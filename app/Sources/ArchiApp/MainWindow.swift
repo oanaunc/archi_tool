@@ -1,0 +1,361 @@
+// Oanarina Archi Tool — GPL-3.0-or-later
+import SwiftUI
+import AppKit
+import ArchiCore
+
+/// One document window: ribbon, workspace (2D / 3D / split / sheet), panels, command line, status bar.
+struct MainWindow: View {
+    let request: DocumentRequest?
+    @StateObject private var model = AppModel()
+    @Environment(\.openWindow) private var openWindow
+    @State private var didSetup = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            RibbonView(model: model)
+            HSeparator()
+            HStack(spacing: 0) {
+                workspace
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .overlay(alignment: .topLeading) { ViewportBadge(model: model).padding(8) }
+                if model.showPanels {
+                    VSeparator()
+                    PanelsView(model: model).frame(width: 300)
+                }
+            }
+            if model.showScriptConsole {
+                HSeparator()
+                ScriptConsoleView(model: model).frame(height: 210)
+            }
+            HSeparator()
+            CommandLineView(model: model)
+            HSeparator()
+            StatusBarView(model: model)
+        }
+        .background(Theme.canvas)
+        .overlay {
+            if model.showStart {
+                StartView(model: model).transition(.opacity)
+            }
+        }
+        .sheet(item: $model.sheet) { s in sheetView(s) }
+        .navigationTitle(model.windowTitle)
+        .background(WindowAccessor { w in attach(w) })
+        .focusedSceneObject(model)
+        .preferredColorScheme(.dark)
+        .frame(minWidth: 960, minHeight: 620)
+        .onAppear(perform: setup)
+        .onChange(of: model.revision) { _ in updateWindowState() }
+    }
+
+    @ViewBuilder private var workspace: some View {
+        switch model.mode {
+        case .plan:
+            PlanCanvas(model: model)
+        case .model:
+            Viewport3DView(model: model)
+        case .split:
+            HSplitView {
+                PlanCanvas(model: model).frame(minWidth: 240, maxWidth: .infinity, maxHeight: .infinity)
+                Viewport3DView(model: model).frame(minWidth: 240, maxWidth: .infinity, maxHeight: .infinity)
+            }
+        case .sheet:
+            SheetView(model: model)
+        }
+    }
+
+    @ViewBuilder private func sheetView(_ s: ModalSheet) -> some View {
+        switch s {
+        case .units: UnitsSheet(model: model)
+        case .drafting: DraftingSettingsSheet(model: model)
+        case .schedule(let k): ScheduleSheet(model: model, kind: k)
+        case .commandReference: CommandReferenceView(registry: model.editor.registry, onClose: { model.sheet = nil }).frame(width: 720, height: 560)
+        case .shortcuts: ShortcutsView(onClose: { model.sheet = nil }).frame(width: 560, height: 520)
+        }
+    }
+
+    private func attach(_ w: NSWindow) {
+        if model.window !== w {
+            model.window = w
+            w.appearance = NSAppearance(named: .darkAqua)
+            w.backgroundColor = Theme.nsPanel
+            w.tabbingIdentifier = "OanarinaArchiDocument"
+            updateWindowState()
+        }
+        model.files.installCloseGuard(on: w)
+    }
+
+    private func updateWindowState() {
+        guard let w = model.window else { return }
+        if w.isDocumentEdited != model.isDirty { w.isDocumentEdited = model.isDirty }
+        if w.representedURL != model.editor.fileURL { w.representedURL = model.editor.fileURL }
+    }
+
+    private func setup() {
+        WindowRouter.openWindow = { r in openWindow(value: r) }
+        guard !didSetup else { return }
+        didSetup = true
+        if !WindowRouter.pendingURLs.isEmpty {
+            let url = WindowRouter.pendingURLs.removeFirst()
+            model.files.load(url)
+            for u in WindowRouter.pendingURLs { WindowRouter.open(DocumentRequest(kind: .open, path: u.path)) }
+            WindowRouter.pendingURLs.removeAll()
+            return
+        }
+        switch request?.kind {
+        case .none, .start?:
+            model.showStart = true
+        case .open?:
+            if let p = request?.path, model.files.load(URL(fileURLWithPath: p)) { } else { model.showStart = true }
+        case .sample?:
+            model.newDocument(.sample)
+            model.buildSampleHouse()
+        case let k?:
+            model.newDocument(k)
+        }
+    }
+}
+
+extension AppModel {
+    /// Replaces the (empty) document with a template.
+    func newDocument(_ kind: DocumentRequest.Kind) {
+        let (d, s) = FileController.template(kind)
+        editor.replaceDocument(d, url: nil)
+        editor.settings = s
+        showStart = false
+        mode = .plan
+        let label: String
+        switch kind {
+        case .blankImperial: label = "New drawing (imperial, inches)"
+        case .building: label = "New building (levels, grid and sheets)"
+        case .sample: label = "Sample house"
+        default: label = "New drawing (metric, millimetres)"
+        }
+        editor.print(label)
+        revision &+= 1
+        zoomExtents()
+    }
+}
+
+/// Small top-left badge on the workspace (AutoCAD viewport label): mode + level.
+private struct ViewportBadge: View {
+    @ObservedObject var model: AppModel
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(WorkspaceMode.allCases) { m in
+                Button { model.mode = m } label: {
+                    Text(m.rawValue)
+                        .font(.system(size: 10, weight: model.mode == m ? .semibold : .regular))
+                        .foregroundStyle(model.mode == m ? Theme.accentText : Theme.textDim)
+                        .padding(.horizontal, 7).frame(height: 18)
+                        .background(model.mode == m ? Theme.accent : Color.clear)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help("Show \(m.rawValue)")
+            }
+            if model.mode == .plan || model.mode == .split {
+                Text(model.doc.level(model.doc.currentLevel)?.name ?? "")
+                    .font(.system(size: 10)).foregroundStyle(Theme.textDim)
+                    .padding(.horizontal, 7)
+            }
+        }
+        .background(RoundedRectangle(cornerRadius: 4).fill(Color.black.opacity(0.45)))
+        .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.separator, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 4))
+    }
+}
+
+/// Reports the hosting NSWindow.
+struct WindowAccessor: NSViewRepresentable {
+    var onWindow: (NSWindow) -> Void
+    func makeNSView(context: Context) -> WindowTrackingView {
+        let v = WindowTrackingView()
+        v.onWindow = onWindow
+        return v
+    }
+    func updateNSView(_ v: WindowTrackingView, context: Context) {
+        v.onWindow = onWindow
+        if let w = v.window { DispatchQueue.main.async { onWindow(w) } }
+    }
+}
+
+final class WindowTrackingView: NSView {
+    var onWindow: ((NSWindow) -> Void)?
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if let w = window { let cb = onWindow; DispatchQueue.main.async { cb?(w) } }
+    }
+}
+
+// MARK: - Sheets
+
+private struct SheetFrame<Content: View>: View {
+    let title: String
+    var onCancel: (() -> Void)?
+    var onOK: (() -> Void)?
+    var okTitle = "OK"
+    @ViewBuilder var content: Content
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text(title).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.text)
+                Spacer()
+            }
+            .padding(14)
+            HSeparator()
+            content.padding(14)
+            HSeparator()
+            HStack {
+                Spacer()
+                if let c = onCancel { Button("Cancel", action: c).buttonStyle(FlatButtonStyle()).keyboardShortcut(.cancelAction) }
+                if let o = onOK { Button(okTitle, action: o).buttonStyle(FlatButtonStyle(prominent: true)).keyboardShortcut(.defaultAction) }
+            }
+            .padding(12)
+        }
+        .background(Theme.panel)
+    }
+}
+
+struct UnitsSheet: View {
+    @ObservedObject var model: AppModel
+    @State private var units: Units = .millimeters
+    var body: some View {
+        SheetFrame(title: "Drawing Units", onCancel: { model.sheet = nil }, onOK: {
+            if units != model.doc.units { model.editor.transaction("Units") { $0.units = units } }
+            model.sheet = nil
+        }) {
+            VStack(alignment: .leading, spacing: 10) {
+                Picker("Insertion units", selection: $units) {
+                    ForEach(Units.allCases, id: \.self) { u in Text("\(u.rawValue.capitalized) (\(u.abbreviation))").tag(u) }
+                }
+                .pickerStyle(.radioGroup)
+                Text("Coordinates are stored as drawing units. Changing the unit relabels the drawing and affects exports (1 \(units.abbreviation) = \(fmt(units.mm)) mm); it does not rescale existing geometry. Use SCALE to resize objects.")
+                    .font(Theme.fontSmall).foregroundStyle(Theme.textDim).fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(width: 360, alignment: .leading)
+        }
+        .onAppear { units = model.doc.units }
+    }
+}
+
+struct DraftingSettingsSheet: View {
+    @ObservedObject var model: AppModel
+    @State private var s = DraftSettings()
+    var body: some View {
+        SheetFrame(title: "Drafting Settings", onCancel: { model.sheet = nil }, onOK: {
+            model.editor.settings = s
+            model.sheet = nil
+            model.revision &+= 1
+        }) {
+            HStack(alignment: .top, spacing: 24) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Snap and Grid").font(Theme.fontBold)
+                    Toggle("Grid display (F7)", isOn: $s.showGrid)
+                    Toggle("Grid snap (F9)", isOn: $s.gridSnap)
+                    HStack { Text("Grid spacing"); TextField("", value: $s.gridSpacing, format: .number).frame(width: 80) }
+                    Divider()
+                    Text("Polar Tracking").font(Theme.fontBold)
+                    Toggle("Ortho (F8)", isOn: $s.ortho)
+                    Toggle("Polar tracking (F10)", isOn: $s.polarTracking)
+                    Picker("Increment", selection: $s.polarIncrement) {
+                        ForEach([5.0, 10, 15, 18, 22.5, 30, 45, 90], id: \.self) { Text("\(fmt($0))°").tag($0) }
+                    }
+                    .frame(width: 180)
+                    Divider()
+                    Toggle("Dynamic input (F12)", isOn: $s.dynamicInput)
+                    Toggle("Show lineweights", isOn: $s.lineweightDisplay)
+                    HStack { Text("Text height"); TextField("", value: $s.textHeight, format: .number).frame(width: 80) }
+                    HStack { Text("Wall thickness"); TextField("", value: $s.wallThickness, format: .number).frame(width: 80) }
+                    HStack { Text("Wall height"); TextField("", value: $s.wallHeight, format: .number).frame(width: 80) }
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Toggle("Object snap (F3)", isOn: $s.objectSnap).font(Theme.fontBold)
+                    ForEach(SnapKind.allCases, id: \.self) { k in
+                        Toggle(k.rawValue.capitalized, isOn: Binding(get: { s.snapModes.contains(k) }, set: { on in if on { s.snapModes.insert(k) } else { s.snapModes.remove(k) } }))
+                    }
+                    HStack {
+                        Button("Select All") { s.snapModes = Set(SnapKind.allCases) }.buttonStyle(FlatButtonStyle(compact: true))
+                        Button("Clear All") { s.snapModes = [] }.buttonStyle(FlatButtonStyle(compact: true))
+                    }
+                }
+            }
+            .font(Theme.font)
+            .frame(width: 480, alignment: .leading)
+        }
+        .onAppear { s = model.editor.settings }
+    }
+}
+
+struct ScheduleSheet: View {
+    @ObservedObject var model: AppModel
+    @State var kind: String
+
+    var body: some View {
+        let rows = parseCSV(ScheduleExporter.csv(doc: model.doc, kind: kind))
+        SheetFrame(title: "Schedule", onCancel: nil, onOK: { model.sheet = nil }, okTitle: "Close") {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Picker("Schedule", selection: $kind) {
+                        ForEach(ScheduleExporter.kinds, id: \.self) { Text($0.capitalized).tag($0) }
+                    }
+                    .frame(width: 220)
+                    Spacer()
+                    Button { model.files.export(format: "csv:\(kind)", path: nil) } label: { Label("Export CSV…", systemImage: "square.and.arrow.up") }
+                        .buttonStyle(FlatButtonStyle())
+                }
+                if rows.isEmpty {
+                    Text("No data for this schedule yet.").font(Theme.font).foregroundStyle(Theme.textDim).frame(maxWidth: .infinity, minHeight: 200)
+                } else {
+                    ScrollView([.horizontal, .vertical]) {
+                        Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 4) {
+                            ForEach(Array(rows.enumerated()), id: \.offset) { i, r in
+                                GridRow {
+                                    ForEach(Array(r.enumerated()), id: \.offset) { _, c in
+                                        Text(c).font(i == 0 ? Theme.fontBold : Theme.font)
+                                            .foregroundStyle(i == 0 ? Theme.accent : Theme.text)
+                                            .textSelection(.enabled)
+                                    }
+                                }
+                                if i == 0 { Divider() }
+                            }
+                        }
+                        .padding(8)
+                    }
+                    .frame(minHeight: 300)
+                    .background(Theme.field)
+                    Text("\(rows.count - 1) row(s)").font(Theme.fontSmall).foregroundStyle(Theme.textDim)
+                }
+            }
+            .frame(width: 720)
+        }
+    }
+}
+
+/// Minimal RFC 4180 CSV parser (quoted fields, doubled quotes).
+func parseCSV(_ text: String) -> [[String]] {
+    var rows: [[String]] = []
+    var row: [String] = []
+    var field = ""
+    var inQuotes = false
+    var it = Array(text).makeIterator()
+    var pending: Character? = nil
+    while let ch = pending ?? it.next() {
+        pending = nil
+        if inQuotes {
+            if ch == "\"" {
+                if let n = it.next() { if n == "\"" { field.append("\"") } else { inQuotes = false; pending = n } } else { inQuotes = false }
+            } else { field.append(ch) }
+        } else {
+            switch ch {
+            case "\"": inQuotes = true
+            case ",": row.append(field); field = ""
+            case "\n", "\r\n": row.append(field); field = ""; if !(row.count == 1 && row[0].isEmpty) { rows.append(row) }; row = []
+            case "\r": break
+            default: field.append(ch)
+            }
+        }
+    }
+    if !field.isEmpty || !row.isEmpty { row.append(field); rows.append(row) }
+    return rows
+}
