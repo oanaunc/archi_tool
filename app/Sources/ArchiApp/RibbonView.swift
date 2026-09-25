@@ -171,6 +171,8 @@ struct RibbonView: View {
 
     private var tab: RibbonTab { RibbonTab(rawValue: tabRaw) ?? .home }
 
+    @ObservedObject private var prefs = AppPreferences.shared
+
     var body: some View {
         VStack(spacing: 0) {
             tabBar
@@ -183,18 +185,47 @@ struct RibbonView: View {
                 .background(Theme.ribbon)
             }
         }
+        // Opaque theme background: never transparent, also in inactive windows.
+        .background(Theme.ribbonTabBar)
+    }
+
+    /// Quick access toolbar: each button runs the same command as typing its name.
+    private var quickAccessBar: some View {
+        HStack(spacing: 0) {
+            ForEach(prefs.quickAccess, id: \.self) { name in
+                let def = model.editor.registry.lookup(name)
+                let disabled = def == nil || (name == "UNDO" || name == "U") && !model.editor.history.canUndo || name == "REDO" && !model.editor.history.canRedo
+                IconButton(symbol: QuickAccess.symbol(for: name), help: def.map { "\($0.name) — \($0.summary)" } ?? "\(name) is not available") {
+                    model.runCommand(name)
+                }
+                .disabled(disabled)
+            }
+            Menu {
+                ForEach(["NEW", "OPEN", "SAVE", "SAVEAS", "UNDO", "REDO", "PLOT", "PREVIEW", "PUBLISH", "MATCHPROP", "QSELECTDIALOG", "LAYER", "RENDER", "OPTIONS"], id: \.self) { n in
+                    Button {
+                        if let i = prefs.quickAccess.firstIndex(of: n) { prefs.quickAccess.remove(at: i) } else { prefs.quickAccess.append(n) }
+                    } label: {
+                        if prefs.quickAccess.contains(n) { Label(n, systemImage: "checkmark") } else { Text(n) }
+                    }
+                }
+                Divider()
+                Button("More Commands…") { PreferencesWindow.show(.toolbar) }
+            } label: { Image(systemName: "chevron.down").font(.system(size: 8)) }
+            .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+            .help("Customize the quick access toolbar")
+        }
     }
 
     // MARK: Tab bar
 
     private var tabBar: some View {
         HStack(spacing: 2) {
-            HStack(spacing: 5) {
-                RoundedRectangle(cornerRadius: 3).fill(Theme.accent).frame(width: 14, height: 14)
-                    .overlay(Text("A").font(.system(size: 10, weight: .black)).foregroundStyle(Theme.accentText))
-            }
-            .padding(.horizontal, 8)
-            .help("Oanarina Archi Tool")
+            Button { AboutWindow.show() } label: { AppIconView(size: 18) }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 6)
+                .help("About Oanarina Archi Tool")
+            quickAccessBar
+            VSeparator().frame(height: 14).padding(.horizontal, 4)
             ForEach(RibbonTab.allCases) { t in
                 Button { tabRaw = t.rawValue; if collapsed { collapsed = false } } label: {
                     Text(t.rawValue)
@@ -210,11 +241,8 @@ struct RibbonView: View {
                 .buttonStyle(.plain)
             }
             Spacer()
-            IconButton(symbol: "square.and.arrow.down", help: "Save (⌘S)") { model.files.save() }
-            IconButton(symbol: "arrow.uturn.backward", help: model.editor.history.undoLabel.map { "Undo \($0) (⌘Z)" } ?? "Nothing to undo") { model.editor.undo() }
-                .disabled(!model.editor.history.canUndo)
-            IconButton(symbol: "arrow.uturn.forward", help: model.editor.history.redoLabel.map { "Redo \($0) (⇧⌘Z)" } ?? "Nothing to redo") { model.editor.redo() }
-                .disabled(!model.editor.history.canRedo)
+            IconButton(symbol: "magnifyingglass", help: "Search commands (⌘K)") { model.showCommandSearch = true }
+            IconButton(symbol: "rectangle.dashed", help: "Clean screen (⌃0)") { model.cleanScreen.toggle() }
             IconButton(symbol: "sidebar.right", help: model.showPanels ? "Hide panels" : "Show panels", active: model.showPanels) { model.showPanels.toggle() }
             IconButton(symbol: collapsed ? "chevron.down" : "chevron.up", help: collapsed ? "Expand the ribbon" : "Collapse the ribbon") { collapsed.toggle() }
                 .padding(.trailing, 6)
@@ -277,6 +305,7 @@ struct RibbonView: View {
                     LayerDropdown(model: model).frame(width: 170)
                     HStack(spacing: 4) {
                         action("Layer Properties", "square.3.layers.3d", .small, help: "Open the Layers panel") { model.showPanels = true; model.panelTab = .layers }
+                        action("States", "rectangle.stack", .small, help: "Layer States Manager (LAYERSTATE)") { model.sheet = .layerStates }
                     }
                 }
             }
@@ -289,7 +318,12 @@ struct RibbonView: View {
             }
             RibbonGroup(title: "Selection") {
                 action("Select All", "checkmark.rectangle.stack", help: "Select all objects (⌘A)") { model.selectAll() }
-                action("Properties", "slider.horizontal.3", help: "Show the Properties panel") { model.showPanels = true; model.panelTab = .properties }
+                action("Quick Select", "line.3.horizontal.decrease.circle", help: "Quick Select dialog (QSELECTDIALOG)") { model.sheet = .quickSelect }
+                VStack(alignment: .leading, spacing: 1) {
+                    cmd(CmdItem(title: "Match Props", symbol: "paintbrush.pointed", names: ["MATCHPROP"]), .small)
+                    cmd(CmdItem(title: "Similar", symbol: "square.on.square.intersection.dashed", names: ["SELECTSIMILAR"]), .small)
+                    action("Properties", "slider.horizontal.3", .small, help: "Show the Properties panel") { model.showPanels = true; model.panelTab = .properties }
+                }
             }
         }
     }
@@ -418,9 +452,48 @@ struct RibbonView: View {
                     }
                 }
             }
+            RibbonGroup(title: "3D Tools") {
+                action("Section Box", "cube.transparent", active: model.showSectionBoxPanel, help: "Cut the 3D model with a box (SECTIONBOX)") {
+                    if model.mode == .plan || model.mode == .sheet { model.mode = .model }
+                    model.showSectionBoxPanel.toggle()
+                }
+                action("Sun Study", "sun.max", active: model.showSunStudy, help: "Animate the sun and shadows (SUNSTUDY)") {
+                    if model.mode == .plan || model.mode == .sheet { model.mode = .model }
+                    model.showSunStudy.toggle()
+                }
+                VStack(alignment: .leading, spacing: 1) {
+                    action("View Cube", "cube", .small, active: model.showViewCube, help: "Show or hide the view cube (NAVVCUBE)") { model.showViewCube.toggle() }
+                    action("Orbit Selection", "scope", .small, enabled: !model.editor.selection.isEmpty, help: "Orbit around and zoom to the selection (ORBITSELECTION)") { model.runCommand("ORBITSELECTION") }
+                    action("Save Camera", "camera", .small, help: "Save the 3D camera (SAVECAMERA)") {
+                        if model.mode == .plan || model.mode == .sheet { model.mode = .model }
+                        model.sheet = .saveCamera
+                    }
+                }
+            }
             RibbonGroup(title: "Presentation") {
                 action("Render", "camera.aperture", help: "Render a photorealistic image") { RenderController.renderImage(model: model) }
                 action("Walk", "figure.walk", active: model.walkMode, help: "Walk through the model (WASD + mouse)") { model.files.handle(.walkthrough) }
+            }
+            RibbonGroup(title: "Interface") {
+                Menu {
+                    ForEach(Workspaces.all) { w in
+                        Button { Workspaces.apply(w, to: model) } label: {
+                            if w.name == Workspaces.currentName { Label(w.name, systemImage: "checkmark") } else { Text(w.name) }
+                        }
+                    }
+                    Divider()
+                    Button("Save Current Workspace…") { model.runCommand("WSSAVE") }
+                } label: {
+                    VStack(spacing: 3) {
+                        Image(systemName: "rectangle.3.group").font(.system(size: 19)).frame(height: 24)
+                        Text("Workspace").font(.system(size: 10))
+                    }
+                    .frame(width: 58, height: 58, alignment: .top).padding(.top, 4)
+                    .foregroundStyle(Theme.text)
+                }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                .help("Switch workspace (WSCURRENT)")
+                action("Clean Screen", "rectangle.dashed", active: model.cleanScreen, help: "Hide the ribbon and panels (⌃0)") { model.cleanScreen.toggle() }
             }
         }
     }
@@ -429,7 +502,20 @@ struct RibbonView: View {
         Group {
             RibbonGroup(title: "Plot") {
                 action("Plot / Print", "printer", help: "Print the drawing or the active sheet (⌘P)") { Plotter.printDrawing(model: model) }
-                action("Export PDF", "doc.richtext", help: "Export the drawing or the active sheet as vector PDF") { model.files.export(format: "pdf", path: nil) }
+                action("Preview", "eye", help: "Plot dialog with live preview (PREVIEW)") { PlotPreviewWindow.show(model: model) }
+                VStack(alignment: .leading, spacing: 1) {
+                    action("Page Setup", "doc.badge.gearshape", .small, help: "Paper, plot style, lineweights, plot stamp (PAGESETUP)") {
+                        model.sheet = .pageSetup(model.mode == .sheet ? model.activeLayout : -1)
+                    }
+                    action("Export PDF", "doc.richtext", .small, help: "Export the drawing or the active sheet as vector PDF") { model.files.export(format: "pdf", path: nil) }
+                    action("Publish", "doc.on.doc", .small, enabled: !model.doc.layouts.isEmpty, help: "All sheets in one PDF (PUBLISH)") { Plotter.publish(model: model, path: nil) }
+                }
+            }
+            RibbonGroup(title: "Sheets") {
+                action("Title Block", "list.bullet.rectangle.portrait", enabled: !model.doc.layouts.isEmpty, help: "Edit the title block and project info (TITLEBLOCK)") {
+                    model.mode = .sheet
+                    model.sheet = .titleBlock(min(max(model.activeLayout, 0), max(model.doc.layouts.count - 1, 0)))
+                }
             }
             RibbonGroup(title: "Export") {
                 let items = ExportFormat.all.filter { $0.ext != "pdf" }
@@ -468,11 +554,16 @@ struct RibbonView: View {
             RibbonGroup(title: "Panels") {
                 action("Layers", "square.3.layers.3d", active: model.showPanels && model.panelTab == .layers, help: "Layer properties manager") { model.showPanels = true; model.panelTab = .layers }
                 action("Browser", "list.bullet.indent", active: model.showPanels && model.panelTab == .browser, help: "Project browser") { model.showPanels = true; model.panelTab = .browser }
+                action("Tools", "square.grid.3x3.square", active: model.showPanels && model.panelTab == .tools, help: "Tool palettes") { model.showPanels = true; model.panelTab = .tools }
                 action("Materials", "paintpalette", active: model.showPanels && model.panelTab == .materials, help: "Materials") { model.showPanels = true; model.panelTab = .materials }
             }
             RibbonGroup(title: "Settings") {
                 action("Units", "ruler", help: "Drawing units") { model.sheet = .units }
                 action("Drafting", "slider.horizontal.3", help: "Drafting settings: grid, snap, polar, object snaps") { model.sheet = .drafting }
+                action("Options", "gearshape", help: "Application settings (OPTIONS, ⌘,)") { PreferencesWindow.show() }
+            }
+            RibbonGroup(title: "History") {
+                action("History", "clock.arrow.circlepath", active: model.showPanels && model.panelTab == .history, help: "Undo history and command history") { model.showPanels = true; model.panelTab = .history }
             }
             RibbonGroup(title: "Cleanup") {
                 action("Purge", "trash.slash", help: "Remove unused layers, blocks and styles") { model.purge() }
@@ -491,6 +582,22 @@ struct RibbonView: View {
                     p.message = "Choose a JavaScript file (archi API) or a command script (one command line per line)"
                     if p.runModal() == .OK, let u = p.url { model.runScriptFile(u) }
                 }
+                Menu {
+                    let scripts = ScriptLibrary.scripts()
+                    if scripts.isEmpty { Text("No scripts in the library yet") }
+                    ForEach(scripts, id: \.self) { u in Button(u.lastPathComponent) { model.runScriptFile(u) } }
+                    Divider()
+                    Button("Open Script Library Folder") { ScriptLibrary.revealFolder() }
+                } label: {
+                    VStack(spacing: 3) {
+                        Image(systemName: "books.vertical").font(.system(size: 19)).frame(height: 24)
+                        Text("Library").font(.system(size: 10))
+                    }
+                    .frame(width: 50, height: 58, alignment: .top).padding(.top, 4)
+                    .foregroundStyle(Theme.text)
+                }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                .help("Run a script from the library (startup.js runs in every new window)")
             }
             RibbonGroup(title: "AI Agents") {
                 action(model.agentRunning ? "Stop Server" : "Start Server", "antenna.radiowaves.left.and.right", active: model.agentRunning,
@@ -501,16 +608,20 @@ struct RibbonView: View {
                         Text(model.agentRunning ? "Listening" : "Stopped").font(Theme.font).foregroundStyle(Theme.text)
                     }
                     Text("127.0.0.1:\(AgentServer.shared.port)").font(Theme.mono).foregroundStyle(Theme.textDim)
-                    if model.agentRunning {
-                        Button("Copy token") {
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(AgentServer.shared.token, forType: .string)
+                    HStack(spacing: 4) {
+                        if model.agentRunning {
+                            Button("Copy token") {
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(AgentServer.shared.token, forType: .string)
+                            }
+                            .buttonStyle(FlatButtonStyle(compact: true))
+                            .help("Copy the session token agents must send")
                         }
-                        .buttonStyle(FlatButtonStyle(compact: true))
-                        .help("Copy the session token agents must send")
+                        Button("Settings…") { PreferencesWindow.show(.agents) }.buttonStyle(FlatButtonStyle(compact: true))
                     }
                 }
                 .padding(.top, 6)
+                action("Connect Claude", "sparkles", help: "How to connect Claude with archi-cli --mcp") { model.sheet = .connectClaude }
             }
         }
     }

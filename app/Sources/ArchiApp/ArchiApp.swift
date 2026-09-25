@@ -39,9 +39,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.appearance = NSAppearance(named: .darkAqua)
         NSWindow.allowsAutomaticWindowTabbing = true
+        AppIcon.install()
+        Clipboard.install()
         CommandRegistry.shared.ensureBuiltins()
+        AppCommands.registerAll()
+        _ = AppPreferences.shared
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { e in
-            MainActor.assumeIsolated { AppDelegate.handleFunctionKey(e) } ? nil : e
+            MainActor.assumeIsolated { ShortcutDispatcher.handle(e) || AppDelegate.handleFunctionKey(e) } ? nil : e
+        }
+        if AppPreferences.shared.agentAutoStart {
+            // Wait for the first document window.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                MainActor.assumeIsolated {
+                    guard !AgentServer.shared.isRunning, let m = AppModel.all.first else { return }
+                    try? AgentServer.shared.start(model: m, port: UInt16(clamping: max(1024, min(AppPreferences.shared.agentPort, 65535))))
+                    for x in AppModel.all { x.agentRunning = AgentServer.shared.isRunning }
+                }
+            }
+        }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        MainActor.assumeIsolated {
+            // A normal quit: the user already decided about unsaved changes.
+            for m in AppModel.all { m.autosave?.stop() }
         }
     }
 
@@ -51,8 +72,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             99: (\.objectSnap, "Osnap"), 98: (\.showGrid, "Grid"), 100: (\.ortho, "Ortho"), 101: (\.gridSnap, "Snap"),
             109: (\.polarTracking, "Polar"), 111: (\.dynamicInput, "Dyn"),
         ]
-        guard let (kp, name) = map[e.keyCode] else { return false }
         let win = e.window ?? NSApp.keyWindow
+        // ⌃0 toggles clean screen; ⌘K opens command search.
+        let flags = e.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        if flags == .control, e.keyCode == 29, let m = AppModel.all.first(where: { $0.window === win }) { m.cleanScreen.toggle(); return true }
+        guard let (kp, name) = map[e.keyCode], flags.isDisjoint(with: [.command, .control, .option]) else { return false }
         guard let m = AppModel.all.first(where: { $0.window === win }) else { return false }
         m.editor.settings[keyPath: kp].toggle()
         let on = m.editor.settings[keyPath: kp]
@@ -85,71 +109,63 @@ struct ClipboardPayload: Codable {
     var entities: [Entity]
     var elements: [BIMElement]
     var base: Vec2
+    /// Block definitions and layers the objects use (absent in payloads written by 1.0).
+    var blocks: [String: Block]?
+    var layers: [Layer]?
     static let type = NSPasteboard.PasteboardType("com.oanarina.archi.objects")
+
+    init(_ c: DraftClipboard) { entities = c.entities; elements = c.elements; base = c.base; blocks = c.blocks; layers = c.layers }
+    var clip: DraftClipboard { DraftClipboard(entities: entities, elements: elements, blocks: blocks ?? [:], layers: layers ?? [], base: base) }
 }
 
+/// Cmd+X/C/V and COPYCLIP/CUTCLIP/COPYBASE/PASTECLIP/PASTEORIG/PASTEBLOCK share one clipboard: the core
+/// `DraftClipboard`, mirrored to the system pasteboard so objects can be pasted into another open drawing.
 @MainActor
 enum Clipboard {
     /// The key window's field editor handles text commands itself.
     static var textIsFocused: Bool { NSApp.keyWindow?.firstResponder is NSText }
 
-    static func copy(_ model: AppModel) -> Bool {
-        let ents = model.selectedEntities
-        let els = model.selectedElements
-        guard !ents.isEmpty || !els.isEmpty else { return false }
-        // Openings travel with their host walls only.
-        let hostIDs = Set(els.map(\.id))
-        var elements = els.filter { if case .opening(let o) = $0.geometry { return hostIDs.contains(o.hostWall) }; return true }
-        let hosted = model.doc.elements.filter { if case .opening(let o) = $0.geometry { return hostIDs.contains(o.hostWall) && !elements.contains($0) }; return false }
-        elements += hosted
-        var b = BBox2.empty
-        for e in ents { b.add(GeometryOps.bounds(e.geometry, doc: model.doc)) }
-        for el in elements { for p in CommandHelpers.footprint(el, doc: model.doc) { b.add(p) } }
-        let payload = ClipboardPayload(entities: ents, elements: elements, base: b.isEmpty ? .zero : b.min)
-        guard let data = try? JSONEncoder().encode(payload) else { return false }
+    /// Mirrors every core clipboard change (COPYCLIP, CUTCLIP, COPYBASE) to the system pasteboard.
+    static func install() {
+        DraftClipboard.onChange = { clip in MainActor.assumeIsolated { write(clip) } }
+    }
+
+    static func write(_ clip: DraftClipboard) {
+        guard let data = try? JSONEncoder().encode(ClipboardPayload(clip)) else { return }
         let pb = NSPasteboard.general
         pb.clearContents()
         pb.setData(data, forType: ClipboardPayload.type)
         pb.setString(String(data: data, encoding: .utf8) ?? "", forType: .string)
-        model.editor.print("\(ents.count + elements.count) object(s) copied to the clipboard.")
+    }
+
+    static func copy(_ model: AppModel) -> Bool {
+        let ids = model.selectedEntities.map(\.id) + model.selectedElements.map(\.id)
+        guard !ids.isEmpty else { return false }
+        var b = BBox2.empty
+        for e in model.selectedEntities { b.add(GeometryOps.bounds(e.geometry, doc: model.doc)) }
+        for el in model.selectedElements { for p in CommandHelpers.footprint(el, doc: model.doc) { b.add(p) } }
+        let clip = DraftClipboard.capture(ids, from: model.doc, base: b.isEmpty ? .zero : b.min)
+        DraftClipboard.current = clip
+        write(clip)
+        model.editor.print("\(clip.entities.count + clip.elements.count) object(s) copied to the clipboard.")
         return true
     }
 
-    static var canPaste: Bool { NSPasteboard.general.data(forType: ClipboardPayload.type) != nil }
+    static var canPaste: Bool { NSPasteboard.general.data(forType: ClipboardPayload.type) != nil || !(DraftClipboard.current?.isEmpty ?? true) }
+
+    /// The system pasteboard's objects (from any open drawing), else the in-process clipboard.
+    static var current: DraftClipboard? {
+        if let data = NSPasteboard.general.data(forType: ClipboardPayload.type) ?? NSPasteboard.general.string(forType: .string)?.data(using: .utf8),
+           let p = try? JSONDecoder().decode(ClipboardPayload.self, from: data) { return p.clip }
+        return DraftClipboard.current
+    }
 
     static func paste(_ model: AppModel) {
-        guard let data = NSPasteboard.general.data(forType: ClipboardPayload.type) ?? NSPasteboard.general.string(forType: .string)?.data(using: .utf8),
-              let p = try? JSONDecoder().decode(ClipboardPayload.self, from: data) else { return }
-        let target = model.canvas != nil ? model.cursorWorld : p.base
-        let t = Transform2D.translation(target - p.base)
+        guard let clip = current, !clip.isEmpty else { return }
+        DraftClipboard.current = clip   // PASTECLIP / PASTEORIG / PASTEBLOCK use the same objects
+        let target = model.canvas != nil ? model.cursorWorld : clip.base
         var newIDs: [EntityID] = []
-        model.editor.transaction("Paste") { d in
-            var map: [EntityID: EntityID] = [:]
-            for var e in p.entities {
-                e.geometry = GeometryOps.transform(e.geometry, t)
-                let old = e.id
-                let nid = d.add(e)
-                map[old] = nid
-                newIDs.append(nid)
-            }
-            let ordered = p.elements.filter { if case .opening = $0.geometry { return false }; return true } + p.elements.filter { if case .opening = $0.geometry { return true }; return false }
-            for el in ordered {
-                var n = el
-                if case .opening(var o) = n.geometry {
-                    guard let h = map[o.hostWall] else { continue }
-                    o.hostWall = h
-                    n.geometry = .opening(o)
-                } else {
-                    n.geometry = CommandHelpers.transform(n.geometry, t)
-                }
-                n.id = d.allocateID()
-                n.level = d.currentLevel
-                map[el.id] = n.id
-                d.ensureLayer(n.layer)
-                d.elements.append(n)
-                newIDs.append(n.id)
-            }
-        }
+        model.editor.transaction("Paste") { d in newIDs = clip.paste(into: &d, offset: target - clip.base, level: d.currentLevel) }
         model.editor.selection = Set(newIDs)
         model.editor.print("Pasted \(newIDs.count) object(s).")
     }
@@ -183,6 +199,14 @@ struct ArchiCommands: Commands {
     }
 
     var body: some Commands {
+        CommandGroup(replacing: .appInfo) {
+            Button("About Oanarina Archi Tool") { AboutWindow.show() }
+        }
+        CommandGroup(replacing: .appSettings) {
+            Button("Settings…") { PreferencesWindow.show() }
+                .keyboardShortcut(",")
+            Button("Agent Server…") { PreferencesWindow.show(.agents) }
+        }
         CommandGroup(replacing: .newItem) {
             Button("New Drawing") { openWindow(value: DocumentRequest(kind: .start)) }
                 .keyboardShortcut("n")
@@ -215,7 +239,7 @@ struct ArchiCommands: Commands {
                 .keyboardShortcut("s", modifiers: [.command, .shift])
                 .disabled(model == nil)
             Divider()
-            Button("Import DXF…") { model?.files.importPanel() }
+            Button("Import…") { model?.files.importPanel() }
                 .keyboardShortcut("i", modifiers: [.command, .shift])
                 .disabled(model == nil)
             Menu("Export") {
@@ -232,12 +256,19 @@ struct ArchiCommands: Commands {
             .disabled(model == nil)
         }
         CommandGroup(replacing: .printItem) {
-            Button("Page Setup (Sheets)") { model?.mode = .sheet }
+            Button("Page Setup…") { if let m = model { m.sheet = .pageSetup(m.mode == .sheet ? m.activeLayout : -1) } }
                 .keyboardShortcut("p", modifiers: [.command, .shift])
+                .disabled(model == nil)
+            Button("Plot Preview…") { if let m = model { PlotPreviewWindow.show(model: m) } }
+                .keyboardShortcut("p", modifiers: [.command, .option, .shift])
                 .disabled(model == nil)
             Button("Plot / Print…") { if let m = model { Plotter.printDrawing(model: m) } }
                 .keyboardShortcut("p")
                 .disabled(model == nil)
+            Button("Publish All Sheets to PDF…") { if let m = model { Plotter.publish(model: m, path: nil) } }
+                .disabled(model == nil || (model?.doc.layouts.isEmpty ?? true))
+            Button("Title Block…") { if let m = model, !m.doc.layouts.isEmpty { m.mode = .sheet; m.sheet = .titleBlock(min(max(m.activeLayout, 0), m.doc.layouts.count - 1)) } }
+                .disabled(model == nil || (model?.doc.layouts.isEmpty ?? true))
         }
         CommandGroup(replacing: .undoRedo) {
             Button(model?.editor.history.undoLabel.map { "Undo \($0)" } ?? "Undo") {
@@ -279,6 +310,10 @@ struct ArchiCommands: Commands {
             .keyboardShortcut("a")
             Button("Deselect All") { model?.editor.selection = [] }
                 .keyboardShortcut("a", modifiers: [.command, .shift])
+            Button("Quick Select…") { model?.sheet = .quickSelect }
+                .disabled(model == nil)
+            Button("Match Properties") { model?.runCommand("MATCHPROP") }
+                .disabled(model == nil)
         }
         CommandGroup(before: .toolbar) {
             Picker("Workspace", selection: Binding(get: { model?.mode ?? .plan }, set: { model?.mode = $0 })) {
@@ -313,6 +348,26 @@ struct ArchiCommands: Commands {
             Button("Properties Panel") { model?.showPanels = true; model?.panelTab = .properties }
             Button("Levels Panel") { model?.showPanels = true; model?.panelTab = .levels }
             Button("Project Browser") { model?.showPanels = true; model?.panelTab = .browser }
+            Button("Materials Panel") { model?.showPanels = true; model?.panelTab = .materials }
+            Button("History Panel") { model?.showPanels = true; model?.panelTab = .history }
+            Button("Layer States…") { model?.sheet = .layerStates }
+            Menu("Workspace") {
+                ForEach(Workspaces.all) { w in
+                    Button(w.name) { if let m = model { Workspaces.apply(w, to: m) } }
+                }
+                Divider()
+                Button("Save Current Workspace…") { model?.runCommand("WSSAVE") }
+            }
+            .disabled(model == nil)
+            Button((model?.cleanScreen ?? false) ? "Exit Clean Screen" : "Clean Screen") { model?.cleanScreen.toggle() }
+            Menu("3D Tools") {
+                Button("View Cube") { model?.showViewCube.toggle() }
+                Button("Section Box") { if let m = model { if m.mode == .plan || m.mode == .sheet { m.mode = .model }; m.showSectionBoxPanel.toggle() } }
+                Button("Sun Study") { if let m = model { if m.mode == .plan || m.mode == .sheet { m.mode = .model }; m.showSunStudy.toggle() } }
+                Button("Orbit Around Selection") { model?.runCommand("ORBITSELECTION") }
+                Button("Save Camera…") { if let m = model { if m.mode == .plan || m.mode == .sheet { m.mode = .model }; m.sheet = .saveCamera } }
+            }
+            .disabled(model == nil)
             Button((model?.showScriptConsole ?? false) ? "Hide Script Console" : "Show Script Console") { model?.showScriptConsole.toggle() }
                 .keyboardShortcut("j", modifiers: [.command, .option])
             Divider()
@@ -322,6 +377,9 @@ struct ArchiCommands: Commands {
         CommandMenu("Annotate") { menuItems(CommandCatalog.text + CommandCatalog.dimensions) }
         CommandMenu("Architecture") { menuItems(CommandCatalog.build + CommandCatalog.spaces) }
         CommandGroup(replacing: .help) {
+            Button("Search Commands…") { model?.showCommandSearch = true }
+                .keyboardShortcut("k")
+                .disabled(model == nil)
             Button("Command Reference") { openWindow(id: "command-reference") }
                 .keyboardShortcut("/", modifiers: [.command, .shift])
             Button("User Guide") {
@@ -329,6 +387,11 @@ struct ArchiCommands: Commands {
             }
             .disabled(Bundle.main.url(forResource: "USER-GUIDE", withExtension: "md") == nil)
             Button("Keyboard Shortcuts") { openWindow(id: "keyboard-shortcuts") }
+            Button("Customize Shortcuts…") { PreferencesWindow.show(.shortcuts) }
+            Divider()
+            Button("Connect Claude…") { model?.sheet = .connectClaude }
+                .disabled(model == nil)
+            Button("Oanarina Website") { if let u = URL(string: "https://oanarina.com") { NSWorkspace.shared.open(u) } }
         }
     }
 }
@@ -404,7 +467,8 @@ struct ShortcutsView: View {
         ("Double-click text", "Edit text"), ("Delete", "Erase the selection"),
         ("⌘Z / ⇧⌘Z", "Undo / Redo"), ("⌘C / ⌘X / ⌘V", "Copy / Cut / Paste objects (paste at cursor)"), ("⌘A", "Select all"),
         ("⌥⌘1 … ⌥⌘4", "2D · 3D · Split · Sheets"), ("⌥⌘P", "Show / hide panels"), ("⌥⌘J", "Script console"),
-        ("⌘N / ⌘O / ⌘S / ⇧⌘S", "New · Open · Save · Save As"), ("⌘P", "Plot / Print"), ("⇧⌘/", "Command reference"),
+        ("⌘N / ⌘O / ⌘S / ⇧⌘S", "New · Open · Save · Save As"), ("⌘P", "Plot / Print"), ("⇧⌘P", "Page setup"), ("⌥⇧⌘P", "Plot preview"),
+        ("⌘K", "Search commands"), ("⌃0", "Clean screen"), ("⌘,", "Settings (custom shortcuts, colors, autosave…)"), ("⇧⌘/", "Command reference"),
     ]
     var body: some View {
         VStack(spacing: 0) {

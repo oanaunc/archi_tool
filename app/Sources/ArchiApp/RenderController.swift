@@ -179,6 +179,42 @@ enum RenderEngine {
     }
 }
 
+// MARK: - Render presets
+
+/// Saved render settings (resolution, antialiasing, exposure, background).
+struct RenderPreset: Codable, Hashable, Identifiable {
+    var id: String { name }
+    var name: String
+    var width: Int
+    var height: Int
+    var antialias: Bool
+    var exposure: Double
+    var background: String
+
+    static let builtIn: [RenderPreset] = [
+        RenderPreset(name: "Draft (720p, fast)", width: 1280, height: 720, antialias: false, exposure: 0, background: "Sky"),
+        RenderPreset(name: "Standard (1080p)", width: 1920, height: 1080, antialias: true, exposure: 0, background: "Sky"),
+        RenderPreset(name: "High (1440p)", width: 2560, height: 1440, antialias: true, exposure: 0, background: "Sky"),
+        RenderPreset(name: "Print (4K)", width: 3840, height: 2160, antialias: true, exposure: 0, background: "Sky"),
+        RenderPreset(name: "Presentation (white)", width: 2560, height: 1440, antialias: true, exposure: 0.3, background: "White"),
+        RenderPreset(name: "Square (1080×1080)", width: 1080, height: 1080, antialias: true, exposure: 0, background: "Sky"),
+    ]
+    private static let key = "render.presets"
+    static var custom: [RenderPreset] {
+        get { UserDefaults.standard.data(forKey: key).flatMap { try? JSONDecoder().decode([RenderPreset].self, from: $0) } ?? [] }
+        set { UserDefaults.standard.set(try? JSONEncoder().encode(newValue), forKey: key) }
+    }
+    static var all: [RenderPreset] { builtIn + custom }
+
+    func apply(to s: inout RenderSettings) {
+        s.width = width; s.height = height; s.antialias = antialias; s.exposure = exposure
+        s.background = RenderSettings.Background(rawValue: background) ?? .sky
+    }
+    static func from(_ s: RenderSettings, name: String) -> RenderPreset {
+        RenderPreset(name: name, width: s.width, height: s.height, antialias: s.antialias, exposure: s.exposure, background: s.background.rawValue)
+    }
+}
+
 // MARK: - Window
 
 enum RenderController {
@@ -211,6 +247,8 @@ private struct RenderPanel: View {
     @State private var status = ""
     @State private var resolution = "1920×1080"
     @State private var seconds = 8.0
+    @State private var presetName = UserDefaults.standard.string(forKey: "render.lastPreset") ?? "Standard (1080p)"
+    @State private var presets = RenderPreset.all
     private let resolutions = ["1280×720", "1920×1080", "2560×1440", "3840×2160", "1080×1080"]
 
     var sunText: String {
@@ -227,10 +265,26 @@ private struct RenderPanel: View {
                 } else {
                     Text(busy ? "Rendering…" : "Press Render").foregroundStyle(.secondary)
                 }
-                if busy { ProgressView(value: progress > 0 ? progress : nil).frame(width: 220).padding().background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8)) }
+                if busy { ProgressView(value: progress > 0 ? progress : nil).frame(width: 220).padding().background(RoundedRectangle(cornerRadius: 8).fill(Theme.panel)) }
             }
             Divider()
             Form {
+                Section("Preset") {
+                    Picker("Preset", selection: Binding(get: { presetName }, set: { applyPreset($0) })) {
+                        ForEach(presets) { Text($0.name).tag($0.name) }
+                        if !presets.contains(where: { $0.name == presetName }) { Text("Custom").tag(presetName) }
+                    }
+                    HStack {
+                        Button("Save as Preset…") { savePreset() }
+                        if RenderPreset.custom.contains(where: { $0.name == presetName }) {
+                            Button("Delete") {
+                                RenderPreset.custom = RenderPreset.custom.filter { $0.name != presetName }
+                                presets = RenderPreset.all
+                                presetName = "Standard (1080p)"
+                            }
+                        }
+                    }
+                }
                 Section("Output") {
                     Picker("Resolution", selection: $resolution) { ForEach(resolutions, id: \.self) { Text($0) } }
                     Picker("Background", selection: $settings.background) { ForEach(RenderSettings.Background.allCases, id: \.self) { Text($0.rawValue) } }
@@ -264,6 +318,35 @@ private struct RenderPanel: View {
             .frame(width: 340)
         }
         .frame(minWidth: 820, minHeight: 520)
+        .onAppear { if let p = presets.first(where: { $0.name == presetName }) { applyPreset(p.name) } }
+    }
+
+    private func applyPreset(_ name: String) {
+        presetName = name
+        guard let p = presets.first(where: { $0.name == name }) else { return }
+        p.apply(to: &settings)
+        resolution = "\(p.width)×\(p.height)"
+        UserDefaults.standard.set(name, forKey: "render.lastPreset")
+    }
+
+    private func savePreset() {
+        applyResolution()
+        let a = NSAlert()
+        a.messageText = "Save Render Preset"
+        a.informativeText = "Resolution \(settings.width)×\(settings.height), exposure \(fmt(settings.exposure, 1)) EV, \(settings.background.rawValue) background."
+        let tf = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 22))
+        tf.stringValue = "My Preset \(RenderPreset.custom.count + 1)"
+        a.accessoryView = tf
+        a.addButton(withTitle: "Save"); a.addButton(withTitle: "Cancel")
+        guard a.runModal() == .alertFirstButtonReturn else { return }
+        let n = tf.stringValue.trimmingCharacters(in: .whitespaces)
+        guard !n.isEmpty, !RenderPreset.builtIn.contains(where: { $0.name == n }) else { return }
+        var c = RenderPreset.custom.filter { $0.name != n }
+        c.append(RenderPreset.from(settings, name: n))
+        RenderPreset.custom = c
+        presets = RenderPreset.all
+        presetName = n
+        UserDefaults.standard.set(n, forKey: "render.lastPreset")
     }
 
     private var hourOfDay: Double {

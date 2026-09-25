@@ -10,6 +10,9 @@ struct ScriptConsoleView: View {
     @AppStorage("archi.script.code") private var code = ScriptExamples.all[3].code
     @State private var lines: [ConsoleLine] = []
     @State private var running = false
+    @State private var showAPI = false
+    @State private var history: [String] = UserDefaults.standard.stringArray(forKey: "archi.script.history") ?? []
+    @State private var selectedText = ""
     init(model: AppModel) { self.model = model }
 
     struct ConsoleLine: Identifiable { enum Kind { case input, output, value, error }
@@ -22,11 +25,38 @@ struct ScriptConsoleView: View {
                     .keyboardShortcut(.return, modifiers: .command)
                     .disabled(running)
                     .help("Run script (⌘↩)")
+                Button { runSelection() } label: { Label("Run Selection", systemImage: "text.cursor") }
+                    .keyboardShortcut(.return, modifiers: [.command, .shift])
+                    .disabled(running || selectedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .help("Run only the selected code (⇧⌘↩)")
                 Menu("Examples") {
                     ForEach(ScriptExamples.all, id: \.name) { ex in Button(ex.name) { code = ex.code } }
                 }.fixedSize()
+                Menu("Library") {
+                    let scripts = ScriptLibrary.scripts()
+                    if scripts.isEmpty { Text("The library is empty") }
+                    ForEach(scripts, id: \.self) { u in
+                        Menu(u.lastPathComponent) {
+                            Button("Open in Editor") { if let t = try? String(contentsOf: u, encoding: .utf8) { code = t } }
+                            Button("Run") { model.runScriptFile(u) }
+                        }
+                    }
+                    Divider()
+                    Button("Save Editor to Library…") { saveToLibrary() }
+                    Button("Save as startup.js") { saveToLibrary(name: "startup.js") }
+                    Button("Open Library Folder") { ScriptLibrary.revealFolder() }
+                }.fixedSize()
+                Menu {
+                    if history.isEmpty { Text("No scripts run yet") }
+                    ForEach(Array(history.enumerated()), id: \.offset) { _, h in
+                        Button(String(h.split(separator: "\n").first ?? "").prefix(60) + (h.contains("\n") ? " …" : "")) { code = h }
+                    }
+                } label: { Image(systemName: "clock.arrow.circlepath") }
+                    .fixedSize().help("Recently run scripts")
                 Button { open() } label: { Image(systemName: "folder") }.help("Open .js file")
                 Button { save() } label: { Image(systemName: "square.and.arrow.down") }.help("Save as .js file")
+                Button { showAPI.toggle() } label: { Image(systemName: "book") }.help("archi API reference")
+                    .popover(isPresented: $showAPI, arrowEdge: .bottom) { ScriptAPIReference(insert: { code += (code.hasSuffix("\n") || code.isEmpty ? "" : "\n") + $0 }) }
                 Spacer()
                 Button { ScriptEngine.forModel(model).reset(); lines.append(ConsoleLine(kind: .output, text: "JavaScript context reset.")) } label: { Image(systemName: "arrow.counterclockwise") }
                     .help("Reset the JavaScript context")
@@ -37,7 +67,7 @@ struct ScriptConsoleView: View {
             .padding(.horizontal, 10).padding(.vertical, 6)
             Divider()
             VSplitView {
-                CodeEditor(text: $code, onRun: run)
+                CodeEditor(text: $code, onRun: run, onSelection: { selectedText = $0 })
                     .frame(minHeight: 120)
                 ScrollViewReader { proxy in
                     ScrollView {
@@ -53,6 +83,7 @@ struct ScriptConsoleView: View {
                         }.padding(8)
                     }
                     .background(Color(white: 0.09))
+                    .contextMenu { Button("Copy Output") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(lines.map(\.text).joined(separator: "\n"), forType: .string) } }
                     .onChange(of: lines.count) { _ in if let last = lines.last { proxy.scrollTo(last.id, anchor: .bottom) } }
                 }
                 .frame(minHeight: 80)
@@ -69,10 +100,36 @@ struct ScriptConsoleView: View {
         }
     }
 
-    private func run() {
+    private func runSelection() { run(source: selectedText) }
+
+    private func saveToLibrary(name: String? = nil) {
+        var n = name
+        if n == nil {
+            let a = NSAlert()
+            a.messageText = "Save to Script Library"
+            let tf = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 22))
+            tf.stringValue = "my-script.js"
+            a.accessoryView = tf
+            a.addButton(withTitle: "Save"); a.addButton(withTitle: "Cancel")
+            guard a.runModal() == .alertFirstButtonReturn else { return }
+            n = tf.stringValue
+        }
+        do {
+            let u = try ScriptLibrary.save(name: n ?? "script.js", code: code)
+            lines.append(ConsoleLine(kind: .output, text: "Saved to the library: \(u.lastPathComponent)"))
+        } catch { lines.append(ConsoleLine(kind: .error, text: "✖ " + error.localizedDescription)) }
+    }
+
+    private func run() { run(source: code) }
+
+    private func run(source: String) {
         guard !running else { return }
-        let src = code
+        let src = source
         guard !src.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        history.removeAll { $0 == src }
+        history.insert(src, at: 0)
+        if history.count > 15 { history.removeLast(history.count - 15) }
+        UserDefaults.standard.set(history, forKey: "archi.script.history")
         running = true
         let engine = ScriptEngine.forModel(model)
         engine.onOutput = { line in
@@ -112,6 +169,7 @@ struct ScriptConsoleView: View {
 private struct CodeEditor: NSViewRepresentable {
     @Binding var text: String
     var onRun: () -> Void
+    var onSelection: (String) -> Void = { _ in }
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -163,6 +221,14 @@ private struct CodeEditor: NSViewRepresentable {
     final class Coordinator: NSObject, NSTextViewDelegate {
         var parent: CodeEditor
         init(_ p: CodeEditor) { parent = p }
+
+        func textViewDidChangeSelection(_ n: Notification) {
+            guard let tv = n.object as? NSTextView else { return }
+            let r = tv.selectedRange()
+            let sel = r.length > 0 ? (tv.string as NSString).substring(with: r) : ""
+            let cb = parent.onSelection
+            DispatchQueue.main.async { cb(sel) }
+        }
 
         func textDidChange(_ n: Notification) {
             guard let tv = n.object as? NSTextView else { return }
@@ -283,4 +349,59 @@ for (const w of archi.elements({ type: "wall" }))
 archi.layers().map(l => l.name);
 """),
     ]
+}
+
+// MARK: - API reference
+
+struct ScriptAPIReference: View {
+    var insert: (String) -> Void
+    static let entries: [(String, String, String)] = [
+        ("archi.run(line)", "Runs a command line exactly like typing it; returns the log lines.", "archi.run(\"CIRCLE 0,0 500\");"),
+        ("archi.print(...values)", "Prints to the console and the command history.", "archi.print(\"Hello\");"),
+        ("archi.add(entity)", "Adds a 2D/3D entity: {type:'line'|'circle'|'polyline'|'text'|'solid'…}. Returns its id.", "archi.add({ type: \"line\", a: [0, 0], b: [1000, 0] });"),
+        ("archi.addElement(element)", "Adds a building element: wall, slab, column, grid, room…", "archi.addElement({ type: \"grid\", start: [0, -1000], end: [0, 9000], label: \"A\" });"),
+        ("archi.wall(x1, y1, x2, y2, opts)", "Wall between two points (thickness, height, level). Returns the wall id.", "const w = archi.wall(0, 0, 6000, 0, { thickness: 200, height: 3000 });"),
+        ("archi.door(wallId, offset, opts)", "Door hosted in a wall at an offset from its start.", "archi.door(w, 1500, { width: 900 });"),
+        ("archi.window(wallId, offset, opts)", "Window hosted in a wall (width, height, sill).", "archi.window(w, 3500, { width: 1200, sill: 900 });"),
+        ("archi.opening(wallId, offset, opts)", "Plain wall opening.", "archi.opening(w, 5000, { width: 1000, height: 2100 });"),
+        ("archi.slab(points, opts)", "Floor slab from a boundary (thickness, topOffset, level).", "archi.slab([[0,0],[6000,0],[6000,4000],[0,4000]], { thickness: 250 });"),
+        ("archi.room(points, name)", "Room / space with a name tag and area.", "archi.room([[0,0],[6000,0],[6000,4000],[0,4000]], \"Office\");"),
+        ("archi.column(x, y, opts)", "Column at a point (size, height).", "archi.column(0, 0, { size: 400 });"),
+        ("archi.entities(filter?)", "Lists entities; filter by {type, layer}.", "archi.entities({ type: \"circle\" }).length;"),
+        ("archi.elements(filter?)", "Lists building elements; filter by {type, level}.", "archi.elements({ type: \"wall\" });"),
+        ("archi.get(id)", "One entity or element as JSON.", "archi.get(1);"),
+        ("archi.update(id, changes)", "Changes properties of an entity or element.", "archi.update(1, { layer: \"A-WALL\" });"),
+        ("archi.remove(ids)", "Deletes entities/elements.", "archi.remove([1, 2]);"),
+        ("archi.select(ids) / archi.selection()", "Sets or reads the selection.", "archi.select(archi.elements({ type: \"wall\" }).map(e => e.id));"),
+        ("archi.layers() / archi.levels()", "Layers and levels of the document.", "archi.layers().map(l => l.name);"),
+        ("archi.setVar(name, value) / getVar(name)", "System variables (saved in the drawing).", "archi.setVar(\"LTSCALE\", \"2\");"),
+        ("archi.doc() / archi.summary()", "The whole document as JSON / a short summary.", "archi.summary();"),
+        ("archi.undo() / archi.redo()", "Undo and redo.", "archi.undo();"),
+        ("archi.commands()", "All command names with aliases and summaries.", "archi.commands().length;"),
+    ]
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("archi API").font(.system(size: 13, weight: .semibold)).padding(12)
+            Divider()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(ScriptAPIReference.entries, id: \.0) { sig, doc, ex in
+                        VStack(alignment: .leading, spacing: 3) {
+                            HStack {
+                                Text(sig).font(.system(size: 11.5, weight: .semibold, design: .monospaced)).foregroundStyle(Theme.accent)
+                                Spacer()
+                                Button("Insert") { insert(ex) }.buttonStyle(FlatButtonStyle(compact: true))
+                            }
+                            Text(doc).font(Theme.fontSmall).foregroundStyle(Theme.text).fixedSize(horizontal: false, vertical: true)
+                            Text(ex).font(.system(size: 10.5, design: .monospaced)).foregroundStyle(Theme.textDim).textSelection(.enabled)
+                        }
+                    }
+                    Text("Full reference: docs/SCRIPTING.md (Help ▸ User Guide).").font(Theme.fontSmall).foregroundStyle(Theme.textDim)
+                }
+                .padding(12)
+            }
+        }
+        .frame(width: 460, height: 480)
+        .background(Theme.panel)
+    }
 }

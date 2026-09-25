@@ -42,8 +42,14 @@ enum RecentFiles {
         var list = UserDefaults.standard.stringArray(forKey: key) ?? []
         list.removeAll { $0 == url.path }
         list.insert(url.path, at: 0)
-        UserDefaults.standard.set(Array(list.prefix(12)), forKey: key)
+        let limit = MainActor.assumeIsolated { AppPreferences.shared.recentLimit }
+        UserDefaults.standard.set(Array(list.prefix(max(1, limit))), forKey: key)
         NSDocumentController.shared.noteNewRecentDocumentURL(url)
+    }
+    static func remove(_ url: URL) {
+        var list = UserDefaults.standard.stringArray(forKey: key) ?? []
+        list.removeAll { $0 == url.path }
+        UserDefaults.standard.set(list, forKey: key)
     }
     static func clear() {
         UserDefaults.standard.removeObject(forKey: key)
@@ -78,6 +84,10 @@ final class WindowCloseGuard: NSObject, NSWindowDelegate {
         }
         if !ok { return false }
         return original?.windowShouldClose?(sender) ?? true
+    }
+    func windowWillClose(_ notification: Notification) {
+        MainActor.assumeIsolated { self.model?.autosave?.stop() }
+        original?.windowWillClose?(notification)
     }
     override func responds(to aSelector: Selector!) -> Bool {
         super.responds(to: aSelector) || (original?.responds(to: aSelector) ?? false)
@@ -161,6 +171,19 @@ final class FileController: EditorHost {
         case "units": model.sheet = .units
         case "drafting", "dsettings", "settings": model.sheet = .drafting
         case "schedule", "schedules": model.sheet = .schedule("all")
+        case "viewcube", "navvcube", "cube":
+            model.showViewCube.toggle()
+            if model.showViewCube && (model.mode == .plan || model.mode == .sheet) { model.mode = .model }
+        case "history", "undohistory": model.showPanels = true; model.panelTab = .history
+        case "tools", "toolpalettes", "palettes": model.showPanels = true; model.panelTab = .tools
+        case "options", "preferences": PreferencesWindow.show()
+        case "quickselect", "qselect": model.sheet = .quickSelect
+        case "layerstates", "layerstate": model.sheet = .layerStates
+        case "pagesetup": model.sheet = .pageSetup(model.mode == .sheet ? model.activeLayout : -1)
+        case "preview", "plotpreview": PlotPreviewWindow.show(model: model)
+        case "sectionbox": model.showSectionBoxPanel = true
+        case "sunstudy", "sun": model.showSunStudy = true
+        case "commandsearch", "search": model.showCommandSearch = true
         default: model.showPanels = true
         }
     }
@@ -276,6 +299,11 @@ final class FileController: EditorHost {
         p.allowedContentTypes = [.archiDocument]
         p.nameFieldStringValue = model.displayName + "." + ArchiFile.fileExtension
         if let dir = model.editor.fileURL?.deletingLastPathComponent() { p.directoryURL = dir }
+        else if let orig = model.recoveredOriginalPath {
+            let u = URL(fileURLWithPath: orig)
+            p.directoryURL = u.deletingLastPathComponent()
+            p.nameFieldStringValue = u.deletingPathExtension().lastPathComponent + " (recovered)." + ArchiFile.fileExtension
+        }
         guard p.runModal() == .OK, let url = p.url else { return false }
         return write(to: url)
     }
@@ -293,6 +321,8 @@ final class FileController: EditorHost {
             try data.write(to: u, options: .atomic)
             model.editor.fileURL = u
             model.editor.isDirty = false
+            model.autosave?.discard()
+            model.recoveredOriginalPath = nil
             RecentFiles.add(u)
             model.editor.print("Saved \(u.lastPathComponent)")
             model.revision &+= 1
@@ -307,9 +337,9 @@ final class FileController: EditorHost {
 
     func importPanel() {
         let p = NSOpenPanel()
-        p.allowedContentTypes = [.dxfDrawing, .archiDocument]
+        p.allowedContentTypes = [.dxfDrawing, .archiDocument] + FileImport.importFormats.compactMap { UTType(filenameExtension: $0) }
         p.allowsMultipleSelection = false
-        p.message = "Import a DXF drawing or Archi project into the current document"
+        p.message = "Import a drawing, model or data file (DXF, Archi, IFC, SVG, OBJ, STL, 3MF, GeoJSON, CSV/XYZ points) into the current document"
         guard p.runModal() == .OK, let url = p.url else { return }
         importFile(url)
     }
@@ -317,6 +347,21 @@ final class FileController: EditorHost {
     /// Merges another drawing into this one (new ids, missing layers/blocks/linetypes added).
     func importFile(_ url: URL) {
         guard let model else { return }
+        let ext = url.pathExtension.lowercased()
+        if ext != "archi" && ext != "dxf" && FileImport.importFormats.contains(ext) {
+            // IFC, SVG, OBJ, STL, 3MF, GeoJSON and point tables go through the core importers (units are scaled).
+            do {
+                var result = DocumentMerge.Result(), summary = ""
+                try model.editor.transaction("Import \(url.lastPathComponent)") { d in
+                    (result, summary) = try FileImport.importFile(url, into: &d)
+                }
+                model.editor.selection = Set(result.allIDs)
+                model.editor.print("Imported \(result.allIDs.count) object(s) from \(url.lastPathComponent). \(summary)")
+                model.showStart = false
+                model.zoomExtents()
+            } catch { showError(error) }
+            return
+        }
         do {
             let src = try FileController.readDocument(url)
             var newIDs: [EntityID] = []
@@ -530,12 +575,12 @@ final class FileController: EditorHost {
             d.layouts = d.levels.prefix(2).enumerated().map { i, l in
                 Layout(name: "A10\(i + 1) — \(l.name)", paper: PaperSize.standard[1],
                        viewports: [Viewport(origin: Vec2(15, 15), size: Vec2(330, 267), viewCenter: Vec2(9000, 6000), scale: 100, view: .plan, level: l.id, title: l.name)],
-                       titleBlock: ["Project": d.info.name, "Sheet": "A10\(i + 1)", "Scale": "1:100"])
+                       titleBlock: ["project": d.info.name, "sheetNumber": "A10\(i + 1)", "scale": "1:100"])
             }
             d.layouts.append(Layout(name: "A201 — Elevations", paper: PaperSize.standard[1],
                                     viewports: [Viewport(origin: Vec2(15, 150), size: Vec2(330, 130), viewCenter: Vec2(9000, 3000), scale: 100, view: .elevationSouth, title: "South Elevation"),
                                                 Viewport(origin: Vec2(15, 15), size: Vec2(330, 130), viewCenter: Vec2(9000, 3000), scale: 100, view: .elevationEast, title: "East Elevation")],
-                                    titleBlock: ["Project": d.info.name, "Sheet": "A201", "Scale": "1:100"]))
+                                    titleBlock: ["project": d.info.name, "sheetNumber": "A201", "scale": "1:100"]))
         default: break
         }
         return (d, s)

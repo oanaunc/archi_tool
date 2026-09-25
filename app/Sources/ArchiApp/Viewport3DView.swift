@@ -242,6 +242,14 @@ final class Scene3DBuilder {
             }
         }
         if src.transparency > 0 { m.isDoubleSided = true }
+        if style != "Hidden Line", style != "X-Ray", let img = MaterialTextures.image(src.texture) {
+            m.diffuse.contents = img
+            m.diffuse.wrapS = .repeat; m.diffuse.wrapT = .repeat
+            m.diffuse.mipFilter = .linear
+            let k = CGFloat(1000 / max(src.textureScale, 1))
+            m.diffuse.contentsTransform = SCNMatrix4MakeScale(k, k, 1)
+            m.multiply.contents = color.blended(withFraction: 0.75, of: .white) ?? NSColor.white
+        }
         materialCache[name] = m
         return m
     }
@@ -377,6 +385,10 @@ final class Viewport3DController: NSObject, ObservableObject {
     private var walkTimer: Timer?
     private var yaw: CGFloat = 0, pitch: CGFloat = 0
     private var lastTick = Date()
+    /// Section box currently applied to the scene materials.
+    var sectionBoxApplied: SectionBox?
+    weak var cubeView: ViewCubeView?
+    private var cubeTimer: Timer?
 
     override init() {
         super.init()
@@ -410,10 +422,19 @@ final class Viewport3DController: NSObject, ObservableObject {
         v.preferredFramesPerSecond = 60
         v.rendersContinuously = false
         Viewport3DController.active = self
+        if cubeTimer == nil {
+            cubeTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 20, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, let cube = self.cubeView, cube.window != nil else { return }
+                    cube.sync(orientation: self.cameraNode.presentation.worldOrientation)
+                }
+            }
+        }
     }
 
     func sync(model: AppModel) {
         self.model = model
+        if model.viewport3D !== self { model.viewport3D = self }
         let style = Scene3DBuilder.visualStyles.contains(model.viewStyle) ? model.viewStyle : "Shaded with Edges"
         if model.editor.changeCount != lastChange || style != lastStyle {
             lastChange = model.editor.changeCount
@@ -423,6 +444,12 @@ final class Viewport3DController: NSObject, ObservableObject {
             if !positioned && !builder.bounds.isEmpty { positioned = true; setView("Iso", animated: false) }
         }
         builder.applySelection(model.editor.selection)
+        let box = SectionBox.load(model.doc)
+        if box?.on == true || sectionBoxApplied != nil {
+            // Live slider edits are applied by the panel; here the stored box is re-applied after rebuilds.
+            if !model.showSectionBoxPanel || sectionBoxApplied == nil || box != sectionBoxApplied { applySectionBox(box) }
+            else { applySectionBox(sectionBoxApplied) }
+        }
         // Camera requests from the ribbon, menus and command line.
         if let action = model.pendingHostAction {
             switch action {
@@ -669,18 +696,29 @@ struct Viewport3DView: View {
     var body: some View {
         ZStack(alignment: .topTrailing) {
             SceneHost(model: model, controller: controller, revision: model.revision, style: model.viewStyle)
-            overlay.padding(10)
+            VStack(alignment: .trailing, spacing: 8) {
+                overlay
+                if model.showViewCube {
+                    ViewCubeRepresentable(controller: controller)
+                        .frame(width: 96, height: 96)
+                        .help("View cube: click a face, edge or corner")
+                }
+                if model.showSectionBoxPanel { SectionBoxPanel(model: model, controller: controller) }
+                if model.showSunStudy { SunStudyPanel(model: model, controller: controller) }
+            }
+            .padding(10)
             if controller.isWalking {
                 VStack {
                     Spacer()
                     Text("Walk: W A S D to move · drag to look · Q/E down/up · Shift to run · Esc to exit")
                         .font(.caption).padding(.horizontal, 12).padding(.vertical, 6)
-                        .background(.ultraThinMaterial, in: Capsule())
+                        .foregroundStyle(Theme.text)
+                        .background(Capsule().fill(Theme.panel))
                         .padding(.bottom, 12)
                 }.frame(maxWidth: .infinity)
             }
         }
-        .onAppear { Viewport3DController.active = controller }
+        .onAppear { Viewport3DController.active = controller; model.viewport3D = controller }
     }
 
     private var overlay: some View {
@@ -694,6 +732,14 @@ struct Viewport3DView: View {
                  controller.isOrtho ? "square.stack.3d.up" : "perspective") { controller.toggleProjection() }
             pill("Zoom extents", "arrow.up.left.and.arrow.down.right") { controller.zoomExtents() }
             pill(controller.isWalking ? "Exit walk mode" : "Walk mode (WASD)", "figure.walk", active: controller.isWalking) { controller.toggleWalk() }
+            pill("Orbit around the selection (zooms to it)", "scope", active: false) {
+                if !controller.orbitSelection(model.editor.selection, frame: true) { model.editor.print("Select building elements to orbit around.") }
+            }
+            Divider().frame(height: 16).padding(.horizontal, 3)
+            pill("Section box", "cube.transparent", active: model.showSectionBoxPanel || SectionBox.load(model.doc)?.on == true) { model.showSectionBoxPanel.toggle() }
+            pill("Sun study", "sun.max", active: model.showSunStudy) { model.showSunStudy.toggle() }
+            pill(model.showViewCube ? "Hide the view cube" : "Show the view cube", "cube", active: model.showViewCube) { model.showViewCube.toggle() }
+            CamerasMenu(model: model, controller: controller)
             Divider().frame(height: 16).padding(.horizontal, 3)
             Menu {
                 ForEach(Scene3DBuilder.visualStyles, id: \.self) { s in
@@ -703,14 +749,15 @@ struct Viewport3DView: View {
                 .menuStyle(.borderlessButton).fixedSize().padding(.horizontal, 6)
         }
         .padding(.horizontal, 6).padding(.vertical, 4)
-        .background(.ultraThinMaterial, in: Capsule())
+        .foregroundStyle(Theme.text)
+        .background(Capsule().fill(Theme.panel))
         .overlay(Capsule().stroke(Color.white.opacity(0.08)))
     }
 
     private func pill(_ help: String, _ icon: String, active: Bool = false, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon).frame(width: 24, height: 22)
-                .foregroundStyle(active ? Color(red: 0.961, green: 0.773, blue: 0.094) : Color.primary)
+                .foregroundStyle(active ? Theme.accent : Theme.text)
         }
         .buttonStyle(.borderless)
         .help(help)

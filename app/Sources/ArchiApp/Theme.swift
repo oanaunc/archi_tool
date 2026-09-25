@@ -5,8 +5,8 @@ import ArchiCore
 
 /// Dark neutral workspace palette (AutoCAD / Revit dark) with a yellow accent.
 enum Theme {
-    static let canvasHex: UInt32 = 0x1E1F22
-    static let canvas = Color(hex: 0x1E1F22)
+    static var canvasHex: UInt32 { ThemeColors.canvasHex }
+    static var canvas: Color { Color(hex: ThemeColors.canvasHex) }
     static let panel = Color(hex: 0x26272B)
     static let ribbon = Color(hex: 0x2F3035)
     static let ribbonTabBar = Color(hex: 0x232428)
@@ -17,15 +17,15 @@ enum Theme {
     static let text = Color(hex: 0xE6E6E6)
     static let textDim = Color(hex: 0x9A9BA1)
     static let textFaint = Color(hex: 0x6B6C72)
-    static let accent = Color(hex: 0xF5C518)
+    static var accent: Color { Color(hex: ThemeColors.accentHex) }
     static let accentText = Color(hex: 0x1E1F22)
     static let danger = Color(hex: 0xE5534B)
     static let windowBlue = Color(red: 0.25, green: 0.45, blue: 0.95)
     static let crossingGreen = Color(red: 0.25, green: 0.8, blue: 0.4)
 
-    static let nsCanvas = NSColor(hex: 0x1E1F22)
+    static var nsCanvas: NSColor { NSColor(hex: ThemeColors.canvasHex) }
     static let nsPanel = NSColor(hex: 0x26272B)
-    static let nsAccent = NSColor(hex: 0xF5C518)
+    static var nsAccent: NSColor { NSColor(hex: ThemeColors.accentHex) }
     static let nsText = NSColor(hex: 0xE6E6E6)
     static let nsTextDim = NSColor(hex: 0x9A9BA1)
     static let nsField = NSColor(hex: 0x1B1C1F)

@@ -14,7 +14,7 @@ struct PanelsView: View {
                     Button { model.panelTab = t } label: {
                         VStack(spacing: 2) {
                             Image(systemName: t.symbol).font(.system(size: 12))
-                            Text(t.rawValue).font(.system(size: 9))
+                            Text(t.rawValue).font(.system(size: 8.5)).lineLimit(1).minimumScaleFactor(0.75)
                         }
                         .foregroundStyle(model.panelTab == t ? Theme.accent : Theme.textDim)
                         .frame(maxWidth: .infinity)
@@ -38,6 +38,8 @@ struct PanelsView: View {
                 case .levels: LevelsPanel(model: model)
                 case .browser: ProjectBrowserPanel(model: model)
                 case .materials: MaterialsPanel(model: model)
+                case .history: HistoryPanel(model: model)
+                case .tools: ToolPalettePanel(model: model)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -92,6 +94,28 @@ struct PropertiesPanel: View {
         return result
     }
 
+    private var typeCounts: [(String, Int)] {
+        let doc = model.doc
+        let types = model.selectedIDs.compactMap { doc.entity($0)?.typeName ?? doc.element($0)?.typeName }
+        return Dictionary(grouping: types, by: { $0 }).mapValues(\.count).sorted { $0.key < $1.key }.map { ($0.key, $0.value) }
+    }
+
+    private func narrow(to type: String) {
+        let doc = model.doc
+        model.editor.selection = Set(model.selectedIDs.filter { (doc.entity($0)?.typeName ?? doc.element($0)?.typeName) == type })
+    }
+
+    private func zoomToSelection() {
+        let doc = model.doc
+        var b = BBox2.empty
+        for e in model.selectedEntities { b.add(GeometryOps.bounds(e.geometry, doc: doc)) }
+        for el in model.selectedElements { for p in CommandHelpers.footprint(el, doc: doc) { b.add(p) } }
+        guard !b.isEmpty else { return }
+        if model.mode == .model { model.viewport3D?.orbitSelection(model.editor.selection, frame: true); return }
+        let pad = max(b.width, b.height) * 0.15 + 100
+        model.canvas?.zoom(to: b.expanded(by: pad))
+    }
+
     private var typeSummary: String {
         let doc = model.doc
         let types = model.selectedIDs.compactMap { doc.entity($0)?.typeName ?? doc.element($0)?.typeName }
@@ -108,11 +132,35 @@ struct PropertiesPanel: View {
                 } else {
                     VStack(alignment: .leading, spacing: 0) {
                     HStack {
-                        Text(typeSummary).font(Theme.fontBold).foregroundStyle(Theme.text).lineLimit(2)
+                        let counts = typeCounts
+                        if counts.count > 1 {
+                            // Narrow a mixed selection to one object type (AutoCAD Properties drop-down).
+                            Menu {
+                                ForEach(counts, id: \.0) { t, n in
+                                    Button("\(t.capitalized) (\(n))") { narrow(to: t) }
+                                }
+                            } label: { Text(typeSummary).font(Theme.fontBold).lineLimit(2) }
+                            .menuStyle(.borderlessButton).fixedSize(horizontal: false, vertical: true)
+                            .help("Keep only one object type in the selection")
+                        } else {
+                            Text(typeSummary).font(Theme.fontBold).foregroundStyle(Theme.text).lineLimit(2)
+                        }
                         Spacer()
                         IconButton(symbol: "xmark.circle", help: "Clear selection") { model.editor.selection = [] }
                     }
                     .padding(.horizontal, 10).padding(.top, 8)
+                    HStack(spacing: 2) {
+                        IconButton(symbol: "line.3.horizontal.decrease.circle", help: "Quick Select…") { model.sheet = .quickSelect }
+                        IconButton(symbol: "paintbrush.pointed", help: "Match properties from the first selected object (MATCHPROP)") { model.runCommand("MATCHPROP") }
+                            .disabled(!model.has("MATCHPROP"))
+                        IconButton(symbol: "square.on.square.intersection.dashed", help: "Select similar objects (SELECTSIMILAR)") { model.runCommand("SELECTSIMILAR") }
+                            .disabled(!model.has("SELECTSIMILAR"))
+                        IconButton(symbol: "arrow.left.arrow.right.square", help: "Invert the selection (SELECTINVERT)") { model.runCommand("SELECTINVERT") }
+                            .disabled(!model.has("SELECTINVERT"))
+                        IconButton(symbol: "scope", help: "Zoom to the selection") { zoomToSelection() }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 8).padding(.top, 2)
                     let rs = rows
                     let general = ["id", "type", "name", "layer", "color", "linetype", "lineweight", "material", "level"]
                     PanelHeader(title: "General")
@@ -291,12 +339,13 @@ struct PropertyField: View {
 struct LayersPanel: View {
     @ObservedObject var model: AppModel
     @State private var selected: String?
-    @State private var filter = ""
+    @State private var filter = LayerFilter()
+    @State private var savedFilterName: String?
 
     var body: some View {
         let doc = model.doc
-        let layers = doc.layers.filter { filter.isEmpty || $0.name.localizedCaseInsensitiveContains(filter) }
         let usage = layerUsage(doc)
+        let layers = doc.layers.filter { filter.matches($0, used: (usage[$0.name.uppercased()] ?? 0) > 0) }
         VStack(spacing: 0) {
             HStack(spacing: 4) {
                 Button { newLayer() } label: { Label("New", systemImage: "plus") }.buttonStyle(FlatButtonStyle(compact: true)).help("New layer")
@@ -305,9 +354,38 @@ struct LayersPanel: View {
                 Button { if let s = selected { model.setCurrentLayer(s) } } label: { Label("Current", systemImage: "checkmark.circle") }
                     .buttonStyle(FlatButtonStyle(compact: true)).disabled(selected == nil).help("Make the selected layer current")
                 Spacer()
+                Button { model.sheet = .layerStates } label: { Image(systemName: "rectangle.stack") }
+                    .buttonStyle(FlatButtonStyle(compact: true)).help("Layer States Manager (LAYERSTATE)")
             }
             .padding(8)
-            TextField("Filter layers", text: $filter).darkField().padding(.horizontal, 8).padding(.bottom, 6)
+            HStack(spacing: 4) {
+                TextField("Filter: name, A-*, ~*TEXT*", text: $filter.pattern).darkField()
+                Menu {
+                    Toggle("On and thawed only", isOn: $filter.onlyVisible)
+                    Toggle("Used layers only", isOn: $filter.onlyUsed)
+                    Toggle("Unlocked only", isOn: $filter.onlyUnlocked)
+                    Divider()
+                    let names = LayerFilter.names(doc)
+                    if !names.isEmpty {
+                        Section("Saved filters") {
+                            ForEach(names, id: \.self) { n in
+                                Button { if let f = LayerFilter.saved(n, in: doc) { filter = f; savedFilterName = n } } label: {
+                                    if savedFilterName == n { Label(n, systemImage: "checkmark") } else { Text(n) }
+                                }
+                            }
+                        }
+                    }
+                    Button("Save Filter…") { saveFilter() }.disabled(filter.isEmpty)
+                    if let n = savedFilterName { Button("Delete Filter \(n)") { model.editor.transaction("Delete Layer Filter") { $0.variables[LayerFilter.prefix + n] = nil }; savedFilterName = nil } }
+                    Button("Clear Filter") { filter = LayerFilter(); savedFilterName = nil }.disabled(filter.isEmpty)
+                } label: {
+                    Image(systemName: filter.isEmpty ? "line.3.horizontal.decrease.circle" : "line.3.horizontal.decrease.circle.fill")
+                        .foregroundStyle(filter.isEmpty ? Theme.text : Theme.accent)
+                }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                .help("Layer filters (saved with the drawing)")
+            }
+            .padding(.horizontal, 8).padding(.bottom, 6)
             HSeparator()
             HStack(spacing: 4) {
                 Text("").frame(width: 16)
@@ -332,10 +410,29 @@ struct LayersPanel: View {
                     }
                 }
             }
+            .background(Theme.panel)
             HSeparator()
-            Text("\(doc.layers.count) layers · double-click the radio to make current")
-                .font(Theme.fontSmall).foregroundStyle(Theme.textFaint).padding(6)
+            Text(filter.isEmpty ? "\(doc.layers.count) layers · double-click the radio to make current" : "\(layers.count) of \(doc.layers.count) layers match the filter")
+                .font(Theme.fontSmall).foregroundStyle(filter.isEmpty ? Theme.textFaint : Theme.accent).padding(6)
         }
+        .onAppear { if let f = model.layerFilterRequest { filter = f; model.layerFilterRequest = nil } }
+        .onChange(of: model.layerFilterRequest) { f in if let f { filter = f; model.layerFilterRequest = nil } }
+    }
+
+    private func saveFilter() {
+        let a = NSAlert()
+        a.messageText = "Save Layer Filter"
+        a.informativeText = "Name for the filter “\(filter.stored.trimmingCharacters(in: .whitespaces))”:"
+        let tf = NSTextField(frame: NSRect(x: 0, y: 0, width: 220, height: 22))
+        tf.stringValue = savedFilterName ?? "Filter \(LayerFilter.names(model.doc).count + 1)"
+        a.accessoryView = tf
+        a.addButton(withTitle: "Save"); a.addButton(withTitle: "Cancel")
+        guard a.runModal() == .alertFirstButtonReturn else { return }
+        let n = tf.stringValue.trimmingCharacters(in: .whitespaces).uppercased()
+        guard !n.isEmpty else { return }
+        let f = filter
+        model.editor.transaction("Save Layer Filter") { $0.variables[LayerFilter.prefix + n] = f.stored }
+        savedFilterName = n
     }
 
     private func layerUsage(_ doc: ArchiDocument) -> [String: Int] {
@@ -641,47 +738,3 @@ struct ProjectBrowserPanel: View {
     }
 }
 
-// MARK: - Materials
-
-struct MaterialsPanel: View {
-    @ObservedObject var model: AppModel
-
-    var body: some View {
-        let doc = model.doc
-        let usage = Dictionary(grouping: doc.elements.compactMap(\.material), by: { $0.lowercased() }).mapValues(\.count)
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 0) {
-                PanelHeader(title: "\(doc.materials.count) materials")
-                ForEach(doc.materials, id: \.name) { m in
-                    HStack(spacing: 8) {
-                        Button {
-                            ColorPanelBridge.shared.pick(initial: m.color) { c in
-                                model.editor.transaction("Material Color") { d in if let i = d.materials.firstIndex(where: { $0.name == m.name }) { d.materials[i].color = c } }
-                            }
-                        } label: {
-                            RoundedRectangle(cornerRadius: 4).fill(Color(m.color))
-                                .frame(width: 28, height: 28)
-                                .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.white.opacity(0.2), lineWidth: 1))
-                                .overlay(alignment: .bottomTrailing) {
-                                    if m.transparency > 0 { Image(systemName: "drop").font(.system(size: 8)).padding(2) }
-                                }
-                        }
-                        .buttonStyle(.plain)
-                        .help("Change the material color")
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(m.name).font(Theme.fontBold).foregroundStyle(Theme.text)
-                            Text("Rough \(fmt(m.roughness, 2)) · Metal \(fmt(m.metalness, 2))\(m.transparency > 0 ? " · Transp \(fmt(m.transparency, 2))" : "") · Cut \(m.cutPattern)")
-                                .font(Theme.fontSmall).foregroundStyle(Theme.textDim).lineLimit(1)
-                        }
-                        Spacer()
-                        if let n = usage[m.name.lowercased()] {
-                            Text("\(n)").font(Theme.fontSmall).foregroundStyle(Theme.textDim)
-                                .padding(.horizontal, 5).background(Capsule().fill(Theme.hover)).help("\(n) element(s) use this material")
-                        }
-                    }
-                    .padding(.horizontal, 10).padding(.vertical, 4)
-                }
-            }
-        }
-    }
-}

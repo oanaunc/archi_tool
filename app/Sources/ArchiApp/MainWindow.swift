@@ -12,13 +12,15 @@ struct MainWindow: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            RibbonView(model: model)
-            HSeparator()
+            if !model.cleanScreen {
+                RibbonView(model: model)
+                HSeparator()
+            }
             HStack(spacing: 0) {
                 workspace
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .overlay(alignment: .topLeading) { ViewportBadge(model: model).padding(8) }
-                if model.showPanels {
+                if model.showPanels && !model.cleanScreen {
                     VSeparator()
                     PanelsView(model: model).frame(width: 300)
                 }
@@ -36,6 +38,14 @@ struct MainWindow: View {
         .overlay {
             if model.showStart {
                 StartView(model: model).transition(.opacity)
+            }
+        }
+        .overlay(alignment: .top) {
+            if model.showCommandSearch {
+                ZStack(alignment: .top) {
+                    Color.black.opacity(0.25).ignoresSafeArea().onTapGesture { model.showCommandSearch = false }
+                    CommandSearchPalette(model: model).padding(.top, 90)
+                }
             }
         }
         .sheet(item: $model.sheet) { s in sheetView(s) }
@@ -71,6 +81,12 @@ struct MainWindow: View {
         case .schedule(let k): ScheduleSheet(model: model, kind: k)
         case .commandReference: CommandReferenceView(registry: model.editor.registry, onClose: { model.sheet = nil }).frame(width: 720, height: 560)
         case .shortcuts: ShortcutsView(onClose: { model.sheet = nil }).frame(width: 560, height: 520)
+        case .quickSelect: QuickSelectSheet(model: model)
+        case .layerStates: LayerStatesSheet(model: model)
+        case .pageSetup(let i): PageSetupSheet(model: model, layoutIndex: i)
+        case .titleBlock(let i): TitleBlockSheet(model: model, layoutIndex: i)
+        case .connectClaude: ConnectClaudeSheet(onClose: { model.sheet = nil })
+        case .saveCamera: SaveCameraSheet(model: model)
         }
     }
 
@@ -79,6 +95,10 @@ struct MainWindow: View {
             model.window = w
             w.appearance = NSAppearance(named: .darkAqua)
             w.backgroundColor = Theme.nsPanel
+            // Opaque window: inactive windows must never show through (no vibrancy).
+            w.isOpaque = true
+            w.titlebarAppearsTransparent = false
+            WindowRepaint.install(on: w)
             w.tabbingIdentifier = "OanarinaArchiDocument"
             updateWindowState()
         }
@@ -89,12 +109,16 @@ struct MainWindow: View {
         guard let w = model.window else { return }
         if w.isDocumentEdited != model.isDirty { w.isDocumentEdited = model.isDirty }
         if w.representedURL != model.editor.fileURL { w.representedURL = model.editor.fileURL }
+        if w.title != model.windowTitle { w.title = model.windowTitle }
+        MaterialTextures.documentFolder = model.editor.fileURL?.deletingLastPathComponent()
     }
 
     private func setup() {
         WindowRouter.openWindow = { r in openWindow(value: r) }
         guard !didSetup else { return }
         didSetup = true
+        AppCommands.registerAll()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { ScriptLibrary.runStartup(for: model) }
         if !WindowRouter.pendingURLs.isEmpty {
             let url = WindowRouter.pendingURLs.removeFirst()
             model.files.load(url)
@@ -119,9 +143,23 @@ struct MainWindow: View {
 extension AppModel {
     /// Replaces the (empty) document with a template.
     func newDocument(_ kind: DocumentRequest.Kind) {
-        let (d, s) = FileController.template(kind)
+        let prefs = AppPreferences.shared
+        var k = kind
+        if kind == .blankMetric, prefs.defaultUnits == .inches || prefs.defaultUnits == .feet { k = .blankImperial }
+        var (d, s) = FileController.template(k)
+        if kind == .blankMetric {
+            d.units = prefs.defaultUnits
+            if d.units == .centimeters || d.units == .meters {
+                let f = d.units.mm
+                s.textHeight /= f; s.wallThickness /= f; s.wallHeight /= f; s.offsetDistance /= f
+            } else if d.units == .feet {
+                s.textHeight /= 12; s.wallThickness /= 12; s.wallHeight /= 12; s.offsetDistance /= 12; s.gridSpacing = 1
+            }
+        }
+        s = prefs.draftDefaults(base: s, units: d.units)
         editor.replaceDocument(d, url: nil)
         editor.settings = s
+        planUserZoomed = false
         showStart = false
         mode = .plan
         let label: String
@@ -358,4 +396,34 @@ func parseCSV(_ text: String) -> [[String]] {
     }
     if !field.isEmpty || !row.isEmpty { row.append(field); rows.append(row) }
     return rows
+}
+
+/// Forces a full repaint when a window becomes visible again (un-occluded, tab switched, key/main changes), so an
+/// inactive or background window never shows a stale or blank ribbon.
+@MainActor
+enum WindowRepaint {
+    private static var observed: Set<ObjectIdentifier> = []
+    static func install(on w: NSWindow) {
+        let id = ObjectIdentifier(w)
+        guard !observed.contains(id) else { return }
+        observed.insert(id)
+        let names: [Notification.Name] = [NSWindow.didChangeOcclusionStateNotification, NSWindow.didBecomeMainNotification,
+                                          NSWindow.didResignMainNotification, NSWindow.didResignKeyNotification, NSWindow.didDeminiaturizeNotification]
+        for n in names {
+            NotificationCenter.default.addObserver(forName: n, object: w, queue: .main) { note in
+                guard let win = note.object as? NSWindow else { return }
+                MainActor.assumeIsolated { repaint(win) }
+            }
+        }
+        NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { _ in
+            MainActor.assumeIsolated { _ = observed.remove(id) }
+        }
+    }
+    static func repaint(_ w: NSWindow) {
+        guard w.occlusionState.contains(.visible), let v = w.contentView else { return }
+        func mark(_ x: NSView) { x.needsDisplay = true; x.subviews.forEach(mark) }
+        mark(v)
+        v.needsLayout = true
+        w.displayIfNeeded()
+    }
 }

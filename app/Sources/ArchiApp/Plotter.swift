@@ -20,6 +20,8 @@ struct PlotRenderer {
     var lineweightScale: CGFloat = 1
     /// Overrides every color (e.g. selection highlight) when set.
     var overrideColor: CGColor?
+    /// Plot style: full color, monochrome (all black) or grayscale.
+    var colorMode: PlotColorMode = .color
 
     var scaleFactor: CGFloat { sqrt(abs(transform.a * transform.d - transform.b * transform.c)) }
     var rotation: CGFloat { atan2(transform.b, transform.a) }
@@ -28,6 +30,14 @@ struct PlotRenderer {
 
     func color(_ c: RGBA) -> CGColor {
         if let o = overrideColor { return o }
+        switch colorMode {
+        case .monochrome: return CGColor(srgbRed: 0, green: 0, blue: 0, alpha: c.a)
+        case .grayscale:
+            let lum = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
+            let v = paper && lum > 0.82 ? 0 : (paper ? min(lum, 0.75) : lum)
+            return CGColor(srgbRed: v, green: v, blue: v, alpha: c.a)
+        case .color: break
+        }
         var r = c.r, g = c.g, b = c.b
         if paper {
             if min(r, g, b) > 0.82 { r = 0; g = 0; b = 0 }
@@ -245,7 +255,11 @@ enum SheetComposer {
         // Title block.
         let tb = titleBlockSize
         let x0 = W - margin - tb.x, y0 = margin, x1 = W - margin, y1 = margin + tb.y
-        let tbv = layout.titleBlock
+        // Keys are lower camel case; files made by earlier templates used "Project"/"Sheet"/"Scale".
+        var tbv = layout.titleBlock
+        for (legacy, key) in [("Project", "project"), ("Sheet", "sheetNumber"), ("Scale", "scale")] where tbv[key] == nil {
+            if let v = tbv[legacy] { tbv[key] = v }
+        }
         let info = doc.info
         let scales = Array(Set(layout.viewports.map { ratioText($0.scale, units: doc.units) })).sorted()
         let scaleText = tbv["scale"] ?? (scales.isEmpty ? "—" : (scales.count == 1 ? scales[0] : "As indicated"))
@@ -345,12 +359,13 @@ enum SheetComposer {
     /// Draws a whole sheet. `paperToDevice` maps paper mm to device units (y-up).
     static func draw(doc: ArchiDocument, layoutIndex: Int, in ctx: CGContext, paperToDevice: CGAffineTransform,
                      devicePerMM: CGFloat, showViewportBorders: Bool, selectedViewport: Int? = nil,
-                     entriesFor: ((Viewport) -> [DrawEntry])? = nil, visible: CGRect? = nil) {
+                     entriesFor: ((Viewport) -> [DrawEntry])? = nil, visible: CGRect? = nil, setup: PageSetup? = nil) {
         guard doc.layouts.indices.contains(layoutIndex) else { return }
         let layout = doc.layouts[layoutIndex]
         for (i, vp) in layout.viewports.enumerated() {
             let entries = entriesFor?(vp) ?? viewportEntries(doc: doc, vp: vp)
-            let r = PlotRenderer(transform: modelToPaper(vp).concatenating(paperToDevice), devicePerMM: devicePerMM, paper: true, minLineWidth: 0.12)
+            var r = PlotRenderer(transform: modelToPaper(vp).concatenating(paperToDevice), devicePerMM: devicePerMM, paper: true, minLineWidth: 0.12)
+            if let setup { r.colorMode = setup.colorMode; r.lineweightScale = CGFloat(setup.lineweightScale) }
             let a = CGPoint(x: vp.origin.x, y: vp.origin.y).applying(paperToDevice)
             let b = CGPoint(x: vp.origin.x + vp.size.x, y: vp.origin.y + vp.size.y).applying(paperToDevice)
             let rect = CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(b.x - a.x), height: abs(b.y - a.y))
@@ -368,9 +383,13 @@ enum SheetComposer {
                 ctx.restoreGState()
             }
         }
-        let paperR = PlotRenderer(transform: paperToDevice, devicePerMM: devicePerMM, paper: true, minLineWidth: 0.12)
+        var paperR = PlotRenderer(transform: paperToDevice, devicePerMM: devicePerMM, paper: true, minLineWidth: 0.12)
+        if let setup { paperR.colorMode = setup.colorMode; paperR.lineweightScale = CGFloat(setup.lineweightScale) }
         paperR.draw(paperEntities(doc: doc, layout: layout), in: ctx)
         paperR.draw(decorations(doc: doc, layout: layout, layoutIndex: layoutIndex), in: ctx)
+        if let setup, setup.plotStamp {
+            paperR.draw([PlotStamp.entry(doc: doc, name: layout.name, paperWidth: layout.paper.width)], in: ctx)
+        }
     }
 }
 
@@ -398,7 +417,7 @@ enum Plotter {
             ctx.beginPDFPage(nil)
             ctx.setFillColor(.white); ctx.fill(box)
             SheetComposer.draw(doc: doc, layoutIndex: li, in: ctx, paperToDevice: CGAffineTransform(scaleX: pointsPerMM, y: pointsPerMM),
-                               devicePerMM: pointsPerMM, showViewportBorders: false)
+                               devicePerMM: pointsPerMM, showViewportBorders: false, setup: PageSetup.load(doc, layoutIndex: li))
             ctx.endPDFPage()
             ctx.closePDF()
         } else {
@@ -408,7 +427,9 @@ enum Plotter {
 
     /// Model space of one level, plotted at the largest standard scale that fits A3 landscape.
     @MainActor static func writeModelPDF(doc: ArchiDocument, to url: URL, level: Int?) throws {
-        let paperW = 420.0, paperH = 297.0, margin = 10.0, strip = 18.0
+        let setup = PageSetup.load(doc, layoutIndex: nil)
+        let paperSize = setup.modelPaperSize
+        let paperW = paperSize.width, paperH = paperSize.height, margin = 10.0, strip = 18.0
         var box = CGRect(x: 0, y: 0, width: paperW * pointsPerMM, height: paperH * pointsPerMM)
         guard let ctx = CGContext(url as CFURL, mediaBox: &box, pdfInfo(doc, title: doc.info.name)) else { throw PlotError.cannotCreate(url.path) }
         var opts = DrawOptions(level: level)
@@ -418,7 +439,8 @@ enum Plotter {
         if b.isEmpty { b = GeometryOps.bounds(of: doc) }
         let area = BBox2(min: Vec2(margin + 3, margin + strip + 3), max: Vec2(paperW - margin - 3, paperH - margin - 3))
         var ratio = 100.0
-        if !b.isEmpty && b.width + b.height > 0 {
+        if let fixed = setup.modelScale, fixed > 0 { ratio = fixed }
+        else if !b.isEmpty && b.width + b.height > 0 {
             let needed = max(b.width / area.width, b.height / area.height) * doc.units.mm
             ratio = standardRatios.first { $0 >= needed } ?? (ceil(needed / 1000) * 1000)
         }
@@ -436,7 +458,9 @@ enum Plotter {
         ctx.setFillColor(.white); ctx.fill(box)
         let clip = CGRect(x: area.min.x * pointsPerMM, y: area.min.y * pointsPerMM, width: area.width * pointsPerMM, height: area.height * pointsPerMM)
         ctx.saveGState(); ctx.clip(to: clip.insetBy(dx: -3 * pointsPerMM, dy: -3 * pointsPerMM))
-        PlotRenderer(transform: t, devicePerMM: pointsPerMM, paper: true, minLineWidth: 0.12).draw(entries, in: ctx)
+        var modelR = PlotRenderer(transform: t, devicePerMM: pointsPerMM, paper: true, minLineWidth: 0.12)
+        modelR.colorMode = setup.colorMode; modelR.lineweightScale = CGFloat(setup.lineweightScale)
+        modelR.draw(entries, in: ctx)
         ctx.restoreGState()
         // Frame and title strip.
         let ink = RGBA.black
@@ -446,10 +470,13 @@ enum Plotter {
             .stroke(points: [Vec2(margin, margin), Vec2(paperW - margin, margin), Vec2(paperW - margin, paperH - margin), Vec2(margin, paperH - margin)], closed: true, style: st),
             .stroke(points: [Vec2(margin, margin + strip), Vec2(paperW - margin, margin + strip)], closed: false, style: ArchiCore.StrokeStyle(color: ink, lineweight: 0.35)),
             .text(TextGeom(position: Vec2(margin + 4, margin + strip / 2), height: 4, content: doc.info.name, valign: .middle), font: "Helvetica", color: ink),
-            .text(TextGeom(position: Vec2(paperW / 2, margin + strip / 2), height: 2.8, content: "\(levelName)   ·   Scale \(SheetComposer.ratioText(scale, units: doc.units)) (A3)   ·   \(SheetComposer.dateText())", halign: .center, valign: .middle), font: "Helvetica", color: ink),
+            .text(TextGeom(position: Vec2(paperW / 2, margin + strip / 2), height: 2.8, content: "\(levelName)   ·   Scale \(SheetComposer.ratioText(scale, units: doc.units)) (\(paperSize.name))   ·   \(SheetComposer.dateText())", halign: .center, valign: .middle), font: "Helvetica", color: ink),
             .text(TextGeom(position: Vec2(paperW - margin - 4, margin + strip / 2), height: 2.4, content: "OANARINA ARCHI TOOL", halign: .right, valign: .middle), font: "Helvetica", color: ink),
         ]
-        PlotRenderer(transform: CGAffineTransform(scaleX: pointsPerMM, y: pointsPerMM), devicePerMM: pointsPerMM, paper: true).draw([DrawEntry(id: nil, items: deco)], in: ctx)
+        var decoR = PlotRenderer(transform: CGAffineTransform(scaleX: pointsPerMM, y: pointsPerMM), devicePerMM: pointsPerMM, paper: true)
+        decoR.colorMode = setup.colorMode
+        decoR.draw([DrawEntry(id: nil, items: deco)], in: ctx)
+        if setup.plotStamp { decoR.draw([PlotStamp.entry(doc: doc, name: levelName, paperWidth: paperW)], in: ctx) }
         ctx.endPDFPage()
         ctx.closePDF()
     }

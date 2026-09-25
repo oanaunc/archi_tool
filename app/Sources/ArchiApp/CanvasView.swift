@@ -673,7 +673,9 @@ final class PlanCanvasView: NSView {
         content.drawer = { [weak self] ctx, r in self?.drawContent(ctx, r) }
         overlay.drawer = { [weak self] ctx, r in self?.drawOverlay(ctx, r) }
         if let c = model.planViewCenter, let s = model.planViewScale {
-            center = c; scale = s; needsInitialZoom = false; handledZoomRequest = model.zoomExtentsRequest
+            center = c; scale = s; handledZoomRequest = model.zoomExtentsRequest
+            // Keep the user's zoom when the canvas is recreated (mode switch); otherwise re-fit to the new size on the first layout.
+            needsInitialZoom = !model.planUserZoomed
         }
         model.$revision.receive(on: DispatchQueue.main).sink { [weak self] _ in self?.modelChanged() }.store(in: &cancellables)
     }
@@ -702,10 +704,22 @@ final class PlanCanvasView: NSView {
     }
 
     override func setFrameSize(_ newSize: NSSize) {
+        let old = frame.size
         super.setFrameSize(newSize)
         content.needsDisplay = true
         overlay.needsDisplay = true
+        // Split divider / window resize: a view the user never zoomed stays fitted to the drawing.
+        if let model, !model.planUserZoomed, !needsInitialZoom, newSize.width > 10, newSize.height > 10,
+           abs(old.width - newSize.width) > 1 || abs(old.height - newSize.height) > 1, !refitScheduled {
+            refitScheduled = true
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.refitScheduled = false
+                if self.model?.planUserZoomed == false { self.zoomExtents(recordHistory: false) }
+            }
+        }
     }
+    private var refitScheduled = false
 
     /// Called from SwiftUI updates.
     func syncFromModel() {
@@ -754,7 +768,7 @@ final class PlanCanvasView: NSView {
         overlay.needsDisplay = true
     }
 
-    func zoomExtents() {
+    func zoomExtents(recordHistory: Bool = true) {
         handledZoomRequest = model?.zoomExtentsRequest ?? 0
         guard bounds.width > 10, bounds.height > 10 else { needsInitialZoom = true; return }
         needsInitialZoom = false
@@ -765,17 +779,19 @@ final class PlanCanvasView: NSView {
             let w = 30000 / u, h = 18000 / u
             b = CGRect(x: -2000 / u, y: -2000 / u, width: w, height: h)
         }
-        zoom(toRect: b, margin: 0.06)
+        zoom(toRect: b, margin: 0.06, recordHistory: recordHistory)
+        model?.planUserZoomed = false
     }
 
     private var zoomHistory: [(CGPoint, CGFloat)] = []
     func zoomPrevious() {
         guard let (c, sc) = zoomHistory.popLast() else { model?.editor.print("No previous view."); return }
-        center = c; scale = sc; viewChanged()
+        center = c; scale = sc; model?.planUserZoomed = true; viewChanged()
     }
-    func zoom(toRect b: CGRect, margin: CGFloat = 0.02) {
+    func zoom(toRect b: CGRect, margin: CGFloat = 0.02, recordHistory: Bool = true) {
         guard bounds.width > 1, bounds.height > 1 else { return }
-        zoomHistory.append((center, scale)); if zoomHistory.count > 50 { zoomHistory.removeFirst() }
+        if recordHistory { zoomHistory.append((center, scale)); if zoomHistory.count > 50 { zoomHistory.removeFirst() } }
+        model?.planUserZoomed = true
         let w = max(b.width, 1e-6), h = max(b.height, 1e-6)
         scale = min(bounds.width * (1 - 2 * margin) / w, bounds.height * (1 - 2 * margin) / h)
         center = CGPoint(x: b.midX, y: b.midY)
@@ -790,12 +806,14 @@ final class PlanCanvasView: NSView {
         let w = toWorld(p)
         let newScale = min(max(scale * f, 1e-7), 1e5)
         scale = newScale
+        model?.planUserZoomed = true
         center = CGPoint(x: CGFloat(w.x) - (p.x - bounds.midX) / scale, y: CGFloat(w.y) - (p.y - bounds.midY) / scale)
         viewChanged()
     }
     func panView(dx: CGFloat, dy: CGFloat) {
         center.x -= dx / scale
         center.y -= dy / scale
+        model?.planUserZoomed = true
         viewChanged()
     }
     func panWorld(_ d: Vec2) {
@@ -1077,7 +1095,8 @@ final class PlanCanvasView: NSView {
     }
 
     private func drawCrosshair(_ ctx: CGContext, _ v: CGPoint, pickbox: Bool) {
-        let arm = max(26, 0.05 * max(bounds.width, bounds.height))
+        let pct = CGFloat(min(max(AppPreferences.shared.cursorSize, 1), 100))
+        let arm = pct >= 100 ? max(bounds.width, bounds.height) * 2 : max(8, pct / 200 * max(bounds.width, bounds.height))
         let x = v.x.rounded() + 0.5, y = v.y.rounded() + 0.5
         let gap: CGFloat = pickbox ? 5 : 0
         ctx.setLineWidth(1)
@@ -1334,10 +1353,12 @@ final class PlanCanvasView: NSView {
             return
         }
         if let id = pick(at: rawWorld) {
+            // Picking a group member selects the whole group (PICKSTYLE, see GROUP).
+            let ids = Set(ed.expandGroups([id]))
             if e.modifierFlags.contains(.shift) {
-                if ed.selection.contains(id) { ed.selection.remove(id) } else { ed.selection.insert(id) }
+                if ed.selection.contains(id) { ed.selection.subtract(ids) } else { ed.selection.formUnion(ids) }
             } else {
-                ed.selection.insert(id)
+                ed.selection.formUnion(ids)
             }
             return
         }
@@ -1384,7 +1405,7 @@ final class PlanCanvasView: NSView {
             model.zoomWindowPending = false
             zoom(to: box)
         case .select:
-            let ids = selectIDs(in: box, crossing: w.current.x < w.start.x)
+            let ids = Set(model.editor.expandGroups(Array(selectIDs(in: box, crossing: w.current.x < w.start.x))))
             if shift { model.editor.selection.subtract(ids) } else { model.editor.selection.formUnion(ids) }
         case .request:
             model.editor.feed(.selection(selectIDs(in: box, crossing: w.current.x < w.start.x)))

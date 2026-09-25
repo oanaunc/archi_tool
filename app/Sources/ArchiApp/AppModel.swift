@@ -9,7 +9,7 @@ enum WorkspaceMode: String, CaseIterable, Identifiable { case plan = "2D", model
 
 /// Side panel tabs.
 enum PanelTab: String, CaseIterable, Identifiable {
-    case properties = "Properties", layers = "Layers", levels = "Levels", browser = "Browser", materials = "Materials"
+    case properties = "Properties", layers = "Layers", levels = "Levels", browser = "Browser", materials = "Materials", tools = "Tools", history = "History"
     var id: String { rawValue }
     var symbol: String {
         switch self {
@@ -18,6 +18,8 @@ enum PanelTab: String, CaseIterable, Identifiable {
         case .levels: return "building.2"
         case .browser: return "list.bullet.indent"
         case .materials: return "paintpalette"
+        case .history: return "clock.arrow.circlepath"
+        case .tools: return "square.grid.3x3.square"
         }
     }
 }
@@ -25,8 +27,15 @@ enum PanelTab: String, CaseIterable, Identifiable {
 /// Modal sheets presented over the main window.
 enum ModalSheet: Identifiable, Equatable {
     case units, drafting, schedule(String), commandReference, shortcuts
+    case quickSelect, layerStates, pageSetup(Int), titleBlock(Int), connectClaude, saveCamera
     var id: String {
         switch self {
+        case .quickSelect: return "qselect"
+        case .layerStates: return "layerstates"
+        case .pageSetup(let i): return "pagesetup-\(i)"
+        case .titleBlock(let i): return "titleblock-\(i)"
+        case .connectClaude: return "connectclaude"
+        case .saveCamera: return "savecamera"
         case .units: return "units"
         case .drafting: return "drafting"
         case .schedule(let k): return "schedule-\(k)"
@@ -71,6 +80,26 @@ final class AppModel: ObservableObject {
     /// Incremented to ask the command line to take keyboard focus.
     @Published var commandFocusToken = 0
     @Published var agentRunning = false
+    /// Clean screen (CLEANSCREENON): hides the ribbon and the side panels.
+    @Published var cleanScreen = false
+    /// 3D view cube widget (NAVVCUBE).
+    @Published var showViewCube = UserDefaults.standard.object(forKey: "showViewCube") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(showViewCube, forKey: "showViewCube") }
+    }
+    /// 3D section box panel visible (SECTIONBOX).
+    @Published var showSectionBoxPanel = false
+    /// Sun study panel visible (SUNSTUDY).
+    @Published var showSunStudy = false
+    /// Command search palette (⌘K).
+    @Published var showCommandSearch = false
+    /// The 3D viewport controller of this window, when a 3D view is shown.
+    weak var viewport3D: Viewport3DController?
+    /// Autosave bookkeeping (crash recovery).
+    var autosave: AutosaveSession?
+    /// Asks the Layers panel to apply a filter (LAYERFILTER command).
+    @Published var layerFilterRequest: LayerFilter?
+    /// Where a recovered document originally lived (Save As suggests it).
+    var recoveredOriginalPath: String?
     /// True while the 2D canvas waits for a zoom-window rectangle.
     var zoomWindowPending = false
 
@@ -113,6 +142,7 @@ final class AppModel: ObservableObject {
             self.commandLog.append(line)
             if self.commandLog.count > 2000 { self.commandLog.removeFirst(500) }
         }
+        autosave = AutosaveSession(model: self)
         AppModel.instances.removeAll { $0.model == nil }
         AppModel.instances.append(WeakModel(model: self))
     }
@@ -120,7 +150,11 @@ final class AppModel: ObservableObject {
     var doc: ArchiDocument { editor.doc }
 
     // MARK: Naming / title
-    var displayName: String { editor.fileURL?.deletingPathExtension().lastPathComponent ?? "Untitled" }
+    var displayName: String {
+        if let u = editor.fileURL { return u.deletingPathExtension().lastPathComponent }
+        let n = doc.info.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return n.isEmpty || n == ProjectInfo().name ? "Untitled" : n
+    }
     var windowTitle: String { "\(displayName) — Oanarina Archi Tool" }
     var isDirty: Bool { editor.isDirty }
     var isEmptyDocument: Bool { doc.entities.isEmpty && doc.elements.isEmpty }
@@ -170,6 +204,8 @@ final class AppModel: ObservableObject {
     /// Saved 2D view (restored when the canvas is recreated after a mode switch).
     var planViewCenter: CGPoint?
     var planViewScale: CGFloat?
+    /// True once the user zoomed or panned the 2D view; false after a zoom-extents fit (the view then re-fits when resized).
+    var planUserZoomed = false
 
     func zoomExtents() {
         zoomExtentsRequest &+= 1

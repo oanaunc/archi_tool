@@ -7,6 +7,7 @@ import ArchiCore
 struct StartView: View {
     @ObservedObject var model: AppModel
     @State private var recents: [URL] = []
+    @State private var recovered: [AutosaveInfo] = []
 
     var body: some View {
         ZStack {
@@ -14,8 +15,7 @@ struct StartView: View {
             HStack(alignment: .top, spacing: 0) {
                 VStack(alignment: .leading, spacing: 18) {
                     HStack(spacing: 12) {
-                        RoundedRectangle(cornerRadius: 9).fill(Theme.accent).frame(width: 46, height: 46)
-                            .overlay(Image(systemName: "building.columns.fill").font(.system(size: 22, weight: .semibold)).foregroundStyle(Theme.accentText))
+                        AppIconView(size: 52)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Oanarina Archi Tool").font(.system(size: 22, weight: .semibold)).foregroundStyle(Theme.text)
                             Text("Drafting and building design for the Mac").font(.system(size: 12)).foregroundStyle(Theme.textDim)
@@ -43,6 +43,7 @@ struct StartView: View {
                 .padding(28)
                 VSeparator()
                 VStack(alignment: .leading, spacing: 10) {
+                    if !recovered.isEmpty { recoverySection }
                     HStack {
                         Text("RECENT").font(.system(size: 10, weight: .semibold)).tracking(0.8).foregroundStyle(Theme.textDim)
                         Spacer()
@@ -59,7 +60,14 @@ struct StartView: View {
                     } else {
                         ScrollView {
                             VStack(spacing: 2) {
-                                ForEach(recents, id: \.self) { url in RecentRow(url: url) { model.files.load(url) } }
+                                ForEach(recents, id: \.self) { url in
+                                    RecentRow(url: url) { model.files.load(url) }
+                                        .contextMenu {
+                                            Button("Open") { model.files.load(url) }
+                                            Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+                                            Button("Remove from List") { RecentFiles.remove(url); recents = RecentFiles.urls }
+                                        }
+                                }
                             }
                         }
                     }
@@ -75,7 +83,36 @@ struct StartView: View {
             }
             .shadow(color: .black.opacity(0.5), radius: 30, y: 10)
         }
-        .onAppear { recents = RecentFiles.urls }
+        .onAppear { recents = RecentFiles.urls; recovered = AutosaveManager.recoverable() }
+    }
+
+    /// Documents recovered from autosave after a crash.
+    private var recoverySection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: "lifepreserver").foregroundStyle(Theme.accent)
+                Text("RECOVERED DOCUMENTS").font(.system(size: 10, weight: .semibold)).tracking(0.8).foregroundStyle(Theme.accent)
+            }
+            Text("These documents had unsaved changes when the app last quit unexpectedly.")
+                .font(Theme.fontSmall).foregroundStyle(Theme.textDim)
+            ForEach(recovered.prefix(4), id: \.id) { info in
+                HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(info.name).font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text).lineLimit(1)
+                        Text(DateFormatter.localizedString(from: info.date, dateStyle: .medium, timeStyle: .short))
+                            .font(Theme.fontSmall).foregroundStyle(Theme.textDim)
+                    }
+                    Spacer()
+                    Button("Restore") { AutosaveManager.restore(info, into: model); recovered = AutosaveManager.recoverable() }
+                        .buttonStyle(FlatButtonStyle(prominent: true, compact: true))
+                    Button("Discard") { AutosaveManager.remove(info); recovered = AutosaveManager.recoverable() }
+                        .buttonStyle(FlatButtonStyle(compact: true))
+                }
+                .padding(.horizontal, 8).frame(height: 38)
+                .background(RoundedRectangle(cornerRadius: 6).fill(Theme.accent.opacity(0.08)))
+            }
+        }
+        .padding(.bottom, 6)
     }
 }
 

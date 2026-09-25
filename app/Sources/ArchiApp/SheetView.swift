@@ -72,17 +72,29 @@ struct SheetView: View {
             if let l = layout, !l.viewports.isEmpty {
                 Menu("Viewports") {
                     ForEach(Array(l.viewports.enumerated()), id: \.offset) { i, vp in
-                        Menu(SheetComposer.viewTitle(vp, doc: model.doc) + "  " + SheetComposer.ratioText(vp.scale, units: model.doc.units)) {
+                        let locked = ViewportLock.isLocked(model.doc, layoutIndex: layoutIndex, viewport: i)
+                        Menu((locked ? "🔒 " : "") + SheetComposer.viewTitle(vp, doc: model.doc) + "  " + SheetComposer.ratioText(vp.scale, units: model.doc.units)) {
                             ForEach([20.0, 50, 100, 200, 500], id: \.self) { s in
-                                Button("Scale 1:\(Int(s))") { setViewportScale(i, s) }
+                                Button("Scale 1:\(Int(s))") { setViewportScale(i, s) }.disabled(locked)
                             }
                             Divider()
-                            Button("Remove", role: .destructive) { removeViewport(i) }
+                            Button(locked ? "Unlock Viewport" : "Lock Viewport") {
+                                let li = layoutIndex
+                                model.editor.transaction(locked ? "Unlock Viewport" : "Lock Viewport") { ViewportLock.set(&$0, layoutIndex: li, viewport: i, locked: !locked) }
+                            }
+                            Button("Remove", role: .destructive) { removeViewport(i) }.disabled(locked)
                         }
                     }
                 }.fixedSize()
             }
             Spacer()
+            Button { model.sheet = .titleBlock(layoutIndex) } label: { Label("Title Block", systemImage: "list.bullet.rectangle.portrait") }.disabled(layout == nil)
+                .help("Edit the title block (TITLEBLOCK)")
+            Button { model.sheet = .pageSetup(layoutIndex) } label: { Label("Page Setup", systemImage: "doc.badge.gearshape") }.disabled(layout == nil)
+                .help("Paper, plot style and plot stamp (PAGESETUP)")
+            Button { PlotPreviewWindow.show(model: model) } label: { Label("Preview", systemImage: "eye") }.disabled(layout == nil)
+            Button { Plotter.publish(model: model, path: nil) } label: { Label("Publish", systemImage: "doc.on.doc") }.disabled(model.doc.layouts.isEmpty)
+                .help("All sheets in one PDF (PUBLISH)")
             Button { exportPDF() } label: { Label("PDF", systemImage: "doc.richtext") }.disabled(layout == nil)
             Button { Plotter.printDrawing(model: model) } label: { Label("Print", systemImage: "printer") }.disabled(layout == nil)
             if model.doc.layouts.count > 1 {
@@ -127,13 +139,17 @@ struct SheetView: View {
     private func removeViewport(_ v: Int) {
         let i = layoutIndex
         guard i >= 0 else { return }
-        model.editor.transaction("Remove Viewport") { d in if d.layouts[i].viewports.indices.contains(v) { d.layouts[i].viewports.remove(at: v) } }
+        guard !ViewportLock.isLocked(model.doc, layoutIndex: i, viewport: v) else { model.editor.print("The viewport is locked (VPLOCK Off to unlock)."); return }
+        model.editor.transaction("Remove Viewport") { d in
+            if d.layouts[i].viewports.indices.contains(v) { d.layouts[i].viewports.remove(at: v); ViewportLock.removed(&d, layoutIndex: i, viewport: v) }
+        }
     }
 
     private func setViewportScale(_ v: Int, _ ratio: Double) {
         let i = layoutIndex
         guard i >= 0 else { return }
         let scale = ratio / model.doc.units.mm
+        guard !ViewportLock.isLocked(model.doc, layoutIndex: i, viewport: v) else { model.editor.print("The viewport is locked (VPLOCK Off to unlock)."); return }
         model.editor.transaction("Viewport Scale") { d in
             guard d.layouts[i].viewports.indices.contains(v) else { return }
             var vp = d.layouts[i].viewports[v]
@@ -280,8 +296,14 @@ final class SheetCanvasNSView: NSView {
                                let e = SheetComposer.viewportEntries(doc: doc, vp: vp)
                                self.cache[key] = e
                                return e
-                           }, visible: dirtyRect)
+                           }, visible: dirtyRect, setup: PageSetup.load(doc, layoutIndex: layoutIndex))
         ctx.restoreGState()
+        // Lock badges on locked viewports.
+        for i in ViewportLock.locked(doc, layoutIndex: layoutIndex) where l.viewports.indices.contains(i) {
+            let v = l.viewports[i]
+            let p = CGPoint(x: v.origin.x + v.size.x, y: v.origin.y + v.size.y).applying(paperToDevice)
+            ("🔒" as NSString).draw(at: CGPoint(x: p.x - 18, y: p.y - 18), withAttributes: [.font: NSFont.systemFont(ofSize: 12)])
+        }
         // Paper size label.
         let label = "\(l.paper.name)  \(fmt(l.paper.width, 0)) × \(fmt(l.paper.height, 0)) mm  ·  \(Int(zoom / Plotter.pointsPerMM * 100))%"
         (label as NSString).draw(at: CGPoint(x: paperRect.minX, y: paperRect.maxY + 6),
@@ -304,6 +326,11 @@ final class SheetCanvasNSView: NSView {
         dragStart = p
         if !event.modifierFlags.contains(.option), let i = viewportIndex(at: p), let l = layout {
             selectedViewport = i
+            if let m = model, ViewportLock.isLocked(m.doc, layoutIndex: layoutIndex, viewport: i) {
+                dragMode = .pan
+                needsDisplay = true
+                return
+            }
             dragMode = .moveViewport(i)
             let o = l.viewports[i].origin
             dragOffset = CGSize(width: o.x, height: o.y)
@@ -347,7 +374,10 @@ final class SheetCanvasNSView: NSView {
     override func keyDown(with event: NSEvent) {
         if (event.keyCode == 51 || event.keyCode == 117), let i = selectedViewport, let model {
             let li = layoutIndex
-            model.editor.transaction("Remove Viewport") { d in if d.layouts[li].viewports.indices.contains(i) { d.layouts[li].viewports.remove(at: i) } }
+            if ViewportLock.isLocked(model.doc, layoutIndex: li, viewport: i) { NSSound.beep(); model.editor.print("The viewport is locked."); return }
+            model.editor.transaction("Remove Viewport") { d in
+                if d.layouts[li].viewports.indices.contains(i) { d.layouts[li].viewports.remove(at: i); ViewportLock.removed(&d, layoutIndex: li, viewport: i) }
+            }
             selectedViewport = nil
             return
         }
