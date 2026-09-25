@@ -268,3 +268,104 @@ Batch conversion (one line per file; exit status 1 when any file failed):
 archi-cli --convert dxf plans/*.archi --outdir out/        # also ifc, ifczip, step, glb, obj, stl, 3mf, svg, xlsx, gbxml, cobie, dae, archi …
 archi-cli --convert archi survey/*.dxf site.ifc            # inputs may be any importable format
 ```
+
+## 3. Plugins (JavaScript SDK)
+
+A plugin is a folder with a `plugin.json` manifest and a JavaScript entry file. Plugin folders are read from
+`~/Library/Application Support/Oanarina Archi Tool/Plugins/` (one sub-folder per plugin), from the folder set with
+`PLUGINS Folder` (drawing variable `PLUGINFOLDER`), and with archi-cli from `--plugins DIR`.
+
+```json
+{
+  "id": "com.example.roomtools",
+  "name": "Room Tools",
+  "version": "1.0",
+  "description": "Tags and checks for rooms.",
+  "author": "Ana",
+  "main": "main.js",
+  "permissions": ["document"],
+  "commands": [
+    {"name": "ROOMBOX", "aliases": ["RBX"], "summary": "Draws a 4 × 3 m room outline.", "function": "roomBox", "category": "Plugins", "modifies": true}
+  ]
+}
+```
+
+```js
+// main.js — every command calls a global function
+function roomBox() {
+  const id = archi.add({type: "polyline", vertices: [[0,0],[4000,0],[4000,3000],[0,3000]], closed: true, layer: "A-AREA"});
+  archi.print("Room outline #" + id);
+}
+```
+
+- Command names are letters, digits, `_` or `-`. A plugin cannot replace a built-in command (it is skipped and reported);
+  aliases already in use are dropped. Plugin commands work on the command line, in scripts and through the agent API, and
+  each run is one undo step.
+- `PLUGINS` manages plugins: `List`, `Reload` (rescan and register), `Enable` / `Disable` (saved in
+  `plugins-state.json` of the plugin folder; a disabled plugin's commands refuse to run), `Info`, `New` (creates a plugin
+  skeleton, optionally replaying a `.scr` script or the running `SCRIPTRECORD` recording), `Folder`.
+- `SCRIPT2JS` converts a command script (`.scr`) or the current recording into JavaScript with one `archi.run(...)` per command.
+
+The `archi` object available to plugin functions (archi-cli; the app's script engine provides the same calls):
+
+| Call | Result |
+| --- | --- |
+| `archi.print(text)` / `console.log(text)` | writes to the command history |
+| `archi.doc()` | summary: project, units, layers, levels, counts, bounds |
+| `archi.entities([type[, layer]])`, `archi.elements([type[, level]])` | objects as JSON (`.archi` format) |
+| `archi.selection()` | ids of the selected objects |
+| `archi.add(entity)` → id, `archi.addElement(element)` → id | adds a drawing object / building element (same JSON as `add_entity` / `add_element`) |
+| `archi.update(id, patch)`, `archi.remove([ids])` | edits / deletes objects |
+| `archi.getVar(name)`, `archi.setVar(name, value)` | drawing variables |
+| `archi.run("COMMAND inputs ")` | queued: runs after the plugin command finishes (each line its own undo step) |
+| `archi.pluginName` | the plugin's name |
+
+Core API for hosts (Swift, `ArchiCore`): `PluginRegistry.shared` (`folders`, `reload()`, `plugins`, `problems`,
+`setEnabled(_:_:)`, `register(into:)`, `commandDefinitions()`, `scaffold(in:name:command:script:registry:)`),
+`PluginManifest`, `PluginCommand`, `LoadedPlugin`, and the hook `PluginRegistry.evaluator:
+@MainActor (LoadedPlugin, String, Editor) async throws -> Void`, which the host sets to evaluate `plugin.source` and call
+the named function (archi-cli: `app/Sources/archi-cli/PluginRunner.swift`). `ScriptConverter` turns script lines into
+JavaScript.
+
+## 4. Document history, recovery and collaboration
+
+| Command | What it does |
+| --- | --- |
+| `VERSIONS Save/List/Restore/Diff/Delete/Prune` | named checkpoints in `<drawing>.archi-versions/` (vNNNN.archi + versions.json); Restore is undoable; Diff compares two versions or a version and the current drawing (`0`) |
+| `RECOVER <file>` | opens a damaged `.archi`: truncated JSON is closed after the last complete object, undecodable objects/settings are dropped, the model is audited (orphan doors/windows, duplicate ids, missing layers) |
+| `JOURNAL On/Off/Now/Status` | change journal (`.archijournal`, JSON lines: base snapshot + deltas) written every n seconds to `~/Library/Application Support/Oanarina Archi Tool/Recovery/`; a half-written last line is ignored on replay |
+| `RECOVERYFILES` | lists change journals and app autosave copies; `Open n` replays / repairs one into the editor |
+| `MODELMERGE <base> <theirs>` | three-way merge into the current drawing (ours); conflicts keep ours, are listed and selected |
+| `STANDARDS Export/Import/Check <file.archistd>` | office standards package: layers, linetypes, text/dim styles, materials, wall/floor/opening types, view templates, hatch patterns |
+| `ISSUETRACKER Add/List/Show/Status/Assign/Priority/Comment/Zoom/Delete/Csv` | issues stored in the drawing (variable `ISSUES`, JSON) with elements, saved view and comments |
+| `IFCOPTIONS` | IFC export schema (`IFC4` / `IFC4X3` → `IFC4X3_ADD2`), MVD (`ReferenceView` / `DesignTransferView`), base quantities |
+
+Saving `.archi` through archi-cli / batch jobs keeps the previous file as `<name>.bak` (drawing variable `ISAVEBAK=0` turns
+it off). `.archiz` is the compressed package: the drawing plus its images, textures and external references (opened with
+paths made absolute). Swift: `DocumentVersions`, `ArchiFile.recover(_:)`, `ArchiFile.save(_:to:backup:)`,
+`DocumentJournal`, `AutosaveJournal`, `RecoveryFiles`, `ThreeWayMerge.merge(base:ours:theirs:)`, `StandardsPackage`,
+`IssueTracker`, `ArchiPackage`.
+
+## 5. Building checks
+
+| Command | Method |
+| --- | --- |
+| `LOADTAKEDOWN` | slabs split into tributary cells carried by the nearest column or bearing wall; dead = slab self weight + `LOADSDL` (1.5 kN/m²) + column self weight; imposed by room usage (EN 1991-1-1: residential 2.0, office 3.0, assembly/retail 5.0, storage 7.5; roofs `LOADROOF` 0.75; room prop `liveLoad`); stacked columns accumulate; ULS 1.35G + 1.5Q, SLS, axial stress |
+| `RAINWATER` | roof plan area incl. overhang; runoff C (pitched 1.0, flat 0.8, green 0.3, prop `runoff`); Q = C·i·A with `RAININTENSITY` (0.03 l/s·m²); downpipes from EN 12056-3 capacities (DN100 = 4.6 l/s); eave gutter length; harvest = A·rain·C·0.8 |
+| `PARKINGCHECK` | required spaces from `PARKINGRULES` (`office=35;apartment=unit:1;…`, area per space or spaces per room) vs. placed parking components; accessible spaces 1 per 25 (then 1 per 50 above 100) |
+| `FIRECOMPARTMENTS` | room areas per `fireCompartment` prop (else per level) vs. `FIREMAXAREA` (2500 m², ×2 with `FIRESPRINKLERS=1`); walls between compartments below `FIRERATINGREQ` minutes (prop `fireRating`, `Pset_WallCommon.FireRating`) are selected |
+| `TLEN`, `ANGLEBETWEEN`, `DISTTOOBJECT`, `POINTINSIDE` | total length, angle between lines, shortest point–object distance, point-in-contour test |
+
+## 6. Exchange details
+
+- DXF: sheet layouts are written as paper space (`*Paper_Space`, `*Paper_SpaceN` blocks, `LAYOUT` objects with paper size,
+  `VIEWPORT` entities with view centre and scale; view kind, level, title and title block as Archi XDATA) and read back;
+  block attribute definitions are written as `ATTDEF` and inserts' `ATTRIB`s sit at their definitions; hatch patterns
+  carry their line families and unknown patterns read from a file are stored as `HPPAT:<NAME>`; `MLINE` and `ACAD_TABLE`
+  are read (element polylines, table cells).
+- IFC export: props named `<Set>.<Property>` go to that property set (typed: booleans, numbers, `ThermalTransmittance`),
+  others to `Archi_Properties`; `Qto_*BaseQuantities` for walls, slabs, columns, beams, spaces, doors and windows; wall /
+  door / window types as `IfcWallType` / `IfcDoorType` / `IfcWindowType` with `IfcRelDefinesByType`. IFC import maps type
+  objects back to wall types and opening types and reads quantities in the file's area/volume units (props in m, m², m³).
+- OBJ import reads the `mtllib` materials (Kd, d/Tr, Ns, Pr/Pm, `map_Kd` with `-s` tiling); USD import reads USDA and
+  USDZ (meshes, transforms, UsdPreviewSurface colours and textures). glTF/GLB export embeds PNG/JPEG textures with UVs.
