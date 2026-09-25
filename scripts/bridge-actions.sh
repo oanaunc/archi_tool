@@ -15,6 +15,13 @@ run_action() {
         if xcrun notarytool history --keychain-profile "$n" >/dev/null 2>&1; then echo "FOUND: $n"; fi
       done; echo done ;;
     icon)          cd "$ROOT" && swift scripts/make-icon.swift "$ROOT" && iconutil -c icns build/AppIcon.iconset -o app/Resources/AppIcon.icns && ls -la app/Resources ;;
+    package-head)  # notarized DMG from the last commit, unaffected by work in progress
+      cd "$ROOT" && rm -rf build/release-src && git worktree prune && git worktree add --detach build/release-src HEAD \
+        && build/release-src/scripts/package.sh && mkdir -p dist && cp build/release-src/dist/*.dmg build/release-src/dist/SHA256SUMS.txt dist/ \
+        && git worktree remove --force build/release-src ;;
+    cli-template)  echo "" | "$ROOT/build/Oanarina Archi Tool.app/Contents/MacOS/archi-cli" --out "$ROOT/build/empty.archi"; ls -la "$ROOT/build/empty.archi" ;;
+    demo-check)    "$ROOT/build/Oanarina Archi Tool.app/Contents/MacOS/archi-cli" "$ROOT/assets/demo/Cedar House.archi" --out "$ROOT/build/demo-plan.svg" </dev/null 2>&1 | tail -20; ls -la "$ROOT/build/demo-plan.svg" ;;
+    open-demo)     open -a "$ROOT/build/Oanarina Archi Tool.app" "$ROOT/assets/demo/Cedar House.archi" ;;
     toolchain)     sw_vers; xcodebuild -version; swift --version ;;
     open-app)      open "$ROOT/build/Oanarina Archi Tool.app" ;;
     quit-app)      osascript -e 'quit app "Oanarina Archi Tool"' ;;

@@ -1,0 +1,3511 @@
+{
+ "app": "Oanarina Archi Tool",
+ "document": {
+  "blocks": {},
+  "currentDimStyle": "Standard",
+  "currentLayer": "0",
+  "currentLevel": 0,
+  "dimStyles": [
+   {
+    "arrow": "closedFilled",
+    "arrowSize": 2.5,
+    "decimals": 0,
+    "extensionExtend": 1.25,
+    "extensionOffset": 1,
+    "linearScale": 1,
+    "name": "Standard",
+    "prefix": "",
+    "scale": 1,
+    "suffix": "",
+    "textGap": 0.8,
+    "textHeight": 2.5
+   },
+   {
+    "arrow": "architecturalTick",
+    "arrowSize": 150,
+    "decimals": 0,
+    "extensionExtend": 150,
+    "extensionOffset": 100,
+    "linearScale": 1,
+    "name": "Architectural 1:100",
+    "prefix": "",
+    "scale": 1,
+    "suffix": "",
+    "textGap": 80,
+    "textHeight": 250
+   }
+  ],
+  "elements": [
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 18000.0,
+      "y": 0.0
+     },
+     "height": 3400.0,
+     "justification": "center",
+     "start": {
+      "x": 0.0,
+      "y": 0.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 1,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Charred Timber",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 18000.0,
+      "y": 7200.0
+     },
+     "height": 3400.0,
+     "justification": "center",
+     "start": {
+      "x": 18000.0,
+      "y": 0.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 2,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Charred Timber",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 0.0,
+      "y": 7200.0
+     },
+     "height": 3400.0,
+     "justification": "center",
+     "start": {
+      "x": 18000.0,
+      "y": 7200.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 3,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Charred Timber",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 0.0,
+      "y": 0.0
+     },
+     "height": 3400.0,
+     "justification": "center",
+     "start": {
+      "x": 0.0,
+      "y": 7200.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 4,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Charred Timber",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 2700.0,
+     "hostWall": 1,
+     "kind": "window",
+     "offset": 1900.0,
+     "sill": 250.0,
+     "type": "window",
+     "width": 2600.0,
+     "windowStyle": "fixed"
+    },
+    "id": 5,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 2700.0,
+     "hostWall": 1,
+     "kind": "window",
+     "offset": 8300.0,
+     "sill": 250.0,
+     "type": "window",
+     "width": 2600.0,
+     "windowStyle": "fixed"
+    },
+    "id": 6,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "sliding",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 2700.0,
+     "hostWall": 1,
+     "kind": "door",
+     "offset": 5100.0,
+     "sill": 0.0,
+     "type": "door",
+     "width": 2600.0,
+     "windowStyle": "fixed"
+    },
+    "id": 7,
+    "layer": "A-DOOR",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 2400.0,
+     "hostWall": 1,
+     "kind": "door",
+     "offset": 15200.0,
+     "sill": 0.0,
+     "type": "door",
+     "width": 1100.0,
+     "windowStyle": "fixed"
+    },
+    "id": 8,
+    "layer": "A-DOOR",
+    "level": 0,
+    "material": "Spruce",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 1800.0,
+     "hostWall": 1,
+     "kind": "window",
+     "offset": 17100.0,
+     "sill": 600.0,
+     "type": "window",
+     "width": 700.0,
+     "windowStyle": "fixed"
+    },
+    "id": 9,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 2900.0,
+     "hostWall": 4,
+     "kind": "window",
+     "offset": 3600.0,
+     "sill": 200.0,
+     "type": "window",
+     "width": 2600.0,
+     "windowStyle": "fixed"
+    },
+    "id": 10,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 1200.0,
+     "hostWall": 2,
+     "kind": "window",
+     "offset": 5400.0,
+     "sill": 1100.0,
+     "type": "window",
+     "width": 900.0,
+     "windowStyle": "fixed"
+    },
+    "id": 11,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 2700.0,
+     "hostWall": 3,
+     "kind": "opening",
+     "offset": 8500.0,
+     "sill": 0.0,
+     "type": "opening",
+     "width": 3000.0,
+     "windowStyle": "fixed"
+    },
+    "id": 12,
+    "layer": "A-DOOR",
+    "level": 0,
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 1100.0,
+     "hostWall": 3,
+     "kind": "window",
+     "offset": 14600.0,
+     "sill": 1000.0,
+     "type": "window",
+     "width": 2200.0,
+     "windowStyle": "fixed"
+    },
+    "id": 13,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 800.0,
+     "hostWall": 3,
+     "kind": "window",
+     "offset": 3000.0,
+     "sill": 1500.0,
+     "type": "window",
+     "width": 800.0,
+     "windowStyle": "fixed"
+    },
+    "id": 14,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 12000.0,
+      "y": 7200.0
+     },
+     "height": 3400.0,
+     "justification": "center",
+     "start": {
+      "x": 12000.0,
+      "y": 0.0
+     },
+     "sweeps": [],
+     "thickness": 120.0,
+     "type": "wall"
+    },
+    "id": 15,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "White Plaster",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": true,
+     "frameWidth": 60.0,
+     "height": 2150.0,
+     "hostWall": 15,
+     "kind": "door",
+     "offset": 5400.0,
+     "sill": 0.0,
+     "type": "door",
+     "width": 900.0,
+     "windowStyle": "fixed"
+    },
+    "id": 16,
+    "layer": "A-DOOR",
+    "level": 0,
+    "material": "Spruce",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 18000.0,
+      "y": 3600.0
+     },
+     "height": 3400.0,
+     "justification": "center",
+     "start": {
+      "x": 12000.0,
+      "y": 3600.0
+     },
+     "sweeps": [],
+     "thickness": 120.0,
+     "type": "wall"
+    },
+    "id": 17,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "White Plaster",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 2150.0,
+     "hostWall": 17,
+     "kind": "door",
+     "offset": 3000.0,
+     "sill": 0.0,
+     "type": "door",
+     "width": 800.0,
+     "windowStyle": "fixed"
+    },
+    "id": 18,
+    "layer": "A-DOOR",
+    "level": 0,
+    "material": "Spruce",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": -150.0,
+       "y": -150.0
+      },
+      {
+       "x": 18150.0,
+       "y": -150.0
+      },
+      {
+       "x": 18150.0,
+       "y": 7350.0
+      },
+      {
+       "x": -150.0,
+       "y": 7350.0
+      }
+     ],
+     "holes": [],
+     "thickness": 300.0,
+     "topOffset": 0.0,
+     "type": "slab"
+    },
+    "id": 19,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Oak Floor",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 3400.0,
+     "boundary": [
+      {
+       "x": 0.0,
+       "y": 0.0
+      },
+      {
+       "x": 18000.0,
+       "y": 0.0
+      },
+      {
+       "x": 18000.0,
+       "y": 7200.0
+      },
+      {
+       "x": 0.0,
+       "y": 7200.0
+      }
+     ],
+     "eaveEdge": 0,
+     "kind": "gable",
+     "overhang": 450.0,
+     "pitch": 42.0,
+     "thickness": 260.0,
+     "type": "roof"
+    },
+    "id": 20,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Black Standing Seam",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "end": {
+      "x": 8000.0,
+      "y": 9350.0
+     },
+     "gridU": 1000.0,
+     "gridV": 1450.0,
+     "height": 2900.0,
+     "mullionSize": 50.0,
+     "start": {
+      "x": 8000.0,
+      "y": 7350.0
+     },
+     "type": "curtainWall"
+    },
+    "id": 22,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Glass",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "end": {
+      "x": 11000.0,
+      "y": 7350.0
+     },
+     "gridU": 1000.0,
+     "gridV": 1450.0,
+     "height": 2900.0,
+     "mullionSize": 50.0,
+     "start": {
+      "x": 11000.0,
+      "y": 9350.0
+     },
+     "type": "curtainWall"
+    },
+    "id": 23,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Glass",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 7900.0,
+       "y": 7200.0
+      },
+      {
+       "x": 11100.0,
+       "y": 7200.0
+      },
+      {
+       "x": 11100.0,
+       "y": 9500.0
+      },
+      {
+       "x": 7900.0,
+       "y": 9500.0
+      }
+     ],
+     "holes": [],
+     "thickness": 300.0,
+     "topOffset": 0.0,
+     "type": "slab"
+    },
+    "id": 24,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Oak Floor",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 7750.0,
+       "y": 7100.0
+      },
+      {
+       "x": 11250.0,
+       "y": 7100.0
+      },
+      {
+       "x": 11250.0,
+       "y": 9600.0
+      },
+      {
+       "x": 7750.0,
+       "y": 9600.0
+      }
+     ],
+     "holes": [],
+     "thickness": 250.0,
+     "topOffset": 3150.0,
+     "type": "slab"
+    },
+    "id": 25,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Black Standing Seam",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 13000.0,
+      "y": 9500.0
+     },
+     "height": 3400.0,
+     "justification": "center",
+     "start": {
+      "x": 6000.0,
+      "y": 9500.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 26,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Charred Timber",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 13000.0,
+      "y": 21500.0
+     },
+     "height": 3400.0,
+     "justification": "center",
+     "start": {
+      "x": 13000.0,
+      "y": 9500.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 27,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Charred Timber",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 6000.0,
+      "y": 21500.0
+     },
+     "height": 3400.0,
+     "justification": "center",
+     "start": {
+      "x": 13000.0,
+      "y": 21500.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 28,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Charred Timber",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 6000.0,
+      "y": 9500.0
+     },
+     "height": 3400.0,
+     "justification": "center",
+     "start": {
+      "x": 6000.0,
+      "y": 21500.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 29,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Charred Timber",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 2700.0,
+     "hostWall": 26,
+     "kind": "opening",
+     "offset": 3500.0,
+     "sill": 0.0,
+     "type": "opening",
+     "width": 3000.0,
+     "windowStyle": "fixed"
+    },
+    "id": 30,
+    "layer": "A-DOOR",
+    "level": 0,
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 2200.0,
+     "hostWall": 27,
+     "kind": "window",
+     "offset": 2000.0,
+     "sill": 500.0,
+     "type": "window",
+     "width": 1800.0,
+     "windowStyle": "fixed"
+    },
+    "id": 31,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 2200.0,
+     "hostWall": 27,
+     "kind": "window",
+     "offset": 6000.0,
+     "sill": 500.0,
+     "type": "window",
+     "width": 1800.0,
+     "windowStyle": "fixed"
+    },
+    "id": 32,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 2200.0,
+     "hostWall": 27,
+     "kind": "window",
+     "offset": 10000.0,
+     "sill": 500.0,
+     "type": "window",
+     "width": 1800.0,
+     "windowStyle": "fixed"
+    },
+    "id": 33,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 3000.0,
+     "hostWall": 28,
+     "kind": "window",
+     "offset": 3500.0,
+     "sill": 200.0,
+     "type": "window",
+     "width": 4600.0,
+     "windowStyle": "fixed"
+    },
+    "id": 34,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 1500.0,
+     "hostWall": 29,
+     "kind": "window",
+     "offset": 2000.0,
+     "sill": 900.0,
+     "type": "window",
+     "width": 1200.0,
+     "windowStyle": "fixed"
+    },
+    "id": 35,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 1500.0,
+     "hostWall": 29,
+     "kind": "window",
+     "offset": 10000.0,
+     "sill": 900.0,
+     "type": "window",
+     "width": 1200.0,
+     "windowStyle": "fixed"
+    },
+    "id": 36,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 13000.0,
+      "y": 13500.0
+     },
+     "height": 3400.0,
+     "justification": "center",
+     "start": {
+      "x": 6000.0,
+      "y": 13500.0
+     },
+     "sweeps": [],
+     "thickness": 120.0,
+     "type": "wall"
+    },
+    "id": 37,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "White Plaster",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 60.0,
+     "height": 2150.0,
+     "hostWall": 37,
+     "kind": "door",
+     "offset": 1400.0,
+     "sill": 0.0,
+     "type": "door",
+     "width": 900.0,
+     "windowStyle": "fixed"
+    },
+    "id": 38,
+    "layer": "A-DOOR",
+    "level": 0,
+    "material": "Spruce",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 13000.0,
+      "y": 17500.0
+     },
+     "height": 3400.0,
+     "justification": "center",
+     "start": {
+      "x": 6000.0,
+      "y": 17500.0
+     },
+     "sweeps": [],
+     "thickness": 120.0,
+     "type": "wall"
+    },
+    "id": 39,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "White Plaster",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": true,
+     "frameWidth": 60.0,
+     "height": 2150.0,
+     "hostWall": 39,
+     "kind": "door",
+     "offset": 1400.0,
+     "sill": 0.0,
+     "type": "door",
+     "width": 900.0,
+     "windowStyle": "fixed"
+    },
+    "id": 40,
+    "layer": "A-DOOR",
+    "level": 0,
+    "material": "Spruce",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 5850.0,
+       "y": 9350.0
+      },
+      {
+       "x": 13150.0,
+       "y": 9350.0
+      },
+      {
+       "x": 13150.0,
+       "y": 21650.0
+      },
+      {
+       "x": 5850.0,
+       "y": 21650.0
+      }
+     ],
+     "holes": [],
+     "thickness": 300.0,
+     "topOffset": 0.0,
+     "type": "slab"
+    },
+    "id": 41,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Oak Floor",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 3400.0,
+     "boundary": [
+      {
+       "x": 13000.0,
+       "y": 9500.0
+      },
+      {
+       "x": 13000.0,
+       "y": 21500.0
+      },
+      {
+       "x": 6000.0,
+       "y": 21500.0
+      },
+      {
+       "x": 6000.0,
+       "y": 9500.0
+      }
+     ],
+     "eaveEdge": 0,
+     "kind": "gable",
+     "overhang": 450.0,
+     "pitch": 42.0,
+     "thickness": 260.0,
+     "type": "roof"
+    },
+    "id": 42,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Black Standing Seam",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": -600.0,
+       "y": -3400.0
+      },
+      {
+       "x": 11600.0,
+       "y": -3400.0
+      },
+      {
+       "x": 11600.0,
+       "y": -150.0
+      },
+      {
+       "x": -600.0,
+       "y": -150.0
+      }
+     ],
+     "holes": [],
+     "thickness": 180.0,
+     "topOffset": 0.0,
+     "type": "slab"
+    },
+    "id": 43,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Spruce",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 14400.0,
+       "y": -1500.0
+      },
+      {
+       "x": 16600.0,
+       "y": -1500.0
+      },
+      {
+       "x": 16600.0,
+       "y": -150.0
+      },
+      {
+       "x": 14400.0,
+       "y": -150.0
+      }
+     ],
+     "holes": [],
+     "thickness": 180.0,
+     "topOffset": 0.0,
+     "type": "slab"
+    },
+    "id": 44,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Spruce",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 150.0,
+       "y": 150.0
+      },
+      {
+       "x": 11940.0,
+       "y": 150.0
+      },
+      {
+       "x": 11940.0,
+       "y": 7050.0
+      },
+      {
+       "x": 150.0,
+       "y": 7050.0
+      }
+     ],
+     "height": 2700.0,
+     "name": "Living & Kitchen",
+     "number": "01",
+     "type": "space"
+    },
+    "id": 45,
+    "layer": "A-AREA",
+    "level": 0,
+    "name": "Living & Kitchen",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 12060.0,
+       "y": 150.0
+      },
+      {
+       "x": 17850.0,
+       "y": 150.0
+      },
+      {
+       "x": 17850.0,
+       "y": 3540.0
+      },
+      {
+       "x": 12060.0,
+       "y": 3540.0
+      }
+     ],
+     "height": 2700.0,
+     "name": "Entrance",
+     "number": "02",
+     "type": "space"
+    },
+    "id": 46,
+    "layer": "A-AREA",
+    "level": 0,
+    "name": "Entrance",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 12060.0,
+       "y": 3660.0
+      },
+      {
+       "x": 17850.0,
+       "y": 3660.0
+      },
+      {
+       "x": 17850.0,
+       "y": 7050.0
+      },
+      {
+       "x": 12060.0,
+       "y": 7050.0
+      }
+     ],
+     "height": 2700.0,
+     "name": "Bath",
+     "number": "03",
+     "type": "space"
+    },
+    "id": 47,
+    "layer": "A-AREA",
+    "level": 0,
+    "name": "Bath",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 8030.0,
+       "y": 7350.0
+      },
+      {
+       "x": 10970.0,
+       "y": 7350.0
+      },
+      {
+       "x": 10970.0,
+       "y": 9350.0
+      },
+      {
+       "x": 8030.0,
+       "y": 9350.0
+      }
+     ],
+     "height": 2700.0,
+     "name": "Glass Link",
+     "number": "04",
+     "type": "space"
+    },
+    "id": 48,
+    "layer": "A-AREA",
+    "level": 0,
+    "name": "Glass Link",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 6150.0,
+       "y": 9650.0
+      },
+      {
+       "x": 12850.0,
+       "y": 9650.0
+      },
+      {
+       "x": 12850.0,
+       "y": 13440.0
+      },
+      {
+       "x": 6150.0,
+       "y": 13440.0
+      }
+     ],
+     "height": 2700.0,
+     "name": "Study",
+     "number": "05",
+     "type": "space"
+    },
+    "id": 49,
+    "layer": "A-AREA",
+    "level": 0,
+    "name": "Study",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 6150.0,
+       "y": 13560.0
+      },
+      {
+       "x": 12850.0,
+       "y": 13560.0
+      },
+      {
+       "x": 12850.0,
+       "y": 17440.0
+      },
+      {
+       "x": 6150.0,
+       "y": 17440.0
+      }
+     ],
+     "height": 2700.0,
+     "name": "Bedroom",
+     "number": "06",
+     "type": "space"
+    },
+    "id": 50,
+    "layer": "A-AREA",
+    "level": 0,
+    "name": "Bedroom",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 6150.0,
+       "y": 17560.0
+      },
+      {
+       "x": 12850.0,
+       "y": 17560.0
+      },
+      {
+       "x": 12850.0,
+       "y": 21350.0
+      },
+      {
+       "x": 6150.0,
+       "y": 21350.0
+      }
+     ],
+     "height": 2700.0,
+     "name": "Main Bedroom",
+     "number": "07",
+     "type": "space"
+    },
+    "id": 51,
+    "layer": "A-AREA",
+    "level": 0,
+    "name": "Main Bedroom",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "category": "Furniture",
+     "position": {
+      "x": 3000.0,
+      "y": 2300.0
+     },
+     "rotation": 0,
+     "size": {
+      "x": 2800,
+      "y": 950,
+      "z": 780
+     },
+     "type": "component"
+    },
+    "id": 52,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Spruce",
+    "name": "Sofa",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "category": "Furniture",
+     "position": {
+      "x": 3000.0,
+      "y": 3900.0
+     },
+     "rotation": 0,
+     "size": {
+      "x": 1200,
+      "y": 700,
+      "z": 420
+     },
+     "type": "component"
+    },
+    "id": 53,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Oak Floor",
+    "name": "Coffee table",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "category": "Furniture",
+     "position": {
+      "x": 7600.0,
+      "y": 3600.0
+     },
+     "rotation": 0,
+     "size": {
+      "x": 2400,
+      "y": 1000,
+      "z": 750
+     },
+     "type": "component"
+    },
+    "id": 54,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Oak Floor",
+    "name": "Dining table",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "category": "Furniture",
+     "position": {
+      "x": 5500.0,
+      "y": 6700.0
+     },
+     "rotation": 0,
+     "size": {
+      "x": 4200,
+      "y": 650,
+      "z": 900
+     },
+     "type": "component"
+    },
+    "id": 55,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "White Plaster",
+    "name": "Kitchen",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "category": "Furniture",
+     "position": {
+      "x": 9900.0,
+      "y": 15500.0
+     },
+     "rotation": 0,
+     "size": {
+      "x": 1800,
+      "y": 2100,
+      "z": 500
+     },
+     "type": "component"
+    },
+    "id": 56,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Spruce",
+    "name": "Bed",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "category": "Furniture",
+     "position": {
+      "x": 9900.0,
+      "y": 19400.0
+     },
+     "rotation": 0,
+     "size": {
+      "x": 2000,
+      "y": 2200,
+      "z": 500
+     },
+     "type": "component"
+    },
+    "id": 57,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Spruce",
+    "name": "Bed",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "category": "Furniture",
+     "position": {
+      "x": 9500.0,
+      "y": 11200.0
+     },
+     "rotation": 0,
+     "size": {
+      "x": 1600,
+      "y": 750,
+      "z": 740
+     },
+     "type": "component"
+    },
+    "id": 58,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Oak Floor",
+    "name": "Desk",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "category": "Fixture",
+     "position": {
+      "x": 16900.0,
+      "y": 5400.0
+     },
+     "rotation": 1.5707963267948966,
+     "size": {
+      "x": 800,
+      "y": 1700,
+      "z": 550
+     },
+     "type": "component"
+    },
+    "id": 59,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "White Plaster",
+    "name": "Bath tub",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": -9000.0,
+       "y": -9000.0
+      },
+      {
+       "x": 27000.0,
+       "y": -9000.0
+      },
+      {
+       "x": 27000.0,
+       "y": 28000.0
+      },
+      {
+       "x": -9000.0,
+       "y": 28000.0
+      }
+     ],
+     "holes": [],
+     "thickness": 60.0,
+     "topOffset": -200.0,
+     "type": "slab"
+    },
+    "id": 60,
+    "layer": "C-TOPO",
+    "level": 0,
+    "material": "Meadow",
+    "name": "Meadow",
+    "props": {}
+   }
+  ],
+  "entities": [
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -5200.0,
+      "y": 12000.0,
+      "z": -200.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 234.0,
+      "y": 234.0,
+      "z": 2340.0
+     },
+     "type": "solid"
+    },
+    "id": 61,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -5200.0,
+      "y": 12000.0,
+      "z": 1170.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 2210.0,
+      "y": 0.0,
+      "z": 5460.0
+     },
+     "type": "solid"
+    },
+    "id": 62,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -5200.0,
+      "y": 12000.0,
+      "z": 4290.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1625.0,
+      "y": 0.0,
+      "z": 4680.0
+     },
+     "type": "solid"
+    },
+    "id": 63,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -3000.0,
+      "y": 17500.0,
+      "z": -200.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 198.00000000000003,
+      "y": 198.00000000000003,
+      "z": 1980.0000000000002
+     },
+     "type": "solid"
+    },
+    "id": 64,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -3000.0,
+      "y": 17500.0,
+      "z": 990.0000000000001
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1870.0000000000002,
+      "y": 0.0,
+      "z": 4620.0
+     },
+     "type": "solid"
+    },
+    "id": 65,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -3000.0,
+      "y": 17500.0,
+      "z": 3630.0000000000005
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1375.0,
+      "y": 0.0,
+      "z": 3960.0000000000005
+     },
+     "type": "solid"
+    },
+    "id": 66,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 1200.0,
+      "y": 22500.0,
+      "z": -200.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 251.99999999999997,
+      "y": 251.99999999999997,
+      "z": 2520.0
+     },
+     "type": "solid"
+    },
+    "id": 67,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 1200.0,
+      "y": 22500.0,
+      "z": 1260.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 2380.0,
+      "y": 0.0,
+      "z": 5880.0
+     },
+     "type": "solid"
+    },
+    "id": 68,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 1200.0,
+      "y": 22500.0,
+      "z": 4620.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1750.0,
+      "y": 0.0,
+      "z": 5040.0
+     },
+     "type": "solid"
+    },
+    "id": 69,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -6500.0,
+      "y": 4200.0,
+      "z": -200.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 216.0,
+      "y": 216.0,
+      "z": 2160.0
+     },
+     "type": "solid"
+    },
+    "id": 70,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -6500.0,
+      "y": 4200.0,
+      "z": 1080.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 2040.0,
+      "y": 0.0,
+      "z": 5040.0
+     },
+     "type": "solid"
+    },
+    "id": 71,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -6500.0,
+      "y": 4200.0,
+      "z": 3960.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1500.0,
+      "y": 0.0,
+      "z": 4320.0
+     },
+     "type": "solid"
+    },
+    "id": 72,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 19500.0,
+      "y": 24000.0,
+      "z": -200.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 225.0,
+      "y": 225.0,
+      "z": 2250.0
+     },
+     "type": "solid"
+    },
+    "id": 73,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 19500.0,
+      "y": 24000.0,
+      "z": 1125.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 2125.0,
+      "y": 0.0,
+      "z": 5250.0
+     },
+     "type": "solid"
+    },
+    "id": 74,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 19500.0,
+      "y": 24000.0,
+      "z": 4125.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1562.5,
+      "y": 0.0,
+      "z": 4500.0
+     },
+     "type": "solid"
+    },
+    "id": 75,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 22500.0,
+      "y": 16500.0,
+      "z": -200.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 206.99999999999997,
+      "y": 206.99999999999997,
+      "z": 2070.0
+     },
+     "type": "solid"
+    },
+    "id": 76,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 22500.0,
+      "y": 16500.0,
+      "z": 1035.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1954.9999999999998,
+      "y": 0.0,
+      "z": 4830.0
+     },
+     "type": "solid"
+    },
+    "id": 77,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 22500.0,
+      "y": 16500.0,
+      "z": 3794.9999999999995
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1437.5,
+      "y": 0.0,
+      "z": 4140.0
+     },
+     "type": "solid"
+    },
+    "id": 78,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 24000.0,
+      "y": 9800.0,
+      "z": -200.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 243.00000000000003,
+      "y": 243.00000000000003,
+      "z": 2430.0
+     },
+     "type": "solid"
+    },
+    "id": 79,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 24000.0,
+      "y": 9800.0,
+      "z": 1215.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 2295.0,
+      "y": 0.0,
+      "z": 5670.0
+     },
+     "type": "solid"
+    },
+    "id": 80,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 24000.0,
+      "y": 9800.0,
+      "z": 4455.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1687.5,
+      "y": 0.0,
+      "z": 4860.0
+     },
+     "type": "solid"
+    },
+    "id": 81,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 3000.0,
+      "y": 15000.0,
+      "z": -200.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 180.0,
+      "y": 180.0,
+      "z": 1800.0
+     },
+     "type": "solid"
+    },
+    "id": 82,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 3000.0,
+      "y": 15000.0,
+      "z": 900.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1700.0,
+      "y": 0.0,
+      "z": 4200.0
+     },
+     "type": "solid"
+    },
+    "id": 83,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 3000.0,
+      "y": 15000.0,
+      "z": 3300.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1250.0,
+      "y": 0.0,
+      "z": 3600.0
+     },
+     "type": "solid"
+    },
+    "id": 84,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 16800.0,
+      "y": 26000.0,
+      "z": -200.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 189.0,
+      "y": 189.0,
+      "z": 1890.0
+     },
+     "type": "solid"
+    },
+    "id": 85,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 16800.0,
+      "y": 26000.0,
+      "z": 945.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1785.0,
+      "y": 0.0,
+      "z": 4410.0
+     },
+     "type": "solid"
+    },
+    "id": 86,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 16800.0,
+      "y": 26000.0,
+      "z": 3465.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1312.5,
+      "y": 0.0,
+      "z": 3780.0
+     },
+     "type": "solid"
+    },
+    "id": 87,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -7000.0,
+      "y": 23500.0,
+      "z": -200.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 216.0,
+      "y": 216.0,
+      "z": 2160.0
+     },
+     "type": "solid"
+    },
+    "id": 88,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -7000.0,
+      "y": 23500.0,
+      "z": 1080.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 2040.0,
+      "y": 0.0,
+      "z": 5040.0
+     },
+     "type": "solid"
+    },
+    "id": 89,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cone",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -7000.0,
+      "y": 23500.0,
+      "z": 3960.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1500.0,
+      "y": 0.0,
+      "z": 4320.0
+     },
+     "type": "solid"
+    },
+    "id": 90,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Pine Needles"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 21500.0,
+      "y": -3000.0,
+      "z": -200.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 130.0,
+      "y": 130.0,
+      "z": 3200.0
+     },
+     "type": "solid"
+    },
+    "id": 91,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Birch Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 21500.0,
+      "y": -3000.0,
+      "z": 4200.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1500.0,
+      "y": 1500.0,
+      "z": 1500.0
+     },
+     "type": "solid"
+    },
+    "id": 92,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Birch Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -4200.0,
+      "y": -5200.0,
+      "z": -200.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 117.0,
+      "y": 117.0,
+      "z": 2880.0
+     },
+     "type": "solid"
+    },
+    "id": 93,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Birch Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -4200.0,
+      "y": -5200.0,
+      "z": 3780.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1350.0,
+      "y": 1350.0,
+      "z": 1350.0
+     },
+     "type": "solid"
+    },
+    "id": 94,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Birch Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 17000.0,
+      "y": 12500.0,
+      "z": -200.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 143.0,
+      "y": 143.0,
+      "z": 3520.0000000000005
+     },
+     "type": "solid"
+    },
+    "id": 95,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Birch Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 17000.0,
+      "y": 12500.0,
+      "z": 4620.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1650.0000000000002,
+      "y": 1650.0000000000002,
+      "z": 1650.0000000000002
+     },
+     "type": "solid"
+    },
+    "id": 96,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Birch Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 1500.0,
+      "y": 11000.0,
+      "z": -200.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 110.5,
+      "y": 110.5,
+      "z": 2720.0
+     },
+     "type": "solid"
+    },
+    "id": 97,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Birch Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 1500.0,
+      "y": 11000.0,
+      "z": 3570.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 1275.0,
+      "y": 1275.0,
+      "z": 1275.0
+     },
+     "type": "solid"
+    },
+    "id": 98,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Birch Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "kind": "linear",
+     "points": [
+      {
+       "x": 0.0,
+       "y": 0.0
+      },
+      {
+       "x": 18000.0,
+       "y": 0.0
+      },
+      {
+       "x": 9000.0,
+       "y": -4600.0
+      }
+     ],
+     "rotation": 0.0,
+     "style": "Architectural 1:100",
+     "type": "dimension"
+    },
+    "id": 99,
+    "layer": "A-ANNO-DIMS",
+    "props": {}
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "kind": "linear",
+     "points": [
+      {
+       "x": 0.0,
+       "y": 0.0
+      },
+      {
+       "x": 0.0,
+       "y": 7200.0
+      },
+      {
+       "x": -1600.0,
+       "y": 3600.0
+      }
+     ],
+     "rotation": 1.5707963267948966,
+     "style": "Architectural 1:100",
+     "type": "dimension"
+    },
+    "id": 100,
+    "layer": "A-ANNO-DIMS",
+    "props": {}
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "kind": "linear",
+     "points": [
+      {
+       "x": 6000.0,
+       "y": 21500.0
+      },
+      {
+       "x": 13000.0,
+       "y": 21500.0
+      },
+      {
+       "x": 9500.0,
+       "y": 23100.0
+      }
+     ],
+     "rotation": 0.0,
+     "style": "Architectural 1:100",
+     "type": "dimension"
+    },
+    "id": 101,
+    "layer": "A-ANNO-DIMS",
+    "props": {}
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "kind": "linear",
+     "points": [
+      {
+       "x": 13000.0,
+       "y": 9500.0
+      },
+      {
+       "x": 13000.0,
+       "y": 21500.0
+      },
+      {
+       "x": 14600.0,
+       "y": 15500.0
+      }
+     ],
+     "rotation": 1.5707963267948966,
+     "style": "Architectural 1:100",
+     "type": "dimension"
+    },
+    "id": 102,
+    "layer": "A-ANNO-DIMS",
+    "props": {}
+   }
+  ],
+  "formatVersion": 1,
+  "info": {
+   "address": "Oslofjord, Norway",
+   "author": "Oana Rinaldi",
+   "client": "",
+   "latitude": 59.91,
+   "longitude": 10.75,
+   "name": "Nordic House",
+   "northAngle": 0,
+   "number": "ND-01"
+  },
+  "keynotes": {},
+  "layers": [
+   {
+    "color": {
+     "a": 1,
+     "b": 1,
+     "g": 1,
+     "r": 1
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.25,
+    "locked": false,
+    "name": "0",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.95,
+     "g": 0.95,
+     "r": 0.95
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.5,
+    "locked": false,
+    "name": "A-WALL",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 1,
+     "g": 0.8,
+     "r": 0.35
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.25,
+    "locked": false,
+    "name": "A-DOOR",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.9,
+     "g": 0.9,
+     "r": 0.4
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.18,
+    "locked": false,
+    "name": "A-GLAZ",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.85,
+     "g": 0.85,
+     "r": 0.85
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.35,
+    "locked": false,
+    "name": "A-ELEMENTS",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.094,
+     "g": 0.773,
+     "r": 0.961
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.18,
+    "locked": false,
+    "name": "A-ANNO-DIMS",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 1,
+     "g": 1,
+     "r": 1
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.18,
+    "locked": false,
+    "name": "A-ANNO-TEXT",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.3,
+     "g": 0.55,
+     "r": 1
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.13,
+    "locked": false,
+    "name": "A-AREA",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.3,
+     "g": 0.3,
+     "r": 0.9
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Center",
+    "lineweight": 0.13,
+    "locked": false,
+    "name": "S-GRID",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.35,
+     "g": 0.7,
+     "r": 0.35
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.18,
+    "locked": false,
+    "name": "L-PLNT",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.35,
+     "g": 0.55,
+     "r": 0.45
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Hidden",
+    "lineweight": 0.13,
+    "locked": false,
+    "name": "C-TOPO",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   }
+  ],
+  "layouts": [
+   {
+    "entities": [],
+    "name": "Sheet 1",
+    "paper": {
+     "height": 297,
+     "name": "A3",
+     "width": 420
+    },
+    "titleBlock": {},
+    "viewports": []
+   }
+  ],
+  "levels": [
+   {
+    "elevation": 0.0,
+    "height": 3400.0,
+    "id": 0,
+    "name": "Ground Floor"
+   }
+  ],
+  "linetypes": [
+   {
+    "description": "Solid line",
+    "name": "Continuous",
+    "pattern": []
+   },
+   {
+    "description": "__ __ __",
+    "name": "Dashed",
+    "pattern": [
+     12,
+     -6
+    ]
+   },
+   {
+    "description": "_ _ _ _",
+    "name": "Hidden",
+    "pattern": [
+     6,
+     -3
+    ]
+   },
+   {
+    "description": "____ _ ____ _",
+    "name": "Center",
+    "pattern": [
+     30,
+     -6,
+     6,
+     -6
+    ]
+   },
+   {
+    "description": "_____ _ _ _____",
+    "name": "Phantom",
+    "pattern": [
+     30,
+     -6,
+     6,
+     -6,
+     6,
+     -6
+    ]
+   },
+   {
+    "description": ". . . .",
+    "name": "Dot",
+    "pattern": [
+     0,
+     -3
+    ]
+   },
+   {
+    "description": "__ . __ .",
+    "name": "DashDot",
+    "pattern": [
+     12,
+     -3,
+     0,
+     -3
+    ]
+   },
+   {
+    "description": "__ __ . __",
+    "name": "Border",
+    "pattern": [
+     12,
+     -3,
+     12,
+     -3,
+     0,
+     -3
+    ]
+   },
+   {
+    "description": "__ . . __",
+    "name": "Divide",
+    "pattern": [
+     12,
+     -3,
+     0,
+     -3,
+     0,
+     -3
+    ]
+   }
+  ],
+  "materials": [
+   {
+    "color": {
+     "a": 1,
+     "b": 0.7,
+     "g": 0.72,
+     "r": 0.72
+    },
+    "cutPattern": "AR-CONC",
+    "metalness": 0,
+    "name": "Concrete",
+    "roughness": 0.9,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.22,
+     "g": 0.3,
+     "r": 0.62
+    },
+    "cutPattern": "ANSI31",
+    "metalness": 0,
+    "name": "Brick",
+    "roughness": 0.85,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.91,
+     "g": 0.94,
+     "r": 0.95
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0,
+    "name": "Plaster",
+    "roughness": 0.9,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.29,
+     "g": 0.46,
+     "r": 0.64
+    },
+    "cutPattern": "ANSI32",
+    "metalness": 0,
+    "name": "Wood",
+    "roughness": 0.6,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.86,
+     "g": 0.78,
+     "r": 0.62
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0,
+    "name": "Glass",
+    "roughness": 0.05,
+    "textureScale": 1000,
+    "transparency": 0.7
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.6,
+     "g": 0.57,
+     "r": 0.55
+    },
+    "cutPattern": "ANSI37",
+    "metalness": 1,
+    "name": "Steel",
+    "roughness": 0.35,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.83,
+     "g": 0.81,
+     "r": 0.8
+    },
+    "cutPattern": "SOLID",
+    "metalness": 1,
+    "name": "Aluminium",
+    "roughness": 0.3,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.16,
+     "g": 0.22,
+     "r": 0.55
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0,
+    "name": "Roof Tiles",
+    "roughness": 0.8,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.57,
+     "g": 0.63,
+     "r": 0.66
+    },
+    "cutPattern": "AR-SAND",
+    "metalness": 0,
+    "name": "Stone",
+    "roughness": 0.9,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.4,
+     "g": 0.85,
+     "r": 0.95
+    },
+    "cutPattern": "INSUL",
+    "metalness": 0,
+    "name": "Insulation",
+    "roughness": 1,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.25,
+     "g": 0.55,
+     "r": 0.35
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0,
+    "name": "Grass",
+    "roughness": 1,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.86,
+     "g": 0.88,
+     "r": 0.88
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0,
+    "name": "Tiles",
+    "roughness": 0.3,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.18,
+     "g": 0.2,
+     "r": 0.22
+    },
+    "cutPattern": "ANSI32",
+    "metalness": 0.0,
+    "name": "Charred Timber",
+    "roughness": 0.9,
+    "textureScale": 1000,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.56,
+     "g": 0.74,
+     "r": 0.86
+    },
+    "cutPattern": "ANSI32",
+    "metalness": 0.0,
+    "name": "Spruce",
+    "roughness": 0.7,
+    "textureScale": 1000,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.17,
+     "g": 0.16,
+     "r": 0.16
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.55,
+    "name": "Black Standing Seam",
+    "roughness": 0.42,
+    "textureScale": 1000,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.08,
+     "g": 0.07,
+     "r": 0.07
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.6,
+    "name": "Black Metal",
+    "roughness": 0.35,
+    "textureScale": 1000,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.45,
+     "g": 0.62,
+     "r": 0.76
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.0,
+    "name": "Oak Floor",
+    "roughness": 0.55,
+    "textureScale": 1000,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.91,
+     "g": 0.94,
+     "r": 0.95
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.0,
+    "name": "White Plaster",
+    "roughness": 0.9,
+    "textureScale": 1000,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.13,
+     "g": 0.22,
+     "r": 0.1
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.0,
+    "name": "Pine Needles",
+    "roughness": 0.95,
+    "textureScale": 1000,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.22,
+     "g": 0.55,
+     "r": 0.42
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.0,
+    "name": "Birch Leaves",
+    "roughness": 0.95,
+    "textureScale": 1000,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.16,
+     "g": 0.22,
+     "r": 0.3
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.0,
+    "name": "Bark",
+    "roughness": 0.95,
+    "textureScale": 1000,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.8,
+     "g": 0.86,
+     "r": 0.88
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.0,
+    "name": "Birch Bark",
+    "roughness": 0.8,
+    "textureScale": 1000,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.25,
+     "g": 0.47,
+     "r": 0.36
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.0,
+    "name": "Meadow",
+    "roughness": 1.0,
+    "textureScale": 1000,
+    "transparency": 0.0
+   }
+  ],
+  "namedViews": [],
+  "nextID": 103,
+  "openingTypes": [
+   {
+    "doorStyle": "single",
+    "frameWidth": 50,
+    "height": 2100,
+    "kind": "door",
+    "name": "Single Door 900x2100",
+    "params": {
+     "Finish": "Painted",
+     "FireRating": ""
+    },
+    "sill": 0,
+    "width": 900,
+    "windowStyle": "casement"
+   },
+   {
+    "doorStyle": "single",
+    "frameWidth": 50,
+    "height": 2100,
+    "kind": "door",
+    "name": "Single Door 800x2100",
+    "params": {},
+    "sill": 0,
+    "width": 800,
+    "windowStyle": "casement"
+   },
+   {
+    "doorStyle": "double",
+    "frameWidth": 50,
+    "height": 2100,
+    "kind": "door",
+    "name": "Double Door 1600x2100",
+    "params": {},
+    "sill": 0,
+    "width": 1600,
+    "windowStyle": "casement"
+   },
+   {
+    "doorStyle": "sliding",
+    "frameWidth": 50,
+    "height": 2200,
+    "kind": "door",
+    "name": "Sliding Door 1800x2200",
+    "params": {},
+    "sill": 0,
+    "width": 1800,
+    "windowStyle": "casement"
+   },
+   {
+    "doorStyle": "garage",
+    "frameWidth": 50,
+    "height": 2200,
+    "kind": "door",
+    "name": "Garage Door 2500x2200",
+    "params": {},
+    "sill": 0,
+    "width": 2500,
+    "windowStyle": "casement"
+   },
+   {
+    "doorStyle": "single",
+    "frameWidth": 50,
+    "height": 1200,
+    "kind": "window",
+    "name": "Casement 1200x1200",
+    "params": {
+     "UValue": "1.1"
+    },
+    "sill": 900,
+    "width": 1200,
+    "windowStyle": "casement"
+   },
+   {
+    "doorStyle": "single",
+    "frameWidth": 50,
+    "height": 1400,
+    "kind": "window",
+    "name": "Double Casement 1500x1400",
+    "params": {},
+    "sill": 800,
+    "width": 1500,
+    "windowStyle": "doubleCasement"
+   },
+   {
+    "doorStyle": "single",
+    "frameWidth": 50,
+    "height": 1800,
+    "kind": "window",
+    "name": "Fixed 600x1800",
+    "params": {},
+    "sill": 300,
+    "width": 600,
+    "windowStyle": "fixed"
+   },
+   {
+    "doorStyle": "single",
+    "frameWidth": 50,
+    "height": 2200,
+    "kind": "window",
+    "name": "Sliding 2400x2200",
+    "params": {},
+    "sill": 0,
+    "width": 2400,
+    "windowStyle": "sliding"
+   },
+   {
+    "doorStyle": "single",
+    "frameWidth": 50,
+    "height": 2100,
+    "kind": "opening",
+    "name": "Opening 1000x2100",
+    "params": {},
+    "sill": 0,
+    "width": 1000,
+    "windowStyle": "casement"
+   }
+  ],
+  "phases": [
+   "Existing",
+   "New Construction"
+  ],
+  "textStyles": [
+   {
+    "font": "Helvetica",
+    "height": 0,
+    "name": "Standard",
+    "oblique": 0,
+    "widthFactor": 1
+   }
+  ],
+  "units": "millimeters",
+  "variables": {},
+  "wallTypes": [
+   {
+    "name": "Generic 200",
+    "plies": [
+     {
+      "function": "Structure",
+      "material": "Concrete",
+      "thickness": 200
+     }
+    ]
+   },
+   {
+    "name": "Exterior Brick 365",
+    "plies": [
+     {
+      "function": "Finish",
+      "material": "Plaster",
+      "thickness": 15
+     },
+     {
+      "function": "Structure",
+      "material": "Brick",
+      "thickness": 240
+     },
+     {
+      "function": "Thermal",
+      "material": "Insulation",
+      "thickness": 100
+     },
+     {
+      "function": "Finish",
+      "material": "Plaster",
+      "thickness": 10
+     }
+    ]
+   },
+   {
+    "name": "Interior Partition 100",
+    "plies": [
+     {
+      "function": "Finish",
+      "material": "Plaster",
+      "thickness": 12.5
+     },
+     {
+      "function": "Structure",
+      "material": "Insulation",
+      "thickness": 75
+     },
+     {
+      "function": "Finish",
+      "material": "Plaster",
+      "thickness": 12.5
+     }
+    ]
+   },
+   {
+    "name": "Concrete 250",
+    "plies": [
+     {
+      "function": "Structure",
+      "material": "Concrete",
+      "thickness": 250
+     }
+    ]
+   }
+  ]
+ },
+ "formatVersion": 1
+}

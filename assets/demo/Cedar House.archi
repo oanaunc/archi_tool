@@ -1,0 +1,4223 @@
+{
+ "app": "Oanarina Archi Tool",
+ "document": {
+  "blocks": {},
+  "currentDimStyle": "Standard",
+  "currentLayer": "0",
+  "currentLevel": 0,
+  "dimStyles": [
+   {
+    "arrow": "closedFilled",
+    "arrowSize": 2.5,
+    "decimals": 0,
+    "extensionExtend": 1.25,
+    "extensionOffset": 1,
+    "linearScale": 1,
+    "name": "Standard",
+    "prefix": "",
+    "scale": 1,
+    "suffix": "",
+    "textGap": 0.8,
+    "textHeight": 2.5
+   },
+   {
+    "arrow": "architecturalTick",
+    "arrowSize": 150,
+    "decimals": 0,
+    "extensionExtend": 150,
+    "extensionOffset": 100,
+    "linearScale": 1,
+    "name": "Architectural 1:100",
+    "prefix": "",
+    "scale": 1,
+    "suffix": "",
+    "textGap": 80,
+    "textHeight": 250
+   }
+  ],
+  "elements": [
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 6000.0,
+      "y": 1500.0
+     },
+     "height": 6200.0,
+     "justification": "center",
+     "start": {
+      "x": 0.0,
+      "y": 1500.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 1,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Limestone",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 6000.0,
+      "y": 10000.0
+     },
+     "height": 6200.0,
+     "justification": "center",
+     "start": {
+      "x": 6000.0,
+      "y": 1500.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 2,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Limestone",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 0.0,
+      "y": 10000.0
+     },
+     "height": 6200.0,
+     "justification": "center",
+     "start": {
+      "x": 6000.0,
+      "y": 10000.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 3,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Limestone",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 0.0,
+      "y": 1500.0
+     },
+     "height": 6200.0,
+     "justification": "center",
+     "start": {
+      "x": 0.0,
+      "y": 10000.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 4,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Limestone",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 70.0,
+     "height": 1100.0,
+     "hostWall": 1,
+     "kind": "window",
+     "offset": 1500.0,
+     "sill": 900.0,
+     "type": "window",
+     "width": 2400.0,
+     "windowStyle": "fixed"
+    },
+    "id": 5,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 70.0,
+     "height": 1500.0,
+     "hostWall": 1,
+     "kind": "window",
+     "offset": 4300.0,
+     "sill": 3800.0,
+     "type": "window",
+     "width": 2400.0,
+     "windowStyle": "fixed"
+    },
+    "id": 6,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 70.0,
+     "height": 1100.0,
+     "hostWall": 4,
+     "kind": "window",
+     "offset": 3500.0,
+     "sill": 900.0,
+     "type": "window",
+     "width": 2200.0,
+     "windowStyle": "fixed"
+    },
+    "id": 7,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 70.0,
+     "height": 1500.0,
+     "hostWall": 4,
+     "kind": "window",
+     "offset": 6000.0,
+     "sill": 3800.0,
+     "type": "window",
+     "width": 1800.0,
+     "windowStyle": "fixed"
+    },
+    "id": 8,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 70.0,
+     "height": 2400.0,
+     "hostWall": 3,
+     "kind": "window",
+     "offset": 3000.0,
+     "sill": 300.0,
+     "type": "window",
+     "width": 3000.0,
+     "windowStyle": "fixed"
+    },
+    "id": 9,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 6200.0,
+     "boundary": [
+      {
+       "x": 0.0,
+       "y": 1500.0
+      },
+      {
+       "x": 6000.0,
+       "y": 1500.0
+      },
+      {
+       "x": 6000.0,
+       "y": 10000.0
+      },
+      {
+       "x": 0.0,
+       "y": 10000.0
+      }
+     ],
+     "eaveEdge": 0,
+     "kind": "flat",
+     "overhang": 700.0,
+     "pitch": 0.0,
+     "thickness": 320.0,
+     "type": "roof"
+    },
+    "id": 10,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Black Fascia",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 11000.0,
+      "y": 0.0
+     },
+     "height": 7200.0,
+     "justification": "center",
+     "start": {
+      "x": 6000.0,
+      "y": 0.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 11,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Cedar",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 11000.0,
+      "y": 7500.0
+     },
+     "height": 7200.0,
+     "justification": "center",
+     "start": {
+      "x": 11000.0,
+      "y": 0.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 12,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Cedar",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 6000.0,
+      "y": 7500.0
+     },
+     "height": 7200.0,
+     "justification": "center",
+     "start": {
+      "x": 11000.0,
+      "y": 7500.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 13,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Cedar",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 6000.0,
+      "y": 0.0
+     },
+     "height": 7200.0,
+     "justification": "center",
+     "start": {
+      "x": 6000.0,
+      "y": 7500.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 14,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Cedar",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 70.0,
+     "height": 5300.0,
+     "hostWall": 11,
+     "kind": "window",
+     "offset": 1650.0,
+     "sill": 1600.0,
+     "type": "window",
+     "width": 1300.0,
+     "windowStyle": "fixed"
+    },
+    "id": 15,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 70.0,
+     "height": 1400.0,
+     "hostWall": 13,
+     "kind": "window",
+     "offset": 2500.0,
+     "sill": 4200.0,
+     "type": "window",
+     "width": 1600.0,
+     "windowStyle": "fixed"
+    },
+    "id": 16,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 7200.0,
+     "boundary": [
+      {
+       "x": 6000.0,
+       "y": 0.0
+      },
+      {
+       "x": 11000.0,
+       "y": 0.0
+      },
+      {
+       "x": 11000.0,
+       "y": 7500.0
+      },
+      {
+       "x": 6000.0,
+       "y": 7500.0
+      }
+     ],
+     "eaveEdge": 2,
+     "kind": "shed",
+     "overhang": 1300.0,
+     "pitch": 4.0,
+     "thickness": 300.0,
+     "type": "roof"
+    },
+    "id": 17,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Black Fascia",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 17600.0,
+      "y": 3200.0
+     },
+     "height": 3300.0,
+     "justification": "center",
+     "start": {
+      "x": 11000.0,
+      "y": 3200.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 18,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Limestone",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 21000.0,
+      "y": 3200.0
+     },
+     "height": 3300.0,
+     "justification": "center",
+     "start": {
+      "x": 17600.0,
+      "y": 3200.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 19,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Cedar",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 70.0,
+     "height": 2900.0,
+     "hostWall": 18,
+     "kind": "window",
+     "offset": 700.0,
+     "sill": 0.0,
+     "type": "window",
+     "width": 900.0,
+     "windowStyle": "fixed"
+    },
+    "id": 20,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 70.0,
+     "height": 2700.0,
+     "hostWall": 18,
+     "kind": "door",
+     "offset": 5300.0,
+     "sill": 0.0,
+     "type": "door",
+     "width": 1100.0,
+     "windowStyle": "fixed"
+    },
+    "id": 21,
+    "layer": "A-DOOR",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 70.0,
+     "height": 2700.0,
+     "hostWall": 18,
+     "kind": "window",
+     "offset": 6250.0,
+     "sill": 0.0,
+     "type": "window",
+     "width": 600.0,
+     "windowStyle": "fixed"
+    },
+    "id": 22,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 70.0,
+     "height": 2800.0,
+     "hostWall": 19,
+     "kind": "window",
+     "offset": 900.0,
+     "sill": 200.0,
+     "type": "window",
+     "width": 1500.0,
+     "windowStyle": "fixed"
+    },
+    "id": 23,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 21000.0,
+      "y": 10000.0
+     },
+     "height": 3300.0,
+     "justification": "center",
+     "start": {
+      "x": 21000.0,
+      "y": 3200.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 24,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Limestone",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 11000.0,
+      "y": 10000.0
+     },
+     "height": 3300.0,
+     "justification": "center",
+     "start": {
+      "x": 21000.0,
+      "y": 10000.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 25,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Limestone",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 11000.0,
+      "y": 10000.0
+     },
+     "height": 3300.0,
+     "justification": "center",
+     "start": {
+      "x": 11000.0,
+      "y": 7500.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 26,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Limestone",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 11000.0,
+       "y": -400.0
+      },
+      {
+       "x": 21600.0,
+       "y": -400.0
+      },
+      {
+       "x": 21600.0,
+       "y": 10300.0
+      },
+      {
+       "x": 11000.0,
+       "y": 10300.0
+      }
+     ],
+     "holes": [],
+     "thickness": 450.0,
+     "topOffset": 3750.0,
+     "type": "slab"
+    },
+    "id": 27,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Black Fascia",
+    "name": "Canopy roof",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 16200.0,
+      "y": 5600.0
+     },
+     "height": 6400.0,
+     "justification": "center",
+     "start": {
+      "x": 11200.0,
+      "y": 5600.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 28,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Limestone",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 16200.0,
+      "y": 10000.0
+     },
+     "height": 6400.0,
+     "justification": "center",
+     "start": {
+      "x": 16200.0,
+      "y": 5600.0
+     },
+     "sweeps": [],
+     "thickness": 300.0,
+     "type": "wall"
+    },
+    "id": 29,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Limestone",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 70.0,
+     "height": 1400.0,
+     "hostWall": 28,
+     "kind": "window",
+     "offset": 3900.0,
+     "sill": 4300.0,
+     "type": "window",
+     "width": 1400.0,
+     "windowStyle": "fixed"
+    },
+    "id": 30,
+    "layer": "A-GLAZ",
+    "level": 0,
+    "material": "Black Metal",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 6400.0,
+     "boundary": [
+      {
+       "x": 11200.0,
+       "y": 5600.0
+      },
+      {
+       "x": 16200.0,
+       "y": 5600.0
+      },
+      {
+       "x": 16200.0,
+       "y": 10000.0
+      },
+      {
+       "x": 11200.0,
+       "y": 10000.0
+      }
+     ],
+     "eaveEdge": 0,
+     "kind": "flat",
+     "overhang": 350.0,
+     "pitch": 0.0,
+     "thickness": 320.0,
+     "type": "roof"
+    },
+    "id": 31,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Black Fascia",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "bulge": 0.0,
+     "end": {
+      "x": 14600.0,
+      "y": 10000.0
+     },
+     "height": 3000.0,
+     "justification": "center",
+     "start": {
+      "x": 14600.0,
+      "y": 3200.0
+     },
+     "sweeps": [],
+     "thickness": 120.0,
+     "type": "wall"
+    },
+    "id": 32,
+    "layer": "A-WALL",
+    "level": 0,
+    "material": "Limestone",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "doorStyle": "single",
+     "flipFacing": false,
+     "flipHand": false,
+     "frameWidth": 70.0,
+     "height": 2400.0,
+     "hostWall": 32,
+     "kind": "opening",
+     "offset": 3400.0,
+     "sill": 0.0,
+     "type": "opening",
+     "width": 1800.0,
+     "windowStyle": "fixed"
+    },
+    "id": 33,
+    "layer": "A-DOOR",
+    "level": 0,
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 11600.0,
+       "y": 0.0
+      },
+      {
+       "x": 17600.0,
+       "y": 0.0
+      },
+      {
+       "x": 17600.0,
+       "y": 3200.0
+      },
+      {
+       "x": 11600.0,
+       "y": 3200.0
+      }
+     ],
+     "holes": [],
+     "thickness": 200.0,
+     "topOffset": 180.0,
+     "type": "slab"
+    },
+    "id": 34,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Concrete Paving",
+    "name": "Porch",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 12600.0,
+       "y": -1100.0
+      },
+      {
+       "x": 17400.0,
+       "y": -1100.0
+      },
+      {
+       "x": 17400.0,
+       "y": 0.0
+      },
+      {
+       "x": 12600.0,
+       "y": 0.0
+      }
+     ],
+     "holes": [],
+     "thickness": 180.0,
+     "topOffset": 0.0,
+     "type": "slab"
+    },
+    "id": 35,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Concrete Paving",
+    "name": "Step",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": -4000.0,
+       "y": -12000.0
+      },
+      {
+       "x": 26000.0,
+       "y": -12000.0
+      },
+      {
+       "x": 26000.0,
+       "y": -1100.0
+      },
+      {
+       "x": -4000.0,
+       "y": -1100.0
+      }
+     ],
+     "holes": [],
+     "thickness": 120.0,
+     "topOffset": 0.0,
+     "type": "slab"
+    },
+    "id": 36,
+    "layer": "C-TOPO",
+    "level": 0,
+    "material": "Concrete Paving",
+    "name": "Forecourt",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": -10000.0,
+       "y": -18000.0
+      },
+      {
+       "x": 32000.0,
+       "y": -18000.0
+      },
+      {
+       "x": 32000.0,
+       "y": 20000.0
+      },
+      {
+       "x": -10000.0,
+       "y": 20000.0
+      }
+     ],
+     "holes": [],
+     "thickness": 60.0,
+     "topOffset": -130.0,
+     "type": "slab"
+    },
+    "id": 37,
+    "layer": "C-TOPO",
+    "level": 0,
+    "material": "Lawn",
+    "name": "Lawn",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": -150.0,
+       "y": 1350.0
+      },
+      {
+       "x": 6150.0,
+       "y": 1350.0
+      },
+      {
+       "x": 6150.0,
+       "y": 10150.0
+      },
+      {
+       "x": -150.0,
+       "y": 10150.0
+      }
+     ],
+     "holes": [],
+     "thickness": 250.0,
+     "topOffset": 0.0,
+     "type": "slab"
+    },
+    "id": 38,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Oak Floor",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 5850.0,
+       "y": -150.0
+      },
+      {
+       "x": 11150.0,
+       "y": -150.0
+      },
+      {
+       "x": 11150.0,
+       "y": 7650.0
+      },
+      {
+       "x": 5850.0,
+       "y": 7650.0
+      }
+     ],
+     "holes": [],
+     "thickness": 250.0,
+     "topOffset": 0.0,
+     "type": "slab"
+    },
+    "id": 39,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Oak Floor",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 11000.0,
+       "y": 3050.0
+      },
+      {
+       "x": 21150.0,
+       "y": 3050.0
+      },
+      {
+       "x": 21150.0,
+       "y": 10150.0
+      },
+      {
+       "x": 11000.0,
+       "y": 10150.0
+      }
+     ],
+     "holes": [],
+     "thickness": 250.0,
+     "topOffset": 0.0,
+     "type": "slab"
+    },
+    "id": 40,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Oak Floor",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 0.0,
+       "y": 1500.0
+      },
+      {
+       "x": 11000.0,
+       "y": 1500.0
+      },
+      {
+       "x": 11000.0,
+       "y": 10000.0
+      },
+      {
+       "x": 0.0,
+       "y": 10000.0
+      }
+     ],
+     "holes": [],
+     "thickness": 250.0,
+     "topOffset": 0.0,
+     "type": "slab"
+    },
+    "id": 41,
+    "layer": "A-ELEMENTS",
+    "level": 1,
+    "material": "Oak Floor",
+    "name": "Upper floor",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "direction": 1.5707963267948966,
+     "kind": "straight",
+     "riserCount": 18,
+     "start": {
+      "x": 10200.0,
+      "y": 1300.0
+     },
+     "totalRise": 3200.0,
+     "treadDepth": 280.0,
+     "type": "stair",
+     "width": 1100.0
+    },
+    "id": 42,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Oak Floor",
+    "name": "",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "category": "Planting",
+     "position": {
+      "x": 3200.0,
+      "y": 700.0
+     },
+     "rotation": 0.0,
+     "size": {
+      "x": 5600.0,
+      "y": 700.0,
+      "z": 750.0
+     },
+     "type": "component"
+    },
+    "id": 43,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Hedge",
+    "name": "Hedge",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "category": "Planting",
+     "position": {
+      "x": 8500.0,
+      "y": -700.0
+     },
+     "rotation": 0.0,
+     "size": {
+      "x": 5200.0,
+      "y": 700.0,
+      "z": 650.0
+     },
+     "type": "component"
+    },
+    "id": 44,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Hedge",
+    "name": "Hedge",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "category": "Planting",
+     "position": {
+      "x": 19300.0,
+      "y": 2500.0
+     },
+     "rotation": 0.0,
+     "size": {
+      "x": 3600.0,
+      "y": 700.0,
+      "z": 650.0
+     },
+     "type": "component"
+    },
+    "id": 45,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Hedge",
+    "name": "Hedge",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "category": "Planting",
+     "position": {
+      "x": 11400.0,
+      "y": 1600.0
+     },
+     "rotation": 0.0,
+     "size": {
+      "x": 700.0,
+      "y": 2600.0,
+      "z": 800.0
+     },
+     "type": "component"
+    },
+    "id": 46,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Hedge",
+    "name": "Hedge",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 150.0,
+       "y": 1650.0
+      },
+      {
+       "x": 5850.0,
+       "y": 1650.0
+      },
+      {
+       "x": 5850.0,
+       "y": 9850.0
+      },
+      {
+       "x": 150.0,
+       "y": 9850.0
+      }
+     ],
+     "height": 2800.0,
+     "name": "Living",
+     "number": "01",
+     "type": "space"
+    },
+    "id": 47,
+    "layer": "A-AREA",
+    "level": 0,
+    "name": "Living",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 6150.0,
+       "y": 150.0
+      },
+      {
+       "x": 10850.0,
+       "y": 150.0
+      },
+      {
+       "x": 10850.0,
+       "y": 7350.0
+      },
+      {
+       "x": 6150.0,
+       "y": 7350.0
+      }
+     ],
+     "height": 2800.0,
+     "name": "Stair Hall",
+     "number": "02",
+     "type": "space"
+    },
+    "id": 48,
+    "layer": "A-AREA",
+    "level": 0,
+    "name": "Stair Hall",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 11150.0,
+       "y": 3350.0
+      },
+      {
+       "x": 14540.0,
+       "y": 3350.0
+      },
+      {
+       "x": 14540.0,
+       "y": 9850.0
+      },
+      {
+       "x": 11150.0,
+       "y": 9850.0
+      }
+     ],
+     "height": 2800.0,
+     "name": "Entry",
+     "number": "03",
+     "type": "space"
+    },
+    "id": 49,
+    "layer": "A-AREA",
+    "level": 0,
+    "name": "Entry",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 14660.0,
+       "y": 3350.0
+      },
+      {
+       "x": 20850.0,
+       "y": 3350.0
+      },
+      {
+       "x": 20850.0,
+       "y": 9850.0
+      },
+      {
+       "x": 14660.0,
+       "y": 9850.0
+      }
+     ],
+     "height": 2800.0,
+     "name": "Kitchen & Dining",
+     "number": "04",
+     "type": "space"
+    },
+    "id": 50,
+    "layer": "A-AREA",
+    "level": 0,
+    "name": "Kitchen & Dining",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 11600.0,
+       "y": 150.0
+      },
+      {
+       "x": 17600.0,
+       "y": 150.0
+      },
+      {
+       "x": 17600.0,
+       "y": 3150.0
+      },
+      {
+       "x": 11600.0,
+       "y": 3150.0
+      }
+     ],
+     "height": 2800.0,
+     "name": "Porch",
+     "number": "05",
+     "type": "space"
+    },
+    "id": 51,
+    "layer": "A-AREA",
+    "level": 0,
+    "name": "Porch",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "boundary": [
+      {
+       "x": 150.0,
+       "y": 1650.0
+      },
+      {
+       "x": 10850.0,
+       "y": 1650.0
+      },
+      {
+       "x": 10850.0,
+       "y": 9850.0
+      },
+      {
+       "x": 150.0,
+       "y": 9850.0
+      }
+     ],
+     "height": 2800.0,
+     "name": "Upper Lounge",
+     "number": "11",
+     "type": "space"
+    },
+    "id": 52,
+    "layer": "A-AREA",
+    "level": 1,
+    "name": "Upper Lounge",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "category": "Furniture",
+     "position": {
+      "x": 3000.0,
+      "y": 5200.0
+     },
+     "rotation": 0.0,
+     "size": {
+      "x": 2600.0,
+      "y": 950.0,
+      "z": 780.0
+     },
+     "type": "component"
+    },
+    "id": 53,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Oak Floor",
+    "name": "Sofa",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "category": "Furniture",
+     "position": {
+      "x": 17800.0,
+      "y": 6600.0
+     },
+     "rotation": 0.0,
+     "size": {
+      "x": 2400.0,
+      "y": 1000.0,
+      "z": 750.0
+     },
+     "type": "component"
+    },
+    "id": 54,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Oak Floor",
+    "name": "Dining table",
+    "props": {}
+   },
+   {
+    "geometry": {
+     "baseOffset": 0.0,
+     "category": "Furniture",
+     "position": {
+      "x": 19800.0,
+      "y": 8900.0
+     },
+     "rotation": 0.0,
+     "size": {
+      "x": 2200.0,
+      "y": 650.0,
+      "z": 900.0
+     },
+     "type": "component"
+    },
+    "id": 55,
+    "layer": "A-ELEMENTS",
+    "level": 0,
+    "material": "Limestone",
+    "name": "Kitchen",
+    "props": {}
+   }
+  ],
+  "entities": [
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 4900.0,
+      "y": 400.0,
+      "z": 0.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 92.0,
+      "y": 92.0,
+      "z": 3449.9999999999995
+     },
+     "type": "solid"
+    },
+    "id": 56,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 4900.0,
+      "y": 400.0,
+      "z": 2875.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 644.0,
+      "y": 644.0,
+      "z": 644.0
+     },
+     "type": "solid"
+    },
+    "id": 57,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 5084.0,
+      "y": 273.5,
+      "z": 3392.4999999999995
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 781.9999999999999,
+      "y": 781.9999999999999,
+      "z": 781.9999999999999
+     },
+     "type": "solid"
+    },
+    "id": 58,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 4727.5,
+      "y": 515.0,
+      "z": 3909.9999999999995
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 804.9999999999999,
+      "y": 804.9999999999999,
+      "z": 804.9999999999999
+     },
+     "type": "solid"
+    },
+    "id": 59,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 5026.5,
+      "y": 572.5,
+      "z": 4427.5
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 793.4999999999999,
+      "y": 793.4999999999999,
+      "z": 793.4999999999999
+     },
+     "type": "solid"
+    },
+    "id": 60,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 4762.0,
+      "y": 296.5,
+      "z": 4945.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 758.9999999999999,
+      "y": 758.9999999999999,
+      "z": 758.9999999999999
+     },
+     "type": "solid"
+    },
+    "id": 61,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 5049.5,
+      "y": 446.0,
+      "z": 5462.5
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 690.0,
+      "y": 690.0,
+      "z": 690.0
+     },
+     "type": "solid"
+    },
+    "id": 62,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 4831.0,
+      "y": 538.0,
+      "z": 5979.999999999999
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 621.0,
+      "y": 621.0,
+      "z": 621.0
+     },
+     "type": "solid"
+    },
+    "id": 63,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 4946.0,
+      "y": 331.0,
+      "z": 6439.999999999999
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 529.0,
+      "y": 529.0,
+      "z": 529.0
+     },
+     "type": "solid"
+    },
+    "id": 64,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 4900.0,
+      "y": 400.0,
+      "z": 6899.999999999999
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 413.99999999999994,
+      "y": 413.99999999999994,
+      "z": 413.99999999999994
+     },
+     "type": "solid"
+    },
+    "id": 65,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 4900.0,
+      "y": 400.0,
+      "z": 7244.999999999999
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 276.0,
+      "y": 276.0,
+      "z": 276.0
+     },
+     "type": "solid"
+    },
+    "id": 66,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 11500.0,
+      "y": 2300.0,
+      "z": 0.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 84.0,
+      "y": 84.0,
+      "z": 3150.0
+     },
+     "type": "solid"
+    },
+    "id": 67,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 11500.0,
+      "y": 2300.0,
+      "z": 2625.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 588.0,
+      "y": 588.0,
+      "z": 588.0
+     },
+     "type": "solid"
+    },
+    "id": 68,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 11668.0,
+      "y": 2184.5,
+      "z": 3097.5
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 714.0,
+      "y": 714.0,
+      "z": 714.0
+     },
+     "type": "solid"
+    },
+    "id": 69,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 11342.5,
+      "y": 2405.0,
+      "z": 3570.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 735.0,
+      "y": 735.0,
+      "z": 735.0
+     },
+     "type": "solid"
+    },
+    "id": 70,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 11615.5,
+      "y": 2457.5,
+      "z": 4042.5
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 724.5,
+      "y": 724.5,
+      "z": 724.5
+     },
+     "type": "solid"
+    },
+    "id": 71,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 11374.0,
+      "y": 2205.5,
+      "z": 4515.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 693.0,
+      "y": 693.0,
+      "z": 693.0
+     },
+     "type": "solid"
+    },
+    "id": 72,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 11636.5,
+      "y": 2342.0,
+      "z": 4987.5
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 630.0,
+      "y": 630.0,
+      "z": 630.0
+     },
+     "type": "solid"
+    },
+    "id": 73,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 11437.0,
+      "y": 2426.0,
+      "z": 5460.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 567.0,
+      "y": 567.0,
+      "z": 567.0
+     },
+     "type": "solid"
+    },
+    "id": 74,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 11542.0,
+      "y": 2237.0,
+      "z": 5880.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 483.0,
+      "y": 483.0,
+      "z": 483.0
+     },
+     "type": "solid"
+    },
+    "id": 75,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 11500.0,
+      "y": 2300.0,
+      "z": 6300.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 378.0,
+      "y": 378.0,
+      "z": 378.0
+     },
+     "type": "solid"
+    },
+    "id": 76,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 11500.0,
+      "y": 2300.0,
+      "z": 6615.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 252.0,
+      "y": 252.0,
+      "z": 252.0
+     },
+     "type": "solid"
+    },
+    "id": 77,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -2500.0,
+      "y": 3500.0,
+      "z": 0.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 96.0,
+      "y": 96.0,
+      "z": 3600.0
+     },
+     "type": "solid"
+    },
+    "id": 78,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -2500.0,
+      "y": 3500.0,
+      "z": 3000.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 672.0,
+      "y": 672.0,
+      "z": 672.0
+     },
+     "type": "solid"
+    },
+    "id": 79,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -2308.0,
+      "y": 3368.0,
+      "z": 3540.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 816.0,
+      "y": 816.0,
+      "z": 816.0
+     },
+     "type": "solid"
+    },
+    "id": 80,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -2680.0,
+      "y": 3620.0,
+      "z": 4080.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 840.0,
+      "y": 840.0,
+      "z": 840.0
+     },
+     "type": "solid"
+    },
+    "id": 81,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -2368.0,
+      "y": 3680.0,
+      "z": 4620.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 828.0,
+      "y": 828.0,
+      "z": 828.0
+     },
+     "type": "solid"
+    },
+    "id": 82,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -2644.0,
+      "y": 3392.0,
+      "z": 5160.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 792.0,
+      "y": 792.0,
+      "z": 792.0
+     },
+     "type": "solid"
+    },
+    "id": 83,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -2344.0,
+      "y": 3548.0,
+      "z": 5700.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 720.0,
+      "y": 720.0,
+      "z": 720.0
+     },
+     "type": "solid"
+    },
+    "id": 84,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -2572.0,
+      "y": 3644.0,
+      "z": 6240.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 648.0,
+      "y": 648.0,
+      "z": 648.0
+     },
+     "type": "solid"
+    },
+    "id": 85,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -2452.0,
+      "y": 3428.0,
+      "z": 6720.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 552.0,
+      "y": 552.0,
+      "z": 552.0
+     },
+     "type": "solid"
+    },
+    "id": 86,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -2500.0,
+      "y": 3500.0,
+      "z": 7200.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 432.0,
+      "y": 432.0,
+      "z": 432.0
+     },
+     "type": "solid"
+    },
+    "id": 87,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -2500.0,
+      "y": 3500.0,
+      "z": 7560.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 288.0,
+      "y": 288.0,
+      "z": 288.0
+     },
+     "type": "solid"
+    },
+    "id": 88,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 23500.0,
+      "y": 5000.0,
+      "z": 0.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 88.0,
+      "y": 88.0,
+      "z": 3300.0000000000005
+     },
+     "type": "solid"
+    },
+    "id": 89,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 23500.0,
+      "y": 5000.0,
+      "z": 2750.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 616.0,
+      "y": 616.0,
+      "z": 616.0
+     },
+     "type": "solid"
+    },
+    "id": 90,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 23676.0,
+      "y": 4879.0,
+      "z": 3245.0000000000005
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 748.0000000000001,
+      "y": 748.0000000000001,
+      "z": 748.0000000000001
+     },
+     "type": "solid"
+    },
+    "id": 91,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 23335.0,
+      "y": 5110.0,
+      "z": 3740.0000000000005
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 770.0000000000001,
+      "y": 770.0000000000001,
+      "z": 770.0000000000001
+     },
+     "type": "solid"
+    },
+    "id": 92,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 23621.0,
+      "y": 5165.0,
+      "z": 4235.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 759.0000000000001,
+      "y": 759.0000000000001,
+      "z": 759.0000000000001
+     },
+     "type": "solid"
+    },
+    "id": 93,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 23368.0,
+      "y": 4901.0,
+      "z": 4730.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 726.0000000000001,
+      "y": 726.0000000000001,
+      "z": 726.0000000000001
+     },
+     "type": "solid"
+    },
+    "id": 94,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 23643.0,
+      "y": 5044.0,
+      "z": 5225.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 660.0,
+      "y": 660.0,
+      "z": 660.0
+     },
+     "type": "solid"
+    },
+    "id": 95,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 23434.0,
+      "y": 5132.0,
+      "z": 5720.000000000001
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 594.0,
+      "y": 594.0,
+      "z": 594.0
+     },
+     "type": "solid"
+    },
+    "id": 96,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 23544.0,
+      "y": 4934.0,
+      "z": 6160.000000000001
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 506.00000000000006,
+      "y": 506.00000000000006,
+      "z": 506.00000000000006
+     },
+     "type": "solid"
+    },
+    "id": 97,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 23500.0,
+      "y": 5000.0,
+      "z": 6600.000000000001
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 396.00000000000006,
+      "y": 396.00000000000006,
+      "z": 396.00000000000006
+     },
+     "type": "solid"
+    },
+    "id": 98,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 23500.0,
+      "y": 5000.0,
+      "z": 6930.000000000001
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 264.0,
+      "y": 264.0,
+      "z": 264.0
+     },
+     "type": "solid"
+    },
+    "id": 99,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -3000.0,
+      "y": 12000.0,
+      "z": 0.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 104.0,
+      "y": 104.0,
+      "z": 3900.0
+     },
+     "type": "solid"
+    },
+    "id": 100,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -3000.0,
+      "y": 12000.0,
+      "z": 3250.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 728.0,
+      "y": 728.0,
+      "z": 728.0
+     },
+     "type": "solid"
+    },
+    "id": 101,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -2792.0,
+      "y": 11857.0,
+      "z": 3835.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 884.0,
+      "y": 884.0,
+      "z": 884.0
+     },
+     "type": "solid"
+    },
+    "id": 102,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -3195.0,
+      "y": 12130.0,
+      "z": 4420.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 910.0,
+      "y": 910.0,
+      "z": 910.0
+     },
+     "type": "solid"
+    },
+    "id": 103,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -2857.0,
+      "y": 12195.0,
+      "z": 5005.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 897.0,
+      "y": 897.0,
+      "z": 897.0
+     },
+     "type": "solid"
+    },
+    "id": 104,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -3156.0,
+      "y": 11883.0,
+      "z": 5590.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 858.0,
+      "y": 858.0,
+      "z": 858.0
+     },
+     "type": "solid"
+    },
+    "id": 105,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -2831.0,
+      "y": 12052.0,
+      "z": 6175.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 780.0,
+      "y": 780.0,
+      "z": 780.0
+     },
+     "type": "solid"
+    },
+    "id": 106,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -3078.0,
+      "y": 12156.0,
+      "z": 6760.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 702.0,
+      "y": 702.0,
+      "z": 702.0
+     },
+     "type": "solid"
+    },
+    "id": 107,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -2948.0,
+      "y": 11922.0,
+      "z": 7280.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 598.0,
+      "y": 598.0,
+      "z": 598.0
+     },
+     "type": "solid"
+    },
+    "id": 108,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -3000.0,
+      "y": 12000.0,
+      "z": 7800.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 468.0,
+      "y": 468.0,
+      "z": 468.0
+     },
+     "type": "solid"
+    },
+    "id": 109,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": -3000.0,
+      "y": 12000.0,
+      "z": 8190.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 312.0,
+      "y": 312.0,
+      "z": 312.0
+     },
+     "type": "solid"
+    },
+    "id": 110,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "cylinder",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 24500.0,
+      "y": 13000.0,
+      "z": 0.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 100.0,
+      "y": 100.0,
+      "z": 3750.0
+     },
+     "type": "solid"
+    },
+    "id": 111,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Bark"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 24500.0,
+      "y": 13000.0,
+      "z": 3125.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 700.0,
+      "y": 700.0,
+      "z": 700.0
+     },
+     "type": "solid"
+    },
+    "id": 112,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 24700.0,
+      "y": 12862.5,
+      "z": 3687.5
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 850.0,
+      "y": 850.0,
+      "z": 850.0
+     },
+     "type": "solid"
+    },
+    "id": 113,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 24312.5,
+      "y": 13125.0,
+      "z": 4250.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 875.0,
+      "y": 875.0,
+      "z": 875.0
+     },
+     "type": "solid"
+    },
+    "id": 114,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 24637.5,
+      "y": 13187.5,
+      "z": 4812.5
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 862.5,
+      "y": 862.5,
+      "z": 862.5
+     },
+     "type": "solid"
+    },
+    "id": 115,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 24350.0,
+      "y": 12887.5,
+      "z": 5375.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 825.0,
+      "y": 825.0,
+      "z": 825.0
+     },
+     "type": "solid"
+    },
+    "id": 116,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 24662.5,
+      "y": 13050.0,
+      "z": 5937.5
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 750.0,
+      "y": 750.0,
+      "z": 750.0
+     },
+     "type": "solid"
+    },
+    "id": 117,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 24425.0,
+      "y": 13150.0,
+      "z": 6500.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 675.0,
+      "y": 675.0,
+      "z": 675.0
+     },
+     "type": "solid"
+    },
+    "id": 118,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 24550.0,
+      "y": 12925.0,
+      "z": 7000.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 575.0,
+      "y": 575.0,
+      "z": 575.0
+     },
+     "type": "solid"
+    },
+    "id": 119,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 24500.0,
+      "y": 13000.0,
+      "z": 7500.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 450.0,
+      "y": 450.0,
+      "z": 450.0
+     },
+     "type": "solid"
+    },
+    "id": 120,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "height": 0.0,
+     "kind": "sphere",
+     "meshTriangles": [],
+     "meshVertices": [],
+     "origin": {
+      "x": 24500.0,
+      "y": 13000.0,
+      "z": 7875.0
+     },
+     "profile": [],
+     "rotation": 0.0,
+     "size": {
+      "x": 300.0,
+      "y": 300.0,
+      "z": 300.0
+     },
+     "type": "solid"
+    },
+    "id": 121,
+    "layer": "L-PLNT",
+    "props": {
+     "material": "Young Leaves"
+    }
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "kind": "linear",
+     "points": [
+      {
+       "x": 0.0,
+       "y": 1500.0
+      },
+      {
+       "x": 21000.0,
+       "y": 1500.0
+      },
+      {
+       "x": 10500.0,
+       "y": 12500.0
+      }
+     ],
+     "rotation": 0.0,
+     "style": "Architectural 1:100",
+     "type": "dimension"
+    },
+    "id": 122,
+    "layer": "A-ANNO-DIMS",
+    "props": {}
+   },
+   {
+    "color": "ByLayer",
+    "geometry": {
+     "kind": "linear",
+     "points": [
+      {
+       "x": 0.0,
+       "y": 1500.0
+      },
+      {
+       "x": 0.0,
+       "y": 10000.0
+      },
+      {
+       "x": -2000.0,
+       "y": 5750.0
+      }
+     ],
+     "rotation": 1.5707963267948966,
+     "style": "Architectural 1:100",
+     "type": "dimension"
+    },
+    "id": 123,
+    "layer": "A-ANNO-DIMS",
+    "props": {}
+   }
+  ],
+  "formatVersion": 1,
+  "info": {
+   "address": "Contemporary residence",
+   "author": "Oana Rinaldi",
+   "client": "",
+   "latitude": 47.6,
+   "longitude": -122.3,
+   "name": "Cedar House",
+   "northAngle": 0,
+   "number": "CH-01"
+  },
+  "keynotes": {},
+  "layers": [
+   {
+    "color": {
+     "a": 1,
+     "b": 1,
+     "g": 1,
+     "r": 1
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.25,
+    "locked": false,
+    "name": "0",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.95,
+     "g": 0.95,
+     "r": 0.95
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.5,
+    "locked": false,
+    "name": "A-WALL",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 1,
+     "g": 0.8,
+     "r": 0.35
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.25,
+    "locked": false,
+    "name": "A-DOOR",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.9,
+     "g": 0.9,
+     "r": 0.4
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.18,
+    "locked": false,
+    "name": "A-GLAZ",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.85,
+     "g": 0.85,
+     "r": 0.85
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.35,
+    "locked": false,
+    "name": "A-ELEMENTS",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.094,
+     "g": 0.773,
+     "r": 0.961
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.18,
+    "locked": false,
+    "name": "A-ANNO-DIMS",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 1,
+     "g": 1,
+     "r": 1
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.18,
+    "locked": false,
+    "name": "A-ANNO-TEXT",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.3,
+     "g": 0.55,
+     "r": 1
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.13,
+    "locked": false,
+    "name": "A-AREA",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.3,
+     "g": 0.3,
+     "r": 0.9
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Center",
+    "lineweight": 0.13,
+    "locked": false,
+    "name": "S-GRID",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.35,
+     "g": 0.72,
+     "r": 0.4
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Continuous",
+    "lineweight": 0.18,
+    "locked": false,
+    "name": "L-PLNT",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.45,
+     "g": 0.55,
+     "r": 0.5
+    },
+    "description": "",
+    "frozen": false,
+    "linetype": "Hidden",
+    "lineweight": 0.13,
+    "locked": false,
+    "name": "C-TOPO",
+    "plot": true,
+    "transparency": 0,
+    "visible": true
+   }
+  ],
+  "layouts": [
+   {
+    "entities": [],
+    "name": "Sheet 1",
+    "paper": {
+     "height": 297,
+     "name": "A3",
+     "width": 420
+    },
+    "titleBlock": {},
+    "viewports": []
+   }
+  ],
+  "levels": [
+   {
+    "elevation": 0.0,
+    "height": 3200.0,
+    "id": 0,
+    "name": "Ground Floor"
+   },
+   {
+    "elevation": 3200.0,
+    "height": 3000.0,
+    "id": 1,
+    "name": "Upper Floor"
+   }
+  ],
+  "linetypes": [
+   {
+    "description": "Solid line",
+    "name": "Continuous",
+    "pattern": []
+   },
+   {
+    "description": "__ __ __",
+    "name": "Dashed",
+    "pattern": [
+     12,
+     -6
+    ]
+   },
+   {
+    "description": "_ _ _ _",
+    "name": "Hidden",
+    "pattern": [
+     6,
+     -3
+    ]
+   },
+   {
+    "description": "____ _ ____ _",
+    "name": "Center",
+    "pattern": [
+     30,
+     -6,
+     6,
+     -6
+    ]
+   },
+   {
+    "description": "_____ _ _ _____",
+    "name": "Phantom",
+    "pattern": [
+     30,
+     -6,
+     6,
+     -6,
+     6,
+     -6
+    ]
+   },
+   {
+    "description": ". . . .",
+    "name": "Dot",
+    "pattern": [
+     0,
+     -3
+    ]
+   },
+   {
+    "description": "__ . __ .",
+    "name": "DashDot",
+    "pattern": [
+     12,
+     -3,
+     0,
+     -3
+    ]
+   },
+   {
+    "description": "__ __ . __",
+    "name": "Border",
+    "pattern": [
+     12,
+     -3,
+     12,
+     -3,
+     0,
+     -3
+    ]
+   },
+   {
+    "description": "__ . . __",
+    "name": "Divide",
+    "pattern": [
+     12,
+     -3,
+     0,
+     -3,
+     0,
+     -3
+    ]
+   }
+  ],
+  "materials": [
+   {
+    "color": {
+     "a": 1,
+     "b": 0.7,
+     "g": 0.72,
+     "r": 0.72
+    },
+    "cutPattern": "AR-CONC",
+    "metalness": 0,
+    "name": "Concrete",
+    "roughness": 0.9,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.22,
+     "g": 0.3,
+     "r": 0.62
+    },
+    "cutPattern": "ANSI31",
+    "metalness": 0,
+    "name": "Brick",
+    "roughness": 0.85,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.91,
+     "g": 0.94,
+     "r": 0.95
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0,
+    "name": "Plaster",
+    "roughness": 0.9,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.29,
+     "g": 0.46,
+     "r": 0.64
+    },
+    "cutPattern": "ANSI32",
+    "metalness": 0,
+    "name": "Wood",
+    "roughness": 0.6,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.86,
+     "g": 0.78,
+     "r": 0.62
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0,
+    "name": "Glass",
+    "roughness": 0.05,
+    "textureScale": 1000,
+    "transparency": 0.7
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.6,
+     "g": 0.57,
+     "r": 0.55
+    },
+    "cutPattern": "ANSI37",
+    "metalness": 1,
+    "name": "Steel",
+    "roughness": 0.35,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.83,
+     "g": 0.81,
+     "r": 0.8
+    },
+    "cutPattern": "SOLID",
+    "metalness": 1,
+    "name": "Aluminium",
+    "roughness": 0.3,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.16,
+     "g": 0.22,
+     "r": 0.55
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0,
+    "name": "Roof Tiles",
+    "roughness": 0.8,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.57,
+     "g": 0.63,
+     "r": 0.66
+    },
+    "cutPattern": "AR-SAND",
+    "metalness": 0,
+    "name": "Stone",
+    "roughness": 0.9,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.4,
+     "g": 0.85,
+     "r": 0.95
+    },
+    "cutPattern": "INSUL",
+    "metalness": 0,
+    "name": "Insulation",
+    "roughness": 1,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.25,
+     "g": 0.55,
+     "r": 0.35
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0,
+    "name": "Grass",
+    "roughness": 1,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1,
+     "b": 0.86,
+     "g": 0.88,
+     "r": 0.88
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0,
+    "name": "Tiles",
+    "roughness": 0.3,
+    "textureScale": 1000,
+    "transparency": 0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.12,
+     "g": 0.21,
+     "r": 0.46
+    },
+    "cutPattern": "ANSI32",
+    "metalness": 0.0,
+    "name": "Cedar",
+    "roughness": 0.55,
+    "texture": "textures/cedar.jpg",
+    "textureScale": 1200.0,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.77,
+     "g": 0.84,
+     "r": 0.87
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.0,
+    "name": "Limestone",
+    "roughness": 0.88,
+    "texture": "textures/limestone.jpg",
+    "textureScale": 1200.0,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.08,
+     "g": 0.07,
+     "r": 0.07
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.5,
+    "name": "Black Fascia",
+    "roughness": 0.4,
+    "textureScale": 1000.0,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.07,
+     "g": 0.06,
+     "r": 0.06
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.6,
+    "name": "Black Metal",
+    "roughness": 0.35,
+    "textureScale": 1000.0,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.74,
+     "g": 0.78,
+     "r": 0.8
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.0,
+    "name": "Concrete Paving",
+    "roughness": 0.85,
+    "texture": "textures/concrete.jpg",
+    "textureScale": 3000.0,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.11,
+     "g": 0.24,
+     "r": 0.13
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.0,
+    "name": "Hedge",
+    "roughness": 0.95,
+    "texture": "textures/hedge.jpg",
+    "textureScale": 800.0,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.18,
+     "g": 0.56,
+     "r": 0.47
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.0,
+    "name": "Young Leaves",
+    "roughness": 0.9,
+    "texture": "textures/leaves.jpg",
+    "textureScale": 900.0,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.22,
+     "g": 0.27,
+     "r": 0.33
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.0,
+    "name": "Bark",
+    "roughness": 0.95,
+    "textureScale": 1000.0,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.22,
+     "g": 0.47,
+     "r": 0.33
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.0,
+    "name": "Lawn",
+    "roughness": 1.0,
+    "texture": "textures/lawn.jpg",
+    "textureScale": 2500.0,
+    "transparency": 0.0
+   },
+   {
+    "color": {
+     "a": 1.0,
+     "b": 0.45,
+     "g": 0.62,
+     "r": 0.76
+    },
+    "cutPattern": "SOLID",
+    "metalness": 0.0,
+    "name": "Oak Floor",
+    "roughness": 0.55,
+    "textureScale": 1000.0,
+    "transparency": 0.0
+   }
+  ],
+  "namedViews": [
+   {
+    "camera": {
+     "eye": {
+      "x": 5200.0,
+      "y": -18500.0,
+      "z": 1500.0
+     },
+     "fov": 38.0,
+     "orthographic": false,
+     "target": {
+      "x": 10800.0,
+      "y": 3500.0,
+      "z": 3200.0
+     }
+    },
+    "center": {
+     "x": 10800.0,
+     "y": 3500.0
+    },
+    "height": 20000.0,
+    "name": "Front"
+   },
+   {
+    "camera": {
+     "eye": {
+      "x": -9000.0,
+      "y": -19000.0,
+      "z": 13000.0
+     },
+     "fov": 40.0,
+     "orthographic": false,
+     "target": {
+      "x": 10500.0,
+      "y": 4500.0,
+      "z": 1500.0
+     }
+    },
+    "center": {
+     "x": 10500.0,
+     "y": 4500.0
+    },
+    "height": 20000.0,
+    "name": "Aerial"
+   },
+   {
+    "camera": {
+     "eye": {
+      "x": -9500.0,
+      "y": -11500.0,
+      "z": 2200.0
+     },
+     "fov": 42.0,
+     "orthographic": false,
+     "target": {
+      "x": 9000.0,
+      "y": 4000.0,
+      "z": 3200.0
+     }
+    },
+    "center": {
+     "x": 9000.0,
+     "y": 4000.0
+    },
+    "height": 20000.0,
+    "name": "Corner"
+   }
+  ],
+  "nextID": 124,
+  "openingTypes": [
+   {
+    "doorStyle": "single",
+    "frameWidth": 50,
+    "height": 2100,
+    "kind": "door",
+    "name": "Single Door 900x2100",
+    "params": {
+     "Finish": "Painted",
+     "FireRating": ""
+    },
+    "sill": 0,
+    "width": 900,
+    "windowStyle": "casement"
+   },
+   {
+    "doorStyle": "single",
+    "frameWidth": 50,
+    "height": 2100,
+    "kind": "door",
+    "name": "Single Door 800x2100",
+    "params": {},
+    "sill": 0,
+    "width": 800,
+    "windowStyle": "casement"
+   },
+   {
+    "doorStyle": "double",
+    "frameWidth": 50,
+    "height": 2100,
+    "kind": "door",
+    "name": "Double Door 1600x2100",
+    "params": {},
+    "sill": 0,
+    "width": 1600,
+    "windowStyle": "casement"
+   },
+   {
+    "doorStyle": "sliding",
+    "frameWidth": 50,
+    "height": 2200,
+    "kind": "door",
+    "name": "Sliding Door 1800x2200",
+    "params": {},
+    "sill": 0,
+    "width": 1800,
+    "windowStyle": "casement"
+   },
+   {
+    "doorStyle": "garage",
+    "frameWidth": 50,
+    "height": 2200,
+    "kind": "door",
+    "name": "Garage Door 2500x2200",
+    "params": {},
+    "sill": 0,
+    "width": 2500,
+    "windowStyle": "casement"
+   },
+   {
+    "doorStyle": "single",
+    "frameWidth": 50,
+    "height": 1200,
+    "kind": "window",
+    "name": "Casement 1200x1200",
+    "params": {
+     "UValue": "1.1"
+    },
+    "sill": 900,
+    "width": 1200,
+    "windowStyle": "casement"
+   },
+   {
+    "doorStyle": "single",
+    "frameWidth": 50,
+    "height": 1400,
+    "kind": "window",
+    "name": "Double Casement 1500x1400",
+    "params": {},
+    "sill": 800,
+    "width": 1500,
+    "windowStyle": "doubleCasement"
+   },
+   {
+    "doorStyle": "single",
+    "frameWidth": 50,
+    "height": 1800,
+    "kind": "window",
+    "name": "Fixed 600x1800",
+    "params": {},
+    "sill": 300,
+    "width": 600,
+    "windowStyle": "fixed"
+   },
+   {
+    "doorStyle": "single",
+    "frameWidth": 50,
+    "height": 2200,
+    "kind": "window",
+    "name": "Sliding 2400x2200",
+    "params": {},
+    "sill": 0,
+    "width": 2400,
+    "windowStyle": "sliding"
+   },
+   {
+    "doorStyle": "single",
+    "frameWidth": 50,
+    "height": 2100,
+    "kind": "opening",
+    "name": "Opening 1000x2100",
+    "params": {},
+    "sill": 0,
+    "width": 1000,
+    "windowStyle": "casement"
+   }
+  ],
+  "phases": [
+   "Existing",
+   "New Construction"
+  ],
+  "textStyles": [
+   {
+    "font": "Helvetica",
+    "height": 0,
+    "name": "Standard",
+    "oblique": 0,
+    "widthFactor": 1
+   }
+  ],
+  "units": "millimeters",
+  "variables": {},
+  "wallTypes": [
+   {
+    "name": "Generic 200",
+    "plies": [
+     {
+      "function": "Structure",
+      "material": "Concrete",
+      "thickness": 200
+     }
+    ]
+   },
+   {
+    "name": "Exterior Brick 365",
+    "plies": [
+     {
+      "function": "Finish",
+      "material": "Plaster",
+      "thickness": 15
+     },
+     {
+      "function": "Structure",
+      "material": "Brick",
+      "thickness": 240
+     },
+     {
+      "function": "Thermal",
+      "material": "Insulation",
+      "thickness": 100
+     },
+     {
+      "function": "Finish",
+      "material": "Plaster",
+      "thickness": 10
+     }
+    ]
+   },
+   {
+    "name": "Interior Partition 100",
+    "plies": [
+     {
+      "function": "Finish",
+      "material": "Plaster",
+      "thickness": 12.5
+     },
+     {
+      "function": "Structure",
+      "material": "Insulation",
+      "thickness": 75
+     },
+     {
+      "function": "Finish",
+      "material": "Plaster",
+      "thickness": 12.5
+     }
+    ]
+   },
+   {
+    "name": "Concrete 250",
+    "plies": [
+     {
+      "function": "Structure",
+      "material": "Concrete",
+      "thickness": 250
+     }
+    ]
+   }
+  ]
+ },
+ "formatVersion": 1
+}
