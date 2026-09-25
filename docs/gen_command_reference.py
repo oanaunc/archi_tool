@@ -11,8 +11,8 @@ from collections import OrderedDict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GUIDE = os.path.join(ROOT, "docs", "USER-GUIDE.md")
-ORDER = ["Draw", "Modify", "Edit", "Select", "Annotate", "Blocks", "Layers", "Settings", "Inquiry", "Architecture",
-         "Structure", "Site", "3D", "View", "Output", "File", "Analysis", "Scripting", "Tools", "Help"]
+ORDER = ["Draw", "Modify", "Parametric", "Edit", "Select", "Annotate", "Blocks", "Layers", "Settings", "Inquiry", "Architecture",
+         "Structure", "Site", "3D", "View", "Output", "Layout", "File", "Analysis", "Scripting", "Tools", "Help"]
 
 def unescape(s):
     return s.replace('\\"', '"').replace("\\\\", "\\")
@@ -30,6 +30,22 @@ def collect():
             aliases = re.findall(r'"([^"]+)"', al.group(1)) if al else []
             cat = re.search(r'category:\s*"([^"]+)"', mid)
             cmds[name] = (cat.group(1) if cat else "Other", aliases, unescape(summary), app)
+        # Parametric single-constraint commands: ("GCPARALLEL", .parallel, ["GCPAR"]) and ("DCLINEAR", "Linear")
+        for m in re.finditer(r'\("(GC[A-Z]+)",\s*\.(\w+),\s*\[([^\]]*)\]\)', src):
+            name, kind, al = m.groups()
+            words = re.sub(r'([A-Z])', r' \1', kind).lower()
+            cmds.setdefault(name, ("Parametric", re.findall(r'"([^"]+)"', al), f"Applies the {words} geometric constraint.", app))
+        for m in re.finditer(r'\("(DC[A-Z]+)",\s*"([A-Za-z]+)"\)', src):
+            name, mode = m.groups()
+            cmds.setdefault(name, ("Parametric", [], f"Applies the {mode.lower()} dimensional constraint.", app))
+        # Paired commands built by one function: let name = flag ? "A" : "B" … aliases: flag ? [..] : [..] … summary: flag ? "…" : "…"
+        for m in re.finditer(r'let name = (\w+) \? "([A-Z0-9]+)" : "([A-Z0-9]+)"(.*?)summary:\s*\1 \? "((?:[^"\\]|\\.)*)" : "((?:[^"\\]|\\.)*)"', src, re.S):
+            flag, n1, n2, mid, s1, s2 = m.groups()
+            al = re.search(r'aliases:\s*' + flag + r' \? \[([^\]]*)\] : \[([^\]]*)\]', mid)
+            cat = re.search(r'category:\s*"([^"]+)"', mid)
+            c = cat.group(1) if cat else "Other"
+            cmds.setdefault(n1, (c, re.findall(r'"([^"]+)"', al.group(1)) if al else [], unescape(s1), app))
+            cmds.setdefault(n2, (c, re.findall(r'"([^"]+)"', al.group(2)) if al else [], unescape(s2), app))
         # 3D standard views: ("TOPVIEW", ["TOP", "PLANVIEW"], "top")
         for m in re.finditer(r'\("([A-Z]+VIEW|[A-Z]{2}ISO)",\s*\[([^\]]*)\],\s*"([a-z]+)"\)', src):
             name, al, v = m.groups()

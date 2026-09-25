@@ -178,7 +178,7 @@
   "reference": "AutoCAD, Revit",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Ribbon with tabs exposes every listed command with icon and tooltip, and each button starts the same command as typing it."
  },
  {
@@ -243,7 +243,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Help ▸ Search finds LINE and runs it."
  },
  {
@@ -334,7 +334,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Layer panel can be docked, floated, auto-hidden and restored."
  },
  {
@@ -360,7 +360,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Levels panel can be docked, floated, auto-hidden and restored."
  },
  {
@@ -373,7 +373,7 @@
   "reference": "Revit",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Materials panel can be docked, floated, auto-hidden and restored."
  },
  {
@@ -386,7 +386,7 @@
   "reference": "AutoCAD",
   "phase": 3,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Tool palettes can be docked, floated, auto-hidden and restored."
  },
  {
@@ -503,7 +503,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Coordinate readout displays correct state and toggles immediately."
  },
  {
@@ -516,7 +516,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Drafting toggles displays correct state and toggles immediately."
  },
  {
@@ -529,7 +529,7 @@
   "reference": "Revit",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Current level and units display displays correct state and toggles immediately."
  },
  {
@@ -893,7 +893,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Command history recall works identically when typed interactively, in a script, or via the agent API."
  },
  {
@@ -1309,7 +1309,7 @@
   "reference": "AutoCAD",
   "phase": 8,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Action recorder is scriptable and persisted as specified."
  },
  {
@@ -1452,7 +1452,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Line by angle creates correct geometry with preview, is one undo step, and works via typed input."
  },
  {
@@ -1465,7 +1465,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Line at relative angle to entity creates correct geometry with preview, is one undo step, and works via typed input."
  },
  {
@@ -1478,7 +1478,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Horizontal/vertical line creates correct geometry with preview, is one undo step, and works via typed input."
  },
  {
@@ -1491,7 +1491,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Parallel line through point creates correct geometry with preview, is one undo step, and works via typed input."
  },
  {
@@ -1504,7 +1504,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Line from point perpendicular to line creates correct geometry with preview, is one undo step, and works via typed input."
  },
  {
@@ -1517,7 +1517,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Bisector line creates correct geometry with preview, is one undo step, and works via typed input."
  },
  {
@@ -1530,7 +1530,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Tangent line from point to circle creates correct geometry with preview, is one undo step, and works via typed input."
  },
  {
@@ -1543,7 +1543,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Tangent line between two circles creates correct geometry with preview, is one undo step, and works via typed input."
  },
  {
@@ -1556,7 +1556,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Orthogonal tangent line creates correct geometry with preview, is one undo step, and works via typed input."
  },
  {
@@ -1582,7 +1582,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Snake line (relative) creates correct geometry with preview, is one undo step, and works via typed input."
  },
  {
@@ -1725,7 +1725,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Circle tangent-tangent-tangent creates the correct circle/arc and snaps work on the result."
  },
  {
@@ -1738,7 +1738,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Circle tangent to 1 entity through 2 points creates the correct circle/arc and snaps work on the result."
  },
  {
@@ -1751,7 +1751,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Circle tangent to 2 entities through point creates the correct circle/arc and snaps work on the result."
  },
  {
@@ -1764,7 +1764,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Circle 2 points and radius creates the correct circle/arc and snaps work on the result."
  },
  {
@@ -1777,7 +1777,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Inscribed circle creates the correct circle/arc and snaps work on the result."
  },
  {
@@ -1790,7 +1790,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Circle from arc creates the correct circle/arc and snaps work on the result."
  },
  {
@@ -1894,7 +1894,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Arc 2 points and height creates the correct circle/arc and snaps work on the result."
  },
  {
@@ -1907,7 +1907,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Arc 2 points and length creates the correct circle/arc and snaps work on the result."
  },
  {
@@ -1985,7 +1985,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Ellipse by 4 points generates geometry that matches the analytic definition within 1e-9."
  },
  {
@@ -1998,7 +1998,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Ellipse by centre and 3 points generates geometry that matches the analytic definition within 1e-9."
  },
  {
@@ -2011,7 +2011,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Ellipse by foci and point generates geometry that matches the analytic definition within 1e-9."
  },
  {
@@ -2245,7 +2245,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Equidistant polylines produces closed/open geometry with correct vertex count and area."
  },
  {
@@ -2310,7 +2310,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Polygon by side-side produces closed/open geometry with correct vertex count and area."
  },
  {
@@ -2453,7 +2453,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Points on line places the expected number of points/blocks at exact positions."
  },
  {
@@ -2466,7 +2466,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Points lattice places the expected number of points/blocks at exact positions."
  },
  {
@@ -2479,7 +2479,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Slice/divide by lines places the expected number of points/blocks at exact positions."
  },
  {
@@ -2531,7 +2531,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "GD&T feature control frame displays correctly on screen, in PDF and after reopening."
  },
  {
@@ -2700,7 +2700,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Paste to points works on mixed selections and is a single undo step."
  },
  {
@@ -2713,7 +2713,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Paste aligned to levels works on mixed selections and is a single undo step."
  },
  {
@@ -2882,7 +2882,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Align reference transforms geometry exactly and keeps associativity."
  },
  {
@@ -2895,7 +2895,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Move and rotate transforms geometry exactly and keeps associativity."
  },
  {
@@ -2908,7 +2908,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Rotate twice transforms geometry exactly and keeps associativity."
  },
  {
@@ -3051,7 +3051,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Trim/extend by amount handles lines, arcs, circles, ellipses, polylines and splines."
  },
  {
@@ -3142,7 +3142,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Break/divide at intersections handles lines, arcs, circles, ellipses, polylines and splines."
  },
  {
@@ -3155,7 +3155,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Line gap handles lines, arcs, circles, ellipses, polylines and splines."
  },
  {
@@ -3246,7 +3246,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Convert to polyline/spline handles lines, arcs, circles, ellipses, polylines and splines."
  },
  {
@@ -3259,7 +3259,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Spline from polyline handles lines, arcs, circles, ellipses, polylines and splines."
  },
  {
@@ -3272,7 +3272,7 @@
   "reference": "SketchUp, Vectorworks",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Weld/merge connected curves handles lines, arcs, circles, ellipses, polylines and splines."
  },
  {
@@ -3285,7 +3285,7 @@
   "reference": "Vectorworks",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Clip with polygon handles lines, arcs, circles, ellipses, polylines and splines."
  },
  {
@@ -3792,7 +3792,7 @@
   "reference": "AutoCAD, Revit",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Isolate objects returns the correct subset for a sample drawing."
  },
  {
@@ -3805,7 +3805,7 @@
   "reference": "AutoCAD, Revit",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Hide objects returns the correct subset for a sample drawing."
  },
  {
@@ -3818,7 +3818,7 @@
   "reference": "AutoCAD, Revit",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Unisolate / end isolation returns the correct subset for a sample drawing."
  },
  {
@@ -4091,7 +4091,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Parallel snap snaps within the aperture and shows its marker glyph."
  },
  {
@@ -4234,7 +4234,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Object snap tracking produces exactly aligned input and shows tracking vectors."
  },
  {
@@ -5573,7 +5573,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "could",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Align/collect multileaders attaches to objects and moves with them."
  },
  {
@@ -6275,7 +6275,7 @@
   "reference": "AutoCAD",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Visibility states changes geometry via parameters and keeps state when saved."
  },
  {
@@ -6665,7 +6665,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Viewport titles displays correctly in layout view and plots at the stated scale."
  },
  {
@@ -6717,7 +6717,7 @@
   "reference": "AutoCAD",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Sheet set manager keeps sheet data consistent across the project."
  },
  {
@@ -6730,7 +6730,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Sheet numbering and renumbering keeps sheet data consistent across the project."
  },
  {
@@ -6743,7 +6743,7 @@
   "reference": "AutoCAD, Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Sheet list/index keeps sheet data consistent across the project."
  },
  {
@@ -6756,7 +6756,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Revisions table keeps sheet data consistent across the project."
  },
  {
@@ -7081,7 +7081,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Level heads and extents controls hosted elements and appears in all relevant views."
  },
  {
@@ -7159,7 +7159,7 @@
   "reference": "Revit, AutoCAD Architecture, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "WALL 0,0 5000,0 creates a wall with correct length and thickness."
  },
  {
@@ -7263,7 +7263,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Wall top/base constraints generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -7276,7 +7276,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 3,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Attach wall to roof/slab generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -7367,7 +7367,7 @@
   "reference": "Revit",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Wall openings (plain) generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -7419,7 +7419,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Curtain panels and mullion types generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -7705,7 +7705,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Ceilings computes area/volume correctly and displays in plan and section."
  },
  {
@@ -7874,7 +7874,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Stair of 3000 rise creates 17 risers at ≤ 180 mm."
  },
  {
@@ -7900,7 +7900,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Winders and landings validates rise/going rules and renders in plan with cut line."
  },
  {
@@ -7913,7 +7913,7 @@
   "reference": "ArchiCAD, Allplan",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Stair calculation rules validates rise/going rules and renders in plan with cut line."
  },
  {
@@ -7926,7 +7926,7 @@
   "reference": "Revit",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Stair plan cut representation validates rise/going rules and renders in plan with cut line."
  },
  {
@@ -8186,7 +8186,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Clicking inside 4 walls creates a room with net area."
  },
  {
@@ -8303,7 +8303,7 @@
   "reference": "Revit",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Component placement places, rotates and schedules correctly."
  },
  {
@@ -8329,7 +8329,7 @@
   "reference": "Revit, Vectorworks",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Casework/kitchen places, rotates and schedules correctly."
  },
  {
@@ -8342,7 +8342,7 @@
   "reference": "Revit",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Sanitary fixtures places, rotates and schedules correctly."
  },
  {
@@ -8537,7 +8537,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Site components (parking, trees) produces correct terrain and site geometry."
  },
  {
@@ -9278,7 +9278,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Interior elevation markers is generated from the model and updates live when the model changes."
  },
  {
@@ -9291,7 +9291,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Callout/detail views is generated from the model and updates live when the model changes."
  },
  {
@@ -9837,7 +9837,7 @@
   "reference": "Revit",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Schedule export CSV/XLSX lists correct values and edits back to the model."
  },
  {
@@ -10357,7 +10357,7 @@
   "reference": "AutoCAD, FreeCAD",
   "phase": 4,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Fillet edges 3D produces a valid manifold solid."
  },
  {
@@ -10370,7 +10370,7 @@
   "reference": "AutoCAD, FreeCAD",
   "phase": 4,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Chamfer edges 3D produces a valid manifold solid."
  },
  {
@@ -10383,7 +10383,7 @@
   "reference": "AutoCAD, FreeCAD",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Shell produces a valid manifold solid."
  },
  {
@@ -10526,7 +10526,7 @@
   "reference": "AutoCAD",
   "phase": 4,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Mirror 3D produces a valid manifold solid."
  },
  {
@@ -10539,7 +10539,7 @@
   "reference": "AutoCAD",
   "phase": 4,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Rotate 3D produces a valid manifold solid."
  },
  {
@@ -10565,7 +10565,7 @@
   "reference": "AutoCAD",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "3D array produces a valid manifold solid."
  },
  {
@@ -10643,7 +10643,7 @@
   "reference": "AutoCAD, Sverchok",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Mesh smooth/refine results in a valid mesh (no non-manifold edges unless allowed)."
  },
  {
@@ -10916,7 +10916,7 @@
   "reference": "AutoCAD, SolveSpace, CAD Sketcher",
   "phase": 4,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "A parallel constraint stays satisfied when an endpoint is dragged."
  },
  {
@@ -10929,7 +10929,7 @@
   "reference": "AutoCAD, SolveSpace, CAD Sketcher",
   "phase": 4,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Dimensional constraints is solved by the constraint solver and persists after edits."
  },
  {
@@ -10942,7 +10942,7 @@
   "reference": "AutoCAD, CAD Sketcher",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Auto-constrain / inference is solved by the constraint solver and persists after edits."
  },
  {
@@ -10955,7 +10955,7 @@
   "reference": "SolveSpace, FreeCAD",
   "phase": 4,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Over-constrained sketch reports the redundant constraint."
  },
  {
@@ -10968,7 +10968,7 @@
   "reference": "SolveSpace, CAD Sketcher",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Reference (driven) dimensions is solved by the constraint solver and persists after edits."
  },
  {
@@ -10994,7 +10994,7 @@
   "reference": "AutoCAD",
   "phase": 4,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Parameters manager is solved by the constraint solver and persists after edits."
  },
  {
@@ -11020,7 +11020,7 @@
   "reference": "SolveSpace",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Point-on-curve and ratio constraints is solved by the constraint solver and persists after edits."
  },
  {
@@ -11046,7 +11046,7 @@
   "reference": "SolveSpace, CAD Sketcher",
   "phase": 4,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Solve-based dragging is solved by the constraint solver and persists after edits."
  },
  {
@@ -11072,7 +11072,7 @@
   "reference": "AutoCAD",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Constraints on 2D drawing entities is solved by the constraint solver and persists after edits."
  },
  {
@@ -11735,7 +11735,7 @@
   "reference": "Enscape",
   "phase": 5,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Ambient occlusion renders consistently in viewport and exports."
  },
  {
@@ -11956,7 +11956,7 @@
   "reference": "SketchUp, Enscape",
   "phase": 5,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Shadows in viewport matches reference values within tolerance."
  },
  {
@@ -11969,7 +11969,7 @@
   "reference": "V-Ray, Enscape",
   "phase": 5,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Sky models matches reference values within tolerance."
  },
  {
@@ -11982,7 +11982,7 @@
   "reference": "V-Ray, Enscape",
   "phase": 5,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "HDRI environment matches reference values within tolerance."
  },
  {
@@ -12047,7 +12047,7 @@
   "reference": "V-Ray, Enscape",
   "phase": 5,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Exposure and white balance matches reference values within tolerance."
  },
  {
@@ -12138,7 +12138,7 @@
   "reference": "Enscape, Twinmotion",
   "phase": 5,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Material library (CC0) looks correct in real-time and path-traced renders."
  },
  {
@@ -12307,7 +12307,7 @@
   "reference": "Enscape",
   "phase": 5,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Clay/white-model render completes without artefacts and matches the viewport camera."
  },
  {
@@ -12359,7 +12359,7 @@
   "reference": "Enscape, Twinmotion",
   "phase": 5,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Entourage library is placed and shown in viewport and renders."
  },
  {
@@ -12580,7 +12580,7 @@
   "reference": "AutoCAD",
   "phase": 6,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "DWG import via LibreDWG imports the sample file set with no missing entities."
  },
  {
@@ -12593,7 +12593,7 @@
   "reference": "AutoCAD",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "DWG export via LibreDWG imports the sample file set with no missing entities."
  },
  {
@@ -12684,7 +12684,7 @@
   "reference": "LibreCAD",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "HPGL/PLT export imports the sample file set with no missing entities."
  },
  {
@@ -12710,7 +12710,7 @@
   "reference": "IfcOpenShell/Bonsai, Revit",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Exported IFC opens in a viewer with walls, slabs, doors, windows."
  },
  {
@@ -12762,7 +12762,7 @@
   "reference": "IfcOpenShell/Bonsai, Revit",
   "phase": 6,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "IFC export mappings passes buildingSMART validation for sample models."
  },
  {
@@ -12775,7 +12775,7 @@
   "reference": "IfcOpenShell/Bonsai",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "IfcZIP and ifcXML passes buildingSMART validation for sample models."
  },
  {
@@ -12788,7 +12788,7 @@
   "reference": "IfcOpenShell/Bonsai",
   "phase": 7,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "IDS validation passes buildingSMART validation for sample models."
  },
  {
@@ -12814,7 +12814,7 @@
   "reference": "IfcOpenShell/Bonsai, Revit",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "COBie export passes buildingSMART validation for sample models."
  },
  {
@@ -12827,7 +12827,7 @@
   "reference": "Revit",
   "phase": 7,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "gbXML export passes buildingSMART validation for sample models."
  },
  {
@@ -12918,7 +12918,7 @@
   "reference": "Native (new)",
   "phase": 6,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "glTF/GLB import exports correct scale, units and materials."
  },
  {
@@ -12970,7 +12970,7 @@
   "reference": "FreeCAD",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "STEP import/export exports correct scale, units and materials."
  },
  {
@@ -13035,7 +13035,7 @@
   "reference": "SketchUp",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Collada DAE exports correct scale, units and materials."
  },
  {
@@ -13048,7 +13048,7 @@
   "reference": "FreeCAD",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "PLY import/export exports correct scale, units and materials."
  },
  {
@@ -13061,7 +13061,7 @@
   "reference": "OpenSCAD",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "OFF/AMF import exports correct scale, units and materials."
  },
  {
@@ -13100,7 +13100,7 @@
   "reference": "FreeCAD",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "PLY/PTS/XYZ point import displays up to 100M points smoothly."
  },
  {
@@ -13165,7 +13165,7 @@
   "reference": "IfcOpenShell/Bonsai, Vectorworks",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Shapefile import georeferences data correctly."
  },
  {
@@ -13191,7 +13191,7 @@
   "reference": "Native (new)",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "OpenStreetMap buildings/context georeferences data correctly."
  },
  {
@@ -13204,7 +13204,7 @@
   "reference": "Vectorworks",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Terrain from elevation data georeferences data correctly."
  },
  {
@@ -13217,7 +13217,7 @@
   "reference": "IfcOpenShell/Bonsai",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "CRS/map conversion georeferences data correctly."
  },
  {
@@ -13230,7 +13230,7 @@
   "reference": "Native (new)",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "CityGML/CityJSON georeferences data correctly."
  },
  {
@@ -13256,7 +13256,7 @@
   "reference": "Revit",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "XLSX export/import georeferences data correctly."
  },
  {
@@ -13308,7 +13308,7 @@
   "reference": "Native (new)",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Batch conversion georeferences data correctly."
  },
  {
@@ -13568,7 +13568,7 @@
   "reference": "Native (new)",
   "phase": 7,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Solar radiation on surfaces produces results consistent with a validated reference tool."
  },
  {
@@ -13581,7 +13581,7 @@
   "reference": "Native (new)",
   "phase": 7,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Daylight factor produces results consistent with a validated reference tool."
  },
  {
@@ -13607,7 +13607,7 @@
   "reference": "Revit",
   "phase": 7,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Energy model generation produces results consistent with a validated reference tool."
  },
  {
@@ -13633,7 +13633,7 @@
   "reference": "Allplan",
   "phase": 7,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Wall with known layers yields U-value within 1% of hand calc."
  },
  {
@@ -13659,7 +13659,7 @@
   "reference": "Native (new)",
   "phase": 7,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Embodied carbon (LCA) produces results consistent with a validated reference tool."
  },
  {
@@ -13685,7 +13685,7 @@
   "reference": "Native (new)",
   "phase": 7,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Acoustic basics produces results consistent with a validated reference tool."
  },
  {
@@ -13698,7 +13698,7 @@
   "reference": "Native (new)",
   "phase": 7,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "View analysis / isovist produces results consistent with a validated reference tool."
  },
  {
@@ -13711,7 +13711,7 @@
   "reference": "Revit, IfcOpenShell/Bonsai",
   "phase": 7,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Analytical model exports an analytical model a solver accepts."
  },
  {
@@ -13724,7 +13724,7 @@
   "reference": "Revit, IfcOpenShell/Bonsai",
   "phase": 7,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Loads and boundary conditions exports an analytical model a solver accepts."
  },
  {
@@ -13737,7 +13737,7 @@
   "reference": "IfcOpenShell/Bonsai",
   "phase": 7,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Simple frame analysis exports an analytical model a solver accepts."
  },
  {
@@ -13750,7 +13750,7 @@
   "reference": "IfcOpenShell/Bonsai",
   "phase": 7,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Export to structural tools exports an analytical model a solver accepts."
  },
  {
@@ -13815,7 +13815,7 @@
   "reference": "Native (new)",
   "phase": 7,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Code checking rules reports each issue with a zoom-to link."
  },
  {
@@ -13841,7 +13841,7 @@
   "reference": "IfcOpenShell/Bonsai",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "IFC schema validation reports each issue with a zoom-to link."
  },
  {
@@ -13854,7 +13854,7 @@
   "reference": "AutoCAD",
   "phase": 7,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Drawing standards checker reports each issue with a zoom-to link."
  },
  {
@@ -14166,7 +14166,7 @@
   "reference": "FreeCAD",
   "phase": 2,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Script editor runs sample scripts and the API is documented."
  },
  {
@@ -14257,7 +14257,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Scripting API reference docs runs sample scripts and the API is documented."
  },
  {
@@ -14270,7 +14270,7 @@
   "reference": "Sverchok, Dynamo",
   "phase": 8,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Node editor evaluates graphs deterministically."
  },
  {
@@ -14283,7 +14283,7 @@
   "reference": "Sverchok",
   "phase": 8,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Geometry nodes evaluates graphs deterministically."
  },
  {
@@ -14296,7 +14296,7 @@
   "reference": "Sverchok",
   "phase": 8,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "List/data nodes evaluates graphs deterministically."
  },
  {
@@ -14322,7 +14322,7 @@
   "reference": "Dynamo",
   "phase": 8,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Graph player/parameters evaluates graphs deterministically."
  },
  {
@@ -14361,7 +14361,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Agent API methods is covered by integration tests."
  },
  {
@@ -14374,7 +14374,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "MCP server is covered by integration tests."
  },
  {
@@ -14387,7 +14387,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Headless CLI is covered by integration tests."
  },
  {
