@@ -35,6 +35,7 @@ public enum ElevationBuilder {
         if view == .plan || view == .ceiling { return DrawListBuilder.entries(doc: doc, options: DrawOptions(level: nil)) }
         let groups = MeshBuilder.build(doc: doc)
         var line = sectionLine
+        if view == .section, let m = Annotations.sectionLine(doc) { line = m }
         if view == .section && line == nil {
             var b = BBox3.empty
             for g in groups { b = union(b, g.mesh.bounds) }
@@ -132,6 +133,54 @@ public enum ElevationBuilder {
         let gz = doc.levels.map(\.elevation).min() ?? 0
         let ext = box.width * 0.05
         out.append(DrawEntry(id: nil, items: [.stroke(points: [Vec2(box.min.x - ext, gz), Vec2(box.max.x + ext, gz)], closed: false, style: StrokeStyle(color: edgeColor, lineweight: 0.5))]))
+        if doc.variable("VIEWANNOTATIONS") != "0" { out += annotations(doc: doc, proj: proj, box: box) }
+        return out
+    }
+
+    static let annoColor = RGBA(0.15, 0.35, 0.75)
+
+    /// Level lines with level heads (name and elevation) at the right, and grid lines with bubbles at the top,
+    /// for grids that cross the view (perpendicular to it).
+    static func annotations(doc: ArchiDocument, proj: Proj, box: BBox2) -> [DrawEntry] {
+        let u = 1 / doc.units.mm
+        let th = 250 * u
+        let ext = max(box.width * 0.04, 800 * u)
+        let x0 = box.min.x - ext, x1 = box.max.x + ext
+        let dash = [600 * u, -150 * u, 100 * u, -150 * u]
+        var out: [DrawEntry] = []
+        var gridTop = box.max.y + 600 * u
+        for l in doc.levels {
+            let y = l.elevation
+            let st = StrokeStyle(color: annoColor, lineweight: 0.18, dash: dash)
+            let r = th * 0.6
+            let head = [Vec2(x1, y), Vec2(x1 + r, y + r), Vec2(x1 + 2 * r, y), Vec2(x1 + r, y - r)]
+            let meters = l.elevation * doc.units.mm / 1000
+            let label = (meters >= 0 ? "+" : "") + String(format: "%.3f", meters)
+            out.append(DrawEntry(id: nil, items: [
+                .stroke(points: [Vec2(x0, y), Vec2(x1, y)], closed: false, style: st),
+                .fill(loops: [[head[0], head[1], head[2]]], color: annoColor),
+                .stroke(points: head, closed: true, style: StrokeStyle(color: annoColor, lineweight: 0.18)),
+                .text(TextGeom(position: Vec2(x1 + 2.6 * r, y + th * 0.15), height: th, content: l.name, valign: .bottom), font: "Helvetica", color: annoColor),
+                .text(TextGeom(position: Vec2(x1 + 2.6 * r, y - th * 0.15), height: th * 0.8, content: label, valign: .top), font: "Helvetica", color: annoColor),
+            ]))
+            gridTop = max(gridTop, y + 600 * u)
+        }
+        let r = 400 * u
+        for el in doc.elements {
+            guard case .gridLine(let g) = el.geometry, g.start.distance(to: g.end) > 1e-9 else { continue }
+            let a = Vec3(g.start.x, g.start.y, 0), b = Vec3(g.end.x, g.end.y, 0)
+            let xa = proj.xf(a), xb = proj.xf(b)
+            guard abs(xa - xb) < g.start.distance(to: g.end) * 0.02 else { continue }
+            let x = (xa + xb) / 2
+            guard x >= x0 - 1e-6, x <= x1 + 1e-6 else { continue }
+            let yb = box.min.y - 300 * u, yt = gridTop
+            let c = Vec2(x, yt + r)
+            out.append(DrawEntry(id: nil, items: [
+                .stroke(points: [Vec2(x, yb), Vec2(x, yt)], closed: false, style: StrokeStyle(color: annoColor, lineweight: 0.13, dash: dash)),
+                .stroke(points: RG.circle(c, r, segments: 40), closed: true, style: StrokeStyle(color: annoColor, lineweight: 0.18)),
+                .text(TextGeom(position: c, height: 350 * u, content: g.label, halign: .center, valign: .middle), font: "Helvetica", color: annoColor),
+            ]))
+        }
         return out
     }
 

@@ -148,7 +148,9 @@ public enum PlanRepresentation {
         case .opening(let o): return openingItems(el, o, ctx: ctx, color: color, options: options)
         case .slab(let g):
             let dash = hiddenDash(doc, options)
-            return ([g.boundary] + g.holes).filter { $0.count >= 2 }.map { stroke($0, closed: true, color, lwHidden, dash) }
+            var out = ([g.boundary] + g.holes).filter { $0.count >= 2 }.map { stroke($0, closed: true, color, lwHidden, dash) }
+            if g.isSloped && g.boundary.count >= 3 { out += slopeArrow(g, el: el, doc: doc, color: color, options: options) }
+            return out
         case .column(let g):
             let poly = g.round ? RG.circle(g.position, max(g.width, 0) / 2) : columnPoly(g)
             guard poly.count >= 3 else { return [] }
@@ -182,17 +184,7 @@ public enum PlanRepresentation {
             return out
         case .space(let g):
             guard g.boundary.count >= 3 else { return [] }
-            var out: [DrawItem] = [.fill(loops: [g.boundary], color: RGBA(color.r, color.g, color.b, 0.08))]
-            if !options.showAnnotations { return out }
-            let c = GeometryOps.centroid(g.boundary)
-            let th = 250 * u, th2 = 180 * u
-            let f = font(doc)
-            out.append(.text(TextGeom(position: c + Vec2(0, th * 0.5), height: th, content: g.name.isEmpty ? el.name : g.name, halign: .center, valign: .bottom), font: f, color: color))
-            var line2 = g.number
-            let area = formatArea(abs(GeometryOps.signedArea(g.boundary)), doc)
-            line2 = line2.isEmpty ? area : line2 + "  " + area
-            out.append(.text(TextGeom(position: c - Vec2(0, th2 * 0.3), height: th2, content: line2, halign: .center, valign: .top), font: f, color: color))
-            return out
+            return spaceItems(el, g, ctx: ctx, color: color, options: options)
         case .curtainWall(let g):
             let len = g.start.distance(to: g.end)
             guard len > 1e-9 else { return [] }
@@ -200,9 +192,7 @@ public enum PlanRepresentation {
             let m = max(g.mullionSize, 1e-6) / 2
             var out: [DrawItem] = [stroke([g.start + n * m, g.end + n * m], color, lwProj), stroke([g.start - n * m, g.end - n * m], color, lwProj),
                                    stroke([g.start, g.end], color, lwFine)]
-            var positions: [Double] = [0]
-            if g.gridU > 1e-9 { var x = g.gridU; while x < len - 1e-6 { positions.append(x); x += g.gridU } }
-            positions.append(len)
+            let positions: [Double] = [0] + g.uPositions + [len]
             for x in positions {
                 let c = g.start + d * x
                 let sq = [c - d * m - n * m, c + d * m - n * m, c + d * m + n * m, c - d * m + n * m]
@@ -217,9 +207,9 @@ public enum PlanRepresentation {
             let poly = componentPoly(g)
             var out: [DrawItem] = [stroke(poly, closed: true, color, lwProj), stroke([poly[0], poly[2]], color, lwFine), stroke([poly[1], poly[3]], color, lwFine)]
             let label = el.name.isEmpty ? g.category : el.name
-            if options.showAnnotations, !label.isEmpty {
-                let th = max(min(min(g.size.x, g.size.y) / 6, 150 * u), 1e-6)
-                out.append(.text(TextGeom(position: g.position, height: th, content: label, rotation: DimensionRenderer.readable(g.rotation), halign: .center, valign: .middle), font: font(doc), color: color))
+            if options.showAnnotations, !label.isEmpty, let th = componentLabelHeight(g, label: label, unit: u) {
+                out.append(.text(TextGeom(position: g.position, height: th, content: label, rotation: DimensionRenderer.readable(g.rotation), halign: .center, valign: .middle),
+                                 font: font(doc), color: blend(color, RGBA(0.55, 0.55, 0.55, color.a), 0.45)))
             }
             return out
         case .gridLine(let g):
@@ -234,11 +224,113 @@ public enum PlanRepresentation {
         }
     }
 
+    /// Label height for a component: fits inside the footprint (width along the rotation), never larger than
+    /// 120 mm on plan; nil when the label would be too small to read.
+    static func componentLabelHeight(_ g: ComponentGeom, label: String, unit u: Double) -> Double? {
+        let chars = Double(max(label.count, 1))
+        let w = abs(g.size.x), d = abs(g.size.y)
+        let th = min(d * 0.28, 0.85 * w / (0.62 * chars), 120 * u)
+        return th >= 35 * u ? th : nil
+    }
+
+    /// Slope arrow across a sloped slab or ramp: from the low side to the high side through the most open point,
+    /// labelled with the gradient ("UP 1:12  8.3%" for ramps).
+    static func slopeArrow(_ g: SlabGeom, el: BIMElement, doc: ArchiDocument, color: RGBA, options: DrawOptions) -> [DrawItem] {
+        let u = unit(doc)
+        let d = Vec2(cos(g.slopeDirection), sin(g.slopeDirection)) * (g.slope >= 0 ? 1 : -1)
+        let c = LabelPlacement.pole(of: g.boundary).point
+        // Extent of the slab along the arrow through c.
+        var t0 = 0.0, t1 = 0.0
+        let far = BBox2(points: g.boundary).width + BBox2(points: g.boundary).height
+        for (a, b) in RG.clipSegment(c - d * far, c + d * far, [g.boundary]) {
+            let ta = (a - c).dot(d), tb = (b - c).dot(d)
+            if min(ta, tb) <= 1e-9 && max(ta, tb) >= -1e-9 { t0 = min(ta, tb); t1 = max(ta, tb) }
+        }
+        let len = t1 - t0
+        guard len > 1e-9 else { return [] }
+        let a = c + d * (t0 + len * 0.1), b = c + d * (t1 - len * 0.1)
+        var out: [DrawItem] = [stroke([a, b], color, lwAnno), .fill(loops: [RG.triangleArrow(tip: b, dir: d, size: min(200 * u, len * 0.15))], color: color)]
+        if options.showAnnotations {
+            let gr = abs(tan(rad(g.slope)))
+            let label = (el.props["kind"] == "ramp" ? "UP " : "") + (gr > 1e-9 ? "1:\(fmt(1 / gr, 1))  " : "") + String(format: "%.1f%%", gr * 100)
+            let rot = DimensionRenderer.readable(d.angle)
+            out.append(.text(TextGeom(position: (a + b) / 2 + d.perp * (60 * u), height: 150 * u, content: label, rotation: rot, halign: .center, valign: .bottom), font: font(doc), color: color))
+        }
+        return out
+    }
+
+    /// Footprints on the same level that room tags should avoid (furniture, columns, stairs).
+    static func tagObstacles(level: Int, near box: BBox2, doc: ArchiDocument) -> [[Vec2]] {
+        var out: [[Vec2]] = []
+        for el in doc.elements where el.level == level {
+            switch el.geometry {
+            case .component(let c): out.append(componentPoly(c))
+            case .column(let c): out.append(c.round ? RG.circle(c.position, max(c.width, 0) / 2, segments: 16) : columnPoly(c))
+            case .stair(let st): out += StairShapes.layout(st).treads.map(\.poly)
+            default: continue
+            }
+        }
+        return out.filter { $0.count >= 3 && BBox2(points: $0).intersects(box) }
+    }
+
+    /// Room fill (subtle tint), and a name/number/area tag at the room's most open point, clear of furniture.
+    static func spaceItems(_ el: BIMElement, _ g: SpaceGeom, ctx: BIMContext, color: RGBA, options: DrawOptions) -> [DrawItem] {
+        let doc = ctx.doc
+        let u = unit(doc)
+        let tint = blend(color, RGBA(1, 1, 1), 0.3)
+        var out: [DrawItem] = [.fill(loops: [g.boundary], color: RGBA(tint.r, tint.g, tint.b, 0.06))]
+        if el.props["areaScheme"] != nil { out.append(stroke(g.boundary, closed: true, color, lwFine, hiddenDash(doc, options))) }
+        guard options.showAnnotations, el.props["tag"] != "0" else { return out }
+        let name = g.name.isEmpty ? el.name : g.name
+        var line2 = g.number
+        let area = formatArea(abs(GeometryOps.signedArea(g.boundary)), doc)
+        line2 = line2.isEmpty ? area : line2 + "  " + area
+        let box = BBox2(points: g.boundary)
+        let placed: (point: Vec2, radius: Double)
+        if let x = el.props["tagX"].flatMap(Double.init), let y = el.props["tagY"].flatMap(Double.init) {
+            placed = (Vec2(x, y), LabelPlacement.signedDistance(Vec2(x, y), g.boundary))
+        } else {
+            placed = labelPole(g.boundary, obstacles: tagObstacles(level: el.level, near: box, doc: doc))
+        }
+        let th = LabelPlacement.fittedTextHeight(lines: [name.count, line2.count], lineSpacing: 1.5, radius: max(placed.radius, 1e-6),
+                                                 maxHeight: 220 * u, minHeight: 60 * u)
+        let th2 = th * 0.72
+        let tagColor = blend(color, RGBA(0.72, 0.74, 0.78, color.a), 0.65)
+        let f = font(doc)
+        let c = placed.point
+        out.append(.text(TextGeom(position: c + Vec2(0, th * 0.15), height: th, content: name, halign: .center, valign: .bottom), font: f, color: tagColor))
+        out.append(.text(TextGeom(position: c - Vec2(0, th * 0.15), height: th2, content: line2, halign: .center, valign: .top), font: f, color: tagColor))
+        return out
+    }
+
+    private static let poleLock = NSLock()
+    private static var poleCache: [[Double]: (Vec2, Double)] = [:]
+
+    /// Cached pole of inaccessibility (room tags are rebuilt on every redraw).
+    static func labelPole(_ boundary: [Vec2], obstacles: [[Vec2]]) -> (point: Vec2, radius: Double) {
+        var key: [Double] = []
+        for p in boundary { key += [p.x, p.y] }
+        key.append(.nan)
+        for o in obstacles { for p in o { key += [p.x, p.y] }; key.append(.infinity) }
+        let k2 = key.map { $0.isNaN ? -9.87654321e300 : $0 }
+        poleLock.lock()
+        if let hit = poleCache[k2] { poleLock.unlock(); return hit }
+        poleLock.unlock()
+        let inside = obstacles.filter { o in o.contains { GeometryOps.pointInPolygon($0, boundary) } }
+        var r = LabelPlacement.pole(of: boundary, avoiding: inside)
+        if r.radius <= 0 { r = LabelPlacement.pole(of: boundary) }
+        poleLock.lock()
+        if poleCache.count > 4000 { poleCache.removeAll() }
+        poleCache[k2] = (r.point, r.radius)
+        poleLock.unlock()
+        return r
+    }
+
     // MARK: Walls
 
     static func splitByGaps(_ pts: [Vec2], side: Double, f: WallFrame, gaps: [(side: Double, s0: Double, s1: Double)]) -> [[Vec2]] {
         let gs = gaps.filter { $0.side == side }
-        guard !gs.isEmpty, !f.isCurved, pts.count >= 2 else { return [pts] }
+        guard !gs.isEmpty, pts.count >= 2 else { return [pts] }
         var out: [[Vec2]] = []
         for i in 0..<(pts.count - 1) {
             let a = pts[i], b = pts[i + 1]
@@ -401,7 +493,21 @@ public enum PlanRepresentation {
             let so = 40 * u
             out.append(stroke([P(s0 - so, ext * h), P(s0 - so, ext * (h + so)), P(s1 + so, ext * (h + so)), P(s1 + so, ext * h)], color, lwProj))
         case .opening:
-            out.append(stroke([P(s0, -h), P(s1, h)], color, lwHidden, hiddenDash(doc, options)))
+            if o.isNiche && o.depth < 2 * h - 1e-9 {
+                // Recess: the back of the wall stays cut (filled), the recess outline is drawn.
+                let fromLeft = o.flipFacing
+                let t0 = fromLeft ? -h : -h + o.depth, t1 = fromLeft ? h - o.depth : h
+                let back = f.face(t0, s0, s1) + f.face(t1, s0, s1).reversed()
+                let tr = fromLeft ? t1 : t0
+                out.append(.fill(loops: [back], color: blend(cutFill, color, 0.2)))
+                out.append(stroke(f.face(tr, s0, s1), color, lwCut))
+                out.append(stroke(f.face(fromLeft ? t0 : t1, s0, s1), color, lwCut))
+                let front = fromLeft ? h : -h
+                out.append(stroke([P(s0, front), P(s0, tr)], color, lwCut))
+                out.append(stroke([P(s1, front), P(s1, tr)], color, lwCut))
+            } else {
+                out.append(stroke([P(s0, -h), P(s1, h)], color, lwHidden, hiddenDash(doc, options)))
+            }
         }
         return out
     }

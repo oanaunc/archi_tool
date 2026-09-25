@@ -130,6 +130,48 @@ public struct WallType: Codable, Hashable {
     ]
 }
 
+/// A door, window or opening type (Revit family type): shared parameters for all instances that follow it.
+public struct OpeningType: Codable, Hashable {
+    public var name: String
+    public var kind: OpeningKind
+    public var width: Double; public var height: Double; public var sill: Double
+    public var doorStyle: DoorStyle; public var windowStyle: WindowStyle
+    public var frameWidth: Double
+    public var material: String?
+    /// Free-form type parameters (fire rating, U-value, manufacturer, cost…), shown in schedules.
+    public var params: [String: String]
+    public init(name: String, kind: OpeningKind, width: Double, height: Double, sill: Double = 0, doorStyle: DoorStyle = .single,
+                windowStyle: WindowStyle = .casement, frameWidth: Double = 50, material: String? = nil, params: [String: String] = [:]) {
+        self.name = name; self.kind = kind; self.width = width; self.height = height; self.sill = sill; self.doorStyle = doorStyle
+        self.windowStyle = windowStyle; self.frameWidth = frameWidth; self.material = material; self.params = params
+    }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(name: try c.decode(String.self, forKey: .name), kind: try c.decodeIfPresent(OpeningKind.self, forKey: .kind) ?? .door,
+                  width: try c.decodeIfPresent(Double.self, forKey: .width) ?? 900, height: try c.decodeIfPresent(Double.self, forKey: .height) ?? 2100,
+                  sill: try c.decodeIfPresent(Double.self, forKey: .sill) ?? 0, doorStyle: try c.decodeIfPresent(DoorStyle.self, forKey: .doorStyle) ?? .single,
+                  windowStyle: try c.decodeIfPresent(WindowStyle.self, forKey: .windowStyle) ?? .casement, frameWidth: try c.decodeIfPresent(Double.self, forKey: .frameWidth) ?? 50,
+                  material: try c.decodeIfPresent(String.self, forKey: .material), params: try c.decodeIfPresent([String: String].self, forKey: .params) ?? [:])
+    }
+    /// Applies the type's parameters to an instance.
+    public func apply(to o: inout OpeningGeom) {
+        o.kind = kind; o.width = width; o.height = height; o.sill = sill; o.doorStyle = doorStyle; o.windowStyle = windowStyle
+        o.frameWidth = frameWidth; o.typeName = name
+    }
+    public static let library: [OpeningType] = [
+        OpeningType(name: "Single Door 900x2100", kind: .door, width: 900, height: 2100, params: ["FireRating": "", "Finish": "Painted"]),
+        OpeningType(name: "Single Door 800x2100", kind: .door, width: 800, height: 2100),
+        OpeningType(name: "Double Door 1600x2100", kind: .door, width: 1600, height: 2100, doorStyle: .double),
+        OpeningType(name: "Sliding Door 1800x2200", kind: .door, width: 1800, height: 2200, doorStyle: .sliding),
+        OpeningType(name: "Garage Door 2500x2200", kind: .door, width: 2500, height: 2200, doorStyle: .garage),
+        OpeningType(name: "Casement 1200x1200", kind: .window, width: 1200, height: 1200, sill: 900, windowStyle: .casement, params: ["UValue": "1.1"]),
+        OpeningType(name: "Double Casement 1500x1400", kind: .window, width: 1500, height: 1400, sill: 800, windowStyle: .doubleCasement),
+        OpeningType(name: "Fixed 600x1800", kind: .window, width: 600, height: 1800, sill: 300, windowStyle: .fixed),
+        OpeningType(name: "Sliding 2400x2200", kind: .window, width: 2400, height: 2200, sill: 0, windowStyle: .sliding),
+        OpeningType(name: "Opening 1000x2100", kind: .opening, width: 1000, height: 2100),
+    ]
+}
+
 public struct PaperSize: Codable, Hashable {
     public var name: String; public var width: Double; public var height: Double
     public init(name: String, width: Double, height: Double) { self.name = name; self.width = width; self.height = height }
@@ -192,7 +234,10 @@ public struct ProjectInfo: Codable, Hashable {
 }
 
 public struct ArchiDocument: Codable, Hashable {
-    public static let currentFormatVersion = 1
+    /// 1: 1.0 preview. 2: optional BIM fields (slab slope, niches, marks, opening types, phases, terrain,
+    /// curtain-wall grids, area plans). Version 2 only adds optional keys, so 1 → 2 needs no data change;
+    /// the bump stops older builds from opening (and silently dropping) the new data.
+    public static let currentFormatVersion = 2
     public var formatVersion: Int = ArchiDocument.currentFormatVersion
     public var info = ProjectInfo()
     public var units: Units = .millimeters
@@ -214,6 +259,12 @@ public struct ArchiDocument: Codable, Hashable {
     /// AutoCAD-style system variables (OSMODE, ORTHOMODE, TEXTSIZE…), stored as strings.
     public var variables: [String: String] = [:]
     public var nextID: Int = 1
+    /// Door/window/opening type catalog.
+    public var openingTypes: [OpeningType] = OpeningType.library
+    /// Construction phases in time order (elements carry props "phaseCreated"/"phaseDemolished").
+    public var phases: [String] = ["Existing", "New Construction"]
+    /// Keynote legend: key → description (elements reference keys through props["keynote"]).
+    public var keynotes: [String: String] = [:]
 
     public init() {
         layers = [
@@ -227,6 +278,31 @@ public struct ArchiDocument: Codable, Hashable {
             Layer(name: "A-AREA", color: RGBA(1.0, 0.55, 0.3), lineweight: 0.13),
             Layer(name: "S-GRID", color: RGBA(0.9, 0.3, 0.3), linetype: "Center", lineweight: 0.13),
         ]
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case formatVersion, info, units, layers, currentLayer, linetypes, textStyles, dimStyles, currentDimStyle, blocks, entities, elements
+        case levels, currentLevel, materials, wallTypes, layouts, namedViews, variables, nextID, openingTypes, phases, keynotes
+    }
+
+    /// Tolerant decoding: every collection falls back to its default when absent, so older files keep opening.
+    public init(from decoder: Decoder) throws {
+        self.init()
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        func opt<T: Decodable>(_ k: CodingKeys, _ into: inout T) throws { if let v = try c.decodeIfPresent(T.self, forKey: k) { into = v } }
+        try opt(.formatVersion, &formatVersion); try opt(.info, &info); try opt(.units, &units); try opt(.layers, &layers)
+        try opt(.currentLayer, &currentLayer); try opt(.linetypes, &linetypes); try opt(.textStyles, &textStyles); try opt(.dimStyles, &dimStyles)
+        try opt(.currentDimStyle, &currentDimStyle); try opt(.blocks, &blocks); try opt(.entities, &entities); try opt(.elements, &elements)
+        try opt(.levels, &levels); try opt(.currentLevel, &currentLevel); try opt(.materials, &materials); try opt(.wallTypes, &wallTypes)
+        try opt(.layouts, &layouts); try opt(.namedViews, &namedViews); try opt(.variables, &variables); try opt(.nextID, &nextID)
+        try opt(.openingTypes, &openingTypes); try opt(.phases, &phases); try opt(.keynotes, &keynotes)
+        let maxID = max(entities.map(\.id).max() ?? 0, elements.map(\.id).max() ?? 0)
+        if nextID <= maxID { nextID = maxID + 1 }
+    }
+
+    public func openingType(_ n: String?) -> OpeningType? {
+        guard let n = n else { return nil }
+        return openingTypes.first { $0.name.caseInsensitiveCompare(n) == .orderedSame }
     }
 
     // MARK: IDs and lookup

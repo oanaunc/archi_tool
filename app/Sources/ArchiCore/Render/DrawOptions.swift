@@ -13,5 +13,7 @@ public struct DrawOptions: Hashable {
     public var forPaper = false
     /// Draw material cut patterns inside cut walls/columns.
     public var cutHatches = true
+    /// Show ceilings (slabs with props kind = ceiling); false in floor plans unless the CEILINGS variable is 1.
+    public var showCeilings: Bool? = nil
     public init(level: Int? = nil) { self.level = level }
 }

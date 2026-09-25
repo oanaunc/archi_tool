@@ -22,7 +22,9 @@ public enum ArchiFile {
     }
 
     /// Migration hooks: `migrations[v]` upgrades the raw JSON `document` object from format `v` to `v + 1`.
-    public static var migrations: [Int: ([String: Any]) throws -> [String: Any]] = [:]
+    public static var migrations: [Int: ([String: Any]) throws -> [String: Any]] = [
+        1: { $0 },   // 1 → 2: new BIM fields are optional; old documents decode unchanged.
+    ]
 
     public static func encode(_ doc: ArchiDocument) throws -> Data {
         var d = doc

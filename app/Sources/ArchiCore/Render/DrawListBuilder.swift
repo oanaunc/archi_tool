@@ -27,17 +27,58 @@ public enum DrawListBuilder {
                 let pa = priority(a.element), pb = priority(b.element)
                 return pa != pb ? pa < pb : a.offset < b.offset
             }
+            let phased = Phasing.isActive(doc)
+            let pf = Phasing.filter(doc)
             for (_, el) in els {
-                let items = PlanRepresentation.items(el, ctx: ctx, options: options).map { paper($0, options) }
+                var st = Phasing.Status.new
+                if phased { st = Phasing.status(el.props, doc: doc); if !Phasing.visible(st, pf) { continue } }
+                if el.props["kind"] == "ceiling" && !(options.showCeilings ?? (doc.variable("CEILINGS") != "0")) { continue }
+                var items = PlanRepresentation.items(el, ctx: ctx, options: options)
+                if phased { items = phaseStyled(items, Phasing.style(st, pf), doc: doc, options: options) }
+                items = items.map { paper($0, options) }
                 if !items.isEmpty { out.append(DrawEntry(id: el.id, items: items)) }
             }
         }
+        let phasedEntities = doc.entities.contains { $0.props["phaseCreated"] != nil || $0.props["phaseDemolished"] != nil }
+        let pf = Phasing.filter(doc)
         for e in doc.entities where layerShown(e.layer, doc, options) {
             if !options.showAnnotations && isAnnotation(e.geometry) { continue }
-            let items = self.items(for: e, doc: doc, options: options)
+            if let l = options.level, let el = e.props["level"].flatMap(Int.init), el != l { continue }
+            var items = self.items(for: e, doc: doc, options: options)
+            if phasedEntities {
+                let st = Phasing.status(e.props, doc: doc)
+                if !Phasing.visible(st, pf) { continue }
+                items = phaseStyled(items, Phasing.style(st, pf), doc: doc, options: options)
+            }
             if !items.isEmpty { out.append(DrawEntry(id: e.id, items: items)) }
         }
         return out
+    }
+
+    /// Phase graphic overrides: halftone for existing work, dashed and tinted for demolished work.
+    static func phaseStyled(_ items: [DrawItem], _ s: (halftone: Bool, dashed: Bool, tint: RGBA?), doc: ArchiDocument, options: DrawOptions) -> [DrawItem] {
+        guard s.halftone || s.dashed || s.tint != nil else { return items }
+        let gray = RGBA(0.5, 0.5, 0.5)
+        func col(_ c: RGBA) -> RGBA {
+            var r = c
+            if let t = s.tint { r = RGBA(t.r, t.g, t.b, c.a) }
+            if s.halftone { r = PlanRepresentation.blend(r, gray, 0.55) }
+            return r
+        }
+        let dash = PlanRepresentation.hiddenDash(doc, options)
+        return items.compactMap { it in
+            switch it {
+            case .stroke(let p, let c, var st):
+                st.color = col(st.color)
+                if s.dashed && st.dash.isEmpty { st.dash = dash }
+                return .stroke(points: p, closed: c, style: st)
+            case .fill(let l, let c):
+                if s.dashed { return nil }
+                let cc = col(c); return .fill(loops: l, color: RGBA(cc.r, cc.g, cc.b, c.a * (s.halftone ? 0.6 : 1)))
+            case .text(let t, let f, let c): return .text(t, font: f, color: col(c))
+            case .image: return it
+            }
+        }
     }
 
     public static func items(for e: Entity, doc: ArchiDocument, options: DrawOptions) -> [DrawItem] {
@@ -206,6 +247,8 @@ public enum DrawListBuilder {
         let layerName = (e.layer == "0" && inherit.layer != nil) ? inherit.layer! : e.layer
         let layer = doc.layer(named: layerName)
         let col = color(e.color, layer: layer, inherit: inherit)
+        if e.props["tagOf"] != nil, case .text(let t) = e.geometry { return Annotations.tagItems(e, t, doc: doc, color: col) }
+        if e.props["sectionMark"] != nil { return Annotations.sectionItems(e, doc: doc, color: col, lineweight: lineweight(e, layer: layer, inherit: inherit)) }
         let lw = lineweight(e, layer: layer, inherit: inherit)
         let style = StrokeStyle(color: col, lineweight: lw, dash: dash(e, layer: layer, doc: doc, options: options, inherit: inherit))
         let solidStyle = StrokeStyle(color: col, lineweight: lw)
@@ -314,6 +357,14 @@ public enum DrawListBuilder {
         case .image(let im):
             return [.image(im)]
         case .solid(let s):
+            if s.kind == .mesh && !s.meshTriangles.isEmpty {
+                if let iv = e.props["contourInterval"].flatMap(Double.init), iv > 0 {
+                    return Annotations.terrainItems(s, interval: iv, major: e.props["contourMajor"].flatMap(Int.init) ?? 5, doc: doc, color: col, lineweight: lw, showLabels: options.showAnnotations)
+                }
+                if s.meshTriangles.count <= 60_000 {
+                    return MeshTools.planEdges(vertices: s.meshVertices, triangles: s.meshTriangles).map { .stroke(points: $0, closed: false, style: style) }
+                }
+            }
             let fp = GeometryOps.solidFootprint(s)
             return fp.count >= 2 ? [.stroke(points: fp, closed: false, style: style)] : []
         }

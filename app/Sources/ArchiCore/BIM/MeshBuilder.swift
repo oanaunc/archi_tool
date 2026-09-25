@@ -122,8 +122,16 @@ public enum MeshBuilder {
     public static func build(doc: ArchiDocument) -> [MeshGroup] {
         let ctx = BIMContext(doc: doc)
         var out: [MeshGroup] = []
-        for el in doc.elements where doc.isVisible(layer: el.layer) { out += groups(el, ctx: ctx) }
-        for e in doc.entities where doc.isVisible(layer: e.layer) { out += groups(for: e, doc: doc) }
+        let phased = Phasing.isActive(doc)
+        let pf = Phasing.filter(doc)
+        func shown(_ props: [String: String]) -> Bool {
+            guard phased else { return true }
+            let st = Phasing.status(props, doc: doc)
+            if st == .demolished { return pf == .demolition }
+            return Phasing.visible(st, pf)
+        }
+        for el in doc.elements where doc.isVisible(layer: el.layer) && shown(el.props) { out += groups(el, ctx: ctx) }
+        for e in doc.entities where doc.isVisible(layer: e.layer) && shown(e.props) { out += groups(for: e, doc: doc) }
         return out
     }
 
@@ -153,12 +161,28 @@ public enum MeshBuilder {
                 var sill = Double.infinity, head = -Double.infinity
                 for oe in c.els { if case .opening(let o) = oe.geometry { sill = min(sill, o.sill); head = max(head, o.sill + o.height) } }
                 if !sill.isFinite { continue }
+                // Niche: keep the back of the wall behind the recess.
+                let niches = c.els.compactMap { oe -> OpeningGeom? in if case .opening(let o) = oe.geometry, o.isNiche { return o }; return nil }
+                if niches.count == c.els.count, let nd = niches.map(\.depth).min(), nd < 2 * f.h - 1e-9 {
+                    let fromLeft = niches[0].flipFacing
+                    let t0 = fromLeft ? -f.h : -f.h + nd, t1 = fromLeft ? f.h - nd : f.h
+                    let back = f.face(t0, c.s0, c.s1) + f.face(t1, c.s0, c.s1).reversed()
+                    acc.prism(back, z0: z0 + max(sill, 0), z1: min(z0 + head, z1), smooth: f.isCurved)
+                }
                 if sill > 1e-9 { acc.prism(poly, z0: z0, z1: min(z0 + sill, z1), smooth: f.isCurved) }
                 if head < g.height - 1e-9 { acc.prism(poly, z0: z0 + max(head, 0), z1: z1, smooth: f.isCurved) }
             }
+            roofInfill(f, wall: el, z1: z1, ctx: ctx, into: &acc)
             var mat = el.material ?? "Plaster"
             if let tn = g.wallType, let wt = doc.wallTypes.first(where: { $0.name == tn }), let p = wt.plies.first { mat = p.material }
-            return [acc.group(el.id, kind, mat)].compactMap { $0 }
+            var out = [acc.group(el.id, kind, mat)].compactMap { $0 }
+            for (i, sw) in g.sweeps.enumerated() {
+                var sa = MeshAcc()
+                wallSweep(sw, f, z0: z0, ctx: ctx, into: &sa)
+                if let grp = sa.group(el.id, "wallSweep", sw.material ?? mat) { out.append(grp) }
+                _ = i
+            }
+            return out
 
         case .opening(let o):
             guard o.kind != .opening, o.width > 0, o.height > 0,
@@ -236,7 +260,8 @@ public enum MeshBuilder {
         case .slab(let g):
             var acc = MeshAcc()
             let top = elev + g.topOffset
-            acc.prism(g.boundary, holes: g.holes, z0: top - g.thickness, z1: top)
+            if g.isSloped { slopedSlab(g, elev: elev, into: &acc) }
+            else { acc.prism(g.boundary, holes: g.holes, z0: top - g.thickness, z1: top) }
             return [acc.group(el.id, kind, el.material ?? "Concrete")].compactMap { $0 }
 
         case .column(let g):
@@ -306,14 +331,10 @@ public enum MeshBuilder {
             let d = (g.end - g.start) / len, n = d.perp
             let m = max(g.mullionSize, 1e-3) / 2, md = m * 1.5
             let zb = elev + g.baseOffset, zt = zb + g.height
-            var xs: [Double] = [0]
-            if g.gridU > 1e-9 { var x = g.gridU; while x < len - m * 2 { xs.append(x); x += g.gridU } }
-            xs.append(len)
-            var zs: [Double] = [0]
-            if g.gridV > 1e-9 { var z = g.gridV; while z < g.height - m * 2 { zs.append(z); z += g.gridV } }
-            zs.append(g.height)
+            let xs: [Double] = [0] + g.uPositions + [len]
+            let zs: [Double] = [0] + g.vPositions + [g.height]
             func P(_ x: Double, _ y: Double) -> Vec2 { g.start + d * x + n * y }
-            var frame = MeshAcc(), glass = MeshAcc()
+            var frame = MeshAcc(), glass = MeshAcc(), solid = MeshAcc()
             for x in xs {
                 let x0 = max(0, x - m), x1 = min(len, x + m)
                 frame.prism([P(x0, -md), P(x1, -md), P(x1, md), P(x0, md)], z0: zb, z1: zt)
@@ -321,15 +342,23 @@ public enum MeshBuilder {
             for i in 0..<(xs.count - 1) {
                 let x0 = xs[i] + m, x1 = xs[i + 1] - m
                 guard x1 > x0 else { continue }
-                for z in zs {
+                for (zi, z) in zs.enumerated() {
+                    // Transoms are omitted between two empty panels.
+                    if zi > 0 && zi < zs.count - 1, g.panels["\(i),\(zi - 1)"] == "empty", g.panels["\(i),\(zi)"] == "empty" { continue }
                     frame.prism([P(x0, -md), P(x1, -md), P(x1, md), P(x0, md)], z0: zb + max(0, z - m), z1: zb + min(g.height, z + m))
                 }
                 for j in 0..<(zs.count - 1) {
                     let za = zb + zs[j] + m, zc = zb + zs[j + 1] - m
-                    if zc > za { glass.prism([P(x0, -5 * u), P(x1, -5 * u), P(x1, 5 * u), P(x0, 5 * u)], z0: za, z1: zc) }
+                    guard zc > za else { continue }
+                    switch g.panels["\(i),\(j)"] ?? "glass" {
+                    case "empty": continue
+                    case "solid": solid.prism([P(x0, -20 * u), P(x1, -20 * u), P(x1, 20 * u), P(x0, 20 * u)], z0: za, z1: zc)
+                    default: glass.prism([P(x0, -5 * u), P(x1, -5 * u), P(x1, 5 * u), P(x0, 5 * u)], z0: za, z1: zc)
+                    }
                 }
             }
-            return [frame.group(el.id, kind, "Aluminium"), glass.group(el.id, kind, el.material ?? "Glass")].compactMap { $0 }
+            return [frame.group(el.id, kind, "Aluminium"), glass.group(el.id, kind, el.material ?? "Glass"),
+                    solid.group(el.id, kind, el.props["panelMaterial"] ?? "Aluminium")].compactMap { $0 }
 
         case .component(let g):
             var acc = MeshAcc()
@@ -360,6 +389,134 @@ public enum MeshBuilder {
 
         case .gridLine:
             return []
+        }
+    }
+
+    /// Gable/shed end infill: extends a perimeter wall under a sloped roof up to the roof underside
+    /// (a triangle under gables, a rectangle or trapezoid under the high side of a shed roof).
+    /// Walls with props["attachTop"] = "1" are attached wherever they stand under the roof; "0" disables it.
+    static func roofInfill(_ f: WallFrame, wall: BIMElement, z1: Double, ctx: BIMContext, into acc: inout MeshAcc) {
+        guard !f.isCurved, f.L > 1e-9, wall.props["attachTop"] != "0" else { return }
+        let forced = wall.props["attachTop"] == "1"
+        let doc = ctx.doc
+        let u = 1 / doc.units.mm
+        for rel in doc.elements where doc.isVisible(layer: rel.layer) {
+            guard case .roof(let rg) = rel.geometry, rg.kind != .flat, rg.pitch > 1e-6 else { continue }
+            let zb = ctx.levelElevation(rel.level) + rg.baseOffset
+            let r = RoofShapes.faces(rg)
+            guard r.boundary.count >= 3, !r.faces.isEmpty else { continue }
+            let tolZ = max(60 * u, 1e-6)
+            if !forced && (z1 < zb - 400 * u || z1 > zb + tolZ) { continue }
+            if forced && z1 > zb + 50_000 * u { continue }
+            let ring = r.boundary + [r.boundary[0]]
+            let near = f.h + max(20 * u, 1e-6)
+            let samples = [f.cs, f.ce, (f.cs + f.ce) / 2]
+            if forced {
+                guard samples.allSatisfy({ GeometryOps.pointInPolygon($0, r.boundary) || GeometryOps.distance(from: $0, toPolyline: ring) <= near }) else { continue }
+            } else {
+                guard samples.allSatisfy({ GeometryOps.distance(from: $0, toPolyline: ring) <= near }) else { continue }
+            }
+            // Breakpoints where the centerline crosses face outlines (the underside is linear in between).
+            var ss: [Double] = [0, f.L]
+            for face in r.faces {
+                let p = face.poly
+                for i in 0..<p.count {
+                    let a = p[i], b = p[(i + 1) % p.count]
+                    if let x = GeometryOps.segmentIntersection(f.cs, f.ce, a, b) { ss.append((x - f.cs).dot(f.dir)) }
+                }
+            }
+            ss = ss.map { min(max($0, 0), f.L) }.sorted()
+            var uniq: [Double] = []
+            for v in ss where uniq.last.map({ v - $0 > 1e-6 }) ?? true { uniq.append(v) }
+            let fpTol = max(BBox2(points: r.footprint).width, 1) * 1e-6 + 1e-6
+            func underside(_ q: Vec2) -> Double? {
+                var best: Double? = nil
+                for face in r.faces {
+                    let inside = GeometryOps.pointInPolygon(q, face.poly) || GeometryOps.distance(from: q, toPolyline: face.poly + [face.poly[0]]) < fpTol * 10
+                    if inside { let h = face.height(q); best = min(best ?? h, h) }
+                }
+                return best
+            }
+            var prof: [(x: Double, z: Double)] = []
+            var any = false
+            for sv in uniq {
+                let h = underside(f.cs + f.dir * sv) ?? 0
+                let z = max(zb + h, z1)
+                if z - z1 > 1e-3 * max(u, 1e-9) { any = true }
+                prof.append((sv, z))
+            }
+            guard any, prof.count >= 2 else { continue }
+            // Polygon: base line at the wall top, then the underside profile back.
+            var poly: [(x: Double, z: Double)] = [(prof[0].x, z1), (prof[prof.count - 1].x, z1)]
+            for p in prof.reversed() { poly.append(p) }
+            var clean: [(x: Double, z: Double)] = []
+            for p in poly where !(clean.last.map { abs($0.x - p.x) < 1e-9 && abs($0.z - p.z) < 1e-9 } ?? false) { clean.append(p) }
+            if let fst = clean.first, let lst = clean.last, abs(fst.x - lst.x) < 1e-9 && abs(fst.z - lst.z) < 1e-9 { clean.removeLast() }
+            let area2 = (0..<clean.count).reduce(0.0) { s, i in let a = clean[i], b = clean[(i + 1) % clean.count]; return s + a.x * b.z - b.x * a.z }
+            guard clean.count >= 3, abs(area2) > 1e-6 else { continue }
+            acc.verticalPlate(clean, origin: f.cs, ax: f.dir, ay: f.dir.perp, y0: -f.h, y1: f.h)
+            return
+        }
+    }
+
+    /// Slab whose top follows an inclined plane (ramps, sloped floors); the soffit is parallel to the top.
+    static func slopedSlab(_ g: SlabGeom, elev: Double, into acc: inout MeshAcc) {
+        var outer = RG.dedupe(g.boundary, closed: true)
+        guard outer.count >= 3, abs(GeometryOps.signedArea(outer)) > 1e-12 else { return }
+        if GeometryOps.signedArea(outer) < 0 { outer.reverse() }
+        var holes = g.holes.map { RG.dedupe($0, closed: true) }.filter { $0.count >= 3 && abs(GeometryOps.signedArea($0)) > 1e-12 }
+        holes = holes.map { GeometryOps.signedArea($0) > 0 ? Array($0.reversed()) : $0 }
+        let k = 1 / max(cos(g.slope * .pi / 180), 0.05)
+        func zt(_ p: Vec2) -> Double { elev + g.topHeight(at: p) }
+        func zbot(_ p: Vec2) -> Double { zt(p) - g.thickness * k }
+        let (pts, tris) = Triangulator.triangulateWithPoints(outer, holes: holes)
+        for t in tris {
+            let a = pts[t.0], b = pts[t.1], c = pts[t.2]
+            let top = [Vec3(a.x, a.y, zt(a)), Vec3(b.x, b.y, zt(b)), Vec3(c.x, c.y, zt(c))]
+            let bot = [Vec3(a.x, a.y, zbot(a)), Vec3(b.x, b.y, zbot(b)), Vec3(c.x, c.y, zbot(c))]
+            acc.face(top, outward: .unitZ); acc.face(bot, outward: -.unitZ)
+        }
+        for loop in [outer] + holes {
+            let n = loop.count
+            for i in 0..<n {
+                let a = loop[i], b = loop[(i + 1) % n]
+                guard a.distance(to: b) > 1e-12 else { continue }
+                let d = (b - a).normalized
+                acc.face([Vec3(a.x, a.y, zbot(a)), Vec3(b.x, b.y, zbot(b)), Vec3(b.x, b.y, zt(b)), Vec3(a.x, a.y, zt(a))], outward: Vec3(d.y, -d.x, 0))
+                acc.edges.append([Vec3(a.x, a.y, zt(a)), Vec3(b.x, b.y, zt(b))])
+                acc.edges.append([Vec3(a.x, a.y, zbot(a)), Vec3(b.x, b.y, zbot(b))])
+                acc.edges.append([Vec3(a.x, a.y, zbot(a)), Vec3(a.x, a.y, zt(a))])
+            }
+        }
+    }
+
+    /// Solid runs of a wall sweep along one face, interrupted by openings that cross its height band.
+    static func wallSweep(_ sw: WallSweep, _ f: WallFrame, z0: Double, ctx: BIMContext, into acc: inout MeshAcc) {
+        let side: Double = sw.side >= 0 ? 1 : -1
+        let zLo = sw.elevation, zHi = sw.elevation + sw.height
+        var runs: [(Double, Double)] = [(0, f.L)]
+        for c in ctx.cuts(f) {
+            var hits = false
+            for oe in c.els { if case .opening(let o) = oe.geometry, o.sill < zHi, o.sill + o.height > zLo { if !(o.isNiche && o.flipFacing != (side > 0)) { hits = true } } }
+            guard hits else { continue }
+            var next: [(Double, Double)] = []
+            for r in runs {
+                if c.s1 <= r.0 || c.s0 >= r.1 { next.append(r); continue }
+                if c.s0 > r.0 { next.append((r.0, c.s0)) }
+                if c.s1 < r.1 { next.append((c.s1, r.1)) }
+            }
+            runs = next
+        }
+        let j = ctx.join(f)
+        // Profile x = outward from the face; the frame's X axis points to the left of travel, so run right faces backwards.
+        for r in runs where r.1 - r.0 > 1e-6 {
+            var pts = f.face(side * f.h, r.0, r.1)
+            if r.0 <= 1e-9 { pts[0] = side > 0 ? j.startL : j.startR }
+            if r.1 >= f.L - 1e-9 { pts[pts.count - 1] = side > 0 ? j.endL : j.endR }
+            if side < 0 { pts.reverse() }
+            let path = pts.map { Vec3($0.x, $0.y, z0 + sw.elevation) }
+            let profile = sw.outline.map { Vec2($0.x, $0.z) }
+            SweepMesh.sweep(profile, along: path, into: &acc)
         }
     }
 
@@ -530,6 +687,7 @@ public enum MeshBuilder {
                 let n = (v[ib] - v[ia]).cross(v[ic] - v[ia]).normalized
                 acc.tri(v[ia], v[ib], v[ic], n, n, n)
             }
+            if s.meshTriangles.count <= 60_000 { acc.edges += MeshTools.featureEdges(vertices: v, triangles: s.meshTriangles, angle: 25) }
         }
     }
 }

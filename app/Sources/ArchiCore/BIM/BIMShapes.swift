@@ -152,6 +152,40 @@ final class BIMContext {
                 }
                 // T-join into the side of a straight wall.
                 let P = me.center, o = me.out
+                var joinedCurved = false
+                for b in walls where b.id != f.id && b.isCurved {
+                    guard let c = b.arcC else { continue }
+                    let pr = b.project(P)
+                    guard pr.s > -tol, pr.s < b.L + tol, abs(pr.t) <= b.h + tol else { continue }
+                    let lft = b.left(min(max(pr.s, 0), b.L))
+                    guard abs(o.dot(b.tangent(min(max(pr.s, 0), b.L)))) < 0.985 else { continue }
+                    var side: Double = o.dot(lft) >= 0 ? 1 : -1
+                    if abs(o.dot(lft)) < 1e-9 { side = pr.t >= 0 ? 1 : -1 }
+                    let r = max(b.arcR - side * b.h * (b.arcSweep >= 0 ? 1 : -1), 1e-6)
+                    let sEnd = atStart ? 0 : f.L
+                    let tan = f.tangent(sEnd)
+                    func hit(_ q: Vec2) -> Vec2? {
+                        // Line q + λ·tan against the face circle; the intersection nearest to the join point.
+                        let d = q - c
+                        let bq = d.dot(tan), cq = d.lengthSquared - r * r
+                        let disc = bq * bq - cq
+                        guard disc >= 0 else { return nil }
+                        let s1 = -bq - disc.squareRoot(), s2 = -bq + disc.squareRoot()
+                        let p1 = q + tan * s1, p2 = q + tan * s2
+                        return p1.distance(to: P) <= p2.distance(to: P) ? p1 : p2
+                    }
+                    guard let cl = hit(f.pt(sEnd, f.h)), let cr = hit(f.pt(sEnd, -f.h)),
+                          cl.distance(to: P) < 8 * max(f.h, b.h) + tol, cr.distance(to: P) < 8 * max(f.h, b.h) + tol else { continue }
+                    if atStart { info.startL = cl; info.startR = cr; info.startCap = false }
+                    else { info.endL = cl; info.endR = cr; info.endCap = false }
+                    let s0 = b.project(cl).s, s1 = b.project(cr).s
+                    var bi = joins[b.id] ?? WallJoinInfo(startL: b.pt(0, b.h), startR: b.pt(0, -b.h), endL: b.pt(b.L, b.h), endR: b.pt(b.L, -b.h))
+                    bi.gaps.append((side, min(s0, s1), max(s0, s1)))
+                    joins[b.id] = bi
+                    joinedCurved = true
+                    break
+                }
+                if joinedCurved { continue }
                 for b in walls where b.id != f.id && !b.isCurved {
                     let q = P - b.cs
                     let u = q.dot(b.dir), tp = q.dot(b.dir.perp)
@@ -324,9 +358,22 @@ enum RoofShapes {
         var eave = g.eaveEdge
         if GeometryOps.signedArea(g.boundary) < 0 { eave = b.count - 2 - eave } // edge index after reversal
         eave = ((eave % b.count) + b.count) % b.count
-        if g.kind == .hip && !RG.isConvex(b) { b = RG.convexHull(b) ; eave = eave % b.count }
-        let fp = g.overhang > 0 ? RG.offsetPolygon(b, g.overhang) : b
+        var fp = g.overhang > 0 ? RG.offsetPolygon(b, g.overhang) : b
         let k = tan(rad(max(0, min(g.pitch, 89))))
+        if g.kind == .hip && !RG.isConvex(b) {
+            // Non-convex footprint: straight-skeleton faces of the overhang outline, heights measured from the eave line.
+            var out: [RoofFace] = []
+            var f = RG.dedupe(fp, closed: true)
+            if GeometryOps.signedArea(f) < 0 { f.reverse() }
+            for face in StraightSkeleton.faces(f) {
+                let a = f[face.edge], c = f[(face.edge + 1) % f.count]
+                let n = (c - a).normalized.perp
+                out.append(RoofFace(poly: face.poly, grad: n * k, c: -k * a.dot(n) - k * max(g.overhang, 0)))
+            }
+            if !out.isEmpty { return (b, fp, out) }
+            b = RG.convexHull(b); eave = eave % b.count
+            fp = g.overhang > 0 ? RG.offsetPolygon(b, g.overhang) : b
+        }
         func edgeFn(_ i: Int) -> RoofFace {
             let a = b[i], c = b[(i + 1) % b.count]
             let n = (c - a).normalized.perp
