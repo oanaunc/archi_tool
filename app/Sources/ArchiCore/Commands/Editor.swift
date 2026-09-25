@@ -127,7 +127,7 @@ public enum SnapKind: String, Codable, CaseIterable, Hashable {
 /// The drawing session: document, selection, undo, command execution. Shared by UI, scripts, agents and CLI.
 @MainActor
 public final class Editor {
-    public var doc: Document { didSet { changeCount += 1; onChange?() } }
+    public var doc: ArchiDocument { didSet { changeCount += 1; onChange?() } }
     public private(set) var changeCount = 0
     public var history = UndoHistory()
     public var selection: Set<EntityID> = [] { didSet { onSelectionChange?() } }
@@ -154,7 +154,7 @@ public final class Editor {
     public var cursor: Vec2?
     private var commandTask: Task<Void, Never>?
 
-    public init(document: Document = Document(), registry: CommandRegistry = .shared) {
+    public init(document: ArchiDocument = ArchiDocument(), registry: CommandRegistry = .shared) {
         self.doc = document
         self.registry = registry
         registry.ensureBuiltins()
@@ -494,7 +494,7 @@ public final class Editor {
     }
 
     // MARK: Direct edits (scripts, UI panels)
-    public func transaction(_ label: String, _ body: (inout Document) throws -> Void) rethrows {
+    public func transaction(_ label: String, _ body: (inout ArchiDocument) throws -> Void) rethrows {
         let before = doc
         var d = doc
         try body(&d)
@@ -508,7 +508,7 @@ public final class Editor {
         if let (d, label) = history.redo(current: doc) { doc = d; print("Redo \(label)") }
         else { print("Nothing to redo.") }
     }
-    public func replaceDocument(_ d: Document, url: URL?) {
+    public func replaceDocument(_ d: ArchiDocument, url: URL?) {
         history = UndoHistory(); selection = []; doc = d; fileURL = url; isDirty = false
     }
 }

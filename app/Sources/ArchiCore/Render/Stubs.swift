@@ -2,9 +2,9 @@
 import Foundation
 
 public enum PlanRepresentation {
-    public static func entries(_ el: BIMElement, doc: Document) -> [DrawItem] { [] }
-    public static func bounds(_ el: BIMElement, doc: Document) -> BBox2 { .empty }
-    public static func distance(from p: Vec2, to el: BIMElement, doc: Document) -> Double { .infinity }
+    public static func entries(_ el: BIMElement, doc: ArchiDocument) -> [DrawItem] { [] }
+    public static func bounds(_ el: BIMElement, doc: ArchiDocument) -> BBox2 { .empty }
+    public static func distance(from p: Vec2, to el: BIMElement, doc: ArchiDocument) -> Double { .infinity }
 }
 
 public enum DimensionRenderer {

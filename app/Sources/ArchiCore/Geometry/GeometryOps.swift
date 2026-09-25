@@ -125,7 +125,7 @@ public enum GeometryOps {
     }
 
     /// Polylines approximating the curve parts of a geometry (text, hatch fill and solids excluded; blocks expanded).
-    public static func tessellate(_ g: Geometry, doc: Document?, depth: Int = 0) -> [[Vec2]] {
+    public static func tessellate(_ g: Geometry, doc: ArchiDocument?, depth: Int = 0) -> [[Vec2]] {
         switch g {
         case .point(let p): return [[p]]
         case .line(let l): return [[l.a, l.b]]
@@ -179,7 +179,7 @@ public enum GeometryOps {
         return [Vec2(x0, y0), Vec2(x0 + w, y0), Vec2(x0 + w, y0 + h), Vec2(x0, y0 + h)].map(tr.apply)
     }
 
-    public static func bounds(_ g: Geometry, doc: Document?) -> BBox2 {
+    public static func bounds(_ g: Geometry, doc: ArchiDocument?) -> BBox2 {
         switch g {
         case .circle(let c): return BBox2(min: c.center - Vec2(c.radius, c.radius), max: c.center + Vec2(c.radius, c.radius))
         case .dimension(let d): return BBox2(points: d.points)
@@ -190,7 +190,7 @@ public enum GeometryOps {
         }
     }
 
-    public static func bounds(of doc: Document, includeElements: Bool = true) -> BBox2 {
+    public static func bounds(of doc: ArchiDocument, includeElements: Bool = true) -> BBox2 {
         var b = BBox2.empty
         for e in doc.entities where doc.isVisible(layer: e.layer) { b.add(bounds(e.geometry, doc: doc)) }
         if includeElements { for el in doc.elements where doc.isVisible(layer: el.layer) { b.add(PlanRepresentation.bounds(el, doc: doc)) } }
@@ -217,7 +217,7 @@ public enum GeometryOps {
         return best
     }
 
-    public static func distance(from p: Vec2, to g: Geometry, doc: Document?) -> Double {
+    public static func distance(from p: Vec2, to g: Geometry, doc: ArchiDocument?) -> Double {
         switch g {
         case .circle(let c): return abs(p.distance(to: c.center) - c.radius)
         case .text(let t):
@@ -239,7 +239,7 @@ public enum GeometryOps {
     }
 
     /// Whether the geometry has a part inside the box (for crossing selection).
-    public static func crosses(_ g: Geometry, box: BBox2, doc: Document?) -> Bool {
+    public static func crosses(_ g: Geometry, box: BBox2, doc: ArchiDocument?) -> Bool {
         for pl in tessellate(g, doc: doc) {
             for p in pl where box.contains(p) { return true }
             if pl.count > 1 { for i in 0..<(pl.count - 1) where segmentIntersectsBox(pl[i], pl[i + 1], box) { return true } }
@@ -297,7 +297,7 @@ public enum GeometryOps {
         for i in 0..<poly.count { let p = poly[i], q = poly[(i + 1) % poly.count]; c += (p + q) * p.cross(q) }
         return c / (6 * a)
     }
-    public static func length(_ g: Geometry, doc: Document?) -> Double {
+    public static func length(_ g: Geometry, doc: ArchiDocument?) -> Double {
         switch g {
         case .circle(let c): return 2 * .pi * c.radius
         case .arc(let a): return a.radius * a.sweep
@@ -308,7 +308,7 @@ public enum GeometryOps {
         }
     }
     /// Area enclosed by a closed geometry (circle, ellipse, closed polyline, hatch).
-    public static func area(_ g: Geometry, doc: Document?) -> Double? {
+    public static func area(_ g: Geometry, doc: ArchiDocument?) -> Double? {
         switch g {
         case .circle(let c): return .pi * c.radius * c.radius
         case .ellipse(let e) where e.isFull: return .pi * e.majorAxis.length * e.majorAxis.length * e.ratio

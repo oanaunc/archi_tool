@@ -11,7 +11,7 @@ public struct WallGeom: Codable, Hashable {
     public var justification: WallJustification
     /// Optional arc: bulge like a polyline segment (0 = straight).
     public var bulge: Double
-    /// Wall type name (see Document.wallTypes) — nil = generic.
+    /// Wall type name (see ArchiDocument.wallTypes) — nil = generic.
     public var wallType: String?
     public init(start: Vec2, end: Vec2, thickness: Double = 200, height: Double = 3000, baseOffset: Double = 0,
                 justification: WallJustification = .center, bulge: Double = 0, wallType: String? = nil) {

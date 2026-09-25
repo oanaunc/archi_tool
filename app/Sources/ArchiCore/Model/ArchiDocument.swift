@@ -191,9 +191,9 @@ public struct ProjectInfo: Codable, Hashable {
     public init() {}
 }
 
-public struct Document: Codable, Hashable {
+public struct ArchiDocument: Codable, Hashable {
     public static let currentFormatVersion = 1
-    public var formatVersion: Int = Document.currentFormatVersion
+    public var formatVersion: Int = ArchiDocument.currentFormatVersion
     public var info = ProjectInfo()
     public var units: Units = .millimeters
     public var layers: [Layer]
@@ -318,23 +318,23 @@ public struct Document: Codable, Hashable {
     public mutating func setVariable(_ name: String, _ value: String) { variables[name.uppercased()] = value }
 }
 
-/// Snapshot-based undo history. Document is a value type, so snapshots share storage until mutated.
+/// Snapshot-based undo history. ArchiDocument is a value type, so snapshots share storage until mutated.
 public struct UndoHistory {
-    public struct Entry { public var label: String; public var doc: Document }
+    public struct Entry { public var label: String; public var doc: ArchiDocument }
     public private(set) var undoStack: [Entry] = []
     public private(set) var redoStack: [Entry] = []
     public var limit = 300
     public init() {}
-    public mutating func record(_ label: String, before: Document) {
+    public mutating func record(_ label: String, before: ArchiDocument) {
         undoStack.append(Entry(label: label, doc: before))
         if undoStack.count > limit { undoStack.removeFirst(undoStack.count - limit) }
         redoStack.removeAll()
     }
-    public mutating func undo(current: Document) -> (Document, String)? {
+    public mutating func undo(current: ArchiDocument) -> (ArchiDocument, String)? {
         guard let e = undoStack.popLast() else { return nil }
         redoStack.append(Entry(label: e.label, doc: current)); return (e.doc, e.label)
     }
-    public mutating func redo(current: Document) -> (Document, String)? {
+    public mutating func redo(current: ArchiDocument) -> (ArchiDocument, String)? {
         guard let e = redoStack.popLast() else { return nil }
         undoStack.append(Entry(label: e.label, doc: current)); return (e.doc, e.label)
     }
