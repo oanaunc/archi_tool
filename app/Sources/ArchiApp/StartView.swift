@@ -27,9 +27,9 @@ struct StartView: View {
                         StartTile(symbol: "ruler", title: "New Drawing", subtitle: "Imperial · inches") { model.newDocument(.blankImperial) }
                         StartTile(symbol: "building.2", title: "New Building", subtitle: "Levels, structural grid and sheets") { model.newDocument(.building) }
                         StartTile(symbol: "folder", title: "Open…", subtitle: ".archi projects and DXF drawings") { model.files.openPanel() }
-                        StartTile(symbol: "house", title: "Sample House", subtitle: "A small house built with commands", accent: true) {
-                            model.newDocument(.sample)
-                            model.buildSampleHouse()
+                        StartTile(symbol: "house", title: "Cedar House", subtitle: "Contemporary sample project with materials", accent: true) {
+                            if let url = SampleProjects.prepare("Cedar House") { model.files.openURL(url) }
+                            else { model.newDocument(.sample); model.buildSampleHouse() }
                         }
                     }
                     Spacer(minLength: 0)
@@ -258,5 +258,28 @@ extension AppModel {
             self.revision &+= 1
             self.zoomExtents()
         }
+    }
+}
+
+
+/// Sample projects bundled in Resources/Samples. They are copied (with their textures) to
+/// ~/Documents/Oanarina Archi Tool/Samples so they can be edited and saved.
+enum SampleProjects {
+    static func prepare(_ name: String) -> URL? {
+        guard let src = Bundle.main.resourceURL?.appendingPathComponent("Samples") else { return nil }
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: src.appendingPathComponent(name + ".archi").path),
+              let docs = fm.urls(for: .documentDirectory, in: .userDomainMask).first else { return nil }
+        let dest = docs.appendingPathComponent("Oanarina Archi Tool/Samples", isDirectory: true)
+        do {
+            try fm.createDirectory(at: dest.appendingPathComponent("textures"), withIntermediateDirectories: true)
+            for t in (try? fm.contentsOfDirectory(atPath: src.appendingPathComponent("textures").path)) ?? [] {
+                let to = dest.appendingPathComponent("textures").appendingPathComponent(t)
+                if !fm.fileExists(atPath: to.path) { try fm.copyItem(at: src.appendingPathComponent("textures").appendingPathComponent(t), to: to) }
+            }
+            let file = dest.appendingPathComponent(name + ".archi")
+            if !fm.fileExists(atPath: file.path) { try fm.copyItem(at: src.appendingPathComponent(name + ".archi"), to: file) }
+            return file
+        } catch { return nil }
     }
 }
