@@ -2,7 +2,19 @@
 
 A free, native Mac application for architectural drawing and building design: 2D drafting, 3D modelling, building information modelling (BIM), rendering, sheets and printing, an AutoCAD-style command line and a scripting interface that AI agents can drive.
 
-Status: early development. See [docs/FEATURE-REGISTER.md](docs/FEATURE-REGISTER.md) for the complete planned feature list and what is already implemented.
+Status: early development (1.0 preview). The [user guide](docs/USER-GUIDE.md) describes everything that works today; [docs/FEATURE-REGISTER.md](docs/FEATURE-REGISTER.md) lists the complete planned feature set and the status of each item.
+
+## What it does today
+
+- **Drafting:** AutoCAD-style command line with 300+ commands and aliases, relative/polar/unit-suffixed input, point filters, UCS, object snaps, grips, transparent commands, scripts (.scr) and script recording.
+- **Editing and selection:** all the usual modify tools plus OVERKILL, clipboard with base point, window/crossing/fence/polygon selection, quick select, filters, named selection sets and groups.
+- **Annotation:** text and mtext with fields, dimensions, multileaders, tables with formulas, annotative scaling, blocks with attributes and data extraction.
+- **BIM:** levels, walls (straight and curved, clean joins, sweeps, niches), doors and windows with type catalogues, curtain walls, slabs (sloped), roofs (flat, shed, gable, hip on any footprint), ceilings, stairs, ramps, railings, columns, beams, foundations, rooms, area plans, phases, toposurfaces and building pads.
+- **Documentation:** live plans, sections and elevations, tags, keynotes, door/window marks, schedules, sheets with viewports and title blocks, page setup, plot preview and multi-sheet PDF publishing.
+- **3D:** solids, extrude/revolve/loft/sweep/pipe/press-pull, booleans, slice and interference; 3D view with view cube, visual styles, section box, sun study, saved cameras, walkthrough, and rendering with presets and turntable video.
+- **Exchange:** DXF (including R12 export), IFC import/export with GUID round trip, SVG, OBJ, STL, 3MF, glTF, USD, GeoJSON, CSV survey points and PDF.
+- **Analysis:** quantity takeoff, cost estimates, room area schedules, clash detection, model checking and sun position.
+- **Automation:** JavaScript console and script library, a local JSON-RPC agent server and an MCP server (`archi-cli --mcp`) for Claude and other AI agents.
 
 ## Build and run
 
