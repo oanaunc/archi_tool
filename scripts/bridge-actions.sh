@@ -22,6 +22,7 @@ run_action() {
     cli-template)  echo "" | "$ROOT/build/Oanarina Archi Tool.app/Contents/MacOS/archi-cli" --out "$ROOT/build/empty.archi"; ls -la "$ROOT/build/empty.archi" ;;
     demo-check)    "$ROOT/build/Oanarina Archi Tool.app/Contents/MacOS/archi-cli" "$ROOT/assets/demo/Cedar House.archi" --out "$ROOT/build/demo-plan.svg" </dev/null 2>&1 | tail -20; ls -la "$ROOT/build/demo-plan.svg" ;;
     open-demo)     open -a "$ROOT/build/Oanarina Archi Tool.app" "$ROOT/assets/demo/Cedar House.archi" ;;
+    selftest)      "$ROOT/scripts/build.sh" >/dev/null && "$ROOT/build/Oanarina Archi Tool.app/Contents/MacOS/Oanarina Archi Tool" --selftest 2>&1 | tail -80 ;;
     toolchain)     sw_vers; xcodebuild -version; swift --version ;;
     open-app)      open "$ROOT/build/Oanarina Archi Tool.app" ;;
     quit-app)      osascript -e 'quit app "Oanarina Archi Tool"' ;;
