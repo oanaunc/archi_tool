@@ -3,13 +3,14 @@
  "asset_version": "20260925",
  "commands": 150,
  "formats": 10,
- "size_mb": "?",
+ "size_mb": "13.3",
  "signing": "Developer ID-signed and notarized by Apple.",
- "note": "First public preview: drafting, building elements, 3D, rendering, sheets, scripting and AI agent connection.",
+ "note": "Preview build \u2014 25 September: drafting and editing, the command line, walls, doors, windows, floors, roofs, stairs and rooms, 3D views, rendering, sheets and PDF, DXF and IFC exchange, and scripting for AI agents. Updated builds follow as development continues.",
  "dmg": "Oanarina-Archi-Tool-1.0.0.dmg",
- "sha_short": "dev",
+ "sha_short": "10ea21d8c070",
  "agent_doc": "downloads/archi-tool/AGENT-API.md",
  "imports": ".archi, DXF (R12\u2013R2018)",
  "exports": "PDF, DXF, SVG, PNG, IFC4, OBJ, STL, glTF (GLB), CSV schedules, .archi",
- "pending": true
+ "pending": false,
+ "guide": false
 }
