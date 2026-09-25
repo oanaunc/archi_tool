@@ -300,7 +300,12 @@ enum ModifyCommands {
         CommandDef("ERASE", aliases: ["E", "DELETE"], category: "Modify", summary: "Removes objects from the drawing.") { ed in
             let ids = try await ed.getSelection()
             guard !ids.isEmpty else { return }
-            ed.doc.remove(ids: Set(ids))
+            let set = Set(ids)
+            ed.lastErased = (ed.doc.entities.filter { set.contains($0.id) }, ed.doc.elements.filter { el in
+                if set.contains(el.id) { return true }
+                if case .opening(let o) = el.geometry, set.contains(o.hostWall) { return true }
+                return false })
+            ed.doc.remove(ids: set)
             ed.selection = []
             ed.print("\(ids.count) object(s) erased.")
         },
@@ -670,8 +675,17 @@ enum ModifyCommands {
             }
             while true {
                 let closed: Bool = { if let id = ids.first, case .polyline(let p) = ed.doc.entity(id)?.geometry { return p.closed }; return false }()
-                let k = try await ed.getKeyword("Enter an option", [closed ? "Open" : "Close", "Join", "Width", "Spline", "Decurve", "Reverse", "Undo", "eXit"], defaultValue: "eXit") ?? "eXit"
+                let k = try await ed.getKeyword("Enter an option", [closed ? "Open" : "Close", "Join", "Width", "Spline", "Decurve", "Reverse", "Addvertex", "delVertex", "Linearize", "Undo", "eXit"], defaultValue: "eXit") ?? "eXit"
                 switch k {
+                case "Addvertex", "delVertex":
+                    guard ids.count == 1 else { ed.print("Vertex editing works on a single polyline."); continue }
+                    let q = try await ed.requirePoint(k == "Addvertex" ? "Specify a point on the segment for the new vertex" : "Specify the vertex to remove")
+                    guard case .polyline(let p)? = ed.doc.entity(ids[0])?.geometry,
+                          let n = k == "Addvertex" ? DraftGeometry.insertVertex(p, near: q) : DraftGeometry.removeVertex(p, near: q) else { ed.print(k == "Addvertex" ? "No segment there." : "Cannot remove that vertex."); continue }
+                    edit { $0 = n }
+                case "Linearize":
+                    let tol = ed.variableDouble("LINEARIZETOL", 0)
+                    edit { $0 = DraftGeometry.linearize($0, maxDeviation: tol) }
                 case "Close": edit { $0.closed = true }
                 case "Open": edit { $0.closed = false }
                 case "Width":
@@ -909,14 +923,6 @@ enum ModifyCommands {
         },
         CommandDef("SELECTALL", aliases: ["AI_SELALL"], category: "Modify", summary: "Selects all selectable objects on unlocked layers (current level).", modifies: false) { ed in
             let ids = ed.doc.entities.map(\.id).filter { ed.isSelectable($0) } + ed.doc.elements.filter { $0.level == ed.doc.currentLevel }.map(\.id).filter { ed.isSelectable($0) }
-            ed.selection = Set(ids)
-            ed.print("\(ids.count) object(s) selected.")
-        },
-        CommandDef("SELECTSIMILAR", category: "Modify", summary: "Selects all objects of the same type and layer as the picked object.", modifies: false) { ed in
-            guard case .pick(let pk) = try await ed.pickObject("Select object") else { return }
-            var ids: [EntityID] = []
-            if let e = ed.doc.entity(pk.id) { ids = ed.doc.entities.filter { $0.typeName == e.typeName && $0.layer == e.layer && ed.isSelectable($0.id) }.map(\.id) }
-            else if let el = ed.doc.element(pk.id) { ids = ed.doc.elements.filter { $0.typeName == el.typeName && $0.level == el.level && ed.isSelectable($0.id) }.map(\.id) }
             ed.selection = Set(ids)
             ed.print("\(ids.count) object(s) selected.")
         },

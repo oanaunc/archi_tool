@@ -5,6 +5,17 @@ import Foundation
 public enum InputParser {
     public enum ParseError: Error { case message(String) }
 
+    /// Units and UCS applied while parsing (set by the Editor from its document before each parse).
+    public static var context = ParseContext()
+
+    /// Point-entry modifiers accepted wherever a point is requested (object snap overrides are handled by the UI).
+    public static let pointModifiers = ["FROM", "FRO", "M2P", "MTP", "TT", ".X", ".Y", ".XY", ".XZ", ".YZ", ".Z"]
+    public static func pointModifier(_ token: String) -> String? {
+        let t = token.uppercased().trimmingCharacters(in: CharacterSet(charactersIn: "_'"))
+        guard pointModifiers.contains(t) else { return nil }
+        switch t { case "FRO": return "FROM"; case "MTP": return "M2P"; default: return t }
+    }
+
     public static func parse(_ raw: String, request: InputRequest, lastPoint: Vec2?, cursor: Vec2?, ortho: Bool) -> Result<CommandInput, ParseFailure> {
         let token = raw.trimmingCharacters(in: .whitespaces)
         if token.isEmpty { return .success(.enter) }
@@ -69,8 +80,12 @@ public enum InputParser {
 
     /// Numbers, simple arithmetic and feet-inch forms: 1200, 1.2e3, 3'6", 2400/2, 1000+250.
     public static func parseNumber(_ s: String) -> Double? {
-        let t = s.replacingOccurrences(of: " ", with: "")
+        var t = s.replacingOccurrences(of: " ", with: "")
         if let d = Double(t) { return d }
+        if t.rangeOfCharacter(from: .letters) != nil, let u = convertUnitSuffixes(t) {
+            if let d = Double(u) { return d }
+            t = u
+        }
         if t.contains("'") || t.contains("\"") {
             var feet = 0.0, inches = 0.0
             let parts = t.split(separator: "'", omittingEmptySubsequences: false)
@@ -78,9 +93,42 @@ public enum InputParser {
                 feet = Double(parts[0]) ?? 0
                 inches = Double(parts[1].replacingOccurrences(of: "\"", with: "").replacingOccurrences(of: "-", with: "")) ?? 0
             } else { inches = Double(t.replacingOccurrences(of: "\"", with: "")) ?? 0 }
-            return (feet * 12 + inches) * 25.4
+            return (feet * 12 + inches) * 25.4 / context.units.mm
         }
         return evalArithmetic(t)
+    }
+
+    /// Unit factors in millimetres for suffixed values ("2.5m", "30cm", "12in", "3ft").
+    static let unitSuffixes: [(String, Double)] = [("mm", 1), ("cm", 10), ("dm", 100), ("km", 1_000_000), ("m", 1000), ("in", 25.4), ("ft", 304.8), ("yd", 914.4)]
+
+    /// Replaces every number followed by a unit suffix with its value in drawing units. nil if a letter sequence is not a unit.
+    public static func convertUnitSuffixes(_ t: String) -> String? {
+        let c = Array(t)
+        var out = "", i = 0
+        while i < c.count {
+            if c[i].isNumber || (c[i] == "." && i + 1 < c.count && c[i + 1].isNumber) {
+                var num = ""
+                while i < c.count, c[i].isNumber || c[i] == "." { num.append(c[i]); i += 1 }
+                // exponent (1e3) — only when followed by a digit or sign+digit
+                if i + 1 < c.count, c[i] == "e" || c[i] == "E", c[i + 1].isNumber || ((c[i + 1] == "-" || c[i + 1] == "+") && i + 2 < c.count && c[i + 2].isNumber) {
+                    num.append(c[i]); i += 1
+                    if c[i] == "-" || c[i] == "+" { num.append(c[i]); i += 1 }
+                    while i < c.count, c[i].isNumber { num.append(c[i]); i += 1 }
+                }
+                var word = ""
+                var j = i
+                while j < c.count, c[j].isLetter { word.append(c[j]); j += 1 }
+                if !word.isEmpty {
+                    guard let f = unitSuffixes.first(where: { $0.0 == word.lowercased() })?.1, let v = Double(num) else { return nil }
+                    out += "(" + fmt(v * f / context.units.mm, 12) + ")"
+                    i = j
+                } else { out += num }
+                continue
+            }
+            if c[i].isLetter { return nil }
+            out.append(c[i]); i += 1
+        }
+        return out
     }
 
     static func evalArithmetic(_ t: String) -> Double? {
@@ -113,26 +161,58 @@ public enum InputParser {
         }
     }
 
-    static func parseAngleDegrees(_ s: String) -> Double? {
-        var t = s.lowercased()
+    /// Angles: 45, 45d, 45°, 0.5r (radians), 50g (grads), 45d30'15" (degrees-minutes-seconds), N45d30'E (surveyor bearing).
+    public static func parseAngleDegrees(_ s: String) -> Double? {
+        var t = s.lowercased().replacingOccurrences(of: " ", with: "")
+        if t.isEmpty { return nil }
+        // Surveyor's units: N45d30'E, S20W, N, E...
+        if let f = t.first, "ns".contains(f), let l = t.last, "ew".contains(l) {
+            let inner = String(t.dropFirst().dropLast())
+            guard let a = inner.isEmpty ? 0 : parseAngleDegrees(inner) else { return nil }
+            switch (f, l) {
+            case ("n", "e"): return 90 - a
+            case ("n", "w"): return 90 + a
+            case ("s", "e"): return 270 + a
+            default: return 270 - a
+            }
+        }
+        switch t { case "n": return 90; case "s": return 270; case "e": return 0; case "w": return 180; default: break }
+        if t.hasSuffix("r") { t.removeLast(); return parseNumber(t).map { deg($0) } }
+        if t.hasSuffix("g") { t.removeLast(); return parseNumber(t).map { $0 * 0.9 } }
+        // Degrees-minutes-seconds
+        if let di = t.firstIndex(where: { $0 == "d" || $0 == "°" }), t.index(after: di) < t.endIndex {
+            guard let d = Double(t[..<di]) else { return nil }
+            var rest = String(t[t.index(after: di)...])
+            var m = 0.0, sec = 0.0
+            if let mi = rest.firstIndex(of: "'") { m = Double(rest[..<mi]) ?? 0; rest = String(rest[rest.index(after: mi)...]) }
+            if rest.hasSuffix("\"") { rest.removeLast(); sec = Double(rest) ?? 0 } else if !rest.isEmpty { return nil }
+            let sign: Double = d < 0 || t.hasPrefix("-") ? -1 : 1
+            return sign * (abs(d) + m / 60 + sec / 3600)
+        }
         if t.hasSuffix("d") || t.hasSuffix("°") { t.removeLast() }
-        if t.hasSuffix("r") { t.removeLast(); return Double(t).map { deg($0) } }
         return parseNumber(t)
     }
 
     /// Parses absolute, relative (@) and polar (<) coordinates. A third component (z) is ignored in 2D.
+    /// Coordinates typed without "*" are in the current UCS (InputParser.context.ucs); "*x,y" and "@*dx,dy" are world coordinates.
     public static func parsePoint(_ s: String, last: Vec2?) -> Vec2? {
         var t = s
         var relative = false
         if t.hasPrefix("@") { relative = true; t.removeFirst(); if t.isEmpty { return last } }
+        var ucs = context.ucs
+        if t.hasPrefix("*") { t.removeFirst(); ucs = .world }
         if t.hasPrefix("#") { t.removeFirst() } // explicit absolute
-        let base = relative ? (last ?? .zero) : .zero
+        guard !t.isEmpty else { return nil }
+        let local: Vec2
         if let lt = t.firstIndex(of: "<") {
             guard let d = parseNumber(String(t[..<lt])), let a = parseAngleDegrees(String(t[t.index(after: lt)...])) else { return nil }
-            return base + Vec2.polar(d, rad(a))
+            local = Vec2.polar(d, rad(a))
+        } else {
+            let parts = t.split(separator: ",", omittingEmptySubsequences: false).map(String.init)
+            guard parts.count == 2 || parts.count == 3, let x = parseNumber(parts[0]), let y = parseNumber(parts[1]) else { return nil }
+            local = Vec2(x, y)
         }
-        let parts = t.split(separator: ",", omittingEmptySubsequences: false).map(String.init)
-        guard parts.count == 2 || parts.count == 3, let x = parseNumber(parts[0]), let y = parseNumber(parts[1]) else { return nil }
-        return base + Vec2(x, y)
+        if relative { return (last ?? .zero) + ucs.vectorToWorld(local) }
+        return ucs.toWorld(local)
     }
 }

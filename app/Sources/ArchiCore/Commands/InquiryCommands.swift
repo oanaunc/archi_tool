@@ -125,7 +125,12 @@ enum InquiryCommands {
         CommandDef("ID", category: "Inquiry", summary: "Displays the coordinates of a location.", modifies: false) { ed in
             let p = try await ed.requirePoint("Specify point")
             let z = ed.doc.level(ed.doc.currentLevel)?.elevation ?? 0
-            ed.print("X = \(fmt(p.x, 4))     Y = \(fmt(p.y, 4))     Z = \(fmt(z, 4))")
+            let ucs = UCSFrame.current(ed.doc)
+            if ucs.isWorld { ed.print("X = \(fmt(p.x, 4))     Y = \(fmt(p.y, 4))     Z = \(fmt(z, 4))") }
+            else {
+                let q = ucs.fromWorld(p)
+                ed.print("X = \(fmt(q.x, 4))     Y = \(fmt(q.y, 4))     Z = \(fmt(z, 4))  (UCS)   World: \(fmt(p.x, 4)),\(fmt(p.y, 4))")
+            }
         }
     }
     static var list: CommandDef {
@@ -228,7 +233,7 @@ enum InquiryCommands {
     static var cal: CommandDef {
         CommandDef("CAL", aliases: ["QUICKCALC", "QC"], category: "Inquiry", summary: "Evaluates an arithmetic expression (+ - * / ^, sqrt, sin, cos, pi…).", modifies: false) { ed in
             guard let s = try await ed.getString("Enter expression"), !s.isEmpty else { return }
-            if let v = CommandHelpers.evaluate(s) ?? InputParser.parseNumber(s) { ed.print("\(s) = \(fmt(v, 8))") }
+            if let v = CalcFunctions.evaluate(s) { ed.print("\(s) = \(fmt(v, 8))"); ed.doc.setVariable("CALRESULT", fmt(v, 10)) }
             else { ed.print("Invalid expression: \(s)") }
         }
     }

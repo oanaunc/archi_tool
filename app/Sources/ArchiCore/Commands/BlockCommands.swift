@@ -52,6 +52,43 @@ enum BlockCommands {
         CommandDef("INSERT", aliases: ["I", "-INSERT", "DDINSERT"], category: "Blocks", summary: "Inserts a block reference (scale, rotation, attributes).") { ed in
             guard let n = try await ed.getWord("Enter block name or [?]", defaultValue: ed.doc.variable("INSNAME")) else { return }
             if n == "?" { listBlocks(ed); return }
+            // "name=path" redefines a block from a drawing file; a path inserts the file as a block.
+            if n.contains("=") || n.lowercased().hasSuffix("." + ArchiFile.fileExtension) || n.contains("/") {
+                try loadBlockFromFile(ed, n)
+                return try await continueInsert(ed, blockFileName(n))
+            }
+            try await continueInsert(ed, n)
+        }
+    }
+
+    static func blockFileName(_ spec: String) -> String {
+        if let eq = spec.firstIndex(of: "="), eq > spec.startIndex { return String(spec[..<eq]) }
+        let p = spec.split(separator: "=").last.map(String.init) ?? spec
+        return ((p as NSString).lastPathComponent as NSString).deletingPathExtension
+    }
+
+    /// Loads a drawing file as a block definition (its INSBASE is the base point); nested blocks and layers come along.
+    @MainActor static func loadBlockFromFile(_ ed: Editor, _ spec: String) throws {
+        let path = spec.contains("=") ? String(spec[spec.index(after: spec.firstIndex(of: "=")!)...]) : spec
+        let name = blockFileName(spec)
+        guard validName(name) else { throw CommandError.invalid("Invalid block name \(name).") }
+        let url = expand(path.isEmpty ? name : path)
+        guard let data = try? Data(contentsOf: url), let src = try? ArchiFile.decode(data) else { throw CommandError.invalid("Cannot read \(url.path).") }
+        var base = Vec2.zero
+        if let b = src.variable("INSBASE") {
+            let p = b.split(separator: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) }
+            if p.count >= 2 { base = Vec2(p[0], p[1]) }
+        }
+        for l in src.layers where ed.doc.layer(named: l.name) == nil { ed.doc.layers.append(l) }
+        for (k, b) in src.blocks where ed.doc.blocks[k] == nil && k != name { ed.doc.blocks[k] = b }
+        let existed = ed.doc.blocks[name] != nil
+        ed.doc.blocks[name] = Block(name: name, basePoint: base, entities: src.entities)
+        if BlockTools.references(name, doc: ed.doc).contains(where: { BlockTools.nestedNames($0, doc: ed.doc).contains(name) }) { throw CommandError.invalid("The file references block \(name) itself.") }
+        ed.print(existed ? "Block \(name) redefined from \(url.lastPathComponent)." : "Block \(name) loaded from \(url.lastPathComponent).")
+    }
+
+    @MainActor static func continueInsert(_ ed: Editor, _ n: String) async throws {
+        do {
             guard let blk = ed.doc.blocks[n] ?? ed.doc.blocks.first(where: { $0.key.caseInsensitiveCompare(n) == .orderedSame })?.value else { throw CommandError.invalid("Block \"\(n)\" not found.") }
             let name = blk.name
             ed.doc.setVariable("INSNAME", name)

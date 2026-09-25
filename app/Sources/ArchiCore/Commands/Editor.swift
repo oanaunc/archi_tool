@@ -174,16 +174,25 @@ public final class Editor {
     /// Submits one line typed on the command line (or from a script).
     /// Spaces separate successive inputs, like AutoCAD, except when a text string is requested.
     public func submit(_ line: String) {
+        recorder?.lines.append(line)
+        inSubmit = true
+        defer { inSubmit = false }
         let trimmed = line.trimmingCharacters(in: .whitespaces)
         if activeCommand == nil {
             if trimmed.isEmpty { if let l = lastCommand { start(l) }; return }
             var tokens = tokenize(trimmed)
-            let name = tokens.removeFirst()
+            let name = Editor.unmark(tokens.removeFirst())
             queuedInputs.append(contentsOf: tokens)
             start(name)
             return
         }
         if trimmed.isEmpty { feed(.enter); return }
+        // Transparent command ('ZOOM, 'PAN, 'SETVAR...) run inside the active command.
+        if trimmed.hasPrefix("'"), request?.kinds != [.string] {
+            var tokens = tokenize(String(trimmed.dropFirst()))
+            let name = Editor.unmark(tokens.removeFirst())
+            if runTransparent(name, inputs: tokens) { return }
+        }
         if request?.kinds == [.string] || (request?.kinds.contains(.string) == true && !(request?.kinds.contains(.point) ?? false)) {
             feed(.text(line.trimmingCharacters(in: .whitespaces))); return
         }
@@ -193,22 +202,54 @@ public final class Editor {
     }
 
     /// Splits a command line into inputs; quoted strings stay together.
+    /// A quoted empty string (""), ";" or an extra space (double space) is an empty token, i.e. Enter. Other quoted tokens are marked so a
+    /// text prompt takes exactly that token (unquoted text prompts take the rest of the line).
     func tokenize(_ s: String) -> [String] {
-        var out: [String] = [], cur = "", inQuote = false
+        var out: [String] = [], cur = "", inQuote = false, quoted = false
+        func flush() {
+            if quoted { out.append(cur.isEmpty ? "" : Editor.quoteMark + cur) } else if !cur.isEmpty { out.append(cur) }
+            cur = ""; quoted = false
+        }
+        var prevSpace = false
         for ch in s {
-            if ch == "\"" { inQuote.toggle(); continue }
-            if ch == " " && !inQuote { if !cur.isEmpty { out.append(cur); cur = "" } ; continue }
+            if ch == "\"" { inQuote.toggle(); quoted = true; prevSpace = false; continue }
+            if ch == " " && !inQuote {
+                // Like AutoCAD scripts, each extra space is an Enter ("ERASE L  CIRCLE…").
+                if prevSpace && cur.isEmpty && !quoted { out.append("") } else { flush() }
+                prevSpace = true; continue
+            }
+            prevSpace = false
             cur.append(ch)
         }
-        if !cur.isEmpty { out.append(cur) }
+        flush()
         return out.isEmpty ? [""] : out
     }
+    static let quoteMark = "\u{2}"
+    static func unmark(_ t: String) -> String { t.hasPrefix(quoteMark) ? String(t.dropFirst(quoteMark.count)) : t }
 
     /// Starts a command by name or alias.
     public func start(_ name: String) {
         registry.ensureBuiltins()
         guard let def = registry.lookup(name) else {
-            print("Unknown command \"\(name.uppercased())\". Press F1 or type HELP.")
+            if let expansion = UserAliases.expansion(for: name, doc: doc) {
+                let rest = queuedInputs
+                queuedInputs.removeAll()
+                if let target = registry.lookup(expansion) {
+                    queuedInputs = rest
+                    start(target.name)
+                } else {
+                    // A macro: its tokens (";" = Enter) followed by whatever was typed after the alias.
+                    let macroTokens = UserAliases.macroTokens(expansion)
+                    guard let first = macroTokens.first else { return }
+                    queuedInputs = Array(macroTokens.dropFirst()) + rest
+                    start(first)
+                }
+                return
+            }
+            var msg = "Unknown command \"\(name.uppercased())\". Press F1 or type HELP."
+            let sugg = CommandSuggestions.suggest(name, registry: registry)
+            if !sugg.isEmpty { msg += " Did you mean: " + sugg.joined(separator: ", ") + "?" }
+            print(msg)
             queuedInputs.removeAll()
             return
         }
@@ -228,7 +269,9 @@ public final class Editor {
                 self.print("Error: \(error)")
             }
             if def.modifies && self.doc != before {
-                self.history.record(def.name, before: before)
+                var d = self.doc
+                if DocumentUpdaters.run(&d) { self.doc = d }
+                if !self.undoGroupActive { self.history.record(def.name, before: before) }
                 self.isDirty = true
             }
             self.activeCommand = nil
@@ -266,9 +309,14 @@ public final class Editor {
     }
 
     /// Feeds a typed token, parsing it against the current request.
-    public func feedToken(_ token: String) {
+    public func feedToken(_ raw: String) {
         guard let req = request else { return }
-        switch InputParser.parse(token, request: req, lastPoint: lastPoint, cursor: cursor, ortho: settings.ortho) {
+        let token = Editor.unmark(raw)
+        if token == ";" { feed(.enter); return }
+        if req.kinds.contains(.point), let m = InputParser.pointModifier(token), !req.keywords.contains(where: { $0.caseInsensitiveCompare(token) == .orderedSame }) {
+            feed(.keyword(Editor.modifierPrefix + m)); return
+        }
+        switch parse(token, req) {
         case .success(let input): feed(input)
         case .failure(let msg):
             print(msg.message)
@@ -279,6 +327,7 @@ public final class Editor {
     /// Feeds an input (from the UI: clicks, Enter, Escape; or parsed text).
     public func feed(_ input: CommandInput) {
         guard let c = continuation else { return }
+        if let rec = recorder, !inSubmit { rec.record(input, world: UCSFrame.current(doc).isWorld) }
         continuation = nil
         switch input {
         case .point(let p): lastPoint = p
@@ -290,17 +339,42 @@ public final class Editor {
     // MARK: Primitives used by commands
     /// Asks for input; the command suspends until the user (or a script) answers.
     public func ask(_ req: InputRequest) async -> CommandInput {
+        let r = await askRaw(req)
+        if case .keyword(let k) = r, k.hasPrefix(Editor.modifierPrefix) {
+            return await resolvePointModifier(String(k.dropFirst(Editor.modifierPrefix.count)), req)
+        }
+        return r
+    }
+
+    static let modifierPrefix = "\u{1}"
+
+    /// Parses a token against a request with the document's units and UCS.
+    func parse(_ token: String, _ req: InputRequest) -> Result<CommandInput, InputParser.ParseFailure> {
+        InputParser.context = ParseContext(units: doc.units, ucs: UCSFrame.current(doc))
+        return InputParser.parse(token, request: req, lastPoint: lastPoint, cursor: cursor, ortho: settings.ortho)
+    }
+
+    func askRaw(_ req: InputRequest) async -> CommandInput {
         request = req
         onPromptChange?()
-        if let base = req.base { _ = base }
-        let pre: [String] = queuedInputs
-        if !pre.isEmpty {
+        if !queuedInputs.isEmpty {
             var t = queuedInputs.removeFirst()
-            if req.kinds == [.string] && !queuedInputs.isEmpty { t += " " + queuedInputs.joined(separator: " "); queuedInputs.removeAll() }
+            let wasQuoted = t.hasPrefix(Editor.quoteMark)
+            t = Editor.unmark(t)
+            if t == ";" && !wasQuoted { t = "" }
+            if req.kinds == [.string] && !queuedInputs.isEmpty && !t.isEmpty && !wasQuoted {
+                // The rest of the line is the string, up to an explicit Enter ("", ; or a double space), which stays queued.
+                var rest: [String] = []
+                while let n = queuedInputs.first, !n.isEmpty, n != ";" { rest.append(Editor.unmark(queuedInputs.removeFirst())) }
+                if !rest.isEmpty { t += " " + rest.joined(separator: " ") }
+            }
             if req.kinds == [.string] { print("\(req.promptText) \(t)"); return t.isEmpty ? .enter : .text(t) }
             print("\(req.promptText) \(t)")
             if t.isEmpty { return .enter }
-            if let r = try? InputParser.parse(t, request: req, lastPoint: lastPoint, cursor: cursor, ortho: settings.ortho).get() {
+            if req.kinds.contains(.point), let m = InputParser.pointModifier(t), !req.keywords.contains(where: { $0.caseInsensitiveCompare(t) == .orderedSame }) {
+                return .keyword(Editor.modifierPrefix + m)
+            }
+            if let r = try? parse(t, req).get() {
                 if case .point(let p) = r { lastPoint = p }
                 return r
             }
@@ -311,6 +385,39 @@ public final class Editor {
         let r = await withCheckedContinuation { (c: CheckedContinuation<CommandInput, Never>) in self.continuation = c }
         request = nil
         return r
+    }
+
+    /// FROM, M2P, TT and point filters (.X/.Y) — asked in place of the requested point.
+    func resolvePointModifier(_ m: String, _ req: InputRequest) async -> CommandInput {
+        func pt(_ msg: String, base: Vec2? = nil) async -> Vec2? {
+            let r = await ask(InputRequest(msg, kinds: [.point], base: base))
+            if case .point(let p) = r { return p }
+            return nil
+        }
+        switch m {
+        case "FROM":
+            guard let b = await pt("Base point") else { return .cancel }
+            lastPoint = b
+            guard let p = await pt("<Offset>", base: b) else { return .cancel }
+            lastPoint = p; return .point(p)
+        case "M2P":
+            guard let a = await pt("First point of mid") else { return .cancel }
+            guard let b = await pt("Second point of mid", base: a) else { return .cancel }
+            let p = a.lerp(b, 0.5); lastPoint = p; return .point(p)
+        case "TT":
+            guard let t = await pt("Specify temporary OTRACK point") else { return .cancel }
+            lastPoint = t
+            var r = req; r.base = t
+            return await ask(r)
+        case ".X", ".Y":
+            guard let a = await pt("\(m.lowercased()) of") else { return .cancel }
+            guard let b = await pt(m == ".X" ? "(need Y)" : "(need X)") else { return .cancel }
+            let p = m == ".X" ? Vec2(a.x, b.y) : Vec2(b.x, a.y)
+            lastPoint = p; return .point(p)
+        default: // .XY/.XZ/.YZ/.Z: 2D input keeps X and Y of the picked point.
+            guard let a = await pt("\(m.lowercased()) of") else { return .cancel }
+            lastPoint = a; return .point(a)
+        }
     }
 
     /// Point, or nil on Enter. Throws on Escape. Keywords are returned through `keyword`.
@@ -411,26 +518,51 @@ public final class Editor {
     /// Returns the current selection if any (noun-verb), otherwise asks the user to select objects.
     public func getSelection(_ msg: String = "Select objects") async throws -> [EntityID] {
         if !selection.isEmpty {
-            let ids = Array(selection).filter { isSelectable($0) }
+            let ids = expandGroups(Array(selection).filter { isSelectable($0) })
             print("\(ids.count) found")
             return ids
         }
         var picked: Set<EntityID> = []
+        var removing = false
+        func apply(_ ids: [EntityID]) {
+            let ok = expandGroups(ids.filter { isSelectable($0) })
+            if removing { picked.subtract(ok) } else { picked.formUnion(ok) }
+            selection = picked
+            print("\(ok.count) found\(removing ? ", \(ok.count) removed" : ""), \(picked.count) total")
+        }
         while true {
-            let r = await ask(InputRequest(msg, kinds: [.selection], keywords: ["All", "Last", "Previous"]))
+            let r = await ask(InputRequest(removing ? "Remove objects" : msg, kinds: [.selection], keywords: Editor.selectionKeywords))
             switch r {
-            case .selection(let ids):
-                let ok = ids.filter { isSelectable($0) }
-                picked.formUnion(ok); selection = picked
-                print("\(ok.count) found, \(picked.count) total")
+            case .selection(let ids): apply(ids)
             case .keyword(let k):
                 switch k {
-                case "All": picked.formUnion(doc.allIDs.filter { isSelectable($0) })
-                case "Last": if let l = (doc.entities.map(\.id) + doc.elements.map(\.id)).max() { picked.insert(l) }
-                default: picked.formUnion(previousSelection)
+                case "All": apply(doc.allIDs)
+                case "Last": if let l = (doc.entities.map(\.id) + doc.elements.map(\.id)).max() { apply([l]) }
+                case "Previous": apply(Array(previousSelection))
+                case "Add": removing = false
+                case "Remove": removing = true
+                case "Window", "Crossing", "BOX":
+                    guard case .point(let a) = await ask(InputRequest("Specify first corner", kinds: [.point])) else { continue }
+                    guard case .point(let b) = await ask(InputRequest("Specify opposite corner", kinds: [.point], base: a)) else { continue }
+                    let crossing = k == "Crossing" || (k == "BOX" && b.x < a.x)
+                    apply(select(in: BBox2(points: [a, b]), crossing: crossing))
+                case "WPolygon", "CPolygon", "Fence":
+                    var pts: [Vec2] = []
+                    while true {
+                        let r2 = await ask(InputRequest(pts.isEmpty ? "First \(k == "Fence" ? "fence" : "polygon") point" : "Specify endpoint of line", kinds: [.point], keywords: pts.isEmpty ? [] : ["Undo"], base: pts.last))
+                        if case .point(let p) = r2 { pts.append(p) }
+                        else if case .keyword("Undo") = r2 { _ = pts.popLast() }
+                        else if case .cancel = r2 { selection = []; throw CommandError.cancelled }
+                        else { break }
+                    }
+                    let mode: SelectionGeometry.Mode = k == "Fence" ? .fence : (k == "WPolygon" ? .windowPolygon : .crossingPolygon)
+                    apply(SelectionGeometry.select(doc: doc, polygon: pts, mode: mode, level: doc.currentLevel))
+                case "Group":
+                    if let g = try await getWord("Enter group name") {
+                        apply(doc.entities.filter { $0.props["group"]?.caseInsensitiveCompare(g) == .orderedSame }.map(\.id))
+                    }
+                default: break
                 }
-                selection = picked
-                print("\(picked.count) total")
             case .enter:
                 previousSelection = picked
                 return Array(picked)
@@ -439,7 +571,79 @@ public final class Editor {
             }
         }
     }
+
+    public static let selectionKeywords = ["All", "Last", "Previous", "Window", "Crossing", "BOX", "WPolygon", "CPolygon", "Fence", "Add", "Remove", "Group"]
+
+    /// Adds the other members of groups (entity prop "group") when PICKSTYLE is on (default).
+    public func expandGroups(_ ids: [EntityID]) -> [EntityID] {
+        guard doc.variable("PICKSTYLE") != "0" else { return ids }
+        let groups = Set(ids.compactMap { doc.entity($0)?.props["group"] })
+        guard !groups.isEmpty else { return ids }
+        var out = ids
+        let have = Set(ids)
+        for e in doc.entities where !have.contains(e.id) {
+            if let g = e.props["group"], groups.contains(g), isSelectable(e.id) { out.append(e.id) }
+        }
+        return out
+    }
     public var previousSelection: Set<EntityID> = []
+
+    // MARK: Script recording, undo groups, transparent commands
+    /// Active script recorder (SCRIPTRECORD); typed lines and UI inputs are captured as script lines.
+    public var recorder: ScriptRecorder?
+    /// The last script recorded with SCRIPTRECORD when no file was given.
+    public var lastRecordedScript: String?
+    /// Objects removed by the last ERASE (restored by OOPS).
+    public var lastErased: (entities: [Entity], elements: [BIMElement])?
+    private var inSubmit = false
+    /// Set by UNDO BEgin: commands inside the group are recorded as one undo step at UNDO End.
+    public var undoGroupActive = false
+    var undoGroupStart: ArchiDocument?
+    var undoMarks: [Int] = []
+    /// Closes an UNDO BEgin group: everything since BEgin becomes one undo step.
+    func endUndoGroup() {
+        undoGroupActive = false
+        if let start = undoGroupStart, start != doc { history.record("Group", before: start); isDirty = true }
+        undoGroupStart = nil
+    }
+    public private(set) var transparentCommand: CommandDef?
+
+    /// Runs a non-modifying command (ZOOM, PAN, SETVAR, DIST...) inside the active one, then restores its prompt.
+    /// Returns false when the command cannot run transparently.
+    @discardableResult
+    public func runTransparent(_ name: String, inputs: [String] = []) -> Bool {
+        guard let def = registry.lookup(name) else { print("Unknown command \"\(name.uppercased())\"."); return true }
+        guard activeCommand != nil, transparentCommand == nil, let savedCont = continuation, let savedReq = request else { return false }
+        guard !def.modifies || Editor.transparentAllowed.contains(def.name) else {
+            print("** \(def.name) cannot be used transparently. **"); print(savedReq.promptText); return true
+        }
+        let savedQueue = queuedInputs
+        continuation = nil
+        queuedInputs = inputs
+        transparentCommand = def
+        print(">>\(def.name)")
+        Task { @MainActor in
+            do { try await def.run(self) } catch CommandError.invalid(let m) { self.print(m) } catch { self.print("*Cancel*") }
+            self.transparentCommand = nil
+            self.queuedInputs = savedQueue
+            self.request = savedReq
+            self.continuation = savedCont
+            self.print("Resuming \(self.activeCommand?.name ?? "") command.")
+            self.print(savedReq.promptText)
+            self.onPromptChange?()
+        }
+        return true
+    }
+    /// Setting commands that change only settings/variables may run transparently.
+    static let transparentAllowed: Set<String> = ["SETVAR", "ORTHO", "OSNAP", "SNAP", "GRIDDISPLAY", "UCS", "CANNOSCALE"]
+
+    /// Suspends until the running command waits for input with nothing queued, or finishes.
+    public func waitForInputOrIdle() async {
+        var n = 0
+        while activeCommand != nil && !(continuation != nil && queuedInputs.isEmpty && transparentCommand == nil) && n < 10000 {
+            await Task.yield(); n += 1
+        }
+    }
 
     public func getEntity(_ msg: String) async throws -> EntityID? {
         while true {
@@ -498,7 +702,7 @@ public final class Editor {
         let before = doc
         var d = doc
         try body(&d)
-        if d != before { history.record(label, before: before); doc = d; isDirty = true }
+        if d != before { DocumentUpdaters.run(&d); history.record(label, before: before); doc = d; isDirty = true }
     }
     public func undo() {
         if let (d, label) = history.undo(current: doc) { doc = d; selection = selection.filter { doc.contains($0) }; print("Undo \(label)") }

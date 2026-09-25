@@ -22,7 +22,7 @@ public enum SystemVariables {
                                "TEXTSIZE", "FILLETRAD", "CHAMFERA", "OFFSETDIST", "CLAYER", "CECOLOR", "CELTYPE", "CELWEIGHT", "DIMSTYLE", "TEXTSTYLE", "LTSCALE",
                                "WALLTHICKNESS", "WALLHEIGHT", "INSUNITS", "CLEVEL"]
     /// Other commonly used variables registered as commands.
-    public static let stored = ["CHAMFERB", "DIMSCALE", "DIMDLI", "LUPREC", "PDMODE", "PDSIZE", "MIRRTEXT", "DELOBJ", "HPNAME", "HPSCALE", "HPANG", "PLINEWID", "TRIMMODE", "DIMLAYER", "TEXTLAYER"]
+    public static let stored = ["CANNOSCALE", "PICKSTYLE", "SELECTSIMILARMODE", "INSBASE", "CENTEREXE", "CHAMFERB", "DIMSCALE", "DIMDLI", "LUPREC", "PDMODE", "PDSIZE", "MIRRTEXT", "DELOBJ", "HPNAME", "HPSCALE", "HPANG", "PLINEWID", "TRIMMODE", "DIMLAYER", "TEXTLAYER"]
 
     static func flag(_ b: Bool) -> String { b ? "1" : "0" }
     static func parseFlag(_ s: String) -> Bool? {
@@ -111,6 +111,23 @@ public enum SystemVariables {
             if value.lowercased() == "bylayer" { ed.doc.variables.removeValue(forKey: "CELWEIGHT"); return nil }
             return pos({ ed.doc.setVariable("CELWEIGHT", fmt($0)) }, allowZero: true)
         case "LTSCALE": return pos { ed.doc.setVariable("LTSCALE", fmt($0)) }
+        case "CANNOSCALE":
+            guard Annotative.factor(value) != nil else { return "Requires a scale such as 1:100." }
+            ed.doc.setVariable("CANNOSCALE", value.replacingOccurrences(of: " ", with: "")); return nil
+        case "PICKSTYLE":
+            guard let v = num, [0, 1, 2, 3].contains(Int(v)) else { return "Requires 0-3." }
+            ed.doc.setVariable("PICKSTYLE", "\(Int(v))"); return nil
+        case "SELECTSIMILARMODE":
+            guard let v = num, v >= 0, v <= 255 else { return "Requires an integer between 0 and 255." }
+            ed.doc.setVariable("SELECTSIMILARMODE", "\(Int(v))"); return nil
+        case "INSBASE":
+            InputParser.context = ParseContext(units: ed.doc.units, ucs: .world)
+            guard let p = InputParser.parsePoint(value, last: nil) else { return "Requires a point x,y." }
+            ed.doc.setVariable("INSBASE", "\(fmt(p.x, 8)),\(fmt(p.y, 8))"); return nil
+        case "CENTEREXE":
+            return pos({ ed.doc.setVariable("CENTEREXE", fmt($0, 8)) }, allowZero: true)
+        case "UCSORG", "UCSANG", "UCSPREV":
+            return "\(n) is read-only; use the UCS command."
         case "INSUNITS":
             guard let u = Units.allCases.first(where: { $0.rawValue.hasPrefix(value.lowercased()) || $0.abbreviation == value.lowercased() }) else { return "Unknown units." }
             ed.doc.units = u; return nil

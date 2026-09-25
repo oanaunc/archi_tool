@@ -330,9 +330,24 @@ enum DrawCommands {
             var rotation = 0.0
             var p1: Vec2
             while true {
-                let a = try await ed.getPoint("Specify first corner point", keywords: ["Chamfer", "Fillet", "Width"])
+                let a = try await ed.getPoint("Specify first corner point", keywords: ["Chamfer", "Fillet", "Width", "3P", "CEnter"])
                 switch a {
                 case .point(let p): p1 = p
+                case .keyword("3P"):
+                    let q1 = try await ed.requirePoint("Specify first point of the edge")
+                    let q2 = try await ed.requirePoint("Specify second point of the edge", base: q1) { c in [.line(LineGeom(q1, c))] }
+                    let q3 = try await ed.requirePoint("Specify a point on the opposite side", base: q2) { c in
+                        DraftGeometry.rectangle3P(q1, q2, c).map { [.polyline(PolylineGeom(points: $0, closed: true))] } ?? [] }
+                    guard let pts = DraftGeometry.rectangle3P(q1, q2, q3) else { throw CommandError.invalid("The rectangle has zero width or height.") }
+                    let r = rectangle(pts[0], pts[2], rotation: (pts[1] - pts[0]).angle, fillet: fillet, chamfer: (ch1, ch2), width: width)
+                    ed.addEntity(.polyline(r)); return
+                case .keyword("CEnter"):
+                    let c = try await ed.requirePoint("Specify center point")
+                    let q = try await ed.requirePoint("Specify corner point", base: c) { p in
+                        [.polyline(rectangle(c * 2 - p, p, rotation: 0, fillet: fillet, chamfer: (ch1, ch2), width: width))] }
+                    let d = q - c
+                    guard abs(d.x) > 1e-9, abs(d.y) > 1e-9 else { throw CommandError.invalid("The rectangle has zero width or height.") }
+                    ed.addEntity(.polyline(rectangle(c - d, q, rotation: 0, fillet: fillet, chamfer: (ch1, ch2), width: width))); return
                 case .keyword("Chamfer"):
                     ch1 = try await ed.getPositive("Specify first chamfer distance for rectangles", defaultValue: ch1, allowZero: true)
                     ch2 = try await ed.getPositive("Specify second chamfer distance for rectangles", defaultValue: ch1, allowZero: true)

@@ -3,6 +3,14 @@ import Foundation
 
 extension Editor {
     /// Layer for new annotation: DIMLAYER / TEXTLAYER variables when set, otherwise the current layer.
+    /// Text typed with field codes (%<Area(12):m2:2>%) becomes a field text that updates automatically.
+    func markFieldIfNeeded(_ i: Int) {
+        let content: String
+        switch doc.entities[i].geometry { case .text(let t): content = t.content; case .leader(let l): content = l.text; default: return }
+        guard content.contains("%<"), content.contains(">%") else { return }
+        doc.entities[i].props["field"] = content
+        Fields.updateAll(&doc, ids: [doc.entities[i].id], volatile: true)
+    }
     func annotationLayer(_ variable: String) -> String {
         if let l = doc.variable(variable), !l.isEmpty, l != "." { doc.ensureLayer(l); return l }
         return doc.currentLayer
@@ -36,8 +44,30 @@ enum AnnotateCommands {
     }
     static let justifyKeywords = ["Left", "Center", "Right", "Middle", "TL", "TC", "TR", "ML", "MC", "MR", "BL", "BC", "BR"]
 
+    /// Converts MTEXT paragraph codes and AutoCAD special symbols (%%d °, %%c ⌀, %%p ±, %%% %).
     static func unescape(_ s: String) -> String {
-        s.replacingOccurrences(of: "\\P", with: "\n").replacingOccurrences(of: "\\n", with: "\n")
+        specialSymbols(s.replacingOccurrences(of: "\\P", with: "\n").replacingOccurrences(of: "\\n", with: "\n"))
+    }
+    static func specialSymbols(_ s: String) -> String {
+        guard s.contains("%%") else { return s }
+        var out = "", i = s.startIndex
+        while i < s.endIndex {
+            if s[i...].hasPrefix("%%"), let n = s.index(i, offsetBy: 2, limitedBy: s.endIndex), n < s.endIndex {
+                switch s[n].lowercased() {
+                case "d": out += "°"; i = s.index(after: n); continue
+                case "c": out += "⌀"; i = s.index(after: n); continue
+                case "p": out += "±"; i = s.index(after: n); continue
+                case "%": out += "%"; i = s.index(after: n); continue
+                default: break
+                }
+                // %%nnn: character code
+                var j = n, code = ""
+                while j < s.endIndex, s[j].isNumber, code.count < 3 { code.append(s[j]); j = s.index(after: j) }
+                if code.count == 3, let v = Int(code), let u = UnicodeScalar(v) { out.unicodeScalars.append(u); i = j; continue }
+            }
+            out.append(s[i]); i = s.index(after: i)
+        }
+        return out
     }
 
     // MARK: - Text
@@ -70,7 +100,8 @@ enum AnnotateCommands {
             var line = 0
             while let s = try await ed.getString("Enter text"), !s.isEmpty {
                 let pos = start + Vec2.polar(1, rot).perp * (-1.5 * h * Double(line))
-                ed.addEntity(.text(TextGeom(position: pos, height: h, content: s, rotation: rot, style: style, halign: ha, valign: va)), layer: ed.annotationLayer("TEXTLAYER"))
+                let tid = ed.addEntity(.text(TextGeom(position: pos, height: h, content: unescape(s), rotation: rot, style: style, halign: ha, valign: va)), layer: ed.annotationLayer("TEXTLAYER"))
+                if let i = ed.doc.entityIndex(tid) { ed.markFieldIfNeeded(i) }
                 line += 1
             }
         },
@@ -108,7 +139,8 @@ enum AnnotateCommands {
             } else { pos = c1 }
             guard let s = try await ed.getString("Enter text (\\P = new paragraph)"), !s.isEmpty else { return }
             ed.settings.textHeight = h
-            ed.addEntity(.text(TextGeom(position: pos, height: h, content: unescape(s), rotation: rot, style: style, halign: ha, valign: va, width: w)), layer: ed.annotationLayer("TEXTLAYER"))
+            let tid = ed.addEntity(.text(TextGeom(position: pos, height: h, content: unescape(s), rotation: rot, style: style, halign: ha, valign: va, width: w)), layer: ed.annotationLayer("TEXTLAYER"))
+            if let i = ed.doc.entityIndex(tid) { ed.markFieldIfNeeded(i) }
         },
         CommandDef("TEXTEDIT", aliases: ["ED", "DDEDIT"], category: "Annotate", summary: "Edits text, leader, dimension text, table cells or attribute values.") { ed in
             while case .pick(let pk) = try await ed.pickObject("Select an annotation object", filter: { ed.doc.entity($0) != nil }) {
@@ -117,6 +149,7 @@ enum AnnotateCommands {
                 case .text(var t):
                     guard let s = try await ed.getString("Enter new text", defaultValue: t.content) else { continue }
                     t.content = unescape(s); ed.doc.entities[i].geometry = .text(t)
+                    ed.doc.entities[i].props["field"] = nil; ed.markFieldIfNeeded(i)
                 case .leader(var l):
                     guard let s = try await ed.getString("Enter new text", defaultValue: l.text) else { continue }
                     l.text = unescape(s); ed.doc.entities[i].geometry = .leader(l)
@@ -460,7 +493,17 @@ enum AnnotateCommands {
             let a = try await ed.requirePoint("Specify leader arrowhead location")
             let b = try await ed.requirePoint("Specify leader landing location", base: a) { c in [.leader(LeaderGeom(points: [a, c], text: "", textHeight: ed.settings.textHeight))] }
             let text = try await ed.getString("Enter text") ?? ""
-            ed.addEntity(.leader(LeaderGeom(points: [a, b], text: unescape(text), textHeight: ed.settings.textHeight)), layer: ed.annotationLayer("TEXTLAYER"))
+            let style = AnnotationToolCommands.currentMLeaderStyle(ed)
+            let layer = style.flatMap { $0.layer.isEmpty ? nil : $0.layer } ?? ed.annotationLayer("TEXTLAYER")
+            ed.doc.ensureLayer(layer)
+            var h = style?.textHeight ?? ed.settings.textHeight
+            if style?.annotative == true { h = Annotative.modelHeight(paper: h, doc: ed.doc) }
+            let id = ed.addEntity(.leader(LeaderGeom(points: [a, b], text: unescape(text), textHeight: h)), layer: layer)
+            if let i = ed.doc.entityIndex(id) {
+                if let s = style { ed.doc.entities[i].props["mleaderstyle"] = s.name }
+                if style?.annotative == true { ed.doc.entities[i].props["annotative"] = "1"; ed.doc.entities[i].props["paperHeight"] = fmt(style!.textHeight, 8) }
+                ed.markFieldIfNeeded(i)
+            }
         },
     ] }
 

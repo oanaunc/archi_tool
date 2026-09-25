@@ -198,21 +198,49 @@ extension Editor {
         return out
     }
 
-    /// Runs command lines one after another (for SCRIPT and agents). Each line is its own undo step.
+    /// Runs a script (SCRIPT, .scr files, agents) like AutoCAD: lines feed the command line in order.
+    /// A blank line or a line with only "" (or ;) sends Enter to the running command, so selection prompts
+    /// can be ended mid-script. A line that is not valid input for the running command's prompt but names a
+    /// command ends the running command (unanswered prompts get Enter) and starts the new one.
     public func runScript(_ text: String) async {
-        for raw in CommandHelpers.scriptLines(text) {
-            await run(raw)
+        for raw in CommandHelpers.scriptLines(text, keepBlank: true) {
+            let line = raw.trimmingCharacters(in: .whitespaces)
+            let isEnter = line.isEmpty || line == "\"\"" || line == ";"
+            if activeCommand != nil { await waitForInputOrIdle() }
+            if isEnter {
+                if activeCommand != nil { feed(.enter); await Task.yield() }
+                continue
+            }
+            if activeCommand != nil, let req = request {
+                let first = Editor.unmark(tokenize(line)[0])
+                let valid = (try? parse(first, req).get()) != nil || first.isEmpty || first == ";"
+                    || (req.kinds.contains(.point) && InputParser.pointModifier(first) != nil)
+                    || req.kinds.contains(.string)
+                if !valid && registry.lookup(first) != nil || !valid && UserAliases.expansion(for: first, doc: doc) != nil {
+                    await waitIdle()
+                    submit(line)
+                } else {
+                    submit(line)
+                }
+            } else {
+                submit(line)
+            }
         }
+        await waitIdle()
     }
 }
 
 // MARK: - Geometry helpers
 
 public enum CommandHelpers {
-    static func scriptLines(_ text: String) -> [String] {
-        text.replacingOccurrences(of: "\r\n", with: "\n").components(separatedBy: "\n")
+    static func scriptLines(_ text: String, keepBlank: Bool = false) -> [String] {
+        var lines = text.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n").components(separatedBy: "\n")
             .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty && !$0.hasPrefix(";") && !$0.hasPrefix("//") }
+            .filter { ($0 == ";" || !$0.hasPrefix(";")) && !$0.hasPrefix("//") }
+        if !keepBlank { return lines.filter { !$0.isEmpty } }
+        // A trailing newline does not add an extra Enter.
+        while lines.last == "" { lines.removeLast() }
+        return lines
     }
 
     /// Point at a fraction of the length of a polyline, and the tangent direction there.
