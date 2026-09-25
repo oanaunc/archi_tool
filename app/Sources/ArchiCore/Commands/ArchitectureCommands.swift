@@ -2,7 +2,7 @@
 import Foundation
 
 enum ArchitectureCommands {
-    static var all: [CommandDef] { walls + openings + horizontals + structure + spaces + management + extendedBIM + documentation + multiStorey + sheetViews + ModelingCommands.all }
+    static var all: [CommandDef] { walls + openings + horizontals + structure + spaces + management + extendedBIM + documentation + multiStorey + sheetViews + ModelingCommands.all + BIMExtCommands.all }
 
     static func wallPreview(_ w: WallGeom) -> Geometry { .polyline(PolylineGeom(points: CommandHelpers.wallRect(w), closed: true)) }
     static func footprintPreview(_ pts: [Vec2]) -> Geometry { .polyline(PolylineGeom(points: pts, closed: true)) }
@@ -391,13 +391,18 @@ enum ArchitectureCommands {
             var kind = StairKind(rawValue: ed.doc.variable("STAIRKIND") ?? "") ?? .straight
             var landingAt: Int? = nil
             var landingDepth: Double? = nil
+            var winders: Int? = ed.doc.variable("STAIRWINDERS").flatMap(Int.init).flatMap { $0 > 0 ? $0 : nil }
+            var clockwise: Bool? = ed.doc.variable("STAIRHAND") == "Right" ? true : nil
+            var innerRadius: Double? = nil
             var start: Vec2
             while true {
                 let rc = risers ?? max(2, Int((rise / 175).rounded()))
                 let top = topLevel.flatMap { ed.doc.level($0)?.name }.map { " up to \($0)" } ?? ""
                 let land = landingAt.map { ", Landing after \($0) risers" } ?? ""
-                ed.print("Stair: \(kind.rawValue), Width = \(fmt(width)), Rise = \(fmt(rise))\(top), Risers = \(rc) (\(fmt(rise / Double(rc), 1)) each), Tread = \(fmt(tread))\(land)")
-                let a = try await ed.getPoint("Specify start point of stair (bottom, center of first riser)", keywords: ["Width", "Rise", "Risers", "Tread", "Kind", "Top", "Landing"])
+                let wind = (kind == .lShape || kind == .uShape) ? (winders.map { ", \($0) winders" } ?? "") : ""
+                let hand = (kind != .straight && clockwise == true) ? ", turning right" : ""
+                ed.print("Stair: \(kind.rawValue), Width = \(fmt(width)), Rise = \(fmt(rise))\(top), Risers = \(rc) (\(fmt(rise / Double(rc), 1)) each), Tread = \(fmt(tread))\(land)\(wind)\(hand)")
+                let a = try await ed.getPoint("Specify start point of stair (bottom, center of first riser)", keywords: ["Width", "Rise", "Risers", "Tread", "Kind", "Top", "Landing", "Winders", "Hand", "Column"])
                 switch a {
                 case .point(let p): start = p
                 case .keyword("Width"): width = try await ed.getPositive("Specify stair width", defaultValue: width); continue
@@ -419,19 +424,32 @@ enum ArchitectureCommands {
                     landingAt = n
                     landingDepth = try await ed.getPositive("Specify landing depth", defaultValue: landingDepth ?? width)
                     continue
+                case .keyword("Winders"):
+                    let def = winders ?? (kind == .uShape ? 6 : 3)
+                    guard let n = try await ed.getInteger("Number of winder treads at the turn (0 = flat landing; L: 2–6, U: 3–10)", defaultValue: def) else { continue }
+                    winders = n > 0 ? n : nil
+                    if n > 0 && kind == .straight { kind = .lShape; ed.print("Kind set to LShape (winders need a turn).") }
+                    continue
+                case .keyword("Hand"):
+                    let h = try await ed.getKeyword("Turn / wind direction", ["Left", "Right"], defaultValue: clockwise == true ? "Right" : "Left") ?? "Left"
+                    clockwise = h == "Right" ? true : nil; continue
+                case .keyword("Column"):
+                    innerRadius = try await ed.getPositive("Specify spiral column (inner) radius", defaultValue: innerRadius ?? max(100, width * 0.15)); continue
                 default: return
                 }
                 break
             }
             let rc = risers ?? max(2, Int((rise / 175).rounded()))
             let preview: (Vec2) -> [Geometry] = { c in
-                let s = StairGeom(start: start, direction: (c - start).angle, width: width, totalRise: rise, riserCount: rc, treadDepth: tread, kind: kind, landingDepth: landingDepth, landingAt: landingAt)
+                let s = StairGeom(start: start, direction: (c - start).angle, width: width, totalRise: rise, riserCount: rc, treadDepth: tread, kind: kind, landingDepth: landingDepth, landingAt: landingAt,
+                                  winders: winders, clockwise: clockwise, innerRadius: innerRadius)
                 return StairShapes.layout(s).treads.map { footprintPreview($0.poly) }
             }
             let dir = try await ed.getAngle("Specify direction of travel (up)", base: start, defaultValue: 0, preview: preview).value ?? 0
             ed.doc.setVariable("STAIRWIDTH", fmt(width)); ed.doc.setVariable("STAIRTREAD", fmt(tread)); ed.doc.setVariable("STAIRKIND", kind.rawValue)
+            ed.doc.setVariable("STAIRWINDERS", "\(winders ?? 0)"); ed.doc.setVariable("STAIRHAND", clockwise == true ? "Right" : "Left")
             let s = StairGeom(start: start, direction: dir, width: width, totalRise: rise, riserCount: rc, treadDepth: tread, kind: kind,
-                              landingDepth: landingDepth, landingAt: landingAt, topLevel: topLevel)
+                              landingDepth: landingDepth, landingAt: landingAt, topLevel: topLevel, winders: winders, clockwise: clockwise, innerRadius: innerRadius)
             ed.doc.addElement(.stair(s), name: "Stair")
             ed.print("Stair created: \(rc) risers of \(fmt(s.riserHeight, 1))" + (topLevel.flatMap { ed.doc.level($0)?.name }.map { ", arriving at \($0)" } ?? "") + ".")
             for issue in BIMConstraints.stairIssues(s, units: ed.doc.units) { ed.print("Note: " + issue) }
@@ -1149,7 +1167,7 @@ extension ArchitectureCommands {
     }
 
     static var curtainGridCommand: CommandDef {
-        CommandDef("CWGRID", aliases: ["CURTAINGRID"], category: "Architecture", summary: "Edits a curtain wall grid: add/remove grid lines, set panels (glass, solid, empty, door, double door), uniform spacing.") { ed in
+        CommandDef("CWGRID", aliases: ["CURTAINGRID"], category: "Architecture", summary: "Edits a curtain wall grid: add/remove grid lines, panels (glass, solid, spandrel, louvre, empty, door, double door), mullion types, uniform spacing.") { ed in
             guard case .pick(let pk) = try await ed.pickObject("Select curtain wall", filter: { if case .curtainWall? = ed.doc.element($0)?.geometry { return true }; return false }),
                   let idx = ed.doc.elementIndex(pk.id), case .curtainWall(var g) = ed.doc.elements[idx].geometry else { return }
             let len = g.length
@@ -1158,7 +1176,7 @@ extension ArchitectureCommands {
             @MainActor func along(_ p: Vec2) -> Double { min(max((p - g.start).dot(d), 0), len) }
             while true {
                 ed.print("Grid: \(g.uPositions.count) vertical, \(g.vPositions.count) horizontal line(s).")
-                let k = try await ed.getKeyword("Grid option", ["AddVertical", "AddHorizontal", "Remove", "Panel", "Uniform", "eXit"], defaultValue: "eXit") ?? "eXit"
+                let k = try await ed.getKeyword("Grid option", ["AddVertical", "AddHorizontal", "Remove", "Panel", "Uniform", "Mullion", "eXit"], defaultValue: "eXit") ?? "eXit"
                 switch k {
                 case "AddVertical":
                     let p = try await ed.requirePoint("Specify position along the wall")
@@ -1185,10 +1203,24 @@ extension ArchitectureCommands {
                     let xs = [0] + g.uPositions + [len], zs = [0] + g.vPositions + [g.height]
                     guard let ci = (0..<(xs.count - 1)).first(where: { x >= xs[$0] && x <= xs[$0 + 1] }),
                           let ri = (0..<(zs.count - 1)).first(where: { z >= zs[$0] && z <= zs[$0 + 1] }) else { ed.print("No panel there."); continue }
-                    let t = try await ed.getKeyword("Panel type", ["Glass", "Solid", "Empty", "Door", "DOUbledoor"], defaultValue: "Solid") ?? "Solid"
+                    let t = try await ed.getKeyword("Panel type", ["Glass", "Solid", "SPandrel", "Louvre", "Empty", "Door", "DOUbledoor"], defaultValue: "Solid") ?? "Solid"
                     if (t == "Door" || t == "DOUbledoor") && ri != 0 { ed.print("Doors go in the bottom row of panels."); continue }
                     if t == "Glass" { g.panels["\(ci),\(ri)"] = nil } else { g.panels["\(ci),\(ri)"] = t.lowercased() }
                     ed.print("Panel \(ci + 1),\(ri + 1) set to \(t.lowercased() == "doubledoor" ? "double door" : t.lowercased()).")
+                case "Mullion":
+                    let which = try await ed.getKeyword("Mullions to change", ["Interior", "Border", "All"], defaultValue: "All") ?? "All"
+                    let cur = CurtainMullion.normalized(which == "Border" ? (g.borderProfile ?? g.mullionProfile) : g.mullionProfile)
+                    let t = try await ed.getKeyword("Mullion type", ["Rect", "Round", "Fin", "Capped", "Tee"], defaultValue: cur.capitalized) ?? "Rect"
+                    let type = t.lowercased()
+                    switch which {
+                    case "Interior": g.mullionProfile = type; if g.borderProfile == nil { g.borderProfile = cur }
+                    case "Border": g.borderProfile = type
+                    default: g.mullionProfile = type; g.borderProfile = nil
+                    }
+                    g.mullionSize = try await ed.getPositive("Specify mullion face width", defaultValue: g.mullionSize)
+                    let dep = try await ed.getPositive("Specify mullion depth", defaultValue: CurtainMullion.depth(g))
+                    g.mullionDepth = abs(dep - g.mullionSize * 1.5) < 1e-9 ? nil : dep
+                    ed.print("Mullions: interior \(CurtainMullion.type(g, border: false)), border \(CurtainMullion.type(g, border: true)), \(fmt(g.mullionSize))×\(fmt(CurtainMullion.depth(g))).")
                 case "Uniform":
                     g.gridU = try await ed.getPositive("Specify vertical line spacing", defaultValue: g.gridU)
                     g.gridV = try await ed.getPositive("Specify horizontal line spacing", defaultValue: g.gridV)
@@ -1373,8 +1405,8 @@ extension ArchitectureCommands {
 
     static var openingTypeCommand: CommandDef {
         CommandDef("OPENINGTYPE", aliases: ["DOORTYPE", "WINDOWTYPE", "TYPECATALOG"], category: "Architecture",
-                   summary: "Door/window type catalog: list, new, set type parameters (updates all instances), apply to openings, delete, import CSV.") { ed in
-            let k = try await ed.getKeyword("Type option", ["List", "New", "Set", "Apply", "Delete", "Import"], defaultValue: "List") ?? "List"
+                   summary: "Door/window type catalog: list, new, set type parameters and sub-parts (mullions, transoms, threshold), formulas, apply to openings, delete, import CSV.") { ed in
+            let k = try await ed.getKeyword("Type option", ["List", "New", "Set", "Formula", "Apply", "Delete", "Import"], defaultValue: "List") ?? "List"
             @MainActor func pickType(_ msg: String) async throws -> Int {
                 guard let n = try await ed.getWord(msg), let i = ed.doc.openingTypes.firstIndex(where: { $0.name.caseInsensitiveCompare(n) == .orderedSame })
                         ?? ed.doc.openingTypes.firstIndex(where: { $0.name.lowercased().hasPrefix(n.lowercased()) }) else { throw CommandError.invalid("Type not found.") }
@@ -1396,7 +1428,7 @@ extension ArchitectureCommands {
                 ed.print("Type \"\(name)\" created.")
             case "Set":
                 let i = try await pickType("Enter type name")
-                guard let param = try await ed.getWord("Parameter [Width/Height/Sill/Style/Frame/Material/Name or any custom name]") else { return }
+                guard let param = try await ed.getWord("Parameter [Width/Height/Sill/Style/Frame/Material/Name/Mullions/Transoms/Threshold or any custom name]") else { return }
                 guard let value = try await ed.getWord("Enter value for \(param)") else { return }
                 var t = ed.doc.openingTypes[i]
                 let old = t.name
@@ -1406,6 +1438,9 @@ extension ArchitectureCommands {
                 case "sill": guard let v = Double(value), v >= 0 else { throw CommandError.invalid("Sill must be zero or positive.") }; t.sill = v
                 case "frame", "framewidth": guard let v = Double(value), v >= 0 else { throw CommandError.invalid("Invalid frame width.") }; t.frameWidth = v
                 case "material": t.material = value.isEmpty ? nil : value
+                case "mullions": guard let v = Int(value), v >= 0, v <= 20 else { throw CommandError.invalid("Mullions: 0 to 20.") }; t.mullions = v
+                case "transoms": guard let v = Int(value), v >= 0, v <= 20 else { throw CommandError.invalid("Transoms: 0 to 20.") }; t.transoms = v
+                case "threshold": t.threshold = ["1", "yes", "true", "on", "y"].contains(value.lowercased())
                 case "name":
                     guard ed.doc.openingType(value) == nil else { throw CommandError.invalid("Type \(value) already exists.") }
                     t.name = value
@@ -1418,14 +1453,29 @@ extension ArchitectureCommands {
                 ed.doc.openingTypes[i] = t
                 let n = propagateType(&ed.doc, oldName: old, type: t)
                 ed.print("Type \"\(t.name)\": \(param) = \(value); \(n) instance(s) updated.")
+                for e in t.resolved().errors { ed.print("Formula error: " + e) }
+            case "Formula":
+                let i = try await pickType("Enter type name")
+                guard let param = try await ed.getWord("Parameter driven by the formula (Width/Height/Sill/FrameWidth/Mullions/Transoms or a custom name)") else { return }
+                let expr = try await ed.getString("Enter formula (other parameters by name, e.g. width * 1.5; empty = remove)") ?? ""
+                var t = ed.doc.openingTypes[i]
+                let key = t.formulas.keys.first { $0.caseInsensitiveCompare(param) == .orderedSame } ?? param
+                t.formulas[key] = expr.trimmingCharacters(in: .whitespaces).isEmpty ? nil : expr
+                let r = t.resolved()
+                guard r.errors.isEmpty else { throw CommandError.invalid("Formula rejected: " + r.errors.joined(separator: "; ")) }
+                if r.type.width <= 0 || r.type.height <= 0 { throw CommandError.invalid("The formula gives a non-positive size.") }
+                ed.doc.openingTypes[i] = t
+                let n = propagateType(&ed.doc, oldName: t.name, type: t)
+                ed.print("Type \"\(t.name)\": \(key) = \(expr.isEmpty ? "(value)" : expr) → \(fmt(r.type.width))×\(fmt(r.type.height)), sill \(fmt(r.type.sill)); \(n) instance(s) updated.")
             case "Apply":
                 let i = try await pickType("Enter type name")
                 let t = ed.doc.openingTypes[i]
+                let rt = t.resolved().type
                 var n = 0
                 for id in try await elements(ed, "Select doors/windows/openings", isOpening) {
                     guard let j = ed.doc.elementIndex(id), case .opening(var o) = ed.doc.elements[j].geometry else { continue }
                     let host = ed.doc.element(o.hostWall).flatMap { el -> WallGeom? in if case .wall(let w) = el.geometry { return w }; return nil }
-                    if let w = host, t.width > w.length + 1e-6 || t.sill + t.height > w.height + 1e-6 { ed.print("#\(id): type does not fit its wall, skipped."); continue }
+                    if let w = host, rt.width > w.length + 1e-6 || rt.sill + rt.height > w.height + 1e-6 { ed.print("#\(id): type does not fit its wall, skipped."); continue }
                     if t.kind != o.kind, o.kind != .opening, t.kind != .opening, o.mark != nil { o.mark = nextMark(ed.doc, t.kind) }
                     t.apply(to: &o)
                     ed.doc.elements[j].geometry = .opening(o); ed.doc.elements[j].name = t.name
@@ -1450,8 +1500,13 @@ extension ArchitectureCommands {
                 for t in ed.doc.openingTypes {
                     let count = ed.doc.elements.filter { if case .opening(let o) = $0.geometry { return o.typeName == t.name }; return false }.count
                     let style = t.kind == .door ? t.doorStyle.rawValue : (t.kind == .window ? t.windowStyle.rawValue : "-")
-                    let extra = t.params.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: ", ")
-                    ed.print("\(t.kind.rawValue) \"\(t.name)\": \(fmt(t.width))×\(fmt(t.height)), sill \(fmt(t.sill)), \(style), \(count) placed" + (extra.isEmpty ? "" : "; " + extra))
+                    let r = t.resolved().type
+                    var extra = r.params.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }
+                    if r.mullions > 0 { extra.append("mullions=\(r.mullions)") }
+                    if r.transoms > 0 { extra.append("transoms=\(r.transoms)") }
+                    if r.threshold { extra.append("threshold") }
+                    extra += t.formulas.sorted { $0.key < $1.key }.map { "\($0.key):=\($0.value)" }
+                    ed.print("\(t.kind.rawValue) \"\(t.name)\": \(fmt(r.width))×\(fmt(r.height)), sill \(fmt(r.sill)), \(style), \(count) placed" + (extra.isEmpty ? "" : "; " + extra.joined(separator: ", ")))
                 }
             }
         }

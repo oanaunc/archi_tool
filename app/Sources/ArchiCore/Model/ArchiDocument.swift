@@ -140,10 +140,17 @@ public struct OpeningType: Codable, Hashable {
     public var material: String?
     /// Free-form type parameters (fire rating, U-value, manufacturer, cost…), shown in schedules.
     public var params: [String: String]
+    /// Sub-parts: window mullions / transoms (door: transoms ≥ 1 = fanlight) and a door threshold.
+    public var mullions: Int; public var transoms: Int; public var threshold: Bool
+    /// Formula-driven parameters: name → expression over the other parameters (e.g. "height": "width * 1.5",
+    /// "sill": "2100 - height", "Cost": "width * height / 1e6 * 350"). Built-ins: width, height, sill, frameWidth, mullions, transoms.
+    public var formulas: [String: String]
     public init(name: String, kind: OpeningKind, width: Double, height: Double, sill: Double = 0, doorStyle: DoorStyle = .single,
-                windowStyle: WindowStyle = .casement, frameWidth: Double = 50, material: String? = nil, params: [String: String] = [:]) {
+                windowStyle: WindowStyle = .casement, frameWidth: Double = 50, material: String? = nil, params: [String: String] = [:],
+                mullions: Int = 0, transoms: Int = 0, threshold: Bool = false, formulas: [String: String] = [:]) {
         self.name = name; self.kind = kind; self.width = width; self.height = height; self.sill = sill; self.doorStyle = doorStyle
         self.windowStyle = windowStyle; self.frameWidth = frameWidth; self.material = material; self.params = params
+        self.mullions = mullions; self.transoms = transoms; self.threshold = threshold; self.formulas = formulas
     }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -151,13 +158,18 @@ public struct OpeningType: Codable, Hashable {
                   width: try c.decodeIfPresent(Double.self, forKey: .width) ?? 900, height: try c.decodeIfPresent(Double.self, forKey: .height) ?? 2100,
                   sill: try c.decodeIfPresent(Double.self, forKey: .sill) ?? 0, doorStyle: try c.decodeIfPresent(DoorStyle.self, forKey: .doorStyle) ?? .single,
                   windowStyle: try c.decodeIfPresent(WindowStyle.self, forKey: .windowStyle) ?? .casement, frameWidth: try c.decodeIfPresent(Double.self, forKey: .frameWidth) ?? 50,
-                  material: try c.decodeIfPresent(String.self, forKey: .material), params: try c.decodeIfPresent([String: String].self, forKey: .params) ?? [:])
+                  material: try c.decodeIfPresent(String.self, forKey: .material), params: try c.decodeIfPresent([String: String].self, forKey: .params) ?? [:],
+                  mullions: try c.decodeIfPresent(Int.self, forKey: .mullions) ?? 0, transoms: try c.decodeIfPresent(Int.self, forKey: .transoms) ?? 0,
+                  threshold: try c.decodeIfPresent(Bool.self, forKey: .threshold) ?? false, formulas: try c.decodeIfPresent([String: String].self, forKey: .formulas) ?? [:])
     }
-    /// Applies the type's parameters to an instance.
+    /// Applies the type's parameters (formulas evaluated) to an instance.
     public func apply(to o: inout OpeningGeom) {
-        o.kind = kind; o.width = width; o.height = height; o.sill = sill; o.doorStyle = doorStyle; o.windowStyle = windowStyle
-        o.frameWidth = frameWidth; o.typeName = name
+        let t = resolved().type
+        o.kind = t.kind; o.width = t.width; o.height = t.height; o.sill = t.sill; o.doorStyle = t.doorStyle; o.windowStyle = t.windowStyle
+        o.frameWidth = t.frameWidth; o.typeName = name; o.mullions = t.mullions; o.transoms = t.transoms; o.threshold = t.threshold
     }
+    /// The type with every formula evaluated (in dependency order), plus formula errors (unknown names, cycles).
+    public func resolved() -> (type: OpeningType, errors: [String]) { TypeFormulas.resolve(self) }
     public static let library: [OpeningType] = [
         OpeningType(name: "Single Door 900x2100", kind: .door, width: 900, height: 2100, params: ["FireRating": "", "Finish": "Painted"]),
         OpeningType(name: "Single Door 800x2100", kind: .door, width: 800, height: 2100),
@@ -237,7 +249,9 @@ public struct ArchiDocument: Codable, Hashable {
     /// 1: 1.0 preview. 2: optional BIM fields (slab slope, niches, marks, opening types, phases, terrain,
     /// curtain-wall grids, area plans). Version 2 only adds optional keys, so 1 → 2 needs no data change;
     /// the bump stops older builds from opening (and silently dropping) the new data.
-    public static let currentFormatVersion = 2
+    /// 3: optional keys for winders/spiral hand, curtain mullion types, structural profiles and sloped beams,
+    /// opening sub-parts and type formulas, run paths (pipes, ducts, trays, retaining walls). No data change from 2.
+    public static let currentFormatVersion = 3
     public var formatVersion: Int = ArchiDocument.currentFormatVersion
     public var info = ProjectInfo()
     public var units: Units = .millimeters
@@ -346,7 +360,11 @@ public struct ArchiDocument: Codable, Hashable {
         }
         let l = layer ?? lay
         ensureLayer(l)
-        elements.append(BIMElement(id: id, level: level ?? currentLevel, name: name, layer: l, material: material ?? defaultMaterial(for: g), geometry: g))
+        var el = BIMElement(id: id, level: level ?? currentLevel, name: name, layer: l, material: material ?? defaultMaterial(for: g), geometry: g)
+        // New elements join the current workset and the design option being edited.
+        if let ws = variable(Worksets.currentVariable), !ws.isEmpty { el.props[Worksets.prop] = ws }
+        if let op = variable(DesignOptions.editingVariable), !op.isEmpty { el.props[DesignOptions.prop] = op }
+        elements.append(el)
         return id
     }
     func defaultMaterial(for g: BIMGeometry) -> String? {

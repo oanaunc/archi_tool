@@ -64,8 +64,12 @@ public struct SlabGeom: Codable, Hashable {
 public struct ColumnGeom: Codable, Hashable {
     public var position: Vec2; public var width: Double; public var depth: Double; public var height: Double
     public var rotation: Double; public var round: Bool; public var baseOffset: Double
-    public init(position: Vec2, width: Double = 300, depth: Double = 300, height: Double = 3000, rotation: Double = 0, round: Bool = false, baseOffset: Double = 0) {
+    /// Structural section from `StructuralProfiles` ("HEA200", "RHS 200x100x8"…); nil = plain rectangle/circle.
+    public var profile: String?
+    public init(position: Vec2, width: Double = 300, depth: Double = 300, height: Double = 3000, rotation: Double = 0, round: Bool = false, baseOffset: Double = 0,
+                profile: String? = nil) {
         self.position = position; self.width = width; self.depth = depth; self.height = height; self.rotation = rotation; self.round = round; self.baseOffset = baseOffset
+        self.profile = profile
     }
 }
 
@@ -73,9 +77,16 @@ public struct BeamGeom: Codable, Hashable {
     public var start: Vec2; public var end: Vec2; public var width: Double; public var depth: Double
     /// Top of beam relative to its level.
     public var topOffset: Double
-    public init(start: Vec2, end: Vec2, width: Double = 200, depth: Double = 400, topOffset: Double = 3000) {
-        self.start = start; self.end = end; self.width = width; self.depth = depth; self.topOffset = topOffset
+    /// Structural section from `StructuralProfiles` (nil = rectangular width × depth).
+    public var profile: String?
+    /// Top of the beam at its end (braces, rafters, sloped beams); nil = level (same as `topOffset`).
+    public var endTopOffset: Double?
+    public init(start: Vec2, end: Vec2, width: Double = 200, depth: Double = 400, topOffset: Double = 3000, profile: String? = nil, endTopOffset: Double? = nil) {
+        self.start = start; self.end = end; self.width = width; self.depth = depth; self.topOffset = topOffset; self.profile = profile; self.endTopOffset = endTopOffset
     }
+    public var isSloped: Bool { endTopOffset.map { abs($0 - topOffset) > 1e-9 } ?? false }
+    /// Top of the beam at its end.
+    public var endTop: Double { endTopOffset ?? topOffset }
 }
 
 public enum OpeningKind: String, Codable, CaseIterable { case door, window, opening }
@@ -100,12 +111,19 @@ public struct OpeningGeom: Codable, Hashable {
     public var typeName: String?
     /// Mark shown by door/window tags (e.g. "D01"); nil = none.
     public var mark: String?
+    /// Windows: extra vertical mullions dividing the glazing into equal lights (0 = none).
+    public var mullions: Int
+    /// Windows: horizontal transoms dividing the glazing; doors: 1 or more = a fanlight (transom light) above the leaf.
+    public var transoms: Int
+    /// Doors: a threshold plate across the opening at floor level.
+    public var threshold: Bool
     public init(kind: OpeningKind, hostWall: EntityID, offset: Double, width: Double, height: Double, sill: Double = 0,
                 flipHand: Bool = false, flipFacing: Bool = false, doorStyle: DoorStyle = .single, windowStyle: WindowStyle = .casement, frameWidth: Double = 50,
-                depth: Double = 0, typeName: String? = nil, mark: String? = nil) {
+                depth: Double = 0, typeName: String? = nil, mark: String? = nil, mullions: Int = 0, transoms: Int = 0, threshold: Bool = false) {
         self.kind = kind; self.hostWall = hostWall; self.offset = offset; self.width = width; self.height = height; self.sill = sill
         self.flipHand = flipHand; self.flipFacing = flipFacing; self.doorStyle = doorStyle; self.windowStyle = windowStyle; self.frameWidth = frameWidth
         self.depth = depth; self.typeName = typeName; self.mark = mark
+        self.mullions = max(0, mullions); self.transoms = max(0, transoms); self.threshold = threshold
     }
     public var isNiche: Bool { kind == .opening && depth > 1e-9 }
 }
@@ -135,11 +153,26 @@ public struct StairGeom: Codable, Hashable {
     public var landingAt: Int?
     /// Level the stair arrives at (nil = rise set by `totalRise`); the upper level shows the stair with a DN arrow.
     public var topLevel: Int?
+    /// L/U stairs: number of winder treads replacing the corner/half landing (nil or 0 = flat landing).
+    public var winders: Int?
+    /// Turn direction: L/U stairs turn right and spirals wind clockwise when true (default: left / counter-clockwise).
+    public var clockwise: Bool?
+    /// Spiral stairs: radius of the central column / inner edge of the treads (nil = automatic).
+    public var innerRadius: Double?
     public init(start: Vec2, direction: Double = 0, width: Double = 1000, totalRise: Double = 3000, riserCount: Int = 17, treadDepth: Double = 280, kind: StairKind = .straight,
-                landingDepth: Double? = nil, landingAt: Int? = nil, topLevel: Int? = nil) {
+                landingDepth: Double? = nil, landingAt: Int? = nil, topLevel: Int? = nil, winders: Int? = nil, clockwise: Bool? = nil, innerRadius: Double? = nil) {
         self.start = start; self.direction = direction; self.width = width; self.totalRise = totalRise; self.riserCount = riserCount; self.treadDepth = treadDepth; self.kind = kind
         self.landingDepth = landingDepth; self.landingAt = landingAt; self.topLevel = topLevel
+        self.winders = winders; self.clockwise = clockwise; self.innerRadius = innerRadius
     }
+    /// Winder treads actually used (L: 2–6, U: 3–10), 0 = flat landing.
+    public var winderCount: Int {
+        guard let w = winders, w > 0 else { return 0 }
+        switch kind { case .lShape: return min(max(w, 2), 6); case .uShape: return min(max(w, 3), 10); default: return 0 }
+    }
+    public var turnsRight: Bool { clockwise ?? false }
+    /// Spiral inner radius (column).
+    public var spiralInnerRadius: Double { max(innerRadius ?? max(100, width * 0.15), 1e-3) }
     public var riserHeight: Double { totalRise / Double(max(riserCount, 1)) }
     public var runLength: Double { treadDepth * Double(max(riserCount - 1, 0)) }
 }
@@ -165,10 +198,18 @@ public struct CurtainWallGeom: Codable, Hashable {
     public var vLines: [Double]?
     /// Panel overrides keyed "column,row" (0-based from start/bottom): "glass", "solid", "empty".
     public var panels: [String: String]
+    /// Interior mullion type ("rect", "round", "fin", "capped", "tee"); nil = rectangular.
+    public var mullionProfile: String?
+    /// Border (perimeter) mullion type; nil = same as `mullionProfile`.
+    public var borderProfile: String?
+    /// Mullion depth perpendicular to the wall (nil = 1.5 × mullionSize).
+    public var mullionDepth: Double?
     public init(start: Vec2, end: Vec2, height: Double = 3000, baseOffset: Double = 0, gridU: Double = 1200, gridV: Double = 1500, mullionSize: Double = 60,
-                uLines: [Double]? = nil, vLines: [Double]? = nil, panels: [String: String] = [:]) {
+                uLines: [Double]? = nil, vLines: [Double]? = nil, panels: [String: String] = [:],
+                mullionProfile: String? = nil, borderProfile: String? = nil, mullionDepth: Double? = nil) {
         self.start = start; self.end = end; self.height = height; self.baseOffset = baseOffset; self.gridU = gridU; self.gridV = gridV; self.mullionSize = mullionSize
         self.uLines = uLines; self.vLines = vLines; self.panels = panels
+        self.mullionProfile = mullionProfile; self.borderProfile = borderProfile; self.mullionDepth = mullionDepth
     }
     public var length: Double { start.distance(to: end) }
     /// Interior vertical grid positions (excluding both ends), sorted.
@@ -230,11 +271,24 @@ public struct ComponentGeom: Codable, Hashable {
     public var size: Vec3; public var baseOffset: Double; public var block: String?
     /// Parametric family from `ComponentLibrary` (e.g. "bed-double", "sofa"); nil = plain box or block.
     public var family: String?
+    /// Run families (pipes, ducts, cable trays, retaining walls): centreline in component-local coordinates
+    /// (world = position + rotation · local), so MOVE/ROTATE/COPY carry it along. nil = a point-placed component.
+    public var path: [Vec2]?
+    /// Heights of the path vertices above `baseOffset` (sloped runs); nil = level at `baseOffset`.
+    public var pathZ: [Double]?
     public init(category: String = "Furniture", position: Vec2, rotation: Double = 0, size: Vec3 = Vec3(600, 600, 750), baseOffset: Double = 0, block: String? = nil,
-                family: String? = nil) {
+                family: String? = nil, path: [Vec2]? = nil, pathZ: [Double]? = nil) {
         self.category = category; self.position = position; self.rotation = rotation; self.size = size; self.baseOffset = baseOffset; self.block = block
-        self.family = family
+        self.family = family; self.path = path; self.pathZ = pathZ
     }
+    /// World-space run path (empty for point components).
+    public var worldPath: [Vec2] {
+        guard let p = path else { return [] }
+        let c = cos(rotation), s = sin(rotation)
+        return p.map { Vec2(position.x + $0.x * c - $0.y * s, position.y + $0.x * s + $0.y * c) }
+    }
+    /// Height above `baseOffset` of path vertex i.
+    public func pathHeight(_ i: Int) -> Double { guard let z = pathZ, i >= 0, i < z.count else { return 0 }; return z[i] }
 }
 
 public struct GridLineGeom: Codable, Hashable {
@@ -374,7 +428,7 @@ extension SlabGeom {
 }
 
 extension OpeningGeom {
-    private enum Keys: String, CodingKey { case kind, hostWall, offset, width, height, sill, flipHand, flipFacing, doorStyle, windowStyle, frameWidth, depth, typeName, mark }
+    private enum Keys: String, CodingKey { case kind, hostWall, offset, width, height, sill, flipHand, flipFacing, doorStyle, windowStyle, frameWidth, depth, typeName, mark, mullions, transoms, threshold }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: Keys.self)
         var kind = try c.decodeIfPresent(OpeningKind.self, forKey: .kind)
@@ -385,7 +439,9 @@ extension OpeningGeom {
                   flipHand: try c.decodeIfPresent(Bool.self, forKey: .flipHand) ?? false, flipFacing: try c.decodeIfPresent(Bool.self, forKey: .flipFacing) ?? false,
                   doorStyle: try c.decodeIfPresent(DoorStyle.self, forKey: .doorStyle) ?? .single, windowStyle: try c.decodeIfPresent(WindowStyle.self, forKey: .windowStyle) ?? .casement,
                   frameWidth: try c.decodeIfPresent(Double.self, forKey: .frameWidth) ?? 50, depth: try c.decodeIfPresent(Double.self, forKey: .depth) ?? 0,
-                  typeName: try c.decodeIfPresent(String.self, forKey: .typeName), mark: try c.decodeIfPresent(String.self, forKey: .mark))
+                  typeName: try c.decodeIfPresent(String.self, forKey: .typeName), mark: try c.decodeIfPresent(String.self, forKey: .mark),
+                  mullions: try c.decodeIfPresent(Int.self, forKey: .mullions) ?? 0, transoms: try c.decodeIfPresent(Int.self, forKey: .transoms) ?? 0,
+                  threshold: try c.decodeIfPresent(Bool.self, forKey: .threshold) ?? false)
     }
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: Keys.self)
@@ -395,11 +451,14 @@ extension OpeningGeom {
         try c.encode(windowStyle, forKey: .windowStyle); try c.encode(frameWidth, forKey: .frameWidth)
         if depth > 0 { try c.encode(depth, forKey: .depth) }
         try c.encodeIfPresent(typeName, forKey: .typeName); try c.encodeIfPresent(mark, forKey: .mark)
+        if mullions > 0 { try c.encode(mullions, forKey: .mullions) }
+        if transoms > 0 { try c.encode(transoms, forKey: .transoms) }
+        if threshold { try c.encode(threshold, forKey: .threshold) }
     }
 }
 
 extension CurtainWallGeom {
-    private enum Keys: String, CodingKey { case start, end, height, baseOffset, gridU, gridV, mullionSize, uLines, vLines, panels }
+    private enum Keys: String, CodingKey { case start, end, height, baseOffset, gridU, gridV, mullionSize, uLines, vLines, panels, mullionProfile, borderProfile, mullionDepth }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: Keys.self)
         self.init(start: try c.decode(Vec2.self, forKey: .start), end: try c.decode(Vec2.self, forKey: .end),
@@ -407,7 +466,9 @@ extension CurtainWallGeom {
                   gridU: try c.decodeIfPresent(Double.self, forKey: .gridU) ?? 1200, gridV: try c.decodeIfPresent(Double.self, forKey: .gridV) ?? 1500,
                   mullionSize: try c.decodeIfPresent(Double.self, forKey: .mullionSize) ?? 60,
                   uLines: try c.decodeIfPresent([Double].self, forKey: .uLines), vLines: try c.decodeIfPresent([Double].self, forKey: .vLines),
-                  panels: try c.decodeIfPresent([String: String].self, forKey: .panels) ?? [:])
+                  panels: try c.decodeIfPresent([String: String].self, forKey: .panels) ?? [:],
+                  mullionProfile: try c.decodeIfPresent(String.self, forKey: .mullionProfile), borderProfile: try c.decodeIfPresent(String.self, forKey: .borderProfile),
+                  mullionDepth: try c.decodeIfPresent(Double.self, forKey: .mullionDepth))
     }
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: Keys.self)
@@ -415,6 +476,8 @@ extension CurtainWallGeom {
         try c.encode(gridU, forKey: .gridU); try c.encode(gridV, forKey: .gridV); try c.encode(mullionSize, forKey: .mullionSize)
         try c.encodeIfPresent(uLines, forKey: .uLines); try c.encodeIfPresent(vLines, forKey: .vLines)
         if !panels.isEmpty { try c.encode(panels, forKey: .panels) }
+        try c.encodeIfPresent(mullionProfile, forKey: .mullionProfile); try c.encodeIfPresent(borderProfile, forKey: .borderProfile)
+        try c.encodeIfPresent(mullionDepth, forKey: .mullionDepth)
     }
 }
 

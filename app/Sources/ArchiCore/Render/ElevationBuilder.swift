@@ -32,7 +32,8 @@ public enum ElevationBuilder {
     static let pocheColor = RGBA(0.2, 0.2, 0.2)
 
     public static func entries(doc: ArchiDocument, view: ViewKind, sectionLine: (Vec2, Vec2)? = nil) -> [DrawEntry] {
-        if view == .plan || view == .ceiling { return DrawListBuilder.entries(doc: doc, options: DrawOptions(level: nil)) }
+        if view == .plan { return DrawListBuilder.entries(doc: doc, options: DrawOptions(level: nil)) }
+        if view == .ceiling { var o = DrawOptions(level: doc.currentLevel); o.reflectedCeiling = true; return DrawListBuilder.entries(doc: doc, options: o) }
         let groups = MeshBuilder.build(doc: doc)
         var line = sectionLine
         if view == .section, let m = Annotations.sectionLine(doc) { line = m }

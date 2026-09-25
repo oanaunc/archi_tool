@@ -119,7 +119,8 @@ struct MeshAcc {
 
 /// Builds 3D triangle meshes (Z up, drawing units) from BIM elements and 3D solids.
 public enum MeshBuilder {
-    public static func build(doc: ArchiDocument) -> [MeshGroup] {
+    public static func build(doc fullDoc: ArchiDocument) -> [MeshGroup] {
+        let doc = ModelSets.visibleModel(fullDoc)
         let ctx = BIMContext(doc: doc)
         var out: [MeshGroup] = []
         let phased = Phasing.isActive(doc)
@@ -248,7 +249,19 @@ public enum MeshBuilder {
                 }
                 let lt = min(40 * u, h)
                 let t0 = side * (h - 5 * u - lt), t1 = side * (h - 5 * u)
-                let ztop = zt - fw
+                var ztop = zt - fw
+                if o.transoms > 0 && fw > 0 {
+                    // Fanlight (transom light) above the leaf: transom bar and glazing.
+                    let fanH = min(400 * u, (zt - zb) * 0.2)
+                    let zt2 = ztop - fanH
+                    box(&frame, a, b, -h, h, zt2 - fw, zt2)
+                    let gt = min(6 * u, h / 2)
+                    box(&glass, a, b, -gt, gt, zt2, ztop)
+                    ztop = zt2 - fw
+                }
+                if o.threshold {
+                    box(&metal, s0, s1, -h - 10 * u, h + 10 * u, zb, zb + 15 * u)
+                }
                 switch o.doorStyle {
                 case .double:
                     let mid = (a + b) / 2
@@ -269,7 +282,7 @@ public enum MeshBuilder {
                     box(&metal, latch - 60 * u, latch + 60 * u, tf, tf + 50 * u, zh - 10 * u, zh + 10 * u)
                     box(&metal, latch - 60 * u, latch + 60 * u, tb2 - 50 * u, tb2, zh - 10 * u, zh + 10 * u)
                 }
-                return [frame.group(el.id, kind, el.material ?? "Wood"), metal.group(el.id, kind, "Aluminium")].compactMap { $0 }
+                return [frame.group(el.id, kind, el.material ?? "Wood"), metal.group(el.id, kind, "Aluminium"), glass.group(el.id, kind, "Glass")].compactMap { $0 }
             }
             // Window.
             let fd = min(h, 35 * u)
@@ -295,6 +308,25 @@ public enum MeshBuilder {
                     box(&glass, sa + sw, sb - sw, off - gt, off + gt, ia + sw, ib - sw)
                 }
             }
+            // Glazing bars: extra mullions and transoms dividing the lights.
+            if o.mullions > 0 || o.transoms > 0 {
+                let bw = max(fw * 0.6, 20 * u) / 2, bd = min(fd * 0.8, 30 * u)
+                for k in 0..<o.mullions {
+                    let x = a + (b - a) * Double(k + 1) / Double(o.mullions + 1)
+                    box(&frame, x - bw, x + bw, -bd, bd, ia, ib)
+                }
+                for k in 0..<o.transoms {
+                    let z = ia + (ib - ia) * Double(k + 1) / Double(o.transoms + 1)
+                    box(&frame, a, b, -bd, bd, z - bw, z + bw)
+                }
+            }
+            // Casement handles on the room side of opening sashes.
+            if sashCount > 0 && o.windowStyle != .sliding {
+                let side: Double = o.flipFacing ? -1 : 1
+                let zh = ia + (ib - ia) * 0.45
+                let hx = o.windowStyle == .doubleCasement ? (a + b) / 2 - 60 * u : (o.flipHand ? a + 60 * u : b - 60 * u)
+                box(&frame, hx - 12 * u, hx + 12 * u, side > 0 ? fd : -fd - 40 * u, side > 0 ? fd + 40 * u : -fd, zh - 60 * u, zh + 60 * u)
+            }
             let ext: Double = o.flipFacing ? 1 : -1
             let so = 40 * u
             box(&frame, s0 - so, s1 + so, min(ext * h * 0.5, ext * (h + so)), max(ext * h * 0.5, ext * (h + so)), zb - 30 * u, zb)
@@ -311,6 +343,12 @@ public enum MeshBuilder {
         case .column(let g):
             var acc = MeshAcc()
             let z0 = elev + g.baseOffset
+            if let sec = StructuralProfiles.section(g.profile) {
+                let o = StructuralProfiles.outline(sec, unit: u)
+                let t = Transform2D.translation(g.position) * Transform2D.rotation(g.rotation)
+                acc.prism(o.outer.map(t.apply), holes: o.holes.map { $0.map(t.apply) }, z0: z0, z1: z0 + g.height, smooth: sec.shape == .chs || sec.shape == .round)
+                return [acc.group(el.id, kind, el.material ?? "Steel")].compactMap { $0 }
+            }
             if g.round { acc.prism(RG.circle(g.position, g.width / 2), z0: z0, z1: z0 + g.height, smooth: true) }
             else { acc.prism(PlanRepresentation.columnPoly(g), z0: z0, z1: z0 + g.height) }
             return [acc.group(el.id, kind, el.material ?? "Concrete")].compactMap { $0 }
@@ -319,7 +357,19 @@ public enum MeshBuilder {
             guard g.start.distance(to: g.end) > 1e-9 else { return [] }
             var acc = MeshAcc()
             let top = elev + g.topOffset
-            acc.prism(PlanRepresentation.beamPoly(g), z0: top - g.depth, z1: top)
+            if let sec = StructuralProfiles.section(g.profile) {
+                let o = StructuralProfiles.outline(sec, unit: u)
+                let hh = sec.h * u / 2
+                acc.member(o.outer, holes: o.holes, from: Vec3(g.start.x, g.start.y, top - hh), to: Vec3(g.end.x, g.end.y, elev + g.endTop - hh),
+                           smooth: sec.shape == .chs || sec.shape == .round)
+                return [acc.group(el.id, kind, el.material ?? "Steel")].compactMap { $0 }
+            }
+            if g.isSloped {
+                let w = g.width / 2, dd = g.depth / 2
+                acc.member([Vec2(-w, -dd), Vec2(w, -dd), Vec2(w, dd), Vec2(-w, dd)], from: Vec3(g.start.x, g.start.y, top - dd), to: Vec3(g.end.x, g.end.y, elev + g.endTop - dd))
+            } else {
+                acc.prism(PlanRepresentation.beamPoly(g), z0: top - g.depth, z1: top)
+            }
             return [acc.group(el.id, kind, el.material ?? "Concrete")].compactMap { $0 }
 
         case .roof(let g):
@@ -344,8 +394,36 @@ public enum MeshBuilder {
                 acc.verticalPlate(prof, origin: fl.origin, ax: fl.dir, ay: ay, y0: g.width / 2, y1: g.width / 2 + st)
                 acc.verticalPlate(prof, origin: fl.origin, ax: fl.dir, ay: ay, y0: -g.width / 2 - st, y1: -g.width / 2)
             }
-            if g.kind == .spiral { acc.prism(RG.circle(g.start, max(60 * u, min(100, g.width * 0.15) * 0.6)), z0: elev, z1: elev + g.totalRise, smooth: true) }
-            return [acc.group(el.id, kind, el.material ?? "Concrete")].compactMap { $0 }
+            // Newel posts at winder pivots.
+            for nw in l.newels {
+                let s = max(50 * u, 1e-3)
+                acc.prism([nw + Vec2(-s, -s), nw + Vec2(s, -s), nw + Vec2(s, s), nw + Vec2(-s, s)], z0: elev, z1: elev + g.totalRise + 900 * u)
+            }
+            var rail = MeshAcc()
+            if g.kind == .spiral {
+                let r0 = g.spiralInnerRadius
+                acc.prism(RG.circle(g.start, max(40 * u, r0 * 0.6)), z0: elev, z1: elev + g.totalRise + 900 * u, smooth: true)
+                // Helical handrail on the outer edge, 900 above the tread nosings.
+                let rr = r0 + g.width - 40 * u, n = max(g.riserCount - 1, 1)
+                let dt = (g.turnsRight ? -1.0 : 1.0) * g.treadDepth / (r0 + g.width / 2)
+                let steps = max(8, n * 4)
+                var helix: [Vec3] = []
+                for i in 0...steps {
+                    let t = Double(i) / Double(steps)
+                    let a = g.direction + dt * Double(n) * t
+                    let q = g.start + Vec2.polar(rr, a)
+                    helix.append(Vec3(q.x, q.y, elev + rh * (1 + Double(n - 1) * t) + 900 * u))
+                }
+                let rp = (0..<12).map { Vec2.polar(20 * u, 2 * Double.pi * Double($0) / 12) }
+                SweepMesh.sweep(rp, along: helix, into: &rail)
+                for i in stride(from: 0, through: n - 1, by: 2) {
+                    let a = g.direction + dt * (Double(i) + 0.5)
+                    let q = g.start + Vec2.polar(rr, a)
+                    let zt = elev + rh * Double(i + 1)
+                    rail.prism(RG.circle(q, 10 * u, segments: 10), z0: zt, z1: zt + 900 * u, smooth: true)
+                }
+            }
+            return [acc.group(el.id, kind, el.material ?? "Concrete"), rail.group(el.id, kind, "Steel")].compactMap { $0 }
 
         case .railing(let g):
             let path = RG.dedupe(g.path, closed: false)
@@ -378,10 +456,22 @@ public enum MeshBuilder {
             let xs: [Double] = [0] + g.uPositions + [len]
             let zs: [Double] = [0] + g.vPositions + [g.height]
             func P(_ x: Double, _ y: Double) -> Vec2 { g.start + d * x + n * y }
-            var frame = MeshAcc(), glass = MeshAcc(), solid = MeshAcc()
-            for x in xs {
-                let x0 = max(0, x - m), x1 = min(len, x + m)
-                frame.prism([P(x0, -md), P(x1, -md), P(x1, md), P(x0, md)], z0: zb, z1: zt)
+            var frame = MeshAcc(), glass = MeshAcc(), solid = MeshAcc(), spandrel = MeshAcc()
+            for (xi, x) in xs.enumerated() {
+                frame.prism(CurtainMullion.planSection(g, x: x, border: xi == 0 || xi == xs.count - 1), z0: zb, z1: zt)
+            }
+            let mdepth = CurtainMullion.depth(g)
+            /// Horizontal member (transom/sill/head) of the grid type between x0 and x1 at height z (relative to the base).
+            func transom(_ x0: Double, _ x1: Double, _ z: Double, border: Bool) {
+                guard x1 - x0 > 1e-9 else { return }
+                var sec = CurtainMullion.section(CurtainMullion.type(g, border: border), width: g.mullionSize, depth: mdepth)
+                if border {
+                    let lo = sec.map(\.x).min() ?? 0, hi = sec.map(\.x).max() ?? 0
+                    let shift = z <= 1e-9 ? -lo : (z >= g.height - 1e-9 ? -hi : 0)
+                    sec = sec.map { Vec2($0.x + shift, $0.y) }
+                }
+                // Section (a → up, b → normal) extruded along the wall; the frame's second axis is −normal.
+                frame.extrudeSection(sec.map { Vec2($0.x, -$0.y) }, origin: Vec3(g.start.x + d.x * x0, g.start.y + d.y * x0, zb + z), axis: Vec3(d.x, d.y, 0), xAxis: .unitZ, length: x1 - x0)
             }
             for i in 0..<(xs.count - 1) {
                 let x0 = xs[i] + m, x1 = xs[i + 1] - m
@@ -391,7 +481,7 @@ public enum MeshBuilder {
                     if zi == 0 && door { continue }   // no sill mullion under a door
                     // Transoms are omitted between two empty panels.
                     if zi > 0 && zi < zs.count - 1, g.panels["\(i),\(zi - 1)"] == "empty", g.panels["\(i),\(zi)"] == "empty" { continue }
-                    frame.prism([P(x0, -md), P(x1, -md), P(x1, md), P(x0, md)], z0: zb + max(0, z - m), z1: zb + min(g.height, z + m))
+                    transom(x0, x1, z, border: zi == 0 || zi == zs.count - 1)
                 }
                 for j in 0..<(zs.count - 1) {
                     let za = zb + zs[j] + m, zc = zb + zs[j + 1] - m
@@ -418,14 +508,27 @@ public enum MeshBuilder {
                             frame.prism([P(hx - 12 * u, -t - 60 * u), P(hx + 12 * u, -t - 60 * u), P(hx + 12 * u, -t), P(hx - 12 * u, -t)], z0: hz - 300 * u, z1: hz + 300 * u)
                         }
                     case "solid": solid.prism([P(x0, -20 * u), P(x1, -20 * u), P(x1, 20 * u), P(x0, 20 * u)], z0: za, z1: zc)
+                    case "spandrel":
+                        // Opaque insulated panel: back-pan behind a spandrel glass skin.
+                        spandrel.prism([P(x0, -10 * u), P(x1, -10 * u), P(x1, 50 * u), P(x0, 50 * u)], z0: za, z1: zc)
+                        glass.prism([P(x0, -18 * u), P(x1, -18 * u), P(x1, -12 * u), P(x0, -12 * u)], z0: za, z1: zc)
+                    case "louvre":
+                        let bd = min(md, 60 * u)
+                        for zc0 in CurtainMullion.louvreBlades(z0: za, z1: zc, pitch: 150 * u) {
+                            let blade = [Vec2(-45 * u, bd), Vec2(-5 * u, -bd), Vec2(10 * u, -bd), Vec2(-30 * u, bd)]
+                            frame.extrudeSection(blade, origin: Vec3(g.start.x + d.x * x0, g.start.y + d.y * x0, zc0), axis: Vec3(d.x, d.y, 0), xAxis: .unitZ, length: x1 - x0)
+                        }
                     default: glass.prism([P(x0, -5 * u), P(x1, -5 * u), P(x1, 5 * u), P(x0, 5 * u)], z0: za, z1: zc)
                     }
                 }
             }
-            return [frame.group(el.id, kind, "Aluminium"), glass.group(el.id, kind, el.material ?? "Glass"),
-                    solid.group(el.id, kind, el.props["panelMaterial"] ?? "Aluminium")].compactMap { $0 }
+            return [frame.group(el.id, kind, el.props["mullionMaterial"] ?? "Aluminium"), glass.group(el.id, kind, el.material ?? "Glass"),
+                    solid.group(el.id, kind, el.props["panelMaterial"] ?? "Aluminium"), spandrel.group(el.id, kind, el.props["spandrelMaterial"] ?? "Steel")].compactMap { $0 }
 
         case .component(let g):
+            if g.block == nil, let rf = ComponentLibrary.runFamily(g.family) {
+                return RunFamilies.meshGroups(rf, g, id: el.id, z0: elev + g.baseOffset, unit: u, overrides: el.props)
+            }
             if g.block == nil, let fam = ComponentLibrary.family(g.family) {
                 return ComponentLibrary.meshGroups(fam, g, id: el.id, z0: elev + g.baseOffset, overrides: el.props)
             }

@@ -276,12 +276,14 @@ final class BIMContext {
 
 // MARK: - Stairs
 
-struct StairTread { var poly: [Vec2]; var step: Int; var landing: Bool }
+struct StairTread { var poly: [Vec2]; var step: Int; var landing: Bool; var winder: Bool = false }
 struct StairLayout {
     var treads: [StairTread]
     var walk: [Vec2]
     /// Flights as (start point, direction, tread count, width) for stringers.
     var flights: [(origin: Vec2, dir: Vec2, count: Int, firstStep: Int)]
+    /// Newel posts (winder pivots) in plan.
+    var newels: [Vec2] = []
 }
 
 enum StairShapes {
@@ -289,14 +291,17 @@ enum StairShapes {
     static func layout(_ g: StairGeom) -> StairLayout {
         let n = max(g.riserCount - 1, 1)
         let td = max(g.treadDepth, 1e-3), w = max(g.width, 1e-3)
-        let d = Vec2.polar(1, g.direction), p = d.perp
+        let d = Vec2.polar(1, g.direction), p = g.turnsRight ? -d.perp : d.perp
         let o = g.start
         func rect(_ x0: Double, _ x1: Double, _ y0: Double, _ y1: Double) -> [Vec2] {
             [o + d * x0 + p * y0, o + d * x1 + p * y0, o + d * x1 + p * y1, o + d * x0 + p * y1]
         }
+        func L(_ x: Double, _ y: Double) -> Vec2 { o + d * x + p * y }
+        let turn: Double = g.turnsRight ? -1 : 1
         var treads: [StairTread] = []
         var walk: [Vec2] = []
         var flights: [(Vec2, Vec2, Int, Int)] = []
+        var newels: [Vec2] = []
         switch g.kind {
         case .straight:
             if let k = g.landingAt, k >= 2, k <= n {
@@ -315,34 +320,63 @@ enum StairShapes {
             walk = [o, o + d * (Double(n) * td)]
             flights = [(o, d, n, 1)]
         case .lShape, .uShape:
-            let n1 = min(max((g.landingAt.map { $0 - 1 }) ?? n / 2, 0), max(n - 1, 0)), n2 = max(n - n1 - 1, 0)
+            let k = min(g.winderCount, n)
+            let n1: Int
+            if k > 0 { n1 = min(max((g.landingAt.map { $0 - 1 }) ?? (n - k) / 2, 0), max(n - k, 0)) }
+            else { n1 = min(max((g.landingAt.map { $0 - 1 }) ?? n / 2, 0), max(n - 1, 0)) }
+            let n2 = k > 0 ? max(n - n1 - k, 0) : max(n - n1 - 1, 0)
             let x1 = Double(n1) * td
             for i in 0..<n1 { treads.append(StairTread(poly: rect(Double(i) * td, Double(i + 1) * td, -w / 2, w / 2), step: i + 1, landing: false)) }
             flights.append((o, d, n1, 1))
+            let afterTurn = k > 0 ? n1 + k + 1 : n1 + 2
             if g.kind == .lShape {
-                treads.append(StairTread(poly: rect(x1, x1 + w, -w / 2, w / 2), step: n1 + 1, landing: true))
+                if k > 0 {
+                    let pivot = L(x1, w / 2)
+                    let outer = [L(x1, -w / 2), L(x1 + w, -w / 2), L(x1 + w, w / 2)]
+                    let a0 = (-p).angle, sweep = turn * Double.pi / 2
+                    for (j, poly) in fan(pivot: pivot, outer: outer, count: k, a0: a0, sweep: sweep).enumerated() {
+                        treads.append(StairTread(poly: poly, step: n1 + 1 + j, landing: false, winder: true))
+                    }
+                    newels.append(pivot)
+                    walk = [o, L(x1, 0)] + Array(GeometryOps.arcPoints(center: pivot, radius: w / 2, start: a0, sweep: sweep).dropFirst())
+                } else {
+                    treads.append(StairTread(poly: rect(x1, x1 + w, -w / 2, w / 2), step: n1 + 1, landing: true))
+                    walk = [o, L(x1 + w / 2, 0)]
+                }
                 let xc = x1 + w / 2
                 for jx in 0..<n2 {
                     let y0 = w / 2 + Double(jx) * td
-                    treads.append(StairTread(poly: rect(xc - w / 2, xc + w / 2, y0, y0 + td), step: n1 + 2 + jx, landing: false))
+                    treads.append(StairTread(poly: rect(xc - w / 2, xc + w / 2, y0, y0 + td), step: afterTurn + jx, landing: false))
                 }
-                walk = [o, o + d * xc, o + d * xc + p * (w / 2 + Double(n2) * td)]
-                flights.append((o + d * xc + p * (w / 2), p, n2, n1 + 2))
+                walk.append(L(xc, w / 2 + Double(n2) * td))
+                flights.append((L(xc, w / 2), p, n2, afterTurn))
             } else {
                 let gap = min(100, w * 0.1)
                 let ld = max(g.landingDepth ?? w, td)
-                treads.append(StairTread(poly: rect(x1, x1 + ld, -w / 2, 1.5 * w + gap), step: n1 + 1, landing: true))
+                let yc = w + gap
+                if k > 0 {
+                    let pivot = L(x1, w / 2 + gap / 2)
+                    let outer = [L(x1, -w / 2), L(x1 + ld, -w / 2), L(x1 + ld, 1.5 * w + gap), L(x1, 1.5 * w + gap)]
+                    let a0 = (-p).angle, sweep = turn * Double.pi
+                    for (j, poly) in fan(pivot: pivot, outer: outer, count: k, a0: a0, sweep: sweep).enumerated() {
+                        treads.append(StairTread(poly: poly, step: n1 + 1 + j, landing: false, winder: true))
+                    }
+                    newels.append(pivot)
+                    walk = [o, L(x1, 0)] + Array(GeometryOps.arcPoints(center: pivot, radius: w / 2 + gap / 2, start: a0, sweep: sweep).dropFirst())
+                } else {
+                    treads.append(StairTread(poly: rect(x1, x1 + ld, -w / 2, 1.5 * w + gap), step: n1 + 1, landing: true))
+                    walk = [o, L(x1 + ld / 2, 0), L(x1 + ld / 2, yc)]
+                }
                 for jx in 0..<n2 {
                     let xa = x1 - Double(jx) * td
-                    treads.append(StairTread(poly: rect(xa - td, xa, w / 2 + gap, 1.5 * w + gap), step: n1 + 2 + jx, landing: false))
+                    treads.append(StairTread(poly: rect(xa - td, xa, w / 2 + gap, 1.5 * w + gap), step: afterTurn + jx, landing: false))
                 }
-                let yc = w + gap
-                walk = [o, o + d * (x1 + ld / 2), o + d * (x1 + ld / 2) + p * yc, o + d * (x1 - Double(n2) * td) + p * yc]
-                flights.append((o + d * x1 + p * yc, -d, n2, n1 + 2))
+                walk.append(L(x1 - Double(n2) * td, yc))
+                flights.append((L(x1, yc), -d, n2, afterTurn))
             }
         case .spiral:
-            let r0 = max(100, w * 0.15), r1 = r0 + w, rw = r0 + w / 2
-            let dt = td / rw
+            let r0 = g.spiralInnerRadius, r1 = r0 + w, rw = r0 + w / 2
+            let dt = turn * td / rw
             for i in 0..<n {
                 let a0 = g.direction + Double(i) * dt
                 var poly = [o + Vec2.polar(r0, a0)]
@@ -352,7 +386,62 @@ enum StairShapes {
             }
             walk = GeometryOps.arcPoints(center: o, radius: rw, start: g.direction, sweep: dt * Double(n))
         }
-        return StairLayout(treads: treads, walk: walk, flights: flights.map { (origin: $0.0, dir: $0.1, count: $0.2, firstStep: $0.3) })
+        var l = StairLayout(treads: treads, walk: walk, flights: flights.map { (origin: $0.0, dir: $0.1, count: $0.2, firstStep: $0.3) })
+        l.newels = newels
+        return l
+    }
+
+    /// Winder treads fanning from `pivot`: rays at equal angles from `a0` over `sweep` cut the outer boundary path;
+    /// each tread is the pivot, its two ray hits and the outer corners between them.
+    static func fan(pivot: Vec2, outer: [Vec2], count k: Int, a0: Double, sweep: Double) -> [[Vec2]] {
+        guard k >= 1, outer.count >= 2 else { return [] }
+        // Parametric hit of a ray on the outer path: (segment index + fraction).
+        func hit(_ a: Double) -> Double? {
+            let dir = Vec2.polar(1, a)
+            var best: (t: Double, r: Double)? = nil
+            for i in 0..<(outer.count - 1) {
+                let p0 = outer[i], p1 = outer[i + 1], e = p1 - p0
+                let den = dir.cross(e)
+                guard abs(den) > 1e-12 else { continue }
+                let w0 = p0 - pivot
+                let r = w0.cross(e) / den, s = w0.cross(dir) / den
+                guard r > 1e-9, s >= -1e-9, s <= 1 + 1e-9 else { continue }
+                if best == nil || r < best!.r { best = (Double(i) + min(max(s, 0), 1), r) }
+            }
+            return best?.t
+        }
+        func point(_ t: Double) -> Vec2 {
+            let i = min(Int(t), outer.count - 2)
+            return outer[i].lerp(outer[i + 1], t - Double(i))
+        }
+        var ts: [Double] = []
+        for j in 0...k {
+            if j == 0 { ts.append(0); continue }
+            if j == k { ts.append(Double(outer.count - 1)); continue }
+            guard let t = hit(a0 + sweep * Double(j) / Double(k)) else { return [] }
+            ts.append(t)
+        }
+        var out: [[Vec2]] = []
+        for j in 0..<k {
+            let ta = ts[j], tb = ts[j + 1]
+            var poly = [pivot, point(ta)]
+            var v = Int(ta.rounded(.down)) + 1
+            while Double(v) < tb - 1e-9 { if Double(v) > ta + 1e-9 { poly.append(outer[v]) }; v += 1 }
+            poly.append(point(tb))
+            out.append(RG.dedupe(poly, closed: true))
+        }
+        return out
+    }
+
+    /// Going of winder treads measured on the walk line (centre of the flight width).
+    static func winderWalkGoing(_ g: StairGeom) -> Double? {
+        let k = g.winderCount
+        guard k > 0 else { return nil }
+        switch g.kind {
+        case .lShape: return g.width / 2 * (Double.pi / 2) / Double(k)
+        case .uShape: let gap = min(100, g.width * 0.1); return (g.width / 2 + gap / 2) * Double.pi / Double(k)
+        default: return nil
+        }
     }
 }
 

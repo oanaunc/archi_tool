@@ -15,5 +15,8 @@ public struct DrawOptions: Hashable {
     public var cutHatches = true
     /// Show ceilings (slabs with props kind = ceiling); false in floor plans unless the CEILINGS variable is 1.
     public var showCeilings: Bool? = nil
+    /// Reflected ceiling plan: ceilings with their grids and heights, ceiling-mounted fixtures; no furniture, floors or door swings.
+    /// Also switched on by the RCP variable.
+    public var reflectedCeiling = false
     public init(level: Int? = nil) { self.level = level }
 }

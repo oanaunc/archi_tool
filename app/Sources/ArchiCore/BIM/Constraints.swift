@@ -145,11 +145,30 @@ public enum BIMConstraints {
         let flightRisers: Int
         switch g.kind {
         case .straight: flightRisers = g.landingAt.map { max($0, g.riserCount - $0) } ?? g.riserCount
-        case .lShape, .uShape: flightRisers = max(g.landingAt ?? g.riserCount / 2, g.riserCount - (g.landingAt ?? g.riserCount / 2))
+        case .lShape, .uShape:
+            // Winders continue the flight: count the risers of both flights plus the winders.
+            if g.winderCount > 0 { flightRisers = g.riserCount }
+            else { flightRisers = max(g.landingAt ?? g.riserCount / 2, g.riserCount - (g.landingAt ?? g.riserCount / 2)) }
         case .spiral: flightRisers = 0
         }
-        if flightRisers > 18 { out.append("A flight of \(flightRisers) risers exceeds 18; add a landing.") }
-        if let ld = g.landingDepth, ld < g.width - 1e-9 { out.append("Landing depth \(fmt(ld * units.mm, 0)) mm is less than the stair width.") }
+        if flightRisers > 18 { out.append(g.winderCount > 0 ? "A winder flight of \(flightRisers) risers exceeds 18; use a landing." : "A flight of \(flightRisers) risers exceeds 18; add a landing.") }
+        if let ld = g.landingDepth, ld < g.width - 1e-9, g.winderCount == 0 { out.append("Landing depth \(fmt(ld * units.mm, 0)) mm is less than the stair width.") }
+        if let wg = StairShapes.winderWalkGoing(g) {
+            // Winders: going on the walk line at least the flight going (and never below 220 mm), 2R + G on the walk line.
+            if wg < t - 1e-6 { out.append("Winder going \(fmt(wg * units.mm, 0)) mm on the walk line is less than the flight going \(fmt(t * units.mm, 0)) mm (use fewer winders or a wider stair).") }
+            if wg < 220 * u { out.append("Winder going \(fmt(wg * units.mm, 0)) mm on the walk line is shorter than 220 mm.") }
+            let b2 = (2 * r + wg) * units.mm
+            if b2 < 550 || b2 > 700 { out.append("Winders: 2R + G = \(fmt(b2, 0)) mm on the walk line is outside 550–700 mm.") }
+        }
+        if g.kind == .spiral {
+            let r0 = g.spiralInnerRadius, rw = r0 + g.width / 2
+            let dt = t / max(rw, 1e-9)
+            let inner = r0 * dt
+            if inner < 50 * u { out.append("Spiral: going at the column \(fmt(inner * units.mm, 0)) mm is below 50 mm (increase the inner radius).") }
+            if t < 190 * u { out.append("Spiral: going on the walk line \(fmt(t * units.mm, 0)) mm is shorter than 190 mm.") }
+            let head = r * (2 * Double.pi / max(dt, 1e-9)) - (r + 50 * u)
+            if head < 2000 * u { out.append("Spiral: headroom under the turn above \(fmt(head * units.mm, 0)) mm is below 2000 mm (use more risers per turn).") }
+        }
         return out
     }
 }

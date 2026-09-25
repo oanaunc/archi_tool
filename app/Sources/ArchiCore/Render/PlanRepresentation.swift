@@ -53,7 +53,7 @@ public enum PlanRepresentation {
             return [g.start] + (l.walk.last.map { [$0] } ?? [])
         case .railing(let g): return g.path
         case .curtainWall(let g): return [g.start, g.end, (g.start + g.end) / 2]
-        case .component(let g): return [g.position] + componentPoly(g)
+        case .component(let g): return g.path != nil ? g.worldPath : [g.position] + componentPoly(g)
         case .gridLine(let g): return [g.start, g.end]
         }
     }
@@ -106,6 +106,7 @@ public enum PlanRepresentation {
         return [Vec2(-w, -d), Vec2(w, -d), Vec2(w, d), Vec2(-w, d)].map(t.apply)
     }
     static func beamPoly(_ g: BeamGeom) -> [Vec2] {
+        // Profiled beams keep width/depth in step with their section (set when the profile is applied).
         let d = (g.end - g.start).normalized.perp * (g.width / 2)
         return [g.start - d, g.end - d, g.end + d, g.start + d]
     }
@@ -145,13 +146,24 @@ public enum PlanRepresentation {
         let u = unit(doc)
         switch el.geometry {
         case .wall: return wallItems(el, ctx: ctx, color: color, options: options)
-        case .opening(let o): return openingItems(el, o, ctx: ctx, color: color, options: options)
+        case .opening(let o):
+            // Reflected ceiling plans show door openings as gaps only (no leaves or swings).
+            if options.reflectedCeiling && o.kind == .door { return [] }
+            return openingItems(el, o, ctx: ctx, color: color, options: options)
+        case .slab(let g) where options.reflectedCeiling && el.props["kind"] == "ceiling":
+            return ReflectedCeiling.ceilingItems(el, g, doc: doc, color: color, options: options)
         case .slab(let g):
             let dash = hiddenDash(doc, options)
             var out = ([g.boundary] + g.holes).filter { $0.count >= 2 }.map { stroke($0, closed: true, color, lwHidden, dash) }
             if g.isSloped && g.boundary.count >= 3 { out += slopeArrow(g, el: el, doc: doc, color: color, options: options) }
             return out
         case .column(let g):
+            if let sec = StructuralProfiles.section(g.profile) {
+                let o = StructuralProfiles.outline(sec, unit: u)
+                let t = Transform2D.translation(g.position) * Transform2D.rotation(g.rotation)
+                let outer = o.outer.map(t.apply), holes = o.holes.map { $0.map(t.apply) }
+                return [.fill(loops: [outer] + holes, color: blend(cutFill, .black, 0.3)), stroke(outer, closed: true, color, lwCut)] + holes.map { stroke($0, closed: true, color, lwCut) }
+            }
             let poly = g.round ? RG.circle(g.position, max(g.width, 0) / 2) : columnPoly(g)
             guard poly.count >= 3 else { return [] }
             return [.fill(loops: [poly], color: blend(cutFill, .black, 0.3)), stroke(poly, closed: true, color, lwCut)]
@@ -183,6 +195,7 @@ public enum PlanRepresentation {
                 }
             }
             if g.overhang > 0 { out.append(stroke(r.boundary, closed: true, color, lwFine, dash)) }
+            if options.showAnnotations && doc.variable("ROOFSLOPEARROWS") != "0" { out += roofSlopeArrows(g, faces: r.faces, doc: doc, color: color) }
             return out
         case .space(let g):
             guard g.boundary.count >= 3 else { return [] }
@@ -195,10 +208,11 @@ public enum PlanRepresentation {
             var out: [DrawItem] = [stroke([g.start + n * m, g.end + n * m], color, lwProj), stroke([g.start - n * m, g.end - n * m], color, lwProj),
                                    stroke([g.start, g.end], color, lwFine)]
             let positions: [Double] = [0] + g.uPositions + [len]
-            for x in positions {
-                let c = g.start + d * x
-                let sq = [c - d * m - n * m, c + d * m - n * m, c + d * m + n * m, c - d * m + n * m]
-                out.append(.fill(loops: [sq], color: color))
+            for (xi, x) in positions.enumerated() {
+                let sec = CurtainMullion.planSection(g, x: x, border: xi == 0 || xi == positions.count - 1)
+                guard sec.count >= 3 else { continue }
+                out.append(.fill(loops: [sec], color: color))
+                out.append(stroke(sec, closed: true, color, lwFine))
             }
             // Door panels (bottom row): leaf and 90° swing on the +normal side.
             for i in 0..<(positions.count - 1) {
@@ -223,11 +237,28 @@ public enum PlanRepresentation {
                 let ins = Entity(id: el.id, layer: el.layer, color: .byLayer, geometry: .insert(InsertGeom(block: b, position: g.position, rotation: g.rotation)))
                 return DrawListBuilder.items(for: ins, doc: doc, options: options)
             }
+            if let rf = ComponentLibrary.runFamily(g.family) {
+                let dash = hiddenDash(doc, options)
+                // Runs display in their system colour (unless the element has an explicit colour).
+                let c = el.props["color"] == nil ? (RunFamilies.systemColor(el.props["system"]) ?? color) : color
+                return RunFamilies.symbol(rf, g).filter { $0.points.count >= 2 }.map {
+                    stroke($0.points, closed: $0.closed, c, $0.outline ? lwProj : lwFine, $0.hidden ? dash : [])
+                }
+            }
             if let fam = ComponentLibrary.family(g.family) {
                 let dash = hiddenDash(doc, options)
-                return ComponentLibrary.worldSymbol(fam, g).filter { $0.points.count >= 2 }.map {
+                var out = ComponentLibrary.worldSymbol(fam, g).filter { $0.points.count >= 2 }.map {
                     stroke($0.points, closed: $0.closed, color, $0.outline ? lwProj : lwFine, $0.hidden ? dash : [])
                 }
+                // MEP connection points (MEPCONNECTORS = 1): small circles tagged with the system.
+                if doc.variable("MEPCONNECTORS") == "1" {
+                    for k in ComponentLibrary.worldConnectors(fam, g, z0: 0) {
+                        let c = k.position.xy, r = 35 * u
+                        out.append(stroke(RG.circle(c, r, segments: 12), closed: true, RGBA(0.3, 0.7, 1.0), lwFine))
+                        if options.showAnnotations { out.append(.text(TextGeom(position: c + Vec2(r * 1.3, 0), height: 60 * u, content: k.system, valign: .middle), font: font(doc), color: RGBA(0.3, 0.7, 1.0))) }
+                    }
+                }
+                return out
             }
             let poly = componentPoly(g)
             var out: [DrawItem] = [stroke(poly, closed: true, color, lwProj), stroke([poly[0], poly[2]], color, lwFine), stroke([poly[1], poly[3]], color, lwFine)]
@@ -284,6 +315,25 @@ public enum PlanRepresentation {
         return out
     }
 
+    /// Slope arrows on sloped roof faces (pointing up-slope, labelled with the pitch).
+    static func roofSlopeArrows(_ g: RoofGeom, faces: [RoofFace], doc: ArchiDocument, color: RGBA) -> [DrawItem] {
+        let u = unit(doc)
+        var out: [DrawItem] = []
+        for f in faces where f.grad.length > 1e-9 && f.poly.count >= 3 {
+            let d = f.grad.normalized
+            let pole = LabelPlacement.pole(of: f.poly)
+            let len = min(1200 * u, max(pole.radius * 1.4, 300 * u))
+            guard pole.radius > 150 * u else { continue }
+            let a = pole.point - d * (len / 2), b = pole.point + d * (len / 2)
+            out.append(stroke([a, b], color, lwAnno))
+            out.append(.fill(loops: [RG.triangleArrow(tip: b, dir: d, size: min(180 * u, len * 0.25))], color: color))
+            let rot = DimensionRenderer.readable(d.angle)
+            let pitch = atan(f.grad.length) * 180 / .pi
+            out.append(.text(TextGeom(position: pole.point + d.perp * (90 * u), height: 140 * u, content: fmt(pitch, 1) + "°", rotation: rot, halign: .center, valign: .bottom), font: font(doc), color: color))
+        }
+        return out
+    }
+
     /// Footprints on the same level that room tags should avoid (furniture, columns, stairs).
     static func tagObstacles(level: Int, near box: BBox2, doc: ArchiDocument) -> [[Vec2]] {
         var out: [[Vec2]] = []
@@ -303,7 +353,10 @@ public enum PlanRepresentation {
         let doc = ctx.doc
         let u = unit(doc)
         let tint = blend(color, RGBA(1, 1, 1), 0.3)
-        var out: [DrawItem] = [.fill(loops: [g.boundary], color: RGBA(tint.r, tint.g, tint.b, 0.06))]
+        var out: [DrawItem]
+        if let c = AreaColors.color(el, doc: doc) { out = [.fill(loops: [g.boundary], color: RGBA(c.r, c.g, c.b, 0.45))] }
+        else if options.reflectedCeiling { out = [] }
+        else { out = [.fill(loops: [g.boundary], color: RGBA(tint.r, tint.g, tint.b, 0.06))] }
         if el.props["areaScheme"] != nil { out.append(stroke(g.boundary, closed: true, color, lwFine, hiddenDash(doc, options))) }
         guard options.showAnnotations, el.props["tag"] != "0" else { return out }
         let name = g.name.isEmpty ? el.name : g.name
@@ -460,6 +513,7 @@ public enum PlanRepresentation {
             if fw > 0 { out.append(stroke(rect(s0, a, -h, h), closed: true, color, lwProj)); out.append(stroke(rect(b, s1, -h, h), closed: true, color, lwProj)) }
             else { out.append(stroke([P(s0, -h), P(s0, h)], color, lwProj)); out.append(stroke([P(s1, -h), P(s1, h)], color, lwProj)) }
             let lf = b - a
+            if o.threshold { out.append(stroke(rect(a, b, -h, h), closed: true, color, lwFine)) }
             func leaf(_ hs: Double, _ sg: Double, _ len: Double) {
                 guard len > 1e-9 else { return }
                 let lt = min(40 * u, len * 0.08)
@@ -507,6 +561,13 @@ public enum PlanRepresentation {
             let fd = min(h, 35 * u)
             if fw > 0 { out.append(stroke(rect(s0, a, -fd, fd), closed: true, color, lwProj)); out.append(stroke(rect(b, s1, -fd, fd), closed: true, color, lwProj)) }
             let g = min(h * 0.3, 8 * u)
+            if o.mullions > 0 {
+                let bw = max(fw * 0.6, 20 * u) / 2
+                for k in 0..<o.mullions {
+                    let x = a + (b - a) * Double(k + 1) / Double(o.mullions + 1)
+                    out.append(stroke(rect(x - bw, x + bw, -fd * 0.8, fd * 0.8), closed: true, color, lwProj))
+                }
+            }
             switch o.windowStyle {
             case .sliding:
                 let mid = (a + b) / 2, ov = 40 * u
@@ -550,6 +611,10 @@ public enum PlanRepresentation {
         guard !l.treads.isEmpty else { return [] }
         let u = unit(doc)
         var out: [DrawItem] = l.treads.map { stroke($0.poly, closed: true, color, lwProj) }
+        for nw in l.newels {
+            let s = 50 * u
+            out.append(stroke([nw + Vec2(-s, -s), nw + Vec2(s, -s), nw + Vec2(s, s), nw + Vec2(-s, s)], closed: true, color, lwProj))
+        }
         let w = Array(l.walk.reversed())
         if w.count >= 2 {
             let last = w[w.count - 1], prev = w[w.count - 2]
@@ -578,9 +643,14 @@ public enum PlanRepresentation {
             if t.step <= cutStep { out.append(stroke(t.poly, closed: true, color, lwProj)) }
             else { out.append(stroke(t.poly, closed: true, color, lwHidden, dash)) }
         }
-        // Break line across the cut tread.
-        if let ct = l.treads.first(where: { $0.step == cutStep && !$0.landing }), ct.poly.count >= 4, cutStep < l.treads.count {
-            let A = ct.poly[1], B = ct.poly[ct.poly.count - 1]
+        for nw in l.newels {
+            let s = 50 * u
+            out.append(stroke([nw + Vec2(-s, -s), nw + Vec2(s, -s), nw + Vec2(s, s), nw + Vec2(-s, s)], closed: true, color, lwProj))
+        }
+        if g.kind == .spiral { out.append(stroke(RG.circle(g.start, max(40 * u, g.spiralInnerRadius * 0.6), segments: 32), closed: true, color, lwProj)) }
+        // Break line across the cut tread (winders: along their riser, the ray from the newel).
+        if let ct = l.treads.first(where: { $0.step == cutStep && !$0.landing }), ct.poly.count >= (ct.winder ? 3 : 4), cutStep < l.treads.count {
+            let A = ct.winder ? ct.poly[0] : ct.poly[1], B = ct.winder ? ct.poly[1] : ct.poly[ct.poly.count - 1]
             let d = B - A, n = d.normalized.perp * (d.length * 0.06)
             let ext = d.normalized * (d.length * 0.08)
             out.append(stroke([A - ext, A + d * 0.45, A + d * 0.48 + n, A + d * 0.52 - n, A + d * 0.55, B + ext], color, lwProj))

@@ -14,7 +14,12 @@ public enum DrawListBuilder {
 
     // MARK: Public API
 
-    public static func entries(doc: ArchiDocument, options: DrawOptions) -> [DrawEntry] {
+    public static func entries(doc fullDoc: ArchiDocument, options: DrawOptions) -> [DrawEntry] {
+        // Worksets and design options not on display are left out entirely (also from wall joins and hosts).
+        let doc = ModelSets.visibleModel(fullDoc)
+        var options = options
+        if doc.variable("RCP") == "1" { options.reflectedCeiling = true }
+        if options.reflectedCeiling { options.showCeilings = true }
         var out: [DrawEntry] = []
         if options.showElements {
             let ctx = PlanRepresentation.context(doc)
@@ -35,6 +40,7 @@ public enum DrawListBuilder {
                 var st = Phasing.Status.new
                 if phased { st = Phasing.status(el.props, doc: doc); if !Phasing.visible(st, pf) { continue } }
                 if el.props["kind"] == "ceiling" && !(options.showCeilings ?? (doc.variable("CEILINGS") != "0")) { continue }
+                if options.reflectedCeiling && !ReflectedCeiling.shows(el) { continue }
                 var items = PlanRepresentation.items(el, ctx: ctx, options: options)
                 if phased { items = phaseStyled(items, Phasing.style(st, pf), doc: doc, options: options) }
                 items = items.map { paper($0, options) }
@@ -46,7 +52,8 @@ public enum DrawListBuilder {
         for e in doc.entities where layerShown(e.layer, doc, options) {
             if !options.showAnnotations && isAnnotation(e.geometry) { continue }
             if let l = options.level, let el = e.props["level"].flatMap(Int.init), el != l { continue }
-            var items = self.items(for: e, doc: doc, options: options)
+            var items = self.items(for: SiteAnnotations.live(e, doc: doc), doc: doc, options: options)
+            items += SiteAnnotations.extraItems(e, doc: doc, options: options)
             if phasedEntities {
                 let st = Phasing.status(e.props, doc: doc)
                 if !Phasing.visible(st, pf) { continue }
@@ -54,6 +61,7 @@ public enum DrawListBuilder {
             }
             if !items.isEmpty { out.append(DrawEntry(id: e.id, items: items)) }
         }
+        out += ConstraintGlyphs.entries(doc: doc, options: options)
         return out
     }
 

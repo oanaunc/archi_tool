@@ -439,6 +439,8 @@ public enum CommandHelpers {
             let t = Transform2D.translation(c.position) * Transform2D.rotation(c.rotation)
             return [Vec2(-c.width / 2, -c.depth / 2), Vec2(c.width / 2, -c.depth / 2), Vec2(c.width / 2, c.depth / 2), Vec2(-c.width / 2, c.depth / 2)].map(t.apply)
         case .component(let c):
+            // Runs (pipes, ducts, trays, retaining walls): the plan path, so window selection and previews see the whole run.
+            if let p = c.path, p.count >= 2 { return c.worldPath }
             let t = Transform2D.translation(c.position) * Transform2D.rotation(c.rotation)
             return [Vec2(-c.size.x / 2, -c.size.y / 2), Vec2(c.size.x / 2, -c.size.y / 2), Vec2(c.size.x / 2, c.size.y / 2), Vec2(-c.size.x / 2, c.size.y / 2)].map(t.apply)
         case .stair(let s):
@@ -453,7 +455,11 @@ public enum CommandHelpers {
     }
 
     static func isOpenPath(_ el: BIMElement) -> Bool {
-        switch el.geometry { case .railing, .gridLine: return true; default: return false }
+        switch el.geometry {
+        case .railing, .gridLine: return true
+        case .component(let c): return (c.path?.count ?? 0) >= 2
+        default: return false
+        }
     }
 
     static func axisMidpoint(_ el: BIMElement, doc: ArchiDocument) -> Vec2? {
@@ -514,7 +520,16 @@ public enum CommandHelpers {
         case .railing(var r): r.path = r.path.map(t.apply); return .railing(r)
         case .space(var s): s.boundary = poly(s.boundary); return .space(s)
         case .curtainWall(var c): c.start = t.apply(c.start); c.end = t.apply(c.end); return .curtainWall(c)
-        case .component(var c): c.position = t.apply(c.position); c.rotation = dirAngle(c.rotation); return .component(c)
+        case .component(var c):
+            // Runs (pipes, ducts, trays, retaining walls) carry a local path: rebuild it from the transformed world path,
+            // so mirroring (which a rotation alone cannot express) flips the path too.
+            let world = c.worldPath.map(t.apply)
+            c.position = t.apply(c.position); c.rotation = dirAngle(c.rotation)
+            if c.path != nil {
+                let co = cos(-c.rotation), si = sin(-c.rotation)
+                c.path = world.map { w in let d = w - c.position; return Vec2(d.x * co - d.y * si, d.x * si + d.y * co) }
+            }
+            return .component(c)
         case .gridLine(var gl): gl.start = t.apply(gl.start); gl.end = t.apply(gl.end); return .gridLine(gl)
         }
     }

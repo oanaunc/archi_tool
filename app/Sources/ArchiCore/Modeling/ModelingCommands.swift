@@ -4,7 +4,7 @@ import Foundation
 /// 3D modelling commands: solid booleans (BSP CSG), slice, interference, press/pull, loft, sweep, pipe,
 /// and site topography (surface from points/contours, contours, building pads).
 enum ModelingCommands {
-    static var all: [CommandDef] { booleans + forming + site + SolidEditCommands.all }
+    static var all: [CommandDef] { booleans + forming + site + SolidEditCommands.all + SurfaceCommands.all }
 
     static func solidOf(_ doc: ArchiDocument, _ id: EntityID) -> SolidGeom? {
         if case .solid(let s)? = doc.entity(id)?.geometry { return s }
@@ -283,10 +283,32 @@ enum ModelingCommands {
             ed.selection = []
             guard case .pick(let pk) = try await ed.pickObject("Select sweep path", filter: { path(ed.doc, $0) != nil && !profs.map(\.0).contains($0) }),
                   let pth = path(ed.doc, pk.id) else { return }
-            let z = try await ed.getDistance("Specify path elevation", defaultValue: ed.variableDouble("ELEVATION", 0)).value ?? 0
+            var twist = 0.0, scale = 1.0
+            var z = ed.variableDouble("ELEVATION", 0)
+            while true {
+                let r = try await ed.getDistance("Specify path elevation" + (twist != 0 || scale != 1 ? " (twist \(fmt(twist * 180 / .pi))°, end scale \(fmt(scale)))" : ""), defaultValue: z, keywords: ["Twist", "Scale"])
+                switch r {
+                case .keyword("Twist"): twist = try await ed.getAngle("Specify total twist angle", defaultValue: twist).value ?? twist
+                case .keyword("Scale"):
+                    let s = try await ed.getReal("Specify end scale factor", defaultValue: scale).value ?? scale
+                    if s > 0 { scale = s } else { ed.print("The scale must be positive.") }
+                case .value(let v): z = v
+                default: break
+                }
+                if case .keyword = r { continue }
+                break
+            }
             var n = 0
             for (_, p) in profs {
-                guard let s = sweepSolid(p, path: pth.points.map { Vec3($0.x, $0.y, z) }, closedPath: pth.closed) else { continue }
+                let path3 = pth.points.map { Vec3($0.x, $0.y, z) }
+                if twist != 0 || scale != 1 {
+                    let c = GeometryOps.centroid(p)
+                    let m = SurfaceTools.twistedSweep(p.map { $0 - c }, along: path3, twist: twist, endScale: scale, closedPath: pth.closed)
+                    guard !m.isEmpty else { continue }
+                    ed.addEntity(.solid(MeshTools.solid(from: MeshTools.triangles(m), tolerance: 1e-6))); n += 1
+                    continue
+                }
+                guard let s = sweepSolid(p, path: path3, closedPath: pth.closed) else { continue }
                 ed.addEntity(.solid(s)); n += 1
             }
             if ed.variableDouble("DELOBJ", 0) != 0 { ed.doc.remove(ids: Set(profs.map(\.0))) }

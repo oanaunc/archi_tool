@@ -28,6 +28,7 @@ public struct ComponentSymbolLine: Hashable {
 
 /// Built-in library of parametric families with 3D meshes and 2D plan symbols.
 public enum ComponentLibrary {
+    /// Point-placed families (see also `runFamilies`, placed along a path).
     public static let families: [ComponentFamily] = [
         ComponentFamily("bed-single", "Single Bed", "Furniture", Vec3(900, 2000, 500), aliases: ["SingleBed"]),
         ComponentFamily("bed-double", "Double Bed", "Furniture", Vec3(1600, 2000, 500), aliases: ["Bed", "DoubleBed"]),
@@ -52,10 +53,34 @@ public enum ComponentLibrary {
         ComponentFamily("shower", "Shower", "Plumbing", Vec3(900, 900, 2000)),
         ComponentFamily("bath", "Bathtub", "Plumbing", Vec3(700, 1700, 550), aliases: ["Bathtub", "Tub"]),
         ComponentFamily("car", "Car", "Entourage", Vec3(1800, 4500, 1500)),
+        ComponentFamily("person-standing", "Person Standing", "Entourage", Vec3(500, 300, 1750), aliases: ["Person", "People", "Man", "Woman", "Standing"]),
+        ComponentFamily("person-walking", "Person Walking", "Entourage", Vec3(500, 650, 1750), aliases: ["Walking", "Pedestrian"]),
+        ComponentFamily("person-child", "Child", "Entourage", Vec3(330, 220, 1150), aliases: ["Kid"]),
+        ComponentFamily("bicycle", "Bicycle", "Entourage", Vec3(600, 1750, 1050), aliases: ["Bike", "Cycle"]),
         ComponentFamily("tree", "Tree", "Planting", Vec3(4000, 4000, 6000)),
         ComponentFamily("shrub", "Shrub", "Planting", Vec3(1200, 1200, 1000), aliases: ["Bush"]),
         ComponentFamily("parking", "Parking Space", "Site", Vec3(2500, 5000, 5), aliases: ["ParkingSpace"]),
+        ComponentFamily("outlet", "Power Outlet", "Electrical", Vec3(80, 45, 80), baseOffset: 300, aliases: ["Receptacle", "Socket"]),
+        ComponentFamily("switch", "Light Switch", "Electrical", Vec3(80, 45, 80), baseOffset: 1100, aliases: ["Switch"]),
+        ComponentFamily("light-ceiling", "Ceiling Light", "Lighting", Vec3(400, 400, 100), baseOffset: 2600, aliases: ["Light", "CeilingLight", "Luminaire"]),
+        ComponentFamily("light-wall", "Wall Light", "Lighting", Vec3(250, 150, 250), baseOffset: 1800, aliases: ["Sconce", "WallLight"]),
+        ComponentFamily("panel", "Electrical Panel", "Electrical", Vec3(450, 150, 600), baseOffset: 1300, aliases: ["DistributionBoard", "Panelboard"]),
+        ComponentFamily("smoke-detector", "Smoke Detector", "Electrical", Vec3(120, 120, 50), baseOffset: 2650, aliases: ["SmokeDetector"]),
+        ComponentFamily("truss-pratt", "Pratt Truss", "Structural", Vec3(12000, 100, 1500), baseOffset: 3000, aliases: ["Truss", "PrattTruss"]),
+        ComponentFamily("truss-howe", "Howe Truss", "Structural", Vec3(12000, 100, 1500), baseOffset: 3000, aliases: ["HoweTruss"]),
+        ComponentFamily("truss-warren", "Warren Truss", "Structural", Vec3(12000, 100, 1500), baseOffset: 3000, aliases: ["WarrenTruss"]),
+        ComponentFamily("truss-fink", "Fink Roof Truss", "Structural", Vec3(9000, 50, 2600), baseOffset: 3000, aliases: ["FinkTruss", "RoofTruss"]),
     ]
+
+    /// Families placed along a path (ComponentGeom.path): size.x = diameter/width, size.z = height.
+    public static let runFamilies: [ComponentFamily] = [
+        ComponentFamily("pipe", "Pipe", "Plumbing", Vec3(50, 50, 50), baseOffset: 2700, aliases: ["PipeRun"]),
+        ComponentFamily("conduit", "Conduit", "Electrical", Vec3(25, 25, 25), baseOffset: 2800),
+        ComponentFamily("duct", "Duct", "Mechanical", Vec3(400, 400, 250), baseOffset: 2800, aliases: ["DuctRun"]),
+        ComponentFamily("cabletray", "Cable Tray", "Electrical", Vec3(300, 300, 60), baseOffset: 2900, aliases: ["Tray"]),
+        ComponentFamily("retaining-wall", "Retaining Wall", "Site", Vec3(300, 300, 1500), aliases: ["RetainingWall"]),
+    ]
+    public static func runFamily(_ id: String?) -> ComponentFamily? { runFamilies.first { $0.id == id } }
 
     /// Materials the families use (added to a document when a family is placed).
     public static let materials: [Material] = [
@@ -69,6 +94,9 @@ public enum ComponentLibrary {
         Material(name: "Car Paint", color: RGBA(0.62, 0.10, 0.10), roughness: 0.25, metalness: 0.6),
         Material(name: "Rubber", color: RGBA(0.08, 0.08, 0.09), roughness: 0.9),
         Material(name: "Road Paint", color: RGBA(0.96, 0.96, 0.94), roughness: 0.8),
+        Material(name: "Skin", color: RGBA(0.80, 0.62, 0.50), roughness: 0.7),
+        Material(name: "Clothing", color: RGBA(0.25, 0.32, 0.45), roughness: 0.95),
+        Material(name: "Clothing Light", color: RGBA(0.78, 0.74, 0.66), roughness: 0.95),
     ]
 
     /// Family by id, name or alias (case-insensitive, ignoring spaces, dashes and underscores).
@@ -336,6 +364,14 @@ public enum ComponentLibrary {
                 p.plate("Rubber", circleProfile(t * L, r, r), origin: Vec2(x1 - 220, y0), ax: Vec2(0, 1), ay: Vec2(1, 0), 0, 210)
             }
             p.box("Glass", x0 + 180, x0 + 480, y0 - 2, y0 + 5, H * 0.40, H * 0.47); p.box("Glass", x1 - 480, x1 - 180, y0 - 2, y0 + 5, H * 0.40, H * 0.47)
+        case "outlet", "switch", "light-ceiling", "light-wall", "panel", "smoke-detector":
+            electricalParts(f.id, &p, W: W, D: D, H: H)
+        case let id where Trusses.kind(of: id) != nil:
+            Trusses.parts(Trusses.kind(of: id)!, &p, W: W, D: D, H: H)
+        case "person-standing", "person-walking", "person-child":
+            Entourage.person(&p, width: W, depth: D, height: H, walking: f.id == "person-walking")
+        case "bicycle":
+            Entourage.bicycle(&p, width: W, depth: D, height: H)
         case "tree":
             let rx = W / 2, ry = D / 2, trunk = max(60, min(rx, ry) * 0.06)
             p.cyl("Bark", .zero, trunk, 0, H * 0.45)
@@ -485,6 +521,13 @@ public enum ComponentLibrary {
             }
         case "parking":
             add([Vec2(x0, y0), Vec2(x0, y1), Vec2(x1, y1), Vec2(x1, y0)], outline: true)
+        case "outlet", "switch", "light-ceiling", "light-wall", "panel", "smoke-detector":
+            out += electricalSymbol(f.id, W: W, D: D)
+        case let id where Trusses.kind(of: id) != nil:
+            rect(x0, x1, y0, y1, outline: true)
+            add([Vec2(x0, 0), Vec2(x1, 0)])
+        case "person-standing", "person-walking", "person-child", "bicycle":
+            for l in Entourage.symbol(f.id, width: W, depth: D, height: max(s.z, 1)) { add(l.points, closed: l.closed, outline: l.outline) }
         default:
             rect(x0, x1, y0, y1, outline: true)
         }
