@@ -18,9 +18,11 @@ public enum DrawListBuilder {
         var out: [DrawEntry] = []
         if options.showElements {
             let ctx = PlanRepresentation.context(doc)
+            let walls: [EntityID: BIMElement] = options.level == nil ? [:] : Dictionary(doc.elements.compactMap { el -> (EntityID, BIMElement)? in
+                if case .wall = el.geometry { return (el.id, el) }; return nil }, uniquingKeysWith: { a, _ in a })
             let els = doc.elements.enumerated().filter { _, el in
                 guard layerShown(el.layer, doc, options) else { return false }
-                if let l = options.level, el.level != l { return false }
+                if let l = options.level, el.level != l, !BIMConstraints.shown(el, onLevel: l, doc: doc, hosts: walls) { return false }
                 if case .gridLine = el.geometry, !options.showAnnotations { return false }
                 return true
             }.sorted { a, b in

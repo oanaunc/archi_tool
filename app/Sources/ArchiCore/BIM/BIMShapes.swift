@@ -218,12 +218,13 @@ final class BIMContext {
     }
 
     /// Opening cut intervals along the wall, clamped and merged, with the openings they contain.
-    func cuts(_ f: WallFrame) -> [(s0: Double, s1: Double, els: [BIMElement])] {
+    func cuts(_ f: WallFrame, only: Set<EntityID>? = nil) -> [(s0: Double, s1: Double, els: [BIMElement])] {
         let j = join(f)
         let sMin = f.isCurved ? 0 : max(f.sOf(j.startL), f.sOf(j.startR), 0) + 1e-6
         let sMax = f.isCurved ? f.L : min(f.sOf(j.endL), f.sOf(j.endR), f.L) - 1e-6
         var raw: [(Double, Double, BIMElement)] = []
         for el in openings[f.id] ?? [] {
+            if let only = only, !only.contains(el.id) { continue }
             guard case .opening(let o) = el.geometry, o.width > 0 else { continue }
             let a = max(o.offset - o.width / 2, sMin), b = min(o.offset + o.width / 2, sMax)
             if b - a > 1e-6 { raw.append((a, b, el)) }
@@ -239,9 +240,9 @@ final class BIMContext {
     }
 
     /// Solid pieces of the wall between openings, with mitred/trimmed ends.
-    func pieces(_ f: WallFrame) -> [WallPiece] {
+    func pieces(_ f: WallFrame, only: Set<EntityID>? = nil) -> [WallPiece] {
         let j = join(f)
-        let c = cuts(f)
+        let c = cuts(f, only: only)
         var segs: [(a: Double, aCut: Bool, b: Double, bCut: Bool)] = []
         var cur: (Double, Bool) = (0, false)
         for k in c { segs.append((cur.0, cur.1, k.s0, true)); cur = (k.s1, true) }
@@ -298,11 +299,23 @@ enum StairShapes {
         var flights: [(Vec2, Vec2, Int, Int)] = []
         switch g.kind {
         case .straight:
+            if let k = g.landingAt, k >= 2, k <= n {
+                // Two flights with an intermediate landing (the landing is step k).
+                let ld = max(g.landingDepth ?? w, td)
+                let n1 = k - 1, n2 = max(n - k, 0)
+                let x1 = Double(n1) * td
+                for i in 0..<n1 { treads.append(StairTread(poly: rect(Double(i) * td, Double(i + 1) * td, -w / 2, w / 2), step: i + 1, landing: false)) }
+                treads.append(StairTread(poly: rect(x1, x1 + ld, -w / 2, w / 2), step: k, landing: true))
+                for i in 0..<n2 { let x = x1 + ld + Double(i) * td; treads.append(StairTread(poly: rect(x, x + td, -w / 2, w / 2), step: k + 1 + i, landing: false)) }
+                walk = [o, o + d * (x1 + ld + Double(n2) * td)]
+                flights = [(o, d, n1, 1), (o + d * (x1 + ld), d, n2, k + 1)]
+                break
+            }
             for i in 0..<n { treads.append(StairTread(poly: rect(Double(i) * td, Double(i + 1) * td, -w / 2, w / 2), step: i + 1, landing: false)) }
             walk = [o, o + d * (Double(n) * td)]
             flights = [(o, d, n, 1)]
         case .lShape, .uShape:
-            let n1 = max(n / 2, 0), n2 = max(n - n1 - 1, 0)
+            let n1 = min(max((g.landingAt.map { $0 - 1 }) ?? n / 2, 0), max(n - 1, 0)), n2 = max(n - n1 - 1, 0)
             let x1 = Double(n1) * td
             for i in 0..<n1 { treads.append(StairTread(poly: rect(Double(i) * td, Double(i + 1) * td, -w / 2, w / 2), step: i + 1, landing: false)) }
             flights.append((o, d, n1, 1))
@@ -317,13 +330,14 @@ enum StairShapes {
                 flights.append((o + d * xc + p * (w / 2), p, n2, n1 + 2))
             } else {
                 let gap = min(100, w * 0.1)
-                treads.append(StairTread(poly: rect(x1, x1 + w, -w / 2, 1.5 * w + gap), step: n1 + 1, landing: true))
+                let ld = max(g.landingDepth ?? w, td)
+                treads.append(StairTread(poly: rect(x1, x1 + ld, -w / 2, 1.5 * w + gap), step: n1 + 1, landing: true))
                 for jx in 0..<n2 {
                     let xa = x1 - Double(jx) * td
                     treads.append(StairTread(poly: rect(xa - td, xa, w / 2 + gap, 1.5 * w + gap), step: n1 + 2 + jx, landing: false))
                 }
                 let yc = w + gap
-                walk = [o, o + d * (x1 + w / 2), o + d * (x1 + w / 2) + p * yc, o + d * (x1 - Double(n2) * td) + p * yc]
+                walk = [o, o + d * (x1 + ld / 2), o + d * (x1 + ld / 2) + p * yc, o + d * (x1 - Double(n2) * td) + p * yc]
                 flights.append((o + d * x1 + p * yc, -d, n2, n1 + 2))
             }
         case .spiral:

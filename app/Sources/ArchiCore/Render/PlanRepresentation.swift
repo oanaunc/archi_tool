@@ -159,7 +159,9 @@ public enum PlanRepresentation {
             guard g.start.distance(to: g.end) > 1e-9 else { return [] }
             let dash = hiddenDash(doc, options)
             return [stroke(beamPoly(g), closed: true, color, lwHidden, dash), stroke([g.start, g.end], color, lwFine, centerDash(doc, options))]
-        case .stair(let g): return stairItems(g, doc: doc, color: color, options: options)
+        case .stair(let g):
+            if let l = options.level, l != el.level { return upperStairItems(g, doc: doc, color: color, options: options) }
+            return stairItems(g, doc: doc, color: color, options: options)
         case .railing(let g):
             guard g.path.count >= 2 else { return [] }
             let d = 25 * u
@@ -198,11 +200,34 @@ public enum PlanRepresentation {
                 let sq = [c - d * m - n * m, c + d * m - n * m, c + d * m + n * m, c - d * m + n * m]
                 out.append(.fill(loops: [sq], color: color))
             }
+            // Door panels (bottom row): leaf and 90° swing on the +normal side.
+            for i in 0..<(positions.count - 1) {
+                guard let kind = g.panels["\(i),0"], kind == "door" || kind == "doubledoor" else { continue }
+                let x0 = positions[i] + m, x1 = positions[i + 1] - m
+                guard x1 > x0 else { continue }
+                let leaves = kind == "doubledoor" ? 2 : 1
+                let lw = (x1 - x0) / Double(leaves)
+                for k in 0..<leaves {
+                    let hinge = k == 0 ? x0 : x1, dirSign: Double = k == 0 ? 1 : -1
+                    let h = g.start + d * hinge + n * m
+                    let open = h + n * lw
+                    out.append(stroke([h, open], color, lwProj))
+                    let a0 = (d * dirSign).angle, sweep = (n.angle - a0)
+                    let sw = normAngle(sweep + .pi) - .pi
+                    out.append(stroke(GeometryOps.arcPoints(center: h, radius: lw, start: a0, sweep: sw), color, lwFine))
+                }
+            }
             return out
         case .component(let g):
             if let b = g.block, doc.blocks[b] != nil {
                 let ins = Entity(id: el.id, layer: el.layer, color: .byLayer, geometry: .insert(InsertGeom(block: b, position: g.position, rotation: g.rotation)))
                 return DrawListBuilder.items(for: ins, doc: doc, options: options)
+            }
+            if let fam = ComponentLibrary.family(g.family) {
+                let dash = hiddenDash(doc, options)
+                return ComponentLibrary.worldSymbol(fam, g).filter { $0.points.count >= 2 }.map {
+                    stroke($0.points, closed: $0.closed, color, $0.outline ? lwProj : lwFine, $0.hidden ? dash : [])
+                }
             }
             let poly = componentPoly(g)
             var out: [DrawItem] = [stroke(poly, closed: true, color, lwProj), stroke([poly[0], poly[2]], color, lwFine), stroke([poly[1], poly[3]], color, lwFine)]
@@ -369,7 +394,12 @@ public enum PlanRepresentation {
         let fill = blend(cutFill, firstMat?.color ?? cutFill, plies.count > 1 ? 0.15 : 0.25)
         var fills: [DrawItem] = [], patterns: [DrawItem] = [], lines: [DrawItem] = []
         let patColor = blend(color, fill, 0.35)
-        for pc in ctx.pieces(f) {
+        // Seen from another level (a wall rising through it), only openings crossing that level's cut plane break the wall.
+        var only: Set<EntityID>? = nil
+        if let l = options.level, l != el.level {
+            only = Set((ctx.openings[el.id] ?? []).filter { BIMConstraints.shown($0, onLevel: l, doc: doc) }.map(\.id))
+        }
+        for pc in ctx.pieces(f, only: only) {
             fills.append(.fill(loops: [pc.poly], color: fill))
             if options.cutHatches {
                 for ply in plies {
@@ -513,6 +543,28 @@ public enum PlanRepresentation {
     }
 
     // MARK: Stairs
+
+    /// A stair seen from the level it arrives at: every tread in projection and a "DN" walk line.
+    static func upperStairItems(_ g: StairGeom, doc: ArchiDocument, color: RGBA, options: DrawOptions) -> [DrawItem] {
+        let l = StairShapes.layout(g)
+        guard !l.treads.isEmpty else { return [] }
+        let u = unit(doc)
+        var out: [DrawItem] = l.treads.map { stroke($0.poly, closed: true, color, lwProj) }
+        let w = Array(l.walk.reversed())
+        if w.count >= 2 {
+            let last = w[w.count - 1], prev = w[w.count - 2]
+            out.append(stroke(w, color, lwAnno))
+            out.append(.fill(loops: [RG.triangleArrow(tip: last, dir: (last - prev).normalized, size: min(150 * u, g.treadDepth * 0.6))], color: color))
+            if options.showAnnotations {
+                let d0 = (w[1] - w[0]).normalized
+                let rot = DimensionRenderer.readable(d0.angle)
+                let flipped = abs(normAngle(rot - d0.angle)) > 1e-6
+                out.append(.text(TextGeom(position: w[0] - d0 * (80 * u), height: 200 * u, content: "DN", rotation: rot,
+                                          halign: flipped ? .left : .right, valign: .middle), font: font(doc), color: color))
+            }
+        }
+        return out
+    }
 
     static func stairItems(_ g: StairGeom, doc: ArchiDocument, color: RGBA, options: DrawOptions) -> [DrawItem] {
         let l = StairShapes.layout(g)

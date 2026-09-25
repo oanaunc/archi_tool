@@ -132,6 +132,46 @@ public enum MeshBuilder {
         }
         for el in doc.elements where doc.isVisible(layer: el.layer) && shown(el.props) { out += groups(el, ctx: ctx) }
         for e in doc.entities where doc.isVisible(layer: e.layer) && shown(e.props) { out += groups(for: e, doc: doc) }
+        if doc.variable("DATUMS3D") == "1" { out += datumGroups(doc: doc) }
+        return out
+    }
+
+    /// Levels and grids as 3D datum lines (edge-only groups, kind "datum"): a level outline around the model at every
+    /// level elevation, and each grid line repeated at every level with vertical end lines and a head bubble on top.
+    public static func datumGroups(doc: ArchiDocument) -> [MeshGroup] {
+        let u = 1 / doc.units.mm
+        var box = BBox2.empty
+        for el in doc.elements {
+            switch el.geometry {
+            case .gridLine(let g): box.add(g.start); box.add(g.end)
+            case .opening: continue
+            default: for p in CommandHelpers.footprint(el, doc: doc) { box.add(p) }
+            }
+        }
+        guard !box.isEmpty, !doc.levels.isEmpty else { return [] }
+        box = box.expanded(by: 1500 * u)
+        let levels = doc.levels.sorted { $0.elevation < $1.elevation }
+        let zLow = levels.first!.elevation, zTop = levels.last!.elevation + levels.last!.height
+        var out: [MeshGroup] = []
+        var lv: [[Vec3]] = []
+        for l in levels {
+            let c = box.corners.map { Vec3($0.x, $0.y, l.elevation) }
+            lv.append(c + [c[0]])
+            // Level head: a small triangle on the right-hand end of the front edge.
+            let h = Vec3(box.max.x, box.min.y, l.elevation), s = 250 * u
+            lv.append([h, h + Vec3(s, 0, s), h + Vec3(s, 0, -s), h])
+        }
+        out.append(MeshGroup(id: nil, kind: "datum", material: "Datum", mesh: Mesh(), edges: lv))
+        for el in doc.elements {
+            guard case .gridLine(let g) = el.geometry, g.start.distance(to: g.end) > 1e-9 else { continue }
+            var e: [[Vec3]] = []
+            for l in levels { e.append([Vec3(g.start.x, g.start.y, l.elevation), Vec3(g.end.x, g.end.y, l.elevation)]) }
+            for p in [g.start, g.end] { e.append([Vec3(p.x, p.y, zLow), Vec3(p.x, p.y, zTop)]) }
+            let d = (g.end - g.start).normalized, r = 400 * u
+            let c = Vec3(g.start.x, g.start.y, zTop + r)
+            e.append((0...32).map { k in let a = 2 * Double.pi * Double(k) / 32; return c + Vec3(d.x * cos(a) * r, d.y * cos(a) * r, sin(a) * r) })
+            out.append(MeshGroup(id: el.id, kind: "datum", material: "Datum", mesh: Mesh(), edges: e))
+        }
         return out
     }
 
@@ -154,24 +194,28 @@ public enum MeshBuilder {
         case .wall(let g):
             guard let f = ctx.frames[el.id] ?? WallFrame(el) else { return [] }
             var acc = MeshAcc()
-            let z0 = elev + g.baseOffset, z1 = z0 + g.height
+            let range = BIMConstraints.wallRange(el, doc: doc)
+            let z0 = range.z0, z1 = range.z1
+            let zb = BIMConstraints.wallNominalBase(el, doc: doc)
+            guard z1 - z0 > 1e-9 else { return [] }
             for pc in ctx.pieces(f) { acc.prism(pc.poly, z0: z0, z1: z1, smooth: f.isCurved) }
             for c in ctx.cuts(f) {
-                let poly = f.face(-f.h, c.s0, c.s1) + f.face(f.h, c.s0, c.s1).reversed()
-                var sill = Double.infinity, head = -Double.infinity
-                for oe in c.els { if case .opening(let o) = oe.geometry { sill = min(sill, o.sill); head = max(head, o.sill + o.height) } }
-                if !sill.isFinite { continue }
-                // Niche: keep the back of the wall behind the recess.
-                let niches = c.els.compactMap { oe -> OpeningGeom? in if case .opening(let o) = oe.geometry, o.isNiche { return o }; return nil }
-                if niches.count == c.els.count, let nd = niches.map(\.depth).min(), nd < 2 * f.h - 1e-9 {
-                    let fromLeft = niches[0].flipFacing
-                    let t0 = fromLeft ? -f.h : -f.h + nd, t1 = fromLeft ? f.h - nd : f.h
-                    let back = f.face(t0, c.s0, c.s1) + f.face(t1, c.s0, c.s1).reversed()
-                    acc.prism(back, z0: z0 + max(sill, 0), z1: min(z0 + head, z1), smooth: f.isCurved)
+                for part in wallCutBands(c, f: f, z0: z0, z1: z1, openingBase: zb) {
+                    let poly = f.face(-f.h, part.s0, part.s1) + f.face(f.h, part.s0, part.s1).reversed()
+                    for b in part.bands {
+                        switch b.kind {
+                        case .solid: acc.prism(poly, z0: b.z0, z1: b.z1, smooth: f.isCurved)
+                        case .niche(let depth, let fromLeft):
+                            guard depth < 2 * f.h - 1e-9 else { continue }
+                            let t0 = fromLeft ? -f.h : -f.h + depth, t1 = fromLeft ? f.h - depth : f.h
+                            let back = f.face(t0, part.s0, part.s1) + f.face(t1, part.s0, part.s1).reversed()
+                            acc.prism(back, z0: b.z0, z1: b.z1, smooth: f.isCurved)
+                        case .open: continue
+                        }
+                    }
                 }
-                if sill > 1e-9 { acc.prism(poly, z0: z0, z1: min(z0 + sill, z1), smooth: f.isCurved) }
-                if head < g.height - 1e-9 { acc.prism(poly, z0: z0 + max(head, 0), z1: z1, smooth: f.isCurved) }
             }
+            slabTopInfill(f, wall: el, z1: z1, doc: doc, into: &acc)
             roofInfill(f, wall: el, z1: z1, ctx: ctx, into: &acc)
             var mat = el.material ?? "Plaster"
             if let tn = g.wallType, let wt = doc.wallTypes.first(where: { $0.name == tn }), let p = wt.plies.first { mat = p.material }
@@ -342,7 +386,9 @@ public enum MeshBuilder {
             for i in 0..<(xs.count - 1) {
                 let x0 = xs[i] + m, x1 = xs[i + 1] - m
                 guard x1 > x0 else { continue }
+                let door = zs.count > 1 && ["door", "doubledoor"].contains(g.panels["\(i),0"] ?? "")
                 for (zi, z) in zs.enumerated() {
+                    if zi == 0 && door { continue }   // no sill mullion under a door
                     // Transoms are omitted between two empty panels.
                     if zi > 0 && zi < zs.count - 1, g.panels["\(i),\(zi - 1)"] == "empty", g.panels["\(i),\(zi)"] == "empty" { continue }
                     frame.prism([P(x0, -md), P(x1, -md), P(x1, md), P(x0, md)], z0: zb + max(0, z - m), z1: zb + min(g.height, z + m))
@@ -352,6 +398,25 @@ public enum MeshBuilder {
                     guard zc > za else { continue }
                     switch g.panels["\(i),\(j)"] ?? "glass" {
                     case "empty": continue
+                    case "door", "doubledoor":
+                        let leaves = g.panels["\(i),\(j)"] == "doubledoor" ? 2 : 1
+                        let lw = (x1 - x0) / Double(leaves), fw = min(60 * u, lw / 5), t = 20 * u
+                        let zd = j == 0 ? zb : za
+                        for k in 0..<leaves {
+                            let a = x0 + lw * Double(k) + 2 * u, b = a + lw - 4 * u
+                            func bx(_ acc: inout MeshAcc, _ s0: Double, _ s1: Double, _ z0: Double, _ z1: Double, _ y: Double) {
+                                guard s1 - s0 > 1e-9, z1 - z0 > 1e-9 else { return }
+                                acc.prism([P(s0, -y), P(s1, -y), P(s1, y), P(s0, y)], z0: z0, z1: z1)
+                            }
+                            bx(&frame, a, a + fw, zd, zc, t); bx(&frame, b - fw, b, zd, zc, t)
+                            bx(&frame, a + fw, b - fw, zd, zd + fw * 1.5, t); bx(&frame, a + fw, b - fw, zc - fw, zc, t)
+                            bx(&glass, a + fw, b - fw, zd + fw * 1.5, zc - fw, 5 * u)
+                            // Pull handle on the latch stile, both faces.
+                            let hx = leaves == 2 ? (k == 0 ? b - fw / 2 : a + fw / 2) : b - fw / 2
+                            let hz = zd + min(1000 * u, (zc - zd) * 0.5)
+                            frame.prism([P(hx - 12 * u, t), P(hx + 12 * u, t), P(hx + 12 * u, t + 60 * u), P(hx - 12 * u, t + 60 * u)], z0: hz - 300 * u, z1: hz + 300 * u)
+                            frame.prism([P(hx - 12 * u, -t - 60 * u), P(hx + 12 * u, -t - 60 * u), P(hx + 12 * u, -t), P(hx - 12 * u, -t)], z0: hz - 300 * u, z1: hz + 300 * u)
+                        }
                     case "solid": solid.prism([P(x0, -20 * u), P(x1, -20 * u), P(x1, 20 * u), P(x0, 20 * u)], z0: za, z1: zc)
                     default: glass.prism([P(x0, -5 * u), P(x1, -5 * u), P(x1, 5 * u), P(x0, 5 * u)], z0: za, z1: zc)
                     }
@@ -361,6 +426,9 @@ public enum MeshBuilder {
                     solid.group(el.id, kind, el.props["panelMaterial"] ?? "Aluminium")].compactMap { $0 }
 
         case .component(let g):
+            if g.block == nil, let fam = ComponentLibrary.family(g.family) {
+                return ComponentLibrary.meshGroups(fam, g, id: el.id, z0: elev + g.baseOffset, overrides: el.props)
+            }
             var acc = MeshAcc()
             let z0 = elev + g.baseOffset
             let hgt = g.size.z > 0 ? g.size.z : 1
@@ -392,15 +460,80 @@ public enum MeshBuilder {
         }
     }
 
+    enum BandKind: Equatable { case solid, open, niche(depth: Double, fromLeft: Bool) }
+    struct Band: Equatable { var z0: Double; var z1: Double; var kind: BandKind }
+    struct CutPart { var s0: Double; var s1: Double; var bands: [Band] }
+
+    /// Splits a merged opening interval of a wall into runs along the wall with the vertical bands that stay solid,
+    /// so openings that overlap along the wall but sit at different heights (a window above a door, stacked windows)
+    /// each cut their own hole. Absolute Z; `openingBase` is the level from which opening sills are measured.
+    static func wallCutBands(_ c: (s0: Double, s1: Double, els: [BIMElement]), f: WallFrame, z0: Double, z1: Double, openingBase: Double) -> [CutPart] {
+        struct Op { var a: Double; var b: Double; var lo: Double; var hi: Double; var niche: OpeningGeom? }
+        var ops: [Op] = []
+        for oe in c.els {
+            guard case .opening(let o) = oe.geometry, o.width > 0, o.height > 0 else { continue }
+            let a = max(o.offset - o.width / 2, c.s0), b = min(o.offset + o.width / 2, c.s1)
+            let lo = max(openingBase + o.sill, z0), hi = min(openingBase + o.sill + o.height, z1)
+            guard b - a > 1e-9, hi - lo > 1e-9 else { continue }
+            ops.append(Op(a: a, b: b, lo: lo, hi: hi, niche: o.isNiche ? o : nil))
+        }
+        var xs = [c.s0, c.s1] + ops.flatMap { [$0.a, $0.b] }
+        xs = xs.map { min(max($0, c.s0), c.s1) }.sorted()
+        var brk: [Double] = []
+        for x in xs where brk.last.map({ x - $0 > 1e-7 }) ?? true { brk.append(x) }
+        var parts: [CutPart] = []
+        for i in 0..<max(brk.count - 1, 0) {
+            let x0 = brk[i], x1 = brk[i + 1], xm = (x0 + x1) / 2
+            let cover = ops.filter { $0.a <= xm && $0.b >= xm }
+            var zs = [z0, z1] + cover.flatMap { [$0.lo, $0.hi] }
+            zs = zs.map { min(max($0, z0), z1) }.sorted()
+            var zb: [Double] = []
+            for z in zs where zb.last.map({ z - $0 > 1e-7 }) ?? true { zb.append(z) }
+            var bands: [Band] = []
+            for k in 0..<max(zb.count - 1, 0) {
+                let za = zb[k], zc = zb[k + 1], zm = (za + zc) / 2
+                let here = cover.filter { $0.lo <= zm && $0.hi >= zm }
+                let kind: BandKind
+                if here.isEmpty { kind = .solid }
+                else if here.contains(where: { $0.niche == nil }) { kind = .open }
+                else {
+                    let n = here.min { $0.niche!.depth < $1.niche!.depth }!.niche!
+                    kind = .niche(depth: n.depth, fromLeft: n.flipFacing)
+                }
+                if var last = bands.last, last.kind == kind, abs(last.z1 - za) < 1e-7 { last.z1 = zc; bands[bands.count - 1] = last }
+                else { bands.append(Band(z0: za, z1: zc, kind: kind)) }
+            }
+            if var last = parts.last, last.bands == bands, abs(last.s1 - x0) < 1e-7 { last.s1 = x1; parts[parts.count - 1] = last }
+            else { parts.append(CutPart(s0: x0, s1: x1, bands: bands)) }
+        }
+        return parts
+    }
+
+    /// Wall attached to a sloped slab: the part of the wall between its lowest top and the slab soffit.
+    static func slabTopInfill(_ f: WallFrame, wall: BIMElement, z1: Double, doc: ArchiDocument, into acc: inout MeshAcc) {
+        guard !f.isCurved, f.L > 1e-9, let host = BIMConstraints.attached(wall, "attachTopTo", doc: doc), case .slab(let s) = host.geometry, s.isSloped else { return }
+        guard let za = BIMConstraints.slabBottom(host, at: f.cs, doc: doc), let zc = BIMConstraints.slabBottom(host, at: f.ce, doc: doc) else { return }
+        let a = max(za, z1), c = max(zc, z1)
+        guard max(a, c) - z1 > 1e-6 else { return }
+        var prof: [(x: Double, z: Double)] = [(0, z1), (f.L, z1)]
+        if c - z1 > 1e-9 { prof.append((f.L, c)) }
+        if a - z1 > 1e-9 { prof.append((0, a)) }
+        guard prof.count >= 3 else { return }
+        acc.verticalPlate(prof, origin: f.cs, ax: f.dir, ay: f.dir.perp, y0: -f.h, y1: f.h)
+    }
+
     /// Gable/shed end infill: extends a perimeter wall under a sloped roof up to the roof underside
     /// (a triangle under gables, a rectangle or trapezoid under the high side of a shed roof).
     /// Walls with props["attachTop"] = "1" are attached wherever they stand under the roof; "0" disables it.
     static func roofInfill(_ f: WallFrame, wall: BIMElement, z1: Double, ctx: BIMContext, into acc: inout MeshAcc) {
         guard !f.isCurved, f.L > 1e-9, wall.props["attachTop"] != "0" else { return }
-        let forced = wall.props["attachTop"] == "1"
         let doc = ctx.doc
+        let target = BIMConstraints.attached(wall, "attachTopTo", doc: doc)
+        if let t = target, case .slab = t.geometry { return }
+        let forced = wall.props["attachTop"] == "1" || target != nil
         let u = 1 / doc.units.mm
         for rel in doc.elements where doc.isVisible(layer: rel.layer) {
+            if let t = target, rel.id != t.id { continue }
             guard case .roof(let rg) = rel.geometry, rg.kind != .flat, rg.pitch > 1e-6 else { continue }
             let zb = ctx.levelElevation(rel.level) + rg.baseOffset
             let r = RoofShapes.faces(rg)

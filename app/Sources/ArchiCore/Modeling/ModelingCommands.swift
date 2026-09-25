@@ -4,7 +4,7 @@ import Foundation
 /// 3D modelling commands: solid booleans (BSP CSG), slice, interference, press/pull, loft, sweep, pipe,
 /// and site topography (surface from points/contours, contours, building pads).
 enum ModelingCommands {
-    static var all: [CommandDef] { booleans + forming + site }
+    static var all: [CommandDef] { booleans + forming + site + SolidEditCommands.all }
 
     static func solidOf(_ doc: ArchiDocument, _ id: EntityID) -> SolidGeom? {
         if case .solid(let s)? = doc.entity(id)?.geometry { return s }

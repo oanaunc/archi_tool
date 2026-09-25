@@ -15,10 +15,16 @@ public struct WallGeom: Codable, Hashable {
     public var wallType: String?
     /// Horizontal profiles run along the wall faces (cornices, skirting, string courses).
     public var sweeps: [WallSweep]
+    /// Top constraint (Revit "Up to level"): id of the level the wall top follows; nil = unconnected (`height` is used).
+    public var topLevel: Int?
+    /// Offset of the wall top above `topLevel` (ignored when unconnected).
+    public var topOffset: Double
     public init(start: Vec2, end: Vec2, thickness: Double = 200, height: Double = 3000, baseOffset: Double = 0,
-                justification: WallJustification = .center, bulge: Double = 0, wallType: String? = nil, sweeps: [WallSweep] = []) {
+                justification: WallJustification = .center, bulge: Double = 0, wallType: String? = nil, sweeps: [WallSweep] = [],
+                topLevel: Int? = nil, topOffset: Double = 0) {
         self.start = start; self.end = end; self.thickness = thickness; self.height = height; self.baseOffset = baseOffset
         self.justification = justification; self.bulge = bulge; self.wallType = wallType; self.sweeps = sweeps
+        self.topLevel = topLevel; self.topOffset = topOffset
     }
     public var length: Double { start.distance(to: end) }
     public var direction: Vec2 { (end - start).normalized }
@@ -123,8 +129,16 @@ public struct StairGeom: Codable, Hashable {
     public var start: Vec2; public var direction: Double
     public var width: Double; public var totalRise: Double; public var riserCount: Int; public var treadDepth: Double
     public var kind: StairKind
-    public init(start: Vec2, direction: Double = 0, width: Double = 1000, totalRise: Double = 3000, riserCount: Int = 17, treadDepth: Double = 280, kind: StairKind = .straight) {
+    /// Depth of landings in the walking direction (nil = stair width). Used by L/U stairs and straight stairs with a landing.
+    public var landingDepth: Double?
+    /// Straight stairs: number of risers before an intermediate landing (nil = no landing). L/U stairs: risers of the first flight (nil = half).
+    public var landingAt: Int?
+    /// Level the stair arrives at (nil = rise set by `totalRise`); the upper level shows the stair with a DN arrow.
+    public var topLevel: Int?
+    public init(start: Vec2, direction: Double = 0, width: Double = 1000, totalRise: Double = 3000, riserCount: Int = 17, treadDepth: Double = 280, kind: StairKind = .straight,
+                landingDepth: Double? = nil, landingAt: Int? = nil, topLevel: Int? = nil) {
         self.start = start; self.direction = direction; self.width = width; self.totalRise = totalRise; self.riserCount = riserCount; self.treadDepth = treadDepth; self.kind = kind
+        self.landingDepth = landingDepth; self.landingAt = landingAt; self.topLevel = topLevel
     }
     public var riserHeight: Double { totalRise / Double(max(riserCount, 1)) }
     public var runLength: Double { treadDepth * Double(max(riserCount - 1, 0)) }
@@ -214,8 +228,12 @@ public struct WallSweep: Codable, Hashable {
 public struct ComponentGeom: Codable, Hashable {
     public var category: String; public var position: Vec2; public var rotation: Double
     public var size: Vec3; public var baseOffset: Double; public var block: String?
-    public init(category: String = "Furniture", position: Vec2, rotation: Double = 0, size: Vec3 = Vec3(600, 600, 750), baseOffset: Double = 0, block: String? = nil) {
+    /// Parametric family from `ComponentLibrary` (e.g. "bed-double", "sofa"); nil = plain box or block.
+    public var family: String?
+    public init(category: String = "Furniture", position: Vec2, rotation: Double = 0, size: Vec3 = Vec3(600, 600, 750), baseOffset: Double = 0, block: String? = nil,
+                family: String? = nil) {
         self.category = category; self.position = position; self.rotation = rotation; self.size = size; self.baseOffset = baseOffset; self.block = block
+        self.family = family
     }
 }
 
@@ -316,7 +334,7 @@ public struct BIMElement: Codable, Hashable, Identifiable {
 // MARK: - Tolerant decoding (fields added after format 1 are optional in files)
 
 extension WallGeom {
-    private enum Keys: String, CodingKey { case start, end, thickness, height, baseOffset, justification, bulge, wallType, sweeps }
+    private enum Keys: String, CodingKey { case start, end, thickness, height, baseOffset, justification, bulge, wallType, sweeps, topLevel, topOffset }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: Keys.self)
         self.init(start: try c.decode(Vec2.self, forKey: .start), end: try c.decode(Vec2.self, forKey: .end),
@@ -326,7 +344,8 @@ extension WallGeom {
                   justification: try c.decodeIfPresent(WallJustification.self, forKey: .justification) ?? .center,
                   bulge: try c.decodeIfPresent(Double.self, forKey: .bulge) ?? 0,
                   wallType: try c.decodeIfPresent(String.self, forKey: .wallType),
-                  sweeps: try c.decodeIfPresent([WallSweep].self, forKey: .sweeps) ?? [])
+                  sweeps: try c.decodeIfPresent([WallSweep].self, forKey: .sweeps) ?? [],
+                  topLevel: try c.decodeIfPresent(Int.self, forKey: .topLevel), topOffset: try c.decodeIfPresent(Double.self, forKey: .topOffset) ?? 0)
     }
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: Keys.self)
@@ -334,6 +353,7 @@ extension WallGeom {
         try c.encode(height, forKey: .height); try c.encode(baseOffset, forKey: .baseOffset); try c.encode(justification, forKey: .justification)
         try c.encode(bulge, forKey: .bulge); try c.encodeIfPresent(wallType, forKey: .wallType)
         if !sweeps.isEmpty { try c.encode(sweeps, forKey: .sweeps) }
+        if let t = topLevel { try c.encode(t, forKey: .topLevel); try c.encode(topOffset, forKey: .topOffset) }
     }
 }
 
