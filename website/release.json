@@ -1,0 +1,15 @@
+{
+ "version": "1.0",
+ "asset_version": "20260925",
+ "commands": 150,
+ "formats": 10,
+ "size_mb": "?",
+ "signing": "Developer ID-signed and notarized by Apple.",
+ "note": "First public preview: drafting, building elements, 3D, rendering, sheets, scripting and AI agent connection.",
+ "dmg": "Oanarina-Archi-Tool-1.0.0.dmg",
+ "sha_short": "dev",
+ "agent_doc": "downloads/archi-tool/AGENT-API.md",
+ "imports": ".archi, DXF (R12\u2013R2018)",
+ "exports": "PDF, DXF, SVG, PNG, IFC4, OBJ, STL, glTF (GLB), CSV schedules, .archi",
+ "pending": true
+}
