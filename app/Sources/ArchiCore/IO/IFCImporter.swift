@@ -786,7 +786,7 @@ final class IFCReader {
             if wall(p) { handled.insert(p.id) }
         }
         for p in products where !handled.contains(p.id) {
-            if typeIs(p, ["IFCSLAB"]) { if slab(p) { handled.insert(p.id) } }
+            if typeIs(p, ["IFCSLAB", "IFCRAMPFLIGHT", "IFCFOOTING"]) || (p.type == "IFCCOVERING" && p[8].enumValue == "CEILING") { if slab(p) { handled.insert(p.id) } }
             else if typeIs(p, ["IFCCOLUMN"]) { if column(p) { handled.insert(p.id) } }
             else if typeIs(p, ["IFCBEAM"]) { if beam(p) { handled.insert(p.id) } }
             else if p.type == "IFCSPACE" { if space(p) { handled.insert(p.id) } }
@@ -803,7 +803,24 @@ final class IFCReader {
         for p in products where !handled.contains(p.id) && !IFCReader.spatial.contains(p.type) {
             addMesh(p, productMesh(p))
         }
+        remapReferences()
         doc.currentLayer = "0"
+    }
+
+    /// Element references stored in props ("host", "rampGroup", joins) name ids of the exporting document; our exporter
+    /// writes those ids as the IFC Tag, so they are mapped to the new element ids (unknown references are dropped).
+    func remapReferences() {
+        var byTag: [String: EntityID] = [:]
+        for (stepID, newID) in elementOf { if let t = f.entities[stepID]?[7].string, Int(t) != nil, byTag[t] == nil { byTag[t] = newID } }
+        guard !byTag.isEmpty else { return }
+        let keys = ["host", "rampGroup", "joinStart", "joinEnd", "attachTopTo", "attachBaseTo"]
+        for i in doc.elements.indices {
+            for k in keys {
+                guard let v = doc.elements[i].props[k] else { continue }
+                if k == "rampGroup", let n = byTag[v] { doc.elements[i].props[k] = "\(n)"; continue }
+                doc.elements[i].props[k] = byTag[v].map { "\($0)" }
+            }
+        }
     }
 
     // MARK: element mapping
@@ -842,16 +859,43 @@ final class IFCReader {
 
     func slab(_ p: StepEntity) -> Bool {
         let w = placement(p[5])
-        guard let x = singleExtrusion(p, w), vertical(x) else { return false }
+        guard let x = singleExtrusion(p, w) else { return false }
         func P(_ q: Vec2) -> Vec2 { x.frame.apply(Vec3(q.x, q.y, 0)).xy }
         let boundary = IFCReader.clean(x.profile.outer.map(P))
         guard boundary.count >= 3 else { return false }
-        let z0 = x.frame.o.z
-        let baseZ = x.dir.z > 0 ? z0 : z0 - x.depth
-        let lv = level(for: p.id, baseZ: baseZ + x.depth)
-        let g = SlabGeom(boundary: boundary, holes: x.profile.holes.map { IFCReader.clean($0.map(P)) }.filter { $0.count >= 3 },
+        var g: SlabGeom
+        let lv: Int
+        if vertical(x) {
+            let z0 = x.frame.o.z
+            let baseZ = x.dir.z > 0 ? z0 : z0 - x.depth
+            lv = level(for: p.id, baseZ: baseZ + x.depth)
+            g = SlabGeom(boundary: boundary, holes: x.profile.holes.map { IFCReader.clean($0.map(P)) }.filter { $0.count >= 3 },
                          thickness: x.depth, topOffset: baseZ + x.depth - elevation(lv))
-        addElement(p, .slab(g), level: lv, material: materialInfo(p.id).name, kind: "slab")
+        } else if abs(abs(x.dir.z) - 1) < 1e-6, x.frame.z.z > 0.05 || x.frame.z.z < -0.05 {
+            // Sloped slab: profile in a tilted plane, extruded vertically (our exporter, Revit-style sloped floors).
+            var n = x.frame.z
+            if n.z < 0 { n = n * -1 }
+            let slope = acos(max(-1, min(1, n.z)))
+            let rise = Vec2(-n.x, -n.y)
+            guard rise.length > 1e-9 else { return false }
+            let tv = x.depth
+            let o = x.frame.o
+            let top = x.dir.z > 0 ? o.z + tv : o.z
+            lv = level(for: p.id, baseZ: top)
+            g = SlabGeom(boundary: boundary, holes: x.profile.holes.map { IFCReader.clean($0.map(P)) }.filter { $0.count >= 3 },
+                         thickness: tv * cos(slope), topOffset: top - elevation(lv), slope: slope * 180 / .pi,
+                         slopeDirection: normAngle(rise.angle), slopeOrigin: o.xy)
+        } else { return false }
+        if abs(g.slopeDirection - 2 * .pi) < 1e-9 { g.slopeDirection = 0 }
+        let id = addElement(p, .slab(g), level: lv, material: materialInfo(p.id).name, kind: "slab")
+        if let i = doc.elementIndex(id), doc.elements[i].props["kind"] == nil {
+            switch p.type {
+            case "IFCRAMPFLIGHT": doc.elements[i].props["kind"] = "ramp"
+            case "IFCFOOTING": doc.elements[i].props["kind"] = "foundation"
+            case "IFCCOVERING": doc.elements[i].props["kind"] = "ceiling"
+            default: if p[8].enumValue == "LANDING" { doc.elements[i].props["kind"] = "landing" }
+            }
+        }
         return true
     }
 

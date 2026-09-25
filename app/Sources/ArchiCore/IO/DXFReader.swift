@@ -433,6 +433,16 @@ public enum DXFReader {
             if let w = r.i(370), w >= 0 { lw = Double(w) / 100 }
             var props: [String: String] = [:]
             if let h = r.s(5) { props["dxfHandle"] = h.trimmingCharacters(in: .whitespaces) }
+            // Elevation (contour polylines, survey points) so TOPO and POINTSEXPORT can use it.
+            let flip = mirrored(r) ? -1.0 : 1.0
+            func put(_ key: String, _ z: Double?) { if let z = z, z.isFinite, abs(z) > 1e-12 { props[key] = fmt(z, 6) } }
+            switch r.type {
+            case "LWPOLYLINE": put("elevation", r.d(38).map { $0 * flip })
+            case "POINT": put("z", r.d(30))
+            case "LINE": if let a = r.d(30), let b = r.d(31), abs(a - b) < 1e-9 { put("elevation", a) }
+            case "CIRCLE", "ARC": put("elevation", r.d(30).map { $0 * flip })
+            default: break
+            }
             let layer = (r.s(8)?.trimmingCharacters(in: .whitespaces)).flatMap { $0.isEmpty ? nil : $0 } ?? "0"
             return Entity(id: 0, layer: layer, color: color, linetype: lt, lineweight: lw, geometry: geometry, props: props)
         }
@@ -473,7 +483,22 @@ public enum DXFReader {
                     var verts: [DXFRecord] = []
                     while i < recs.count && recs[i].type == "VERTEX" { verts.append(recs[i]); i += 1 }
                     if i < recs.count && recs[i].type == "SEQEND" { i += 1 }
-                    if let g = polyline(r, verts) { out.append(common(r, geometry: g)) }
+                    if let g = polyline(r, verts) {
+                        var e = common(r, geometry: g)
+                        let flags = r.i(70) ?? 0
+                        if case .polyline = g {
+                            if flags & 8 != 0 {
+                                // 3D polyline: a constant z is an elevation (contour); varying z is kept per vertex.
+                                let zs = verts.filter { (($0.i(70) ?? 0) & 16) == 0 }.map { $0.d(30) ?? 0 }
+                                if let z0 = zs.first, zs.allSatisfy({ abs($0 - z0) < 1e-9 }) {
+                                    if abs(z0) > 1e-12 { e.props["elevation"] = fmt(z0, 6) }
+                                } else if !zs.isEmpty { e.props["vertexZ"] = zs.map { fmt($0, 6) }.joined(separator: ",") }
+                            } else if let z = r.d(30), abs(z) > 1e-12 {
+                                e.props["elevation"] = fmt(z * (mirrored(r) ? -1 : 1), 6)
+                            }
+                        }
+                        out.append(e)
+                    }
                 case "INSERT":
                     var attribs: [String: String] = [:]
                     if (r.i(66) ?? 0) == 1 {

@@ -3,7 +3,7 @@
 import Foundation
 
 public enum AnalysisCommands {
-    public static var all: [CommandDef] { [takeoff, costEstimate, unitPrice, roomSchedule, sunPosition, clashDetect, checkModel] }
+    public static var all: [CommandDef] { [takeoff, costEstimate, unitPrice, roomSchedule, sunPosition, clashDetect, checkModel] + BuildingAnalysisCommands.all }
 
     @MainActor static func level(_ ed: Editor) async throws -> Int? {
         let names = ed.doc.levels.map { "\($0.id)=\($0.name)" }.joined(separator: ", ")

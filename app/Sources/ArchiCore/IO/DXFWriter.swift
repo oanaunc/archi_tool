@@ -80,6 +80,8 @@ public enum DXFWriter {
         var dimCursor = 0
         var blockRecordHandles: [String: String] = [:]
         var blockNames: [String: String] = [:] // doc name -> dxf name
+        /// Z / elevation of the entity being written (props "elevation" or "z": contours, survey points).
+        var elevation = 0.0
 
         init(doc: ArchiDocument) { self.doc = doc }
 
@@ -351,19 +353,32 @@ public enum DXFWriter {
 
         mutating func entity(_ e: Entity, owner: String) {
             let s = Style(layer: e.layer, color: e.color, linetype: e.linetype, lineweight: e.lineweight)
+            elevation = DXFWriter.elevation(of: e)
             geometry(e.geometry, s, owner: owner)
+            elevation = 0
+            // Toposurfaces also get their contour lines as polylines at their elevation (readable by TOPO Contours).
+            if e.props["topo"] == "1", case .solid(let sol) = e.geometry {
+                for c in DXFWriter.topoContours(sol, props: e.props) {
+                    elevation = c.z
+                    for l in c.lines where l.count >= 2 {
+                        let closed = l.count > 3 && l[0].isClose(l[l.count - 1], tol: 1e-9)
+                        lwpolyline((closed ? Array(l.dropLast()) : l).map { PolyVertex($0) }, closed: closed, width: 0, s, owner: owner)
+                    }
+                }
+                elevation = 0
+            }
         }
 
         mutating func geometry(_ geo: Geometry, _ s: Style, owner: String) {
             switch geo {
             case .point(let p):
-                head("POINT", s, owner: owner, sub: "AcDbPoint"); pt(10, p)
+                head("POINT", s, owner: owner, sub: "AcDbPoint"); pt(10, p, elevation)
             case .line(let l):
-                head("LINE", s, owner: owner, sub: "AcDbLine"); pt(10, l.a); pt(11, l.b)
+                head("LINE", s, owner: owner, sub: "AcDbLine"); pt(10, l.a, elevation); pt(11, l.b, elevation)
             case .circle(let c):
-                head("CIRCLE", s, owner: owner, sub: "AcDbCircle"); pt(10, c.center); g(40, c.radius)
+                head("CIRCLE", s, owner: owner, sub: "AcDbCircle"); pt(10, c.center, elevation); g(40, c.radius)
             case .arc(let a):
-                head("ARC", s, owner: owner, sub: "AcDbCircle"); pt(10, a.center); g(40, a.radius)
+                head("ARC", s, owner: owner, sub: "AcDbCircle"); pt(10, a.center, elevation); g(40, a.radius)
                 g(100, "AcDbArc"); g(50, deg(normAngle(a.start))); g(51, deg(normAngle(a.end)))
             case .ellipse(let e):
                 var major = e.majorAxis, ratio = e.ratio, s0 = e.start, e0 = e.end
@@ -474,6 +489,7 @@ public enum DXFWriter {
             head("LWPOLYLINE", s, owner: owner, sub: "AcDbPolyline")
             g(90, v.count); g(70, closed ? 1 : 0)
             if width != 0 { g(43, width) }
+            if elevation != 0 { g(38, elevation) }
             for (i, p) in v.enumerated() {
                 g(10, p.p.x); g(20, p.p.y)
                 if p.bulge != 0 && (closed || i < v.count - 1) { g(42, p.bulge) }
@@ -779,6 +795,21 @@ public enum DXFWriter {
     }
 
     /// Plan outline of a wall (straight or curved via bulge).
+    /// Elevation carried by an entity: props "elevation" (contours, lines) or "z" (survey points); 0 = none.
+    static func elevation(of e: Entity) -> Double {
+        switch e.geometry {
+        case .point, .line, .circle, .arc, .polyline:
+            return (e.props["elevation"] ?? e.props["z"]).flatMap { Double($0.trimmingCharacters(in: .whitespaces)) }.flatMap { $0.isFinite ? $0 : nil } ?? 0
+        default: return 0
+        }
+    }
+
+    /// Contour lines of a toposurface solid (its contour interval, or none when contours are hidden).
+    static func topoContours(_ s: SolidGeom, props: [String: String]) -> [(z: Double, lines: [[Vec2]])] {
+        guard let iv = props["contourInterval"].flatMap(Double.init), iv > 0, s.kind == .mesh else { return [] }
+        return Terrain.contours(vertices: s.meshVertices, triangles: s.meshTriangles, interval: iv, minZ: s.origin.z + iv * 0.01)
+    }
+
     static func wallOutline(_ w: WallGeom) -> [Vec2] {
         let a = w.centerStart, b = w.centerEnd
         let n = w.direction.perp, t = w.thickness / 2

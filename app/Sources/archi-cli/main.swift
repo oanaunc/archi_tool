@@ -1,7 +1,7 @@
 // Oanarina Archi Tool command-line runner — GPL-3.0-or-later
 //
-// archi-cli [file.archi|.dxf|.ifc|.svg|.obj|.stl|.3mf|.geojson|.csv] [--script file.scr]
-//           [--out file.archi|.dxf|.svg|.ifc|.obj|.stl|.glb|.csv|.3mf|.usda|.usdz|.geojson] [--mcp]
+// archi-cli [file.archi|.dxf|.dwg|.ifc|.ifczip|.svg|.obj|.stl|.3mf|.gltf|.glb|.ply|.off|.amf|.step|.geojson|.shp|.osm|.asc|.xlsx|.csv|.xyz|.pts]
+//           [--script file.scr] [--out file.<format>] [--mcp] [--convert FORMAT files… [--outdir DIR]]
 // Headless: uses ArchiCore only. See docs/AGENT-API.md.
 import Foundation
 import ArchiCore
@@ -312,10 +312,11 @@ func writeDocument(_ doc: ArchiDocument, to url: URL, format: String? = nil, lev
     case "stl": try text(STLExporter.export(MeshBuilder.build(doc: doc), name: doc.info.name))
     case "glb", "gltf": try GLTFExporter.exportGLB(MeshBuilder.build(doc: doc), materials: doc.materials).write(to: url, options: .atomic)
     case "csv": try text(ScheduleExporter.csv(doc: doc, kind: "all"))
-    case "3mf", "usda", "usd", "usdz", "geojson", "dxf12", "points": try FileImport.export(doc, to: url, format: f)
     case "takeoff": try text(QuantityTakeoff.compute(doc).csv)
     case "pdf": throw CLIError.message("PDF output needs the app (Core Graphics); export SVG instead")
-    default: throw CLIError.message("unsupported output format '\(f)'")
+    default:
+        // 3mf, usda/usdz, geojson, dxf12, points, step, ply, plt/hpgl, xlsx, ifczip, dwg (converter), analytical (JSON)
+        guard try FileImport.export(doc, to: url, format: f == "usd" ? "usda" : f) else { throw CLIError.message("unsupported output format '\(f)'") }
     }
 }
 
@@ -370,10 +371,12 @@ final class MCPServer {
         return s
     }
 
-    let tools: [[String: Any]] = [
+    lazy var tools: [[String: Any]] = baseTools + AgentTools.definitions
+
+    let baseTools: [[String: Any]] = [
         ["name": "run_command", "title": "Run command",
-         "description": "Runs one or more AutoCAD-style command lines (newline-separated) against the document, e.g. \"LINE 0,0 1000,0 \" or \"WALL 0,0 5000,0 \". Unanswered prompts get Enter. Returns the command log.",
-         "inputSchema": MCPServer.schema(["command": ["type": "string", "description": "Command line(s)"]], required: ["command"])],
+         "description": "Runs one or more AutoCAD-style command lines (newline-separated) against the document, e.g. \"LINE 0,0 1000,0 \" or \"WALL 0,0 5000,0 \". Unanswered prompts get Enter. Returns the command log (the last `maxLines` lines when long). With a progressToken in _meta, every log line is also streamed as a notifications/progress message while the commands run (and as notifications/message when logging is enabled).",
+         "inputSchema": MCPServer.schema(["command": ["type": "string", "description": "Command line(s)"], "maxLines": ["type": "integer", "description": "Return at most this many (last) log lines; default 500"]], required: ["command"])],
         ["name": "get_document_summary", "title": "Document summary",
          "description": "Project info, units, layers, levels, entity/element counts by type and model bounds.", "inputSchema": MCPServer.schema([:])],
         ["name": "get_document", "title": "Full document", "description": "The whole document as .archi JSON (can be large).", "inputSchema": MCPServer.schema([:])],
@@ -397,13 +400,13 @@ final class MCPServer {
         ["name": "save", "title": "Save", "description": "Saves the document as .archi (to `path`, or to the file it was opened from).",
          "inputSchema": MCPServer.schema(["path": ["type": "string"]])],
         ["name": "export", "title": "Export",
-         "description": "Exports to dxf, svg (2D plan of the current level), ifc, obj (+mtl), stl, glb, csv (schedules) or archi.",
-         "inputSchema": MCPServer.schema(["path": ["type": "string"], "format": ["type": "string", "enum": ["dxf", "svg", "ifc", "obj", "stl", "glb", "csv", "archi"]], "level": ["type": "integer"]], required: ["path"])],
+         "description": "Exports to dxf, dxf12, svg (2D plan of a level), ifc, ifczip, obj (+mtl), stl, glb, 3mf, usda, usdz, step (AP214 faceted B-rep), ply, plt (HP-GL/2), xlsx (schedules workbook), csv (schedules), geojson, points, analytical (structural model JSON), gbxml (energy model), cobie (COBie 2.4 xlsx), dae (COLLADA), dwg (needs an installed converter) or archi.",
+         "inputSchema": MCPServer.schema(["path": ["type": "string"], "format": ["type": "string", "enum": ["dxf", "dxf12", "svg", "ifc", "ifczip", "obj", "stl", "glb", "3mf", "usda", "usdz", "step", "ply", "plt", "xlsx", "csv", "geojson", "points", "analytical", "gbxml", "cobie", "dae", "dwg", "archi"]], "level": ["type": "integer"]], required: ["path"])],
         ["name": "list_commands", "title": "List commands", "description": "All command names, aliases, categories and summaries.",
          "inputSchema": MCPServer.schema(["category": ["type": "string"]])],
         ["name": "undo", "title": "Undo", "description": "Undoes the last change.", "inputSchema": MCPServer.schema([:])],
         ["name": "import_file", "title": "Import file",
-         "description": "Imports a file into the document (merged with new ids): .archi, .dxf, .ifc (walls/slabs/columns/beams/doors/windows/spaces become BIM elements, other products meshes), .svg, .obj, .stl, .3mf, .geojson, .csv/.txt/.xyz survey points. Returns the new ids and a summary.",
+         "description": "Imports a file into the document (merged with new ids): .archi, .dxf, .dwg (via an installed ODA/LibreDWG converter), .ifc/.ifczip (walls/slabs/columns/beams/doors/windows/spaces/ramps/footings become BIM elements, other products meshes), .svg, .obj, .stl, .3mf, .gltf/.glb, .ply, .off, .amf, .dae, .step (polyhedral), .cityjson, .geojson (EPSG:4326/3857/UTM), .shp, .osm, .asc (elevation grid → toposurface), .xlsx (tables), .csv/.txt survey points, .xyz/.pts point clouds. Returns the new ids and a summary.",
          "inputSchema": MCPServer.schema(["path": ["type": "string"], "format": ["type": "string", "description": "Override the format detected from the extension"],
                                           "offset": ["type": "array", "items": ["type": "number"], "description": "[dx, dy] move in drawing units"]], required: ["path"])],
         ["name": "takeoff", "title": "Quantity takeoff",
@@ -425,6 +428,21 @@ final class MCPServer {
          "description": "Sun azimuth (clockwise from north) and altitude, sunrise/sunset for an ISO date-time (e.g. 2025-06-21T14:30:00+03:00) at the project location or given latitude/longitude.",
          "inputSchema": MCPServer.schema(["datetime": ["type": "string"], "latitude": ["type": "number"], "longitude": ["type": "number"]], required: ["datetime"])],
     ]
+
+    /// Streaming of command logs: progress token of the running tools/call, and the client's logging level.
+    var progressToken: Any?
+    var progressCount = 0
+    var logLevel: String?
+
+    func stream(_ line: String) {
+        if let t = progressToken {
+            progressCount += 1
+            write(["jsonrpc": "2.0", "method": "notifications/progress", "params": ["progressToken": t, "progress": progressCount, "message": line] as [String: Any]])
+        }
+        if logLevel != nil, ["debug", "info"].contains(logLevel!) {
+            write(["jsonrpc": "2.0", "method": "notifications/message", "params": ["level": "info", "logger": "archi", "data": line] as [String: Any]])
+        }
+    }
 
     func write(_ obj: Any) {
         guard let d = try? JSONSerialization.data(withJSONObject: obj, options: [.withoutEscapingSlashes]) else { return }
@@ -465,11 +483,14 @@ final class MCPServer {
             let asked = params["protocolVersion"] as? String ?? ""
             return ["jsonrpc": "2.0", "id": id!, "result": [
                 "protocolVersion": MCPServer.supportedVersions.contains(asked) ? asked : MCPServer.supportedVersions[0],
-                "capabilities": ["tools": ["listChanged": false]],
+                "capabilities": ["tools": ["listChanged": false], "logging": [String: Any]()],
                 "serverInfo": ["name": "archi", "title": "Oanarina Archi Tool", "version": cliVersion],
                 "instructions": "Edits an Oanarina Archi Tool (.archi) CAD/BIM document. Units are millimetres (see get_document_summary). Use run_command for AutoCAD-style commands (list_commands), add_entity/add_element for precise JSON edits, and save to write the file.",
             ] as [String: Any]]
         case "ping":
+            return ["jsonrpc": "2.0", "id": id!, "result": [String: Any]()]
+        case "logging/setLevel":
+            logLevel = (params["level"] as? String)?.lowercased()
             return ["jsonrpc": "2.0", "id": id!, "result": [String: Any]()]
         case "tools/list":
             return ["jsonrpc": "2.0", "id": id!, "result": ["tools": tools]]
@@ -478,6 +499,9 @@ final class MCPServer {
                 return error(id, -32602, "Unknown tool: \(params["name"] ?? "")")
             }
             let args = params["arguments"] as? [String: Any] ?? [:]
+            progressToken = (params["_meta"] as? [String: Any])?["progressToken"]
+            progressCount = 0
+            defer { progressToken = nil }
             do {
                 let result = try await call(name, args)
                 let text = result as? String ?? ArchiJSON.jsonString(result, pretty: true)
@@ -498,9 +522,14 @@ final class MCPServer {
         case "run_command":
             guard let text = a["command"] as? String else { throw CLIError.message("missing 'command'") }
             var log: [String] = []
+            let streaming = progressToken != nil || logLevel != nil
+            if streaming { ed.onLog = { [weak self] s in self?.stream(s) } }
+            defer { ed.onLog = nil }
             for line in text.components(separatedBy: .newlines) where !line.trimmingCharacters(in: .whitespaces).isEmpty {
                 log += await ed.run(line)
             }
+            let maxLines = max(ArchiJSON.int(a["maxLines"]) ?? 500, 1)
+            if log.count > maxLines { return ["log": Array(log.suffix(maxLines)), "truncated": log.count - maxLines, "totalLines": log.count] }
             return ["log": log]
         case "get_document_summary":
             var s = ArchiJSON.summary(ed.doc)
@@ -619,7 +648,14 @@ final class MCPServer {
                     "sunriseUTC": t.sunrise.map { out.string(from: $0) as Any } ?? NSNull(), "solarNoonUTC": out.string(from: t.noon),
                     "sunsetUTC": t.sunset.map { out.string(from: $0) as Any } ?? NSNull(), "direction": [dir.x, dir.y, dir.z], "latitude": lat, "longitude": lon]
         default:
-            throw CLIError.message("unknown tool \(name)")
+            guard AgentTools.names.contains(name) else { throw CLIError.message("unknown tool \(name)") }
+            let r = try AgentTools.call(name, a, doc: ed.doc, resolve: expand)
+            if name == "plan_svg", let svg = r as? String, let p = a["path"] as? String {
+                let url = expand(p)
+                try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try svg.write(to: url, atomically: true, encoding: .utf8)
+            }
+            return r
         }
     }
 }
@@ -632,15 +668,50 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
   (no options)     REPL: reads command lines from stdin and prints the command log.
                    Extra REPL lines: :save [path], :export <path>, :quit
   --script FILE    Runs the command lines in FILE (AutoCAD .scr style; ';' starts a comment).
-  --out FILE       Writes the result: .archi, .dxf, .svg, .ifc, .obj, .stl, .glb, .csv, .3mf, .usda, .usdz, .geojson
-                   (input may also be .ifc, .svg, .obj, .stl, .3mf, .geojson or a .csv of points)
+  --out FILE       Writes the result: .archi, .dxf, .svg, .ifc, .ifczip, .obj, .stl, .glb, .csv, .3mf, .usda, .usdz, .geojson,
+                   .step, .ply, .plt, .xlsx, .dae, .dwg (with a converter)
+                   (input may also be .dwg, .ifc, .ifczip, .svg, .obj, .stl, .3mf, .gltf/.glb, .ply, .off, .amf, .dae, .step,
+                   .geojson, .cityjson, .shp, .osm, .asc, .xlsx, .csv points or .xyz/.pts point clouds)
   --mcp            Model Context Protocol server on stdin/stdout (for Claude and other agents).
+  --convert FMT FILES…  Batch conversion: writes each input file as FMT (dxf, ifc, step, glb, svg, archi, …) next to it
+                   or into --outdir DIR; prints one line per file and exits non-zero if any failed.
   --version        Prints the version.
 """
+
+/// Converts files one by one; failures are reported and do not stop the batch.
+@MainActor func batchConvert(_ files: [URL], format: String, outDir: URL?) -> Int32 {
+    var failed = 0
+    let ext = ["dxf12": "dxf", "points": "csv", "analytical": "json", "hpgl": "plt", "stp": "step", "gbxml": "xml", "cobie": "xlsx"][format] ?? format
+    for f in files {
+        let dest = (outDir ?? f.deletingLastPathComponent()).appendingPathComponent(f.deletingPathExtension().lastPathComponent + (format == "analytical" ? ".analytical" : "")).appendingPathExtension(ext)
+        do {
+            guard dest.standardizedFileURL != f.standardizedFileURL else { throw CLIError.message("output would overwrite the input") }
+            let doc = try loadDocument(f)
+            try writeDocument(doc, to: dest, format: format)
+            print("\(f.lastPathComponent) → \(dest.path)")
+        } catch {
+            failed += 1
+            eprint("\(f.lastPathComponent): \((error as? LocalizedError)?.errorDescription ?? "\(error)")")
+        }
+    }
+    print("Converted \(files.count - failed) of \(files.count) file(s).")
+    return failed == 0 ? 0 : 1
+}
 
 @MainActor func runCLI() async -> Int32 {
     var input: String?, script: String?, out: String?, mcp = false
     var args = Array(CommandLine.arguments.dropFirst())
+    if let ci = args.firstIndex(of: "--convert") {
+        var rest = Array(args[(ci + 1)...])
+        guard !rest.isEmpty else { eprint(usage); return 2 }
+        let fmtName = rest.removeFirst().lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
+        var outDir: URL?
+        if let oi = rest.firstIndex(of: "--outdir"), oi + 1 < rest.count { outDir = expand(rest[oi + 1]); rest.removeSubrange(oi...(oi + 1)) }
+        let files = rest + Array(args[..<ci]).filter { !$0.hasPrefix("-") }
+        guard !files.isEmpty else { eprint("No input files."); return 2 }
+        CommandRegistry.shared.ensureBuiltins()
+        return batchConvert(files.map(expand), format: fmtName, outDir: outDir)
+    }
     while !args.isEmpty {
         let a = args.removeFirst()
         switch a {

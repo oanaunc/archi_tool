@@ -3,8 +3,9 @@ import Foundation
 
 /// Headless import/export by file extension, used by the IO commands, the CLI and agents.
 public enum FileImport {
-    public static let importFormats = ["archi", "dxf", "ifc", "svg", "obj", "stl", "3mf", "geojson", "csv", "tsv", "txt", "xyz", "pts"]
-    public static let exportFormats = ["3mf", "usda", "usdz", "geojson", "dxf12", "points"]
+    public static let importFormats = ["archi", "dxf", "dwg", "ifc", "ifczip", "svg", "obj", "stl", "3mf", "gltf", "glb", "ply", "off", "amf", "dae", "stp", "step",
+                                       "geojson", "cityjson", "shp", "osm", "asc", "xlsx", "csv", "tsv", "txt", "xyz", "pts"]
+    public static let exportFormats = ["3mf", "usda", "usdz", "geojson", "dxf12", "points", "stp", "step", "ply", "plt", "hpgl", "xlsx", "ifczip", "dwg", "analytical", "gbxml", "cobie", "dae"]
 
     public enum ImportError: Error, LocalizedError {
         case unsupported(String), unreadable(String)
@@ -25,9 +26,27 @@ public enum FileImport {
     public static func format(for url: URL, override: String? = nil) -> String {
         let f = (override ?? url.pathExtension).lowercased()
         switch f {
-        case "json": return "geojson"
-        case "tsv", "txt", "xyz", "pts", "csv", "points": return "csv"
-        case "ifczip": return "ifc"
+        case "json":
+            // CityJSON files are JSON too ("type": "CityJSON").
+            if override == nil, let h = try? FileHandle(forReadingFrom: url), let head = try? h.read(upToCount: 4096) {
+                try? h.close()
+                if String(decoding: head, as: UTF8.self).replacingOccurrences(of: " ", with: "").contains("\"type\":\"CityJSON\"") { return "cityjson" }
+            }
+            return "geojson"
+        case "cityjson", "jsonl": return "cityjson"
+        case "tsv", "txt", "csv", "points": return "csv"
+        case "pts": return "pointcloud"
+        case "xyz":
+            // Laser-scan exports (many rows or colour columns) are point clouds; short survey lists stay point tables.
+            if override == nil, let text = try? readText(url) {
+                let lines = text.split(whereSeparator: { $0.isNewline })
+                let wide = lines.prefix(20).contains { $0.split(whereSeparator: { $0 == " " || $0 == "," || $0 == "\t" || $0 == ";" }).compactMap { Double($0) }.count >= 6 }
+                return lines.count > 5000 || wide ? "pointcloud" : "csv"
+            }
+            return "csv"
+        case "step", "stp", "p21": return "step"
+        case "glb": return "gltf"
+        case "tif", "tiff", "dem": return f
         default: return f
         }
     }
@@ -49,6 +68,56 @@ public enum FileImport {
         case "ifc":
             let r = try IFCImporter.importFile(try readText(url))
             return (r.doc, r.summary)
+        case "ifczip":
+            let r = try IFCImporter.importFile(try IFCZip.read(try Data(contentsOf: url)))
+            return (r.doc, r.summary)
+        case "dwg":
+            let d = try DWGConverter.read(url, converter: reference.variable("DWGCONVERTER"))
+            return (d, "\(d.entities.count) entities, \(d.blocks.count) blocks (converted from DWG)")
+        case "gltf":
+            let ents = try GLTFImporter.entities(try Data(contentsOf: url), baseURL: url.deletingLastPathComponent(), scale: 1000 / reference.units.mm)
+            return (entityDoc(ents, native: true), "\(ents.count) glTF meshes")
+        case "ply":
+            let data = try Data(contentsOf: url)
+            let ply = try PointCloud.parsePLY(data)
+            if let mesh = PointCloud.mesh(fromPLY: ply, scale: 1000 / reference.units.mm) {
+                return (entityDoc([mesh], native: true), "PLY mesh (\(ply.faces.count) faces)")
+            }
+            let ents = PointCloud.entities(ply.points, options: PointCloudOptions(scale: 1000 / reference.units.mm))
+            return (entityDoc(ents, native: true), "\(ents.count) of \(ply.points.count) PLY points")
+        case "pointcloud":
+            let r = try PointCloud.load(try Data(contentsOf: url), ext: url.pathExtension, options: PointCloudOptions(scale: 1000 / reference.units.mm))
+            return (entityDoc(r.entities, native: true), "\(r.entities.count) of \(r.total) points")
+        case "off":
+            let e = try PointCloud.off(try readText(url))
+            return (entityDoc([e]), "OFF mesh")
+        case "amf":
+            let ents = try PointCloud.amf(try Data(contentsOf: url), unitMM: reference.units.mm)
+            return (entityDoc(ents, native: true), "\(ents.count) AMF objects")
+        case "dae":
+            let ents = try ColladaImporter.entities(try Data(contentsOf: url), unitMM: reference.units.mm)
+            return (entityDoc(ents, native: true), "\(ents.count) COLLADA meshes")
+        case "cityjson":
+            let ents = try CityJSONImporter.entities(try Data(contentsOf: url), doc: reference)
+            return (entityDoc(ents, native: true), "\(ents.count) city objects")
+        case "step":
+            let ents = try STEPImporter.entities(try readText(url), unitMM: reference.units.mm)
+            return (entityDoc(ents, native: true), "\(ents.count) STEP shells")
+        case "shp":
+            let ents = try Shapefile.load(url, doc: reference)
+            return (entityDoc(ents, native: true), "\(ents.count) shapefile features")
+        case "osm":
+            var o = GISImportOptions(); o.masses = true
+            let ents = try OSMImporter.entities(try Data(contentsOf: url), doc: reference, options: o)
+            return (entityDoc(ents, native: true), "\(ents.filter { $0.layer == "OSM-BUILDINGS" }.count) buildings, \(ents.count) OSM features")
+        case "asc":
+            let g = try ElevationGrid.parse(try readText(url))
+            let e = try ElevationGrid.topo(g, unitMM: reference.units.mm)
+            return (entityDoc([e], native: true), "toposurface from a \(g.ncols)×\(g.nrows) grid (\(fmt(g.cell, 2)) m cells)")
+        case "xlsx":
+            let sheets = try XLSX.read(try Data(contentsOf: url))
+            let ents = XLSXTables.entities(sheets, unitMM: reference.units.mm)
+            return (entityDoc(ents, native: true), "\(ents.count) table(s) from \(sheets.count) sheet(s)")
         case "svg":
             let ents = try SVGImporter.entities(try readText(url))
             return (entityDoc(ents), "\(ents.count) SVG entities")
@@ -80,6 +149,14 @@ public enum FileImport {
         return (r, summary)
     }
 
+    /// Mesh group in millimetres (MeshBuilder works in drawing units).
+    static func scaled(_ g: MeshGroup, _ unitMM: Double) -> MeshGroup {
+        guard abs(unitMM - 1) > 1e-12 else { return g }
+        var c = g
+        c.mesh.positions = g.mesh.positions.map { $0 * unitMM }
+        return c
+    }
+
     /// Writes the extra exchange formats (3mf, usda, usdz, geojson, dxf12, points csv). Returns false for other formats.
     @discardableResult
     public static func export(_ doc: ArchiDocument, to url: URL, format: String) throws -> Bool {
@@ -91,6 +168,25 @@ public enum FileImport {
         case "geojson": try GeoJSON.export(doc).write(to: url, atomically: true, encoding: .utf8)
         case "dxf12", "r12": try DXFWriter.write(doc, version: .r12).write(to: url, atomically: true, encoding: .utf8)
         case "points": try PointTable.exportPoints(doc).write(to: url, atomically: true, encoding: .utf8)
+        case "stp", "step": try STEPExporter.export(MeshBuilder.build(doc: doc).map { scaled($0, unitMM) }, materials: doc.materials, name: doc.info.name, author: doc.info.author).write(to: url, atomically: true, encoding: .utf8)
+        case "ply": try PointCloud.exportPLY(MeshBuilder.build(doc: doc).map { scaled($0, unitMM) }, materials: doc.materials).write(to: url, atomically: true, encoding: .utf8)
+        case "plt", "hpgl":
+            let entries = DrawListBuilder.entries(doc: doc, options: DrawOptions(level: doc.currentLevel))
+            var b = entries.reduce(BBox2.empty) { $0.union($1.bounds) }
+            if b.isEmpty { b = BBox2(min: .zero, max: Vec2(1000, 1000)) }
+            let scale = Double(doc.variable("PLOTSCALE") ?? "") ?? 100
+            try HPGLExporter.export(entries, bounds: b, scale: scale, unitMM: unitMM).write(to: url, atomically: true, encoding: .ascii)
+        case "xlsx": try XLSX.schedules(doc).write(to: url, options: .atomic)
+        case "ifczip":
+            let ifc = IFCExporter.export(doc: doc, meshes: MeshBuilder.build(doc: doc))
+            try IFCZip.write(ifc, name: url.deletingPathExtension().lastPathComponent + ".ifc").write(to: url, options: .atomic)
+        case "dwg": try DWGConverter.write(doc, to: url, converter: doc.variable("DWGCONVERTER"))
+        case "gbxml": try GBXMLExporter.export(doc).write(to: url, atomically: true, encoding: .utf8)
+        case "cobie": try COBieExporter.export(doc).write(to: url, options: .atomic)
+        case "dae": try ColladaExporter.export(MeshBuilder.build(doc: doc), materials: doc.materials, unitMM: unitMM).write(to: url, atomically: true, encoding: .utf8)
+        case "analytical":
+            let m = StructuralAnalysis.model(doc, options: AnalyticalOptions.from(doc))
+            try JSONSerialization.data(withJSONObject: m.json(name: doc.info.name), options: [.prettyPrinted, .sortedKeys]).write(to: url, options: .atomic)
         default: return false
         }
         return true

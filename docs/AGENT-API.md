@@ -99,7 +99,7 @@ Tools:
 
 | Tool | Arguments | Purpose |
 | --- | --- | --- |
-| `run_command` | `command` | AutoCAD-style command line(s); returns the log |
+| `run_command` | `command`, `maxLines?` | AutoCAD-style command line(s); returns the log (last `maxLines`, default 500, with `truncated`/`totalLines` when cut). Streams every log line while running (see below) |
 | `get_document_summary` | – | overview: units, layers, levels, counts, bounds, unsaved changes |
 | `get_document` | – | whole document JSON |
 | `list_entities` | `type?`, `layer?`, `limit?` | drafting entities |
@@ -109,16 +109,68 @@ Tools:
 | `update_entity` | `id`, `patch` | modify an entity/element |
 | `delete` | `ids` | delete |
 | `save` | `path?` | save as `.archi` (default: the opened file) |
-| `export` | `path`, `format?`, `level?` | dxf, svg, ifc, obj, stl, glb, csv, archi |
+| `export` | `path`, `format?`, `level?` | dxf, dxf12, svg, ifc, ifczip, obj, stl, glb, 3mf, usda, usdz, step, ply, plt (HP-GL/2), xlsx, csv, geojson, points, analytical, gbxml, cobie, dae, dwg (converter needed), archi |
 | `list_commands` | `category?` | available commands |
 | `undo` | – | undo last change |
-| `import_file` | `path`, `format?`, `offset?` | merge .archi, .dxf, .ifc, .svg, .obj, .stl, .3mf, .geojson or CSV/XYZ points into the document |
+| `import_file` | `path`, `format?`, `offset?` | merge .archi, .dxf, .dwg (converter), .ifc/.ifczip, .svg, .obj, .stl, .3mf, .gltf/.glb, .ply, .off, .amf, .dae, .step, .geojson, .cityjson, .shp, .osm, .asc, .xlsx, CSV points or XYZ/PTS point clouds into the document |
 | `takeoff` | `level?`, `format?` (json, csv) | quantity takeoff of walls, slabs, roofs, columns, beams, openings and spaces |
 | `cost_estimate` | `prices?`, `path?`, `format?` | cost of the takeoff from unit rates (inline, a JSON file, or the drawing's UNITPRICE rates) |
 | `room_schedule` | `level?`, `format?` | rooms with net/gross area, perimeter, height and volume |
 | `clash` | `tolerance?`, `ids?`, `includeSpaces?` | hard clashes between elements and 3D solids |
 | `check_model` | – | model audit (walls, openings, rooms, duplicates, levels) |
 | `sun_position` | `datetime`, `latitude?`, `longitude?` | sun azimuth/altitude, sunrise and sunset |
+| `sun_path` | `date`, `utcOffset?`, `latitude?`, `longitude?` | hourly sun azimuth/altitude between sunrise and sunset |
+| `heat_loss` | `indoor?`, `outdoor?`, `airChanges?`, `degreeDays?`, `thermalBridge?`, `format?` | envelope U·A·ΔT + ventilation design heat loss, per component and element, annual heating demand |
+| `u_values` | `ids?` | U-value (EN ISO 6946) and layers of walls, slabs, roofs, openings; `exterior` flag for walls |
+| `daylight` | `level?`, `format?` | average daylight factor and window-to-floor ratio per room |
+| `code_check` | `rules?` (object), `path?` | building-code rules (room area/height/width, window ratio, stairs, ramps, doors); issues with ids and zoom boxes |
+| `level_areas` | `format?` | gross and net floor area per level |
+| `schedule` | `kind` (walls, doors, windows, rooms, slabs, all), `format?` | element schedule rows |
+| `structural_model` | `solve?`, `deadLoad?`, `liveLoad?` | analytical model (nodes, members, panels, supports, loads); `solve` adds displacements and reactions |
+| `energy_extras` | `level?` | room reverberation times (RT60) and embodied carbon by material |
+| `plan_svg` | `level?`, `width?`, `background?`, `path?` | render-free SVG image of a level's plan (text; also written to `path`) |
+| `ifc_validate` | `path?` | IFC checks (syntax, schema, references, GlobalIds, attribute counts, units, containment) of a file or the model |
+| `ids_check` | `idsPath`, `ifcPath?` | Information Delivery Specification check of the model's IFC export or an IFC file |
+
+### Streaming long command logs
+
+`run_command` can take a long time (scripts, imports). Two ways to follow it live:
+
+- Send `_meta.progressToken` with the `tools/call` request: every log line is sent as
+  `{"method":"notifications/progress","params":{"progressToken":…,"progress":n,"message":"<line>"}}` before the result.
+- Or enable logging once with `logging/setLevel` (`"level":"info"`): log lines arrive as
+  `{"method":"notifications/message","params":{"level":"info","logger":"archi","data":"<line>"}}`.
+
+The final result still carries the log (capped by `maxLines`).
+
+### Analysis examples
+
+```json
+{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"heat_loss","arguments":{"indoor":20,"outdoor":-12,"airChanges":0.6}}}
+{"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"code_check","arguments":{"rules":{"minRoomArea":7,"stair":{"maxRiser":180,"minTread":270}}}}}
+{"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"plan_svg","arguments":{"level":0,"width":1600,"path":"~/Desktop/plan.svg"}}}
+```
+
+Code rules (`code_check`, command `CODECHECK`/`CODERULES`) are JSON; keys that are absent switch that rule off:
+`name`, `minRoomArea` (m²), `minCeilingHeight` (mm), `minWindowToFloor` (ratio), `noWindowRooms` (name substrings),
+`rooms` (`[{match, minArea, minWidth, minHeight, minWindowToFloor}]`), `stair` (`{maxRiser, minRiser, minTread, maxTread,
+stepFormulaMin, stepFormulaMax, minWidth, maxRisersPerFlight}` in mm), `maxRampGradient` (rise/run), `minDoorWidth` (clear, mm).
+
+Thermal data: conductivities default to typical EN ISO 10456 values by material name; override with drawing variables
+`LAMBDA:<material>` (W/m·K) or `UVALUE:<wall type|wall|roof|floor|window|door|curtainWall>` (W/m²·K), or an element's
+`uValue` prop. Walls are exterior when `isExternal=1`, their type name says exterior, rooms lie on one side only, or (no rooms)
+they lie on the outline of the level.
+
+The analytical model JSON (`structural_model`, `export` format `analytical`, command `ANALYTICALMODEL`) uses format
+`archi-analytical-1`: metres, kN, MPa; `nodes[{id, xyz, support[6]}]`, `members[{id, element, type, nodes[2], material,
+section{shape, b, h, A, Iy, Iz, J}}]`, `panels[{id, element, type, outline, thickness, material, areaLoad_kN_m2}]`,
+`loads{nodal[{node, F, M}], memberUniform[{member, w}]}`, `materials[{name, E_MPa, G_MPa, unitWeight_kN_m3}]`.
+
+### DWG files
+
+DWG is read and written through a converter installed on the Mac — the free ODA File Converter (in /Applications) or
+LibreDWG (`brew install libredwg`) — or the path stored with the `DWGCONVERTER` command / `ARCHI_DWG_CONVERTER`
+environment variable. Without one, `import_file`/`export` of `.dwg` return guidance to save DXF from the original CAD program.
 
 ### Claude Desktop
 
@@ -143,6 +195,14 @@ archi-cli project.archi                          # REPL: type commands, :save, :
 archi-cli project.archi --script build.scr --out project.archi
 archi-cli drawing.dxf --out drawing.archi        # convert
 echo "WALL 0,0 5000,0 " | archi-cli --out model.ifc
+archi-cli model.archi --out model.step                # also .ifczip .gltf/.glb .ply .plt .xlsx .dae … (see `export` formats)
 ```
 
 Script files contain one command line per line; lines starting with `;` are comments.
+
+Batch conversion (one line per file; exit status 1 when any file failed):
+
+```sh
+archi-cli --convert dxf plans/*.archi --outdir out/        # also ifc, ifczip, step, glb, obj, stl, 3mf, svg, xlsx, gbxml, cobie, dae, archi …
+archi-cli --convert archi survey/*.dxf site.ifc            # inputs may be any importable format
+```

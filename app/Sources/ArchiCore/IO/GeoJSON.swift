@@ -10,7 +10,10 @@ public struct GeoJSONOptions {
     /// Reference point (lat, lon); nil = the document's project location.
     public var origin: (lat: Double, lon: Double)?
     public var layer = "GEOJSON"
-    public init(geographic: Bool? = nil) { self.geographic = geographic }
+    /// Coordinate reference system. Export: projected output (UTM, Web Mercator) with a "crs" member; import: overrides
+    /// the file's "crs" member. nil = WGS84 when geographic, else the file's CRS or local metres.
+    public var crs: GeoCRS?
+    public init(geographic: Bool? = nil, crs: GeoCRS? = nil) { self.geographic = geographic; self.crs = crs }
 }
 
 public enum GeoJSON {
@@ -34,11 +37,16 @@ public enum GeoJSON {
 
     /// FeatureCollection of the document's entities (points, curves → LineString, closed shapes → Polygon, text → Point with "text").
     public static func export(_ doc: ArchiDocument, options: GeoJSONOptions = GeoJSONOptions(geographic: true), ids: Set<EntityID>? = nil) -> String {
-        let geo = options.geographic ?? true
+        let projected: GeoCRS? = options.crs.flatMap { $0 == .wgs84 || $0 == .local ? nil : $0 }
+        let geo = projected != nil ? true : (options.crs == .local ? false : (options.geographic ?? true))
         let o = options.origin ?? (doc.info.latitude, doc.info.longitude)
         let k = doc.units.mm
         func c(_ p: Vec2) -> [Double] {
-            if geo { let q = toLonLat(p, origin: o, unitMM: k); return [q.lon, q.lat] }
+            if geo {
+                let q = toLonLat(p, origin: o, unitMM: k)
+                if let pc = projected { let xy = pc.fromLonLat(q.lon, q.lat); return [(xy.x * 1000).rounded() / 1000, (xy.y * 1000).rounded() / 1000] }
+                return [q.lon, q.lat]
+            }
             return [p.x * k / 1000, p.y * k / 1000]
         }
         func ring(_ pts: [Vec2]) -> [[Double]] {
@@ -92,6 +100,8 @@ public enum GeoJSON {
         }
         var root: [String: Any] = ["type": "FeatureCollection", "features": features]
         if !geo { root["properties"] = ["units": "m", "crs": "local"] }
+        if let pc = projected, case .utm(let z, let n) = pc { root["crs"] = ["type": "name", "properties": ["name": "urn:ogc:def:crs:EPSG::\(n ? 32600 + z : 32700 + z)"]] }
+        if projected == .webMercator { root["crs"] = ["type": "name", "properties": ["name": "urn:ogc:def:crs:EPSG::3857"]] }
         guard let d = try? JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys]) else { return "{}" }
         return String(decoding: d, as: UTF8.self)
     }
@@ -126,7 +136,12 @@ public enum GeoJSON {
             if let a = v as? [Any] { a.forEach(gather) }
         }
         for (g, _) in feats { gather(g["coordinates"] ?? []); for sub in (g["geometries"] as? [[String: Any]]) ?? [] { gather(sub["coordinates"] ?? []) } }
-        let geo = options.geographic ?? (!allPts.isEmpty && allPts.allSatisfy { abs($0[0]) <= 180 && abs($0[1]) <= 90 })
+        // CRS: option, else the (2008 GeoJSON) "crs" member, else detected from the coordinate ranges.
+        var fileCRS: GeoCRS? = nil
+        if let crs = root["crs"] as? [String: Any], let props = crs["properties"] as? [String: Any], let name = props["name"] as? String { fileCRS = GeoCRS.parse(name) }
+        let crs = options.crs ?? fileCRS
+        let projected: GeoCRS? = crs.flatMap { $0 == .wgs84 || $0 == .local ? nil : $0 }
+        let geo = projected != nil || crs == .wgs84 ? true : (crs == .local ? false : (options.geographic ?? (!allPts.isEmpty && allPts.allSatisfy { abs($0[0]) <= 180 && abs($0[1]) <= 90 })))
         let k = doc.units.mm
         let o = options.origin ?? (doc.info.latitude, doc.info.longitude)
         func P(_ a: Any) -> Vec2? {
@@ -134,6 +149,7 @@ public enum GeoJSON {
                 if let n = a as? [NSNumber], n.count >= 2 { return P(n.map { $0.doubleValue }) }
                 return nil
             }
+            if let pc = projected { let ll = pc.toLonLat(c[0], c[1]); return fromLonLat(lon: ll.lon, lat: ll.lat, origin: o, unitMM: k) }
             return geo ? fromLonLat(lon: c[0], lat: c[1], origin: o, unitMM: k) : Vec2(c[0] * 1000 / k, c[1] * 1000 / k)
         }
         func line(_ a: Any) -> [Vec2] { (a as? [Any])?.compactMap(P) ?? [] }

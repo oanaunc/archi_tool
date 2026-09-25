@@ -4,7 +4,7 @@ import Foundation
 
 public enum IOCommands {
     public static var all: [CommandDef] { [importFile, ifcImport, svgImport, meshImport, geoJSONImport, geoJSONExport, pointsImport, pointsExport,
-                                           export3MF, usdExport, dxfR12Out] }
+                                           export3MF, usdExport, dxfR12Out] + ExchangeCommands.all }
 
     /// Resolves a path typed on the command line (~, relative to the drawing's folder, else the working directory).
     @MainActor static func resolve(_ ed: Editor, _ path: String) -> URL {
@@ -75,11 +75,26 @@ public enum IOCommands {
     }
 
     static var meshImport: CommandDef {
-        CommandDef("MESHIMPORT", aliases: ["OBJIMPORT", "STLIMPORT", "3MFIMPORT", "OBJIN", "STLIN"], category: "File",
-                   summary: "Imports an OBJ, STL or 3MF file as mesh solids (choose the file's units).") { ed in
-            let url = try await path(ed, "Enter OBJ/STL/3MF file name")
+        CommandDef("MESHIMPORT", aliases: ["OBJIMPORT", "STLIMPORT", "3MFIMPORT", "OBJIN", "STLIN", "GLTFIMPORT", "GLBIMPORT", "PLYIMPORT", "OFFIMPORT", "AMFIMPORT", "DAEIMPORT", "COLLADAIMPORT"], category: "File",
+                   summary: "Imports an OBJ, STL, 3MF, glTF/GLB, PLY, OFF, AMF or COLLADA (.dae) file as mesh solids (choose the file's units where the format has none).") { ed in
+            let url = try await path(ed, "Enter OBJ/STL/3MF/glTF/GLB/PLY/OFF/AMF/DAE file name")
             let ext = url.pathExtension.lowercased()
-            guard ["obj", "stl", "3mf"].contains(ext) else { throw CommandError.invalid("Use a .obj, .stl or .3mf file.") }
+            guard ["obj", "stl", "3mf", "gltf", "glb", "ply", "off", "amf", "dae"].contains(ext) else { throw CommandError.invalid("Use a .obj, .stl, .3mf, .gltf, .glb, .ply, .off, .amf or .dae file.") }
+            if ["gltf", "glb", "amf", "dae"].contains(ext) {
+                // Formats with defined units (glTF: metres; AMF: its unit attribute).
+                do {
+                    let data = try Data(contentsOf: url)
+                    let ents = ext == "amf" ? try PointCloud.amf(data, unitMM: ed.doc.units.mm)
+                        : ext == "dae" ? try ColladaImporter.entities(data, unitMM: ed.doc.units.mm)
+                        : try GLTFImporter.entities(data, baseURL: url.deletingLastPathComponent(), scale: 1000 / ed.doc.units.mm)
+                    var ids: [EntityID] = []
+                    for e in ents { ed.doc.ensureLayer(e.layer); ids.append(ed.doc.add(e)) }
+                    ed.selection = Set(ids)
+                    let tris = ents.reduce(0) { n, e in if case .solid(let s) = e.geometry { return n + s.meshTriangles.count / 3 }; return n }
+                    ed.print("Imported \(ents.count) mesh\(ents.count == 1 ? "" : "es") (\(tris) triangles) from \(url.lastPathComponent).")
+                    return
+                } catch { throw CommandError.invalid("Cannot import \(url.lastPathComponent): \((error as? LocalizedError)?.errorDescription ?? "\(error)")") }
+            }
             let units = ["Meters", "Centimeters", "Millimeters", "Inches", "Feet"]
             let def = ext == "obj" ? "Meters" : "Millimeters"
             let u = ext == "3mf" ? "Millimeters" : (try await ed.getKeyword("Specify file units", units, defaultValue: def) ?? def)
@@ -90,6 +105,11 @@ public enum IOCommands {
                 switch ext {
                 case "obj": var o = MeshImportOptions.obj; o.scale = k; ents = try MeshImporter.obj(try FileImport.readText(url), options: o)
                 case "stl": var o = MeshImportOptions.stl; o.scale = k; ents = try MeshImporter.stl(try Data(contentsOf: url), options: o)
+                case "off": ents = [try PointCloud.off(try FileImport.readText(url), scale: k)]
+                case "ply":
+                    let ply = try PointCloud.parsePLY(try Data(contentsOf: url))
+                    guard let m = PointCloud.mesh(fromPLY: ply, scale: k) else { throw CommandError.invalid("The PLY file has no faces; use POINTCLOUDIMPORT for point clouds.") }
+                    ents = [m]
                 default: ents = try ThreeMFImporter.entities(try Data(contentsOf: url), scale: 1 / ed.doc.units.mm)
                 }
                 var ids: [EntityID] = []
@@ -112,9 +132,20 @@ public enum IOCommands {
     static var geoJSONExport: CommandDef {
         CommandDef("GEOJSONEXPORT", aliases: ["GEOJSONOUT"], category: "File", summary: "Exports 2D entities (selection or all) as GeoJSON in WGS84 or local metres.", modifies: false) { ed in
             let url = try await path(ed, "Enter GeoJSON file name")
-            let k = try await ed.getKeyword("Coordinates [Geographic/Local]", ["Geographic", "Local"], defaultValue: "Geographic") ?? "Geographic"
+            let k = try await ed.getKeyword("Coordinates [Geographic/Local/Utm/Webmercator/Epsg]", ["Geographic", "Local", "Utm", "Webmercator", "Epsg"], defaultValue: "Geographic") ?? "Geographic"
+            var crs: GeoCRS? = nil
+            switch k {
+            case "Utm": crs = GeoCRS.utmZone(lon: ed.doc.info.longitude, lat: ed.doc.info.latitude)
+            case "Webmercator": crs = .webMercator
+            case "Epsg":
+                guard let c = try await ed.getWord("Enter EPSG code (4326, 3857, 326xx, 327xx, 258xx)"), let g = GeoCRS.parse("EPSG:" + c) else { throw CommandError.invalid("Unsupported EPSG code.") }
+                crs = g
+            case "Local": crs = .local
+            default: crs = .wgs84
+            }
             let ids: Set<EntityID>? = ed.selection.isEmpty ? nil : ed.selection
-            let text = GeoJSON.export(ed.doc, options: GeoJSONOptions(geographic: k == "Geographic"), ids: ids)
+            let text = GeoJSON.export(ed.doc, options: GeoJSONOptions(geographic: crs != .local, crs: crs), ids: ids)
+            if let c = crs, c != .wgs84 { ed.print("Coordinates in \(c).") }
             try write(ed, url, "GeoJSON", { try text.write(to: url, atomically: true, encoding: .utf8) })
         }
     }

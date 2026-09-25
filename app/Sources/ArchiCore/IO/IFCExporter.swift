@@ -282,11 +282,23 @@ final class IFCBuilder {
 
         // Walls first (openings reference them), then the rest.
         for el in doc.elements { if case .wall = el.geometry { wall(el) } }
+        var rampGroups: [String: [BIMElement]] = [:]
+        var rampOrder: [String] = []
         for el in doc.elements {
             switch el.geometry {
             case .wall: break
             case .opening: opening(el)
-            case .slab: slab(el)
+            case .slab:
+                switch el.props["kind"] ?? "" {
+                case "ramp", "landing":
+                    if el.props["kind"] == "landing" && el.props["rampGroup"] == nil { slab(el); continue }
+                    let key = el.props["rampGroup"] ?? "\(el.id)"
+                    if rampGroups[key] == nil { rampOrder.append(key) }
+                    rampGroups[key, default: []].append(el)
+                case "foundation": footing(el)
+                case "ceiling": covering(el)
+                default: slab(el)
+                }
             case .column: column(el)
             case .beam: beam(el)
             case .space: space(el)
@@ -294,6 +306,8 @@ final class IFCBuilder {
             default: meshElement(el)
             }
         }
+        for key in rampOrder { ramp(key, rampGroups[key] ?? []) }
+        phaseGroups()
 
         for lv in levels {
             if let els = contained[lv.id], !els.isEmpty, let st = storeyEntity[lv.id] {
@@ -340,6 +354,7 @@ final class IFCBuilder {
     func commonProps(_ el: BIMElement, _ entity: Int, pset: String, _ extra: [(String, String)]) {
         var p: [(String, String)] = [("Reference", ident(el.name.isEmpty ? el.typeName : el.name))]
         p += extra
+        if let st = phaseStatus(el) { p.append(("Status", label(st))) }
         psets.append((pset, [entity], p))
         let custom = el.props.sorted { $0.key < $1.key }.filter { !$0.key.isEmpty && $0.key != "ifcGuid" }
         if !custom.isEmpty { psets.append(("Archi_Properties", [entity], custom.map { ($0.key, label($0.value)) })) }
@@ -460,17 +475,158 @@ final class IFCBuilder {
         useMaterial(el.material, e)
     }
 
+    /// Placement and body of a slab-like element: a vertical extrusion, or for a sloped slab an extrusion whose profile
+    /// lies in the tilted soffit plane and whose direction stays vertical (exactly the sheared prism MeshBuilder draws).
+    func slabBody(_ el: BIMElement, _ sl: SlabGeom, relTo parent: Int?) -> (placement: Int, item: Int)? {
+        guard sl.isSloped else {
+            let pl = placement(relTo: parent, Vec3(0, 0, (sl.topOffset - sl.thickness) * k))
+            guard let prof = arbitraryProfile(sl.boundary, holes: sl.holes) else { return nil }
+            let item = extrusion(profile: prof, depth: sl.thickness * k)
+            style(item, material: el.material)
+            return (pl, item)
+        }
+        let a = sl.slope * .pi / 180
+        let ca = cos(a), sa = sin(a)
+        guard abs(ca) > 0.05 else { return nil }
+        let d = Vec2(cos(sl.slopeDirection), sin(sl.slopeDirection)), n2 = d.perp
+        let o = sl.slopeOrigin ?? sl.boundary.first ?? .zero
+        let tv = sl.thickness / max(abs(ca), 0.05)
+        // Frame on the soffit plane: x up the slope, y horizontal, z normal to the slab.
+        let loc = point3(o.x * k, o.y * k, (sl.topOffset - tv) * k)
+        // Directions with full precision (the slope is recovered from them on import).
+        func pdir(_ x: Double, _ y: Double, _ z: Double) -> Int {
+            func q(_ v: Double) -> String { var t = fmt(v, 15); if t == "-0" { t = "0" }; return t.contains(".") || t.contains("E") || t.contains("e") ? t : t + "." }
+            return add("IFCDIRECTION((\(q(x)),\(q(y)),\(q(z))))")
+        }
+        let zAxis = pdir(-sa * d.x, -sa * d.y, ca), xAxis = pdir(ca * d.x, ca * d.y, sa)
+        let ax = add("IFCAXIS2PLACEMENT3D(#\(loc),#\(zAxis),#\(xAxis))")
+        let pl = add("IFCLOCALPLACEMENT(\(parent.map { "#\($0)" } ?? "$"),#\(ax))")
+        func local(_ p: Vec2) -> Vec2 { let q = p - o; return Vec2(q.dot(d) / ca, q.dot(n2)) }
+        guard let prof = arbitraryProfile(sl.boundary.map(local), holes: sl.holes.map { $0.map(local) }) else { return nil }
+        // World up in the local frame.
+        let up = pdir(sa, 0, ca)
+        let pos = axis3(.zero)
+        let item = add("IFCEXTRUDEDAREASOLID(#\(prof),#\(pos),#\(up),\(r(max(tv * k, 0.001))))")
+        style(item, material: el.material)
+        return (pl, item)
+    }
+
+    func slopeProps(_ sl: SlabGeom) -> [(String, String)] {
+        sl.isSloped ? [("PitchAngle", "IFCPLANEANGLEMEASURE(\(r(sl.slope * .pi / 180)))")] : []
+    }
+
     func slab(_ el: BIMElement) {
         guard case .slab(let sl) = el.geometry else { return }
         let lv = level(of: el)
-        let pl = placement(relTo: storeyPlacement[lv], Vec3(0, 0, (sl.topOffset - sl.thickness) * k))
-        guard let prof = arbitraryProfile(sl.boundary, holes: sl.holes) else { return }
-        let item = extrusion(profile: prof, depth: sl.thickness * k)
-        style(item, material: el.material)
-        let rep = shape([item], type: "SweptSolid")
-        let e = add("IFCSLAB(\(eg(el)),#\(oh),\(s(name(el, "Slab"))),$,$,#\(pl),#\(rep),\(s("\(el.id)")),.FLOOR.)")
+        guard let body = slabBody(el, sl, relTo: storeyPlacement[lv]) else { return }
+        let rep = shape([body.item], type: "SweptSolid")
+        let t = el.props["kind"] == "landing" ? ".LANDING." : ".FLOOR."
+        let e = add("IFCSLAB(\(eg(el)),#\(oh),\(s(name(el, "Slab"))),$,$,#\(body.placement),#\(rep),\(s("\(el.id)")),\(t))")
         elementEntity[el.id] = e; contained[lv, default: []].append(e); useMaterial(el.material, e)
-        commonProps(el, e, pset: "Pset_SlabCommon", [("IsExternal", bool(isExternal(el, default: false))), ("LoadBearing", bool(true))])
+        commonProps(el, e, pset: "Pset_SlabCommon", [("IsExternal", bool(isExternal(el, default: false))), ("LoadBearing", bool(true))] + slopeProps(sl))
+    }
+
+    /// Strip footing (host is a wall) or pad footing (host is a column, or none).
+    func footing(_ el: BIMElement) {
+        guard case .slab(let sl) = el.geometry else { return }
+        let lv = level(of: el)
+        guard let body = slabBody(el, sl, relTo: storeyPlacement[lv]) else { return }
+        let rep = shape([body.item], type: "SweptSolid")
+        var strip = false
+        if let h = el.props["host"].flatMap(Int.init), let host = doc.element(h), case .wall = host.geometry { strip = true }
+        let t = strip ? ".STRIP_FOOTING." : ".PAD_FOOTING."
+        let e = add("IFCFOOTING(\(eg(el)),#\(oh),\(s(name(el, "Footing"))),$,$,#\(body.placement),#\(rep),\(s("\(el.id)")),\(t))")
+        elementEntity[el.id] = e; contained[lv, default: []].append(e); useMaterial(el.material, e)
+        commonProps(el, e, pset: "Pset_FootingCommon", [("LoadBearing", bool(true))])
+    }
+
+    /// Ceiling slabs become IfcCovering (CEILING).
+    func covering(_ el: BIMElement) {
+        guard case .slab(let sl) = el.geometry else { return }
+        let lv = level(of: el)
+        guard let body = slabBody(el, sl, relTo: storeyPlacement[lv]) else { return }
+        let rep = shape([body.item], type: "SweptSolid")
+        let e = add("IFCCOVERING(\(eg(el)),#\(oh),\(s(name(el, "Ceiling"))),$,$,#\(body.placement),#\(rep),\(s("\(el.id)")),.CEILING.)")
+        elementEntity[el.id] = e; contained[lv, default: []].append(e); useMaterial(el.material, e)
+        commonProps(el, e, pset: "Pset_CoveringCommon", [("IsExternal", bool(false))])
+    }
+
+    /// A ramp (IfcRamp) aggregating its sloped flights (IfcRampFlight) and landings (IfcSlab LANDING).
+    func ramp(_ key: String, _ parts: [BIMElement]) {
+        guard let first = parts.first else { return }
+        let lv = level(of: first)
+        let rpl = placement(relTo: storeyPlacement[lv], .zero)
+        var partEntities: [Int] = []
+        var flightDirs: [Double] = []
+        var rise = 0.0, run = 0.0, width = Double.infinity
+        for el in parts {
+            guard case .slab(let sl) = el.geometry, let body = slabBody(el, sl, relTo: rpl) else { continue }
+            let rep = shape([body.item], type: "SweptSolid")
+            let e: Int
+            if el.props["kind"] == "landing" || !sl.isSloped {
+                e = add("IFCSLAB(\(eg(el)),#\(oh),\(s(name(el, "Ramp Landing"))),$,$,#\(body.placement),#\(rep),\(s("\(el.id)")),.LANDING.)")
+                commonProps(el, e, pset: "Pset_SlabCommon", [("IsExternal", bool(isExternal(el, default: false))), ("LoadBearing", bool(true))])
+            } else {
+                flightDirs.append(sl.slopeDirection)
+                let d = Vec2(cos(sl.slopeDirection), sin(sl.slopeDirection))
+                let ext = sl.boundary.map { $0.dot(d) }, across = sl.boundary.map { $0.dot(d.perp) }
+                let fr = (ext.max() ?? 0) - (ext.min() ?? 0)
+                run += fr; rise += fr * tan(sl.slope * .pi / 180)
+                width = min(width, (across.max() ?? 0) - (across.min() ?? 0))
+                e = add("IFCRAMPFLIGHT(\(eg(el)),#\(oh),\(s(name(el, "Ramp Flight"))),$,$,#\(body.placement),#\(rep),\(s("\(el.id)")),.STRAIGHT.)")
+                commonProps(el, e, pset: "Pset_RampFlightCommon", [("Slope", "IFCPLANEANGLEMEASURE(\(r(sl.slope * .pi / 180)))"),
+                                                                     ("ClearWidth", length(width.isFinite ? width * k : 0))])
+            }
+            elementEntity[el.id] = e; useMaterial(el.material, e)
+            partEntities.append(e)
+        }
+        guard !partEntities.isEmpty else { return }
+        let type: String
+        if flightDirs.count <= 1 { type = ".STRAIGHT_RUN_RAMP." }
+        else {
+            var turn = 0.0
+            for i in 1..<flightDirs.count { var t = flightDirs[i] - flightDirs[i - 1]; while t > .pi { t -= 2 * .pi }; while t < -.pi { t += 2 * .pi }; turn += abs(t) }
+            let deg90 = turn / (.pi / 2)
+            if flightDirs.count == 2 && abs(deg90) < 0.1 { type = ".TWO_STRAIGHT_RUN_RAMP." }
+            else if flightDirs.count == 2 && abs(deg90 - 1) < 0.1 { type = ".QUARTER_TURN_RAMP." }
+            else if flightDirs.count == 2 && abs(deg90 - 2) < 0.1 { type = ".HALF_TURN_RAMP." }
+            else if flightDirs.count == 3 && abs(deg90 - 2) < 0.1 { type = ".TWO_QUARTER_TURN_RAMP." }
+            else { type = ".NOTDEFINED." }
+        }
+        let rampName = parts.count == 1 ? name(first, "Ramp") : "Ramp \(key)"
+        let re = add("IFCRAMP(\(g("ramp:\(key)")),#\(oh),\(s(rampName)),$,$,#\(rpl),$,\(s(key)),\(type))")
+        contained[lv, default: []].append(re)
+        add("IFCRELAGGREGATES(\(g("rel:ramp:\(key)")),#\(oh),$,$,#\(re),\(refs(partEntities)))")
+        let gradient = run > 1e-9 ? rise / run : 0
+        psets.append(("Pset_RampCommon", [re], [("Reference", ident(rampName)), ("RequiredSlope", "IFCPLANEANGLEMEASURE(\(r(atan(gradient))))"),
+                                                ("HandicapAccessible", bool(gradient <= 1.0 / 12 + 1e-9)), ("IsExternal", bool(isExternal(first, default: false)))]))
+    }
+
+    // MARK: phases
+
+    /// IFC4 "Status" of an element from its phases (as of the current phase): NEW, EXISTING or DEMOLISH.
+    func phaseStatus(_ el: BIMElement) -> String? {
+        guard !doc.phases.isEmpty, el.props["phaseCreated"] != nil || el.props["phaseDemolished"] != nil else { return nil }
+        switch Phasing.status(el.props, doc: doc) {
+        case .existing: return "EXISTING"
+        case .new: return "NEW"
+        case .demolished, .gone: return "DEMOLISH"
+        case .future: return "NEW"
+        }
+    }
+
+    /// One IfcGroup per phase ("Phase: <name>") holding the elements created in it; demolished elements also go into
+    /// "Demolished: <name>" groups.
+    func phaseGroups() {
+        guard !doc.phases.isEmpty else { return }
+        for (i, ph) in doc.phases.enumerated() {
+            for (prefix, key) in [("Phase", "phaseCreated"), ("Demolished", "phaseDemolished")] {
+                let members = doc.elements.filter { Phasing.phaseIndex($0.props[key], doc) == i }.compactMap { elementEntity[$0.id] }
+                guard !members.isEmpty else { continue }
+                let grp = add("IFCGROUP(\(g("group:\(key):\(i)")),#\(oh),\(s("\(prefix): \(ph)")),\(s(key == "phaseCreated" ? "Construction phase" : "Demolition phase")),\(s("Phase")))")
+                add("IFCRELASSIGNSTOGROUP(\(g("rel:group:\(key):\(i)")),#\(oh),$,$,\(refs(members)),$,#\(grp))")
+            }
+        }
     }
 
     func column(_ el: BIMElement) {

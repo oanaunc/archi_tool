@@ -128,15 +128,30 @@ public enum DXFR12Writer {
             return s
         }
 
+        /// Z of the entity being written (contours, survey points).
+        var elevation = 0.0
+
         mutating func entity(_ e: Entity, paper: Bool) {
+            elevation = DXFWriter.elevation(of: e)
             geometry(e.geometry, style(e), paper: paper, props: e.props, depth: 0)
+            elevation = 0
+            if e.props["topo"] == "1", case .solid(let sol) = e.geometry {
+                for c in DXFWriter.topoContours(sol, props: e.props) {
+                    elevation = c.z
+                    for l in c.lines where l.count >= 2 {
+                        let closed = l.count > 3 && l[0].isClose(l[l.count - 1], tol: 1e-9)
+                        polyline((closed ? Array(l.dropLast()) : l).map { PolyVertex($0) }, closed: closed, style(e), paper: paper)
+                    }
+                }
+                elevation = 0
+            }
         }
 
         mutating func polyline(_ v: [PolyVertex], closed: Bool, _ s: Style, paper: Bool) {
             guard v.count >= 2 else { return }
-            head("POLYLINE", s, paper: paper); g(66, 1); pt(10, .zero); g(70, closed ? 1 : 0)
+            head("POLYLINE", s, paper: paper); g(66, 1); pt(10, .zero, elevation); g(70, closed ? 1 : 0)
             for (i, p) in v.enumerated() {
-                g(0, "VERTEX"); g(8, layerName(s.layer)); pt(10, p.p)
+                g(0, "VERTEX"); g(8, layerName(s.layer)); pt(10, p.p, elevation)
                 if (closed || i < v.count - 1), abs(p.bulge) > 1e-12 { g(42, p.bulge) }
             }
             g(0, "SEQEND"); g(8, layerName(s.layer))
@@ -177,10 +192,10 @@ public enum DXFR12Writer {
         mutating func geometry(_ geo: Geometry, _ s: Style, paper: Bool, props: [String: String], depth: Int) {
             guard depth < 8 else { return }
             switch geo {
-            case .point(let p): head("POINT", s, paper: paper); pt(10, p)
-            case .line(let l): head("LINE", s, paper: paper); pt(10, l.a); pt(11, l.b)
-            case .circle(let c): head("CIRCLE", s, paper: paper); pt(10, c.center); g(40, c.radius)
-            case .arc(let a): head("ARC", s, paper: paper); pt(10, a.center); g(40, a.radius); g(50, deg(normAngle(a.start))); g(51, deg(normAngle(a.end)))
+            case .point(let p): head("POINT", s, paper: paper); pt(10, p, elevation)
+            case .line(let l): head("LINE", s, paper: paper); pt(10, l.a, elevation); pt(11, l.b, elevation)
+            case .circle(let c): head("CIRCLE", s, paper: paper); pt(10, c.center, elevation); g(40, c.radius)
+            case .arc(let a): head("ARC", s, paper: paper); pt(10, a.center, elevation); g(40, a.radius); g(50, deg(normAngle(a.start))); g(51, deg(normAngle(a.end)))
             case .ellipse(let e):
                 var pts = GeometryOps.ellipsePoints(e)
                 if e.isFull, pts.count > 2, pts[0].isClose(pts[pts.count - 1]) { pts.removeLast() }
