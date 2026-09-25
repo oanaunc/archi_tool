@@ -429,8 +429,8 @@ enum DrawCommands {
 
     // MARK: - Curves
     static var curves: [CommandDef] { [
-        CommandDef("CIRCLE", aliases: ["C"], category: "Draw", summary: "Draws a circle (center/radius, diameter, 2P, 3P, tangent-tangent-radius).") { ed in
-            let a = try await ed.getPoint("Specify center point for circle", keywords: ["3P", "2P", "Ttr"])
+        CommandDef("CIRCLE", aliases: ["C"], category: "Draw", summary: "Draws a circle (center/radius, diameter, 2P, 3P, tangent-tangent-radius, tangent-tangent-tangent).") { ed in
+            let a = try await ed.getPoint("Specify center point for circle", keywords: ["3P", "2P", "Ttr", "TTT"])
             let lastR = ed.variableDouble("CIRCLERAD", 0)
             var result: CircleGeom?
             switch a {
@@ -453,6 +453,8 @@ enum DrawCommands {
                 let p1 = try await ed.requirePoint("Specify first end point of circle's diameter")
                 let p2 = try await ed.requirePoint("Specify second end point of circle's diameter", base: p1) { c in [.circle(CircleGeom((p1 + c) / 2, p1.distance(to: c) / 2))] }
                 result = CircleGeom((p1 + p2) / 2, p1.distance(to: p2) / 2)
+            case .keyword("TTT"):
+                try await DraftConstructionCommands.apolloniusCommand(ed, tangents: 3, points: 0); return
             case .keyword("Ttr"):
                 guard case .pick(let k1) = try await ed.pickObject("Specify point on object for first tangent of circle"),
                       case .pick(let k2) = try await ed.pickObject("Specify point on object for second tangent of circle") else { return }

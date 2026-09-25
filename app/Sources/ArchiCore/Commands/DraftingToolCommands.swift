@@ -370,7 +370,7 @@ enum DraftingToolCommands {
                 for (a, v) in UserAliases.global.sorted(by: { $0.key < $1.key }) where d[a] == nil { ed.print("  \(a) → \(v)  (global)") }
             }
         },
-        CommandDef("SCRIPTRECORD", aliases: ["ACTRECORD", "RECSCRIPT"], category: "Tools", summary: "Records typed commands and picks as a script (Start/Stop); saved to a .scr file.", modifies: false) { ed in
+        CommandDef("SCRIPTRECORD", aliases: ["RECSCRIPT"], category: "Tools", summary: "Records typed commands and picks as a script (Start/Stop); saved to a .scr file.", modifies: false) { ed in
             if ed.recorder != nil {
                 let rec = ed.recorder!
                 ed.recorder = nil

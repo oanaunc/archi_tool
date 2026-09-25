@@ -860,6 +860,22 @@ public enum PropertyAccess {
         [P(name: name + "X", get: { fmt($0[keyPath: kp].x) }, set: { t, v in guard let x = num(v) else { return false }; t[keyPath: kp].x = x; return true }),
          P(name: name + "Y", get: { fmt($0[keyPath: kp].y) }, set: { t, v in guard let x = num(v) else { return false }; t[keyPath: kp].y = x; return true })]
     }
+    /// A string property stored in an element's `props` dictionary (empty or "none" removes it).
+    static func prop(_ name: String, _ key: String, validate: ((String) -> Bool)? = nil) -> P<BIMElement> {
+        P(name: name, get: { $0.props[key] ?? "" }, set: { t, v in
+            let x = v.trimmingCharacters(in: .whitespaces)
+            if x.isEmpty || x.lowercased() == "none" { t.props[key] = nil; return true }
+            if let f = validate, !f(x) { return false }
+            t.props[key] = x; return true })
+    }
+    /// A numeric property stored in `props` (empty removes it).
+    static func propNum(_ name: String, _ key: String) -> P<BIMElement> {
+        P(name: name, get: { $0.props[key] ?? "" }, set: { t, v in
+            let x = v.trimmingCharacters(in: .whitespaces)
+            if x.isEmpty || x.lowercased() == "none" { t.props[key] = nil; return true }
+            guard let d = num(x), d.isFinite else { return false }
+            t.props[key] = fmt(d); return true })
+    }
     static func optS<T>(_ name: String, _ kp: WritableKeyPath<T, String?>) -> P<T> {
         P(name: name, get: { $0[keyPath: kp] ?? "" }, set: { t, v in t[keyPath: kp] = (v.isEmpty || v.lowercased() == "none") ? nil : v; return true })
     }
@@ -878,7 +894,9 @@ public enum PropertyAccess {
         var ps: [P<BIMElement>] = [
             ro("id") { "\($0.id)" }, ro("type") { $0.typeName },
             s("name", \.name), s("layer", \.layer), optS("material", \.material), i("level", \.level),
+            prop("phaseCreated", "phaseCreated"), prop("phaseDemolished", "phaseDemolished"), prop("keynote", "keynote"),
         ]
+        if case .opening = el.geometry {} else { ps.append(prop("mark", "mark")) }
         func L<G>(_ g: [P<G>], _ ex: @escaping (BIMGeometry) -> G?, _ em: @escaping (G) -> BIMGeometry) -> [P<BIMElement>] {
             lift(g, extract: { ex($0.geometry) }, embed: { $0.geometry = em($1) })
         }
@@ -887,11 +905,50 @@ public enum PropertyAccess {
             ps += L(v("start", \WallGeom.start) + v("end", \WallGeom.end) + [
                 d("thickness", \WallGeom.thickness, min: 1), d("height", \WallGeom.height, min: 1), d("baseOffset", \WallGeom.baseOffset),
                 e("justification", \WallGeom.justification), d("bulge", \WallGeom.bulge), optS("wallType", \WallGeom.wallType),
-                ro("length") { fmt($0.length) }], { if case .wall(let g) = $0 { return g }; return nil }, { .wall($0) })
+                ro("length") { fmt($0.length) }, ro("sweeps") { "\($0.sweeps.count)" }], { if case .wall(let g) = $0 { return g }; return nil }, { .wall($0) })
+            // attachTop: "auto" (default — attaches to roofs/slabs above when they cover the wall), "1" forced, "0" never.
+            ps.append(P(name: "attachTop", get: { el in
+                switch el.props["attachTop"] { case "1": return "yes"; case "0": return "no"; default: return "auto" } }, set: { el, v in
+                switch v.lowercased() {
+                case "auto", "", "default": el.props["attachTop"] = nil
+                case "1", "yes", "y", "true", "on": el.props["attachTop"] = "1"
+                case "0", "no", "n", "false", "off": el.props["attachTop"] = "0"
+                default: return false
+                }
+                return true }))
+            ps += [prop("joinStart", "joinStart"), prop("joinEnd", "joinEnd")]
         case .slab:
-            ps += L([d("thickness", \SlabGeom.thickness, min: 1), d("topOffset", \SlabGeom.topOffset),
+            ps += L([d("slope", \SlabGeom.slope), angle("slopeDirection", \SlabGeom.slopeDirection),
+                     P(name: "slopeOriginX", get: { $0.slopeOrigin.map { fmt($0.x) } ?? "" }, set: { t, v in
+                        if v.isEmpty || v.lowercased() == "none" { t.slopeOrigin = nil; return true }
+                        guard let x = num(v) else { return false }; t.slopeOrigin = Vec2(x, t.slopeOrigin?.y ?? t.boundary.first?.y ?? 0); return true }),
+                     P(name: "slopeOriginY", get: { $0.slopeOrigin.map { fmt($0.y) } ?? "" }, set: { t, v in
+                        if v.isEmpty || v.lowercased() == "none" { t.slopeOrigin = nil; return true }
+                        guard let y = num(v) else { return false }; t.slopeOrigin = Vec2(t.slopeOrigin?.x ?? t.boundary.first?.x ?? 0, y); return true }),
+                     P(name: "gradient", get: { $0.isSloped ? fmt(tan($0.slope * .pi / 180) * 100, 2) + "%" : "0%" }, set: { t, v in
+                        // Percent (e.g. "8.33" or "8.33%") or a ratio "1:12".
+                        let x = v.replacingOccurrences(of: "%", with: "").trimmingCharacters(in: .whitespaces)
+                        if let c = x.firstIndex(of: ":"), let a = num(String(x[..<c])), let b = num(String(x[x.index(after: c)...])), b > 0 {
+                            t.slope = atan(a / b) * 180 / .pi; return true }
+                        guard let pc = num(x) else { return false }
+                        t.slope = atan(pc / 100) * 180 / .pi; return true }),
+                     d("thickness", \SlabGeom.thickness, min: 1), d("topOffset", \SlabGeom.topOffset),
                      ro("area") { fmt(abs(GeometryOps.signedArea($0.boundary)), 2) }, ro("perimeter") { fmt(CommandHelpers.polylineLength($0.boundary + [$0.boundary.first ?? .zero]), 2) },
                      ro("holes") { "\($0.holes.count)" }], { if case .slab(let g) = $0 { return g }; return nil }, { .slab($0) })
+            // Kind: floor (default), ramp, foundation; foundations reference their wall/column host.
+            ps.append(P(name: "kind", get: { $0.props["kind"] ?? "floor" }, set: { el, v in
+                switch v.lowercased() {
+                case "floor", "slab", "": el.props["kind"] = nil
+                case "ramp", "foundation", "ceiling", "landing": el.props["kind"] = v.lowercased()
+                default: return false
+                }
+                return true }))
+            ps.append(ro("host") { $0.props["host"] ?? "" })
+            if el.props["kind"] == "ramp", case .slab(let g) = el.geometry {
+                let run = rampRun(g)
+                ps.append(ro("run") { _ in fmt(run) })
+                ps.append(ro("rise") { _ in fmt(tan(g.slope * .pi / 180) * run) })
+            }
         case .column:
             ps += L(v("position", \ColumnGeom.position) + [d("width", \ColumnGeom.width, min: 1), d("depth", \ColumnGeom.depth, min: 1), d("height", \ColumnGeom.height, min: 1),
                     angle("rotation", \ColumnGeom.rotation), b("round", \ColumnGeom.round), d("baseOffset", \ColumnGeom.baseOffset)],
@@ -902,7 +959,9 @@ public enum PropertyAccess {
         case .opening:
             ps += L([ro("kind") { $0.kind.rawValue }, ro("hostWall") { "\($0.hostWall)" }, d("offset", \OpeningGeom.offset), d("width", \OpeningGeom.width, min: 1),
                      d("height", \OpeningGeom.height, min: 1), d("sill", \OpeningGeom.sill), b("flipHand", \OpeningGeom.flipHand), b("flipFacing", \OpeningGeom.flipFacing),
-                     e("doorStyle", \OpeningGeom.doorStyle), e("windowStyle", \OpeningGeom.windowStyle), d("frameWidth", \OpeningGeom.frameWidth, min: 0)],
+                     e("doorStyle", \OpeningGeom.doorStyle), e("windowStyle", \OpeningGeom.windowStyle), d("frameWidth", \OpeningGeom.frameWidth, min: 0),
+                     d("depth", \OpeningGeom.depth, min: 0), optS("typeName", \OpeningGeom.typeName), optS("mark", \OpeningGeom.mark),
+                     ro("isNiche") { $0.isNiche ? "true" : "false" }],
                     { if case .opening(let g) = $0 { return g }; return nil }, { .opening($0) })
         case .roof:
             ps += L([e("kind", \RoofGeom.kind), d("pitch", \RoofGeom.pitch), d("thickness", \RoofGeom.thickness, min: 1), d("overhang", \RoofGeom.overhang),
@@ -920,6 +979,7 @@ public enum PropertyAccess {
             ps.removeAll { $0.name == "name" }
             ps += [P(name: "name", get: { el in if case .space(let g) = el.geometry { return g.name }; return el.name }, set: { el, v in
                 if case .space(var g) = el.geometry { g.name = v; el.geometry = .space(g) }; el.name = v; return true })]
+            ps += [propNum("tagX", "tagX"), propNum("tagY", "tagY"), prop("areaScheme", "areaScheme")]
             ps += L([s("number", \SpaceGeom.number), d("height", \SpaceGeom.height, min: 1),
                      ro("area") { fmt(abs(GeometryOps.signedArea($0.boundary)), 2) }, ro("perimeter") { fmt(CommandHelpers.polylineLength($0.boundary + [$0.boundary.first ?? .zero]), 2) }],
                     { if case .space(let g) = $0 { return g }; return nil }, { .space($0) })
@@ -939,6 +999,14 @@ public enum PropertyAccess {
                     { if case .gridLine(let g) = $0 { return g }; return nil }, { .gridLine($0) })
         }
         return ps
+    }
+
+    /// Horizontal run of a ramp: the extent of its boundary along the slope direction.
+    static func rampRun(_ g: SlabGeom) -> Double {
+        let d = Vec2(cos(g.slopeDirection), sin(g.slopeDirection))
+        let ts = g.boundary.map { $0.dot(d) }
+        guard let lo = ts.min(), let hi = ts.max() else { return 0 }
+        return hi - lo
     }
 
     public static func propertyNames(of el: BIMElement) -> [String] { elementProps(el).map(\.name) }
@@ -1070,8 +1138,25 @@ public enum PropertyAccess {
         }
         if let i = doc.elementIndex(id) {
             var el = doc.elements[i]
+            let lname = name.lowercased()
+            if lname == "phasecreated" || lname == "phasedemolished" {
+                let v = value.trimmingCharacters(in: .whitespaces)
+                if !v.isEmpty && v.lowercased() != "none" {
+                    guard let idx = Phasing.phaseIndex(v, doc) else { return false }
+                    let created = lname == "phasecreated" ? idx : Phasing.phaseIndex(el.props["phaseCreated"], doc)
+                    let demolished = lname == "phasedemolished" ? idx : Phasing.phaseIndex(el.props["phaseDemolished"], doc)
+                    if let c = created, let d = demolished, d < c { return false }
+                    el.props[lname == "phasecreated" ? "phaseCreated" : "phaseDemolished"] = doc.phases[idx]
+                    doc.elements[i] = el; return true
+                }
+            }
+            if lname == "keynote", !value.isEmpty, value.lowercased() != "none", !doc.keynotes.isEmpty, doc.keynotes[value] == nil { return false }
             guard setProperty(&el, name, value) else { return false }
-            if name.lowercased() == "level", doc.level(el.level) == nil { return false }
+            if lname == "level", doc.level(el.level) == nil { return false }
+            if lname == "typename", case .opening(var o) = el.geometry, let t = o.typeName {
+                guard let ty = doc.openingType(t) else { return false }
+                ty.apply(to: &o); el.geometry = .opening(o)
+            }
             doc.ensureLayer(el.layer); doc.elements[i] = el; return true
         }
         return false

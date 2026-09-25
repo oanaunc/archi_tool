@@ -3,21 +3,32 @@ import Foundation
 
 public enum BuiltinCommands {
     public static func registerAll(_ r: CommandRegistry) {
-        r.register(DrawCommands.all)
-        r.register(ModifyCommands.all)
-        r.register(AnnotateCommands.all)
-        r.register(ArchitectureCommands.all)
-        r.register(InquiryCommands.all)
-        r.register(SettingsCommands.all)
-        r.register(BlockCommands.all)
-        r.register(FileViewCommands.all)
-        r.register(edit)
-        r.register(SelectionCommands.all)
-        r.register(DraftingToolCommands.all)
-        r.register(AnnotationToolCommands.all)
-        r.register(BlockToolCommands.all)
-        r.register(IOCommands.all)
-        r.register(AnalysisCommands.all)
+        r.register(allDefinitions)
+    }
+
+    /// Every built-in command in registration order (later entries would replace earlier ones with the same name).
+    public static var allDefinitions: [CommandDef] {
+        var out: [CommandDef] = []
+        out += DrawCommands.all
+        out += ModifyCommands.all
+        out += AnnotateCommands.all
+        out += ArchitectureCommands.all
+        out += InquiryCommands.all
+        out += SettingsCommands.all
+        out += BlockCommands.all
+        out += FileViewCommands.all
+        out += edit
+        out += SelectionCommands.all
+        out += DraftingToolCommands.all
+        out += AnnotationToolCommands.all
+        out += BlockToolCommands.all
+        out += IOCommands.all
+        out += AnalysisCommands.all
+        out += ConstraintCommands.all
+        out += DraftConstructionCommands.all
+        out += ModifyToolCommands.all
+        out += WorkflowCommands.all
+        return out
     }
 
     static var edit: [CommandDef] { [

@@ -20,9 +20,9 @@ public enum SystemVariables {
     /// Names with dedicated handling (others are stored in ArchiDocument.variables).
     public static let known = ["ORTHOMODE", "SNAPMODE", "GRIDMODE", "SNAPUNIT", "GRIDUNIT", "OSMODE", "POLARMODE", "AUTOSNAP", "POLARANG", "DYNMODE", "LWDISPLAY",
                                "TEXTSIZE", "FILLETRAD", "CHAMFERA", "OFFSETDIST", "CLAYER", "CECOLOR", "CELTYPE", "CELWEIGHT", "DIMSTYLE", "TEXTSTYLE", "LTSCALE",
-                               "WALLTHICKNESS", "WALLHEIGHT", "INSUNITS", "CLEVEL"]
+                               "WALLTHICKNESS", "WALLHEIGHT", "INSUNITS", "CLEVEL", "OTRACK"]
     /// Other commonly used variables registered as commands.
-    public static let stored = ["CANNOSCALE", "PICKSTYLE", "SELECTSIMILARMODE", "INSBASE", "CENTEREXE", "CHAMFERB", "DIMSCALE", "DIMDLI", "LUPREC", "PDMODE", "PDSIZE", "MIRRTEXT", "DELOBJ", "HPNAME", "HPSCALE", "HPANG", "PLINEWID", "TRIMMODE", "DIMLAYER", "TEXTLAYER"]
+    public static let stored = ["CANNOSCALE", "PICKSTYLE", "SELECTSIMILARMODE", "INSBASE", "CENTEREXE", "CHAMFERB", "DIMSCALE", "DIMDLI", "LUPREC", "PDMODE", "PDSIZE", "MIRRTEXT", "DELOBJ", "HPNAME", "HPSCALE", "HPANG", "PLINEWID", "TRIMMODE", "DIMLAYER", "TEXTLAYER", "CONSTRAINTINFER", "AUTOCONSTRAINDIST", "AUTOCONSTRAINANGLE"]
 
     static func flag(_ b: Bool) -> String { b ? "1" : "0" }
     static func parseFlag(_ s: String) -> Bool? {
@@ -39,6 +39,7 @@ public enum SystemVariables {
         case "OSMODE": return "\(osmode(s))"
         case "POLARMODE", "AUTOSNAP": return flag(s.polarTracking)
         case "POLARANG": return fmt(s.polarIncrement)
+        case "OTRACK": return flag(s.objectSnapTracking)
         case "DYNMODE": return flag(s.dynamicInput)
         case "LWDISPLAY": return flag(s.lineweightDisplay)
         case "TEXTSIZE": return fmt(s.textHeight)
@@ -76,6 +77,7 @@ public enum SystemVariables {
         case "GRIDMODE": return onOff { ed.settings.showGrid = $0 }
         case "POLARMODE", "AUTOSNAP": return onOff { ed.settings.polarTracking = $0 }
         case "DYNMODE": return onOff { ed.settings.dynamicInput = $0 }
+        case "OTRACK": return onOff { ed.settings.objectSnapTracking = $0; if !$0 { Snap.tracker.clear() } }
         case "LWDISPLAY": return onOff { ed.settings.lineweightDisplay = $0 }
         case "SNAPUNIT", "GRIDUNIT": return pos { ed.settings.gridSpacing = $0 }
         case "POLARANG": return pos { ed.settings.polarIncrement = $0 }

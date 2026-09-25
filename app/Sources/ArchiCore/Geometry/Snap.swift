@@ -6,8 +6,83 @@ public struct SnapResult: Equatable {
     public init(point: Vec2, kind: SnapKind, entity: EntityID?) { self.point = point; self.kind = kind; self.entity = entity }
 }
 
+/// Points and directions acquired for object snap tracking (OTRACK): hovering an object snap acquires its point,
+/// hovering a straight segment (with PAR on and a base point) acquires its direction for parallel snapping.
+public final class SnapTracker {
+    public private(set) var points: [Vec2] = []
+    public private(set) var directions: [Vec2] = []
+    /// Tracking vectors of the last successful tracking snap (for display: from → to).
+    public var lines: [(from: Vec2, to: Vec2)] = []
+    public var maxPoints = 7
+    /// Tracking runs only while a command asks for a point (set by the Editor).
+    public var active = false
+    public init() {}
+    public func acquire(_ p: Vec2) {
+        if let i = points.firstIndex(where: { $0.isClose(p, tol: 1e-9) }) { if i == points.count - 1 { return }; points.remove(at: i) }
+        points.append(p)
+        if points.count > maxPoints { points.removeFirst(points.count - maxPoints) }
+    }
+    public func acquireDirection(_ v: Vec2) {
+        let d = v.normalized
+        guard d != .zero else { return }
+        directions.removeAll { abs($0.cross(d)) < 1e-9 }
+        directions.append(d)
+        if directions.count > 3 { directions.removeFirst() }
+    }
+    public func clear() { points = []; directions = []; lines = [] }
+}
+
 /// Object snaps (OSNAP) and ortho/polar/grid constraints.
 public enum Snap {
+    /// Shared tracking state (the canvas has one cursor).
+    public static let tracker = SnapTracker()
+
+    /// Object snap tracking: aligns the cursor horizontally/vertically (or at polar angles when polar tracking is on) with acquired
+    /// points, at the intersection of two such paths, or parallel to an acquired direction from `base`.
+    /// Returns the tracked point, its kind (.extension for point tracking, .parallel) and the tracking vectors to display.
+    public static func track(cursor: Vec2, base: Vec2?, points: [Vec2], directions: [Vec2], settings: DraftSettings, tolerance: Double)
+        -> (point: Vec2, kind: SnapKind, lines: [(from: Vec2, to: Vec2)])? {
+        let tol = Swift.max(tolerance, 1e-12)
+        var angles: [Double] = [0, .pi / 2]
+        if settings.polarTracking && settings.polarIncrement > 1e-9 && !settings.ortho {
+            let inc = rad(settings.polarIncrement)
+            let n = Swift.min(Int((Double.pi / inc).rounded(.up)), 72)
+            angles = (0..<n).map { Double($0) * inc }.filter { $0 < .pi - 1e-9 }
+        }
+        struct Path { var origin: Vec2; var dir: Vec2; var kind: SnapKind; var fromBase: Bool }
+        var paths: [Path] = []
+        for p in points where !(base.map { $0.isClose(p, tol: 1e-9) } ?? false) {
+            for a in angles { paths.append(Path(origin: p, dir: Vec2.polar(1, a), kind: .extension, fromBase: false)) }
+        }
+        if let b = base {
+            for d in directions { paths.append(Path(origin: b, dir: d, kind: .parallel, fromBase: true)) }
+            for a in angles { paths.append(Path(origin: b, dir: Vec2.polar(1, a), kind: .extension, fromBase: true)) }
+        }
+        guard !paths.isEmpty else { return nil }
+        func foot(_ q: Path) -> Vec2 { q.origin + q.dir * (cursor - q.origin).dot(q.dir) }
+        let near = paths.filter { foot($0).distance(to: cursor) <= tol }
+        guard !near.isEmpty else { return nil }
+        // Two paths from different origins: their intersection.
+        var best: (Vec2, Double, Path, Path)?
+        for i in 0..<near.count {
+            for j in (i + 1)..<near.count {
+                let a = near[i], b = near[j]
+                guard !a.origin.isClose(b.origin, tol: 1e-9), abs(a.dir.cross(b.dir)) > 1e-9,
+                      let x = GeometryOps.lineIntersection(a.origin, a.origin + a.dir, b.origin, b.origin + b.dir) else { continue }
+                let d = x.distance(to: cursor)
+                if d <= tol * 2, d < (best?.1 ?? .infinity) { best = (x, d, a, b) }
+            }
+        }
+        if let (x, _, a, b) = best {
+            return (x, a.kind == .parallel || b.kind == .parallel ? .parallel : .extension, [(a.origin, x), (b.origin, x)])
+        }
+        // A single path; a plain polar path from the base is left to polar tracking.
+        let singles = near.filter { !$0.fromBase || $0.kind == .parallel }
+        guard let q = singles.min(by: { foot($0).distance(to: cursor) < foot($1).distance(to: cursor) }) else { return nil }
+        let f = foot(q)
+        return (f, q.kind, [(q.origin, f)])
+    }
+
     /// Lower tier wins; within a tier the closest point wins.
     static func tier(_ k: SnapKind) -> Int {
         switch k {
@@ -310,6 +385,23 @@ public enum Snap {
                     if t < 0 || t > 1 { c.offer(pc.point(t), .extension, id) }
                 }
             }
+        }
+        if settings.objectSnapTracking && tracker.active {
+            if let b = c.best, b.res.kind != .nearest, b.res.kind != .grid, b.res.kind != .extension {
+                tracker.acquire(b.res.point)
+            } else if modes.contains(.parallel), base != nil,
+                      let near = c.local.filter({ !$0.piece.isArc && !$0.piece.approx }).min(by: { $0.piece.closestPoint(cursor).distance(to: cursor) < $1.piece.closestPoint(cursor).distance(to: cursor) }),
+                      near.piece.closestPoint(cursor).distance(to: cursor) <= tol {
+                tracker.acquireDirection(near.piece.p1 - near.piece.p0)
+            }
+            if c.best == nil || c.best!.res.kind == .nearest {
+                if let t = track(cursor: cursor, base: base, points: tracker.points, directions: modes.contains(.parallel) ? tracker.directions : [],
+                                 settings: settings, tolerance: tol) {
+                    tracker.lines = t.lines
+                    return SnapResult(point: t.point, kind: t.kind, entity: nil)
+                }
+            }
+            tracker.lines = []
         }
         if settings.gridSnap && settings.gridSpacing > 0 {
             let g = settings.gridSpacing

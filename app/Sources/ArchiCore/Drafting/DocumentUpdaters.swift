@@ -7,6 +7,7 @@ public enum DocumentUpdaters {
     @discardableResult
     public static func run(_ doc: inout ArchiDocument) -> Bool {
         var changed = false
+        if Constraints.updateAll(&doc) { changed = true }
         if Fields.updateAll(&doc) { changed = true }
         if Annotative.updateAll(&doc) { changed = true }
         if TableFormulas.updateAll(&doc) { changed = true }

@@ -117,7 +117,46 @@ public struct DraftSettings: Codable, Hashable {
     public var offsetDistance = 100.0
     public var filletRadius = 0.0
     public var chamferDistance = 0.0
+    /// Object snap tracking (OTRACK, F11): alignment paths from acquired snap points.
+    public var objectSnapTracking = true
     public init() {}
+
+    private enum Keys: String, CodingKey {
+        case ortho, gridSnap, gridSpacing, showGrid, objectSnap, snapModes, polarTracking, polarIncrement, dynamicInput, lineweightDisplay
+        case textHeight, wallThickness, wallHeight, wallJustification, offsetDistance, filletRadius, chamferDistance, objectSnapTracking
+    }
+    /// Tolerant decoding: settings saved by older builds (missing keys) keep the defaults for the new fields.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Keys.self)
+        let d = DraftSettings()
+        ortho = try c.decodeIfPresent(Bool.self, forKey: .ortho) ?? d.ortho
+        gridSnap = try c.decodeIfPresent(Bool.self, forKey: .gridSnap) ?? d.gridSnap
+        gridSpacing = try c.decodeIfPresent(Double.self, forKey: .gridSpacing) ?? d.gridSpacing
+        showGrid = try c.decodeIfPresent(Bool.self, forKey: .showGrid) ?? d.showGrid
+        objectSnap = try c.decodeIfPresent(Bool.self, forKey: .objectSnap) ?? d.objectSnap
+        snapModes = (try? c.decodeIfPresent(Set<SnapKind>.self, forKey: .snapModes)) ?? d.snapModes
+        polarTracking = try c.decodeIfPresent(Bool.self, forKey: .polarTracking) ?? d.polarTracking
+        polarIncrement = try c.decodeIfPresent(Double.self, forKey: .polarIncrement) ?? d.polarIncrement
+        dynamicInput = try c.decodeIfPresent(Bool.self, forKey: .dynamicInput) ?? d.dynamicInput
+        lineweightDisplay = try c.decodeIfPresent(Bool.self, forKey: .lineweightDisplay) ?? d.lineweightDisplay
+        textHeight = try c.decodeIfPresent(Double.self, forKey: .textHeight) ?? d.textHeight
+        wallThickness = try c.decodeIfPresent(Double.self, forKey: .wallThickness) ?? d.wallThickness
+        wallHeight = try c.decodeIfPresent(Double.self, forKey: .wallHeight) ?? d.wallHeight
+        wallJustification = (try? c.decodeIfPresent(WallJustification.self, forKey: .wallJustification)) ?? d.wallJustification
+        offsetDistance = try c.decodeIfPresent(Double.self, forKey: .offsetDistance) ?? d.offsetDistance
+        filletRadius = try c.decodeIfPresent(Double.self, forKey: .filletRadius) ?? d.filletRadius
+        chamferDistance = try c.decodeIfPresent(Double.self, forKey: .chamferDistance) ?? d.chamferDistance
+        objectSnapTracking = try c.decodeIfPresent(Bool.self, forKey: .objectSnapTracking) ?? d.objectSnapTracking
+    }
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: Keys.self)
+        try c.encode(ortho, forKey: .ortho); try c.encode(gridSnap, forKey: .gridSnap); try c.encode(gridSpacing, forKey: .gridSpacing)
+        try c.encode(showGrid, forKey: .showGrid); try c.encode(objectSnap, forKey: .objectSnap); try c.encode(snapModes, forKey: .snapModes)
+        try c.encode(polarTracking, forKey: .polarTracking); try c.encode(polarIncrement, forKey: .polarIncrement); try c.encode(dynamicInput, forKey: .dynamicInput)
+        try c.encode(lineweightDisplay, forKey: .lineweightDisplay); try c.encode(textHeight, forKey: .textHeight); try c.encode(wallThickness, forKey: .wallThickness)
+        try c.encode(wallHeight, forKey: .wallHeight); try c.encode(wallJustification, forKey: .wallJustification); try c.encode(offsetDistance, forKey: .offsetDistance)
+        try c.encode(filletRadius, forKey: .filletRadius); try c.encode(chamferDistance, forKey: .chamferDistance); try c.encode(objectSnapTracking, forKey: .objectSnapTracking)
+    }
 }
 
 public enum SnapKind: String, Codable, CaseIterable, Hashable {
@@ -175,6 +214,8 @@ public final class Editor {
     /// Spaces separate successive inputs, like AutoCAD, except when a text string is requested.
     public func submit(_ line: String) {
         recorder?.lines.append(line)
+        actionRecorder?.lines.append(line)
+        recordHistory(line, atPrompt: activeCommand != nil)
         inSubmit = true
         defer { inSubmit = false }
         let trimmed = line.trimmingCharacters(in: .whitespaces)
@@ -268,6 +309,10 @@ public final class Editor {
             } catch {
                 self.print("Error: \(error)")
             }
+            if def.modifies && self.doc.variable("CONSTRAINTINFER") == "1" && (def.category == "Draw" || def.category == "Modify") {
+                let newIDs = Set(self.doc.entities.map(\.id)).subtracting(before.entities.map(\.id))
+                if !newIDs.isEmpty { ConstraintCommands.inferConstraints(self, newIDs: newIDs) }
+            }
             if def.modifies && self.doc != before {
                 var d = self.doc
                 if DocumentUpdaters.run(&d) { self.doc = d }
@@ -276,6 +321,8 @@ public final class Editor {
             }
             self.activeCommand = nil
             self.request = nil
+            Snap.tracker.active = false
+            Snap.tracker.clear()
             self.continuation = nil
             self.queuedInputs.removeAll()
             self.onPromptChange?()
@@ -327,10 +374,13 @@ public final class Editor {
     /// Feeds an input (from the UI: clicks, Enter, Escape; or parsed text).
     public func feed(_ input: CommandInput) {
         guard let c = continuation else { return }
-        if let rec = recorder, !inSubmit { rec.record(input, world: UCSFrame.current(doc).isWorld) }
+        if !inSubmit {
+            if let rec = recorder { rec.record(input, world: UCSFrame.current(doc).isWorld) }
+            if let rec = actionRecorder { rec.record(input, world: UCSFrame.current(doc).isWorld) }
+        }
         continuation = nil
         switch input {
-        case .point(let p): lastPoint = p
+        case .point(let p): lastPoint = p; Snap.tracker.clear()
         default: break
         }
         c.resume(returning: input)
@@ -356,6 +406,7 @@ public final class Editor {
 
     func askRaw(_ req: InputRequest) async -> CommandInput {
         request = req
+        Snap.tracker.active = req.kinds.contains(.point)
         onPromptChange?()
         if !queuedInputs.isEmpty {
             var t = queuedInputs.removeFirst()
@@ -591,6 +642,41 @@ public final class Editor {
     // MARK: Script recording, undo groups, transparent commands
     /// Active script recorder (SCRIPTRECORD); typed lines and UI inputs are captured as script lines.
     public var recorder: ScriptRecorder?
+    /// Action macro recorder (ACTRECORD … ACTSTOP).
+    public var actionRecorder: ScriptRecorder?
+    /// Background work started by a command (ACTPLAY, SCRIPT) that outlives it; awaitable by scripts and tests.
+    public var backgroundTask: Task<Void, Never>?
+    /// Command lines typed while no command was running (most recent last).
+    public private(set) var commandHistory: [String] = []
+    /// Values typed at prompts (recent input), most recent last.
+    public private(set) var recentInputs: [String] = []
+    /// When set, every command line is also appended to this file (persistent command history).
+    public static var historyFile: URL?
+    public static let historyLimit = 1000
+
+    func recordHistory(_ line: String, atPrompt: Bool) {
+        let t = line.trimmingCharacters(in: .whitespaces)
+        guard !t.isEmpty else { return }
+        if atPrompt {
+            recentInputs.removeAll { $0 == t }
+            recentInputs.append(t)
+            if recentInputs.count > 200 { recentInputs.removeFirst(recentInputs.count - 200) }
+            return
+        }
+        commandHistory.append(t)
+        if commandHistory.count > Editor.historyLimit { commandHistory.removeFirst(commandHistory.count - Editor.historyLimit) }
+        if let url = Editor.historyFile { CommandHistoryFile.append(t, to: url) }
+    }
+    /// Replaces the in-memory command history (e.g. loaded from the history file).
+    public func setCommandHistory(_ lines: [String]) { commandHistory = Array(lines.suffix(Editor.historyLimit)) }
+    public func clearHistory() { commandHistory = []; recentInputs = [] }
+    /// History entry `back` steps before the latest (1 = previous command line), optionally only those starting with a prefix.
+    public func historyEntry(back: Int, prefix: String = "") -> String? {
+        let h = prefix.isEmpty ? commandHistory : commandHistory.filter { $0.uppercased().hasPrefix(prefix.uppercased()) }
+        guard back >= 1, back <= h.count else { return nil }
+        return h[h.count - back]
+    }
+
     /// The last script recorded with SCRIPTRECORD when no file was given.
     public var lastRecordedScript: String?
     /// Objects removed by the last ERASE (restored by OOPS).
