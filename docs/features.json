@@ -407,12 +407,12 @@
   "area": "Application Shell & UI",
   "group": "Palettes & Panels",
   "name": "Navigator / overview map",
-  "command": "—",
+  "command": "NAVIGATOR",
   "description": "Mini-map of the full drawing with a draggable view rectangle.",
   "reference": "ArchiCAD, Vectorworks",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Navigator / overview map can be docked, floated, auto-hidden and restored."
  },
  {
@@ -472,12 +472,12 @@
   "area": "Application Shell & UI",
   "group": "Palettes & Panels",
   "name": "Selection info panel",
-  "command": "—",
+  "command": "SELECTIONINFO",
   "description": "Shows count and types of selected objects with filter shortcuts.",
   "reference": "Revit",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Selection info panel can be docked, floated, auto-hidden and restored."
  },
  {
@@ -485,12 +485,12 @@
   "area": "Application Shell & UI",
   "group": "Palettes & Panels",
   "name": "Notifications centre",
-  "command": "—",
+  "command": "NOTIFICATIONS",
   "description": "Non-modal list of warnings (e.g. overlapping walls, missing fonts) with zoom-to.",
   "reference": "Revit",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Warning entry zooms to the offending element when clicked."
  },
  {
@@ -771,12 +771,12 @@
   "area": "Application Shell & UI",
   "group": "Shortcuts & Help",
   "name": "What's new dialog",
-  "command": "—",
+  "command": "WHATSNEW",
   "description": "Release notes shown after update.",
   "reference": "Native (new)",
   "phase": 8,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "What's new dialog is documented in the in-app help and works on a fresh install."
  },
  {
@@ -1270,7 +1270,7 @@
   "reference": "AutoCAD",
   "phase": 8,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "System variable monitor is scriptable and persisted as specified."
  },
  {
@@ -1317,12 +1317,12 @@
   "area": "Command Line & Input",
   "group": "System Variables & Scripts",
   "name": "Macros in buttons",
-  "command": "—",
+  "command": "MACROBUTTON",
   "description": "Custom buttons with macro strings (^C^C_LINE;...).",
   "reference": "AutoCAD",
   "phase": 8,
   "priority": "could",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Macros in buttons is scriptable and persisted as specified."
  },
  {
@@ -2019,12 +2019,12 @@
   "area": "2D Drafting",
   "group": "Ellipses & Curves",
   "name": "Ellipse inscribed in quadrilateral",
-  "command": "—",
+  "command": "ELLIPSEQUAD",
   "description": "Ellipse tangent to four lines.",
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Ellipse inscribed in quadrilateral generates geometry that matches the analytic definition within 1e-9."
  },
  {
@@ -2115,7 +2115,7 @@
   "reference": "AutoCAD",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Helix generates geometry that matches the analytic definition within 1e-9."
  },
  {
@@ -2778,7 +2778,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Text to front works on mixed selections and is a single undo step."
  },
  {
@@ -2934,7 +2934,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Rotate 90° shortcut transforms geometry exactly and keeps associativity."
  },
  {
@@ -2947,7 +2947,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Rectangular array creates the right count and spacing and can be edited afterwards."
  },
  {
@@ -2960,7 +2960,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Polar array creates the right count and spacing and can be edited afterwards."
  },
  {
@@ -2973,7 +2973,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Path array creates the right count and spacing and can be edited afterwards."
  },
  {
@@ -2986,7 +2986,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Array edit creates the right count and spacing and can be edited afterwards."
  },
  {
@@ -2999,7 +2999,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Classic array dialog creates the right count and spacing and can be edited afterwards."
  },
  {
@@ -3194,7 +3194,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Explode text to letters/lines handles lines, arcs, circles, ellipses, polylines and splines."
  },
  {
@@ -3761,12 +3761,12 @@
   "area": "Selection & Grips",
   "group": "Filters",
   "name": "Select by property value",
-  "command": "—",
+  "command": "FILTER",
   "description": "Select objects whose property matches a value or expression.",
   "reference": "Revit, IfcOpenShell/Bonsai",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Select by property value returns the correct subset for a sample drawing."
  },
  {
@@ -4125,12 +4125,12 @@
   "area": "Precision & Coordinates",
   "group": "Object Snaps",
   "name": "Manual intersection snap",
-  "command": "—",
+  "command": "INTOF",
   "description": "Pick two entities to snap to their intersection.",
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Manual intersection snap snaps within the aperture and shows its marker glyph."
  },
  {
@@ -4138,12 +4138,12 @@
   "area": "Precision & Coordinates",
   "group": "Object Snaps",
   "name": "Manual middle snap",
-  "command": "—",
+  "command": "M2P",
   "description": "Snap to middle between two picked points.",
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Manual middle snap snaps within the aperture and shows its marker glyph."
  },
  {
@@ -4177,12 +4177,12 @@
   "area": "Precision & Coordinates",
   "group": "Object Snaps",
   "name": "Snap restriction (horizontal/vertical)",
-  "command": "—",
+  "command": "RH / RV",
   "description": "Restrict snapped point horizontally/vertically.",
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Snap restriction (horizontal/vertical) snaps within the aperture and shows its marker glyph."
  },
  {
@@ -4281,12 +4281,12 @@
   "area": "Precision & Coordinates",
   "group": "Tracking & Constraints",
   "name": "Relative zero",
-  "command": "—",
+  "command": "RELZERO",
   "description": "Set/lock the relative zero (last point) marker.",
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Relative zero produces exactly aligned input and shows tracking vectors."
  },
  {
@@ -4437,12 +4437,12 @@
   "area": "Precision & Coordinates",
   "group": "UCS & Workplanes",
   "name": "Measurement units conversion",
-  "command": "—",
+  "command": "UNITS",
   "description": "Change drawing units with scaling of content.",
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Measurement units conversion changes coordinate input and display consistently."
  },
  {
@@ -4671,12 +4671,12 @@
   "area": "Layers & Properties",
   "group": "Layers",
   "name": "Layer descriptions",
-  "command": "—",
+  "command": "LAYDESC",
   "description": "Description field per layer.",
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Layer descriptions is reflected in display, plotting and file round-trip."
  },
  {
@@ -4827,12 +4827,12 @@
   "area": "Layers & Properties",
   "group": "Colours & Transparency",
   "name": "Colour books",
-  "command": "—",
+  "command": "COLORBOOK",
   "description": "Named colour book palettes (RAL, NCS-like open palettes).",
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Colour books resolves ByLayer/ByBlock correctly."
  },
  {
@@ -4983,12 +4983,12 @@
   "area": "Annotation",
   "group": "Text",
   "name": "Bullets and numbering",
-  "command": "—",
+  "command": "TEXTLIST",
   "description": "Lists in multiline text.",
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Bullets and numbering renders identically on screen, PDF and DXF round-trip."
  },
  {
@@ -4996,12 +4996,12 @@
   "area": "Annotation",
   "group": "Text",
   "name": "Columns in mtext",
-  "command": "—",
+  "command": "MTEXTCOLUMNS",
   "description": "Static/dynamic columns.",
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Columns in mtext renders identically on screen, PDF and DXF round-trip."
  },
  {
@@ -5009,12 +5009,12 @@
   "area": "Annotation",
   "group": "Text",
   "name": "Stacked fractions",
-  "command": "—",
+  "command": "AUTOSTACK",
   "description": "1/2 stacked, diagonal and tolerance stacks.",
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Stacked fractions renders identically on screen, PDF and DXF round-trip."
  },
  {
@@ -5092,7 +5092,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Text background mask renders identically on screen, PDF and DXF round-trip."
  },
  {
@@ -5391,7 +5391,7 @@
   "reference": "AutoCAD",
   "phase": 8,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Inspection dimension measures the correct value, updates associatively and follows its style."
  },
  {
@@ -5425,12 +5425,12 @@
   "area": "Annotation",
   "group": "Dimensions",
   "name": "Alternate units",
-  "command": "—",
+  "command": "DIMALTUNITS",
   "description": "Dual units (mm [in]).",
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Alternate units measures the correct value, updates associatively and follows its style."
  },
  {
@@ -5438,12 +5438,12 @@
   "area": "Annotation",
   "group": "Dimensions",
   "name": "Tolerances in dimensions",
-  "command": "—",
+  "command": "DIMTOLERANCE",
   "description": "Symmetric, deviation, limits, basic.",
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Tolerances in dimensions measures the correct value, updates associatively and follows its style."
  },
  {
@@ -5763,12 +5763,12 @@
   "area": "Annotation",
   "group": "Hatching",
   "name": "Pattern library (ISO/ANSI/AR)",
-  "command": "—",
+  "command": "HATCH",
   "description": "Standard .pat patterns: ANSI31-38, AR-CONC, AR-SAND, INSUL, BRICK, EARTH...",
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Pattern library (ISO/ANSI/AR) fills the right area, updates with its boundary and prints correctly."
  },
  {
@@ -6283,12 +6283,12 @@
   "area": "Blocks & Content",
   "group": "Dynamic Blocks",
   "name": "Lookup tables",
-  "command": "—",
+  "command": "BTABLE",
   "description": "Named configurations mapping parameters.",
   "reference": "AutoCAD",
   "phase": 3,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Lookup tables changes geometry via parameters and keeps state when saved."
  },
  {
@@ -6301,7 +6301,7 @@
   "reference": "AutoCAD",
   "phase": 3,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Block properties table changes geometry via parameters and keeps state when saved."
  },
  {
@@ -6366,7 +6366,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Xref clip loads, displays and reloads the referenced file."
  },
  {
@@ -6964,7 +6964,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Raster export (PNG/JPEG/TIFF) produces output matching the preview."
  },
  {
@@ -7102,12 +7102,12 @@
   "area": "BIM Building Elements",
   "group": "Levels & Grids",
   "name": "Radial grids",
-  "command": "—",
+  "command": "RADIALGRID",
   "description": "Radial/angular grid systems.",
   "reference": "Revit, ArchiCAD",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Radial grids controls hosted elements and appears in all relevant views."
  },
  {
@@ -7115,12 +7115,12 @@
   "area": "BIM Building Elements",
   "group": "Levels & Grids",
   "name": "Grid system generator",
-  "command": "—",
+  "command": "GRIDSYSTEM",
   "description": "Create rectangular grid system with spacing lists (e.g. 3*6000).",
   "reference": "ArchiCAD, Allplan",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Grid system generator controls hosted elements and appears in all relevant views."
  },
  {
@@ -7336,12 +7336,12 @@
   "area": "BIM Building Elements",
   "group": "Walls",
   "name": "Split wall",
-  "command": "—",
+  "command": "SPLITWALL",
   "description": "Split walls at points or by levels.",
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Split wall generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -7349,12 +7349,12 @@
   "area": "BIM Building Elements",
   "group": "Walls",
   "name": "Wall flip",
-  "command": "—",
+  "command": "WALLFLIP",
   "description": "Flip interior/exterior orientation.",
   "reference": "Revit",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Wall flip generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -7518,12 +7518,12 @@
   "area": "BIM Building Elements",
   "group": "Openings: Doors & Windows",
   "name": "Door/window flip",
-  "command": "—",
+  "command": "OPENINGFLIP",
   "description": "Flip hand and facing.",
   "reference": "Revit",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Door/window flip cuts the host wall and shows correct plan symbol and 3D."
  },
  {
@@ -7778,12 +7778,12 @@
   "area": "BIM Building Elements",
   "group": "Roofs",
   "name": "Mansard, gambrel, dome, barrel roofs",
-  "command": "—",
+  "command": "ROOFSHAPE",
   "description": "Additional roof shapes.",
   "reference": "Revit, ArchiCAD",
   "phase": 3,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Mansard, gambrel, dome, barrel roofs generates the correct 3D shape and plan projection."
  },
  {
@@ -7986,12 +7986,12 @@
   "area": "BIM Building Elements",
   "group": "Stairs, Ramps & Railings",
   "name": "Escalators/elevators",
-  "command": "—",
+  "command": "ESCALATOR",
   "description": "Vertical transport components.",
   "reference": "Revit",
   "phase": 3,
   "priority": "could",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Escalators/elevators validates rise/going rules and renders in plan with cut line."
  },
  {
@@ -8264,7 +8264,7 @@
   "reference": "ArchiCAD, IfcOpenShell/Bonsai",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Zones computes boundary and area correctly and updates on wall changes."
  },
  {
@@ -8558,12 +8558,12 @@
   "area": "BIM Building Elements",
   "group": "Site & Topography",
   "name": "Geolocation",
-  "command": "—",
+  "command": "GEOLOCATION",
   "description": "Lat/long, elevation, time zone for project.",
   "reference": "Revit, IfcOpenShell/Bonsai",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Geolocation produces correct terrain and site geometry."
  },
  {
@@ -8688,12 +8688,12 @@
   "area": "BIM Building Elements",
   "group": "Phasing, Options & Worksets",
   "name": "Classification codes",
-  "command": "—",
+  "command": "CLASSIFY",
   "description": "Uniclass, OmniClass, Uniformat, NL-SfB assignment.",
   "reference": "IfcOpenShell/Bonsai, Revit",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Classification codes filters elements correctly in views and schedules."
  },
  {
@@ -8701,12 +8701,12 @@
   "area": "BIM Building Elements",
   "group": "Phasing, Options & Worksets",
   "name": "Property sets (Psets)",
-  "command": "—",
+  "command": "PSET",
   "description": "Custom property sets with IFC standard Psets.",
   "reference": "IfcOpenShell/Bonsai",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Property sets (Psets) filters elements correctly in views and schedules."
  },
  {
@@ -8714,12 +8714,12 @@
   "area": "BIM Building Elements",
   "group": "Phasing, Options & Worksets",
   "name": "Property set templates",
-  "command": "—",
+  "command": "PSET Template",
   "description": "Define custom Pset templates.",
   "reference": "IfcOpenShell/Bonsai",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Property set templates filters elements correctly in views and schedules."
  },
  {
@@ -8745,7 +8745,7 @@
   "reference": "Revit, FreeCAD",
   "phase": 3,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Family editor works in the family editor and flexes correctly when parameters change."
  },
  {
@@ -8766,12 +8766,12 @@
   "area": "Parametric Families",
   "group": "Family Editor",
   "name": "Reference planes and lines",
-  "command": "—",
+  "command": "FAMILY Ref",
   "description": "Named reference planes/lines driving geometry.",
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Reference planes and lines works in the family editor and flexes correctly when parameters change."
  },
  {
@@ -8784,7 +8784,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Solid forms in families works in the family editor and flexes correctly when parameters change."
  },
  {
@@ -8992,7 +8992,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Parameter types evaluates correctly and propagates to geometry and schedules."
  },
  {
@@ -9039,12 +9039,12 @@
   "area": "Parametric Families",
   "group": "Parameters & Formulas",
   "name": "Global parameters",
-  "command": "—",
+  "command": "GLOBALPARAM",
   "description": "Project-level parameters driving dimensions.",
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Global parameters evaluates correctly and propagates to geometry and schedules."
  },
  {
@@ -9156,12 +9156,12 @@
   "area": "Parametric Families",
   "group": "Parameters & Formulas",
   "name": "Purge unused families/types",
-  "command": "—",
+  "command": "FAMILY Purge",
   "description": "Remove unused family types.",
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Purge unused families/types evaluates correctly and propagates to geometry and schedules."
  },
  {
@@ -9169,12 +9169,12 @@
   "area": "Parametric Families",
   "group": "Parameters & Formulas",
   "name": "Family types table editor",
-  "command": "—",
+  "command": "FAMILYPANEL",
   "description": "Spreadsheet-like type editor.",
   "reference": "Revit, Allplan",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Family types table editor evaluates correctly and propagates to geometry and schedules."
  },
  {
@@ -9221,12 +9221,12 @@
   "area": "Documentation & Views",
   "group": "Views",
   "name": "View range",
-  "command": "—",
+  "command": "VIEWRANGE",
   "description": "Top, cut plane, bottom, view depth settings.",
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "View range is generated from the model and updates live when the model changes."
  },
  {
@@ -9525,7 +9525,7 @@
   "reference": "Revit",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Temporary hide/isolate (BIM) changes only the targeted view's graphics."
  },
  {
@@ -9538,7 +9538,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Reveal hidden elements changes only the targeted view's graphics."
  },
  {
@@ -9559,12 +9559,12 @@
   "area": "Documentation & Views",
   "group": "Visibility & Graphics",
   "name": "Halftone/underlay levels",
-  "command": "—",
+  "command": "UNDERLAY",
   "description": "Show another level as underlay.",
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Halftone/underlay levels changes only the targeted view's graphics."
  },
  {
@@ -9993,7 +9993,7 @@
   "reference": "AutoCAD, FreeCAD",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Wedge creates a closed, watertight solid with the specified dimensions."
  },
  {
@@ -10006,7 +10006,7 @@
   "reference": "AutoCAD, FreeCAD",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Torus creates a closed, watertight solid with the specified dimensions."
  },
  {
@@ -10019,7 +10019,7 @@
   "reference": "AutoCAD",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Pyramid creates a closed, watertight solid with the specified dimensions."
  },
  {
@@ -10032,7 +10032,7 @@
   "reference": "AutoCAD",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Polysolid creates a closed, watertight solid with the specified dimensions."
  },
  {
@@ -10040,12 +10040,12 @@
   "area": "3D Modelling",
   "group": "Primitives",
   "name": "Prism/tube",
-  "command": "—",
+  "command": "PRISM",
   "description": "Regular prism and tube primitives.",
   "reference": "FreeCAD",
   "phase": 4,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Prism/tube creates a closed, watertight solid with the specified dimensions."
  },
  {
@@ -10079,12 +10079,12 @@
   "area": "3D Modelling",
   "group": "Primitives",
   "name": "Polyhedron",
-  "command": "—",
+  "command": "POLYHEDRON",
   "description": "Solid from points and faces.",
   "reference": "OpenSCAD",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Polyhedron creates a closed, watertight solid with the specified dimensions."
  },
  {
@@ -10136,7 +10136,7 @@
   "reference": "AutoCAD, FreeCAD, Sverchok",
   "phase": 4,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Loft regenerates when the source sketch changes."
  },
  {
@@ -10162,7 +10162,7 @@
   "reference": "FreeCAD, Sverchok",
   "phase": 4,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Pipe regenerates when the source sketch changes."
  },
  {
@@ -10409,7 +10409,7 @@
   "reference": "AutoCAD",
   "phase": 4,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Section plane produces a valid manifold solid."
  },
  {
@@ -10422,7 +10422,7 @@
   "reference": "AutoCAD, FreeCAD",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Thicken produces a valid manifold solid."
  },
  {
@@ -10461,7 +10461,7 @@
   "reference": "AutoCAD",
   "phase": 4,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Separate/clean solids produces a valid manifold solid."
  },
  {
@@ -10495,12 +10495,12 @@
   "area": "3D Modelling",
   "group": "Solid Editing & Booleans",
   "name": "Hull",
-  "command": "—",
+  "command": "HULL",
   "description": "Convex hull of objects.",
   "reference": "OpenSCAD",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Hull produces a valid manifold solid."
  },
  {
@@ -10578,7 +10578,7 @@
   "reference": "AutoCAD",
   "phase": 4,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Gizmos (move/rotate/scale) produces a valid manifold solid."
  },
  {
@@ -10612,12 +10612,12 @@
   "area": "3D Modelling",
   "group": "Solid Editing & Booleans",
   "name": "Validate shapes",
-  "command": "—",
+  "command": "SOLIDCHECK",
   "description": "Check geometry for errors.",
   "reference": "FreeCAD, Sverchok",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Validate shapes produces a valid manifold solid."
  },
  {
@@ -10630,7 +10630,7 @@
   "reference": "AutoCAD",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Mesh primitives results in a valid mesh (no non-manifold edges unless allowed)."
  },
  {
@@ -10651,12 +10651,12 @@
   "area": "3D Modelling",
   "group": "Mesh Modelling",
   "name": "Mesh from solids and back",
-  "command": "—",
+  "command": "CONVTOMESH / CONVTOSOLID",
   "description": "Convert solids↔meshes.",
   "reference": "FreeCAD",
   "phase": 4,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Mesh from solids and back results in a valid mesh (no non-manifold edges unless allowed)."
  },
  {
@@ -10760,7 +10760,7 @@
   "reference": "AutoCAD, FreeCAD",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Planar surface matches continuity requirements (G0/G1/G2) where specified."
  },
  {
@@ -11093,12 +11093,12 @@
   "area": "3D Modelling",
   "group": "CSG Scripting",
   "name": "Linear/rotate extrude",
-  "command": "—",
+  "command": "LINEAREXTRUDE",
   "description": "linear_extrude with twist/scale and rotate_extrude.",
   "reference": "OpenSCAD",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Linear/rotate extrude produces the same geometry as the reference implementation for sample scripts."
  },
  {
@@ -11293,7 +11293,7 @@
   "reference": "SketchUp",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Scale tool with gizmo can be converted into BIM elements."
  },
  {
@@ -11587,12 +11587,12 @@
   "area": "Visualization & Rendering",
   "group": "3D Navigation",
   "name": "Field of view control",
-  "command": "—",
+  "command": "FOV",
   "description": "Adjust FOV / focal length.",
   "reference": "SketchUp",
   "phase": 5,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Field of view control is smooth and predictable on trackpad and mouse."
  },
  {
@@ -11795,12 +11795,12 @@
   "area": "Visualization & Rendering",
   "group": "Visual Styles",
   "name": "Explode/isolate by level in 3D",
-  "command": "—",
+  "command": "LEVELVIEW3D",
   "description": "Show only selected levels in 3D.",
   "reference": "Native (new)",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Explode/isolate by level in 3D renders consistently in viewport and exports."
  },
  {
@@ -12445,12 +12445,12 @@
   "area": "Visualization & Rendering",
   "group": "Entourage & Immersive",
   "name": "Image export of viewport",
-  "command": "—",
+  "command": "VIEWIMAGE",
   "description": "Snapshot of viewport with transparent background option.",
   "reference": "SketchUp",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Image export of viewport is placed and shown in viewport and renders."
  },
  {
@@ -12601,12 +12601,12 @@
   "area": "Interoperability",
   "group": "CAD Exchange",
   "name": "DWF/DWFx import",
-  "command": "—",
+  "command": "DWFIMPORT",
   "description": "Underlay DWF files.",
   "reference": "AutoCAD",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "DWF/DWFx import imports the sample file set with no missing entities."
  },
  {
@@ -12619,7 +12619,7 @@
   "reference": "AutoCAD",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "DGN import/export imports the sample file set with no missing entities."
  },
  {
@@ -12632,7 +12632,7 @@
   "reference": "AutoCAD",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "PDF import (vector) imports the sample file set with no missing entities."
  },
  {
@@ -12692,12 +12692,12 @@
   "area": "Interoperability",
   "group": "CAD Exchange",
   "name": "CNC/laser export (MakerCAM SVG)",
-  "command": "—",
+  "command": "LASEREXPORT",
   "description": "Export for laser/CNC.",
   "reference": "LibreCAD",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "CNC/laser export (MakerCAM SVG) imports the sample file set with no missing entities."
  },
  {
@@ -12723,7 +12723,7 @@
   "reference": "IfcOpenShell/Bonsai, Revit",
   "phase": 6,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "IFC2x3 export passes buildingSMART validation for sample models."
  },
  {
@@ -12757,7 +12757,7 @@
   "area": "Interoperability",
   "group": "BIM Exchange",
   "name": "IFC export mappings",
-  "command": "—",
+  "command": "IFCMAP",
   "description": "Map categories/properties to IFC classes/Psets.",
   "reference": "IfcOpenShell/Bonsai, Revit",
   "phase": 6,
@@ -12944,7 +12944,7 @@
   "reference": "Native (new)",
   "phase": 6,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "USD import exports correct scale, units and materials."
  },
  {
@@ -12957,7 +12957,7 @@
   "reference": "Twinmotion",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "FBX import/export exports correct scale, units and materials."
  },
  {
@@ -12983,7 +12983,7 @@
   "reference": "FreeCAD",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "IGES import/export exports correct scale, units and materials."
  },
  {
@@ -13087,7 +13087,7 @@
   "reference": "Revit",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "LAS/LAZ import displays up to 100M points smoothly."
  },
  {
@@ -13108,12 +13108,12 @@
   "area": "Interoperability",
   "group": "Point Clouds & Survey",
   "name": "Point cloud display and clipping",
-  "command": "—",
+  "command": "POINTCLOUDVIEW",
   "description": "Octree LOD display, clipping with section box.",
   "reference": "Revit",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Point cloud display and clipping displays up to 100M points smoothly."
  },
  {
@@ -13121,12 +13121,12 @@
   "area": "Interoperability",
   "group": "Point Clouds & Survey",
   "name": "Snapping to point clouds",
-  "command": "—",
+  "command": "PCPLANE",
   "description": "Snap to points and fitted planes.",
   "reference": "Revit",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Snapping to point clouds displays up to 100M points smoothly."
  },
  {
@@ -13134,12 +13134,12 @@
   "area": "Interoperability",
   "group": "Point Clouds & Survey",
   "name": "Plane/wall fitting from scans",
-  "command": "—",
+  "command": "SCANTOBIM",
   "description": "Detect planes and create walls/floors.",
   "reference": "Native (new)",
   "phase": 8,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Plane/wall fitting from scans displays up to 100M points smoothly."
  },
  {
@@ -13524,12 +13524,12 @@
   "area": "Analysis",
   "group": "Quantities & Cost",
   "name": "Construction sequencing (4D)",
-  "command": "—",
+  "command": "WORKSCHEDULE",
   "description": "Work schedules, tasks, Gantt (IfcWorkSchedule).",
   "reference": "IfcOpenShell/Bonsai",
   "phase": 7,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Construction sequencing (4D) matches manual takeoff within 1%."
  },
  {
@@ -13542,7 +13542,7 @@
   "reference": "IfcOpenShell/Bonsai",
   "phase": 7,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Resource planning matches manual takeoff within 1%."
  },
  {
@@ -13615,12 +13615,12 @@
   "area": "Analysis",
   "group": "Environmental",
   "name": "Energy simulation (EnergyPlus)",
-  "command": "—",
+  "command": "ENERGYPLUS",
   "description": "Run EnergyPlus (open) on the model.",
   "reference": "Native (new)",
   "phase": 7,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Energy simulation (EnergyPlus) produces results consistent with a validated reference tool."
  },
  {
@@ -13641,12 +13641,12 @@
   "area": "Analysis",
   "group": "Environmental",
   "name": "Thermal bridges hint",
-  "command": "—",
+  "command": "THERMALBRIDGES",
   "description": "Detect geometric thermal bridges.",
   "reference": "Native (new)",
   "phase": 7,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Thermal bridges hint produces results consistent with a validated reference tool."
  },
  {
@@ -13719,12 +13719,12 @@
   "area": "Analysis",
   "group": "Structural",
   "name": "Loads and boundary conditions",
-  "command": "—",
+  "command": "STRUCTLOAD / STRUCTSUPPORT",
   "description": "Point/line/area loads, supports.",
   "reference": "Revit, IfcOpenShell/Bonsai",
   "phase": 7,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Loads and boundary conditions exports an analytical model a solver accepts."
  },
  {
@@ -13901,12 +13901,12 @@
   "area": "Collaboration & Versioning",
   "group": "Versions & Compare",
   "name": "Git-backed projects",
-  "command": "—",
+  "command": "GITVERSION",
   "description": "Git-friendly text format and IfcGit-style versioning.",
   "reference": "IfcOpenShell/Bonsai",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Git-backed projects identifies every change in test pairs."
  },
  {
@@ -13953,12 +13953,12 @@
   "area": "Collaboration & Versioning",
   "group": "Markups & Issues",
   "name": "Markup import from PDF",
-  "command": "—",
+  "command": "PDFMARKUPS",
   "description": "Import PDF annotations as markups.",
   "reference": "AutoCAD",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Markup import from PDF links to the correct view and elements."
  },
  {
@@ -14010,7 +14010,7 @@
   "reference": "AutoCAD",
   "phase": 6,
   "priority": "could",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Trace/overlay review links to the correct view and elements."
  },
  {
@@ -14031,12 +14031,12 @@
   "area": "Collaboration & Versioning",
   "group": "Sharing & Teamwork",
   "name": "Share read-only view links",
-  "command": "—",
+  "command": "SHAREVIEW",
   "description": "Share viewer export.",
   "reference": "Native (new)",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Share read-only view links works without data loss between two users."
  },
  {
@@ -14049,7 +14049,7 @@
   "reference": "Revit",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Element borrowing/locking works without data loss between two users."
  },
  {
@@ -14070,12 +14070,12 @@
   "area": "Collaboration & Versioning",
   "group": "Sharing & Teamwork",
   "name": "Central/local model",
-  "command": "—",
+  "command": "CENTRAL",
   "description": "Central file with sync-with-central.",
   "reference": "Revit",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Central/local model works without data loss between two users."
  },
  {
@@ -14192,7 +14192,7 @@
   "reference": "FreeCAD, IfcOpenShell/Bonsai",
   "phase": 8,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Python bridge runs sample scripts and the API is documented."
  },
  {
@@ -14200,12 +14200,12 @@
   "area": "Scripting, Automation & AI",
   "group": "Scripting",
   "name": "AutoLISP compatibility subset",
-  "command": "—",
+  "command": "LISP",
   "description": "Run common .lsp routines (subset interpreter).",
   "reference": "AutoCAD",
   "phase": 8,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "AutoLISP compatibility subset runs sample scripts and the API is documented."
  },
  {
@@ -14218,7 +14218,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Custom commands from scripts runs sample scripts and the API is documented."
  },
  {
@@ -14231,7 +14231,7 @@
   "reference": "AutoCAD",
   "phase": 8,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Event hooks runs sample scripts and the API is documented."
  },
  {
@@ -14244,7 +14244,7 @@
   "reference": "FreeCAD",
   "phase": 8,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Script-defined UI panels runs sample scripts and the API is documented."
  },
  {
@@ -14400,7 +14400,7 @@
   "reference": "AutoCAD",
   "phase": 8,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Plugin SDK is covered by integration tests."
  },
  {
@@ -14439,7 +14439,7 @@
   "reference": "Native (new)",
   "phase": 8,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Webhooks/automation triggers is covered by integration tests."
  },
  {
@@ -14473,12 +14473,12 @@
   "area": "Scripting, Automation & AI",
   "group": "AI Assistant",
   "name": "Natural-language commands",
-  "command": "—",
+  "command": "ASK",
   "description": "Type \"draw a 4 m wall north of grid A\" to run commands.",
   "reference": "Native (new)",
   "phase": 8,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Natural-language commands produces valid, undoable edits and asks for confirmation for bulk changes."
  },
  {
@@ -14499,12 +14499,12 @@
   "area": "Scripting, Automation & AI",
   "group": "AI Assistant",
   "name": "Plan generation from brief",
-  "command": "—",
+  "command": "PLANGEN",
   "description": "Generate floor plan options from room programme.",
   "reference": "Native (new)",
   "phase": 8,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Plan generation from brief produces valid, undoable edits and asks for confirmation for bulk changes."
  },
  {
@@ -14512,12 +14512,12 @@
   "area": "Scripting, Automation & AI",
   "group": "AI Assistant",
   "name": "Auto-dimensioning",
-  "command": "—",
+  "command": "AUTODIMPLAN",
   "description": "Automatically dimension plans.",
   "reference": "Native (new)",
   "phase": 8,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Auto-dimensioning produces valid, undoable edits and asks for confirmation for bulk changes."
  },
  {
@@ -14525,12 +14525,12 @@
   "area": "Scripting, Automation & AI",
   "group": "AI Assistant",
   "name": "Auto-tagging and room naming",
-  "command": "—",
+  "command": "AUTONAMEROOMS",
   "description": "AI naming of rooms and tagging.",
   "reference": "Native (new)",
   "phase": 8,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Auto-tagging and room naming produces valid, undoable edits and asks for confirmation for bulk changes."
  },
  {
@@ -14564,12 +14564,12 @@
   "area": "Scripting, Automation & AI",
   "group": "AI Assistant",
   "name": "Model QA assistant",
-  "command": "—",
+  "command": "QAASSIST",
   "description": "Explain warnings and suggest fixes.",
   "reference": "Native (new)",
   "phase": 8,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Model QA assistant produces valid, undoable edits and asks for confirmation for bulk changes."
  },
  {
@@ -14790,7 +14790,7 @@
   "reference": "Native (new)",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Spatial index meets the stated benchmark on an M1 Mac."
  },
  {
@@ -14855,7 +14855,7 @@
   "reference": "Native (new)",
   "phase": 3,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Fast open meets the stated benchmark on an M1 Mac."
  },
  {
