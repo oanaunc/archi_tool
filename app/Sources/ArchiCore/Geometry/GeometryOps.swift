@@ -25,7 +25,7 @@ public enum GeometryOps {
         let mid = (a + b) / 2
         let h = r * cos(abs(sweep) / 2) // distance from chord midpoint to center
         let n = (b - a).normalized.perp
-        let center = mid + n * (bulge > 0 ? h : -h) * (abs(sweep) > .pi ? -1 : 1)
+        let center = mid + n * (bulge > 0 ? h : -h) // h < 0 when |sweep| > π
         let start = (a - center).angle
         return (center, abs(r), start, sweep)
     }

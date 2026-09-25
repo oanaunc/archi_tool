@@ -41,7 +41,7 @@ enum FileViewCommands {
             host(ed, .saveAs(path))
         },
         CommandDef("EXPORT", aliases: ["EXP"], category: "File", summary: "Exports the drawing (PDF, DXF, SVG, OBJ, STL, GLB, IFC, CSV, PNG).", modifies: false) { ed in
-            let f = try await ed.getKeyword("Enter format", ["PDF", "DXF", "SVG", "OBJ", "STL", "GLB", "IFC", "CSV", "PNG"], defaultValue: ed.doc.variable("EXPORTFORMAT") ?? "PDF") ?? "PDF"
+            let f = try await ed.getKeyword("Enter format", ["PDF", "DXF", "SVG", "OBJ", "STL", "GLB", "IFC", "CSV", "PNG", "Window"], defaultValue: ed.doc.variable("EXPORTFORMAT") ?? "PDF") ?? "PDF"
             let path = try await ed.getWord("Enter file name (Enter = choose)")
             host(ed, .export(format: f.lowercased(), path: path))
         },

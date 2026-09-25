@@ -423,6 +423,24 @@ final class Viewport3DController: NSObject, ObservableObject {
             if !positioned && !builder.bounds.isEmpty { positioned = true; setView("Iso", animated: false) }
         }
         builder.applySelection(model.editor.selection)
+        // Camera requests from the ribbon, menus and command line.
+        if let action = model.pendingHostAction {
+            switch action {
+            case .setView(let v) where v != "zoomPrevious":
+                model.pendingHostAction = nil
+                if isWalking { toggleWalk() }
+                if v.lowercased() == "ortho" || v.lowercased() == "perspective" {
+                    if (v.lowercased() == "ortho") != isOrtho { toggleProjection() }
+                } else { setView(v) }
+            case .zoomExtents:
+                model.pendingHostAction = nil; zoomExtents()
+            case .walkthrough:
+                model.pendingHostAction = nil
+                if !isWalking { toggleWalk() }
+            default: break
+            }
+        }
+        if !model.walkMode && isWalking && model.pendingHostAction == nil { }
     }
 
     private func applyCameraEffects(_ style: String) {

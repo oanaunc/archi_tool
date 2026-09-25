@@ -10,6 +10,11 @@ run_action() {
     notary-profiles)
       for kc in $(security list-keychains | tr -d '"'); do security dump-keychain "$kc" 2>/dev/null; done | grep -i -o 'notary[^"]*' | sort -u
       grep -a -h -o 'keychain-profile[ =][^ ;]*' ~/.zsh_history ~/.bash_history 2>/dev/null | sort -u ;;
+    notary-try)
+      for n in notary notarytool NOTARY AC_PASSWORD AC_NOTARY oanarina Oanarina oanarina-notary photo-editor notarize notarization developer DeveloperID default archi; do
+        if xcrun notarytool history --keychain-profile "$n" >/dev/null 2>&1; then echo "FOUND: $n"; fi
+      done; echo done ;;
+    icon)          cd "$ROOT" && swift scripts/make-icon.swift "$ROOT" && iconutil -c icns build/AppIcon.iconset -o app/Resources/AppIcon.icns && ls -la app/Resources ;;
     toolchain)     sw_vers; xcodebuild -version; swift --version ;;
     open-app)      open "$ROOT/build/Oanarina Archi Tool.app" ;;
     quit-app)      osascript -e 'quit app "Oanarina Archi Tool"' ;;

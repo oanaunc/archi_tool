@@ -174,6 +174,7 @@ final class AppModel: ObservableObject {
     func zoomExtents() {
         zoomExtentsRequest &+= 1
         canvas?.zoomExtents()
+        if mode == .model || mode == .split { pendingHostAction = .zoomExtents; revision &+= 1 }
     }
 
     // MARK: Selection helpers

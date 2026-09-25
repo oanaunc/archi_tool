@@ -768,8 +768,14 @@ final class PlanCanvasView: NSView {
         zoom(toRect: b, margin: 0.06)
     }
 
+    private var zoomHistory: [(CGPoint, CGFloat)] = []
+    func zoomPrevious() {
+        guard let (c, sc) = zoomHistory.popLast() else { model?.editor.print("No previous view."); return }
+        center = c; scale = sc; viewChanged()
+    }
     func zoom(toRect b: CGRect, margin: CGFloat = 0.02) {
         guard bounds.width > 1, bounds.height > 1 else { return }
+        zoomHistory.append((center, scale)); if zoomHistory.count > 50 { zoomHistory.removeFirst() }
         let w = max(b.width, 1e-6), h = max(b.height, 1e-6)
         scale = min(bounds.width * (1 - 2 * margin) / w, bounds.height * (1 - 2 * margin) / h)
         center = CGPoint(x: b.midX, y: b.midY)

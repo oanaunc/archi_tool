@@ -1,5 +1,6 @@
 // Oanarina Archi Tool — GPL-3.0-or-later
 import AppKit
+import SceneKit
 import SwiftUI
 import UniformTypeIdentifiers
 import ArchiCore
@@ -136,6 +137,8 @@ final class FileController: EditorHost {
             model.viewStyle = s
             model.pendingHostAction = action
             model.revision &+= 1
+        case .setView("zoomPrevious"):
+            model.canvas?.zoomPrevious()
         case .setView(let v):
             model.viewDirection = v
             if model.mode == .plan && v.lowercased() != "top" && v.lowercased() != "plan" { model.mode = .model }
@@ -165,6 +168,11 @@ final class FileController: EditorHost {
     // MARK: Alerts
 
     func message(_ text: String) {
+        switch text {
+        case "quit": NSApp.terminate(nil); return
+        case "close": model?.window?.performClose(nil); return
+        default: break
+        }
         let a = NSAlert()
         a.messageText = "Oanarina Archi Tool"
         a.informativeText = text
@@ -359,6 +367,28 @@ final class FileController: EditorHost {
         return p.url
     }
 
+    /// Renders the whole window (including the 3D viewport) to a PNG — used for documentation and the website.
+    func snapshotWindow(to url: URL) throws {
+        guard let view = model?.window?.contentView?.superview ?? model?.window?.contentView else { throw ExportError(errorDescription: "No window.") }
+        guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { throw ExportError(errorDescription: "Cannot capture the window.") }
+        view.cacheDisplay(in: view.bounds, to: rep)
+        let img = NSImage(size: view.bounds.size)
+        img.addRepresentation(rep)
+        // SceneKit views are Metal-backed and are not captured by cacheDisplay: draw their snapshots on top.
+        func scnViews(_ v: NSView) -> [SCNView] { (v as? SCNView).map { [$0] } ?? v.subviews.flatMap(scnViews) }
+        let final = NSImage(size: view.bounds.size, flipped: false) { _ in
+            img.draw(in: view.bounds)
+            for sv in scnViews(view) where !sv.isHiddenOrHasHiddenAncestor {
+                let r = sv.convert(sv.bounds, to: view)
+                sv.snapshot().draw(in: r)
+            }
+            return true
+        }
+        guard let tiff = final.tiffRepresentation, let bmp = NSBitmapImageRep(data: tiff),
+              let png = bmp.representation(using: .png, properties: [:]) else { throw ExportError(errorDescription: "Cannot encode PNG.") }
+        try png.write(to: url, options: .atomic)
+    }
+
     func export(format: String, path: String?) {
         guard let model else { return }
         var f = format.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: ". "))
@@ -367,6 +397,11 @@ final class FileController: EditorHost {
             let rest = f.dropFirst(3).trimmingCharacters(in: CharacterSet(charactersIn: ":-_ "))
             if !rest.isEmpty { kind = rest }
             f = "csv"
+        }
+        if f == "window" || f == "screenshot" {
+            let url = URL(fileURLWithPath: path ?? (NSHomeDirectory() + "/Desktop/Archi Tool window.png"))
+            do { try snapshotWindow(to: url); model.editor.print("Window image saved to \(url.path)") } catch { showError(error) }
+            return
         }
         if f == "gltf" { f = "glb" }
         if f == "jpeg" || f == "jpg" { f = "png" }
