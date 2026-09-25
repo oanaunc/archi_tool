@@ -67,7 +67,12 @@ public struct MeshGroup: Hashable {
 /// Ear-clipping triangulation of a simple polygon with optional holes (holes are bridged into the outer loop).
 public enum Triangulator {
     public static func triangulate(_ outer: [Vec2], holes: [[Vec2]]) -> [(Int, Int, Int)] {
-        guard outer.count >= 3 else { return [] }
+        triangulateWithPoints(outer, holes: holes).triangles
+    }
+
+    /// Triangulates and returns the combined point list the indices refer to (outer followed by the holes in bridging order).
+    public static func triangulateWithPoints(_ outer: [Vec2], holes: [[Vec2]]) -> (points: [Vec2], triangles: [(Int, Int, Int)]) {
+        guard outer.count >= 3 else { return (outer, []) }
         var idx: [Int] = GeometryOps.signedArea(outer) < 0 ? Array((0..<outer.count).reversed()) : Array(0..<outer.count)
         var all = outer
         // Bridge holes: connect each hole's rightmost vertex to the closest outer vertex.
@@ -88,7 +93,7 @@ public enum Triangulator {
             bridge.append(idx[bestK])
             idx.insert(contentsOf: bridge, at: bestK + 1)
         }
-        return earClip(all, idx)
+        return (all, earClip(all, idx))
     }
 
     static func visible(_ pts: [Vec2], _ idx: [Int], from a: Vec2, to b: Vec2) -> Bool {
