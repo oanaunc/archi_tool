@@ -4,7 +4,7 @@ import Foundation
 /// Shared helpers for 3D exchange formats. Meshes are in millimetres, Z up.
 enum MeshExport {
     /// Model (mm, Z-up) → exchange space (m, Y-up).
-    static func yUp(_ p: Vec3) -> Vec3 { Vec3(p.x / 1000, p.z / 1000, -p.y / 1000) }
+    static func yUp(_ p: Vec3, unitMM: Double = 1) -> Vec3 { let k = unitMM / 1000; return Vec3(p.x * k, p.z * k, -p.y * k) }
     static func yUpNormal(_ n: Vec3) -> Vec3 { Vec3(n.x, n.z, -n.y) }
 
     static func safeName(_ s: String) -> String {
@@ -48,6 +48,11 @@ public enum OBJExporter {
     }
 
     public static func export(_ groups: [MeshGroup], materials: [Material], mtlFileName: String?) -> (obj: String, mtl: String) {
+        export(groups, materials: materials, mtlFileName: mtlFileName, unitMM: 1)
+    }
+
+    /// `unitMM`: millimetres per drawing unit of the mesh positions (MeshBuilder works in drawing units).
+    public static func export(_ groups: [MeshGroup], materials: [Material], mtlFileName: String?, unitMM: Double) -> (obj: String, mtl: String) {
         var obj = "# Oanarina Archi Tool OBJ export (units: metres, Y up)\n"
         if let m = mtlFileName { obj += "mtllib \(m)\n" }
         var used: [String] = []
@@ -60,7 +65,7 @@ public enum OBJExporter {
             let hasN = m.normals.count == m.positions.count
             let hasT = m.uvs.count == m.positions.count
             obj += "o \(MeshExport.groupName(g, index: gi))\ng \(MeshExport.safeName(g.kind))\n"
-            for p in m.positions { let q = MeshExport.yUp(p); obj += "v \(f(q.x)) \(f(q.y)) \(f(q.z))\n" }
+            for p in m.positions { let q = MeshExport.yUp(p, unitMM: unitMM); obj += "v \(f(q.x)) \(f(q.y)) \(f(q.z))\n" }
             if hasT { for t in m.uvs { obj += "vt \(f(t.x)) \(f(t.y))\n" } }
             if hasN { for nn in m.normals { let q = MeshExport.yUpNormal(nn.normalized); obj += "vn \(f(q.x)) \(f(q.y)) \(f(q.z))\n" } }
             let mat = MeshExport.material(g.material, in: materials)
@@ -142,7 +147,10 @@ public enum STLExporter {
 
 public enum GLTFExporter {
     /// glTF 2.0 binary (.glb): one node + mesh per group, PBR metallic-roughness materials, metres, Y up.
-    public static func exportGLB(_ groups: [MeshGroup], materials: [Material]) -> Data {
+    public static func exportGLB(_ groups: [MeshGroup], materials: [Material]) -> Data { exportGLB(groups, materials: materials, unitMM: 1) }
+
+    /// `unitMM`: millimetres per drawing unit of the mesh positions.
+    public static func exportGLB(_ groups: [MeshGroup], materials: [Material], unitMM: Double) -> Data {
         var bin = Data()
         var bufferViews: [[String: Any]] = []
         var accessors: [[String: Any]] = []
@@ -193,7 +201,7 @@ public enum GLTFExporter {
             var pos: [Float] = []; pos.reserveCapacity(m.positions.count * 3)
             var mn = Vec3(.infinity, .infinity, .infinity), mx = Vec3(-.infinity, -.infinity, -.infinity)
             for p in m.positions {
-                let q = MeshExport.yUp(p)
+                let q = MeshExport.yUp(p, unitMM: unitMM)
                 let fq = Vec3(Double(Float(q.x)), Double(Float(q.y)), Double(Float(q.z)))
                 pos += [Float(q.x), Float(q.y), Float(q.z)]
                 mn = Vec3(min(mn.x, fq.x), min(mn.y, fq.y), min(mn.z, fq.z)); mx = Vec3(max(mx.x, fq.x), max(mx.y, fq.y), max(mx.z, fq.z))

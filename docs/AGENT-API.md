@@ -131,6 +131,67 @@ Tools:
 | `plan_svg` | `level?`, `width?`, `background?`, `path?` | render-free SVG image of a level's plan (text; also written to `path`) |
 | `ifc_validate` | `path?` | IFC checks (syntax, schema, references, GlobalIds, attribute counts, units, containment) of a file or the model |
 | `ids_check` | `idsPath`, `ifcPath?` | Information Delivery Specification check of the model's IFC export or an IFC file |
+| `egress` | `level?`, `maxDistance?`, `format?` | longest walking distance from each room to the nearest exit (doors in exterior walls or `exit=1`, stairs above the ground level) on a 250 mm grid around walls and columns; route from the farthest point; limit `EGRESSMAX` (m, default 45) |
+| `accessibility` | `level?`, `minDoorWidth?`, `turningDiameter?` | door clear widths (default 850 mm, `A11YDOORWIDTH`) and the largest free turning circle in bathrooms (default Ø1500 mm, `A11YTURNING`) clear of fixtures |
+| `energy_balance` | `hdd?`, `heatingDays?`, `format?` | seasonal heating need (EN ISO 13790): losses from degree days (latitude table or `HDD`), solar gains per window orientation, internal gains, utilisation factor |
+| `bill_of_quantities` | `prices?`, `path?`, `currency?`, `vat?`, `contingency?`, `format?` | priced bill of quantities by trade (numbered items, subtotals, contingency, VAT) |
+| `takeoff_by_phase` | `format?` | quantities per construction phase (new / demolished) and level |
+| `compare` | `path`, `overlayPath?`, `format?` | differences between an older file and the open document (added/removed/modified by id and geometry); optional colour-coded overlay `.archi` |
+| `markups` | `status?` (open, resolved, all) | review markups with author, date, status, replies, linked elements and view |
+| `validate_exchange` | `format` (gbxml, cobie), `path?` | schema requirements check of the gbXML / COBie export or a file |
+| `markup_add` | `comment`, `title?`, `min?`, `max?`, `elements?`, `author?` | adds a markup (cloud around `min`–`max` or around the elements); undoable |
+| `markup_update` | `id`, `status?`, `reply?`, `author?`, `delete?` | resolve/reopen, reply to or delete a markup (id or its list number); undoable |
+| `bcf_import` | `path` | imports BCF 2.x topics (.bcfzip) as markups (camera, selection by IFC GlobalId, comments); undoable |
+| `run_batch` | `path?` or `jobs?`, `stopOnError?` | runs batch jobs on separate documents (see Batch jobs); the open document is not changed |
+
+`export` also writes `kml`/`kmz` (Google Earth, placed at the project latitude/longitude and north angle; KMZ includes the
+COLLADA model), `bcf` (markups as BCF 2.1), `boq` (bill of quantities from the drawing's COST: rates, `.csv` or `.xlsx`) and
+`svglayers` (plan with one Inkscape/Illustrator layer per drawing layer; `svg` output of archi-cli is layered too).
+
+### Resources and prompts
+
+The server also offers MCP **resources** (`resources/list`, `resources/templates/list`, `resources/read`):
+
+| URI | Type | Content |
+| --- | --- | --- |
+| `archi://document/summary` | application/json | project info, units, counts, bounds, markups |
+| `archi://document` | application/json | the whole document (.archi JSON) |
+| `archi://takeoff`, `archi://takeoff/phases` | text/csv | quantity takeoff; by phase and level |
+| `archi://schedules/{kind}` | text/csv | walls, doors, windows, rooms, slabs, all |
+| `archi://markups`, `archi://levels`, `archi://layers` | application/json | review markups, levels, layers |
+| `archi://element/{id}` | application/json | one BIM element or entity |
+| `archi://plan/{level}` | image/svg+xml | plan of a level with layers as groups |
+
+and **prompt templates** (`prompts/list`, `prompts/get`): `review_model` (`focus?`), `quantity_report` (`currency?`, `vat?`),
+`energy_advice` (`target?` kWh/m²a), `draw_room` (`name`, `width`, `depth`, `origin?`) and `resolve_markups`. Each returns
+a user message with instructions and the current model context (summary, model-checker findings, takeoff, energy balance
+or open markups).
+
+### Markups and BCF
+
+Markups are stored in the document on layer `MARKUP`: a revision cloud (props `markup` = id, `author`, `date` ISO 8601,
+`status` open/resolved, `title`, `comment`, `elements` = linked ids, `view` = centre x,y and height, `camera` = eye, target,
+fov, ortho, `level`, `reply1…` = author␟date␟text) and a note text (`markupNote` = id). Commands: `MARKUP`
+(Add/List/Resolve/Reopen/Reply/Zoom/Delete), `BCFOUT`, `BCFIN`; author = `USERNAME` variable, else the project author.
+BCF 2.1: one topic per markup (`markup.bcf` with comments; `viewpoint.bcfv` with an orthogonal top view for plan markups or a
+perspective camera in metres, and the linked elements as `Component IfcGuid` — the GlobalIds the IFC exporter writes).
+
+### Batch jobs
+
+`archi-cli --batch jobs.json`, the `run_batch` tool or the `BATCH` command in the app run jobs, each on its own document;
+relative paths are resolved against the jobs file's folder:
+
+```json
+{"stopOnError": false, "jobs": [
+  {"name": "plan", "input": "house.archi", "import": ["survey.dxf"], "commands": ["LAYER M A-NEW ", "WALL 0,0 5000,0 "],
+   "script": "finish.scr", "outputs": ["house.dxf", {"path": "house.ifc", "format": "ifc"}, {"path": "l1.svg", "level": 1}],
+   "reports": [{"tool": "takeoff", "path": "quantities.csv"}, {"tool": "egress", "path": "egress.json", "arguments": {"level": 0}}],
+   "save": "house-out.archi"}]}
+```
+
+`reports` accept `takeoff`, `check_model`, `room_schedule` and every read-only analysis tool above (with `arguments`); a
+`.csv` path asks for CSV. The CLI prints one line per job and a JSON summary (`jobs[{name, ok, error?, written[],
+commandErrors, logTail}]`, `failed`, `succeeded`) and exits with status 1 when a job failed.
 
 ### Streaming long command logs
 
@@ -198,7 +259,8 @@ echo "WALL 0,0 5000,0 " | archi-cli --out model.ifc
 archi-cli model.archi --out model.step                # also .ifczip .gltf/.glb .ply .plt .xlsx .dae … (see `export` formats)
 ```
 
-Script files contain one command line per line; lines starting with `;` are comments.
+Script files contain one command line per line; lines starting with `;` are comments. `archi-cli --batch jobs.json` runs
+batch jobs (see above).
 
 Batch conversion (one line per file; exit status 1 when any file failed):
 

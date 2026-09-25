@@ -14,8 +14,10 @@ public enum AgentTools {
     static let levelProp: [String: Any] = ["type": "integer", "description": "Level id (omit for all levels)"]
     static let formatProp: [String: Any] = ["type": "string", "enum": ["json", "csv"]]
 
-    /// MCP tool definitions (name, title, description, inputSchema).
-    public static let definitions: [[String: Any]] = [
+    /// MCP tool definitions (name, title, description, inputSchema): read-only tools of this file and AgentExtraTools.
+    public static var definitions: [[String: Any]] { baseDefinitions + AgentExtraTools.definitions }
+
+    static let baseDefinitions: [[String: Any]] = [
         ["name": "heat_loss", "title": "Heat loss",
          "description": "Design heat loss of the envelope (U·A·ΔT of exterior walls, windows, doors, curtain walls, roofs, ground floor) plus ventilation, and annual heating demand from degree days. U-values come from wall-type layers and material conductivities (LAMBDA:/UVALUE: variables override).",
          "inputSchema": schema(["indoor": ["type": "number"], "outdoor": ["type": "number"], "airChanges": ["type": "number"], "degreeDays": ["type": "number"],
@@ -169,6 +171,7 @@ public enum AgentTools {
             return ["valid": !issues.contains { $0.severity == .error }, "count": issues.count,
                     "issues": issues.map { ["severity": $0.severity.rawValue, "code": $0.code, "message": $0.message, "instances": Array($0.instances.prefix(50))] }]
         default:
+            if AgentExtraTools.names.contains(name) { return try AgentExtraTools.call(name, a, doc: doc, resolve: resolve) }
             throw ToolError(message: "unknown tool \(name)")
         }
     }

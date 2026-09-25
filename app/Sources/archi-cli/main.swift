@@ -277,47 +277,11 @@ func expand(_ path: String) -> URL {
     return p.hasPrefix("/") ? URL(fileURLWithPath: p) : URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent(p)
 }
 
-func loadDocument(_ url: URL) throws -> ArchiDocument {
-    switch url.pathExtension.lowercased() {
-    case "dxf":
-        let data = try Data(contentsOf: url)
-        let text = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1) ?? ""
-        return try DXFReader.read(text)
-    case "archi", "json":
-        return try ArchiFile.decode(Data(contentsOf: url))
-    default:
-        // IFC, SVG, OBJ, STL, 3MF, GeoJSON, CSV points
-        return try FileImport.load(url).0
-    }
-}
+func loadDocument(_ url: URL) throws -> ArchiDocument { try DocumentIO.read(url) }
 
-/// Writes the document; the format comes from `format` or the file extension.
+/// Writes the document; the format comes from `format` or the file extension (see DocumentIO.write).
 func writeDocument(_ doc: ArchiDocument, to url: URL, format: String? = nil, level: Int? = nil) throws {
-    let f = (format ?? url.pathExtension).lowercased()
-    try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-    func text(_ s: String) throws { try s.write(to: url, atomically: true, encoding: .utf8) }
-    switch f {
-    case "archi", "json": try ArchiFile.encode(doc).write(to: url, options: .atomic)
-    case "dxf": try text(DXFWriter.write(doc))
-    case "svg":
-        let entries = DrawListBuilder.entries(doc: doc, options: DrawOptions(level: level ?? doc.currentLevel))
-        var b = entries.reduce(BBox2.empty) { $0.union($1.bounds) }
-        if b.isEmpty { b = BBox2(min: .zero, max: Vec2(1000, 1000)) }
-        try text(SVGExporter.export(entries: entries, bounds: b.expanded(by: max(b.width, b.height) * 0.02), background: nil, pixelsPerUnit: 1))
-    case "ifc": try text(IFCExporter.export(doc: doc, meshes: MeshBuilder.build(doc: doc)))
-    case "obj":
-        let r = OBJExporter.export(MeshBuilder.build(doc: doc), materials: doc.materials, mtlFileName: url.deletingPathExtension().lastPathComponent + ".mtl")
-        try text(r.obj)
-        try r.mtl.write(to: url.deletingPathExtension().appendingPathExtension("mtl"), atomically: true, encoding: .utf8)
-    case "stl": try text(STLExporter.export(MeshBuilder.build(doc: doc), name: doc.info.name))
-    case "glb", "gltf": try GLTFExporter.exportGLB(MeshBuilder.build(doc: doc), materials: doc.materials).write(to: url, options: .atomic)
-    case "csv": try text(ScheduleExporter.csv(doc: doc, kind: "all"))
-    case "takeoff": try text(QuantityTakeoff.compute(doc).csv)
-    case "pdf": throw CLIError.message("PDF output needs the app (Core Graphics); export SVG instead")
-    default:
-        // 3mf, usda/usdz, geojson, dxf12, points, step, ply, plt/hpgl, xlsx, ifczip, dwg (converter), analytical (JSON)
-        guard try FileImport.export(doc, to: url, format: f == "usd" ? "usda" : f) else { throw CLIError.message("unsupported output format '\(f)'") }
-    }
+    try DocumentIO.write(doc, to: url, format: format, level: level)
 }
 
 /// Handles host actions (SAVE, EXPORT, OPEN…) requested by commands when running headless.
@@ -371,7 +335,11 @@ final class MCPServer {
         return s
     }
 
-    lazy var tools: [[String: Any]] = baseTools + AgentTools.definitions
+    lazy var tools: [[String: Any]] = baseTools + AgentTools.definitions + AgentExtraTools.mutatingDefinitions + [MCPServer.batchTool]
+
+    static let batchTool: [String: Any] = ["name": "run_batch", "title": "Run batch jobs",
+        "description": "Runs batch jobs headless (each on its own document): open or import files, run command lines or a .scr script, write outputs in any export format, write tool reports (JSON/CSV) and save. Pass `path` to a jobs JSON file or `jobs` inline: [{\"input\":\"a.archi\",\"commands\":[\"WALL 0,0 5000,0 \"],\"outputs\":[\"a.dxf\",{\"path\":\"a.ifc\"}],\"reports\":[{\"tool\":\"takeoff\",\"path\":\"q.csv\",\"arguments\":{\"format\":\"csv\"}}],\"save\":\"out.archi\"}]. The open document is not changed.",
+        "inputSchema": MCPServer.schema(["path": ["type": "string"], "jobs": ["type": "array", "items": ["type": "object"]], "stopOnError": ["type": "boolean"]])]
 
     let baseTools: [[String: Any]] = [
         ["name": "run_command", "title": "Run command",
@@ -400,8 +368,8 @@ final class MCPServer {
         ["name": "save", "title": "Save", "description": "Saves the document as .archi (to `path`, or to the file it was opened from).",
          "inputSchema": MCPServer.schema(["path": ["type": "string"]])],
         ["name": "export", "title": "Export",
-         "description": "Exports to dxf, dxf12, svg (2D plan of a level), ifc, ifczip, obj (+mtl), stl, glb, 3mf, usda, usdz, step (AP214 faceted B-rep), ply, plt (HP-GL/2), xlsx (schedules workbook), csv (schedules), geojson, points, analytical (structural model JSON), gbxml (energy model), cobie (COBie 2.4 xlsx), dae (COLLADA), dwg (needs an installed converter) or archi.",
-         "inputSchema": MCPServer.schema(["path": ["type": "string"], "format": ["type": "string", "enum": ["dxf", "dxf12", "svg", "ifc", "ifczip", "obj", "stl", "glb", "3mf", "usda", "usdz", "step", "ply", "plt", "xlsx", "csv", "geojson", "points", "analytical", "gbxml", "cobie", "dae", "dwg", "archi"]], "level": ["type": "integer"]], required: ["path"])],
+         "description": "Exports to dxf, dxf12, svg (2D plan of a level), ifc, ifczip, obj (+mtl), stl, glb, 3mf, usda, usdz, step (AP214 faceted B-rep), ply, plt (HP-GL/2), xlsx (schedules workbook), csv (schedules), geojson, points, analytical (structural model JSON), gbxml (energy model), cobie (COBie 2.4 xlsx), dae (COLLADA), kml/kmz (Google Earth, geolocated), bcf (markups as BCF 2.1), boq (bill of quantities CSV/XLSX), svglayers, dwg (needs an installed converter) or archi.",
+         "inputSchema": MCPServer.schema(["path": ["type": "string"], "format": ["type": "string", "enum": ["dxf", "dxf12", "svg", "ifc", "ifczip", "obj", "stl", "glb", "3mf", "usda", "usdz", "step", "ply", "plt", "xlsx", "csv", "geojson", "points", "analytical", "gbxml", "cobie", "dae", "dwg", "kml", "kmz", "bcf", "boq", "svglayers", "archi"]], "level": ["type": "integer"]], required: ["path"])],
         ["name": "list_commands", "title": "List commands", "description": "All command names, aliases, categories and summaries.",
          "inputSchema": MCPServer.schema(["category": ["type": "string"]])],
         ["name": "undo", "title": "Undo", "description": "Undoes the last change.", "inputSchema": MCPServer.schema([:])],
@@ -483,7 +451,8 @@ final class MCPServer {
             let asked = params["protocolVersion"] as? String ?? ""
             return ["jsonrpc": "2.0", "id": id!, "result": [
                 "protocolVersion": MCPServer.supportedVersions.contains(asked) ? asked : MCPServer.supportedVersions[0],
-                "capabilities": ["tools": ["listChanged": false], "logging": [String: Any]()],
+                "capabilities": ["tools": ["listChanged": false], "logging": [String: Any](), "resources": ["listChanged": false, "subscribe": false],
+                                 "prompts": ["listChanged": false]],
                 "serverInfo": ["name": "archi", "title": "Oanarina Archi Tool", "version": cliVersion],
                 "instructions": "Edits an Oanarina Archi Tool (.archi) CAD/BIM document. Units are millimetres (see get_document_summary). Use run_command for AutoCAD-style commands (list_commands), add_entity/add_element for precise JSON edits, and save to write the file.",
             ] as [String: Any]]
@@ -494,6 +463,26 @@ final class MCPServer {
             return ["jsonrpc": "2.0", "id": id!, "result": [String: Any]()]
         case "tools/list":
             return ["jsonrpc": "2.0", "id": id!, "result": ["tools": tools]]
+        case "resources/list":
+            return ["jsonrpc": "2.0", "id": id!, "result": ["resources": AgentResources.list(ed.doc)]]
+        case "resources/templates/list":
+            return ["jsonrpc": "2.0", "id": id!, "result": ["resourceTemplates": AgentResources.templates]]
+        case "resources/read":
+            guard let uri = params["uri"] as? String else { return error(id, -32602, "missing uri") }
+            do {
+                let c = try AgentResources.read(uri, doc: ed.doc)
+                return ["jsonrpc": "2.0", "id": id!, "result": ["contents": [["uri": c.uri, "mimeType": c.mimeType, "text": c.text]]]]
+            } catch {
+                return self.error(id, -32002, (error as? LocalizedError)?.errorDescription ?? "Resource not found: \(uri)")
+            }
+        case "prompts/list":
+            return ["jsonrpc": "2.0", "id": id!, "result": ["prompts": AgentPrompts.definitions]]
+        case "prompts/get":
+            guard let name = params["name"] as? String else { return error(id, -32602, "missing name") }
+            var args: [String: String] = [:]
+            for (k, v) in (params["arguments"] as? [String: Any]) ?? [:] { args[k] = "\(v)" }
+            do { return ["jsonrpc": "2.0", "id": id!, "result": try AgentPrompts.get(name, arguments: args, doc: ed.doc)] }
+            catch { return self.error(id, -32602, (error as? LocalizedError)?.errorDescription ?? "\(error)") }
         case "tools/call":
             guard let name = params["name"] as? String, tools.contains(where: { $0["name"] as? String == name }) else {
                 return error(id, -32602, "Unknown tool: \(params["name"] ?? "")")
@@ -647,7 +636,20 @@ final class MCPServer {
             return ["azimuth": p.azimuth, "altitude": p.altitude, "declination": p.declination, "equationOfTime_min": p.equationOfTime,
                     "sunriseUTC": t.sunrise.map { out.string(from: $0) as Any } ?? NSNull(), "solarNoonUTC": out.string(from: t.noon),
                     "sunsetUTC": t.sunset.map { out.string(from: $0) as Any } ?? NSNull(), "direction": [dir.x, dir.y, dir.z], "latitude": lat, "longitude": lon]
+        case "run_batch":
+            var spec: Data
+            var base = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+            if let p = a["path"] as? String { let u = expand(p); spec = try Data(contentsOf: u); base = u.deletingLastPathComponent() }
+            else if let jobs = a["jobs"] { spec = try JSONSerialization.data(withJSONObject: ["jobs": jobs, "stopOnError": a["stopOnError"] as? Bool ?? false]) }
+            else { throw CLIError.message("pass 'path' or 'jobs'") }
+            let parsed = try BatchJob.parse(spec)
+            return await runBatch(parsed.jobs, stopOnError: parsed.stopOnError, base: base)
         default:
+            if AgentExtraTools.mutatingNames.contains(name) {
+                var result: Any = NSNull()
+                try ed.transaction("Agent \(name)") { d in result = try AgentExtraTools.mutate(name, a, doc: &d, resolve: expand) }
+                return result
+            }
             guard AgentTools.names.contains(name) else { throw CLIError.message("unknown tool \(name)") }
             let r = try AgentTools.call(name, a, doc: ed.doc, resolve: expand)
             if name == "plan_svg", let svg = r as? String, let p = a["path"] as? String {
@@ -658,6 +660,16 @@ final class MCPServer {
             return r
         }
     }
+}
+
+// MARK: - Batch jobs
+
+/// Runs batch jobs, each on a fresh document; returns a JSON-compatible summary.
+@MainActor func runBatch(_ jobs: [BatchJob], stopOnError: Bool, base: URL, verbose: Bool = false) async -> [String: Any] {
+    let host = CLIHost()
+    let r = await BatchRunner.run(jobs, stopOnError: stopOnError, base: base, host: host, progress: verbose ? { print($0) } : nil)
+    withExtendedLifetime(host) {}
+    return r
 }
 
 // MARK: - Main
@@ -675,6 +687,8 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
   --mcp            Model Context Protocol server on stdin/stdout (for Claude and other agents).
   --convert FMT FILES…  Batch conversion: writes each input file as FMT (dxf, ifc, step, glb, svg, archi, …) next to it
                    or into --outdir DIR; prints one line per file and exits non-zero if any failed.
+  --batch FILE     Runs the jobs of a JSON batch file (open/import, commands or script, outputs, reports, save);
+                   prints one line per job and a JSON summary, exits non-zero if any job failed.
   --version        Prints the version.
 """
 
@@ -701,6 +715,20 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
 @MainActor func runCLI() async -> Int32 {
     var input: String?, script: String?, out: String?, mcp = false
     var args = Array(CommandLine.arguments.dropFirst())
+    if let bi = args.firstIndex(of: "--batch") {
+        guard bi + 1 < args.count else { eprint(usage); return 2 }
+        let u = expand(args[bi + 1])
+        CommandRegistry.shared.ensureBuiltins()
+        do {
+            let parsed = try BatchJob.parse(try Data(contentsOf: u))
+            let summary = await runBatch(parsed.jobs, stopOnError: parsed.stopOnError, base: u.deletingLastPathComponent(), verbose: true)
+            print(ArchiJSON.jsonString(summary, pretty: true))
+            return (summary["failed"] as? Int ?? 1) == 0 ? 0 : 1
+        } catch {
+            eprint("Batch file \(u.lastPathComponent): \((error as? LocalizedError)?.errorDescription ?? "\(error)")")
+            return 2
+        }
+    }
     if let ci = args.firstIndex(of: "--convert") {
         var rest = Array(args[(ci + 1)...])
         guard !rest.isEmpty else { eprint(usage); return 2 }

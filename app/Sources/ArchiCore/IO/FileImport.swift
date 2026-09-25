@@ -4,8 +4,10 @@ import Foundation
 /// Headless import/export by file extension, used by the IO commands, the CLI and agents.
 public enum FileImport {
     public static let importFormats = ["archi", "dxf", "dwg", "ifc", "ifczip", "svg", "obj", "stl", "3mf", "gltf", "glb", "ply", "off", "amf", "dae", "stp", "step",
-                                       "geojson", "cityjson", "shp", "osm", "asc", "xlsx", "csv", "tsv", "txt", "xyz", "pts"]
-    public static let exportFormats = ["3mf", "usda", "usdz", "geojson", "dxf12", "points", "stp", "step", "ply", "plt", "hpgl", "xlsx", "ifczip", "dwg", "analytical", "gbxml", "cobie", "dae"]
+                                       "geojson", "cityjson", "shp", "osm", "asc", "xlsx", "csv", "tsv", "txt", "xyz", "pts",
+                                       "png", "jpg", "jpeg", "gif", "bmp", "tif", "tiff", "webp", "heic", "heif", "avif"]
+    public static let exportFormats = ["3mf", "usda", "usdz", "geojson", "dxf12", "points", "stp", "step", "ply", "plt", "hpgl", "xlsx", "ifczip", "dwg", "analytical", "gbxml", "cobie", "dae",
+                                       "kml", "kmz", "bcfzip", "bcf", "boq", "svglayers"]
 
     public enum ImportError: Error, LocalizedError {
         case unsupported(String), unreadable(String)
@@ -46,7 +48,8 @@ public enum FileImport {
             return "csv"
         case "step", "stp", "p21": return "step"
         case "glb": return "gltf"
-        case "tif", "tiff", "dem": return f
+        case "tif", "tiff", "png", "jpg", "jpeg", "gif", "bmp", "webp", "heic", "heif", "avif": return "image"
+        case "dem": return f
         default: return f
         }
     }
@@ -133,6 +136,12 @@ public enum FileImport {
         case "geojson":
             let ents = try GeoJSON.entities(try readText(url), doc: reference)
             return (entityDoc(ents, native: true), "\(ents.count) GeoJSON features")
+        case "image":
+            // Georeferenced with a world file when present, else 10 mm per pixel at the origin.
+            let (im, geo) = try ImagePlacement.load(url, doc: reference)
+            var d = entityDoc([Entity(layer: "IMAGES", geometry: .image(im))], native: true)
+            d.ensureLayer("IMAGES")
+            return (d, "image \(fmt(im.size.x, 0)) × \(fmt(im.size.y, 0))" + (geo ? " (georeferenced by world file)" : ""))
         case "csv":
             let r = PointTable.importPoints(try readText(url))
             return (entityDoc(r.entities, native: true), "\(r.entities.count) points" + (r.skipped > 0 ? " (\(r.skipped) rows skipped)" : ""))
@@ -164,7 +173,8 @@ public enum FileImport {
         switch format.lowercased() {
         case "3mf": try ThreeMFExporter.export(MeshBuilder.build(doc: doc), materials: doc.materials, name: doc.info.name, unitScale: unitMM).write(to: url, options: .atomic)
         case "usda", "usd": try USDExporter.usda(MeshBuilder.build(doc: doc), materials: doc.materials, metersPerUnit: unitMM / 1000, name: doc.info.name).write(to: url, atomically: true, encoding: .utf8)
-        case "usdz": try USDExporter.usdz(MeshBuilder.build(doc: doc), materials: doc.materials, metersPerUnit: unitMM / 1000, name: doc.info.name).write(to: url, options: .atomic)
+        case "usdz": try USDExporter.usdz(MeshBuilder.build(doc: doc), materials: doc.materials, metersPerUnit: unitMM / 1000, name: doc.info.name,
+                                          textureRoot: doc.variable("TEXTUREROOT").map { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath) } ?? url.deletingLastPathComponent()).write(to: url, options: .atomic)
         case "geojson": try GeoJSON.export(doc).write(to: url, atomically: true, encoding: .utf8)
         case "dxf12", "r12": try DXFWriter.write(doc, version: .r12).write(to: url, atomically: true, encoding: .utf8)
         case "points": try PointTable.exportPoints(doc).write(to: url, atomically: true, encoding: .utf8)
@@ -184,6 +194,17 @@ public enum FileImport {
         case "gbxml": try GBXMLExporter.export(doc).write(to: url, atomically: true, encoding: .utf8)
         case "cobie": try COBieExporter.export(doc).write(to: url, options: .atomic)
         case "dae": try ColladaExporter.export(MeshBuilder.build(doc: doc), materials: doc.materials, unitMM: unitMM).write(to: url, atomically: true, encoding: .utf8)
+        case "kml": try KMLExporter.kml(doc, options: KMLOptions()).write(to: url, atomically: true, encoding: .utf8)
+        case "kmz": try KMLExporter.kmz(doc).write(to: url, options: .atomic)
+        case "bcf", "bcfzip": try BCF.export(doc, projectFile: url.deletingPathExtension().lastPathComponent + ".ifc").write(to: url, options: .atomic)
+        case "boq":
+            let boq = BillOfQuantities.build(QuantityTakeoff.compute(doc), table: CostTable.fromVariables(doc), options: BoQOptions.from(doc))
+            if url.pathExtension.lowercased() == "xlsx" { try boq.xlsx.write(to: url, options: .atomic) } else { try boq.csv.write(to: url, atomically: true, encoding: .utf8) }
+        case "svglayers":
+            let entries = DrawListBuilder.entries(doc: doc, options: DrawOptions(level: doc.currentLevel))
+            var b = entries.reduce(BBox2.empty) { $0.union($1.bounds) }
+            if b.isEmpty { b = BBox2(min: .zero, max: Vec2(1000, 1000)) }
+            try SVGExporter.exportLayered(doc: doc, entries: entries, bounds: b.expanded(by: max(b.width, b.height) * 0.02), background: nil).write(to: url, atomically: true, encoding: .utf8)
         case "analytical":
             let m = StructuralAnalysis.model(doc, options: AnalyticalOptions.from(doc))
             try JSONSerialization.data(withJSONObject: m.json(name: doc.info.name), options: [.prettyPrinted, .sortedKeys]).write(to: url, options: .atomic)

@@ -207,6 +207,12 @@ final class ThreeMFParser: NSObject, XMLParserDelegate {
 public enum USDExporter {
     /// USD ASCII layer (Z up). `metersPerUnit` = size of one drawing unit in metres (0.001 for millimetres).
     public static func usda(_ groups: [MeshGroup], materials: [Material], metersPerUnit: Double = 0.001, name: String = "Model") -> String {
+        usda(groups, materials: materials, metersPerUnit: metersPerUnit, name: name, textures: [:])
+    }
+
+    /// `textures`: material name → texture path inside the package; textured meshes get box-projected `st` coordinates
+    /// with one texture tile per `Material.textureScale` millimetres.
+    public static func usda(_ groups: [MeshGroup], materials: [Material], metersPerUnit: Double, name: String, textures: [String: String]) -> String {
         let f = { (v: Double) -> String in MeshExport.num(v) }
         var used: Set<String> = []
         func ident(_ s: String) -> String {
@@ -224,6 +230,40 @@ public enum USDExporter {
             let m = MeshExport.material(g.material, in: materials)
             let id = ident("M_" + m.name)
             matIDs[g.material] = id
+            if let tex = textures[m.name] {
+                matBlock += """
+                    def Material "\(id)"
+                    {
+                        token outputs:surface.connect = </\(root)/Materials/\(id)/PBR.outputs:surface>
+                        def Shader "PBR"
+                        {
+                            uniform token info:id = "UsdPreviewSurface"
+                            color3f inputs:diffuseColor.connect = </\(root)/Materials/\(id)/Texture.outputs:rgb>
+                            float inputs:roughness = \(f(m.roughness))
+                            float inputs:metallic = \(f(m.metalness))
+                            float inputs:opacity = \(f(max(0, min(1, 1 - m.transparency))))
+                            token outputs:surface
+                        }
+                        def Shader "StReader"
+                        {
+                            uniform token info:id = "UsdPrimvarReader_float2"
+                            token inputs:varname = "st"
+                            float2 outputs:result
+                        }
+                        def Shader "Texture"
+                        {
+                            uniform token info:id = "UsdUVTexture"
+                            asset inputs:file = @\(tex)@
+                            float2 inputs:st.connect = </\(root)/Materials/\(id)/StReader.outputs:result>
+                            token inputs:wrapS = "repeat"
+                            token inputs:wrapT = "repeat"
+                            float3 outputs:rgb
+                        }
+                    }
+
+            """
+                continue
+            }
             matBlock += """
                     def Material "\(id)"
                     {
@@ -251,6 +291,25 @@ public enum USDExporter {
             let nrm = w.normals.map { "(\(f($0.x)), \(f($0.y)), \(f($0.z)))" }.joined(separator: ", ")
             let counts = Array(repeating: "3", count: w.triangles.count / 3).joined(separator: ", ")
             let idx = w.triangles.map(String.init).joined(separator: ", ")
+            // Box projection: the dominant normal axis picks the plane; one tile per textureScale mm.
+            var stLine = ""
+            if textures[m.name] != nil {
+                let k = metersPerUnit * 1000 / max(m.textureScale, 1e-9)
+                var sts: [String] = []
+                var t = 0
+                while t + 2 < w.triangles.count {
+                    let a = w.positions[w.triangles[t]], b = w.positions[w.triangles[t + 1]], c = w.positions[w.triangles[t + 2]]
+                    let nn = (b - a).cross(c - a)
+                    let ax = abs(nn.x), ay = abs(nn.y), az = abs(nn.z)
+                    for p in [a, b, c] {
+                        let uv = az >= ax && az >= ay ? (p.x, p.y) : (ax >= ay ? (p.y, p.z) : (p.x, p.z))
+                        sts.append("(\(f(uv.0 * k)), \(f(uv.1 * k)))")
+                    }
+                    t += 3
+                }
+                let st = sts.joined(separator: ", ")
+                stLine = "\n            texCoord2f[] primvars:st = [\(st)] (\n                interpolation = \"faceVarying\"\n            )"
+            }
             meshes += """
                 def Mesh "\(id)" (
                     prepend apiSchemas = ["MaterialBindingAPI"]
@@ -263,7 +322,7 @@ public enum USDExporter {
                     normal3f[] normals = [\(nrm)] (
                         interpolation = "vertex"
                     )
-                    color3f[] primvars:displayColor = [(\(f(m.color.r)), \(f(m.color.g)), \(f(m.color.b)))]
+                    color3f[] primvars:displayColor = [(\(f(m.color.r)), \(f(m.color.g)), \(f(m.color.b)))]\(stLine)
                     uniform token subdivisionScheme = "none"
                     rel material:binding = </\(root)/Materials/\(matIDs[g.material]!)>
                 }
@@ -294,7 +353,30 @@ public enum USDExporter {
 
     /// USDZ package: an uncompressed ZIP whose single layer (model.usda) is 64-byte aligned.
     public static func usdz(_ groups: [MeshGroup], materials: [Material], metersPerUnit: Double = 0.001, name: String = "Model") -> Data {
-        let text = usda(groups, materials: materials, metersPerUnit: metersPerUnit, name: name)
-        return ZipArchive.write([.init(name: "model.usda", data: Data(text.utf8))], compress: false, align: 64)
+        usdz(groups, materials: materials, metersPerUnit: metersPerUnit, name: name, textureRoot: nil)
+    }
+
+    /// USDZ with the PNG/JPEG textures of the used materials packaged under textures/ (paths absolute or relative to
+    /// `textureRoot`); materials whose texture cannot be read keep their plain colour.
+    public static func usdz(_ groups: [MeshGroup], materials: [Material], metersPerUnit: Double, name: String, textureRoot: URL?) -> Data {
+        var textures: [String: String] = [:]
+        var files: [ZipArchive.Entry] = []
+        var usedNames = Set<String>()
+        for mname in Set(groups.map(\.material)).sorted() {
+            let m = MeshExport.material(mname, in: materials)
+            guard textures[m.name] == nil, let t = m.texture, !t.isEmpty else { continue }
+            let ext = (t as NSString).pathExtension.lowercased()
+            guard ["png", "jpg", "jpeg"].contains(ext) else { continue }
+            let expanded = (t as NSString).expandingTildeInPath
+            let url = expanded.hasPrefix("/") ? URL(fileURLWithPath: expanded) : (textureRoot ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath)).appendingPathComponent(t)
+            guard let data = try? Data(contentsOf: url), ImageHeader.size(data) != nil else { continue }
+            var n = "textures/" + MeshExport.safeName(m.name) + "." + ext
+            while usedNames.contains(n) { n = "textures/" + MeshExport.safeName(m.name) + "_\(usedNames.count)." + ext }
+            usedNames.insert(n)
+            textures[m.name] = n
+            files.append(.init(name: n, data: data))
+        }
+        let text = usda(groups, materials: materials, metersPerUnit: metersPerUnit, name: name, textures: textures)
+        return ZipArchive.write([.init(name: "model.usda", data: Data(text.utf8))] + files, compress: false, align: 64)
     }
 }

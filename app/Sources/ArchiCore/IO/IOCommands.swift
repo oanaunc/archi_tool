@@ -4,7 +4,7 @@ import Foundation
 
 public enum IOCommands {
     public static var all: [CommandDef] { [importFile, ifcImport, svgImport, meshImport, geoJSONImport, geoJSONExport, pointsImport, pointsExport,
-                                           export3MF, usdExport, dxfR12Out] + ExchangeCommands.all }
+                                           export3MF, usdExport, dxfR12Out] + ExchangeCommands.all + MoreIOCommands.all }
 
     /// Resolves a path typed on the command line (~, relative to the drawing's folder, else the working directory).
     @MainActor static func resolve(_ ed: Editor, _ path: String) -> URL {

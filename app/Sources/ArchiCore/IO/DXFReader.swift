@@ -92,6 +92,28 @@ public enum DXFReader {
         RGBA(Double((v >> 16) & 255) / 255, Double((v >> 8) & 255) / 255, Double(v & 255) / 255)
     }
 
+    /// Groups following `1001 <app>` up to the next application (XDATA).
+    static func xdataGroups(_ pairs: [DXFPair], app: String) -> [DXFPair] {
+        guard let i = pairs.firstIndex(where: { $0.code == 1001 && $0.trimmed.caseInsensitiveCompare(app) == .orderedSame }) else { return [] }
+        var out: [DXFPair] = []
+        var j = i + 1
+        while j < pairs.count && pairs[j].code != 1001 && pairs[j].code >= 1000 { out.append(pairs[j]); j += 1 }
+        return out
+    }
+
+    /// Arrowhead kind of a DIMBLK block name.
+    static func arrow(blockName n: String) -> ArrowKind? {
+        switch n.trimmingCharacters(in: .whitespaces).uppercased() {
+        case "", "_CLOSEDFILLED", "CLOSEDFILLED": return .closedFilled
+        case "_OPEN", "_OPEN30", "_OPEN90", "_CLOSED", "_CLOSEDBLANK": return .open
+        case "_DOT", "_DOTSMALL", "_DOTBLANK", "_SMALL", "_ORIGIN", "_ORIGIN2", "_INTEGRAL": return .dot
+        case "_ARCHTICK": return .architecturalTick
+        case "_OBLIQUE": return .tick
+        case "_NONE": return ArrowKind.none
+        default: return nil
+        }
+    }
+
     /// Removes MTEXT inline formatting codes, converting paragraph breaks to newlines.
     public static func stripMText(_ s: String) -> String {
         let chars = Array(s)
@@ -167,6 +189,8 @@ public enum DXFReader {
         var doc = ArchiDocument()
         var dimStyleNames: Set<String> = []
         var textStyleNames: Set<String> = []
+        /// Dimension style → DIMBLK block record handle, resolved after the tables are read.
+        var pendingArrowHandles: [String: String] = [:]
         /// IMAGEDEF handle → file path (from OBJECTS).
         var imageDefs: [String: String] = [:]
         /// LAYOUT objects: name, tab order, block record handle.
@@ -334,6 +358,15 @@ public enum DXFReader {
 
         // MARK: Tables
         mutating func tables(_ recs: [DXFRecord]) {
+            defer {
+                // DIMBLK handles name BLOCK_RECORDs, which come after DIMSTYLE in the TABLES section.
+                for (style, hnd) in pendingArrowHandles {
+                    guard let bn = blockRecordNames[hnd], let a = DXFReader.arrow(blockName: bn),
+                          let i = doc.dimStyles.firstIndex(where: { $0.name.caseInsensitiveCompare(style) == .orderedSame }) else { continue }
+                    doc.dimStyles[i].arrow = a
+                }
+                pendingArrowHandles = [:]
+            }
             for r in recs {
                 switch r.type {
                 case "BLOCK_RECORD":
@@ -341,15 +374,18 @@ public enum DXFReader {
                 case "LAYER":
                     guard let name = r.s(2)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { continue }
                     let aci = r.i(62) ?? 7
-                    var color = aciColor(abs(aci) == 0 ? 7 : abs(aci))
+                    var color = DXFColors.rgba(aci: abs(aci) == 0 ? 7 : abs(aci))
                     if let tc = r.i(420) { color = DXFReader.rgb(fromTrueColor: tc) }
                     let flags = r.i(70) ?? 0
                     var lw = 0.25
                     if let w = r.i(370), w >= 0 { lw = Double(w) / 100 }
                     var lt = r.s(6)?.trimmingCharacters(in: .whitespaces) ?? "Continuous"
                     if lt.uppercased() == "CONTINUOUS" { lt = "Continuous" }
-                    let layer = Layer(name: name, color: color, linetype: lt, lineweight: lw, visible: aci >= 0,
+                    var layer = Layer(name: name, color: color, linetype: lt, lineweight: lw, visible: aci >= 0,
                                       frozen: flags & 1 != 0, locked: flags & 4 != 0, plot: (r.i(290) ?? 1) != 0)
+                    if let t = DXFReader.xdataGroups(r.pairs, app: "AcCmTransparency").first(where: { $0.code == 1071 }).flatMap({ DXFColors.transparencyPercent(code: $0.int) }) {
+                        layer.transparency = t / 100
+                    }
                     if let idx = doc.layerIndex(name) { doc.layers[idx] = layer } else { doc.layers.append(layer) }
                 case "LTYPE":
                     guard let name = r.s(2)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { continue }
@@ -363,9 +399,14 @@ public enum DXFReader {
                 case "STYLE":
                     guard let name = r.s(2)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { continue }
                     if (r.i(70) ?? 0) & 1 != 0 { continue } // shape file
-                    var font = r.s(3) ?? ""
-                    if font.isEmpty { font = "Helvetica" }
-                    font = (font as NSString).deletingPathExtension
+                    let file = r.s(3)?.trimmingCharacters(in: .whitespaces) ?? ""
+                    let acad = DXFReader.xdataGroups(r.pairs, app: "ACAD")
+                    var font = DXFFonts.family(fromFile: file, face: acad.first { $0.code == 1000 }?.value)
+                    if let f = acad.first(where: { $0.code == 1071 })?.int {
+                        if f & 0x2000000 != 0 && !font.lowercased().hasSuffix("bold") { font += " Bold" }
+                        if f & 0x1000000 != 0 && !font.lowercased().hasSuffix("italic") { font += " Italic" }
+                    }
+                    if !file.isEmpty { doc.setVariable("DXFFONT:" + name, file) }
                     let st = TextStyle(name: name, font: font, height: r.d(40) ?? 0, widthFactor: r.d(41) ?? 1, oblique: rad(r.d(50) ?? 0))
                     if let idx = doc.textStyles.firstIndex(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) { doc.textStyles[idx] = st } else { doc.textStyles.append(st) }
                     textStyleNames.insert(name.lowercased())
@@ -385,6 +426,9 @@ public enum DXFReader {
                         if parts.count == 2 { ds.prefix = parts[0]; ds.suffix = parts[1] } else { ds.suffix = post }
                     }
                     if (r.i(176) ?? 0) == 0, (r.d(142) ?? 0) > 0 || (r.d(143) ?? 0) > 0 { ds.arrow = .architecturalTick }
+                    else if let n = r.s(5), let a = DXFReader.arrow(blockName: n) { ds.arrow = a }
+                    else if let hnd = r.s(342)?.trimmingCharacters(in: .whitespaces).uppercased(), !hnd.isEmpty { pendingArrowHandles[name] = hnd }
+                    if let a = DXFXData.read(r.pairs)["arrow"].flatMap(ArrowKind.init(rawValue:)) { ds.arrow = a; pendingArrowHandles[name] = nil }
                     if let idx = doc.dimStyles.firstIndex(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) { doc.dimStyles[idx] = ds } else { doc.dimStyles.append(ds) }
                     dimStyleNames.insert(name.lowercased())
                 default: break
@@ -442,6 +486,23 @@ public enum DXFReader {
             case "LINE": if let a = r.d(30), let b = r.d(31), abs(a - b) < 1e-9 { put("elevation", a) }
             case "CIRCLE", "ARC": put("elevation", r.d(30).map { $0 * flip })
             default: break
+            }
+            // Extended data (Archi props, other applications), transparency, MTEXT formatting.
+            for (k, v) in DXFXData.read(r.pairs) where props[k] == nil { props[k] = v }
+            if let t = r.i(440).flatMap({ DXFColors.transparencyPercent(code: $0) }) { props["transparency"] = fmt(t, 0) }
+            if r.type == "MTEXT" {
+                var raw = ""
+                for p in r.pairs where p.code == 3 { raw += p.value }
+                for p in r.pairs where p.code == 1 { raw += p.value }
+                let f = MTextFormatting.leading(raw)
+                if f.hasFormatting {
+                    props["mtext"] = raw
+                    if let fn = f.font { props["font"] = fn }
+                    if f.bold { props["bold"] = "1" }
+                    if f.italic { props["italic"] = "1" }
+                    if f.underline { props["underline"] = "1" }
+                }
+                if let c = f.color, color == .byLayer { color = c }
             }
             let layer = (r.s(8)?.trimmingCharacters(in: .whitespaces)).flatMap { $0.isEmpty ? nil : $0 } ?? "0"
             return Entity(id: 0, layer: layer, color: color, linetype: lt, lineweight: lw, geometry: geometry, props: props)

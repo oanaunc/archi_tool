@@ -88,7 +88,8 @@ public enum GBXMLExporter {
                 let z = elev(el.level) + (rf.baseOffset + rf.thickness) * u
                 var s = "<Surface id=\"su-\(el.id)\" surfaceType=\"Roof\""
                 if let c = consID(el, "roof") { s += " constructionIdRef=\"\(c)\"" }
-                s += "><RectangularGeometry><Tilt>\(n(rf.kind == .flat ? 0 : rf.pitch))</Tilt></RectangularGeometry>"
+                let c0 = b[0] * u
+                s += "><RectangularGeometry><CartesianPoint><Coordinate>\(n(c0.x))</Coordinate><Coordinate>\(n(c0.y))</Coordinate><Coordinate>\(n(z))</Coordinate></CartesianPoint><Tilt>\(n(rf.kind == .flat ? 0 : rf.pitch))</Tilt></RectangularGeometry>"
                 surfaces.append(s + "<PlanarGeometry>\(loop(b.map { Vec3($0.x * u, $0.y * u, z) }))</PlanarGeometry><CADObjectId>\(el.id)</CADObjectId></Surface>")
             default: continue
             }
@@ -169,6 +170,14 @@ public enum COBieExporter {
         }
 
         var types: [String: [String]] = [:]
+        // Component names are unique keys in COBie: repeated marks get the element id appended.
+        var usedNames = Set<String>(), componentName: [EntityID: String] = [:]
+        func unique(_ n: String, _ id: EntityID) -> String {
+            var name = n.isEmpty ? "Component-\(id)" : n
+            if usedNames.contains(name) { name += "-\(id)" }
+            usedNames.insert(name); componentName[id] = name
+            return name
+        }
         var component = [["Name", "CreatedBy", "CreatedOn", "TypeName", "Space", "Description", "ExtSystem", "ExtObject", "ExtIdentifier", "SerialNumber", "InstallationDate",
                           "WarrantyStartDate", "TagNumber", "BarCode", "AssetIdentifier"]]
         var attribute = [["Name", "CreatedBy", "CreatedOn", "Category", "SheetName", "RowName", "Value", "Unit", "ExtSystem", "ExtObject", "ExtIdentifier", "Description", "AllowedValues"]]
@@ -183,7 +192,7 @@ public enum COBieExporter {
                     let c = w.centerStart + w.direction * o.offset, off = w.thickness / 2 + 100 / doc.units.mm
                     let a = spaceOf(c + w.direction.perp * off, level: h.level), b = spaceOf(c - w.direction.perp * off, level: h.level)
                     pos = nil
-                    component.append([el.props["mark"] ?? o.mark ?? "\(ifc.dropFirst(3))-\(el.id)", who, now, typeName, [a, b].filter { $0 != "n/a" }.joined(separator: ",").isEmpty ? "n/a" : [a, b].filter { $0 != "n/a" }.joined(separator: ","),
+                    component.append([unique(el.props["mark"] ?? o.mark ?? "\(ifc.dropFirst(3))-\(el.id)", el.id), who, now, typeName, [a, b].filter { $0 != "n/a" }.joined(separator: ",").isEmpty ? "n/a" : [a, b].filter { $0 != "n/a" }.joined(separator: ","),
                                       el.name.isEmpty ? typeName : el.name, sys, ifc, guid(el), "n/a", "n/a", "n/a", o.mark ?? "n/a", "n/a", "n/a"])
                 }
                 dims = (o.width * u, 0, o.height * u)
@@ -195,15 +204,16 @@ public enum COBieExporter {
             default: continue
             }
             if let p = pos {
-                component.append([el.name.isEmpty ? "\(typeName)-\(el.id)" : el.name, who, now, typeName, spaceOf(p, level: el.level), el.name.isEmpty ? typeName : el.name,
+                component.append([unique(el.name.isEmpty ? "\(typeName)-\(el.id)" : el.name, el.id), who, now, typeName, spaceOf(p, level: el.level), el.name.isEmpty ? typeName : el.name,
                                   sys, ifc, guid(el), "n/a", "n/a", "n/a", "n/a", "n/a", "n/a"])
             }
             if types[typeName] == nil {
                 types[typeName] = [typeName, who, now, cat, typeName, "Fixed", el.props["manufacturer"] ?? "n/a", el.props["model"] ?? "n/a", "n/a", "0", "n/a", "0", "Year",
                                    sys, ifc + "Type", "n/a", "0", "0", "Year", fmt(dims.0, 3), fmt(dims.1, 3), fmt(dims.2, 3)]
             }
+            guard let rowName = componentName[el.id] else { continue }
             for (k, v) in el.props.sorted(by: { $0.key < $1.key }) where !["ifcGuid", "mark", "manufacturer", "model"].contains(k) && !v.isEmpty {
-                attribute.append([k, who, now, "Submitted", "Component", component.last?[0] ?? "\(el.id)", v, "n/a", sys, "IfcPropertySingleValue", "n/a", k, "n/a"])
+                attribute.append([k, who, now, "Submitted", "Component", rowName, v, "n/a", sys, "IfcPropertySingleValue", "n/a", k, "n/a"])
             }
         }
         var type = [["Name", "CreatedBy", "CreatedOn", "Category", "Description", "AssetType", "Manufacturer", "ModelNumber", "WarrantyGuarantorParts", "WarrantyDurationParts",

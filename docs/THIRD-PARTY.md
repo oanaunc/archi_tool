@@ -9,6 +9,7 @@ its header comment, and it is listed here.
 | `app/Sources/ArchiCore/Modeling/CSG.swift` | [csg.js](https://github.com/evanw/csg.js) by Evan Wallace | MIT | The BSP-tree boolean algorithm (union, subtract, intersect) is reimplemented in Swift; no code was copied. |
 | `app/Sources/ArchiCore/Modeling/SolidOps.swift` (MESHSMOOTH) | Loop subdivision, C. Loop, *Smooth Subdivision Surfaces Based on Triangles* (M.S. thesis, University of Utah, 1987) | Published algorithm | Vertex/edge masks (β = 3/16 or 3/(8n), 3/8–1/8 edge rule, boundary crease rules) implemented from the paper; no code was copied. |
 | `app/Sources/ArchiCore/IO/DXFWriter.swift`, `IO/DXFReader.swift` | [LibreCAD](https://librecad.org) libdxfrw / rs_filterdxfrw, © LibreCAD team | GPL-2.0-or-later | DXF section layout, group codes and hatch edge conventions were cross-checked against it. |
+| `app/Sources/ArchiCore/IO/DXFExtras.swift` | [LibreCAD](https://librecad.org) libdxfrw `drw_objects.h` (© 2011-2015 José F. Soriano, 2016-2022 A. Stebich) | GPL-2.0-or-later | The 256-entry AutoCAD Color Index RGB table was taken from it (data, credited in the file header). |
 | `app/Sources/ArchiCore/IO/IFCExporter.swift` | [IfcOpenShell](https://ifcopenshell.org) `ifcopenshell.guid`, © IfcOpenShell contributors | LGPL-3.0 | The IFC GlobalId compression (22-character base-64) matches its algorithm. |
 
 The reference checkouts in `other_projects/` (LibreCAD, IfcOpenShell, SolveSpace, OpenSCAD, BRL-CAD, CAD_Sketcher,

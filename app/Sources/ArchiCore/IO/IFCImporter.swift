@@ -112,6 +112,8 @@ final class IFCReader {
     var typeOf: [Int: Int] = [:]
     var levelOfStorey: [Int: Int] = [:]
     var elementOf: [Int: EntityID] = [:]    // IFC product → element id
+    var materialColor: [String: (RGBA, Double)] = [:]   // material name → surface colour, transparency
+    var itemColor: [Int: (RGBA, Double)] = [:]          // representation item → styled colour
 
     init(file: STEPFile, options: IFCImportOptions) {
         f = file; self.options = options
@@ -689,7 +691,8 @@ final class IFCReader {
     func ensureMaterial(_ name: String?) -> String? {
         guard let n = name?.trimmingCharacters(in: .whitespaces), !n.isEmpty else { return nil }
         if let m = doc.material(n) { return m.name }
-        doc.materials.append(Material(name: n, color: RGBA(0.78, 0.78, 0.78)))
+        let c = materialColor[n]
+        doc.materials.append(Material(name: n, color: c?.0 ?? RGBA(0.78, 0.78, 0.78), transparency: c?.1 ?? 0))
         return n
     }
 
@@ -698,13 +701,36 @@ final class IFCReader {
         var sets = psetsOf[id] ?? []
         if let t = typeOf[id], let tt = f.entities[t] { sets += (tt[5].list ?? []).compactMap { $0.ref }; if let n = tt[2].string { out["ifcTypeName"] = n } }
         for ps in sets {
-            guard let p = f.entities[ps], p.type == "IFCPROPERTYSET" else { continue }
+            guard let p = f.entities[ps] else { continue }
             let setName = p[2].string ?? "Pset"
+            if p.type == "IFCELEMENTQUANTITY" {
+                // Quantities (Qto_*): IfcQuantityLength/Area/Volume/Count/Weight/Time value is attribute 3.
+                guard options.importPropertySets else { continue }
+                for q in p[5].list ?? [] {
+                    guard let qe = e(q), qe.type.hasPrefix("IFCQUANTITY"), let n = qe[0].string, let v = qe[3].double else { continue }
+                    let k = qe.type == "IFCQUANTITYLENGTH" ? scale / 1000 : qe.type == "IFCQUANTITYAREA" ? pow(scale / 1000, 2) : qe.type == "IFCQUANTITYVOLUME" ? pow(scale / 1000, 3) : 1
+                    out["\(setName).\(n)"] = fmt(v * k, 6)
+                }
+                continue
+            }
+            guard p.type == "IFCPROPERTYSET" else { continue }
             let isOurs = setName == "Archi_Properties"
             guard isOurs || options.importPropertySets else { continue }
             for pv in p[4].list ?? [] {
-                guard let prop = e(pv), prop.type == "IFCPROPERTYSINGLEVALUE", let n = prop[0].string, let val = prop[2].text else { continue }
-                out[isOurs ? n : "\(setName).\(n)"] = val
+                guard let prop = e(pv), let n = prop[0].string else { continue }
+                var val: String?
+                switch prop.type {
+                case "IFCPROPERTYSINGLEVALUE": val = prop[2].text
+                case "IFCPROPERTYENUMERATEDVALUE", "IFCPROPERTYLISTVALUE":
+                    let vs = (prop[2].list ?? []).compactMap { $0.text }
+                    val = vs.isEmpty ? nil : vs.joined(separator: ", ")
+                case "IFCPROPERTYBOUNDEDVALUE":
+                    let lo = prop[3].text, hi = prop[2].text
+                    val = lo == nil && hi == nil ? nil : "\(lo ?? "")..\(hi ?? "")"
+                default: val = nil
+                }
+                guard let v = val else { continue }
+                out[isOurs ? n : "\(setName).\(n)"] = v
             }
         }
         return out
@@ -733,18 +759,190 @@ final class IFCReader {
 
     func addMesh(_ p: StepEntity, _ m: TriMesh) {
         guard options.meshUnsupported, !m.isEmpty else { return }
-        let pretty = p.type.hasPrefix("IFC") ? String(p.type.dropFirst(3)).capitalized : p.type.capitalized
-        let layer = "IFC-" + pretty
+        var pretty = p.type.hasPrefix("IFC") ? String(p.type.dropFirst(3)).capitalized : p.type.capitalized
         var props = properties(p.id)
+        // Parts of stairs and ramps (flights, landings, stringers) keep their assembly.
+        if let par = parentOf[p.id], let pe = f.entities[par], ["IFCSTAIR", "IFCRAMP", "IFCROOF", "IFCCURTAINWALL"].contains(pe.type) {
+            props["assembly"] = pe[0].string ?? "\(par)"
+            props["assemblyType"] = pe.type
+            if let n = pe[2].string, !n.isEmpty { props["assemblyName"] = n }
+            pretty = String(pe.type.dropFirst(3)).capitalized
+        }
+        let layer = "IFC-" + pretty
         props["ifcType"] = p.type
         if let g = p[0].string { props["ifcGuid"] = g }
         if let n = p[2].string, !n.isEmpty { props["name"] = n }
         if let mat = ensureMaterial(materialInfo(p.id).name) { props["material"] = mat }
+        else if let c = styledColor(p) { props["material"] = colourMaterial(c) }
         let z = m.bounds.min.z
         if let lv = doc.level(level(for: p.id, baseZ: z.isFinite ? z : 0)) { props["level"] = lv.name }
         doc.ensureLayer(layer)
         doc.add(Entity(layer: layer, geometry: .solid(SolidGeom(kind: .mesh, origin: .zero, meshVertices: m.v, meshTriangles: m.t)), props: props))
         bump("mesh")
+    }
+
+    // MARK: styles
+
+    func colour(_ v: StepValue) -> RGBA? {
+        guard let c = e(v), c.type == "IFCCOLOURRGB", let r = c[1].double, let g = c[2].double, let b = c[3].double else { return nil }
+        return RGBA(r, g, b)
+    }
+
+    /// Surface colour and transparency of a presentation style (IfcSurfaceStyle, IFC2x3 style assignments).
+    func styleColour(_ v: StepValue, depth: Int = 0) -> (RGBA, Double)? {
+        guard depth < 4, let st = e(v) else { return nil }
+        switch st.type {
+        case "IFCSURFACESTYLE":
+            for x in st[2].list ?? [] {
+                guard let r = e(x), r.type == "IFCSURFACESTYLERENDERING" || r.type == "IFCSURFACESTYLESHADING", let c = colour(r[0]) else { continue }
+                return (c, max(0, min(1, r[1].double ?? 0)))
+            }
+            return nil
+        case "IFCPRESENTATIONSTYLEASSIGNMENT":
+            for x in st[0].list ?? [] { if let c = styleColour(x, depth: depth + 1) { return c } }
+            return nil
+        default: return nil
+        }
+    }
+
+    func readStyles() {
+        for it in f.all("IFCSTYLEDITEM") {
+            guard let item = it[0].ref else { continue }
+            for sv in it[1].list ?? [] { if let c = styleColour(sv) { itemColor[item] = c; break } }
+        }
+        for mdr in f.all("IFCMATERIALDEFINITIONREPRESENTATION") {
+            guard let m = e(mdr[3]), m.type == "IFCMATERIAL", let name = m[0].string?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { continue }
+            outer: for rv in mdr[2].list ?? [] {
+                guard let rep = e(rv) else { continue }
+                for iv in rep[3].list ?? [] {
+                    guard let si = e(iv), si.type == "IFCSTYLEDITEM" else { continue }
+                    for sv in si[1].list ?? [] { if let c = styleColour(sv) { materialColor[name] = c; break outer } }
+                }
+            }
+        }
+    }
+
+    /// Colour styled directly on a product's body items (also through mapped items).
+    func styledColor(_ p: StepEntity) -> (RGBA, Double)? {
+        for it in bodyItems(p) {
+            guard let id = it.ref else { continue }
+            if let c = itemColor[id] { return c }
+            if let ie = f.entities[id], ie.type == "IFCMAPPEDITEM", let src = e(ie[0]), let rep = e(src[1]) {
+                for x in rep[3].list ?? [] { if let r = x.ref, let c = itemColor[r] { return c } }
+            }
+        }
+        return nil
+    }
+
+    /// Material named after a styled colour ("IFC Colour RRGGBB").
+    func colourMaterial(_ c: (RGBA, Double)) -> String {
+        let name = "IFC Colour " + String(c.0.hex.dropFirst()).uppercased() + (c.1 > 0 ? " T\(Int((c.1 * 100).rounded()))" : "")
+        if doc.material(name) == nil { doc.materials.append(Material(name: name, color: c.0, transparency: c.1)) }
+        return name
+    }
+
+    // MARK: spaces from meshes, space boundaries, curtain walls
+
+    /// Space boundary from a non-extruded body: the outline of its bottom faces.
+    func spaceFromMesh(_ p: StepEntity) -> Bool {
+        let m = productMesh(p)
+        let b = m.bounds
+        guard !m.isEmpty, !b.isEmpty, b.max.z - b.min.z > 1 else { return false }
+        let tol = max(1.0, (b.max.z - b.min.z) * 0.01)
+        var edgeCount: [String: (Vec2, Vec2, Int)] = [:]
+        func key(_ q: Vec2) -> String { "\(Int((q.x * 10).rounded())),\(Int((q.y * 10).rounded()))" }
+        var t = 0
+        while t + 2 < m.t.count {
+            let a = m.v[m.t[t]], c1 = m.v[m.t[t + 1]], c2 = m.v[m.t[t + 2]]
+            t += 3
+            let n = (c1 - a).cross(c2 - a)
+            guard n.length > 1e-9, abs(n.z) / n.length > 0.9, [a, c1, c2].allSatisfy({ abs($0.z - b.min.z) <= tol }) else { continue }
+            for (u, v) in [(a, c1), (c1, c2), (c2, a)] {
+                let k1 = key(u.xy), k2 = key(v.xy)
+                let k = k1 < k2 ? k1 + "|" + k2 : k2 + "|" + k1
+                let cur = edgeCount[k]
+                edgeCount[k] = (u.xy, v.xy, (cur?.2 ?? 0) + 1)
+            }
+        }
+        // Boundary edges appear once; chain them into loops and keep the largest.
+        var next: [String: [Vec2]] = [:]
+        var pts: [String: Vec2] = [:]
+        for (_, e) in edgeCount where e.2 == 1 {
+            next[key(e.0), default: []].append(e.1); next[key(e.1), default: []].append(e.0)
+            pts[key(e.0)] = e.0; pts[key(e.1)] = e.1
+        }
+        var visited = Set<String>(), best: [Vec2] = []
+        for start in pts.keys.sorted() where !visited.contains(start) {
+            var loop: [Vec2] = [], cur = start, prev = ""
+            for _ in 0..<(pts.count + 1) {
+                visited.insert(cur); loop.append(pts[cur]!)
+                guard let cand = next[cur]?.map(key).first(where: { $0 != prev && (!visited.contains($0) || ($0 == start && loop.count > 2)) }) else { break }
+                if cand == start { break }
+                prev = cur; cur = cand
+            }
+            if loop.count >= 3 && abs(GeometryOps.signedArea(loop)) > abs(GeometryOps.signedArea(best)) { best = loop }
+        }
+        let boundary = IFCReader.clean(best)
+        guard boundary.count >= 3 else { return false }
+        let lv = level(for: p.id, baseZ: b.min.z)
+        let long = p[7].string ?? "", short = p[2].string ?? ""
+        let g = SpaceGeom(boundary: boundary, name: long.isEmpty ? (short.isEmpty ? "Room" : short) : long, number: long.isEmpty ? "" : short, height: b.max.z - b.min.z)
+        let id = doc.addElement(.space(g), level: lv)
+        if let i = doc.elementIndex(id) {
+            var props = properties(p.id)
+            if let guid = p[0].string { props["ifcGuid"] = guid }
+            doc.elements[i].props = props
+        }
+        elementOf[p.id] = id
+        bump("space")
+        return true
+    }
+
+    /// IfcRelSpaceBoundary: the building elements bounding each imported space (props "boundedBy", element ids).
+    func readSpaceBoundaries() {
+        var bounded: [EntityID: [EntityID]] = [:]
+        for r in f.all("IFCRELSPACEBOUNDARY") + f.all("IFCRELSPACEBOUNDARY1STLEVEL") + f.all("IFCRELSPACEBOUNDARY2NDLEVEL") {
+            guard let s = r[4].ref, let sp = elementOf[s], let el = r[5].ref, let eid = elementOf[el] else { continue }
+            if !(bounded[sp]?.contains(eid) ?? false) { bounded[sp, default: []].append(eid) }
+        }
+        for (sp, ids) in bounded { if let i = doc.elementIndex(sp) { doc.elements[i].props["boundedBy"] = ids.sorted().map(String.init).joined(separator: ",") } }
+    }
+
+    /// A curtain wall (own body or aggregated plates/members) as a curtain wall element along its long plan axis.
+    /// Returns the handled product ids (the wall and its parts).
+    func curtainWall(_ p: StepEntity, products: [StepEntity]) -> Set<Int> {
+        let parts = products.filter { parentOf[$0.id] == p.id }
+        var m = productMesh(p)
+        for q in parts { m.append(productMesh(q)) }
+        let b = m.bounds
+        guard !m.isEmpty, !b.isEmpty, b.max.z - b.min.z > 1 else { return [] }
+        let pts = m.t.map { m.v[$0].xy }
+        let hull = Thermal.convexHull(pts)
+        guard hull.count >= 2 else { return [] }
+        // Minimum-width direction over the hull edges (rotating calipers).
+        var best: (w: Double, dir: Vec2, lo: Double, hi: Double, off: Double)?
+        for i in 0..<hull.count {
+            let d = (hull[(i + 1) % hull.count] - hull[i])
+            guard d.length > 1e-9 else { continue }
+            let u = d / d.length, n = u.perp
+            let us = hull.map { $0.dot(u) }, ns = hull.map { $0.dot(n) }
+            let w = ns.max()! - ns.min()!
+            if best == nil || w < best!.w { best = (w, u, us.min()!, us.max()!, (ns.max()! + ns.min()!) / 2) }
+        }
+        guard let bb = best, bb.hi - bb.lo > 3 * max(bb.w, 1), bb.w < 1000 else { return [] }
+        let start = bb.dir * bb.lo + bb.dir.perp * bb.off, end = bb.dir * bb.hi + bb.dir.perp * bb.off
+        let lv = level(for: p.id, baseZ: b.min.z)
+        let height = b.max.z - b.min.z
+        let verticals = parts.filter { $0.type == "IFCMEMBER" }.filter { q in let qb = productMesh(q).bounds; return !qb.isEmpty && qb.max.z - qb.min.z > height * 0.6 }.count
+        var g = CurtainWallGeom(start: start, end: end, height: height, baseOffset: b.min.z - elevation(lv))
+        if verticals >= 3 { g.gridU = (bb.hi - bb.lo) / Double(verticals - 1) }
+        let plates = parts.filter { $0.type == "IFCPLATE" }.count
+        if verticals >= 2, plates >= verticals - 1 {
+            let rows = max(1, plates / max(verticals - 1, 1))
+            g.gridV = height / Double(rows)
+        }
+        addElement(p, .curtainWall(g), level: lv, material: materialInfo(p.id).name, kind: "curtainWall")
+        return Set([p.id] + parts.map(\.id))
     }
 
     // MARK: run
@@ -762,6 +960,7 @@ final class IFCReader {
         readUnits()
         readRelationships()
         readStoreys()
+        readStyles()
         if let proj = f.all("IFCPROJECT").first {
             if let n = proj[2].string, !n.isEmpty { doc.info.name = n }
             if let n = proj[3].string { doc.info.number = n }
@@ -789,7 +988,12 @@ final class IFCReader {
             if typeIs(p, ["IFCSLAB", "IFCRAMPFLIGHT", "IFCFOOTING"]) || (p.type == "IFCCOVERING" && p[8].enumValue == "CEILING") { if slab(p) { handled.insert(p.id) } }
             else if typeIs(p, ["IFCCOLUMN"]) { if column(p) { handled.insert(p.id) } }
             else if typeIs(p, ["IFCBEAM"]) { if beam(p) { handled.insert(p.id) } }
-            else if p.type == "IFCSPACE" { if space(p) { handled.insert(p.id) } }
+            else if p.type == "IFCSPACE" { if space(p) || spaceFromMesh(p) { handled.insert(p.id) } }
+            else if typeIs(p, ["IFCCURTAINWALL"]) { handled.formUnion(curtainWall(p, products: products)) }
+        }
+        // Curtain walls without their own body aggregate plates and members.
+        for cw in (f.all("IFCCURTAINWALL") + f.all("IFCCURTAINWALLSTANDARDCASE")).sorted(by: { $0.id < $1.id }) where !handled.contains(cw.id) && cw[0].string != nil {
+            handled.formUnion(curtainWall(cw, products: products))
         }
         for p in products where !handled.contains(p.id) && typeIs(p, ["IFCDOOR", "IFCWINDOW"]) {
             if opening(p) { handled.insert(p.id) }
@@ -803,6 +1007,7 @@ final class IFCReader {
         for p in products where !handled.contains(p.id) && !IFCReader.spatial.contains(p.type) {
             addMesh(p, productMesh(p))
         }
+        readSpaceBoundaries()
         remapReferences()
         doc.currentLayer = "0"
     }

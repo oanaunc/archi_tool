@@ -23,15 +23,7 @@ public enum DXFWriter {
     }
 
     /// Nearest AutoCAD Color Index (1…255) to an RGB color.
-    static func nearestACI(_ c: RGBA) -> Int {
-        var best = 7, bestD = Double.infinity
-        for i in 1...255 {
-            let a = aciColor(i)
-            let d = (a.r - c.r) * (a.r - c.r) + (a.g - c.g) * (a.g - c.g) + (a.b - c.b) * (a.b - c.b)
-            if d < bestD { bestD = d; best = i }
-        }
-        return best
-    }
+    static func nearestACI(_ c: RGBA) -> Int { DXFColors.nearest(c) }
     static func trueColor(_ c: RGBA) -> Int {
         func b(_ v: Double) -> Int { Int((max(0, min(1, v)) * 255).rounded()) }
         return b(c.r) << 16 | b(c.g) << 8 | b(c.b)
@@ -82,11 +74,22 @@ public enum DXFWriter {
         var blockNames: [String: String] = [:] // doc name -> dxf name
         /// Z / elevation of the entity being written (props "elevation" or "z": contours, survey points).
         var elevation = 0.0
+        /// Props of the entity being written (MTEXT formatting), its XDATA (attached to its first DXF entity, emitted just
+        /// before the next group 0) and its transparency (group 440 on every DXF entity it produces).
+        var entityProps: [String: String] = [:]
+        var armedXData: [(Int, String)]? = nil
+        var pendingXData: [(Int, String)] = []
+        var entityTransparency: Int? = nil
 
         init(doc: ArchiDocument) { self.doc = doc }
 
         mutating func h() -> String { defer { nextHandle += 1 }; return String(nextHandle, radix: 16, uppercase: true) }
         mutating func g(_ code: Int, _ v: String) {
+            if code == 0 && !pendingXData.isEmpty {
+                let x = pendingXData
+                pendingXData = []
+                for (xc, xv) in x { g(xc, xv) }
+            }
             let c = String(code)
             body.append(String(repeating: " ", count: max(0, 3 - c.count)) + c)
             body.append(v)
@@ -217,10 +220,14 @@ public enum DXFWriter {
                 g(70, (l.frozen ? 1 : 0) | (l.locked ? 4 : 0))
                 let aci = DXFWriter.nearestACI(l.color)
                 g(62, l.visible ? aci : -aci)
-                if !aciColor(aci).isNear(l.color) { g(420, DXFWriter.trueColor(l.color)) }
+                if !DXFColors.rgba(aci: aci).isNear(l.color) { g(420, DXFWriter.trueColor(l.color)) }
                 g(6, linetypeName(l.linetype) ?? "Continuous")
                 if !l.plot { g(290, 0) }
                 g(370, DXFWriter.lineweightCode(l.lineweight))
+                if l.transparency > 1e-9 {
+                    let pct = l.transparency > 1 ? l.transparency : l.transparency * 100
+                    g(1001, "AcCmTransparency"); g(1071, DXFColors.transparencyCode(percent: pct))
+                }
             }
             g(0, "ENDTAB")
             // STYLE
@@ -231,18 +238,31 @@ public enum DXFWriter {
                 record("STYLE", "3", "AcDbTextStyleTableRecord")
                 g(2, DXFWriter.enc(DXFWriter.safeName(s.name))); g(70, 0); g(40, s.height); g(41, s.widthFactor == 0 ? 1 : s.widthFactor)
                 g(50, deg(s.oblique)); g(71, 0); g(42, 2.5)
-                var font = s.font
-                if font.lowercased() == "helvetica" || font.isEmpty { font = "arial" }
-                if !font.contains(".") { font += ".ttf" }
+                let original = doc.variable("DXFFONT:" + s.name)
+                let keep = original.map { DXFFonts.family(fromFile: $0).caseInsensitiveCompare(s.font) == .orderedSame } ?? false
+                let font = DXFFonts.file(forFamily: s.font, original: keep ? original : nil)
                 g(3, DXFWriter.enc(font)); g(4, "")
+                if font.lowercased().hasSuffix(".ttf") || font.lowercased().hasSuffix(".otf") {
+                    let lower = s.font.lowercased()
+                    var face = s.font.isEmpty ? "Arial" : s.font
+                    var flags = 34
+                    if lower.hasSuffix(" bold") { face = String(face.dropLast(5)); flags |= 0x2000000 }
+                    if lower.hasSuffix(" italic") { face = String(face.dropLast(7)); flags |= 0x1000000 }
+                    if lower == "helvetica" { face = "Arial" }
+                    g(1001, "ACAD"); g(1000, DXFWriter.enc(face)); g(1071, flags)
+                }
             }
             g(0, "ENDTAB")
             // VIEW, UCS
             tableHead("VIEW", "6", 0); g(0, "ENDTAB")
             tableHead("UCS", "7", 0); g(0, "ENDTAB")
             // APPID
-            tableHead("APPID", "9", 1)
+            var apps = DXFXData.appNames(doc).filter { $0.uppercased() != "ACAD" }
+            if doc.layers.contains(where: { $0.transparency > 1e-9 }) { apps.append("AcCmTransparency") }
+            if !doc.dimStyles.isEmpty && !apps.contains(DXFXData.app) { apps.append(DXFXData.app) }
+            tableHead("APPID", "9", 1 + apps.count)
             record("APPID", "9", "AcDbRegAppTableRecord", handle: "12"); g(2, "ACAD"); g(70, 0)
+            for a in apps { record("APPID", "9", "AcDbRegAppTableRecord"); g(2, DXFWriter.enc(a)); g(70, 0) }
             g(0, "ENDTAB")
             // DIMSTYLE
             g(0, "TABLE"); g(2, "DIMSTYLE"); g(5, "A"); g(330, "0"); g(100, "AcDbSymbolTable"); g(70, doc.dimStyles.count)
@@ -255,6 +275,7 @@ public enum DXFWriter {
                 if ds.arrow == .architecturalTick || ds.arrow == .tick { g(142, ds.arrowSize) }
                 g(144, ds.linearScale); g(140, ds.textHeight); g(147, ds.textGap)
                 g(77, 1); g(271, ds.decimals); g(272, ds.decimals)
+                g(1001, DXFXData.app); g(1000, "arrow=" + ds.arrow.rawValue)
             }
             g(0, "ENDTAB")
             // BLOCK_RECORD
@@ -348,12 +369,19 @@ public enum DXFWriter {
                 g(62, DXFWriter.nearestACI(c)); g(420, Int(r) << 16 | Int(gg) << 8 | Int(b))
             }
             if let lw = s.lineweight { g(370, DXFWriter.lineweightCode(lw)) }
+            if let t = entityTransparency { g(440, t) }
             g(100, sub)
+            if let x = armedXData { pendingXData = x; armedXData = nil }
         }
 
         mutating func entity(_ e: Entity, owner: String) {
             let s = Style(layer: e.layer, color: e.color, linetype: e.linetype, lineweight: e.lineweight)
             elevation = DXFWriter.elevation(of: e)
+            entityProps = e.props
+            let x = DXFXData.groups(e.props, enc: DXFWriter.enc)
+            armedXData = x.isEmpty ? nil : x
+            entityTransparency = e.props["transparency"].flatMap { Double($0) }.map { DXFColors.transparencyCode(percent: $0) }
+            defer { entityProps = [:]; armedXData = nil; entityTransparency = nil }
             geometry(e.geometry, s, owner: owner)
             elevation = 0
             // Toposurfaces also get their contour lines as polylines at their elevation (readable by TOPO Contours).
@@ -537,7 +565,7 @@ public enum DXFWriter {
 
         mutating func text(_ t: TextGeom, _ s: Style, owner: String) {
             let style = DXFWriter.enc(DXFWriter.safeName(t.style.isEmpty ? "Standard" : t.style))
-            if t.content.contains("\n") || t.width > 0 {
+            if t.content.contains("\n") || t.width > 0 || entityProps["mtext"] != nil {
                 head("MTEXT", s, owner: owner, sub: "AcDbMText")
                 pt(10, t.position); g(40, t.height)
                 if t.width > 0 { g(41, t.width) }
@@ -546,6 +574,7 @@ public enum DXFWriter {
                 g(71, row * 3 + col); g(72, 1)
                 var content = DXFWriter.enc(Writer.mtextEscape(t.content).replacingOccurrences(of: "\\U+", with: "\u{1}"))
                 content = content.replacingOccurrences(of: "\u{1}", with: "\\U+")
+                if let raw = entityProps["mtext"], DXFReader.stripMText(raw) == t.content { content = DXFWriter.enc(raw) }
                 var chunks: [String] = []
                 var cur = ""
                 for ch in content { cur.append(ch); if cur.count >= 240 && ch != "\\" { chunks.append(cur); cur = "" } }
