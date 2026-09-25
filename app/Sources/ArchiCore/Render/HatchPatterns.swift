@@ -72,12 +72,78 @@ public enum HatchPatterns {
         // Wood end grain / timber: long lines with irregular breaks. Real-world mm.
         p["WOOD"] = [Family(0, 0, 0, 37.0, 9.0, [120, -8, 60, -14, 200, -6]),
                      Family(0, 0, 4.5, 71.0, 18.0, [40, -25, 160, -10])]
+        // More of the standard acad(iso).pat library.
+        p["ANSI33"] = [Family(45, 0, 0, 0, 0.25 * i), Family(45, 0.176776695 * i, 0, 0, 0.25 * i, [0.125 * i, -0.0625 * i])]
+        p["ANSI34"] = [Family(45, 0, 0, 0, 0.75 * i), Family(45, 0.176776695 * i, 0, 0, 0.75 * i),
+                       Family(45, 0.353553391 * i, 0, 0, 0.75 * i), Family(45, 0.530330086 * i, 0, 0, 0.75 * i)]
+        p["ANSI35"] = [Family(45, 0, 0, 0, 0.25 * i), Family(45, 0.176776695 * i, 0, 0, 0.25 * i, [0.3125 * i, -0.0625 * i, 0, -0.0625 * i])]
+        p["ANSI36"] = [Family(45, 0, 0, 0.21875 * i, 0.125 * i, [0.3125 * i, -0.0625 * i, 0, -0.0625 * i])]
+        p["ANSI38"] = [Family(45, 0, 0, 0, 0.125 * i), Family(135, 0, 0, 0.25 * i, 0.125 * i, [0.3125 * i, -0.1875 * i])]
+        p["SQUARE"] = [Family(0, 0, 0, 0, 0.125 * i, [0.125 * i, -0.125 * i]), Family(90, 0, 0, 0, 0.125 * i, [0.125 * i, -0.125 * i])]
+        p["ZIGZAG"] = [Family(0, 0, 0, 0.125 * i, 0.125 * i, [0.125 * i, -0.125 * i]), Family(90, 0.125 * i, 0, 0.125 * i, 0.125 * i, [0.125 * i, -0.125 * i])]
+        p["AR-B816"] = [Family(0, 0, 0, 0, 203.2), Family(90, 0, 0, 203.2, 203.2, [203.2, -203.2])]
+        p["AR-HBONE"] = [Family(45, 0, 0, 101.6, 101.6, [304.8, -101.6]), Family(135, 71.84, 71.84, 101.6, -101.6, [304.8, -101.6])]
         return p
     }()
 
+    // MARK: Custom patterns (.pat files)
+
+    /// Patterns loaded from .pat definitions (PATLOAD, or saved in a drawing as variables "HPPAT:<NAME>").
+    static var custom: [String: [Family]] = [:]
+    static var customSources: [String: String] = [:]
+
+    /// Parses AutoCAD .pat text ("*NAME, description" followed by "angle, x0,y0, dx,dy [, dashes…]" lines).
+    /// Returns the patterns by upper-case name with their definition text (for saving in a drawing). Values are used as written
+    /// (drawing units); ";" starts a comment.
+    public static func parsePat(_ text: String) -> [(name: String, text: String)] {
+        var out: [(String, String)] = []
+        var name: String? = nil, body: [String] = []
+        func flush() { if let n = name, !body.isEmpty { out.append((n, body.joined(separator: "\n"))) }; name = nil; body = [] }
+        for raw in text.replacingOccurrences(of: "\r", with: "").components(separatedBy: "\n") {
+            var line = raw
+            if let c = line.firstIndex(of: ";") { line = String(line[..<c]) }
+            line = line.trimmingCharacters(in: .whitespaces)
+            if line.isEmpty { continue }
+            if line.hasPrefix("*") {
+                flush()
+                let n = line.dropFirst().split(separator: ",", maxSplits: 1).first.map { $0.trimmingCharacters(in: .whitespaces).uppercased() } ?? ""
+                name = n.isEmpty ? nil : n
+            } else if name != nil, families(fromLine: line) != nil { body.append(line) }
+        }
+        flush()
+        return out
+    }
+
+    static func families(fromLine line: String) -> Family? {
+        let v = line.split(separator: ",").map { Double($0.trimmingCharacters(in: .whitespaces)) }
+        guard v.count >= 5, v.allSatisfy({ $0 != nil }) else { return nil }
+        let n = v.map { $0! }
+        return Family(n[0], n[1], n[2], n[3], n[4], Array(n.dropFirst(5)))
+    }
+
+    /// Registers a pattern definition (lines of "angle, x0,y0, dx,dy, dashes"). Returns false if nothing valid.
+    @discardableResult
+    public static func register(name: String, definition: String) -> Bool {
+        let key = name.uppercased()
+        if customSources[key] == definition { return true }
+        let fams = definition.components(separatedBy: "\n").compactMap { families(fromLine: $0) }
+        guard !fams.isEmpty, fams.allSatisfy({ abs($0.delta.y) > 1e-12 }) else { return false }
+        custom[key] = fams; customSources[key] = definition
+        return true
+    }
+
+    /// Registers the patterns saved in a drawing (variables "HPPAT:<NAME>").
+    public static func register(doc: ArchiDocument) {
+        for (k, v) in doc.variables where k.hasPrefix("HPPAT:") { register(name: String(k.dropFirst(6)), definition: v) }
+    }
+
+    /// Built-in and loaded pattern names.
+    public static var allNames: [String] { names + custom.keys.sorted().filter { !names.contains($0) } }
+
     /// Pattern names understood by `lines(...)` (SOLID is a plain fill).
-    public static let names: [String] = ["SOLID", "ANSI31", "ANSI32", "ANSI37", "AR-CONC", "AR-SAND", "INSUL", "BRICK", "AR-BRSTD",
-                                         "GRASS", "NET", "DOTS", "HONEY", "LINE", "CROSS", "EARTH", "GRAVEL", "WOOD"]
+    public static let names: [String] = ["SOLID", "ANSI31", "ANSI32", "ANSI33", "ANSI34", "ANSI35", "ANSI36", "ANSI37", "ANSI38", "AR-CONC", "AR-SAND",
+                                         "INSUL", "BRICK", "AR-BRSTD", "AR-B816", "AR-HBONE", "GRASS", "NET", "DOTS", "HONEY", "LINE", "CROSS",
+                                         "EARTH", "GRAVEL", "WOOD", "SQUARE", "ZIGZAG"]
 
     /// Whether the pattern is defined at real-world size (AR-*, WOOD, GRAVEL, INSUL) rather than drafting size.
     public static func isRealWorld(_ pattern: String) -> Bool {
@@ -88,6 +154,13 @@ public enum HatchPatterns {
     /// Safety limit on generated segments per call.
     public static var maxSegments = 60000
 
+    /// Pattern line segments with the pattern anchored at `origin` (HATCH origin / HPORIGIN) instead of 0,0.
+    public static func lines(loops: [[Vec2]], pattern: String, scale: Double, angle: Double, origin: Vec2) -> [[Vec2]] {
+        guard origin != .zero else { return lines(loops: loops, pattern: pattern, scale: scale, angle: angle) }
+        let shifted = loops.map { $0.map { $0 - origin } }
+        return lines(loops: shifted, pattern: pattern, scale: scale, angle: angle).map { $0.map { $0 + origin } }
+    }
+
     /// Pattern line segments clipped to the even-odd region of `loops`. Returns [] for SOLID or unknown patterns.
     public static func lines(loops: [[Vec2]], pattern: String, scale: Double, angle: Double) -> [[Vec2]] {
         let loops = loops.map { RG.dedupe($0, closed: true) }.filter { $0.count >= 3 }
@@ -95,7 +168,7 @@ public enum HatchPatterns {
         let s = scale > 1e-12 ? scale : 1
         let name = pattern.uppercased()
         if name == "INSUL" { return insulation(loops: loops, scale: s, angle: angle) }
-        guard let fams = families[name] else { return [] }
+        guard let fams = families[name] ?? custom[name] else { return [] }
         var out: [[Vec2]] = []
         for f in fams {
             family(f, loops: loops, scale: s, angle: angle, into: &out)

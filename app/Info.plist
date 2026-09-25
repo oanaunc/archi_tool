@@ -25,6 +25,14 @@
       <key>LSItemContentTypes</key><array><string>com.oanarina.archi</string></array>
     </dict>
     <dict>
+      <key>CFBundleTypeName</key><string>Oanarina Archi Template</string>
+      <key>CFBundleTypeRole</key><string>Viewer</string>
+      <key>LSHandlerRank</key><string>Owner</string>
+      <key>CFBundleTypeIconFile</key><string>AppIcon</string>
+      <key>CFBundleTypeExtensions</key><array><string>architemplate</string></array>
+      <key>LSItemContentTypes</key><array><string>com.oanarina.architemplate</string></array>
+    </dict>
+    <dict>
       <key>CFBundleTypeName</key><string>DXF Drawing</string>
       <key>CFBundleTypeRole</key><string>Editor</string>
       <key>LSHandlerRank</key><string>Alternate</string>
@@ -38,6 +46,12 @@
       <key>UTTypeDescription</key><string>Oanarina Archi Project</string>
       <key>UTTypeConformsTo</key><array><string>public.json</string><string>public.data</string></array>
       <key>UTTypeTagSpecification</key><dict><key>public.filename-extension</key><array><string>archi</string></array></dict>
+    </dict>
+    <dict>
+      <key>UTTypeIdentifier</key><string>com.oanarina.architemplate</string>
+      <key>UTTypeDescription</key><string>Oanarina Archi Template</string>
+      <key>UTTypeConformsTo</key><array><string>public.json</string><string>public.data</string></array>
+      <key>UTTypeTagSpecification</key><dict><key>public.filename-extension</key><array><string>architemplate</string></array></dict>
     </dict>
   </array>
 </dict>

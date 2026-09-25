@@ -12,6 +12,7 @@ public enum DocumentIO {
         switch url.pathExtension.lowercased() {
         case "dxf": return try DXFReader.read(try FileImport.readText(url))
         case "archi", "json": return try ArchiFile.decode(Data(contentsOf: url))
+        case "archiz": return try ArchiPackage.read(url)
         default: return try FileImport.load(url).0
         }
     }
@@ -23,7 +24,9 @@ public enum DocumentIO {
         func text(_ s: String) throws { try s.write(to: url, atomically: true, encoding: .utf8) }
         let mm = doc.units.mm
         switch f {
-        case "archi", "json": try ArchiFile.encode(doc).write(to: url, options: .atomic)
+        case "archi": try ArchiFile.save(doc, to: url, backup: doc.variable("ISAVEBAK") != "0")
+        case "json": try ArchiFile.encode(doc).write(to: url, options: .atomic)
+        case "archiz": _ = try ArchiPackage.write(doc, to: url)
         case "dxf": try text(DXFWriter.write(doc))
         case "svg":
             let entries = DrawListBuilder.entries(doc: doc, options: DrawOptions(level: level ?? doc.currentLevel))

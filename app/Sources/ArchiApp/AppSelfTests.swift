@@ -107,6 +107,7 @@ enum AppSelfTests {
         lastCoverage = cov
         check(cov.missing.isEmpty, "commands without a ribbon/menu/palette entry: \(cov.missing.joined(separator: ", "))")
         extraChecks(check)
+        reviewChecks(check)
         check(CommandSearch.rank("prspl", registry: .shared).first?.name == "PRESSPULL", "fuzzy search finds PRESSPULL")
         check(CommandSearch.rank("tag all", registry: .shared).contains { $0.name == "TAGALL" }, "ribbon title search finds TAGALL")
         return r
@@ -220,6 +221,149 @@ enum AppSelfTests {
         let t = TemplateLibrary.metricArchitectural()
         check(t.layer(named: "A-FURN") != nil && t.dimStyles.contains { $0.name == "Architectural 1:50" } && t.currentDimStyle == "Architectural 1:100", "metric architectural template")
         check(DocumentThumbnails.stableKey("abc") == DocumentThumbnails.stableKey("abc") && DocumentThumbnails.stableKey("abc") != DocumentThumbnails.stableKey("abd"), "stable thumbnail keys")
+    }
+
+    /// Checks of the collaboration, 3D tool, render queue, printing, scripting and node editor additions.
+    static func reviewChecks(_ check: (Bool, String) -> Void) {
+        // New catalog sections are unique and every item resolves.
+        let names = CommandCatalog.coverageMenus.map(\.0)
+        check(Set(names).count == names.count, "coverage menu section names are unique")
+        for n in ["ACCESSIBILITY", "BATCH", "BCFIN", "BCFOUT", "BOQ", "COMPARE", "EGRESS", "ENERGYBALANCE", "ETRANSMIT", "EXCHANGECHECK", "IMAGEIMPORT",
+                  "IMAGESCALE", "KMLOUT", "MARKUP", "MATCHPROP", "SVGLAYERSOUT", "TAKEOFFPHASE", "MEASURE3D", "RENDERQUEUE", "PRINTSETUP"] {
+            check(CommandCatalog.curatedItems.contains { $0.names.contains(n) }, "\(n) has a ribbon/menu entry")
+        }
+        check(RibbonTab.allCases.contains(.collaborate), "Collaborate ribbon tab")
+
+        // Nudge (MOD-028) and selection cycling (SEL-018) through the editor.
+        var nd = ArchiDocument()
+        let l1 = nd.add(.line(LineGeom(Vec2(0, 0), Vec2(1000, 0))), layer: "0")
+        let l2 = nd.add(.line(LineGeom(Vec2(0, 1), Vec2(1000, 1))), layer: "0")
+        let ed = Editor(document: nd)
+        ed.selection = [l1]
+        check(ed.nudgeSelection(by: Vec2(10, -5)) == 1, "nudge moves one object")
+        if case .line(let lg)? = ed.doc.entity(l1)?.geometry { check(lg.a.isClose(Vec2(10, -5), tol: 1e-9) && lg.b.isClose(Vec2(1010, -5), tol: 1e-9), "nudge offset exact") }
+        else { check(false, "nudged line") }
+        ed.undo()
+        if case .line(let lg)? = ed.doc.entity(l1)?.geometry { check(lg.a.isClose(.zero, tol: 1e-9), "nudge is one undo step") }
+        let a = ed.cyclePick(at: Vec2(500, 0.5), tolerance: 5), b = ed.cyclePick(at: Vec2(500, 0.5), tolerance: 5), c = ed.cyclePick(at: Vec2(500, 0.5), tolerance: 5)
+        check(a != nil && b != nil && a != b && c == a && Set([a!, b!]) == Set([l1, l2]), "cycle pick alternates between overlapping lines")
+
+        // 3D measure and gizmo maths.
+        check(Measure3D.describe(Vec3(0, 0, 0), Vec3(3000, 4000, 0), precision: 0).hasPrefix("Distance 5000"), "3D measure distance")
+        check(abs(GizmoMath.axisDelta(drag: CGVector(dx: 50, dy: 0), axisScreen: CGVector(dx: 0.1, dy: 0)) - 500) < 1e-9, "gizmo axis drag → 500 mm")
+        check(abs(GizmoMath.axisDelta(drag: CGVector(dx: 0, dy: 40), axisScreen: CGVector(dx: 0.1, dy: 0))) < 1e-9, "gizmo drag across the axis is ignored")
+        check(abs(GizmoMath.sweep(center: .zero, from: CGPoint(x: 10, y: 0), to: CGPoint(x: 0, y: 10)) - .pi / 2) < 1e-9, "gizmo ring sweep 90°")
+        check(abs(GizmoMath.sweep(center: .zero, from: CGPoint(x: -10, y: 1), to: CGPoint(x: -10, y: -1)) - 0.19933) < 1e-3, "sweep wraps across ±180°")
+        check(abs(GizmoMath.snap(0.3, step: .pi / 12) - .pi / 12) < 1e-12, "rotation snaps to 15°")
+        let gd = Editor(document: nd)
+        let n = GizmoMath.apply(gd, ids: [l1], GizmoMath.transform(axis: 2, amount: .pi / 2, pivot: .zero), label: "Rotate")
+        if n == 1, case .line(let lg)? = gd.doc.entity(l1)?.geometry { check(lg.b.isClose(Vec2(0, 1000), tol: 1e-6), "gizmo rotation about Z") } else { check(false, "gizmo rotation applied") }
+
+        // Markup filter.
+        var md = ArchiDocument()
+        let m1 = Markups.add(&md, rect: (Vec2(0, 0), Vec2(100, 100)), comment: "Door width", author: "A", date: "2026-01-01")
+        _ = Markups.add(&md, rect: (Vec2(200, 0), Vec2(300, 100)), comment: "Stair headroom", author: "B", date: "2026-01-02")
+        Markups.setStatus(&md, m1, resolved: true)
+        Markups.reply(&md, m1, text: "fixed in rev B")
+        let ml = Markups.list(md)
+        check(MarkupFilter.open.apply(ml).map(\.comment) == ["Stair headroom"] && MarkupFilter.resolved.apply(ml).count == 1 && MarkupFilter.all.apply(ml).count == 2, "markup open/resolved filter")
+        check(MarkupFilter.all.apply(ml, query: "rev b").map(\.id) == [m1], "markup search includes replies")
+
+        // Compare overlay shapes.
+        var oldD = ArchiDocument()
+        let keep = oldD.add(.line(LineGeom(Vec2(0, 0), Vec2(100, 0))), layer: "0")
+        let gone = oldD.add(.circle(CircleGeom(Vec2(500, 500), 50)), layer: "0")
+        var newD = oldD
+        newD.remove(ids: [gone])
+        if let i = newD.entityIndex(keep) { newD.entities[i].geometry = .line(LineGeom(Vec2(0, 0), Vec2(200, 0))) }
+        _ = newD.add(.line(LineGeom(Vec2(0, 300), Vec2(100, 300))), layer: "0")
+        let diff = DocumentCompare.compare(oldD, newD, matchGeometry: false)
+        let shapes = CompareOverlay.shapes(diff, old: oldD, new: newD)
+        check(shapes.count == 3 && Set(shapes.map(\.kind)) == [.added, .removed, .modified], "compare overlay has added/removed/modified shapes")
+        check(shapes.first { $0.kind == .removed }?.polylines.first?.count ?? 0 > 8, "removed circle outline comes from the old version")
+
+        // Sheet revision clouds.
+        var rd = ArchiDocument()
+        rd.layouts = [ArchiCore.Layout(name: "A101"), ArchiCore.Layout(name: "A102")]
+        let c1 = SheetRevisionClouds.add(&rd, layout: 0, rect: BBox2(min: Vec2(10, 10), max: Vec2(60, 40)), code: "B", note: "door moved")
+        _ = SheetRevisionClouds.add(&rd, layout: 1, rect: BBox2(min: Vec2(10, 10), max: Vec2(30, 30)), code: "B")
+        _ = SheetRevisionClouds.add(&rd, layout: 1, rect: BBox2(min: Vec2(50, 10), max: Vec2(80, 30)), code: "C")
+        check(SheetRevisionClouds.add(&rd, layout: 5, rect: BBox2(min: .zero, max: Vec2(1, 1)), code: "A") == nil, "cloud on a missing sheet is refused")
+        let counts = SheetRevisionClouds.counts(rd)
+        check(counts.map(\.code) == ["B", "C"] && counts[0].clouds == 2 && counts[0].sheets == ["A101", "A102"], "revision cloud schedule")
+        check(rd.layouts[0].entities.count == 3 && SheetRevisionClouds.list(rd).first?.note == "door moved", "cloud with triangle tag and note")
+        if let c1 { SheetRevisionClouds.remove(&rd, c1) }
+        check(rd.layouts[0].entities.isEmpty && SheetRevisionClouds.list(rd).count == 2, "deleting a cloud removes its tag")
+
+        // Block library preview document and drag payload.
+        var bd = ArchiDocument()
+        bd.blocks["Chair"] = Block(name: "Chair", basePoint: .zero, entities: [Entity(layer: "0", geometry: .circle(CircleGeom(.zero, 250)))])
+        _ = bd.add(.line(LineGeom(Vec2(0, 0), Vec2(9000, 0))), layer: "0")
+        let libDir = FileManager.default.temporaryDirectory.appendingPathComponent("archi-selftest-lib-\(UUID().uuidString)", isDirectory: true)
+        try? FileManager.default.createDirectory(at: libDir, withIntermediateDirectories: true)
+        try? ArchiFile.encode(bd).write(to: libDir.appendingPathComponent("Furniture.archi"))
+        let scanned = BlockLibrary.scan(libDir)
+        check(scanned.count == 2 && BlockLibrary.search(scanned, "chair").count == 1, "library folder lists the drawing and its block")
+        guard let item = scanned.first(where: { $0.block == "Chair" }) else { check(false, "library block item"); return }
+        check(BlockLibraryStore.item(fromKey: BlockLibraryStore.key(item)) == item, "favourite key resolves to the item")
+        let pv = BlockLibraryStore.previewDocument(item, source: bd)
+        check(pv.entities.count == 1 && { if case .insert(let i) = pv.entities[0].geometry { return i.block == "Chair" }; return false }(), "library preview shows only the block")
+        check(BlockLibraryStore.dragString(item).hasPrefix(ToolDrop.libraryBlockPrefix) && ToolDrop.accepts(BlockLibraryStore.dragString(item)), "library drag payload accepted by drops")
+        var into = ArchiDocument()
+        let bn = try? BlockLibrary.load(item, into: &into)
+        check(bn == "Chair" && into.blocks["Chair"]?.entities.count == 1, "library block loads into a drawing")
+        try? FileManager.default.removeItem(at: libDir)
+
+        // Camera paths: exact keys at their times, smooth between, persistence.
+        var cp = CameraPathDef(name: "Tour")
+        cp.keys = [CameraKey(name: "a", time: 0, camera: Camera(eye: Vec3(0, 0, 1600), target: Vec3(1000, 0, 1600))),
+                   CameraKey(name: "c", time: 10, camera: Camera(eye: Vec3(4000, 4000, 1600), target: Vec3(4000, 5000, 1600))),
+                   CameraKey(name: "b", time: 2, camera: Camera(eye: Vec3(4000, 0, 1600), target: Vec3(5000, 0, 1600)))]
+        check(cp.sample(at: 2)?.eye.isClose(Vec3(4000, 0, 1600), tol: 1e-6) == true && cp.sample(at: 10)?.eye.isClose(Vec3(4000, 4000, 1600), tol: 1e-6) == true, "camera path hits keys at their times")
+        check(cp.sample(at: -1)?.eye.isClose(Vec3(0, 0, 1600), tol: 1e-9) == true && cp.duration == 10, "camera path clamps and has a duration")
+        if let m = cp.sample(at: 1) { check(m.eye.x > 0 && m.eye.x < 4000, "between keys the camera moves along the path") }
+        var cd = ArchiDocument()
+        CameraPaths.store([cp], in: &cd)
+        check(CameraPaths.load(cd) == [cp] && CameraPaths.uniqueName("Tour", in: [cp]) == "Tour 2", "camera paths stored in the drawing")
+        var rt = cp; rt.retime(total: 6)
+        check(rt.sorted.map(\.time) == [0, 3, 6] && rt.sorted.map(\.name) == ["a", "b", "c"], "even timing keeps the key order")
+
+        // Clipping plane panel form.
+        let cpl = ClipPlaneForm.plane(.alongY, offset: 2500, flipped: true)
+        check(cpl.normal.isClose(Vec3(-1, 0, 0), tol: 1e-12) && abs(cpl.point.x - 2500) < 1e-12, "clip plane along Y at x = 2500, flipped")
+        if let f = ClipPlaneForm.form(cpl) { check(f.0 == .alongY && abs(f.offset - 2500) < 1e-9 && f.flipped, "clip plane form recognised") } else { check(false, "clip plane form") }
+        check(ClipPlaneForm.form(SectionPlane(on: true, point: .init(0, 0, 0), normal: Vec3(1, 1, 0).normalized)) == nil, "oblique planes are not axis forms")
+
+        // Render queue file names.
+        check(RenderQueue.fileName("House: view/1", existing: []) == "House- view-1.png" && RenderQueue.fileName("A", existing: ["a.png"]) == "A 2.png", "render queue file names")
+
+        // PPD parsing for trays and paper.
+        let ppd = "*DefaultInputSlot: Tray1\n*InputSlot Tray1/Tray 1: \"<<>>\"\n*InputSlot Manual/Manual Feed: \"x\"\n*PageSize A4/A4: \"y\"\n*PageSize A3: \"z\"\n*InputSlot Tray1/Dup: \"\""
+        let trays = PPDOptions.parse(ppd, option: "InputSlot")
+        check(trays.choices.map(\.key) == ["Tray1", "Manual"] && trays.choices[1].label == "Manual Feed" && trays.defaultKey == "Tray1", "PPD input trays")
+        check(PPDOptions.parse(ppd, option: "PageSize").choices.map(\.label) == ["A4", "A3"], "PPD paper sizes")
+        var po = PrintOptions(); po.scaling = .custom; po.percent = 50
+        check(abs(po.scale.factor - 0.5) < 1e-9 && po.scale.mode == .pageScaleNone, "custom print scale")
+        check((try? JSONDecoder().decode(PrintOptions.self, from: JSONEncoder().encode(po))) == po, "print options round trip")
+
+        // Script diagnostics.
+        let ex = ScriptDiagnostics.excerpt(source: "let a = 1\nfoo(\nlet b", line: 2, column: 1)
+        check(ex.count == 4 && ex[1].hasPrefix(">") && ex[1].hasSuffix("foo(") && ex[2].hasSuffix("^"), "script error excerpt with caret")
+        check(ScriptDiagnostics.frames("f@:1:2\nglobal code\n") == ["f@:1:2"], "script stack frames")
+
+        // Node graph groups, comments, old files, export as script.
+        var g = NodeGraph.sample
+        let gid = g.addGroup(title: "Columns", around: g.nodes.map(\.id))
+        let cid = g.addComment("Octagonal columns", x: 10, y: 10)
+        check(g.members(of: g.groups[0]).count == 4, "group frames its nodes")
+        let x0 = g.nodes[0].x
+        g.moveGroup(gid, dx: 100, dy: 0)
+        check(abs(g.nodes[0].x - x0 - 100) < 1e-9 && g.comments.first?.id == cid, "moving a group moves its nodes")
+        let gj = try? JSONEncoder().encode(g)
+        check(gj.flatMap { try? JSONDecoder().decode(NodeGraph.self, from: $0) } == g, "groups and comments round trip")
+        check((try? JSONDecoder().decode(NodeGraph.self, from: Data(#"{"nodes":[],"links":[],"nextID":3}"#.utf8)))?.groups.isEmpty == true, "graphs without groups decode")
+        let js = NodeGraphScript.javascript(g, name: "cols")
+        check(js.contains("Columns_1: 3000") && js.contains("archi.bakeGraph(graph)") && js.contains("archi.evaluateGraph(graph)"), "graph exported as a parametric script")
     }
 
     static var command: CommandDef {

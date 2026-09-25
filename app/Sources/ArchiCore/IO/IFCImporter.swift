@@ -100,6 +100,8 @@ final class IFCReader {
     var stats: [String: Int] = [:]
     var warnings: [String] = []
     var scale = 1000.0      // file length unit → mm
+    var areaToM2: Double?   // file area unit → m² (nil: length unit squared)
+    var volumeToM3: Double? // file volume unit → m³
     var angleScale = 1.0    // file plane-angle unit → radians
     var placementCache: [Int: Frame3] = [:]
 
@@ -134,6 +136,14 @@ final class IFCReader {
             switch (ue.type, kind) {
             case ("IFCSIUNIT", "LENGTHUNIT"): scale = siFactor(ue) * 1000
             case ("IFCSIUNIT", "PLANEANGLEUNIT"): angleScale = 1
+            case ("IFCSIUNIT", "AREAUNIT"): areaToM2 = pow(siFactor(ue), 2)
+            case ("IFCSIUNIT", "VOLUMEUNIT"): volumeToM3 = pow(siFactor(ue), 3)
+            case ("IFCCONVERSIONBASEDUNIT", "AREAUNIT"):
+                if let m = e(ue[3]), let v = m[0].double { areaToM2 = v * (e(m[1]).map { pow(siFactor($0), 2) } ?? 1) }
+                else if (ue[2].string ?? "").uppercased().contains("FOOT") { areaToM2 = 0.09290304 }
+            case ("IFCCONVERSIONBASEDUNIT", "VOLUMEUNIT"):
+                if let m = e(ue[3]), let v = m[0].double { volumeToM3 = v * (e(m[1]).map { pow(siFactor($0), 3) } ?? 1) }
+                else if (ue[2].string ?? "").uppercased().contains("FOOT") { volumeToM3 = 0.028316846592 }
             case ("IFCCONVERSIONBASEDUNIT", "LENGTHUNIT"), ("IFCCONVERSIONBASEDUNITWITHOFFSET", "LENGTHUNIT"):
                 if let m = e(ue[3]) { let v = m[0].double ?? 1; let base = e(m[1]).map { siFactor($0) } ?? 1; scale = v * base * 1000 }
                 else if let n = ue[2].string?.uppercased() { scale = n.contains("FOOT") ? 304.8 : (n.contains("INCH") ? 25.4 : scale) }
@@ -699,7 +709,11 @@ final class IFCReader {
     func properties(_ id: Int) -> [String: String] {
         var out: [String: String] = [:]
         var sets = psetsOf[id] ?? []
-        if let t = typeOf[id], let tt = f.entities[t] { sets += (tt[5].list ?? []).compactMap { $0.ref }; if let n = tt[2].string { out["ifcTypeName"] = n } }
+        if let t = typeOf[id], let tt = f.entities[t] {
+            sets += (tt[5].list ?? []).compactMap { $0.ref }
+            if let n = tt[2].string { out["ifcTypeName"] = n }
+            out["ifcTypeClass"] = tt.type
+        }
         for ps in sets {
             guard let p = f.entities[ps] else { continue }
             let setName = p[2].string ?? "Pset"
@@ -708,7 +722,9 @@ final class IFCReader {
                 guard options.importPropertySets else { continue }
                 for q in p[5].list ?? [] {
                     guard let qe = e(q), qe.type.hasPrefix("IFCQUANTITY"), let n = qe[0].string, let v = qe[3].double else { continue }
-                    let k = qe.type == "IFCQUANTITYLENGTH" ? scale / 1000 : qe.type == "IFCQUANTITYAREA" ? pow(scale / 1000, 2) : qe.type == "IFCQUANTITYVOLUME" ? pow(scale / 1000, 3) : 1
+                    // Lengths in metres, areas in m², volumes in m³ (the file's area/volume units, else its length unit).
+                    let k = qe.type == "IFCQUANTITYLENGTH" ? scale / 1000 : qe.type == "IFCQUANTITYAREA" ? (areaToM2 ?? pow(scale / 1000, 2))
+                        : qe.type == "IFCQUANTITYVOLUME" ? (volumeToM3 ?? pow(scale / 1000, 3)) : 1
                     out["\(setName).\(n)"] = fmt(v * k, 6)
                 }
                 continue
@@ -1052,7 +1068,17 @@ final class IFCReader {
         let info = materialInfo(p.id)
         var wallType: String? = nil
         let candidates = [p[4].string, info.layerSet].compactMap { $0 }.filter { !$0.isEmpty }
-        if let t = candidates.first(where: { n in doc.wallTypes.contains { $0.name == n } }) { wallType = t }
+        // Type object (IfcRelDefinesByType → IfcWallType): its name is the wall type; its material layers (or the
+        // occurrence's) the build-up.
+        let typeEntity = typeOf[p.id].flatMap { f.entities[$0] }
+        let typeName = typeEntity.flatMap { ["IFCWALLTYPE", "IFCWALLSTYLE"].contains($0.type) ? $0[2].string : nil }.flatMap { $0.isEmpty ? nil : $0 }
+        let typeInfo = typeEntity.map { materialInfo($0.id) }
+        if let tn = typeName {
+            if doc.wallTypes.contains(where: { $0.name == tn }) { wallType = tn }
+            else if let plies = [info.plies, typeInfo?.plies ?? []].first(where: { !$0.isEmpty }) { doc.wallTypes.append(WallType(name: tn, plies: plies)); wallType = tn }
+        }
+        if wallType != nil {}
+        else if let t = candidates.first(where: { n in doc.wallTypes.contains { $0.name == n } }) { wallType = t }
         else if let n = info.layerSet, !n.isEmpty, !info.plies.isEmpty {
             doc.wallTypes.append(WallType(name: n, plies: info.plies)); wallType = n
         }
@@ -1233,6 +1259,22 @@ final class IFCReader {
             }
         }
         if let tag = p[7].string, !tag.isEmpty, Int(tag) == nil { g.mark = tag }
+        // Type object (IfcDoorType / IfcWindowType, IFC2x3 styles): the opening follows a document opening type of that name.
+        if let t = typeOf[p.id], let tt = f.entities[t], ["IFCDOORTYPE", "IFCWINDOWTYPE", "IFCDOORSTYLE", "IFCWINDOWSTYLE"].contains(tt.type),
+           let tn = tt[2].string, !tn.isEmpty {
+            g.typeName = tn
+            if doc.openingType(tn) == nil {
+                var params: [String: String] = [:]
+                for ps in (tt[5].list ?? []).compactMap({ e($0) }) where ps.type == "IFCPROPERTYSET" {
+                    for pv in ps[4].list ?? [] {
+                        guard let prop = e(pv), prop.type == "IFCPROPERTYSINGLEVALUE", let n = prop[0].string, let v = prop[2].text else { continue }
+                        params[n] = v
+                    }
+                }
+                doc.openingTypes.append(OpeningType(name: tn, kind: isDoor ? .door : .window, width: g.width, height: g.height, sill: g.sill,
+                                                    doorStyle: g.doorStyle, windowStyle: g.windowStyle, frameWidth: g.frameWidth, params: params))
+            }
+        }
         addElement(p, .opening(g), level: host.0.level, material: materialInfo(p.id).name, kind: isDoor ? "door" : "window")
         return true
     }

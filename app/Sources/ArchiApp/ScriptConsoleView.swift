@@ -15,7 +15,7 @@ struct ScriptConsoleView: View {
     @State private var selectedText = ""
     init(model: AppModel) { self.model = model }
 
-    struct ConsoleLine: Identifiable { enum Kind { case input, output, value, error }
+    struct ConsoleLine: Identifiable { enum Kind { case input, output, value, error, warning }
         let id = UUID(); let kind: Kind; let text: String }
 
     var body: some View {
@@ -95,6 +95,8 @@ struct ScriptConsoleView: View {
                                     .foregroundStyle(color(l.kind))
                                     .textSelection(.enabled)
                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                    .onTapGesture(count: 2) { if l.kind == .error { goToLine(l.text) } }
+                                    .help(l.kind == .error && l.text.contains("(line ") ? "Double-click to go to the line" : "")
                                     .id(l.id)
                             }
                         }.padding(8)
@@ -114,7 +116,19 @@ struct ScriptConsoleView: View {
         case .output: return Color(white: 0.88)
         case .value: return Color(white: 0.6)
         case .error: return Color(red: 1, green: 0.42, blue: 0.38)
+        case .warning: return Color(red: 1, green: 0.8, blue: 0.35)
         }
+    }
+
+    /// Error lines mentioning "(line N" jump to that line in the editor.
+    private func goToLine(_ text: String) {
+        guard let r = text.range(of: "(line "), let n = Int(text[r.upperBound...].prefix { $0.isNumber }), let tv = ScriptTextView.active else { return }
+        let ns = tv.string as NSString
+        var loc = 0
+        for _ in 1..<max(n, 1) { let lr = ns.lineRange(for: NSRange(location: loc, length: 0)); loc = NSMaxRange(lr); if loc >= ns.length { break } }
+        let lr = ns.lineRange(for: NSRange(location: min(loc, ns.length), length: 0))
+        tv.window?.makeFirstResponder(tv)
+        tv.setSelectedRange(lr); tv.scrollRangeToVisible(lr); tv.showFindIndicator(for: lr)
     }
 
     private func runSelection() { run(source: selectedText) }
@@ -169,7 +183,7 @@ struct ScriptConsoleView: View {
         running = true
         let engine = ScriptEngine.forModel(model)
         engine.onOutput = { line in
-            lines.append(ConsoleLine(kind: line.hasPrefix("✖") ? .error : .output, text: line))
+            lines.append(ConsoleLine(kind: line.hasPrefix("✖") ? .error : line.hasPrefix("⚠") ? .warning : .output, text: line))
             if lines.count > 3000 { lines.removeFirst(1000) }
         }
         let firstLine = src.split(separator: "\n").first.map(String.init) ?? ""
@@ -441,6 +455,8 @@ struct ScriptAPIReference: View {
         ("archi.doc() / archi.summary()", "The whole document as JSON / a short summary.", "archi.summary();"),
         ("archi.undo() / archi.redo()", "Undo and redo.", "archi.undo();"),
         ("archi.commands()", "All command names with aliases and summaries.", "archi.commands().length;"),
+        ("archi.evaluateGraph(graph) / archi.bakeGraph(graph)", "Evaluates a node graph object (Node Editor ▸ Graphs ▸ Export as Script) or bakes its output (one undo step).", "archi.bakeGraph(graph).length;"),
+        ("console.warn / console.error / console.assert / console.time / console.timeEnd / console.count / console.trace", "Debug output: warnings and errors are coloured; errors show the source line and the call stack.", "console.time(\"walls\"); /* … */ console.timeEnd(\"walls\");"),
     ]
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {

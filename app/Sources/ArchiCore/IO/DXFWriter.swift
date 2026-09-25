@@ -62,6 +62,19 @@ public enum DXFWriter {
         "INSUL": [(0, 0, 0, 0, 3.175, []), (0, 0, 1.0583, 0, 3.175, [1.0583, -1.0583])],
     ]
 
+    /// Line families written for a hatch pattern: a definition saved in the drawing (variable "HPPAT:<NAME>", from PATLOAD
+    /// or a DXF import) wins, then the DXF table above, then the renderer's built-in library, else ANSI31.
+    static func patternDefinition(_ name: String, doc: ArchiDocument) -> [(Double, Double, Double, Double, Double, [Double])] {
+        let key = name.uppercased()
+        if let def = doc.variable("HPPAT:" + key) ?? doc.variables.first(where: { $0.key.uppercased() == "HPPAT:" + key })?.value {
+            let fams = def.components(separatedBy: "\n").compactMap { HatchPatterns.families(fromLine: $0) }
+            if !fams.isEmpty { return fams.map { ($0.angle, $0.origin.x, $0.origin.y, $0.delta.x, $0.delta.y, $0.dashes) } }
+        }
+        if let p = patterns[key] { return p }
+        if let fams = HatchPatterns.families[key], !fams.isEmpty { return fams.map { ($0.angle, $0.origin.x, $0.origin.y, $0.delta.x, $0.delta.y, $0.dashes) } }
+        return patterns["ANSI31"]!
+    }
+
     // MARK: -
 
     struct Writer {
@@ -80,6 +93,12 @@ public enum DXFWriter {
         var armedXData: [(Int, String)]? = nil
         var pendingXData: [(Int, String)] = []
         var entityTransparency: Int? = nil
+        /// Block record handle per sheet layout (layout 0 is *Paper_Space = 1E, the others *Paper_SpaceN).
+        var layoutRecords: [String] = []
+        /// First dimension block of the active (first) layout's paper-space entities.
+        var paperDimStart = 0
+        /// Entities being written belong to paper space (group 67 = 1).
+        var paperSpace = false
 
         init(doc: ArchiDocument) { self.doc = doc }
 
@@ -125,10 +144,21 @@ public enum DXFWriter {
             }
             collect(doc.entities)
             for name in sortedBlocks { collect(doc.blocks[name]!.entities) }
+            // Sheet layouts: layouts 2… live in *Paper_SpaceN blocks (written after the user blocks), layout 1 in ENTITIES.
+            for (i, l) in doc.layouts.enumerated() where i > 0 { collect(l.entities) }
+            paperDimStart = dimBlocks.count
+            if let l0 = doc.layouts.first { collect(l0.entities) }
 
             // Block record handles
             blockRecordHandles["*Model_Space"] = "1F"; blockRecordHandles["*Paper_Space"] = "1E"
             for name in sortedBlocks { blockRecordHandles[blockNames[name]!] = h() }
+            layoutRecords = []
+            for i in doc.layouts.indices {
+                if i == 0 { layoutRecords.append("1E"); continue }
+                let hd = h()
+                blockRecordHandles["*Paper_Space\(i - 1)"] = hd
+                layoutRecords.append(hd)
+            }
             for d in dimBlocks { blockRecordHandles[d.name] = h() }
 
             classes()
@@ -328,6 +358,12 @@ public enum DXFWriter {
                 for e in b.entities { entity(e, owner: owner) }
                 blockEnd(owner: owner)
             }
+            for (i, l) in doc.layouts.enumerated() where i > 0 {
+                let owner = layoutRecords[i]
+                blockBegin("*Paper_Space\(i - 1)", owner: owner, base: .zero, flags: 0, paper: true)
+                layoutContent(l, owner: owner)
+                blockEnd(owner: owner, paper: true)
+            }
             for d in dimBlocks {
                 let owner = blockRecordHandles[d.name]!
                 blockBegin(d.name, owner: owner, base: .zero, flags: 1)
@@ -342,14 +378,87 @@ public enum DXFWriter {
             g(0, "SECTION"); g(2, "ENTITIES")
             for e in doc.entities { entity(e, owner: "1F") }
             for el in doc.elements where levels == nil || levels!.contains(el.level) { element(el) }
+            if let l0 = doc.layouts.first {
+                dimCursor = paperDimStart
+                layoutContent(l0, owner: "1E")
+            }
             g(0, "ENDSEC")
+        }
+
+        /// Paper-space content of a sheet: the overall paper viewport (id 1), the model viewports and the annotation entities.
+        mutating func layoutContent(_ l: Layout, owner: String) {
+            paperSpace = true
+            defer { paperSpace = false }
+            let paper = Vec2(l.paper.width, l.paper.height)
+            viewport(Viewport(origin: .zero, size: paper, viewCenter: paper / 2, scale: 1), id: 1, owner: owner)
+            for (k, v) in l.viewports.enumerated() { viewport(v, id: k + 2, owner: owner) }
+            for e in l.entities { entity(e, owner: owner) }
+        }
+
+        /// VIEWPORT entity: paper centre/size, model view centre, view height = paper height × scale. View kind, level and
+        /// title travel as Archi XDATA.
+        mutating func viewport(_ v: Viewport, id: Int, owner: String) {
+            let w = max(abs(v.size.x), 1e-6), hgt = max(abs(v.size.y), 1e-6)
+            let c = v.origin + Vec2(w, hgt) / 2
+            if id > 1 {
+                var p: [String: String] = ["vpView": v.view.rawValue]
+                if let lv = v.level { p["vpLevel"] = "\(lv)" }
+                if !v.title.isEmpty { p["vpTitle"] = v.title }
+                armedXData = DXFXData.groups(p, enc: DXFWriter.enc)
+            }
+            head("VIEWPORT", Style(layer: "0"), owner: owner, sub: "AcDbViewport")
+            pt(10, c); g(40, w); g(41, hgt); g(68, id == 1 ? 1 : 2); g(69, id)
+            g(12, v.viewCenter.x); g(22, v.viewCenter.y)
+            g(13, 0.0); g(23, 0.0); g(14, 10.0); g(24, 10.0); g(15, 10.0); g(25, 10.0)
+            g(16, 0.0); g(26, 0.0); g(36, 1.0); g(17, 0.0); g(27, 0.0); g(37, 0.0)
+            g(42, 50.0); g(43, 0.0); g(44, 0.0); g(45, hgt * v.scale); g(50, 0.0); g(51, 0.0); g(72, 1000); g(90, 32864)
+            g(1, ""); g(281, 0); g(71, 1); g(74, 0); g(110, 0.0); g(120, 0.0); g(130, 0.0)
+            g(111, 1.0); g(121, 0.0); g(131, 0.0); g(112, 0.0); g(122, 1.0); g(132, 0.0); g(79, 0); g(146, 0.0)
         }
 
         mutating func objects() {
             g(0, "SECTION"); g(2, "OBJECTS")
-            g(0, "DICTIONARY"); g(5, "C"); g(330, "0"); g(100, "AcDbDictionary"); g(281, 1); g(3, "ACAD_GROUP"); g(350, "D")
+            let dictHandle = "1A"
+            let modelLayout = h()
+            var layoutHandles: [String] = []
+            for _ in doc.layouts { layoutHandles.append(h()) }
+            g(0, "DICTIONARY"); g(5, "C"); g(330, "0"); g(100, "AcDbDictionary"); g(281, 1)
+            g(3, "ACAD_GROUP"); g(350, "D"); g(3, "ACAD_LAYOUT"); g(350, dictHandle)
             g(0, "DICTIONARY"); g(5, "D"); g(330, "C"); g(100, "AcDbDictionary"); g(281, 1)
+            g(0, "DICTIONARY"); g(5, dictHandle); g(330, "C"); g(100, "AcDbDictionary"); g(281, 1)
+            g(3, "Model"); g(350, modelLayout)
+            var usedNames = Set<String>(["MODEL"])
+            var layoutNames: [String] = []
+            for l in doc.layouts {
+                var n = DXFWriter.safeName(l.name.isEmpty ? "Layout" : l.name)
+                while usedNames.contains(n.uppercased()) { n += "_" }
+                usedNames.insert(n.uppercased()); layoutNames.append(n)
+            }
+            for (i, n) in layoutNames.enumerated() { g(3, DXFWriter.enc(n)); g(350, layoutHandles[i]) }
+            layoutObject(name: "Model", handle: modelLayout, dict: dictHandle, tab: 0, record: "1F", paper: PaperSize(name: "A3", width: 420, height: 297), titleBlock: nil)
+            for (i, l) in doc.layouts.enumerated() {
+                layoutObject(name: layoutNames[i], handle: layoutHandles[i], dict: dictHandle, tab: i + 1, record: layoutRecords[i], paper: l.paper, titleBlock: l.titleBlock)
+            }
             g(0, "ENDSEC")
+        }
+
+        /// LAYOUT object (AcDbPlotSettings + AcDbLayout). Paper size in mm (44/45); the title block travels as Archi XDATA.
+        mutating func layoutObject(name: String, handle: String, dict: String, tab: Int, record: String, paper: PaperSize, titleBlock: [String: String]?) {
+            g(0, "LAYOUT"); g(5, handle); g(102, "{ACAD_REACTORS"); g(330, dict); g(102, "}"); g(330, dict)
+            g(100, "AcDbPlotSettings"); g(1, ""); g(2, "none_device"); g(4, DXFWriter.enc(paper.name))
+            g(6, ""); g(40, 0.0); g(41, 0.0); g(42, 0.0); g(43, 0.0); g(44, paper.width); g(45, paper.height)
+            g(46, 0.0); g(47, 0.0); g(48, 0.0); g(49, 0.0); g(140, 0.0); g(141, 0.0); g(142, 1.0); g(143, 1.0)
+            g(70, 688); g(72, 1); g(73, 0); g(74, 5); g(7, ""); g(75, 16); g(147, 1.0); g(148, 0.0); g(149, 0.0)
+            g(100, "AcDbLayout"); g(1, DXFWriter.enc(name)); g(70, 1); g(71, tab)
+            g(10, 0.0); g(20, 0.0); g(11, paper.width); g(21, paper.height)
+            g(12, 0.0); g(22, 0.0); g(32, 0.0); g(14, 0.0); g(24, 0.0); g(34, 0.0); g(15, paper.width); g(25, paper.height); g(35, 0.0)
+            g(146, 0.0); g(13, 0.0); g(23, 0.0); g(33, 0.0); g(16, 1.0); g(26, 0.0); g(36, 0.0); g(17, 0.0); g(27, 1.0); g(37, 0.0)
+            g(76, 0); g(330, record)
+            if let tb = titleBlock {
+                var p: [String: String] = ["archiLayout": "1"]
+                for (k, v) in tb { p["tb:" + k] = v }
+                for (c, v) in DXFXData.groups(p, enc: DXFWriter.enc) { g(c, v) }
+            }
         }
 
         // MARK: entities
@@ -358,6 +467,7 @@ public enum DXFWriter {
 
         mutating func head(_ type: String, _ s: Style, owner: String, sub: String) {
             g(0, type); g(5, h()); g(330, owner); g(100, "AcDbEntity")
+            if paperSpace { g(67, 1) }
             g(8, DXFWriter.enc(DXFWriter.safeName(s.layer)))
             if let lt = linetypeName(s.linetype), lt != "ByLayer" { g(6, lt) }
             switch s.color {
@@ -420,7 +530,7 @@ public enum DXFWriter {
             case .spline(let sp):
                 spline(sp, s, owner: owner)
             case .text(let t):
-                text(t, s, owner: owner)
+                if let tag = entityProps["attdef"], !tag.isEmpty { attdef(t, tag: tag, s, owner: owner) } else { text(t, s, owner: owner) }
             case .dimension(let d):
                 dimension(d, s, owner: owner)
             case .hatch(let hg):
@@ -433,11 +543,28 @@ public enum DXFWriter {
                 g(41, ins.scale.x); g(42, ins.scale.y); g(43, 1.0); g(50, deg(ins.rotation))
                 if !ins.attributes.isEmpty {
                     var y = 0.0
+                    // Attribute definitions of the block give each ATTRIB its place, height and visibility.
+                    var defs: [String: (TextGeom, Bool)] = [:]
+                    let blk = doc.blocks[ins.block]
+                    for e in blk?.entities ?? [] {
+                        if let tag = e.props["attdef"], case .text(let t) = e.geometry { defs[tag.uppercased()] = (t, e.props["invisible"] == "1") }
+                    }
                     for (tag, value) in ins.attributes.sorted(by: { $0.key < $1.key }) {
+                        var pos = ins.position + Vec2(0, y), hgt = 2.5, rot = ins.rotation, invisible = false
+                        var ha = 0, va = 0
+                        if let (t, inv) = defs[tag.uppercased()] {
+                            pos = ins.transform.apply(t.position - (blk?.basePoint ?? .zero))
+                            hgt = t.height * abs(ins.scale.y); rot = t.rotation + ins.rotation; invisible = inv
+                            ha = t.halign == .left ? 0 : (t.halign == .center ? 1 : 2)
+                            switch t.valign { case .baseline: va = 0; case .bottom: va = 1; case .middle: va = 2; case .top: va = 3 }
+                        } else { y -= 3.75 }
                         head("ATTRIB", s, owner: owner, sub: "AcDbText")
-                        pt(10, ins.position + Vec2(0, y)); g(40, 2.5); g(1, DXFWriter.enc(value))
-                        g(100, "AcDbAttribute"); g(2, DXFWriter.enc(DXFWriter.safeName(tag).replacingOccurrences(of: " ", with: "_"))); g(70, 1)
-                        y -= 3.75
+                        pt(10, pos); g(40, hgt); g(1, DXFWriter.enc(value))
+                        if abs(rot) > 1e-12 { g(50, deg(normAngle(rot))) }
+                        if ha != 0 { g(72, ha) }
+                        if ha != 0 || va != 0 { pt(11, pos) }
+                        g(100, "AcDbAttribute"); g(2, DXFWriter.enc(DXFWriter.safeName(tag).replacingOccurrences(of: " ", with: "_"))); g(70, invisible ? 1 : 0)
+                        if va != 0 { g(74, va) }
                     }
                     g(0, "SEQEND"); g(5, h()); g(330, owner); g(100, "AcDbEntity"); g(8, DXFWriter.enc(DXFWriter.safeName(s.layer)))
                 }
@@ -561,6 +688,23 @@ public enum DXFWriter {
                 }
             }
             return out
+        }
+
+        /// Block attribute definition (tag, prompt, default value, invisible flag).
+        mutating func attdef(_ t: TextGeom, tag: String, _ s: Style, owner: String) {
+            head("ATTDEF", s, owner: owner, sub: "AcDbText")
+            pt(10, t.position); g(40, t.height); g(1, DXFWriter.enc(entityProps["default"] ?? ""))
+            if t.rotation != 0 { g(50, deg(normAngle(t.rotation))) }
+            g(7, DXFWriter.enc(DXFWriter.safeName(t.style.isEmpty ? "Standard" : t.style)))
+            let ha: Int = t.halign == .left ? 0 : (t.halign == .center ? 1 : 2)
+            let va: Int
+            switch t.valign { case .baseline: va = 0; case .bottom: va = 1; case .middle: va = 2; case .top: va = 3 }
+            if ha != 0 { g(72, ha) }
+            if ha != 0 || va != 0 { pt(11, t.position) }
+            g(100, "AcDbAttributeDefinition")
+            g(3, DXFWriter.enc(entityProps["prompt"] ?? tag)); g(2, DXFWriter.enc(DXFWriter.safeName(tag).replacingOccurrences(of: " ", with: "_")))
+            g(70, entityProps["invisible"] == "1" ? 1 : 0)
+            if va != 0 { g(74, va) }
         }
 
         mutating func text(_ t: TextGeom, _ s: Style, owner: String) {
@@ -697,7 +841,7 @@ public enum DXFWriter {
             guard !loops.isEmpty else { return }
             let pat = pattern.uppercased()
             let solid = pat == "SOLID" || pat.isEmpty
-            let defs = solid ? [] : (DXFWriter.patterns[pat] ?? DXFWriter.patterns["ANSI31"]!)
+            let defs = solid ? [] : DXFWriter.patternDefinition(pat, doc: doc)
             head("HATCH", s, owner: owner, sub: "AcDbHatch")
             pt(10, .zero); g(210, 0.0); g(220, 0.0); g(230, 1.0)
             g(2, DXFWriter.enc(DXFWriter.safeName(solid ? "SOLID" : pat))); g(70, solid ? 1 : 0); g(71, 0); g(91, loops.count)

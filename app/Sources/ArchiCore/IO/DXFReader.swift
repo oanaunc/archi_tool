@@ -200,6 +200,9 @@ public enum DXFReader {
         /// Paper space entities and viewports by layout name.
         var paper: [String: [Entity]] = [:]
         var paperViewports: [String: [Viewport]] = [:]
+        /// Paper size and Archi title block of LAYOUT objects (by layout name); layouts written by this app are kept even when empty.
+        var layoutPaper: [String: PaperSize] = [:]
+        var layoutTitle: [String: [String: String]] = [:]
 
         init() {
             doc.layers = [Layer(name: "0")]
@@ -245,6 +248,7 @@ public enum DXFReader {
             }
             doc.currentLayer = "0"
             if doc.layer(named: "0") == nil { doc.layers.insert(Layer(name: "0"), at: 0) }
+            collectHatchDefinitions()
             buildLayouts()
         }
 
@@ -258,9 +262,22 @@ public enum DXFReader {
                 case "IMAGEDEF":
                     if let h = r.s(5)?.trimmingCharacters(in: .whitespaces), let path = r.s(1) { imageDefs[h.uppercased()] = path }
                 case "LAYOUT":
-                    guard let name = r.s(1)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { continue }
-                    let owners = r.all(330).map { $0.trimmed.uppercased() }
+                    // The first group 1 is the page setup name (AcDbPlotSettings), the last one the layout name (AcDbLayout).
+                    let body = r.pairs.prefix { $0.code < 1000 }
+                    guard let name = body.last(where: { $0.code == 1 })?.value.trimmingCharacters(in: .whitespaces), !name.isEmpty else { continue }
+                    let owners = body.filter { $0.code == 330 }.map { $0.trimmed.uppercased() }
                     layoutInfo.append((name, r.i(71) ?? 0, owners.last ?? ""))
+                    if name.uppercased() != "MODEL", let w = r.d(44), let hh = r.d(45), w > 1, hh > 1 {
+                        let rot = (r.i(73) ?? 0) % 2 == 1
+                        let pn = r.s(4)?.trimmingCharacters(in: .whitespaces) ?? ""
+                        layoutPaper[name] = PaperSize(name: pn.isEmpty ? "Custom" : pn, width: rot ? hh : w, height: rot ? w : hh)
+                    }
+                    let x = DXFXData.read(r.pairs)
+                    if x["archiLayout"] != nil {
+                        var tb: [String: String] = [:]
+                        for (k, v) in x where k.hasPrefix("tb:") { tb[String(k.dropFirst(3))] = v }
+                        layoutTitle[name] = tb
+                    }
                 default: break
                 }
             }
@@ -279,13 +296,57 @@ public enum DXFReader {
                 if case .polyline(let pl) = e.geometry, pl.vertices.count == 4, let c = e.props["vpCenter"].flatMap(parseVec),
                    let sc = e.props["vpScale"].flatMap(Double.init) {
                     let b = BBox2(points: pl.vertices.map(\.p))
-                    paperViewports[layout, default: []].append(Viewport(origin: b.min, size: Vec2(b.width, b.height), viewCenter: c, scale: sc))
+                    var vp = Viewport(origin: b.min, size: Vec2(b.width, b.height), viewCenter: c, scale: sc)
+                    if let v = e.props["vpView"].flatMap(ViewKind.init(rawValue:)) { vp.view = v }
+                    vp.level = e.props["vpLevel"].flatMap { Int($0) }
+                    vp.title = e.props["vpTitle"] ?? ""
+                    paperViewports[layout, default: []].append(vp)
                 }
                 return
             }
             e.id = doc.allocateID()
             doc.ensureLayer(e.layer)
             paper[layout, default: []].append(e)
+        }
+
+        /// Hatch patterns the renderer does not know keep the line families stored in the file: they are saved in the drawing
+        /// as "HPPAT:<NAME>" (like PATLOAD) and registered, so custom patterns display and write back unchanged.
+        mutating func collectHatchDefinitions() {
+            var defs: [String: String] = [:]
+            func take(_ e: inout Entity) {
+                guard let d = e.props.removeValue(forKey: "_hatchdef"), case .hatch(let h) = e.geometry else { return }
+                if defs[h.pattern] == nil { defs[h.pattern] = d }
+            }
+            for i in doc.entities.indices { take(&doc.entities[i]) }
+            for k in Array(doc.blocks.keys) { for i in doc.blocks[k]!.entities.indices { take(&doc.blocks[k]!.entities[i]) } }
+            for k in Array(paper.keys) { for i in paper[k]!.indices { take(&paper[k]![i]) } }
+            for (name, d) in defs.sorted(by: { $0.key < $1.key }) where HatchPatterns.families[name] == nil && name != "SOLID" && doc.variable("HPPAT:" + name) == nil {
+                if HatchPatterns.register(name: name, definition: d) { doc.setVariable("HPPAT:" + name, d) }
+            }
+        }
+
+        /// Pattern line families of a HATCH record, back in pattern space (unrotated by the hatch angle, unscaled), as .pat lines.
+        static func hatchDefinition(_ r: DXFRecord) -> String? {
+            let pairs = r.pairs
+            guard let i78 = pairs.firstIndex(where: { $0.code == 78 }) else { return nil }
+            let angle = rad(pairs[..<i78].last { $0.code == 52 }?.double ?? 0)
+            var sc = pairs[..<i78].last { $0.code == 41 }?.double ?? 1
+            if abs(sc) < 1e-12 { sc = 1 }
+            var lines: [String] = []
+            var i = i78 + 1
+            while i < pairs.count, pairs[i].code == 53 {
+                let la = pairs[i].double; i += 1
+                var v: [Int: Double] = [:]
+                while i < pairs.count, [43, 44, 45, 46].contains(pairs[i].code) { v[pairs[i].code] = pairs[i].double; i += 1 }
+                var dashes: [Double] = []
+                if i < pairs.count, pairs[i].code == 79 { i += 1 }
+                while i < pairs.count, pairs[i].code == 49 { dashes.append(pairs[i].double / sc); i += 1 }
+                let base = Vec2(v[43] ?? 0, v[44] ?? 0).rotated(by: -angle) / sc
+                let off = Vec2(v[45] ?? 0, v[46] ?? 0).rotated(by: -rad(la)) / sc
+                let fa = normAngle(rad(la) - angle) * 180 / .pi
+                lines.append(([fa, base.x, base.y, off.x, off.y] + dashes).map { fmt($0, 6) }.joined(separator: ","))
+            }
+            return lines.isEmpty ? nil : lines.joined(separator: "\n")
         }
 
         func parseVec(_ s: String) -> Vec2? {
@@ -295,7 +356,7 @@ public enum DXFReader {
 
         /// Replaces the default sheet with the drawing's paper space layouts (tab order).
         mutating func buildLayouts() {
-            let names = Set(paper.keys).union(paperViewports.keys)
+            let names = Set(paper.keys).union(paperViewports.keys).union(layoutTitle.keys)
             guard !names.isEmpty else { return }
             let order = layoutInfo.sorted { $0.tab < $1.tab }.map(\.name)
             let sorted = names.sorted { (order.firstIndex(of: $0) ?? Int.max, $0) < (order.firstIndex(of: $1) ?? Int.max, $1) }
@@ -308,7 +369,7 @@ public enum DXFReader {
                 let size = PaperSize.standard.map { $0.width >= $0.height ? $0 : PaperSize(name: $0.name, width: $0.height, height: $0.width) }
                     .sorted { $0.width * $0.height < $1.width * $1.height }
                     .first { b.isEmpty || ($0.width >= b.max.x - 1 && $0.height >= b.max.y - 1) } ?? PaperSize.standard[1]
-                return Layout(name: n, paper: size, viewports: paperViewports[n] ?? [], entities: ents)
+                return Layout(name: n, paper: layoutPaper[n] ?? size, viewports: paperViewports[n] ?? [], entities: ents, titleBlock: layoutTitle[n] ?? [:])
             }
         }
 
@@ -490,6 +551,7 @@ public enum DXFReader {
             // Extended data (Archi props, other applications), transparency, MTEXT formatting.
             for (k, v) in DXFXData.read(r.pairs) where props[k] == nil { props[k] = v }
             if let t = r.i(440).flatMap({ DXFColors.transparencyPercent(code: $0) }) { props["transparency"] = fmt(t, 0) }
+            if r.type == "HATCH", (r.i(70) ?? 0) == 0, let d = Reader.hatchDefinition(r) { props["_hatchdef"] = d }
             if r.type == "MTEXT" {
                 var raw = ""
                 for p in r.pairs where p.code == 3 { raw += p.value }
@@ -702,6 +764,10 @@ public enum DXFReader {
                 guard let p = r.v2(10), let d = r.v2(11), d.length > geomEpsilon else { return [] }
                 let big = 1e6, dir = d.normalized
                 return [.line(LineGeom(r.type == "RAY" ? p : p - dir * big, p + dir * big))]
+            case "MLINE":
+                return mline(r)
+            case "ACAD_TABLE":
+                return acadTable(r).map { [$0] } ?? []
             case "IMAGE":
                 guard let o = r.v2(10), let u = r.v2(11), let v = r.v2(12) else { return [] }
                 let px = r.v2(13) ?? Vec2(1, 1)
@@ -713,6 +779,81 @@ public enum DXFReader {
             default:
                 return [] // 3DSOLID, REGION, ... are ignored
             }
+        }
+
+        /// MLINE: one polyline per element line, each vertex offset along its miter direction by the element's first parameter.
+        func mline(_ r: DXFRecord) -> [Geometry] {
+            let pairs = r.pairs
+            guard let i73 = pairs.firstIndex(where: { $0.code == 73 }) else { return [] }
+            let nElems = max(0, min(pairs[i73].int, 64))
+            let closed = ((r.i(71) ?? 0) & 2) != 0
+            guard nElems > 0 else { return [] }
+            var lines = Array(repeating: [Vec2](), count: nElems)
+            var i = i73 + 1
+            func vec(_ code: Int) -> Vec2? {
+                guard i < pairs.count, pairs[i].code == code else { return nil }
+                let x = pairs[i].double; i += 1
+                var y = 0.0
+                if i < pairs.count, pairs[i].code == code + 10 { y = pairs[i].double; i += 1 }
+                if i < pairs.count, pairs[i].code == code + 20 { i += 1 }
+                return Vec2(x, y)
+            }
+            while i < pairs.count && pairs[i].code != 11 { i += 1 }
+            while i < pairs.count, pairs[i].code == 11 {
+                guard let v = vec(11) else { break }
+                _ = vec(12)
+                let miter = vec(13) ?? Vec2(0, 1)
+                for k in 0..<nElems {
+                    var params: [Double] = []
+                    if i < pairs.count, pairs[i].code == 74 {
+                        let n = pairs[i].int; i += 1
+                        for _ in 0..<max(0, n) where i < pairs.count && pairs[i].code == 41 { params.append(pairs[i].double); i += 1 }
+                    }
+                    if i < pairs.count, pairs[i].code == 75 {
+                        let n = pairs[i].int; i += 1
+                        for _ in 0..<max(0, n) where i < pairs.count && pairs[i].code == 42 { i += 1 }
+                    }
+                    lines[k].append(v + miter.normalized * (params.first ?? 0))
+                }
+            }
+            return lines.filter { $0.count >= 2 }.map { .polyline(PolylineGeom(points: $0, closed: closed)) }
+        }
+
+        /// ACAD_TABLE: insertion point (top left), row heights (141), column widths (142) and the cell texts in row order.
+        func acadTable(_ r: DXFRecord) -> Geometry? {
+            let pairs = r.pairs
+            guard let o = r.v2(10) else { return nil }
+            let rows = pairs.filter { $0.code == 141 }.map(\.double)
+            let cols = pairs.filter { $0.code == 142 }.map(\.double)
+            guard !rows.isEmpty, !cols.isEmpty, rows.count <= 10_000, cols.count <= 1000 else { return nil }
+            // Cells start at group 171 (cell type); the text is the cell's group 1 (plus continuation groups 2/3) or its
+            // 302 value (newer files).
+            var texts: [String] = []
+            var cur: String? = nil
+            var textHeight: Double? = nil
+            var inCell = false
+            for p in pairs {
+                switch p.code {
+                case 171:
+                    if inCell { texts.append(cur ?? "") }
+                    inCell = true; cur = nil
+                case 1 where inCell: cur = (cur ?? "") + p.value
+                case 2, 3: if inCell, cur != nil { cur! += p.value }
+                case 302 where inCell && cur == nil: cur = p.value
+                case 140 where inCell && textHeight == nil && p.double > 0: textHeight = p.double
+                default: break
+                }
+            }
+            if inCell { texts.append(cur ?? "") }
+            var cells: [[String]] = []
+            for rr in 0..<rows.count {
+                cells.append((0..<cols.count).map { c in
+                    let k = rr * cols.count + c
+                    return k < texts.count ? DXFReader.decodeSpecial(DXFReader.stripMText(texts[k])) : ""
+                })
+            }
+            let rh = rows.reduce(0, +) / Double(rows.count)
+            return .table(TableGeom(origin: o, columnWidths: cols, rowHeight: rh, cells: cells, textHeight: textHeight ?? max(rh * 0.36, 1e-3)))
         }
 
         /// MULTILEADER: each leader line (arrow tip first) ends at its landing point; the first carries the MText content.

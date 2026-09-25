@@ -66,6 +66,7 @@ public enum ComponentLibrary {
         ComponentFamily("light-wall", "Wall Light", "Lighting", Vec3(250, 150, 250), baseOffset: 1800, aliases: ["Sconce", "WallLight"]),
         ComponentFamily("panel", "Electrical Panel", "Electrical", Vec3(450, 150, 600), baseOffset: 1300, aliases: ["DistributionBoard", "Panelboard"]),
         ComponentFamily("smoke-detector", "Smoke Detector", "Electrical", Vec3(120, 120, 50), baseOffset: 2650, aliases: ["SmokeDetector"]),
+        ComponentFamily("elevator", "Elevator Car", "Vertical Circulation", Vec3(1100, 1400, 2300), aliases: ["Lift", "Elevator", "LiftCar"]),
         ComponentFamily("truss-pratt", "Pratt Truss", "Structural", Vec3(12000, 100, 1500), baseOffset: 3000, aliases: ["Truss", "PrattTruss"]),
         ComponentFamily("truss-howe", "Howe Truss", "Structural", Vec3(12000, 100, 1500), baseOffset: 3000, aliases: ["HoweTruss"]),
         ComponentFamily("truss-warren", "Warren Truss", "Structural", Vec3(12000, 100, 1500), baseOffset: 3000, aliases: ["WarrenTruss"]),
@@ -178,6 +179,17 @@ public enum ComponentLibrary {
         let W = max(s.x, 1), D = max(s.y, 1), H = max(s.z, 1)
         let x0 = -W / 2, x1 = W / 2, y0 = -D / 2, y1 = D / 2
         switch f.id {
+        case "elevator":
+            // Car: floor, walls on three sides, ceiling, and a two-panel centre-opening door on the front (−Y).
+            let t = 30.0
+            p.box("Steel", x0, x1, y0, y1, 0, 60)
+            p.box("Steel", x0, x0 + t, y0 + 80, y1, 60, H - 60); p.box("Steel", x1 - t, x1, y0 + 80, y1, 60, H - 60)
+            p.box("Steel", x0, x1, y1 - t, y1, 60, H - 60)
+            p.box("Steel", x0, x1, y0, y1, H - 60, H)
+            let dw = min(W * 0.8, 900.0) / 2
+            p.box("Aluminium", -dw, -2, y0, y0 + 25, 60, min(2100, H - 80)); p.box("Aluminium", 2, dw, y0, y0 + 25, 60, min(2100, H - 80))
+            p.box("Steel", x0, -dw, y0, y0 + 80, 60, H - 60); p.box("Steel", dw, x1, y0, y0 + 80, 60, H - 60)
+            p.box("Glass", x0 + t, x0 + t + 6, y0 + 200, y1 - 200, 900, H - 300)
         case "bed-single", "bed-double":
             let leg = min(100, H * 0.2), frameTop = H * 0.6
             for (cx, cy) in [(x0 + 60, y0 + 60), (x1 - 60, y0 + 60), (x0 + 60, y1 - 60), (x1 - 60, y1 - 60)] { p.cyl("Wood", Vec2(cx, cy), 25, 0, leg) }
@@ -424,6 +436,11 @@ public enum ComponentLibrary {
             add([Vec2(a, c), Vec2(b, c), Vec2(b, d), Vec2(a, d)], closed: true, outline: outline, hidden: hidden)
         }
         switch f.id {
+        case "elevator":
+            rect(x0, x1, y0, y1, outline: true)
+            add([Vec2(x0, y0), Vec2(x1, y1)]); add([Vec2(x0, y1), Vec2(x1, y0)])
+            let dw = min(W * 0.8, 900.0) / 2
+            add([Vec2(-dw, y0 - 60), Vec2(dw, y0 - 60)], outline: true)
         case "bed-single", "bed-double":
             rect(x0, x1, y0, y1, outline: true)
             rect(x0, x1, y1 - 60, y1)

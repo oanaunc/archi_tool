@@ -8,7 +8,9 @@ public enum ElevationBuilder {
         var viewDir: Vec3
         var xf: (Vec3) -> Double
         var depthf: (Vec3) -> Double
-        func xy(_ p: Vec3) -> Vec2 { Vec2(xf(p), p.z) }
+        /// Vertical drawing axis (default: Z).
+        var yf: ((Vec3) -> Double)? = nil
+        func xy(_ p: Vec3) -> Vec2 { Vec2(xf(p), yf?(p) ?? p.z) }
         func depth(_ p: Vec3) -> Double { depthf(p) }
     }
 
@@ -117,24 +119,54 @@ public enum ElevationBuilder {
             }
         }
         prims.sort { $0.key > $1.key }
+        // View graphics: line weights by depth (projection near / beyond), depth cueing, far clip, hidden lines.
+        let gfx = ViewGraphics.settings(doc)
+        let d0 = cut ? 0 : dmin, span = max(dmax - d0, 1e-9)
+        if let far = gfx.farClip { prims.removeAll { $0.key > d0 + far } }
+        let hiddenMode = gfx.hiddenLines
+        var occluder: ViewGraphics.Occluder? = nil
+        if hiddenMode { occluder = ViewGraphics.Occluder(prims: prims.compactMap { p in if case .face(let pts, _) = p.prim { return (pts, p.key) }; return nil }, size: size) }
         var out: [DrawEntry] = []
+        var hidden: [DrawItem] = []
+        var visibleEdges: [(EntityID?, DrawItem)] = []
         var curID: EntityID?? = nil
         var cur: [DrawItem] = []
         func flush() { if let id = curID, !cur.isEmpty { out.append(DrawEntry(id: id, items: cur)) }; cur = [] }
         for p in prims {
-            if curID == nil || curID! != p.id { flush(); curID = .some(p.id) }
+            let t = min(max((p.key - d0) / span, 0), 1)
             switch p.prim {
-            case .face(let pts, let c): cur.append(.fill(loops: [pts], color: c))
-            case .edge(let pts): cur.append(.stroke(points: pts, closed: false, style: StrokeStyle(color: edgeColor, lineweight: 0.25)))
+            case .face(let pts, let c):
+                if curID == nil || curID! != p.id { flush(); curID = .some(p.id) }
+                cur.append(.fill(loops: [pts], color: gfx.depthCue ? ViewGraphics.cue(c, t) : c))
+            case .edge(let pts):
+                let lw = gfx.lineWeights ? ViewGraphics.lineweight(depthFraction: t, cut: cut) : 0.25
+                let col = gfx.depthCue ? ViewGraphics.cue(edgeColor, t) : edgeColor
+                if let occ = occluder {
+                    let m = (pts[0] + pts[1]) / 2
+                    if occ.isHidden(m, depth: p.key + bias, tolerance: bias * 20) {
+                        hidden.append(.stroke(points: pts, closed: false, style: StrokeStyle(color: ViewGraphics.hiddenColor, lineweight: 0.13, dash: gfx.hiddenDash)))
+                    } else { visibleEdges.append((p.id, .stroke(points: pts, closed: false, style: StrokeStyle(color: col, lineweight: lw)))) }
+                    continue
+                }
+                if curID == nil || curID! != p.id { flush(); curID = .some(p.id) }
+                cur.append(.stroke(points: pts, closed: false, style: StrokeStyle(color: col, lineweight: lw)))
             }
         }
         flush()
+        if hiddenMode {
+            // Visible edges over all faces; hidden edges dashed (ELEVHIDDEN = 1).
+            var byID: [EntityID?: [DrawItem]] = [:]
+            for (id, it) in visibleEdges { byID[id, default: []].append(it) }
+            for (id, items) in byID.sorted(by: { ($0.key ?? -1) < ($1.key ?? -1) }) { out.append(DrawEntry(id: id, items: items)) }
+            if !hidden.isEmpty { out.append(DrawEntry(id: nil, items: hidden)) }
+        }
         out += poche
         // Ground line.
         let gz = doc.levels.map(\.elevation).min() ?? 0
         let ext = box.width * 0.05
         out.append(DrawEntry(id: nil, items: [.stroke(points: [Vec2(box.min.x - ext, gz), Vec2(box.max.x + ext, gz)], closed: false, style: StrokeStyle(color: edgeColor, lineweight: 0.5))]))
         if doc.variable("VIEWANNOTATIONS") != "0" { out += annotations(doc: doc, proj: proj, box: box) }
+        if gfx.dimensions { out += ViewGraphics.elevationDimensions(doc: doc, box: box) }
         return out
     }
 

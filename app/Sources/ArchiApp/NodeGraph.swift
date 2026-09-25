@@ -132,6 +132,9 @@ struct NodeGraph: Codable, Equatable {
     var nodes: [GraphNode] = []
     var links: [GraphLink] = []
     var nextID = 1
+    /// Frames grouping nodes (members are the nodes whose centre lies inside) and free comments.
+    var groups: [NodeFrame] = []
+    var comments: [NodeComment] = []
 
     static let variableKey = "NODEGRAPH"
 
@@ -148,6 +151,8 @@ struct NodeGraph: Codable, Equatable {
 
     mutating func remove(_ id: Int) {
         nodes.removeAll { $0.id == id }
+        comments.removeAll { $0.id == id }
+        groups.removeAll { $0.id == id }
         links.removeAll { $0.from == id || $0.to == id }
     }
 
@@ -568,4 +573,100 @@ enum NodeGraphBake {
         return ids
     }
     static func bakedCount(_ doc: ArchiDocument) -> Int { doc.entities.filter { $0.props[tag] != nil }.count + doc.elements.filter { $0.props[tag] != nil }.count }
+}
+
+
+// MARK: - Groups and comments
+
+/// A titled frame on the node canvas; it groups the nodes inside it and moves them with it.
+struct NodeFrame: Codable, Hashable, Identifiable {
+    var id: Int
+    var title: String
+    var x: Double, y: Double, width: Double, height: Double
+    var color: Int = 0
+    func contains(_ n: GraphNode) -> Bool {
+        let cx = n.x + Double(NodeLayout.width) / 2, cy = n.y + 20
+        return cx >= x && cx <= x + width && cy >= y && cy <= y + height
+    }
+}
+
+/// A sticky note on the node canvas.
+struct NodeComment: Codable, Hashable, Identifiable {
+    var id: Int
+    var text: String
+    var x: Double, y: Double
+    var width: Double = 200
+}
+
+extension NodeGraph {
+    /// Graphs saved before groups and comments existed still decode.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        nodes = try c.decodeIfPresent([GraphNode].self, forKey: .nodes) ?? []
+        links = try c.decodeIfPresent([GraphLink].self, forKey: .links) ?? []
+        nextID = try c.decodeIfPresent(Int.self, forKey: .nextID) ?? ((nodes.map(\.id).max() ?? 0) + 1)
+        groups = try c.decodeIfPresent([NodeFrame].self, forKey: .groups) ?? []
+        comments = try c.decodeIfPresent([NodeComment].self, forKey: .comments) ?? []
+    }
+
+    /// Node ids inside a group frame.
+    func members(of g: NodeFrame) -> [Int] { nodes.filter { g.contains($0) }.map(\.id) }
+
+    /// A frame around the given nodes (or an empty frame at x, y). Returns its id.
+    @discardableResult
+    mutating func addGroup(title: String, around ids: [Int] = [], x: Double = 40, y: Double = 40) -> Int {
+        let ns = nodes.filter { ids.contains($0.id) }
+        var f = NodeFrame(id: nextID, title: title, x: x, y: y, width: 360, height: 220)
+        if !ns.isEmpty {
+            let x0 = ns.map(\.x).min()!, y0 = ns.map(\.y).min()!
+            let x1 = ns.map { $0.x + Double(NodeLayout.width) }.max()!, y1 = ns.map { $0.y + Double(NodeLayout.height($0.kind)) }.max()!
+            f = NodeFrame(id: nextID, title: title, x: max(0, x0 - 20), y: max(0, y0 - 36), width: x1 - x0 + 40, height: y1 - y0 + 56)
+        }
+        groups.append(f); nextID += 1
+        return f.id
+    }
+
+    /// Moves a group frame and the nodes inside it.
+    mutating func moveGroup(_ id: Int, dx: Double, dy: Double) {
+        guard let gi = groups.firstIndex(where: { $0.id == id }) else { return }
+        let inside = Set(members(of: groups[gi]))
+        groups[gi].x += dx; groups[gi].y += dy
+        for i in nodes.indices where inside.contains(nodes[i].id) { nodes[i].x += dx; nodes[i].y += dy }
+    }
+
+    @discardableResult
+    mutating func addComment(_ text: String, x: Double, y: Double) -> Int {
+        comments.append(NodeComment(id: nextID, text: text, x: x, y: y)); nextID += 1
+        return nextID - 1
+    }
+
+    /// Parameter name of a Number node in exported scripts: its group title or comment-free fallback.
+    func parameterName(_ n: GraphNode) -> String {
+        let g = groups.first { $0.contains(n) }
+        let base = (g?.title.isEmpty == false ? g!.title : "number") + "_\(n.id)"
+        return base.replacingOccurrences(of: "[^A-Za-z0-9_]", with: "_", options: .regularExpression)
+    }
+}
+
+/// Export of a graph as a JavaScript program for the script console: the Number nodes become named parameters at the
+/// top; the script evaluates the graph with them (archi.evaluateGraph) and bakes the result (archi.bakeGraph).
+enum NodeGraphScript {
+    static func javascript(_ g: NodeGraph, name: String = "graph") -> String {
+        let numbers = g.nodes.filter { $0.kind == .number }
+        var out = "// Node graph \"\(name)\" exported by Oanarina Archi Tool.\n// Edit the parameters and run the script (⌘↩) to rebuild the geometry.\n\n"
+        out += "const params = {\n"
+        for n in numbers { out += "  \(g.parameterName(n)): \(fmt(n.param("value", 0), 6)),\n" }
+        out += "};\n\n"
+        let e = JSONEncoder(); e.outputFormatting = [.sortedKeys]
+        let json = (try? e.encode(g)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+        out += "const graph = \(json);\n\n"
+        out += "// Apply the parameters to the Number nodes.\n"
+        out += "const ids = {\(numbers.map { "\(g.parameterName($0)): \($0.id)" }.joined(separator: ", "))};\n"
+        out += "for (const k in params) { const n = graph.nodes.find(function (x) { return x.id === ids[k]; }); if (n) n.params.value = params[k]; }\n\n"
+        out += "const result = archi.evaluateGraph(graph);\n"
+        out += "for (const id in result.errors) console.error(\"node \" + id + \": \" + result.errors[id]);\n"
+        out += "const baked = archi.bakeGraph(graph);\n"
+        out += "console.log(\"Baked \" + baked.length + \" object(s): \" + result.objects + \" geometry, \" + result.elements + \" elements.\");\n"
+        return out
+    }
 }

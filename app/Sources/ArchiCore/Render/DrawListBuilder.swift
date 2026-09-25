@@ -16,7 +16,9 @@ public enum DrawListBuilder {
 
     public static func entries(doc fullDoc: ArchiDocument, options: DrawOptions) -> [DrawEntry] {
         // Worksets and design options not on display are left out entirely (also from wall joins and hosts).
-        let doc = ModelSets.visibleModel(fullDoc)
+        // Associative content (area schemes, auto dimensions, family instances) is shown regenerated; a view template
+        // named by VIEWTEMPLATE applies its settings to the view.
+        let doc = DraftingViews.isolated(ModelSets.visibleModel(ViewTemplates.applied(BIMUpdaters.regenerated(fullDoc))))
         var options = options
         if doc.variable("RCP") == "1" { options.reflectedCeiling = true }
         if options.reflectedCeiling { options.showCeilings = true }
@@ -54,6 +56,7 @@ public enum DrawListBuilder {
             if let l = options.level, let el = e.props["level"].flatMap(Int.init), el != l { continue }
             var items = self.items(for: SiteAnnotations.live(e, doc: doc), doc: doc, options: options)
             items += SiteAnnotations.extraItems(e, doc: doc, options: options)
+            if Shafts.isShaft(e) { items += Shafts.crossItems(e, color: doc.resolvedColor(e)) }
             if phasedEntities {
                 let st = Phasing.status(e.props, doc: doc)
                 if !Phasing.visible(st, pf) { continue }
@@ -148,9 +151,12 @@ public enum DrawListBuilder {
         guard o.forPaper, c.r > 0.9, c.g > 0.9, c.b > 0.9 else { return c }
         return RGBA(0, 0, 0, c.a)
     }
+    /// Opaque white used for masks (text masks, WIPEOUT): kept white on paper instead of printing black.
+    public static let maskWhite = RGBA(1, 1, 1, 0.99999)
     static func paper(_ it: DrawItem, _ o: DrawOptions) -> DrawItem {
         guard o.forPaper else { return it }
         switch it {
+        case .fill(let l, let c) where c == maskWhite: return .fill(loops: l, color: .white)
         case .stroke(let p, let c, var s): s.color = paperColor(s.color, o); return .stroke(points: p, closed: c, style: s)
         case .fill(let l, let c): return .fill(loops: l, color: paperColor(c, o))
         case .text(let t, let f, let c): return .text(t, font: f, color: paperColor(c, o))
@@ -260,6 +266,7 @@ public enum DrawListBuilder {
         if e.props["tagOf"] != nil, case .text(let t) = e.geometry { return Annotations.tagItems(e, t, doc: doc, color: col) }
         if e.props["sectionMark"] != nil { return Annotations.sectionItems(e, doc: doc, color: col, lineweight: lineweight(e, layer: layer, inherit: inherit)) }
         let lw = lineweight(e, layer: layer, inherit: inherit)
+        if let custom = DraftRendering.items(e, doc: doc, options: options, color: col, lineweight: lw) { return custom }
         let style = StrokeStyle(color: col, lineweight: lw, dash: dash(e, layer: layer, doc: doc, options: options, inherit: inherit))
         let solidStyle = StrokeStyle(color: col, lineweight: lw)
         func strokes(_ g: Geometry, closed: Bool = false) -> [DrawItem] {
@@ -306,6 +313,7 @@ public enum DrawListBuilder {
             let loops = h.loops.map { RG.dedupe(GeometryOps.polylinePoints($0, closed: true), closed: true) }.filter { $0.count >= 3 }
             guard !loops.isEmpty else { return [] }
             if h.pattern.uppercased() == "SOLID" {
+                if e.props["wipeout"] == "1" { return [.fill(loops: loops, color: options.forPaper ? maskWhite : DraftRendering.screenBackground)] }
                 let fc = h.fill.map { color($0, layer: layer, inherit: inherit) } ?? col
                 return [.fill(loops: loops, color: fc)]
             }
@@ -355,7 +363,10 @@ public enum DrawListBuilder {
                               lineweight: lw, layer: layerName, depth: inherit.depth + 1)
             if e.linetype?.caseInsensitiveCompare("ByBlock") == .orderedSame { sub.linetype = inherit.linetype }
             var out: [DrawItem] = []
+            // ATTMODE: 0 hides all attributes, 1 (normal) hides invisible ones, 2 shows all.
+            let attMode = doc.variable("ATTMODE").flatMap(Int.init) ?? 1
             for be in b.entities where layerShown(be.layer == "0" ? layerName : be.layer, doc, options) {
+                if be.props["attdef"] != nil, attMode == 0 || (attMode == 1 && be.props["invisible"] == "1") { continue }
                 var child = be
                 child.geometry = GeometryOps.transform(be.geometry, t)
                 if case .text(var tx) = child.geometry, let tag = be.props["attdef"] ?? be.props["tag"], let v = ins.attributes[tag] {

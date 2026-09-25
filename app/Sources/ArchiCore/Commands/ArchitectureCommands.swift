@@ -2,7 +2,7 @@
 import Foundation
 
 enum ArchitectureCommands {
-    static var all: [CommandDef] { walls + openings + horizontals + structure + spaces + management + extendedBIM + documentation + multiStorey + sheetViews + ModelingCommands.all + BIMExtCommands.all }
+    static var all: [CommandDef] { walls + openings + horizontals + structure + spaces + management + extendedBIM + documentation + multiStorey + sheetViews + ModelingCommands.all + BIMExtCommands.all + BIMDetailCommands.all + BIMSystemCommands.all }
 
     static func wallPreview(_ w: WallGeom) -> Geometry { .polyline(PolylineGeom(points: CommandHelpers.wallRect(w), closed: true)) }
     static func footprintPreview(_ pts: [Vec2]) -> Geometry { .polyline(PolylineGeom(points: pts, closed: true)) }
@@ -895,11 +895,18 @@ enum ArchitectureCommands {
             ed.print("Building created: \(walls) walls, \(levelIDs.count) floor slab(s)\(roofMsg). Footprint " + CommandHelpers.areaText(abs(GeometryOps.signedArea(outer)), units: ed.doc.units) + ".")
         },
         CommandDef("SCHEDULE", aliases: ["SCH"], category: "Architecture", summary: "Creates a schedule table (walls, doors, windows, rooms, slabs) or prints it.") { ed in
-            let k = try await ed.getKeyword("Enter schedule type", ["Walls", "Doors", "Windows", "Rooms", "Slabs", "Types", "Areas", "Keynotes", "All"], defaultValue: "Rooms") ?? "Rooms"
+            let k = try await ed.getKeyword("Enter schedule type", ["Walls", "Doors", "Windows", "Rooms", "Slabs", "Types", "Areas", "Keynotes", "Lighting", "Systems", "All"], defaultValue: "Rooms") ?? "Rooms"
             let kind = k.lowercased()
-            var csv = scheduleCSV(ed.doc, kind) ?? ScheduleExporter.csv(doc: ed.doc, kind: kind)
-            if csv.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { csv = fallbackSchedule(ed.doc, kind) }
-            let rows = parseCSV(csv).filter { !$0.allSatisfy { $0.isEmpty } }
+            // Schedules count what SCHEDULEFILTER selects (default: what the views show — worksets, design options, systems).
+            let sd = ModelSets.scheduleModel(ed.doc)
+            var rows: [[String]]
+            if kind == "lighting" { rows = LightingFixtures.scheduleRows(doc: sd) }
+            else if kind == "systems" { rows = MEPNetworks.scheduleRows(doc: sd) }
+            else {
+                var csv = scheduleCSV(sd, kind) ?? ScheduleExporter.csv(doc: sd, kind: kind)
+                if csv.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { csv = fallbackSchedule(sd, kind) }
+                rows = parseCSV(csv).filter { !$0.allSatisfy { $0.isEmpty } }
+            }
             guard let p = try await ed.getPoint("Specify insertion point (Enter = print to command line)").point else {
                 for r in rows { ed.print(r.joined(separator: "\t")) }
                 return
@@ -1739,8 +1746,23 @@ extension ArchitectureCommands {
     /// (Re)builds the block of a drawing view; returns the block name.
     @discardableResult
     static func buildViewBlock(_ doc: inout ArchiDocument, spec: String) -> String? {
-        // spec: "north" | "south" | "east" | "west" | "section:A"
+        // spec: "north" | "south" | "east" | "west" | "section:A" | "legend:walls" | "solidsection:…" | "drafting:Name",
+        // optionally followed by "|template=Name" (view template applied to the view).
+        let (core, tpl) = ViewTemplates.split(spec)
+        if let t = tpl {
+            var td = ViewTemplates.applied(doc, template: t)
+            guard let name = buildViewBlock(&td, spec: core), var b = td.blocks[name] else { return nil }
+            b.description = "view:" + spec
+            doc.blocks[name] = b
+            return name
+        }
         let parts = spec.split(separator: ":").map(String.init)
+        if parts.first == "legend", parts.count >= 2 { return Legends.makeBlock(&doc, kind: parts[1]) }
+        if parts.first == "drafting", parts.count >= 2 { let n = DraftingViews.blockName(parts[1]); return doc.blocks[n] != nil ? n : nil }
+        if parts.first == "solidsection", parts.count >= 6, let x0 = Double(parts[1]), let y0 = Double(parts[2]), let x1 = Double(parts[3]), let y1 = Double(parts[4]) {
+            let existing = doc.blocks.first { $0.value.description == "view:" + spec }?.key
+            return SolidSections.makeBlock(&doc, a: Vec2(x0, y0), b: Vec2(x1, y1), name: existing, includeModel: parts[5] == "1")
+        }
         if parts.first == "interior", parts.count == 3, let rid = Int(parts[1]), let k = Int(parts[2]), let room = doc.element(rid) {
             let entries = InteriorElevation.entries(doc: doc, room: room, index: k)
             guard !entries.isEmpty else { return nil }

@@ -166,12 +166,18 @@ enum ToolDrop {
     static let componentPrefix = "archi-component:"
     static let commandPrefix = "archi-command:"
     static let materialPrefix = "archi-material:"
+    /// Block library item: "archi-libblock:<file path>␟<block name or empty>".
+    static let libraryBlockPrefix = "archi-libblock:"
 
-    static func accepts(_ s: String) -> Bool { [blockPrefix, componentPrefix, commandPrefix, materialPrefix].contains { s.hasPrefix($0) } }
+    static func accepts(_ s: String) -> Bool { [blockPrefix, componentPrefix, commandPrefix, materialPrefix, libraryBlockPrefix].contains { s.hasPrefix($0) } }
 
     /// Places a dropped item at a world point. One undo step per drop. Returns false when nothing happened.
     @discardableResult
     static func drop(_ s: String, at p: Vec2, onto hit: EntityID?, model: AppModel) -> Bool {
+        if s.hasPrefix(libraryBlockPrefix) {
+            guard let item = BlockLibraryStore.item(fromKey: String(s.dropFirst(libraryBlockPrefix.count))) else { return false }
+            return BlockLibraryStore.shared.insert(item, at: p, model: model) != nil
+        }
         if s.hasPrefix(blockPrefix) {
             let name = String(s.dropFirst(blockPrefix.count))
             guard model.doc.blocks[name] != nil else { return false }

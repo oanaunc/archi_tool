@@ -179,7 +179,20 @@ public struct StairGeom: Codable, Hashable {
 
 public struct RailingGeom: Codable, Hashable {
     public var path: [Vec2]; public var height: Double; public var baseOffset: Double
+    /// Railing type (nil = generic posts and top rail): handrail profile and size, infill ("balusters", "glass", "cables",
+    /// "bars", "none"), baluster profile/size/spacing, post spacing, bottom rail and handrail extensions at the ends.
+    public var railProfile: String?
+    public var railSize: Double?
+    public var infill: String?
+    public var balusterProfile: String?
+    public var balusterSize: Double?
+    public var balusterSpacing: Double?
+    public var postSpacing: Double?
+    public var bottomRail: Bool?
+    public var extensionLength: Double?
     public init(path: [Vec2], height: Double = 1000, baseOffset: Double = 0) { self.path = path; self.height = height; self.baseOffset = baseOffset }
+    /// Whether any railing-type parameter is set.
+    public var isTyped: Bool { railProfile != nil || infill != nil || balusterSpacing != nil || postSpacing != nil || extensionLength != nil || bottomRail != nil }
 }
 
 public struct SpaceGeom: Codable, Hashable {

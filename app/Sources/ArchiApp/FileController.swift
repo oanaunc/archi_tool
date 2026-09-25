@@ -24,6 +24,15 @@ enum WindowRouter {
         if let o = openWindow { o(r) } else if let p = r.path { pendingURLs.append(URL(fileURLWithPath: p)) }
     }
     static func openFile(_ url: URL) {
+        // A template file opens as a new untitled drawing based on it (the template itself is not edited).
+        if url.pathExtension.lowercased() == TemplateLibrary.fileExtension {
+            MainActor.assumeIsolated {
+                if let m = AppModel.all.first(where: { $0.isEmptyDocument && !$0.isDirty && $0.editor.fileURL == nil }) {
+                    TemplateLibrary.apply(TemplateLibrary.template(for: url), to: m); m.window?.makeKeyAndOrderFront(nil)
+                } else { open(DocumentRequest(kind: .template, path: url.path)) }
+            }
+            return
+        }
         if let m = AppModel.all.first(where: { $0.isEmptyDocument && !$0.isDirty && $0.editor.fileURL == nil }) {
             if m.files.load(url) { m.window?.makeKeyAndOrderFront(nil); return }
         }
@@ -324,8 +333,9 @@ final class FileController: EditorHost {
         }
         if u.pathExtension.lowercased() != ArchiFile.fileExtension { u = u.appendingPathExtension(ArchiFile.fileExtension) }
         do {
-            let data = try ArchiFile.encode(model.doc)
-            try data.write(to: u, options: .atomic)
+            // Keeps the previous file as <name>.bak (ISAVEBAK ≠ 0); falls back to a plain write if the backup cannot be made.
+            do { try ArchiFile.save(model.doc, to: u, backup: model.doc.variable("ISAVEBAK") != "0") }
+            catch { try ArchiFile.encode(model.doc).write(to: u, options: .atomic) }
             model.editor.fileURL = u
             model.editor.isDirty = false
             model.autosave?.discard()

@@ -526,7 +526,15 @@ enum SettingsCommands {
         if kinds.contains("Blocks") {
             while true {
                 var used = Set<String>()
-                func scan(_ es: [Entity]) { for e in es { if case .insert(let i) = e.geometry { used.insert(i.block) } } }
+                // References to visibility/dynamic variants keep their base block (it regenerates the variants).
+                func scan(_ es: [Entity]) {
+                    for e in es {
+                        guard case .insert(let i) = e.geometry else { continue }
+                        used.insert(i.block)
+                        if let b = e.props["visBase"] { used.insert(b) }
+                        if let b = e.props[DynamicBlocks.baseProp] { used.insert(b) }
+                    }
+                }
                 scan(doc.entities); doc.layouts.forEach { scan($0.entities) }; doc.blocks.values.forEach { scan($0.entities) }
                 for el in doc.elements { if case .component(let c) = el.geometry, let b = c.block { used.insert(b) } }
                 let unused = doc.blocks.keys.filter { !used.contains($0) }

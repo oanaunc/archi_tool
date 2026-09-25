@@ -251,7 +251,9 @@ public struct ArchiDocument: Codable, Hashable {
     /// the bump stops older builds from opening (and silently dropping) the new data.
     /// 3: optional keys for winders/spiral hand, curtain mullion types, structural profiles and sloped beams,
     /// opening sub-parts and type formulas, run paths (pipes, ducts, trays, retaining walls). No data change from 2.
-    public static let currentFormatVersion = 3
+    /// 4: document families (parametric family definitions), layered floor/roof types, view templates, solid feature
+    /// history and associative sweeps, railing types, roof edges, shafts and wall join overrides (all optional keys).
+    public static let currentFormatVersion = 4
     public var formatVersion: Int = ArchiDocument.currentFormatVersion
     public var info = ProjectInfo()
     public var units: Units = .millimeters
@@ -279,6 +281,14 @@ public struct ArchiDocument: Codable, Hashable {
     public var phases: [String] = ["Existing", "New Construction"]
     /// Keynote legend: key → description (elements reference keys through props["keynote"]).
     public var keynotes: [String: String] = [:]
+    /// Parametric family definitions (family editor).
+    public var families: [FamilyDefinition] = []
+    /// Layered floor / roof types (slab elements reference them through props["slabType"]).
+    public var slabTypes: [SlabType] = SlabType.library
+    /// View templates.
+    public var viewTemplates: [ViewTemplate] = ViewTemplate.library
+    /// Model group definitions (repeated element groups).
+    public var modelGroups: [ModelGroup] = []
 
     public init() {
         layers = [
@@ -297,6 +307,7 @@ public struct ArchiDocument: Codable, Hashable {
     enum CodingKeys: String, CodingKey {
         case formatVersion, info, units, layers, currentLayer, linetypes, textStyles, dimStyles, currentDimStyle, blocks, entities, elements
         case levels, currentLevel, materials, wallTypes, layouts, namedViews, variables, nextID, openingTypes, phases, keynotes
+        case families, slabTypes, viewTemplates, modelGroups
     }
 
     /// Tolerant decoding: every collection falls back to its default when absent, so older files keep opening.
@@ -310,6 +321,7 @@ public struct ArchiDocument: Codable, Hashable {
         try opt(.levels, &levels); try opt(.currentLevel, &currentLevel); try opt(.materials, &materials); try opt(.wallTypes, &wallTypes)
         try opt(.layouts, &layouts); try opt(.namedViews, &namedViews); try opt(.variables, &variables); try opt(.nextID, &nextID)
         try opt(.openingTypes, &openingTypes); try opt(.phases, &phases); try opt(.keynotes, &keynotes)
+        try opt(.families, &families); try opt(.slabTypes, &slabTypes); try opt(.viewTemplates, &viewTemplates); try opt(.modelGroups, &modelGroups)
         let maxID = max(entities.map(\.id).max() ?? 0, elements.map(\.id).max() ?? 0)
         if nextID <= maxID { nextID = maxID + 1 }
     }

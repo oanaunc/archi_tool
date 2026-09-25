@@ -3,7 +3,7 @@ import Foundation
 
 /// Headless import/export by file extension, used by the IO commands, the CLI and agents.
 public enum FileImport {
-    public static let importFormats = ["archi", "dxf", "dwg", "ifc", "ifczip", "svg", "obj", "stl", "3mf", "gltf", "glb", "ply", "off", "amf", "dae", "stp", "step",
+    public static let importFormats = ["archi", "dxf", "dwg", "ifc", "ifczip", "svg", "obj", "usda", "usdz", "usd", "stl", "3mf", "gltf", "glb", "ply", "off", "amf", "dae", "stp", "step",
                                        "geojson", "cityjson", "shp", "osm", "asc", "xlsx", "csv", "tsv", "txt", "xyz", "pts",
                                        "png", "jpg", "jpeg", "gif", "bmp", "tif", "tiff", "webp", "heic", "heif", "avif"]
     public static let exportFormats = ["3mf", "usda", "usdz", "geojson", "dxf12", "points", "stp", "step", "ply", "plt", "hpgl", "xlsx", "ifczip", "dwg", "analytical", "gbxml", "cobie", "dae",
@@ -125,8 +125,17 @@ public enum FileImport {
             let ents = try SVGImporter.entities(try readText(url))
             return (entityDoc(ents), "\(ents.count) SVG entities")
         case "obj":
-            let ents = try MeshImporter.obj(try readText(url))
-            return (entityDoc(ents), "\(ents.count) OBJ meshes")
+            // Materials (colour, opacity, textures) come from the OBJ's mtllib files next to it.
+            let r = try MTLReader.importOBJ(url)
+            var d = entityDoc(r.entities)
+            for m in r.materials { if let i = d.materials.firstIndex(where: { $0.name.caseInsensitiveCompare(m.name) == .orderedSame }) { d.materials[i] = m } else { d.materials.append(m) } }
+            return (d, "\(r.entities.count) OBJ meshes" + (r.materials.isEmpty ? "" : ", \(r.materials.count) materials (\(r.materials.filter { $0.texture != nil }.count) textured)"))
+        case "usd", "usda", "usdz":
+            let r = try USDImporter.read(url)
+            var d = entityDoc(r.entities)
+            d.ensureLayer("IMPORT-USD")
+            for m in r.materials { if let i = d.materials.firstIndex(where: { $0.name.caseInsensitiveCompare(m.name) == .orderedSame }) { d.materials[i] = m } else { d.materials.append(m) } }
+            return (d, "\(r.entities.count) USD meshes, \(r.materials.count) materials")
         case "stl":
             let ents = try MeshImporter.stl(try Data(contentsOf: url))
             return (entityDoc(ents), "STL mesh (\(ents.first.map { if case .solid(let s) = $0.geometry { return s.meshTriangles.count / 3 }; return 0 } ?? 0) triangles)")

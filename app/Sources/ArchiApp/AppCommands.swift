@@ -16,6 +16,7 @@ enum AppCommands {
         r.ensureBuiltins()
         r.register(all)
         r.register(AppCommandsExtra.all)
+        r.register(AppCommandsReview.all)
         r.register(AppSelfTests.command)
         AppCommandsExtra.installSpellChecker()
     }
@@ -44,7 +45,7 @@ enum AppCommands {
                 AppPreferences.shared.autosaveMinutes = v
                 ed.print(v == 0 ? "Autosave is off." : "Autosave every \(v) minute(s).")
             },
-            CommandDef("DRAWINGRECOVERY", aliases: ["DRM", "RECOVER"], category: "File", summary: "Shows documents recovered from autosave after a crash.", modifies: false) { ed in
+            CommandDef("DRAWINGRECOVERY", aliases: ["DRM"], category: "File", summary: "Shows documents recovered from autosave after a crash.", modifies: false) { ed in
                 let m = try ui(ed)
                 let list = AutosaveManager.recoverable()
                 if list.isEmpty { ed.print("No recovered documents."); return }

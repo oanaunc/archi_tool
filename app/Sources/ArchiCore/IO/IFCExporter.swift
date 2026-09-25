@@ -3,9 +3,51 @@
 // the GUID compression algorithm matches IfcOpenShell's ifcopenshell.guid (LGPL-3.0, © IfcOpenShell contributors).
 import Foundation
 
+/// IFC export settings. Defaults come from the document variables IFCSCHEMA (IFC4 / IFC4X3), IFCMVD
+/// (ReferenceView / DesignTransferView) and IFCQUANTITIES (1/0), so every export path honours IFCOPTIONS.
+public struct IFCExportOptions: Hashable {
+    public enum Schema: String, CaseIterable { case ifc4 = "IFC4", ifc4x3 = "IFC4X3_ADD2" }
+    public enum ModelView: String, CaseIterable {
+        case referenceView = "ReferenceView_V1.2", designTransferView = "DesignTransferView_V1.0"
+        public var shortName: String { self == .referenceView ? "ReferenceView" : "DesignTransferView" }
+    }
+    public var schema: Schema = .ifc4
+    public var modelView: ModelView = .referenceView
+    /// Writes Qto_*BaseQuantities (IfcElementQuantity) for walls, slabs, columns, beams, spaces, doors and windows.
+    public var quantities = true
+    public init(schema: Schema = .ifc4, modelView: ModelView = .referenceView, quantities: Bool = true) {
+        self.schema = schema; self.modelView = modelView; self.quantities = quantities
+    }
+    public static func parseSchema(_ s: String) -> Schema? {
+        switch s.uppercased().replacingOccurrences(of: ".", with: "").replacingOccurrences(of: "_", with: "") {
+        case "IFC4", "IFC4ADD2", "4": return .ifc4
+        case "IFC4X3", "IFC43", "IFC4X3ADD2", "43", "4X3": return .ifc4x3
+        default: return nil
+        }
+    }
+    public static func parseView(_ s: String) -> ModelView? {
+        let u = s.uppercased()
+        if u.hasPrefix("REF") { return .referenceView }
+        if u.hasPrefix("DES") || u.hasPrefix("DTV") { return .designTransferView }
+        return nil
+    }
+    public static func from(_ doc: ArchiDocument) -> IFCExportOptions {
+        var o = IFCExportOptions()
+        if let v = doc.variable("IFCSCHEMA"), let sc = parseSchema(v) { o.schema = sc }
+        if let v = doc.variable("IFCMVD"), let mv = parseView(v) { o.modelView = mv }
+        if let v = doc.variable("IFCQUANTITIES") { o.quantities = !["0", "no", "off", "false"].contains(v.lowercased()) }
+        return o
+    }
+}
+
 public enum IFCExporter {
     public static func export(doc: ArchiDocument, meshes: [MeshGroup]) -> String {
-        let b = IFCBuilder(doc: doc, meshes: meshes)
+        export(doc: doc, meshes: meshes, options: IFCExportOptions.from(doc))
+    }
+    public static func export(doc: ArchiDocument, meshes: [MeshGroup], options: IFCExportOptions) -> String {
+        // Writes the model selected by EXPORTFILTER (worksets, design options, phases); meshes are matched by id.
+        let b = IFCBuilder(doc: ModelSets.exportModel(doc), meshes: meshes)
+        b.options = options
         return b.build()
     }
 
@@ -96,6 +138,37 @@ final class IFCBuilder {
     var psets: [(String, [Int], [(String, String)])] = []
     var layerSetUsage: [String: Int] = [:]
     var usedGuids = Set<String>()
+    var options = IFCExportOptions()
+    /// Quantity sets: (Qto name, element entity, [(quantity name, IFC entity, value)]).
+    var qtos: [(String, Int, [(String, String, Double)])] = []
+    /// Type objects: "wall|door|window" + ":" + type name → occurrence entities (in first-use order).
+    var typeUse: [String: [Int]] = [:]
+    var typeOrder: [String] = []
+    func useType(_ kind: String, _ name: String?, _ entity: Int) {
+        guard let n = name, !n.isEmpty else { return }
+        let key = kind + ":" + n
+        if typeUse[key] == nil { typeOrder.append(key) }
+        typeUse[key, default: []].append(entity)
+    }
+    /// IfcWallType / IfcDoorType / IfcWindowType with IfcRelDefinesByType; opening type parameters as a type property set.
+    func writeTypes() {
+        for key in typeOrder {
+            guard let occ = typeUse[key], let cut = key.firstIndex(of: ":") else { continue }
+            let kind = String(key[..<cut]), name = String(key[key.index(after: cut)...])
+            var psets = "$"
+            if kind != "wall", let ot = doc.openingType(name), !ot.params.isEmpty {
+                let props = ot.params.sorted { $0.key < $1.key }.filter { !$0.key.isEmpty && !$0.value.isEmpty }.map { add("IFCPROPERTYSINGLEVALUE(\(s($0.key)),$,\(typedValue($0.key, $0.value)),$)") }
+                if !props.isEmpty { psets = "(#\(add("IFCPROPERTYSET(\(g("typepset:\(key)")),#\(oh),'Archi_TypeProperties',$,\(refs(props)))")))" }
+            }
+            let t: Int
+            switch kind {
+            case "wall": t = add("IFCWALLTYPE(\(g("type:\(key)")),#\(oh),\(s(name)),$,$,\(psets),$,$,$,.STANDARD.)")
+            case "door": t = add("IFCDOORTYPE(\(g("type:\(key)")),#\(oh),\(s(name)),$,$,\(psets),$,$,$,.DOOR.,.NOTDEFINED.,$,$)")
+            default: t = add("IFCWINDOWTYPE(\(g("type:\(key)")),#\(oh),\(s(name)),$,$,\(psets),$,$,$,.WINDOW.,.NOTDEFINED.,$,$)")
+            }
+            add("IFCRELDEFINESBYTYPE(\(g("rel:type:\(key)")),#\(oh),$,$,\(refs(occ)),#\(t))")
+        }
+    }
 
     init(doc: ArchiDocument, meshes: [MeshGroup]) {
         self.doc = doc; self.meshes = meshes; self.k = doc.units.mm
@@ -308,6 +381,7 @@ final class IFCBuilder {
         }
         for key in rampOrder { ramp(key, rampGroups[key] ?? []) }
         phaseGroups()
+        writeTypes()
 
         for lv in levels {
             if let els = contained[lv.id], !els.isEmpty, let st = storeyEntity[lv.id] {
@@ -330,13 +404,18 @@ final class IFCBuilder {
             let ps = add("IFCPROPERTYSET(\(g("pset:\(i):\(p.0):\(p.1.first ?? 0)")),#\(oh),\(s(p.0)),$,\(refs(props)))")
             add("IFCRELDEFINESBYPROPERTIES(\(g("rel:pset:\(i):\(p.0)")),#\(oh),$,$,\(refs(p.1)),#\(ps))")
         }
+        for (i, q) in qtos.enumerated() where !q.2.isEmpty {
+            let items = q.2.map { add("\($0.1)(\(s($0.0)),$,$,\(r($0.2)),$)") }
+            let eq = add("IFCELEMENTQUANTITY(\(g("qto:\(i):\(q.0):\(q.1)")),#\(oh),\(s(q.0)),$,'BaseQuantities',\(refs(items)))")
+            add("IFCRELDEFINESBYPROPERTIES(\(g("rel:qto:\(i):\(q.0)")),#\(oh),$,$,(#\(q.1)),#\(eq))")
+        }
 
         let iso = ISO8601DateFormatter()
         iso.formatOptions = [.withInternetDateTime]
         var out = "ISO-10303-21;\nHEADER;\n"
-        out += "FILE_DESCRIPTION(('ViewDefinition [ReferenceView_V1.2]'),'2;1');\n"
+        out += "FILE_DESCRIPTION(('ViewDefinition [\(options.modelView.rawValue)]'),'2;1');\n"
         out += "FILE_NAME(\(s(doc.info.name + ".ifc")),\(s(iso.string(from: Date()))),(\(s(author))),('Oanarina'),'Oanarina Archi Tool','Oanarina Archi Tool','');\n"
-        out += "FILE_SCHEMA(('IFC4'));\nENDSEC;\nDATA;\n"
+        out += "FILE_SCHEMA(('\(options.schema.rawValue)'));\nENDSEC;\nDATA;\n"
         out += lines.joined(separator: "\n")
         out += "\nENDSEC;\nEND-ISO-10303-21;\n"
         return out
@@ -351,13 +430,87 @@ final class IFCBuilder {
         if let v = el.props["isExternal"] ?? el.props["IsExternal"] { return ["1", "true", "yes"].contains(v.lowercased()) }
         return d
     }
+    /// Typed IFC value for a property written from element props ("Pset_WallCommon.FireRating" = "EI 60").
+    func typedValue(_ name: String, _ v: String) -> String {
+        let t = v.trimmingCharacters(in: .whitespaces)
+        switch t.lowercased() {
+        case "true", ".t.", "yes": return bool(true)
+        case "false", ".f.", "no": return bool(false)
+        default: break
+        }
+        if let d = Double(t), d.isFinite {
+            switch name {
+            case "ThermalTransmittance": return "IFCTHERMALTRANSMITTANCEMEASURE(\(r(d)))"
+            case "AcousticRating", "FireRating", "Reference", "Status", "SurfaceSpreadOfFlame": return label(t)
+            case "Slope", "Pitch": return "IFCPLANEANGLEMEASURE(\(r(d * .pi / 180)))"
+            default: return "IFCREAL(\(r(d)))"
+            }
+        }
+        return label(t)
+    }
+
     func commonProps(_ el: BIMElement, _ entity: Int, pset: String, _ extra: [(String, String)]) {
         var p: [(String, String)] = [("Reference", ident(el.name.isEmpty ? el.typeName : el.name))]
         p += extra
         if let st = phaseStatus(el) { p.append(("Status", label(st))) }
+        // Props named "<Set>.<Property>" go to that property set (the element's common set is merged, props win);
+        // quantities ("Qto_…") are recomputed from the geometry; everything else stays in Archi_Properties.
+        var named: [String: [(String, String)]] = [:]
+        var custom: [(String, String)] = []
+        for (key, v) in el.props.sorted(by: { $0.key < $1.key }) where !key.isEmpty && key != "ifcGuid" {
+            if let dot = key.firstIndex(of: "."), dot != key.startIndex, key.index(after: dot) != key.endIndex {
+                let set = String(key[..<dot]), prop = String(key[key.index(after: dot)...])
+                if set.hasPrefix("Qto_") { continue }
+                named[set, default: []].append((prop, typedValue(prop, v)))
+            } else { custom.append((key, label(v))) }
+        }
+        if let mine = named.removeValue(forKey: pset) {
+            for (n, v) in mine { if let i = p.firstIndex(where: { $0.0 == n }) { p[i].1 = v } else { p.append((n, v)) } }
+        }
         psets.append((pset, [entity], p))
-        let custom = el.props.sorted { $0.key < $1.key }.filter { !$0.key.isEmpty && $0.key != "ifcGuid" }
-        if !custom.isEmpty { psets.append(("Archi_Properties", [entity], custom.map { ($0.key, label($0.value)) })) }
+        for (set, props) in named.sorted(by: { $0.key < $1.key }) { psets.append((set, [entity], props)) }
+        if !custom.isEmpty { psets.append(("Archi_Properties", [entity], custom)) }
+        if options.quantities, let q = baseQuantities(el) { qtos.append((q.0, entity, q.1)) }
+    }
+
+    /// Qto_*BaseQuantities from the element geometry: lengths in mm (the file's length unit), areas in m², volumes in m³.
+    func baseQuantities(_ el: BIMElement) -> (String, [(String, String, Double)])? {
+        let mm = k, m = k / 1000
+        func L(_ n: String, _ v: Double) -> (String, String, Double) { (n, "IFCQUANTITYLENGTH", v * mm) }
+        func A(_ n: String, _ v: Double) -> (String, String, Double) { (n, "IFCQUANTITYAREA", v * m * m) }
+        func V(_ n: String, _ v: Double) -> (String, String, Double) { (n, "IFCQUANTITYVOLUME", v * m * m * m) }
+        switch el.geometry {
+        case .wall(let w):
+            let len = w.length, gross = len * w.height
+            var openings = 0.0
+            for o in doc.elements { if case .opening(let op) = o.geometry, op.hostWall == el.id { openings += op.width * min(op.height, max(w.height - op.sill, 0)) } }
+            let net = max(gross - openings, 0)
+            return ("Qto_WallBaseQuantities", [L("Length", len), L("Width", w.thickness), L("Height", w.height), A("GrossSideArea", gross),
+                                               A("NetSideArea", net), V("GrossVolume", gross * w.thickness), V("NetVolume", net * w.thickness)])
+        case .slab(let sl):
+            let gross = abs(GeometryOps.signedArea(sl.boundary))
+            let net = max(gross - sl.holes.reduce(0) { $0 + abs(GeometryOps.signedArea($1)) }, 0)
+            var per = 0.0
+            for i in sl.boundary.indices { per += sl.boundary[i].distance(to: sl.boundary[(i + 1) % sl.boundary.count]) }
+            return ("Qto_SlabBaseQuantities", [L("Width", sl.thickness), L("Perimeter", per), A("GrossArea", gross), A("NetArea", net),
+                                               V("GrossVolume", gross * sl.thickness), V("NetVolume", net * sl.thickness)])
+        case .column(let c):
+            let a = c.round ? Double.pi * c.width * c.width / 4 : c.width * c.depth
+            return ("Qto_ColumnBaseQuantities", [L("Length", c.height), A("CrossSectionArea", a), V("GrossVolume", a * c.height), V("NetVolume", a * c.height)])
+        case .beam(let b):
+            let len = b.start.distance(to: b.end), a = b.width * b.depth
+            return ("Qto_BeamBaseQuantities", [L("Length", len), A("CrossSectionArea", a), V("GrossVolume", a * len), V("NetVolume", a * len)])
+        case .space(let sp):
+            let a = abs(GeometryOps.signedArea(sp.boundary))
+            var per = 0.0
+            for i in sp.boundary.indices { per += sp.boundary[i].distance(to: sp.boundary[(i + 1) % sp.boundary.count]) }
+            return ("Qto_SpaceBaseQuantities", [L("Height", sp.height), L("GrossPerimeter", per), A("GrossFloorArea", a), A("NetFloorArea", a),
+                                                V("GrossVolume", a * sp.height), V("NetVolume", a * sp.height)])
+        case .opening(let o):
+            guard o.kind != .opening else { return nil }
+            return (o.kind == .door ? "Qto_DoorBaseQuantities" : "Qto_WindowBaseQuantities", [L("Width", o.width), L("Height", o.height), A("Area", o.width * o.height)])
+        default: return nil
+        }
     }
     func name(_ el: BIMElement, _ fallback: String) -> String { el.name.isEmpty ? "\(fallback) \(el.id)" : el.name }
 
@@ -384,6 +537,7 @@ final class IFCBuilder {
         let rep = shape(items, type: "SweptSolid", axis: axis)
         let e = add("IFCWALL(\(eg(el)),#\(oh),\(s(name(el, "Wall"))),$,\(w.wallType.map { s($0) } ?? "$"),#\(pl),#\(rep),\(s("\(el.id)")),.STANDARD.)")
         wallPlacement[el.id] = pl; wallEntity[el.id] = e; elementEntity[el.id] = e
+        useType("wall", w.wallType, e)
         contained[lv, default: []].append(e)
         // Material: layer set for typed walls.
         if let tn = w.wallType, let wt = doc.wallTypes.first(where: { $0.name == tn }), !wt.plies.isEmpty {
@@ -470,6 +624,7 @@ final class IFCBuilder {
             commonProps(el, e, pset: "Pset_WindowCommon", [("IsExternal", bool(isExternal(el, default: isExternal(host, default: true))))])
         }
         add("IFCRELFILLSELEMENT(\(g("rel:fills:\(el.id)")),#\(oh),$,$,#\(oe),#\(e))")
+        useType(o.kind == .door ? "door" : "window", o.typeName, e)
         elementEntity[el.id] = e
         contained[lv, default: []].append(e)
         useMaterial(el.material, e)

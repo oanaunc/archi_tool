@@ -24,8 +24,10 @@ enum NodeEditorWindow {
     }
 }
 
-private enum NodeLayout {
+enum NodeLayout {
     static let width: CGFloat = 188
+    /// Approximate drawn height of a node (header, input rows, number slider, footer).
+    static func height(_ k: NodeKind) -> CGFloat { header + row * CGFloat(k.inputs.count) + (k == .number ? 52 : 0) + 22 }
     static let header: CGFloat = 24
     static let row: CGFloat = 26
     static func inputPort(_ n: GraphNode, _ i: Int) -> CGPoint { CGPoint(x: n.x, y: n.y + header + row * CGFloat(i) + row / 2) }
@@ -53,11 +55,17 @@ struct NodeEditorView: View {
                         Color(white: 0.13).frame(width: 2400, height: 1600)
                             .onTapGesture { }
                         GridBackground().frame(width: 2400, height: 1600)
+                        ForEach(graph.groups) { g in
+                            NodeFrameBox(frame: groupBinding(g.id), graph: $graph).offset(x: g.x, y: g.y)
+                        }
                         links(ev)
                         ForEach(graph.nodes) { n in
                             NodeBox(node: binding(n.id), graph: $graph, value: ev.values[n.id], error: ev.errors[n.id],
                                     isOutput: graph.outputNodes.contains(n.id), dragLink: $dragLink, onLinkEnd: finishLink)
                                 .offset(x: n.x, y: n.y)
+                        }
+                        ForEach(graph.comments) { c in
+                            NodeCommentBox(comment: commentBinding(c.id), graph: $graph).offset(x: c.x, y: c.y)
                         }
                     }
                     .coordinateSpace(name: "graph")
@@ -74,6 +82,29 @@ struct NodeEditorView: View {
             graph = NodeGraph.load(model.doc) ?? NodeGraph.sample
         }
         .onChange(of: graph) { _ in if live { scheduleBake() } }
+    }
+
+    private func groupBinding(_ id: Int) -> Binding<NodeFrame> {
+        Binding(get: { graph.groups.first { $0.id == id } ?? NodeFrame(id: id, title: "", x: 0, y: 0, width: 0, height: 0) },
+                set: { v in if let i = graph.groups.firstIndex(where: { $0.id == id }) { graph.groups[i] = v } })
+    }
+    private func commentBinding(_ id: Int) -> Binding<NodeComment> {
+        Binding(get: { graph.comments.first { $0.id == id } ?? NodeComment(id: id, text: "", x: 0, y: 0) },
+                set: { v in if let i = graph.comments.firstIndex(where: { $0.id == id }) { graph.comments[i] = v } })
+    }
+
+    private func exportScript() {
+        let p = NSSavePanel()
+        p.allowedContentTypes = [.javaScript]
+        p.nameFieldStringValue = "graph.js"
+        guard p.runModal() == .OK, let u = p.url else { return }
+        do { try NodeGraphScript.javascript(graph, name: u.deletingPathExtension().lastPathComponent).write(to: u, atomically: true, encoding: .utf8); status = "Exported \(u.lastPathComponent)." }
+        catch { status = error.localizedDescription }
+    }
+    private func openInConsole() {
+        UserDefaults.standard.set(NodeGraphScript.javascript(graph), forKey: "archi.script.code")
+        model.showScriptConsole = true
+        status = "The graph script is in the JavaScript console."
     }
 
     private func binding(_ id: Int) -> Binding<GraphNode> {
@@ -94,6 +125,10 @@ struct NodeEditorView: View {
             } label: { Label("Add Node", systemImage: "plus.circle") }
             .menuStyle(.borderlessButton).fixedSize()
             Button { graph = NodeGraph.sample } label: { Label("Sample", systemImage: "wand.and.stars") }.buttonStyle(FlatButtonStyle(compact: true))
+            Button { graph.addGroup(title: "Group \(graph.groups.count + 1)", around: graph.nodes.map(\.id).filter { id in !graph.groups.contains { g in g.contains(graph.node(id)!) } }) } label: { Label("Group", systemImage: "rectangle.dashed") }
+                .buttonStyle(FlatButtonStyle(compact: true)).help("Frame the ungrouped nodes in a titled group; drag its title to move the group with its nodes")
+            Button { graph.addComment("Note", x: 60 + Double(graph.comments.count * 24), y: 60) } label: { Label("Comment", systemImage: "note.text") }
+                .buttonStyle(FlatButtonStyle(compact: true)).help("Add a sticky note to the canvas")
             Button { graph = NodeGraph() } label: { Label("Clear", systemImage: "trash") }.buttonStyle(FlatButtonStyle(compact: true))
             Menu {
                 let names = NodeGraph.names(model.doc)
@@ -106,6 +141,8 @@ struct NodeEditorView: View {
                 }.disabled(names.isEmpty)
                 Divider()
                 Button("Export JSON…") { exportJSON() }
+                Button("Export as Script…") { exportScript() }
+                Button("Open as Script in Console") { openInConsole() }
                 Button("Import JSON…") { importJSON() }
             } label: { Label("Graphs", systemImage: "folder") }
             .menuStyle(.borderlessButton).fixedSize()
@@ -423,5 +460,70 @@ private struct NodePreview3D: NSViewRepresentable {
             cam.look(at: s.center)
             v.pointOfView = cam
         }
+    }
+}
+
+
+/// Group frame: title bar drags the frame with its nodes; the corner handle resizes it.
+private struct NodeFrameBox: View {
+    @Binding var frame: NodeFrame
+    @Binding var graph: NodeGraph
+    @State private var last: CGSize = .zero
+    @State private var resizeStart: CGSize?
+    private static let colors: [Color] = [Color(red: 0.96, green: 0.77, blue: 0.09), .blue, .green, .purple, .orange, .teal]
+    var body: some View {
+        let c = Self.colors[abs(frame.color) % Self.colors.count]
+        ZStack(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: 8).fill(c.opacity(0.08))
+            RoundedRectangle(cornerRadius: 8).stroke(c.opacity(0.5), lineWidth: 1)
+            HStack(spacing: 4) {
+                TextField("Group", text: $frame.title).textFieldStyle(.plain).font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.text)
+                Text("\(graph.members(of: frame).count) nodes").font(.system(size: 9)).foregroundStyle(Theme.textDim)
+                Button { frame.color += 1 } label: { Image(systemName: "paintpalette").font(.system(size: 9)) }.buttonStyle(.plain).help("Change colour")
+                Button { graph.groups.removeAll { $0.id == frame.id } } label: { Image(systemName: "xmark").font(.system(size: 9)) }.buttonStyle(.plain).help("Delete the group (keeps the nodes)")
+            }
+            .padding(.horizontal, 8).frame(height: 26)
+            .background(RoundedRectangle(cornerRadius: 8).fill(c.opacity(0.25)))
+            .gesture(DragGesture(coordinateSpace: .named("graph")).onChanged { g in
+                let dx = g.translation.width - last.width, dy = g.translation.height - last.height
+                last = g.translation
+                graph.moveGroup(frame.id, dx: Double(dx), dy: Double(dy))
+            }.onEnded { _ in last = .zero })
+            Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 9)).foregroundStyle(Theme.textDim)
+                .frame(width: 16, height: 16)
+                .offset(x: frame.width - 18, y: frame.height - 18)
+                .gesture(DragGesture(coordinateSpace: .named("graph")).onChanged { g in
+                    if resizeStart == nil { resizeStart = CGSize(width: frame.width, height: frame.height) }
+                    frame.width = max(160, Double(resizeStart!.width + g.translation.width)); frame.height = max(80, Double(resizeStart!.height + g.translation.height))
+                }.onEnded { _ in resizeStart = nil })
+        }
+        .frame(width: frame.width, height: frame.height, alignment: .topLeading)
+    }
+}
+
+/// Sticky note on the node canvas.
+private struct NodeCommentBox: View {
+    @Binding var comment: NodeComment
+    @Binding var graph: NodeGraph
+    @State private var start: CGPoint?
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack {
+                Image(systemName: "note.text").font(.system(size: 9))
+                Spacer()
+                Button { graph.comments.removeAll { $0.id == comment.id } } label: { Image(systemName: "xmark").font(.system(size: 9)) }.buttonStyle(.plain)
+            }
+            .foregroundStyle(Color.black.opacity(0.6))
+            .contentShape(Rectangle())
+            .gesture(DragGesture(coordinateSpace: .named("graph")).onChanged { g in
+                if start == nil { start = CGPoint(x: comment.x, y: comment.y) }
+                comment.x = max(0, Double(start!.x + g.translation.width)); comment.y = max(0, Double(start!.y + g.translation.height))
+            }.onEnded { _ in start = nil })
+            TextField("Comment", text: $comment.text, axis: .vertical).textFieldStyle(.plain).font(.system(size: 11)).foregroundStyle(.black)
+        }
+        .padding(6)
+        .frame(width: comment.width, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 4).fill(Color(red: 1, green: 0.93, blue: 0.55)))
+        .shadow(color: .black.opacity(0.3), radius: 3, y: 1)
     }
 }

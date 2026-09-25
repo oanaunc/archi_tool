@@ -20,7 +20,7 @@ enum DraftAnnotationCommands {
                 switch k {
                 case "Properties":
                     let name = try await ed.getWord("Enter a pattern name or [?/Solid]", defaultValue: h.pattern) ?? h.pattern
-                    if name == "?" { ed.print("Patterns: " + HatchPatterns.names.joined(separator: ", ")); continue }
+                    if name == "?" { ed.print("Patterns: " + HatchPatterns.allNames.joined(separator: ", ")); continue }
                     h.pattern = name.uppercased() == "S" ? "SOLID" : name.uppercased()
                     if h.pattern != "SOLID" {
                         if let s = try await ed.getReal("Specify a scale for the pattern", defaultValue: h.scale).value, s > 0 { h.scale = s }

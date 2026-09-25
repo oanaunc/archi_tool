@@ -689,6 +689,7 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
                    or into --outdir DIR; prints one line per file and exits non-zero if any failed.
   --batch FILE     Runs the jobs of a JSON batch file (open/import, commands or script, outputs, reports, save);
                    prints one line per job and a JSON summary, exits non-zero if any job failed.
+  --plugins DIR    Also loads JavaScript plugins from DIR (folders with plugin.json; see docs/AGENT-API.md).
   --version        Prints the version.
 """
 
@@ -713,7 +714,7 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
 }
 
 @MainActor func runCLI() async -> Int32 {
-    var input: String?, script: String?, out: String?, mcp = false
+    var input: String?, script: String?, out: String?, mcp = false, pluginDir: URL?
     var args = Array(CommandLine.arguments.dropFirst())
     if let bi = args.firstIndex(of: "--batch") {
         guard bi + 1 < args.count else { eprint(usage); return 2 }
@@ -746,6 +747,7 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
         case "--script", "-s": guard !args.isEmpty else { eprint(usage); return 2 }; script = args.removeFirst()
         case "--out", "-o": guard !args.isEmpty else { eprint(usage); return 2 }; out = args.removeFirst()
         case "--mcp": mcp = true
+        case "--plugins": guard !args.isEmpty else { eprint(usage); return 2 }; pluginDir = expand(args.removeFirst())
         case "--help", "-h": print(usage); return 0
         case "--version": print("archi-cli \(cliVersion) (Oanarina Archi Tool)"); return 0
         default:
@@ -756,6 +758,7 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
 
     let host = CLIHost()
     CommandRegistry.shared.ensureBuiltins()
+    CLIPlugins.install(extra: pluginDir)
     let ed = Editor()
     ed.host = host
     var fileURL: URL?

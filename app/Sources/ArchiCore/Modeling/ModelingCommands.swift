@@ -4,7 +4,7 @@ import Foundation
 /// 3D modelling commands: solid booleans (BSP CSG), slice, interference, press/pull, loft, sweep, pipe,
 /// and site topography (surface from points/contours, contours, building pads).
 enum ModelingCommands {
-    static var all: [CommandDef] { booleans + forming + site + SolidEditCommands.all + SurfaceCommands.all }
+    static var all: [CommandDef] { booleans + forming + site + SolidEditCommands.all + SurfaceCommands.all + FeatureCommands.all }
 
     static func solidOf(_ doc: ArchiDocument, _ id: EntityID) -> SolidGeom? {
         if case .solid(let s)? = doc.entity(id)?.geometry { return s }
@@ -14,7 +14,8 @@ enum ModelingCommands {
     @MainActor static func selectSolids(_ ed: Editor, _ msg: String) async throws -> [EntityID] {
         ed.selection = ed.selection.filter { solidOf(ed.doc, $0) != nil }
         let ids = try await ed.getSelection(msg)
-        let s = ids.filter { solidOf(ed.doc, $0) != nil }
+        // Selections are sets: order them by drawing order so results are deterministic.
+        let s = ids.filter { solidOf(ed.doc, $0) != nil }.sorted { (ed.doc.entityIndex($0) ?? 0) < (ed.doc.entityIndex($1) ?? 0) }
         if s.count < ids.count { ed.print("\(ids.count - s.count) non-solid object(s) ignored.") }
         return s
     }
@@ -36,11 +37,13 @@ enum ModelingCommands {
 
     static var booleans: [CommandDef] { [
         CommandDef("UNION", aliases: ["UNI"], category: "3D", summary: "Combines selected 3D solids into one.") { ed in
-            let ids = try await selectSolids(ed, "Select solids to unite")
+            var ids = try await selectSolids(ed, "Select solids to unite")
             guard ids.count >= 2 else { throw CommandError.invalid("Select at least two solids.") }
+            // A solid with a feature history survives so its history continues.
+            if let h = ids.firstIndex(where: { solidOf(ed.doc, $0)?.history != nil }), h > 0 { ids.insert(ids.remove(at: h), at: 0) }
             var acc = solidOf(ed.doc, ids[0])!
             for id in ids.dropFirst() {
-                guard let s = solidOf(ed.doc, id), let r = CSG.apply(.union, acc, s) else { continue }
+                guard let s = solidOf(ed.doc, id), let r = boolean(ed, .union, acc, s) else { continue }
                 acc = r
             }
             replace(ed, ids[0], with: acc)
@@ -60,7 +63,7 @@ enum ModelingCommands {
                 var empty = false
                 for t in tools {
                     guard let ts = solidOf(ed.doc, t) else { continue }
-                    if let r = CSG.apply(.subtract, s, ts) { s = r } else { empty = true; break }
+                    if let r = boolean(ed, .subtract, s, ts) { s = r } else { empty = true; break }
                 }
                 if empty { removed.insert(b); ed.print("#\(b) was entirely removed.") } else { replace(ed, b, with: s) }
             }
@@ -74,7 +77,7 @@ enum ModelingCommands {
             var acc: SolidGeom? = solidOf(ed.doc, ids[0])
             for id in ids.dropFirst() {
                 guard let a = acc, let s = solidOf(ed.doc, id) else { break }
-                acc = CSG.apply(.intersect, a, s)
+                acc = boolean(ed, .intersect, a, s)
             }
             if let r = acc {
                 replace(ed, ids[0], with: r)
@@ -153,6 +156,13 @@ enum ModelingCommands {
         },
     ] }
 
+    /// A boolean that records a feature history when SOLIDHIST = 1 or the base solid already has one.
+    @MainActor static func boolean(_ ed: Editor, _ op: SolidFeature.Op, _ a: SolidGeom, _ b: SolidGeom) -> SolidGeom? {
+        if a.history != nil || ed.doc.variable("SOLIDHIST") == "1" { return SolidHistoryEngine.record(op, base: a, tool: b) }
+        let o: CSG.Operation = op == .union ? .union : (op == .subtract ? .subtract : .intersect)
+        return CSG.apply(o, a, b)
+    }
+
     @MainActor static func sliceBoth(_ ed: Editor, _ ids: [EntityID], _ a: SolidGeom, _ b: SolidGeom) throws {
         var n = 0
         for id in ids {
@@ -215,6 +225,10 @@ enum ModelingCommands {
             var profile: [Vec2]? = nil, holes: [[Vec2]] = []
             var source: EntityID? = nil
             if let id = ed.pickFiltered(at: p, filter: { ed.doc.entity($0) != nil }) {
+                if case .solid(let s)? = ed.doc.entity(id)?.geometry, s.kind != .extrusion && s.kind != .box || s.history != nil {
+                    try await pushPullFace(ed, id, s, at: p, mode: "top")
+                    return
+                }
                 if case .solid(var s)? = ed.doc.entity(id)?.geometry, s.kind == .extrusion || s.kind == .box {
                     let cur = s.kind == .box ? s.size.z : s.height
                     guard let h = try await ed.getDistance("Specify new height", defaultValue: cur).value, abs(h) > 1e-9 else { return }
@@ -224,6 +238,29 @@ enum ModelingCommands {
                     return
                 }
                 if let l = loop(ed.doc, id) { profile = l; source = id }
+            }
+            if profile == nil {
+                // Inside the plan outline of a solid: push/pull its top face (the highest one under the point).
+                var best: (EntityID, SolidGeom, Double)? = nil
+                for e in ed.doc.entities where ed.doc.isEditable(layer: e.layer) {
+                    guard case .solid(let s) = e.geometry, let f = FacePushPull.pick(s, at: p, mode: "top") else { continue }
+                    let n = f.normal, t = f.triangles[0].0
+                    let z = t.z - (n.x * (p.x - t.x) + n.y * (p.y - t.y)) / max(n.z, 1e-9)
+                    if z > (best?.2 ?? -.infinity) { best = (e.id, s, z) }
+                }
+                if let b = best {
+                    if b.1.kind == .extrusion || b.1.kind == .box, b.1.history == nil {
+                        var s = b.1
+                        let cur = s.kind == .box ? s.size.z : s.height
+                        guard let h = try await ed.getDistance("Specify new height", defaultValue: cur).value, abs(h) > 1e-9 else { return }
+                        if s.kind == .box { s.size.z = h } else { s.height = abs(h) }
+                        replace(ed, b.0, with: s)
+                        ed.print("Height changed to \(fmt(h)).")
+                        return
+                    }
+                    try await pushPullFace(ed, b.0, b.1, at: p, mode: "top")
+                    return
+                }
             }
             if profile == nil {
                 let curves = ed.doc.entities.filter { ed.doc.isVisible(layer: $0.layer) && $0.props["sectionMark"] == nil }.map(\.geometry)
@@ -299,16 +336,18 @@ enum ModelingCommands {
                 break
             }
             var n = 0
-            for (_, p) in profs {
+            let assoc = ed.variableDouble("DELOBJ", 0) == 0 && ed.doc.variable("SWEEPASSOC") != "0"
+            for (pid, p) in profs {
                 let path3 = pth.points.map { Vec3($0.x, $0.y, z) }
+                var made: SolidGeom?
                 if twist != 0 || scale != 1 {
                     let c = GeometryOps.centroid(p)
                     let m = SurfaceTools.twistedSweep(p.map { $0 - c }, along: path3, twist: twist, endScale: scale, closedPath: pth.closed)
-                    guard !m.isEmpty else { continue }
-                    ed.addEntity(.solid(MeshTools.solid(from: MeshTools.triangles(m), tolerance: 1e-6))); n += 1
-                    continue
-                }
-                guard let s = sweepSolid(p, path: path3, closedPath: pth.closed) else { continue }
+                    if !m.isEmpty { made = MeshTools.solid(from: MeshTools.triangles(m), tolerance: 1e-6) }
+                } else { made = sweepSolid(p, path: path3, closedPath: pth.closed) }
+                guard var s = made else { continue }
+                // Associative sweep: remembers its profile and path and regenerates when they change (SWEEPASSOC = 0 turns it off).
+                if assoc { s = AssociativeSolids.attach(s, source: SolidSource(kind: .sweep, profiles: [pid], path: pk.id, elevation: z, twist: twist, endScale: scale), doc: ed.doc) }
                 ed.addEntity(.solid(s)); n += 1
             }
             if ed.variableDouble("DELOBJ", 0) != 0 { ed.doc.remove(ids: Set(profs.map(\.0))) }

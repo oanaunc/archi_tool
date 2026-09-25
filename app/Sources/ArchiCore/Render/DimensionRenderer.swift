@@ -125,12 +125,12 @@ public enum DimensionRenderer {
     /// Graphics of a dimension; dimension and extension lines are interrupted at its DIMBREAK gaps.
     public static func primitives(_ d: DimensionGeom, style: DimStyle) -> Primitives {
         let gaps = breaks(d)
-        var prim = basePrimitives(withoutBreaks(d), style: style)
+        var prim = basePrimitives(withoutBreaks(d), style: style, jogs: jogs(d))
         if !gaps.isEmpty { prim.lines = clip(prim.lines, gaps: gaps) }
         return prim
     }
 
-    static func basePrimitives(_ d: DimensionGeom, style: DimStyle) -> Primitives {
+    static func basePrimitives(_ d: DimensionGeom, style: DimStyle, jogs: [Vec2] = []) -> Primitives {
         var prim = Primitives()
         let p = d.points
         guard p.count >= 2 else { return prim }
@@ -166,18 +166,24 @@ public enum DimensionRenderer {
             }
             let span = d1.distance(to: d2)
             let along = span > 1e-12 ? (d2 - d1) / span : u
+            let jogH = style.textHeight * sc * jogHeightFactor
+            /// The dimension line from a to b, with the DIMJOGLINE zig-zag inserted when a jog lies on it.
+            func dimLine(_ a: Vec2, _ b: Vec2) -> [Vec2] {
+                guard let j = jogs.first else { return [a, b] }
+                return jogLine(a, b, at: j, height: jogH)
+            }
             if isTick(style) {
                 let ext = arr * 0.5
-                prim.lines.append([d1 - along * ext, d2 + along * ext])
+                prim.lines.append(dimLine(d1 - along * ext, d2 + along * ext))
                 arrow(&prim, tip: d1, dir: -along, style: style, lineDir: along)
                 arrow(&prim, tip: d2, dir: along, style: style, lineDir: along)
             } else if span < arr * 2.5 {
                 // Arrows outside the extension lines.
-                prim.lines.append([d1 - along * (arr * 1.8), d2 + along * (arr * 1.8)])
+                prim.lines.append(dimLine(d1 - along * (arr * 1.8), d2 + along * (arr * 1.8)))
                 arrow(&prim, tip: d1, dir: along, style: style, lineDir: along)
                 arrow(&prim, tip: d2, dir: -along, style: style, lineDir: along)
             } else {
-                prim.lines.append([d1, d2])
+                prim.lines.append(dimLine(d1, d2))
                 arrow(&prim, tip: d1, dir: -along, style: style, lineDir: along)
                 arrow(&prim, tip: d2, dir: along, style: style, lineDir: along)
             }
@@ -191,6 +197,12 @@ public enum DimensionRenderer {
             let loc = p.count > 2 ? p[2] : nil
             if let l = loc, l.distance(to: c) > 1e-12 { w = (l - c).normalized }
             let tip = c + w * r
+            if d.kind == .radius, jogs.count >= 2 {
+                // DIMJOGGED: the dimension line starts at the overridden centre and has a jog.
+                let anchor = jogged(&prim, tip: tip, w: w, radius: r, override: jogs[0], jog: jogs[1], location: loc, style: style)
+                placeText(at: anchor, along: w.angle)
+                return prim
+            }
             if d.kind == .diameter {
                 let other = c - w * r
                 if let l = loc, l.distance(to: c) > r {
@@ -273,6 +285,85 @@ public enum DimensionRenderer {
         return prim
     }
 
+    // MARK: - Jogs (DIMJOGGED, DIMJOGLINE)
+
+    /// Jog height as a multiple of the dimension text height (AutoCAD DIMJOGLINE default 1.5).
+    public static var jogHeightFactor = 1.5
+    /// Transverse angle of the jogged-radius jog (DIMJOGANG default 45°).
+    public static var jogAngle = Double.pi / 4
+
+    /// A polyline from a to b with a zig-zag jog symbol centred on the projection of `j` (clamped inside the line).
+    public static func jogLine(_ a: Vec2, _ b: Vec2, at j: Vec2, height h: Double) -> [Vec2] {
+        let len = a.distance(to: b)
+        guard len > 1e-12, h > 1e-12 else { return [a, b] }
+        let u = (b - a) / len, n = u.perp
+        let half = min(h / 4, len / 2)
+        let s = min(max((j - a).dot(u), half), len - half)
+        let m = a + u * s
+        return [a, m - u * half, m + n * (h / 2), m - n * (h / 2), m + u * half, b]
+    }
+
+    /// Jogged radius graphics: arrow at the curve, a line toward the centre down to the jog, the transverse jog
+    /// segment, and a line to the overridden centre. Returns the text anchor.
+    static func jogged(_ prim: inout Primitives, tip: Vec2, w: Vec2, radius r: Double, override co: Vec2, jog j: Vec2, location loc: Vec2?, style: DimStyle) -> Vec2 {
+        let n = w.perp
+        // Offset between the main line (through the tip along w) and the parallel line through the overridden centre.
+        let off = (co - tip).dot(n)
+        // Jog foot on the main line, between the tip and the overridden centre's projection.
+        let coS = (co - tip).dot(w)             // negative: centre side
+        var s = (j - tip).dot(w)
+        let lo = min(coS, 0), hi = max(coS, 0)
+        s = min(max(s, lo), hi)
+        let a = tip + w * s
+        let run = abs(off) / tan(jogAngle)
+        let dirToCentre: Double = coS <= 0 ? -1 : 1
+        let b = a + n * off + w * (dirToCentre * run)
+        var mainStart = tip
+        var anchor = (tip + a) / 2
+        if let l = loc, (l - tip).dot(w) > 1e-9 {
+            // Text location outside the arc: the line continues outward to it and the arrow points back in.
+            mainStart = tip + w * (l - tip).dot(w)
+            anchor = (tip + mainStart) / 2
+            arrow(&prim, tip: tip, dir: -w, style: style, lineDir: w)
+        } else {
+            arrow(&prim, tip: tip, dir: w, style: style, lineDir: w)
+        }
+        prim.lines.append([mainStart, a, b, co])
+        return anchor
+    }
+
+    /// Jog markers stored on a dimension: zero-radius point pairs after the definition points
+    /// (jogged radius: overridden centre then jog location; linear/aligned: jog-line location).
+    public static func jogs(_ d: DimensionGeom) -> [Vec2] {
+        let n = definitionCount(d.kind)
+        var out: [Vec2] = []
+        var i = n
+        while i + 1 < d.points.count {
+            if d.points[i] == d.points[i + 1] { out.append(d.points[i]) }
+            i += 2
+        }
+        return out
+    }
+
+    /// The dimension with exactly these jog markers (keeping its breaks).
+    public static func withJogs(_ d: DimensionGeom, _ jogs: [Vec2], style: DimStyle) -> DimensionGeom {
+        var x = padded(d, style: style)
+        guard x.points.count == definitionCount(d.kind) else { return withoutBreaks(d) }
+        for g in breaks(d) { x.points.append(g.center); x.points.append(g.center + Vec2(g.radius, 0)) }
+        for j in jogs { x.points.append(j); x.points.append(j) }
+        return x
+    }
+
+    /// Removes the breaks but keeps the jog markers.
+    public static func withoutGaps(_ d: DimensionGeom) -> DimensionGeom {
+        let js = jogs(d)
+        var x = withoutBreaks(d)
+        guard !js.isEmpty else { return x }
+        while x.points.count < definitionCount(d.kind) { x.points.append(x.points.last ?? .zero) }
+        for j in js { x.points.append(j); x.points.append(j) }
+        return x
+    }
+
     // MARK: - Dimension breaks (DIMBREAK)
 
     /// A gap cut out of the dimension and extension lines: everything inside the circle is not drawn.
@@ -334,10 +425,12 @@ public enum DimensionRenderer {
     }
     /// The dimension with exactly these break gaps (replacing any previous ones).
     public static func withBreaks(_ d: DimensionGeom, _ gaps: [DimBreak], style: DimStyle) -> DimensionGeom {
-        guard !gaps.isEmpty else { return withoutBreaks(d) }
+        guard !gaps.isEmpty else { return withoutGaps(d) }
+        let js = jogs(d)
         var x = padded(d, style: style)
         guard x.points.count == definitionCount(d.kind) else { return withoutBreaks(d) }
         for g in gaps { x.points.append(g.center); x.points.append(g.center + Vec2(g.radius, 0)) }
+        for j in js { x.points.append(j); x.points.append(j) }
         return x
     }
 

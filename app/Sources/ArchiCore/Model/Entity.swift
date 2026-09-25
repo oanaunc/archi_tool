@@ -216,10 +216,58 @@ public struct SolidGeom: Codable, Hashable {
     public var rotation: Double         // about Z
     public var meshVertices: [Vec3]
     public var meshTriangles: [Int]
+    /// Feature history (solid history light): base solid and the ordered boolean features that produced this solid.
+    public var history: SolidHistory?
+    /// Associative source (sweep of profile entities along a path entity): regenerated when the sources change.
+    public var source: SolidSource?
     public init(kind: Kind, origin: Vec3, size: Vec3 = Vec3(1, 1, 1), profile: [Vec2] = [], height: Double = 0, rotation: Double = 0,
-                meshVertices: [Vec3] = [], meshTriangles: [Int] = []) {
+                meshVertices: [Vec3] = [], meshTriangles: [Int] = [], history: SolidHistory? = nil, source: SolidSource? = nil) {
         self.kind = kind; self.origin = origin; self.size = size; self.profile = profile; self.height = height; self.rotation = rotation
-        self.meshVertices = meshVertices; self.meshTriangles = meshTriangles
+        self.meshVertices = meshVertices; self.meshTriangles = meshTriangles; self.history = history; self.source = source
+    }
+}
+
+/// One step of a solid's feature history.
+public struct SolidFeature: Codable, Hashable {
+    public enum Op: String, Codable, CaseIterable { case union, subtract, intersect }
+    public var op: Op
+    /// Index of the tool solid in `SolidHistory.solids`.
+    public var tool: Int
+    public var suppressed: Bool
+    public var name: String
+    public init(op: Op, tool: Int, suppressed: Bool = false, name: String = "") { self.op = op; self.tool = tool; self.suppressed = suppressed; self.name = name }
+}
+
+/// Feature list of a solid: `solids[0]` is the base, features apply tools in order; the solid's mesh is the evaluated result.
+public struct SolidHistory: Codable, Hashable {
+    public var solids: [SolidGeom]
+    public var features: [SolidFeature]
+    public init(base: SolidGeom, features: [SolidFeature] = [], tools: [SolidGeom] = []) {
+        var b = base; b.history = nil
+        solids = [b] + tools.map { var t = $0; t.history = nil; return t }
+        self.features = features
+    }
+    public var base: SolidGeom { solids[0] }
+}
+
+/// Associative source of a generated solid.
+public struct SolidSource: Codable, Hashable {
+    public enum Kind: String, Codable { case sweep, loft }
+    public var kind: Kind
+    /// Profile entity ids (sweep: one profile; loft: sections in order).
+    public var profiles: [EntityID]
+    /// Path entity (sweep).
+    public var path: EntityID?
+    /// Path elevation (sweep) or section heights (loft).
+    public var elevation: Double
+    public var heights: [Double]
+    public var twist: Double
+    public var endScale: Double
+    /// Snapshot of the source geometries the solid was built from (regenerated when they differ).
+    public var inputs: [Geometry]
+    public init(kind: Kind, profiles: [EntityID], path: EntityID? = nil, elevation: Double = 0, heights: [Double] = [], twist: Double = 0, endScale: Double = 1, inputs: [Geometry] = []) {
+        self.kind = kind; self.profiles = profiles; self.path = path; self.elevation = elevation; self.heights = heights
+        self.twist = twist; self.endScale = endScale; self.inputs = inputs
     }
 }
 

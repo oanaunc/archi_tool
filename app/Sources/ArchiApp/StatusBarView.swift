@@ -6,6 +6,23 @@ import ArchiCore
 struct StatusBarView: View {
     @ObservedObject var model: AppModel
 
+    /// Isolate / hide objects (APP-043): tinted while objects are hidden.
+    private var isolateMenu: some View {
+        let count = model.doc.variables[HiddenObjects.variable] == nil ? 0 : 1
+        let sel = !model.editor.selection.isEmpty
+        return Menu {
+            Button("Isolate Selection") { model.runCommand("ISOLATEOBJECTS") }.disabled(!sel)
+            Button("Hide Selection") { model.runCommand("HIDEOBJECTS") }.disabled(!sel)
+            Divider()
+            Button("End Isolation") { model.runCommand("UNISOLATEOBJECTS") }.disabled(count == 0)
+        } label: {
+            Image(systemName: count > 0 ? "eye.trianglebadge.exclamationmark" : "eye")
+                .foregroundStyle(count > 0 ? Theme.accent : Theme.textDim)
+        }
+        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+        .help(count > 0 ? "Objects are hidden — End Isolation shows them again" : "Isolate or hide the selected objects")
+    }
+
     var body: some View {
         HStack(spacing: 0) {
             CoordinateReadout(live: model.live, units: model.doc.units, ucs: UCSFrame.current(model.doc))
@@ -33,6 +50,7 @@ struct StatusBarView: View {
                 if sel > 0 {
                     Label("\(sel) selected", systemImage: "cursorarrow.rays").foregroundStyle(Theme.accent)
                 }
+                isolateMenu
                 Menu {
                     ForEach(Units.allCases, id: \.self) { u in
                         Button(u.rawValue.capitalized) { model.editor.transaction("Units") { $0.units = u } }

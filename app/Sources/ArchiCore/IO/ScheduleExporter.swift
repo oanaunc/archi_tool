@@ -12,6 +12,7 @@ public enum ScheduleExporter {
 
     /// Header row followed by data rows.
     public static func table(doc: ArchiDocument, kind: String) -> [[String]] {
+        let doc = ModelSets.scheduleModel(doc)   // SCHEDULEFILTER: worksets, design options, phases
         let u = doc.units.mm
         let area = { (a: Double) -> String in fmt(a * u * u / 1_000_000, 3) }
         let vol = { (v: Double) -> String in fmt(v * u * u * u / 1_000_000_000, 3) }

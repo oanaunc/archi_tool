@@ -8,6 +8,7 @@ public enum DocumentUpdaters {
     public static func run(_ doc: inout ArchiDocument) -> Bool {
         var changed = false
         if Constraints.updateAll(&doc) { changed = true }
+        if BIMUpdaters.hasAssociative(doc), BIMUpdaters.run(&doc) { changed = true }
         if Fields.updateAll(&doc) { changed = true }
         if Annotative.updateAll(&doc) { changed = true }
         if TableFormulas.updateAll(&doc) { changed = true }
@@ -56,7 +57,16 @@ public enum Fields {
     public static let placeholder = "####"
 
     /// Evaluates one field code ("Area(12):m2:2"). Volatile fields (Date) only when `volatile` is true.
-    public static func evaluate(_ code: String, doc: ArchiDocument, volatile: Bool = true) -> String? {
+    public static func evaluate(_ code: String, doc: ArchiDocument, volatile: Bool = true, layout: Int? = nil) -> String? {
+        // Formula fields: Expr(<arithmetic with {Field} references, field calls and numeric variables>)[:decimals]
+        let trimmed = code.trimmingCharacters(in: .whitespaces)
+        if trimmed.lowercased().hasPrefix("expr("), let close = trimmed.lastIndex(of: ")") {
+            let inner = String(trimmed[trimmed.index(trimmed.startIndex, offsetBy: 5)..<close])
+            let fmtPart = trimmed[trimmed.index(after: close)...].trimmingCharacters(in: CharacterSet(charactersIn: ": "))
+            guard let v = expression(inner, doc: doc, volatile: volatile, layout: layout) else { return nil }
+            if let d = Int(fmtPart) { return String(format: "%.\(max(0, min(d, 10)))f", v) }
+            return fmt(v, 6)
+        }
         var parts = code.split(separator: ":", omittingEmptySubsequences: false).map { String($0).trimmingCharacters(in: .whitespaces) }
         let head = parts.removeFirst()
         var name = head, args: [String] = []
@@ -109,19 +119,93 @@ public enum Fields {
             let f = DateFormatter(); f.dateFormat = args.first.flatMap { $0.isEmpty ? nil : $0 } ?? "yyyy-MM-dd"
             return f.string(from: Date())
         case "filename": return doc.variable("DWGNAME") ?? doc.info.name
+        case "posx", "posy", "northing", "easting":
+            // Location of an object (a leader's arrow point); northing/easting add the survey offsets NORTHING0/EASTING0.
+            guard let i = id(0), let e = doc.entity(i) else { return nil }
+            let p: Vec2?
+            switch e.geometry { case .leader(let l): p = l.points.first; case .point(let q): p = q; default: p = GeometryOps.grips(e.geometry).first }
+            guard let q = p else { return nil }
+            let n = name.lowercased()
+            let v = n == "posx" ? q.x : n == "posy" ? q.y
+                : n == "northing" ? q.y + (doc.variable("NORTHING0").flatMap(Double.init) ?? 0) : q.x + (doc.variable("EASTING0").flatMap(Double.init) ?? 0)
+            return number(v, dim: 1)
+        case "author": return doc.info.author
+        case "plotdate", "savedate":
+            if name.lowercased() == "savedate", let s = doc.variable("LASTSAVED") { return s }
+            guard volatile else { return nil }
+            let f = DateFormatter(); f.dateFormat = args.first.flatMap { $0.isEmpty ? nil : $0 } ?? "yyyy-MM-dd"
+            return f.string(from: Date())
+        case "sheetnumber", "sheetname", "sheettitle", "sheetcount", "revision":
+            let li = layout ?? doc.variable("CTAB").flatMap { n in doc.layouts.firstIndex { $0.name == n } } ?? (doc.layouts.isEmpty ? nil : 0)
+            switch name.lowercased() {
+            case "sheetcount": return "\(doc.layouts.count)"
+            case "revision": return li.flatMap { doc.layouts[$0].titleBlock["revision"] } ?? doc.variable("REVNUMBER")
+            default: break
+            }
+            guard let i = li, doc.layouts.indices.contains(i) else { return nil }
+            let l = doc.layouts[i]
+            switch name.lowercased() {
+            case "sheetnumber": return l.titleBlock["sheetNumber"] ?? l.titleBlock["Sheet"] ?? "\(i + 1)"
+            case "sheetname": return l.titleBlock["sheetName"] ?? l.name
+            default: return l.titleBlock["title"] ?? l.titleBlock["sheetName"] ?? l.name
+            }
         default: return nil
         }
     }
 
+    /// Evaluates a formula: {Field} references and field calls (Area(12), Var(USERR1)…) are replaced by their numbers,
+    /// bare names by numeric system variables; then + - * / ^, parentheses and functions (sqrt, round…) are evaluated.
+    public static func expression(_ s: String, doc: ArchiDocument, volatile: Bool = true, layout: Int? = nil) -> Double? {
+        func number(_ v: String?) -> String? {
+            guard let v = v else { return nil }
+            if let d = Double(v) { return fmt(d, 12) }
+            guard let r = v.range(of: #"-?\d+(\.\d+)?([eE][-+]?\d+)?"#, options: .regularExpression) else { return nil }
+            return String(v[r])
+        }
+        var e = s
+        // {Code} references.
+        while let o = e.range(of: "{"), let c = e.range(of: "}", range: o.upperBound..<e.endIndex) {
+            guard let v = number(evaluate(String(e[o.upperBound..<c.lowerBound]), doc: doc, volatile: volatile, layout: layout)) else { return nil }
+            e.replaceSubrange(o.lowerBound..<c.upperBound, with: "(\(v))")
+        }
+        // Field calls written directly.
+        let names = "area|length|perimeter|radius|diameter|height|measurement|prop|objprop|var|sysvar|count|sheetnumber|sheetcount"
+        let rx = try! NSRegularExpression(pattern: "\\b(\(names))\\(([^()]*)\\)", options: .caseInsensitive)
+        var guardN = 0
+        while guardN < 100, let m = rx.firstMatch(in: e, range: NSRange(e.startIndex..., in: e)), let r = Range(m.range, in: e) {
+            guardN += 1
+            guard let v = number(evaluate(String(e[r]), doc: doc, volatile: volatile, layout: layout)) else { return nil }
+            e.replaceSubrange(r, with: "(\(v))")
+        }
+        // Bare identifiers that are numeric system variables (USERR1, DIMSCALE…); math names are left to the evaluator.
+        let known: Set<String> = ["pi", "e", "sqrt", "abs", "sin", "cos", "tan", "asin", "acos", "atan", "ln", "log", "exp", "round", "floor", "ceil", "r2d", "d2r"]
+        let idRx = try! NSRegularExpression(pattern: "[A-Za-z_][A-Za-z0-9_]*")
+        var out = ""
+        var last = e.startIndex
+        for m in idRx.matches(in: e, range: NSRange(e.startIndex..., in: e)) {
+            guard let r = Range(m.range, in: e) else { continue }
+            let word = String(e[r])
+            // Skip exponent markers inside numbers (1e6).
+            if word.lowercased().hasPrefix("e"), r.lowerBound > e.startIndex, e[e.index(before: r.lowerBound)].isNumber, Double("1" + word) != nil { continue }
+            out += e[last..<r.lowerBound]
+            if known.contains(word.lowercased()) { out += word }
+            else if let v = doc.variable(word).flatMap(Double.init) { out += "(\(fmt(v, 12)))" }
+            else { return nil }
+            last = r.upperBound
+        }
+        out += e[last...]
+        return CommandHelpers.evaluate(out)
+    }
+
     /// Expands every %<...>% in a template. Unresolvable fields show "####".
-    public static func expand(_ template: String, doc: ArchiDocument, previous: String? = nil, volatile: Bool = true) -> String {
+    public static func expand(_ template: String, doc: ArchiDocument, previous: String? = nil, volatile: Bool = true, layout: Int? = nil) -> String {
         var out = "", rest = Substring(template)
         while let r = rest.range(of: "%<") {
             out += rest[..<r.lowerBound]
             guard let e = rest[r.upperBound...].range(of: ">%") else { out += rest[r.lowerBound...]; return out }
             let code = String(rest[r.upperBound..<e.lowerBound])
-            if let v = evaluate(code, doc: doc, volatile: volatile) { out += v }
-            else if !volatile, code.lowercased().hasPrefix("date"), let prev = previous { return prev }
+            if let v = evaluate(code, doc: doc, volatile: volatile, layout: layout) { out += v }
+            else if !volatile, ["date", "plotdate", "savedate"].contains(where: { code.lowercased().hasPrefix($0) }), let prev = previous { return prev }
             else { out += placeholder }
             rest = rest[e.upperBound...]
         }
@@ -144,6 +228,15 @@ public enum Fields {
                 let v = expand(tpl, doc: snapshot, previous: l.text, volatile: volatile)
                 if v != l.text { l.text = v; doc.entities[i].geometry = .leader(l); changed = true }
             default: break
+            }
+        }
+        // Paper-space fields (title blocks, sheet numbers) resolve against their own sheet.
+        for li in doc.layouts.indices {
+            for j in doc.layouts[li].entities.indices {
+                guard let tpl = doc.layouts[li].entities[j].props["field"], case .text(var t) = doc.layouts[li].entities[j].geometry else { continue }
+                if let ids = ids, !ids.contains(doc.layouts[li].entities[j].id) { continue }
+                let v = expand(tpl, doc: snapshot, previous: t.content, volatile: volatile, layout: li)
+                if v != t.content { t.content = v; doc.layouts[li].entities[j].geometry = .text(t); changed = true }
             }
         }
         return changed

@@ -178,9 +178,17 @@ enum AnnotationToolCommands {
     // MARK: - Fields and annotative scale
     static var fields: [CommandDef] { [
         CommandDef("FIELD", category: "Annotate", summary: "Inserts text containing a field (area, length, property, variable, count, date) that updates automatically.") { ed in
-            let k = try await ed.getKeyword("Enter field type", ["Area", "Length", "Perimeter", "Radius", "Property", "Variable", "Count", "Date", "FileName"], defaultValue: "Area") ?? "Area"
+            let k = try await ed.getKeyword("Enter field type", ["Area", "Length", "Perimeter", "Radius", "Property", "Variable", "Count", "Date", "FileName",
+                                                                  "SheetNumber", "SheetName", "SheetCount", "SheetTitle", "Revision", "AUthor", "PlotDate", "Expression"], defaultValue: "Area") ?? "Area"
             var code: String
             switch k {
+            case "SheetNumber", "SheetName", "SheetCount", "SheetTitle", "Revision", "AUthor": code = k == "AUthor" ? "Author" : k
+            case "PlotDate": code = "PlotDate(" + (try await ed.getWord("Enter date format", defaultValue: "yyyy-MM-dd") ?? "yyyy-MM-dd") + ")"
+            case "Expression":
+                guard let e = try await ed.getString("Enter formula ({Area(12)}, Length(5), variables, + - * / ^, sqrt, round…)") else { return }
+                guard Fields.expression(e, doc: ed.doc) != nil else { throw CommandError.invalid("Invalid formula \(e).") }
+                let d = try await ed.getInteger("Number of decimals", defaultValue: 2) ?? 2
+                code = "Expr(\(e)):\(max(0, min(d, 10)))"
             case "Area", "Length", "Perimeter", "Radius", "Property":
                 guard case .pick(let pk) = try await ed.pickObject("Select object") else { return }
                 if k == "Property" {
@@ -260,7 +268,7 @@ enum AnnotationToolCommands {
                 _ = idx
                 var e = ed.doc.entities[i]
                 var f = TableFormulas.formulas(e)
-                let k = try await ed.getKeyword("Enter an option", ["Cell", "InsertRow", "DeleteRow", "InsertColumn", "DeleteColumn", "Width", "eXit"], defaultValue: "eXit") ?? "eXit"
+                let k = try await ed.getKeyword("Enter an option", ["Cell", "InsertRow", "DeleteRow", "InsertColumn", "DeleteColumn", "Width", "Merge", "Unmerge", "eXit"], defaultValue: "eXit") ?? "eXit"
                 switch k {
                 case "Cell":
                     guard let ref = try await ed.getWord("Enter cell (e.g. B2)"), let (r, c) = TableFormulas.cellIndex(ref), r < t.cells.count, c < t.columnWidths.count else { ed.print("Invalid cell."); continue }
@@ -299,6 +307,21 @@ enum AnnotationToolCommands {
                 case "Width":
                     guard let n = try await ed.getInteger("Column number", defaultValue: 1), n >= 1, n <= t.columnWidths.count else { ed.print("Invalid column."); continue }
                     t.columnWidths[n - 1] = try await ed.getPositive("Specify column width", defaultValue: t.columnWidths[n - 1])
+                case "Merge", "Unmerge":
+                    guard let a = try await ed.getWord(k == "Merge" ? "Enter first cell of range (e.g. A1)" : "Enter a cell of the merged range"),
+                          let (r0, c0) = TableFormulas.cellIndex(a) else { ed.print("Invalid cell."); continue }
+                    var m = DraftRendering.merges(e.props[DraftRendering.tableMergeProp])
+                    if k == "Unmerge" {
+                        let before = m.count
+                        m.removeAll { $0.contains(r0, c0) }
+                        if m.count == before { ed.print("That cell is not merged.") }
+                    } else {
+                        guard let b = try await ed.getWord("Enter last cell of range (e.g. C1)"), let (r1, c1) = TableFormulas.cellIndex(b) else { ed.print("Invalid cell."); continue }
+                        let rg = DraftRendering.Merge(row: min(r0, r1), col: min(c0, c1), rowSpan: abs(r1 - r0) + 1, colSpan: abs(c1 - c0) + 1)
+                        guard let nm = DraftRendering.merged(m, adding: rg, rows: t.cells.count, cols: t.columnWidths.count) else { ed.print("Invalid range."); continue }
+                        m = nm
+                    }
+                    e.props[DraftRendering.tableMergeProp] = m.isEmpty ? nil : DraftRendering.mergeText(m)
                 default: return
                 }
                 e.geometry = .table(t)
@@ -323,17 +346,45 @@ enum AnnotationToolCommands {
         var textHeight: Double
         var annotative: Bool
         var layer: String
-        var text: String { "height=\(fmt(textHeight, 8));annotative=\(annotative ? 1 : 0);layer=\(layer)" }
+        /// Arrowhead: closed, open, dot, tick or none.
+        var arrow = "closed"
+        /// Arrowhead size (0 = from the dimension style).
+        var arrowSize = 0.0
+        /// Horizontal landing (dogleg) length before the text (0 = none).
+        var landing = 0.0
+        /// Frame around the text.
+        var frame = false
+        static let arrows = ["closed", "open", "dot", "tick", "none"]
+        var isCustomGraphics: Bool { arrow != "closed" || arrowSize > 0 || landing > 0 || frame }
+        var text: String {
+            var s = "height=\(fmt(textHeight, 8));annotative=\(annotative ? 1 : 0);layer=\(layer)"
+            if arrow != "closed" { s += ";arrow=\(arrow)" }
+            if arrowSize > 0 { s += ";arrowsize=\(fmt(arrowSize, 8))" }
+            if landing > 0 { s += ";landing=\(fmt(landing, 8))" }
+            if frame { s += ";frame=1" }
+            return s
+        }
         init(name: String, textHeight: Double, annotative: Bool = false, layer: String = "") { self.name = name; self.textHeight = textHeight; self.annotative = annotative; self.layer = layer }
         init?(name: String, text: String) {
             var h = 0.0, a = false, l = ""
+            var arrow = "closed", size = 0.0, landing = 0.0, frame = false
             for kv in text.split(separator: ";") {
                 let p = kv.split(separator: "=", maxSplits: 1).map(String.init)
                 guard p.count == 2 else { continue }
-                switch p[0] { case "height": h = Double(p[1]) ?? 0; case "annotative": a = p[1] == "1"; case "layer": l = p[1]; default: break }
+                switch p[0] {
+                case "height": h = Double(p[1]) ?? 0
+                case "annotative": a = p[1] == "1"
+                case "layer": l = p[1]
+                case "arrow": arrow = MLeaderStyle.arrows.contains(p[1]) ? p[1] : "closed"
+                case "arrowsize": size = max(0, Double(p[1]) ?? 0)
+                case "landing": landing = max(0, Double(p[1]) ?? 0)
+                case "frame": frame = p[1] == "1"
+                default: break
+                }
             }
             guard h > 0 else { return nil }
             self.init(name: name, textHeight: h, annotative: a, layer: l)
+            self.arrow = arrow; self.arrowSize = size; self.landing = landing; self.frame = frame
         }
     }
     @MainActor static func currentMLeaderStyle(_ ed: Editor) -> MLeaderStyle? {
@@ -342,7 +393,7 @@ enum AnnotationToolCommands {
     }
 
     static var leaders: [CommandDef] { [
-        CommandDef("MLEADERSTYLE", aliases: ["MLS"], category: "Annotate", summary: "Creates, edits, lists and sets multileader styles (text height, annotative, layer).") { ed in
+        CommandDef("MLEADERSTYLE", aliases: ["MLS"], category: "Annotate", summary: "Creates, edits, lists and sets multileader styles (text height, annotative, layer, arrowhead, landing, text frame).") { ed in
             let k = try await ed.getKeyword("Enter an option", ["Set", "New", "Edit", "List"], defaultValue: "List") ?? "List"
             switch k {
             case "Set":
@@ -357,7 +408,12 @@ enum AnnotationToolCommands {
                 let h = try await ed.getPositive("Text height", defaultValue: cur.textHeight)
                 let a = try await ed.getYesNo("Annotative?", defaultValue: cur.annotative)
                 let l = try await ed.getWord("Layer (. = current)", defaultValue: cur.layer.isEmpty ? "." : cur.layer) ?? "."
-                let s = MLeaderStyle(name: n, textHeight: h, annotative: a, layer: l == "." ? "" : l)
+                var s = MLeaderStyle(name: n, textHeight: h, annotative: a, layer: l == "." ? "" : l)
+                let ah = try await ed.getKeyword("Arrowhead", ["Closed", "Open", "Dot", "Tick", "None"], defaultValue: cur.arrow.capitalized) ?? cur.arrow.capitalized
+                s.arrow = ah.lowercased()
+                s.arrowSize = try await ed.getPositive("Arrowhead size (0 = dimension style)", defaultValue: cur.arrowSize, allowZero: true)
+                s.landing = try await ed.getPositive("Landing length (0 = none)", defaultValue: cur.landing, allowZero: true)
+                s.frame = try await ed.getYesNo("Frame the text?", defaultValue: cur.frame)
                 ed.doc.setVariable("MLSTYLE:" + n, s.text)
                 ed.doc.setVariable("CMLEADERSTYLE", n)
                 ed.print("Multileader style \(n) is current.")

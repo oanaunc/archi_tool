@@ -580,8 +580,54 @@ enum DrawCommands {
             }
             ed.addEntity(.ellipse(e))
         },
-        CommandDef("SPLINE", aliases: ["SPL"], category: "Draw", summary: "Draws a smooth curve through fit points.") { ed in
-            var pts = [try await ed.requirePoint("Specify first point")]
+        CommandDef("SPLINE", aliases: ["SPL"], category: "Draw", summary: "Draws a smooth curve through fit points, or by control vertices (Method CV, Degree 1-5).") { ed in
+            var method = ed.doc.variable("SPLMETHOD") == "1" ? "CV" : "Fit"
+            var degree = Int(ed.variableDouble("SPLDEGREE", 3))
+            var first: Vec2? = nil
+            while first == nil {
+                let a = try await ed.getPoint(method == "CV" ? "Specify first control vertex or [Method/Degree]" : "Specify first point or [Method]",
+                                              keywords: method == "CV" ? ["Method", "Degree"] : ["Method"])
+                switch a {
+                case .point(let p): first = p
+                case .keyword("Method"):
+                    method = try await ed.getKeyword("Enter spline creation method", ["Fit", "CV"], defaultValue: method) ?? method
+                    ed.doc.setVariable("SPLMETHOD", method == "CV" ? "1" : "0")
+                case .keyword("Degree"):
+                    guard let d = try await ed.getInteger("Enter degree of spline (1-5)", defaultValue: degree), (1...5).contains(d) else { ed.print("Requires an integer between 1 and 5."); continue }
+                    degree = d; ed.doc.setVariable("SPLDEGREE", "\(d)")
+                default: return
+                }
+            }
+            if method == "CV" {
+                var cv = [first!]
+                var closedCV = false
+                while true {
+                    let cur = cv, deg = degree
+                    let a = try await ed.getPoint("Enter next control vertex", base: cv.last, keywords: cv.count >= 3 ? ["Close", "Undo"] : ["Undo"]) { c in
+                        let pts = cur + [c]
+                        return [.spline(SplineGeom(degree: min(deg, pts.count - 1), controlPoints: pts)), .polyline(PolylineGeom(points: pts))]
+                    }
+                    switch a {
+                    case .point(let p): if !p.isClose(cv.last!, tol: 1e-9) { cv.append(p) }; continue
+                    case .keyword("Undo"): if cv.count > 1 { cv.removeLast() }; continue
+                    case .keyword("Close"): closedCV = true
+                    default: break
+                    }
+                    break
+                }
+                guard cv.count >= 2 else { throw CommandError.invalid("A spline needs at least two control vertices.") }
+                if closedCV {
+                    // Closed: wrap the first `degree` vertices so the curve closes smoothly (uniform periodic knots).
+                    let p = min(degree, cv.count - 1)
+                    let pts = cv + Array(cv.prefix(p))
+                    let knots = (0..<(pts.count + p + 1)).map { Double($0) }
+                    ed.addEntity(.spline(SplineGeom(degree: p, controlPoints: pts, knots: knots, closed: true)))
+                } else {
+                    ed.addEntity(.spline(SplineGeom(degree: min(degree, cv.count - 1), controlPoints: cv)))
+                }
+                return
+            }
+            var pts = [first!]
             var closed = false
             while true {
                 let kws = pts.count >= 3 ? ["Close", "Undo"] : ["Undo"]
@@ -664,7 +710,12 @@ enum DrawCommands {
             var fill: ColorRef? = ed.doc.variable("HPCOLOR").flatMap { ColorRef.parse($0) }
             var created: [EntityID] = []
             @MainActor func make(_ loops: [[PolyVertex]]) {
-                created.append(ed.addEntity(.hatch(HatchGeom(loops: loops, pattern: pattern, scale: scale, angle: angle, fill: fill))))
+                let id = ed.addEntity(.hatch(HatchGeom(loops: loops, pattern: pattern, scale: scale, angle: angle, fill: fill)))
+                created.append(id)
+                // HPORIGIN: pattern origin for new hatches (0,0 = default).
+                if let o = DraftProps.point(ed.doc.variable("HPORIGIN")), o != .zero, let i = ed.doc.entityIndex(id) {
+                    ed.doc.entities[i].props[DraftRendering.hatchOriginProp] = DraftProps.text(o)
+                }
             }
             while true {
                 let a = try await ed.getPoint("Pick internal point", keywords: ["Select", "Pattern", "Scale", "Angle", "Color", "Undo"])
@@ -697,9 +748,9 @@ enum DrawCommands {
                     }
                 case .keyword("Pattern"):
                     let name = try await ed.getWord("Enter a pattern name or [?]", defaultValue: pattern) ?? pattern
-                    if name == "?" { ed.print("Patterns: " + HatchPatterns.names.joined(separator: ", ")); continue }
+                    if name == "?" { ed.print("Patterns: " + HatchPatterns.allNames.joined(separator: ", ")); continue }
                     pattern = name.uppercased()
-                    if !HatchPatterns.names.contains(pattern) && !HatchPatterns.names.isEmpty { ed.print("Note: pattern \(pattern) is not in the built-in library.") }
+                    if !HatchPatterns.allNames.contains(pattern) { ed.print("Note: pattern \(pattern) is not in the built-in library.") }
                     ed.doc.setVariable("HPNAME", pattern)
                 case .keyword("Scale"):
                     if let s = try await ed.getReal("Specify a scale for the pattern", defaultValue: scale).value, s > 0 { scale = s; ed.doc.setVariable("HPSCALE", fmt(s)) }

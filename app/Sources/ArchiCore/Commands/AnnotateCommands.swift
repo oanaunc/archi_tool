@@ -164,7 +164,7 @@ enum AnnotateCommands {
                     tb.cells[r - 1][c - 1] = s; ed.doc.entities[i].geometry = .table(tb)
                 case .insert(var ins):
                     guard let b = ed.doc.blocks[ins.block] else { continue }
-                    for tag in b.entities.compactMap({ $0.props["attdef"] }) {
+                    for tag in b.entities.filter({ !AttributeModes.has($0, "C") }).compactMap({ $0.props["attdef"] }) {
                         if let v = try await ed.getString("Enter value for \(tag)", defaultValue: ins.attributes[tag] ?? "") { ins.attributes[tag] = v }
                     }
                     ed.doc.entities[i].geometry = .insert(ins)
@@ -401,52 +401,39 @@ enum AnnotateCommands {
         },
         CommandDef("DIMCONTINUE", aliases: ["DCO", "DIMCONT"], category: "Annotate", summary: "Continues a chain of dimensions from the last one.") { ed in try await chainDims(ed, baseline: false) },
         CommandDef("DIMBASELINE", aliases: ["DBA", "DIMBASE"], category: "Annotate", summary: "Creates dimensions from the baseline of the last dimension.") { ed in try await chainDims(ed, baseline: true) },
-        CommandDef("QDIM", category: "Annotate", summary: "Quickly dimensions the end points of selected objects (continuous or baseline).") { ed in
+        CommandDef("QDIM", category: "Annotate", summary: "Quickly dimensions selected objects: Continuous, Staggered, Baseline, Ordinate, Radius, Diameter, datumPoint.") { ed in
             let ids = try await ed.getEntitySelection("Select geometry to dimension")
             var pts: [Vec2] = []
+            var curves: [(center: Vec2, radius: Double, isCircle: Bool)] = []
             for id in ids {
                 guard let e = ed.doc.entity(id) else { continue }
                 switch e.geometry {
                 case .line(let l): pts += [l.a, l.b]
                 case .polyline(let p): pts += p.vertices.map(\.p)
-                case .arc(let a): pts += [a.startPoint, a.endPoint, a.center]
-                case .circle(let c): pts.append(c.center)
+                case .arc(let a): pts += [a.startPoint, a.endPoint, a.center]; curves.append((a.center, a.radius, false))
+                case .circle(let c): pts.append(c.center); curves.append((c.center, c.radius, true))
                 case .point(let p): pts.append(p)
                 default: continue
                 }
             }
             ed.selection = []
-            guard pts.count >= 2 else { throw CommandError.invalid("Select objects with at least two points.") }
+            guard pts.count >= 2 || !curves.isEmpty else { throw CommandError.invalid("Select objects with at least two points.") }
             var mode = ed.doc.variable("QDIMMODE") ?? "Continuous"
-            let style = ed.doc.currentDimStyle
-            let bb = BBox2(points: pts)
-            let spacing = ed.variableDouble("DIMDLI", max(ed.doc.dimStyle.textHeight * ed.doc.dimStyle.scale * 3.75, 1))
-            func build(_ loc: Vec2) -> [DimensionGeom] {
-                let vertical = loc.y >= bb.min.y && loc.y <= bb.max.y && !(loc.x >= bb.min.x && loc.x <= bb.max.x)
-                let key: (Vec2) -> Double = vertical ? { $0.y } : { $0.x }
-                var sorted: [Vec2] = []
-                for p in pts.sorted(by: { key($0) < key($1) }) where sorted.last.map({ abs(key($0) - key(p)) > 1e-6 }) ?? true { sorted.append(p) }
-                guard sorted.count >= 2 else { return [] }
-                let rot = vertical ? Double.pi / 2 : 0
-                var out: [DimensionGeom] = []
-                for i in 1..<sorted.count {
-                    if mode == "Baseline" {
-                        let n = vertical ? Vec2(loc.x < bb.min.x ? -1 : 1, 0) : Vec2(0, loc.y < bb.min.y ? -1 : 1)
-                        out.append(DimensionGeom(kind: .linear, points: [sorted[0], sorted[i], loc + n * spacing * Double(i - 1)], rotation: rot, style: style))
-                    } else {
-                        out.append(DimensionGeom(kind: .linear, points: [sorted[i - 1], sorted[i], loc], rotation: rot, style: style))
-                    }
-                }
-                return out
-            }
+            var datum = DraftProps.point(ed.doc.variable("QDIMDATUM")) ?? .zero
+            let dims = QuickDim(points: pts, curves: curves, style: ed.doc.currentDimStyle,
+                                spacing: ed.variableDouble("DIMDLI", max(ed.doc.dimStyle.textHeight * ed.doc.dimStyle.scale * 3.75, 1)))
             while true {
-                let r = try await ed.getPoint("Specify dimension line position", keywords: ["Continuous", "Baseline"]) { c in build(c).map { .dimension($0) } }
+                let r = try await ed.getPoint("Specify dimension line position", keywords: ["Continuous", "Staggered", "Baseline", "Ordinate", "Radius", "Diameter", "datumPoint"]) { c in
+                    dims.build(mode, at: c, datum: datum).map { .dimension($0) } }
                 switch r {
                 case .point(let loc):
-                    let ds = build(loc)
+                    let ds = dims.build(mode, at: loc, datum: datum)
+                    guard !ds.isEmpty else { throw CommandError.invalid(mode == "Radius" || mode == "Diameter" ? "Select arcs or circles." : "Select objects with at least two points.") }
                     for d in ds { ed.addEntity(.dimension(d), layer: ed.annotationLayer("DIMLAYER")) }
                     ed.print("\(ds.count) dimension(s) created.")
                     return
+                case .keyword("datumPoint"):
+                    datum = try await ed.requirePoint("Select new datum point"); ed.doc.setVariable("QDIMDATUM", DraftProps.text(datum))
                 case .keyword(let k): mode = k; ed.doc.setVariable("QDIMMODE", k)
                 default: return
                 }

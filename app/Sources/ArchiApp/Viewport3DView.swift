@@ -428,6 +428,7 @@ final class Viewport3DController: NSObject, ObservableObject {
     func attach(_ v: ArchiSCNView) {
         view = v
         v.controller = self
+        v.registerDrops()
         v.scene = builder.scene
         v.pointOfView = cameraNode
         v.allowsCameraControl = true
@@ -490,6 +491,7 @@ final class Viewport3DController: NSObject, ObservableObject {
             }
         }
         if !model.walkMode && isWalking && model.pendingHostAction == nil { }
+        refreshGizmo()
     }
 
     private func applyCameraEffects(_ style: String) {
@@ -670,6 +672,21 @@ final class ArchiSCNView: SCNView {
     var pressedKeys = Set<Character>()
     var shiftDown = false
     private var downPoint: CGPoint?
+    /// Gizmo drag in progress: handle, start point, current amount.
+    private var gizmoDrag: (axis: Int, start: CGPoint, amount: Double)?
+
+    // Materials, blocks and components dragged from the libraries onto the model.
+    func registerDrops() { registerForDraggedTypes([.string]) }
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        guard let s = sender.draggingPasteboard.string(forType: .string), ToolDrop.accepts(s) else { return [] }
+        return .copy
+    }
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation { draggingEntered(sender) }
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        guard let s = sender.draggingPasteboard.string(forType: .string) else { return false }
+        let p = convert(sender.draggingLocation, from: nil)
+        return MainActor.assumeIsolated { controller?.drop(s, at: p) ?? false }
+    }
 
     override var acceptsFirstResponder: Bool { true }
 
@@ -677,14 +694,35 @@ final class ArchiSCNView: SCNView {
         downPoint = convert(event.locationInWindow, from: nil)
         window?.makeFirstResponder(self)
         if controller?.isWalking == true { return }
+        if let d = downPoint, let a = MainActor.assumeIsolated({ controller?.gizmoAxis(at: d) }) { gizmoDrag = (a, d, 0); return }
         super.mouseDown(with: event)
     }
     override func mouseDragged(with event: NSEvent) {
         if controller?.isWalking == true { MainActor.assumeIsolated { controller?.look(dx: event.deltaX, dy: event.deltaY) }; return }
+        if var g = gizmoDrag {
+            let p = convert(event.locationInWindow, from: nil)
+            MainActor.assumeIsolated {
+                g.amount = controller?.gizmoAmount(axis: g.axis, from: g.start, to: p) ?? 0
+                controller?.gizmoPreview(axis: g.axis, amount: g.amount)
+            }
+            gizmoDrag = g
+            return
+        }
         super.mouseDragged(with: event)
     }
     override func mouseUp(with event: NSEvent) {
         let p = convert(event.locationInWindow, from: nil)
+        if let g = gizmoDrag {
+            gizmoDrag = nil; downPoint = nil
+            MainActor.assumeIsolated { controller?.gizmoCommit(axis: g.axis, amount: g.amount) }
+            return
+        }
+        if let d = downPoint, hypot(p.x - d.x, p.y - d.y) < 4, MainActor.assumeIsolated({ Measure3DState.shared.active }) {
+            MainActor.assumeIsolated { controller?.measurePick(at: p) }
+            downPoint = nil
+            super.mouseUp(with: event)
+            return
+        }
         if let d = downPoint, hypot(p.x - d.x, p.y - d.y) < 4 {
             let extend = event.modifierFlags.contains(.shift) || event.modifierFlags.contains(.command)
             MainActor.assumeIsolated { controller?.pick(at: p, extend: extend) }
@@ -713,6 +751,7 @@ final class ArchiSCNView: SCNView {
 struct Viewport3DView: View {
     @ObservedObject var model: AppModel
     @StateObject private var controller = Viewport3DController()
+    @ObservedObject private var clip = ClipPlaneState.shared
     init(model: AppModel) { self.model = model }
 
     var body: some View {
@@ -727,6 +766,12 @@ struct Viewport3DView: View {
                 }
                 if model.showSectionBoxPanel { SectionBoxPanel(model: model, controller: controller) }
                 if model.showSunStudy { SunStudyPanel(model: model, controller: controller) }
+                if clip.visible { ClipPlanePanel(model: model, controller: controller) }
+            }
+            .padding(10)
+            VStack {
+                Spacer()
+                HStack { Viewport3DToolBar(model: model); Spacer() }
             }
             .padding(10)
             if controller.isWalking {
@@ -760,6 +805,7 @@ struct Viewport3DView: View {
             Divider().frame(height: 16).padding(.horizontal, 3)
             pill("Section box", "cube.transparent", active: model.showSectionBoxPanel || SectionBox.load(model.doc)?.on == true) { model.showSectionBoxPanel.toggle() }
             pill("Sun study", "sun.max", active: model.showSunStudy) { model.showSunStudy.toggle() }
+            pill("Clipping plane (SECTIONPLANE)", "square.split.diagonal", active: clip.visible || SectionPlane.load(model.doc)?.on == true) { clip.visible.toggle() }
             pill(model.showViewCube ? "Hide the view cube" : "Show the view cube", "cube", active: model.showViewCube) { model.showViewCube.toggle() }
             CamerasMenu(model: model, controller: controller)
             Divider().frame(height: 16).padding(.horizontal, 3)

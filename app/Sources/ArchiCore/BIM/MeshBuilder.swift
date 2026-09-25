@@ -120,7 +120,7 @@ struct MeshAcc {
 /// Builds 3D triangle meshes (Z up, drawing units) from BIM elements and 3D solids.
 public enum MeshBuilder {
     public static func build(doc fullDoc: ArchiDocument) -> [MeshGroup] {
-        let doc = ModelSets.visibleModel(fullDoc)
+        let doc = ModelSets.visibleModel(BIMUpdaters.regenerated(fullDoc))
         let ctx = BIMContext(doc: doc)
         var out: [MeshGroup] = []
         let phased = Phasing.isActive(doc)
@@ -233,6 +233,9 @@ public enum MeshBuilder {
             guard o.kind != .opening, o.width > 0, o.height > 0,
                   let host = doc.element(o.hostWall), let f = ctx.frames[host.id] ?? WallFrame(host),
                   case .wall(let hg) = host.geometry else { return [] }
+            if let fn = el.props["family"], let def = doc.family(named: fn) {
+                return FamilyEngine.openingGroups(def, el: el, o: o, f: f, zBase: ctx.levelElevation(host.level) + hg.baseOffset, doc: doc)
+            }
             let zb = ctx.levelElevation(host.level) + hg.baseOffset + o.sill, zt = zb + o.height
             let s0 = o.offset - o.width / 2, s1 = o.offset + o.width / 2
             let fw = min(max(o.frameWidth, 0), o.width / 4, o.height / 4)
@@ -283,6 +286,7 @@ public enum MeshBuilder {
                     box(&metal, latch - 60 * u, latch + 60 * u, tb2 - 50 * u, tb2, zh - 10 * u, zh + 10 * u)
                 }
                 return [frame.group(el.id, kind, el.material ?? "Wood"), metal.group(el.id, kind, "Aluminium"), glass.group(el.id, kind, "Glass")].compactMap { $0 }
+                    + OpeningTrim.meshGroups(el, o, f: f, zb: zb, zt: zt, unit: u)
             }
             // Window.
             let fd = min(h, 35 * u)
@@ -332,8 +336,12 @@ public enum MeshBuilder {
             box(&frame, s0 - so, s1 + so, min(ext * h * 0.5, ext * (h + so)), max(ext * h * 0.5, ext * (h + so)), zb - 30 * u, zb)
             let frameMat = el.props["frameMaterial"] ?? ((el.material ?? "Glass").caseInsensitiveCompare("Glass") == .orderedSame ? "Aluminium" : el.material!)
             return [frame.group(el.id, kind, frameMat), glass.group(el.id, kind, "Glass")].compactMap { $0 }
+                + OpeningTrim.meshGroups(el, o, f: f, zb: zb, zt: zt, unit: u)
 
         case .slab(let g):
+            if el.props["slabType"] != nil || doc.entities.contains(where: { Shafts.isShaft($0) }) {
+                return SlabDetails.groups(el, g, elev: elev, doc: doc)
+            }
             var acc = MeshAcc()
             let top = elev + g.topOffset
             if g.isSloped { slopedSlab(g, elev: elev, into: &acc) }
@@ -373,7 +381,7 @@ public enum MeshBuilder {
             return [acc.group(el.id, kind, el.material ?? "Concrete")].compactMap { $0 }
 
         case .roof(let g):
-            return roofGroups(el, g, elev: elev).compactMap { $0 }
+            return RoofDetails.groups(el, g, elev: elev, doc: doc)
 
         case .stair(let g):
             var acc = MeshAcc()
@@ -426,6 +434,7 @@ public enum MeshBuilder {
             return [acc.group(el.id, kind, el.material ?? "Concrete"), rail.group(el.id, kind, "Steel")].compactMap { $0 }
 
         case .railing(let g):
+            if g.isTyped { return RailingTypes.groups(el, g, elev: elev, doc: doc) }
             let path = RG.dedupe(g.path, closed: false)
             guard path.count >= 2 else { return [] }
             var acc = MeshAcc()
@@ -526,6 +535,10 @@ public enum MeshBuilder {
                     solid.group(el.id, kind, el.props["panelMaterial"] ?? "Aluminium"), spandrel.group(el.id, kind, el.props["spandrelMaterial"] ?? "Steel")].compactMap { $0 }
 
         case .component(let g):
+            if el.props["kind"] == "skylight" { return RoofDetails.skylightGroups(el, g, doc: doc) }
+            if g.block == nil, g.path == nil, let def = doc.family(named: g.family) {
+                return FamilyEngine.meshGroups(def, el: el, g: g, doc: doc, z0: elev + g.baseOffset)
+            }
             if g.block == nil, let rf = ComponentLibrary.runFamily(g.family) {
                 return RunFamilies.meshGroups(rf, g, id: el.id, z0: elev + g.baseOffset, unit: u, overrides: el.props)
             }
@@ -751,7 +764,10 @@ public enum MeshBuilder {
             if r.1 >= f.L - 1e-9 { pts[pts.count - 1] = side > 0 ? j.endL : j.endR }
             if side < 0 { pts.reverse() }
             let path = pts.map { Vec3($0.x, $0.y, z0 + sw.elevation) }
-            let profile = sw.outline.map { Vec2($0.x, $0.z) }
+            // Profile families of the document (PROFILE / FAMILY) flex to the sweep's depth × height; built-ins otherwise.
+            var profile = sw.outline.map { Vec2($0.x, $0.z) }
+            if !["rect", "cornice", "skirting", "baseboard", "cove"].contains(sw.profile.lowercased()),
+               let p = ProfileLibrary.outline(sw.profile, width: max(sw.depth, 1e-6), height: max(sw.height, 1e-6), doc: ctx.doc) { profile = p }
             SweepMesh.sweep(profile, along: path, into: &acc)
         }
     }

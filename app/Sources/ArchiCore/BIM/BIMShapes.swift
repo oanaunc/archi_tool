@@ -99,18 +99,30 @@ final class BIMContext {
     var openings: [EntityID: [BIMElement]] = [:]
     let tol: Double
 
+    /// Join overrides per wall end (props "joinStart"/"joinEnd"): miter (default), butt, square, none.
+    var joinModes: [EntityID: (start: String, end: String)] = [:]
+
     init(doc: ArchiDocument, level: Int? = nil) {
         self.doc = doc
         tol = max(2.0 / doc.units.mm, 1e-6)
         var byLevel: [Int: [WallFrame]] = [:]
         for el in doc.elements {
-            if let f = WallFrame(el), level == nil || el.level == level { frames[el.id] = f; byLevel[el.level, default: []].append(f) }
+            if let f = WallFrame(el), level == nil || el.level == level {
+                frames[el.id] = f; byLevel[el.level, default: []].append(f)
+                let a = el.props["joinStart"]?.lowercased() ?? "", b = el.props["joinEnd"]?.lowercased() ?? ""
+                if !a.isEmpty || !b.isEmpty { joinModes[el.id] = (a, b) }
+            }
             if case .opening(let o) = el.geometry { openings[o.hostWall, default: []].append(el) }
         }
         for (_, walls) in byLevel { computeJoins(walls) }
     }
 
     func levelElevation(_ l: Int) -> Double { doc.level(l)?.elevation ?? 0 }
+
+    func joinMode(_ id: EntityID, atStart: Bool) -> String {
+        guard let m = joinModes[id] else { return "" }
+        return atStart ? m.start : m.end
+    }
 
     private struct End { let f: WallFrame; let atStart: Bool
         var center: Vec2 { atStart ? f.cs : f.ce }
@@ -123,12 +135,53 @@ final class BIMContext {
             var info = WallJoinInfo(startL: f.pt(0, f.h), startR: f.pt(0, -f.h), endL: f.pt(f.L, f.h), endR: f.pt(f.L, -f.h))
             for atStart in [true, false] {
                 let me = End(f: f, atStart: atStart)
+                let myMode = joinMode(f.id, atStart: atStart)
                 var node = [me]
                 for g in walls where g.id != f.id {
                     for gs in [true, false] {
                         let e = End(f: g, atStart: gs)
                         let d = min(e.center.distance(to: me.center), e.drawn.distance(to: me.drawn), e.center.distance(to: me.drawn), e.drawn.distance(to: me.center))
-                        if d <= tol { node.append(e) }
+                        if d <= tol && joinMode(g.id, atStart: gs) != "none" { node.append(e) }
+                    }
+                }
+                // Disallowed join: the end stays square and uncleaned.
+                if myMode == "none" { continue }
+                if node.count >= 2 && myMode == "square" {
+                    // Square-off: a square end extended to cover the other walls at the corner.
+                    let ext = node.dropFirst().map { $0.f.h }.max() ?? 0
+                    let s0 = atStart ? -ext : f.L + ext
+                    if atStart { info.startL = f.pt(s0, f.h); info.startR = f.pt(s0, -f.h) } else { info.endL = f.pt(s0, f.h); info.endR = f.pt(s0, -f.h) }
+                    continue
+                }
+                if node.count == 2 {
+                    let other = node[1]
+                    let otherMode = joinMode(other.f.id, atStart: other.atStart)
+                    if otherMode == "square" { continue }   // the other wall squares off over this end: keep it square
+                    if myMode == "butt" || otherMode == "butt", abs(me.out.cross(other.out)) > 1e-6 {
+                        let P = me.center, o = me.out
+                        let sEnd = atStart ? 0 : f.L
+                        func hit(_ t: Double, _ lineP: Vec2, _ lineD: Vec2) -> Vec2 {
+                            GeometryOps.lineIntersection(f.pt(sEnd, t), f.pt(sEnd, t) + o, lineP, lineP + lineD) ?? f.pt(sEnd, t)
+                        }
+                        // Near face of the other wall (on this wall's side) or its far face (when the other wall butts into this one).
+                        let side: Double = o.dot(other.out.perp) >= 0 ? 1 : -1
+                        let s = myMode == "butt" ? side : -side
+                        let face = other.center + other.out.perp * (s * other.f.h)
+                        let L = hit(f.h, face, other.out), R = hit(-f.h, face, other.out)
+                        if L.distance(to: P) < 8 * max(f.h, other.f.h) + tol && R.distance(to: P) < 8 * max(f.h, other.f.h) + tol {
+                            let cap = myMode != "butt"
+                            if myMode == "butt" {
+                                // The butting end covers part of the other wall's face: no face line there.
+                                let gs = other.atStart ? s : -s
+                                let a = other.f.project(L).s, b = other.f.project(R).s
+                                var bi = joins[other.f.id] ?? WallJoinInfo(startL: other.f.pt(0, other.f.h), startR: other.f.pt(0, -other.f.h), endL: other.f.pt(other.f.L, other.f.h), endR: other.f.pt(other.f.L, -other.f.h))
+                                bi.gaps.append((gs, min(a, b), max(a, b)))
+                                joins[other.f.id] = bi
+                            }
+                            if atStart { info.startL = L; info.startR = R; info.startCap = cap }
+                            else { info.endL = L; info.endR = R; info.endCap = cap }
+                            continue
+                        }
                     }
                 }
                 if node.count >= 2 {
@@ -153,7 +206,10 @@ final class BIMContext {
                 // T-join into the side of a straight wall.
                 let P = me.center, o = me.out
                 var joinedCurved = false
-                for b in walls where b.id != f.id && b.isCurved {
+                func disallowed(_ b: WallFrame) -> Bool {
+                    (b.cs.distance(to: P) <= tol && joinMode(b.id, atStart: true) == "none") || (b.ce.distance(to: P) <= tol && joinMode(b.id, atStart: false) == "none")
+                }
+                for b in walls where b.id != f.id && b.isCurved && !disallowed(b) {
                     guard let c = b.arcC else { continue }
                     let pr = b.project(P)
                     guard pr.s > -tol, pr.s < b.L + tol, abs(pr.t) <= b.h + tol else { continue }
@@ -186,7 +242,7 @@ final class BIMContext {
                     break
                 }
                 if joinedCurved { continue }
-                for b in walls where b.id != f.id && !b.isCurved {
+                for b in walls where b.id != f.id && !b.isCurved && !disallowed(b) {
                     let q = P - b.cs
                     let u = q.dot(b.dir), tp = q.dot(b.dir.perp)
                     guard u > -tol, u < b.L + tol, abs(tp) <= b.h + tol, abs(o.dot(b.dir)) < 0.985 else { continue }

@@ -85,12 +85,25 @@ public final class CommandRegistry {
         return nil
     }
     public var sorted: [CommandDef] { commands.values.sorted { $0.name < $1.name } }
-    /// Names and aliases starting with the prefix (autocomplete).
+    /// How often each command was started (autocomplete ranking; the app may persist it).
+    public var usage: [String: Int] = [:]
+    /// Also suggest commands containing the typed text in the middle of their name (INPUTSEARCHOPTIONS mid-string search).
+    public var midStringSearch = true
+
+    /// Names and aliases starting with the prefix (autocomplete), most used first; then names containing it (3+ letters).
     public func complete(_ prefix: String) -> [String] {
         let p = prefix.uppercased()
         guard !p.isEmpty else { return [] }
-        let names = commands.keys.filter { $0.hasPrefix(p) } + aliasMap.keys.filter { $0.hasPrefix(p) }
-        return Array(Set(names)).sorted { ($0.count, $0) < ($1.count, $1) }
+        let names = Array(Set(commands.keys.filter { $0.hasPrefix(p) } + aliasMap.keys.filter { $0.hasPrefix(p) }))
+        func uses(_ n: String) -> Int { usage[aliasMap[n] ?? n] ?? 0 }
+        // Most used first; a command's full name before its aliases; then shorter names.
+        func alias(_ n: String) -> Int { commands[n] == nil ? 1 : 0 }
+        var out = names.sorted { (-uses($0), alias($0), $0.count, $0) < (-uses($1), alias($1), $1.count, $1) }
+        if midStringSearch && p.count >= 3 {
+            let mid = commands.keys.filter { !$0.hasPrefix(p) && $0.contains(p) }
+            out += mid.sorted { (-uses($0), $0.count, $0) < (-uses($1), $1.count, $1) }
+        }
+        return out
     }
     public func ensureBuiltins() {
         guard !registeredBuiltins else { return }
@@ -174,7 +187,14 @@ public enum SnapKind: String, Codable, CaseIterable, Hashable {
 /// The drawing session: document, selection, undo, command execution. Shared by UI, scripts, agents and CLI.
 @MainActor
 public final class Editor {
-    public var doc: ArchiDocument { didSet { changeCount += 1; onChange?() } }
+    public var doc: ArchiDocument {
+        didSet {
+            changeCount += 1
+            // Hatch patterns saved in the drawing (HPPAT:<name>) are available to every renderer.
+            if doc.variables != oldValue.variables { HatchPatterns.register(doc: doc) }
+            onChange?()
+        }
+    }
     public private(set) var changeCount = 0
     public var history = UndoHistory()
     public var selection: Set<EntityID> = [] { didSet { onSelectionChange?() } }
@@ -205,6 +225,7 @@ public final class Editor {
         self.doc = document
         self.registry = registry
         registry.ensureBuiltins()
+        HatchPatterns.register(doc: document)
     }
 
     // MARK: Logging
@@ -308,9 +329,10 @@ public final class Editor {
             queuedInputs.removeAll()
             return
         }
-        if activeCommand != nil { cancel() }
+        if activeCommand != nil { cancelCommand() }
         activeCommand = def
         lastCommand = def.name
+        registry.usage[def.name, default: 0] += 1
         print("Command: \(def.name)")
         let before = doc
         commandTask = Task { @MainActor in
@@ -372,13 +394,20 @@ public final class Editor {
         var guardCount = 0
         while activeCommand != nil && guardCount < 10000 {
             await Task.yield()
-            if continuation != nil && queuedInputs.isEmpty { feed(.enter) }
+            if continuation != nil && (queuedInputs.isEmpty || pausedForUser) { feed(.enter) }
             guardCount += 1
         }
-        if activeCommand != nil { cancel() }
+        if activeCommand != nil { cancelCommand() }
     }
 
+    /// Escape from the user: cancels the running command and interrupts a running script (RESUME continues it).
     public func cancel() {
+        if scriptDepth > 0 { scriptInterrupted = true }
+        cancelCommand()
+    }
+
+    /// Cancels the running command without interrupting a script.
+    func cancelCommand() {
         queuedInputs.removeAll()
         if continuation != nil { feed(.cancel) } else { commandTask?.cancel() }
     }
@@ -436,6 +465,16 @@ public final class Editor {
         request = req
         Snap.tracker.active = req.kinds.contains(.point)
         onPromptChange?()
+        if queuedInputs.first == MacroPause.mark {
+            // Macro pause: this prompt is answered by the user; the rest of the macro continues afterwards.
+            queuedInputs.removeFirst()
+            pausedForUser = true
+            print(req.promptText)
+            let r = await withCheckedContinuation { (c: CheckedContinuation<CommandInput, Never>) in self.continuation = c }
+            pausedForUser = false
+            request = nil
+            return r
+        }
         if !queuedInputs.isEmpty {
             var t = queuedInputs.removeFirst()
             let wasQuoted = t.hasPrefix(Editor.quoteMark)
@@ -596,6 +635,8 @@ public final class Editor {
 
     /// Returns the current selection if any (noun-verb), otherwise asks the user to select objects.
     public func getSelection(_ msg: String = "Select objects") async throws -> [EntityID] {
+        // PICKFIRST 0: commands ignore the pre-selection (verb-noun only).
+        if !selection.isEmpty && doc.variable("PICKFIRST") == "0" { selection = [] }
         if !selection.isEmpty {
             let ids = expandGroups(Array(selection).filter { isSelectable($0) })
             print("\(ids.count) found")
@@ -616,7 +657,7 @@ public final class Editor {
             case .keyword(let k):
                 switch k {
                 case "All": apply(doc.allIDs)
-                case "Last": if let l = (doc.entities.map(\.id) + doc.elements.map(\.id)).max() { apply([l]) }
+                case "Last": if let l = (doc.entities.map(\.id) + doc.elements.map(\.id)).filter({ isSelectable($0) }).max() { apply([l]) }
                 case "Previous": apply(Array(previousSelection))
                 case "Add": removing = false
                 case "Remove": removing = true
@@ -666,6 +707,22 @@ public final class Editor {
         return out
     }
     public var previousSelection: Set<EntityID> = []
+    /// True while a prompt waits for the user at a macro pause ("\\").
+    public var pausedForUser = false
+    /// Script nesting depth, interruption flag and the lines left when a script was interrupted (RESUME).
+    public var scriptDepth = 0
+    public var scriptInterrupted = false
+    public var pendingScript: [String]?
+
+    /// Runs a menu/button macro: tokens separated by spaces, ";" = Enter, "\\" = pause for user input, leading ^C^C cancels.
+    public func runMacro(_ macro: String) {
+        if activeCommand != nil && macro.hasPrefix("^C") { cancelCommand() }
+        let tokens = UserAliases.macroTokens(macro)
+        guard let first = tokens.first(where: { !$0.isEmpty && $0 != MacroPause.mark }) else { return }
+        let idx = tokens.firstIndex(of: first)!
+        queuedInputs = Array(tokens[(idx + 1)...])
+        start(first.hasPrefix("_") ? String(first.dropFirst()) : first)
+    }
 
     // MARK: Script recording, undo groups, transparent commands
     /// Active script recorder (SCRIPTRECORD); typed lines and UI inputs are captured as script lines.

@@ -91,6 +91,7 @@ public enum UserAliases {
             if inQuote { cur.append(ch); continue }
             if ch == " " { flush(); continue }
             if ch == ";" { flush(); out.append(""); continue }
+            if ch == "\\" { flush(); out.append(MacroPause.mark); continue }   // pause for user input
             cur.append(ch)
         }
         flush()

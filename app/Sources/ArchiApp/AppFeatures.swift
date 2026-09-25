@@ -55,7 +55,25 @@ enum TemplateLibrary {
         let files = ((try? fm.contentsOfDirectory(at: FileLocations.templates, includingPropertiesForKeys: nil)) ?? [])
             .filter { $0.pathExtension.lowercased() == ArchiFile.fileExtension || $0.pathExtension.lowercased() == TemplateLibrary.fileExtension }
             .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
-        return builtIn + files.map { DrawingTemplate(id: $0.path, name: $0.deletingPathExtension().lastPathComponent, subtitle: "Templates folder", symbol: "doc.badge.gearshape") }
+        let inFolder = files.map { DrawingTemplate(id: $0.path, name: $0.deletingPathExtension().lastPathComponent, subtitle: "Templates folder", symbol: "doc.badge.gearshape") }
+        let paths = Set(inFolder.map(\.id))
+        return builtIn + inFolder + recentTemplates.filter { !paths.contains($0.id) }.map { var t = $0; t.subtitle = "Recent · " + t.subtitle; return t }
+    }
+
+    /// Template entry for any template file (also outside the templates folder, e.g. opened from Finder).
+    static func template(for url: URL) -> DrawingTemplate {
+        DrawingTemplate(id: url.standardizedFileURL.path, name: url.deletingPathExtension().lastPathComponent, subtitle: url.deletingLastPathComponent().lastPathComponent, symbol: "doc.badge.gearshape")
+    }
+
+    /// Recently used template files (most recent first), shown on the start screen.
+    static var recentTemplates: [DrawingTemplate] {
+        (UserDefaults.standard.stringArray(forKey: "recentTemplates") ?? []).filter { FileManager.default.fileExists(atPath: $0) }.map { template(for: URL(fileURLWithPath: $0)) }
+    }
+    static func noteUsed(_ t: DrawingTemplate) {
+        guard let u = t.url else { return }
+        var l = UserDefaults.standard.stringArray(forKey: "recentTemplates") ?? []
+        l.removeAll { $0 == u.path }; l.insert(u.path, at: 0)
+        UserDefaults.standard.set(Array(l.prefix(8)), forKey: "recentTemplates")
     }
 
     /// Metric architectural template: extra layers, scale-specific dimension and text styles.
@@ -98,6 +116,7 @@ enum TemplateLibrary {
             m.editor.print("New drawing from the Metric Architectural template (\(d.layers.count) layers, \(d.dimStyles.count) dimension styles).")
         default:
             guard let u = t.url else { return }
+            noteUsed(t)
             do {
                 var d = try FileController.readDocument(u)
                 d.info.name = "Untitled Project"

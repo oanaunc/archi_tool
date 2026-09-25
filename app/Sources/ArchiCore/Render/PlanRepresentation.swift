@@ -156,6 +156,7 @@ public enum PlanRepresentation {
             let dash = hiddenDash(doc, options)
             var out = ([g.boundary] + g.holes).filter { $0.count >= 2 }.map { stroke($0, closed: true, color, lwHidden, dash) }
             if g.isSloped && g.boundary.count >= 3 { out += slopeArrow(g, el: el, doc: doc, color: color, options: options) }
+            if let tile = el.props["finishTile"], g.boundary.count >= 3 { out += tileGrid(tile, boundary: g.boundary, holes: g.holes, doc: doc, color: color) }
             return out
         case .column(let g):
             if let sec = StructuralProfiles.section(g.profile) {
@@ -233,9 +234,14 @@ public enum PlanRepresentation {
             }
             return out
         case .component(let g):
+            if el.props["kind"] == "skylight" { return RoofDetails.skylightPlan(g, color: color, unit: u) }
             if let b = g.block, doc.blocks[b] != nil {
                 let ins = Entity(id: el.id, layer: el.layer, color: .byLayer, geometry: .insert(InsertGeom(block: b, position: g.position, rotation: g.rotation)))
                 return DrawListBuilder.items(for: ins, doc: doc, options: options)
+            }
+            if g.path == nil, let def = doc.family(named: g.family) {
+                let outs = FamilyEngine.planOutlines(def, el: el, g: g, doc: doc)
+                if !outs.isEmpty { return outs.map { stroke($0, closed: true, color, lwProj) } }
             }
             if let rf = ComponentLibrary.runFamily(g.family) {
                 let dash = hiddenDash(doc, options)
@@ -452,6 +458,9 @@ public enum PlanRepresentation {
         if let l = options.level, l != el.level {
             only = Set((ctx.openings[el.id] ?? []).filter { BIMConstraints.shown($0, onLevel: l, doc: doc) }.map(\.id))
         }
+        let cuts = ctx.cuts(f, only: only)
+        let cutStarts = cuts.map(\.s0), cutEnds = cuts.map(\.s1)
+        let wrap = layerWrap(el, plies: plies, doc: doc, h: f.h)
         for pc in ctx.pieces(f, only: only) {
             fills.append(.fill(loops: [pc.poly], color: fill))
             if options.cutHatches {
@@ -479,12 +488,23 @@ public enum PlanRepresentation {
                     }
                 }
             }
-            // Ply boundary lines.
+            // Ply boundary lines; with layer wrapping at inserts (WALLWRAP = 1 or props wrapInserts = 1) the finish layers
+            // return into the opening jambs and the inner ply lines stop short of them.
             if plies.count > 1 {
+                let w = wrap.enabled && !f.isCurved ? wrap.width : 0
+                let cutStart = w > 0 && cutEnds.contains { abs($0 - pc.s0) < 1e-6 }, cutEnd = w > 0 && cutStarts.contains { abs($0 - pc.s1) < 1e-6 }
+                let lo = pc.s0 + (cutStart ? w : 0), hi = pc.s1 - (cutEnd ? w : 0)
                 for ply in plies.dropLast() {
                     let line = f.isCurved ? f.face(ply.tlo, pc.s0, pc.s1) : [f.pt(pc.s0 - 10 * f.h - 1, ply.tlo), f.pt(pc.s1 + 10 * f.h + 1, ply.tlo)]
-                    for s in RG.clipPolyline(line, [pc.poly]) { lines.append(stroke(s, color, lwFine)) }
+                    for s in RG.clipPolyline(line, [pc.poly]) {
+                        guard w > 0, s.count == 2 else { lines.append(stroke(s, color, lwFine)); continue }
+                        let sa = f.sOf(s[0]), sb = f.sOf(s[1])
+                        let a = max(min(sa, sb), lo), b = min(max(sa, sb), hi)
+                        if b - a > 1e-9 { lines.append(stroke([f.pt(a, ply.tlo), f.pt(b, ply.tlo)], color, lwFine)) }
+                    }
                 }
+                if cutStart && hi > lo { lines.append(stroke([f.pt(lo, wrap.top), f.pt(lo, wrap.bottom)], color, lwFine)) }
+                if cutEnd && hi > lo { lines.append(stroke([f.pt(hi, wrap.top), f.pt(hi, wrap.bottom)], color, lwFine)) }
             }
             for s in splitByGaps(pc.faceR, side: -1, f: f, gaps: j.gaps) { lines.append(stroke(s, color, lwCut)) }
             for s in splitByGaps(pc.faceL, side: 1, f: f, gaps: j.gaps) { lines.append(stroke(s, color, lwCut)) }
@@ -494,9 +514,46 @@ public enum PlanRepresentation {
         return fills + patterns + lines
     }
 
+    /// Floor finish tile grid ("600x600") clipped to the finish outline, starting from the boundary's lower-left corner.
+    static func tileGrid(_ spec: String, boundary: [Vec2], holes: [[Vec2]], doc: ArchiDocument, color: RGBA) -> [DrawItem] {
+        let parts = spec.lowercased().split(separator: "x").compactMap { Double($0) }
+        guard parts.count == 2, parts[0] > 0, parts[1] > 0 else { return [] }
+        let u = unit(doc)
+        let tx = parts[0] * u, ty = parts[1] * u
+        let b = BBox2(points: boundary)
+        guard b.width / tx < 400, b.height / ty < 400 else { return [] }
+        let loops = [boundary] + holes
+        var out: [DrawItem] = []
+        let c = blend(color, RGBA(0.6, 0.6, 0.6, color.a), 0.5)
+        var x = b.min.x + tx
+        while x < b.max.x - 1e-9 { for (p, q) in RG.clipSegment(Vec2(x, b.min.y), Vec2(x, b.max.y), loops) { out.append(stroke([p, q], c, lwFine)) }; x += tx }
+        var y = b.min.y + ty
+        while y < b.max.y - 1e-9 { for (p, q) in RG.clipSegment(Vec2(b.min.x, y), Vec2(b.max.x, y), loops) { out.append(stroke([p, q], c, lwFine)) }; y += ty }
+        return out
+    }
+
+    /// Layer wrapping at inserts: the finish plies on each face return into opening jambs. `width` = wrap depth into
+    /// the jamb (the exterior finish thickness), `top`/`bottom` = the core band the return line spans (wall t offsets).
+    static func layerWrap(_ el: BIMElement, plies: [(material: String?, thi: Double, tlo: Double)], doc: ArchiDocument, h: Double)
+        -> (enabled: Bool, width: Double, top: Double, bottom: Double) {
+        let on = el.props["wrapInserts"] == "1" || (el.props["wrapInserts"] != "0" && doc.variable("WALLWRAP") == "1")
+        guard on, plies.count > 1, case .wall(let g) = el.geometry, let tn = g.wallType, let wt = doc.wallTypes.first(where: { $0.name == tn }), wt.thickness > 0 else {
+            return (false, 0, 0, 0)
+        }
+        let k = 2 * h / wt.thickness
+        let lead = wt.plies.prefix { $0.function == "Finish" }.reduce(0) { $0 + $1.thickness } * k
+        let trail = wt.plies.reversed().prefix { $0.function == "Finish" }.reduce(0) { $0 + $1.thickness } * k
+        guard lead + trail > 1e-9, lead + trail < 2 * h - 1e-9 else { return (false, 0, 0, 0) }
+        return (true, max(lead, trail), h - lead, -h + trail)
+    }
+
     // MARK: Openings
 
     static func openingItems(_ el: BIMElement, _ o: OpeningGeom, ctx: BIMContext, color: RGBA, options: DrawOptions) -> [DrawItem] {
+        openingSymbol(el, o, ctx: ctx, color: color, options: options) + OpeningTrim.planItems(el, o, ctx: ctx, color: color, options: options)
+    }
+
+    static func openingSymbol(_ el: BIMElement, _ o: OpeningGeom, ctx: BIMContext, color: RGBA, options: DrawOptions) -> [DrawItem] {
         let doc = ctx.doc
         guard o.width > 0, let f = ctx.frames[o.hostWall] ?? doc.element(o.hostWall).flatMap({ WallFrame($0) }) else { return [] }
         let u = unit(doc)

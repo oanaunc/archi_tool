@@ -141,7 +141,9 @@ struct MainWindow: View {
             model.newDocument(.sample)
             model.buildSampleHouse()
         case .template?:
-            if let id = request?.path, let t = TemplateLibrary.all().first(where: { $0.id == id }) { TemplateLibrary.apply(t, to: model) } else { model.showStart = true }
+            if let id = request?.path, let t = TemplateLibrary.all().first(where: { $0.id == id }) ?? (FileManager.default.fileExists(atPath: id) ? TemplateLibrary.template(for: URL(fileURLWithPath: id)) : nil) {
+                TemplateLibrary.apply(t, to: model)
+            } else { model.showStart = true }
         case let k?:
             model.newDocument(k)
         }

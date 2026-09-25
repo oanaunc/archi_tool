@@ -88,7 +88,7 @@ enum CommandCatalog {
 
 enum RibbonTab: String, CaseIterable, Identifiable {
     case home = "Home", insert = "Insert", annotate = "Annotate", architecture = "Architecture", modeling = "Modeling", analyze = "Analyze"
-    case view = "View", output = "Output", manage = "Manage", script = "Script"
+    case collaborate = "Collaborate", view = "View", output = "Output", manage = "Manage", script = "Script"
     var id: String { rawValue }
 }
 
@@ -290,6 +290,7 @@ struct RibbonView: View {
         case .architecture: architectureTab
         case .modeling: modelingTab
         case .analyze: analyzeTab
+        case .collaborate: collaborateTab
         case .view: viewTab
         case .output: outputTab
         case .manage: manageTab
@@ -335,7 +336,7 @@ struct RibbonView: View {
                 RibbonCatalogMenu(model: model, title: "Draw", symbol: "pencil.and.outline",
                                   sections: [("Draw More", CommandCatalog.drawMore), ("Construction", CommandCatalog.construction)], help: "More drawing and construction tools")
                 RibbonCatalogMenu(model: model, title: "Modify", symbol: "wand.and.rays",
-                                  sections: [("Modify More", CommandCatalog.modifyMore), ("Clipboard & Selection", CommandCatalog.clipboard)], help: "More modify, clipboard and selection tools")
+                                  sections: [("Modify More", CommandCatalog.modifyMore), ("Clipboard & Selection", CommandCatalog.clipboard), ("Drafting Extras", CommandCatalog.draftingExtra)], help: "More modify, clipboard and selection tools")
                 RibbonCatalogMenu(model: model, title: "Layers", symbol: "square.3.layers.3d.middle.filled",
                                   sections: [("Layer Tools", CommandCatalog.layersMore)], help: "Layer tools (LAYISO, LAYFRZ, LAYMRG…)")
             }
@@ -380,8 +381,15 @@ struct RibbonView: View {
             }
             RibbonGroup(title: "Export") { smallColumns(CommandCatalog.exportItems) }
             RibbonGroup(title: "More") {
-                RibbonCatalogMenu(model: model, title: "Blocks", symbol: "square.on.square.dashed", sections: [("Blocks & Attributes", CommandCatalog.blocksMore)], help: "Block and attribute tools")
+                RibbonCatalogMenu(model: model, title: "Blocks", symbol: "square.on.square.dashed", sections: [("Blocks & Attributes", CommandCatalog.blocksMore), ("Dynamic Blocks", CommandCatalog.blocksExtra)], help: "Block and attribute tools")
                 RibbonCatalogMenu(model: model, title: "Exchange", symbol: "arrow.left.arrow.right.square", sections: [("Import & Export", CommandCatalog.exchange), ("File", CommandCatalog.fileCommands)], help: "More import/export formats and file commands")
+            }
+            RibbonGroup(title: "Images & Geo") {
+                cmd(CommandCatalog.imagesGeo[0])
+                smallColumns(Array(CommandCatalog.imagesGeo.dropFirst()))
+            }
+            RibbonGroup(title: "Library") {
+                action("Block Library", "books.vertical", help: "Browse folders of drawings as a block library with thumbnails; drag a block onto the drawing (BLOCKLIBRARY)") { BlockLibraryWindow.show(model: model) }
             }
         }
     }
@@ -406,7 +414,7 @@ struct RibbonView: View {
                 cmd(CommandCatalog.site[0])
                 smallColumns(Array(CommandCatalog.site.dropFirst()), rows: 2)
             }
-            RibbonGroup(title: "Surfaces") { RibbonCatalogMenu(model: model, title: "Surfaces", symbol: "square.stack.3d.up", sections: [("Surfaces & Mesh", CommandCatalog.surfaces)], help: "Ruled, tabulated, revolved and edge surfaces; mesh repair") }
+            RibbonGroup(title: "Surfaces") { RibbonCatalogMenu(model: model, title: "Surfaces", symbol: "square.stack.3d.up", sections: [("Surfaces & Mesh", CommandCatalog.surfaces), ("Solid Features", CommandCatalog.solidsExtra)], help: "Ruled, tabulated, revolved and edge surfaces; mesh repair") }
             RibbonGroup(title: "Visual Programming") {
                 action("Node Editor", "point.3.connected.trianglepath.dotted", help: "Visual node editor with live preview (NODEEDITOR)") { NodeEditorWindow.show(model: model) }
             }
@@ -426,7 +434,42 @@ struct RibbonView: View {
                 smallColumns(Array(CommandCatalog.analysis.dropFirst(2)), rows: 2)
             }
             RibbonGroup(title: "Coordination") { ForEach(CommandCatalog.coordination) { cmd($0) } }
+            RibbonGroup(title: "Checks") {
+                cmd(CommandCatalog.checks[0])
+                cmd(CommandCatalog.checks[1])
+                smallColumns(Array(CommandCatalog.checks.dropFirst(2)), rows: 2)
+            }
+            RibbonGroup(title: "Measure") { smallColumns(CommandCatalog.inquiryExtra, rows: 2) }
+            RibbonGroup(title: "3D Measure") {
+                action("Measure 3D", "ruler", active: Measure3DState.shared.active, help: "Pick two points on the 3D model to measure distance, ΔX/ΔY/ΔZ (MEASURE3D)") {
+                    if model.mode == .plan || model.mode == .sheet { model.mode = .model }
+                    Measure3DState.shared.toggle(); model.revision &+= 1
+                }
+            }
             RibbonGroup(title: "Building Physics") { RibbonCatalogMenu(model: model, title: "More", symbol: "ellipsis.circle", sections: [("Analysis & Checks", CommandCatalog.analysisMore)], help: "Energy, daylight, acoustics, carbon and code checks") }
+        }
+    }
+
+    private var collaborateTab: some View {
+        Group {
+            RibbonGroup(title: "Review") {
+                action("Markups", "text.bubble", help: "Markup and comment manager: add, reply, resolve, zoom to (MARKUP)") { MarkupWindow.show(model: model) }
+                action("Compare", "rectangle.on.rectangle.angled", help: "Compare this drawing with another version and show the differences as an overlay (COMPARE)") { CompareWindow.show(model: model) }
+                smallColumns(Array(CommandCatalog.review.dropFirst(2)))
+            }
+            RibbonGroup(title: "Versions & Issues") {
+                cmd(CommandCatalog.versioning[0])
+                cmd(CommandCatalog.versioning[1])
+                smallColumns(Array(CommandCatalog.versioning.dropFirst(2)))
+            }
+            RibbonGroup(title: "Share") {
+                action("Share", "square.and.arrow.up", help: "Share the project and a PDF with Mail, Messages, AirDrop… (SHARE)") { model.runCommand("SHARE Both") }
+                cmd(CommandCatalog.sharing[0])
+                smallColumns(Array(CommandCatalog.sharing.dropFirst()))
+            }
+            RibbonGroup(title: "Sheets") {
+                action("Revision Clouds", "cloud", help: "Revision clouds of the sheets: list, add, zoom to, delete") { RevisionCloudWindow.show(model: model) }
+            }
         }
     }
 
@@ -440,7 +483,7 @@ struct RibbonView: View {
             RibbonGroup(title: "Leaders & Tables") { ForEach(CommandCatalog.dimensions.suffix(2)) { cmd($0) } }
             RibbonGroup(title: "More") {
                 RibbonCatalogMenu(model: model, title: "Dims", symbol: "ruler", sections: [("Dimensions", CommandCatalog.dimMore)], help: "Baseline, continue, ordinate, QDIM, dimension editing")
-                RibbonCatalogMenu(model: model, title: "Text", symbol: "textformat", sections: [("Text, Leaders & Tables", CommandCatalog.textMore)], help: "Text editing, spelling, fields, tables, symbols")
+                RibbonCatalogMenu(model: model, title: "Text", symbol: "textformat", sections: [("Text, Leaders & Tables", CommandCatalog.textMore), ("Annotation Extras", CommandCatalog.annotateExtra)], help: "Text editing, spelling, fields, tables, symbols")
             }
             RibbonGroup(title: "Parametric") {
                 RibbonCatalogMenu(model: model, title: "Constrain", symbol: "link.circle", sections: [("Parametric", CommandCatalog.parametric)], help: "Geometric and dimensional constraints")
@@ -490,7 +533,7 @@ struct RibbonView: View {
             }
             RibbonGroup(title: "More") {
                 RibbonCatalogMenu(model: model, title: "Systems", symbol: "square.stack.3d.up.fill",
-                                  sections: [("BIM Data", CommandCatalog.bimMore), ("Structure", CommandCatalog.structure), ("MEP", CommandCatalog.mep), ("Site", CommandCatalog.siteMore)],
+                                  sections: [("BIM Data", CommandCatalog.bimMore), ("BIM Authoring", CommandCatalog.bimAuthoring), ("Structure", CommandCatalog.structure), ("MEP", CommandCatalog.mep), ("Site", CommandCatalog.siteMore)],
                                   help: "BIM data, structure, MEP and site tools")
             }
             RibbonGroup(title: "Level") {
@@ -595,8 +638,16 @@ struct RibbonView: View {
                 action("Render", "camera.aperture", help: "Render a photorealistic image") { RenderController.renderImage(model: model) }
                 action("Walk", "figure.walk", active: model.walkMode, help: "Walk through the model (WASD + mouse)") { model.files.handle(.walkthrough) }
                 RibbonCatalogMenu(model: model, title: "Animate", symbol: "film", sections: [("Animation & Export", CommandCatalog.animationItems)], help: "Walkthrough path, sun study video, 360° panorama")
+                VStack(alignment: .leading, spacing: 1) {
+                    action("Camera Paths", "point.topleft.down.to.point.bottomright.curvepath", .small, help: "Keyframe camera paths with a timeline and video export (CAMERAPATHEDIT)") { CameraPathWindow.show(model: model) }
+                    action("Render Queue", "square.stack.3d.forward.dottedline", .small, help: "Queue renders of views and cameras; render history (RENDERQUEUE)") { RenderQueueWindow.show(model: model) }
+                    action("Gizmo", "move.3d", .small, active: Gizmo3DState.shared.mode != .off, help: "Move/rotate gizmo on the selection in 3D (GIZMO3D)") {
+                        if model.mode == .plan || model.mode == .sheet { model.mode = .model }
+                        Gizmo3DState.shared.mode = Gizmo3DState.shared.mode == .off ? .move : .off; model.revision &+= 1
+                    }
+                }
             }
-            RibbonGroup(title: "More") { RibbonCatalogMenu(model: model, title: "View", symbol: "eye", sections: [("View", CommandCatalog.viewMore)], help: "Every view command") }
+            RibbonGroup(title: "More") { RibbonCatalogMenu(model: model, title: "View", symbol: "eye", sections: [("View", CommandCatalog.viewMore), ("Views & Graphics", CommandCatalog.viewsExtra)], help: "Every view command") }
             RibbonGroup(title: "Interface") {
                 Menu {
                     ForEach(Workspaces.all) { w in
@@ -626,6 +677,7 @@ struct RibbonView: View {
             RibbonGroup(title: "Plot") {
                 action("Plot / Print", "printer", help: "Print the drawing or the active sheet (⌘P)") { Plotter.printDrawing(model: model) }
                 action("Preview", "eye", help: "Plot dialog with live preview (PREVIEW)") { PlotPreviewWindow.show(model: model) }
+                action("Print Setup", "printer.filled.and.paper", help: "Print with printer, paper, tray, scale and copies (PRINTSETUP)") { PrintSetupWindow.show(model: model) }
                 VStack(alignment: .leading, spacing: 1) {
                     action("Page Setup", "doc.badge.gearshape", .small, help: "Paper, plot style, lineweights, plot stamp (PAGESETUP)") {
                         model.sheet = .pageSetup(model.mode == .sheet ? model.activeLayout : -1)
@@ -745,7 +797,7 @@ struct RibbonView: View {
                 .help("Run a script from the library (startup.js runs in every new window)")
             }
             RibbonGroup(title: "Automation") {
-                RibbonCatalogMenu(model: model, title: "Tools", symbol: "wrench.and.screwdriver", sections: [("Tools & Scripting", CommandCatalog.tools)], help: "Action recorder, script recorder, aliases")
+                RibbonCatalogMenu(model: model, title: "Tools", symbol: "wrench.and.screwdriver", sections: [("Tools & Scripting", CommandCatalog.tools), ("Script Control", CommandCatalog.scriptingExtra)], help: "Action recorder, script recorder, aliases, macros")
             }
             RibbonGroup(title: "AI Agents") {
                 action(model.agentRunning ? "Stop Server" : "Start Server", "antenna.radiowaves.left.and.right", active: model.agentRunning,

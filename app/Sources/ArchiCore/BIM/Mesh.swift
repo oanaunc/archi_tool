@@ -75,7 +75,9 @@ public enum Triangulator {
         guard outer.count >= 3 else { return (outer, []) }
         var idx: [Int] = GeometryOps.signedArea(outer) < 0 ? Array((0..<outer.count).reversed()) : Array(0..<outer.count)
         var all = outer
-        // Bridge holes: connect each hole's rightmost vertex to the closest outer vertex.
+        // Every hole edge blocks bridges (a bridge must not cut through another hole or its own hole).
+        let holeEdges: [(Vec2, Vec2)] = holes.filter { $0.count >= 3 }.flatMap { h in (0..<h.count).map { (h[$0], h[($0 + 1) % h.count]) } }
+        // Bridge holes: connect each hole's rightmost vertex to the closest visible vertex of the merged outline.
         for hole0 in holes.sorted(by: { ($0.map(\.x).max() ?? 0) > ($1.map(\.x).max() ?? 0) }) where hole0.count >= 3 {
             var hole = hole0
             if GeometryOps.signedArea(hole) > 0 { hole.reverse() }
@@ -86,7 +88,7 @@ public enum Triangulator {
             var bestK = 0, bestD = Double.infinity
             for (k, oi) in idx.enumerated() {
                 let d = all[oi].distance(to: hp)
-                if d < bestD, visible(all, idx, from: hp, to: all[oi]) { bestD = d; bestK = k }
+                if d < bestD, visible(all, idx, from: hp, to: all[oi]), clear(holeEdges, from: hp, to: all[oi]) { bestD = d; bestK = k }
             }
             var bridge: [Int] = []
             for j in 0...hole.count { bridge.append(hStart + (hi + j) % hole.count) }
@@ -94,6 +96,22 @@ public enum Triangulator {
             idx.insert(contentsOf: bridge, at: bestK + 1)
         }
         return (all, earClip(all, idx))
+    }
+
+    /// Whether segment a–b crosses none of the edges (edges touching a or b are ignored, but passing through a vertex blocks).
+    static func clear(_ edges: [(Vec2, Vec2)], from a: Vec2, to b: Vec2) -> Bool {
+        let d = b - a, len = d.length
+        guard len > 1e-12 else { return true }
+        for (p, q) in edges {
+            if p.isClose(a) || q.isClose(a) || p.isClose(b) || q.isClose(b) { continue }
+            if GeometryOps.segmentIntersection(a, b, p, q) != nil { return false }
+            // A vertex lying on the bridge (collinear touch).
+            for v in [p, q] {
+                let t = (v - a).dot(d) / (len * len)
+                if t > 1e-9, t < 1 - 1e-9, abs(d.cross(v - a)) / len < 1e-9 * max(1, len) { return false }
+            }
+        }
+        return true
     }
 
     static func visible(_ pts: [Vec2], _ idx: [Int], from a: Vec2, to b: Vec2) -> Bool {

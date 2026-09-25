@@ -258,10 +258,15 @@ enum ModifyCommands {
                 ed.transformObjects(ids, .translation(d1 - s1), copy: false); ed.selection = []; return
             }
             let d2 = try await ed.requirePoint("Specify second destination point", base: s2)
+            // Optional third pair: picks the side, so the objects are mirrored when the third points lie on opposite sides.
+            var mirror = false
+            if let s3 = try await ed.getPoint("Specify third source point or <continue>").point {
+                let d3 = try await ed.requirePoint("Specify third destination point", base: s3)
+                let a = (s2 - s1).cross(s3 - s1), b = (d2 - d1).cross(d3 - d1)
+                mirror = a * b < 0
+            }
             let scale = try await ed.getYesNo("Scale objects based on alignment points?", defaultValue: false)
-            let ang = (d2 - d1).angle - (s2 - s1).angle
-            let f = scale && s1.distance(to: s2) > 1e-9 ? d1.distance(to: d2) / s1.distance(to: s2) : 1
-            let t = Transform2D.translation(d1) * Transform2D.rotation(ang) * Transform2D.scale(f, f) * Transform2D.translation(-s1)
+            let t = alignTransform(s1, s2, d1, d2, scale: scale, mirror: mirror)
             ed.transformObjects(ids, t, copy: false)
             ed.selection = []
         },
@@ -563,7 +568,7 @@ enum ModifyCommands {
             var value = ed.variableDouble("LENGTHENVALUE", 0)
             ed.selection = []
             loop: while true {
-                let a = try await ed.pickObject("Select an object to measure", keywords: ["DElta", "Percent", "Total"]) { ed.doc.entity($0) != nil }
+                let a = try await ed.pickObject("Select an object to measure", keywords: ["DElta", "Percent", "Total", "DYnamic"]) { ed.doc.entity($0) != nil }
                 switch a {
                 case .pick(let pk):
                     if let e = ed.doc.entity(pk.id) {
@@ -581,6 +586,20 @@ enum ModifyCommands {
                 case .keyword("Total"):
                     guard let v = try await ed.getDistance("Specify total length", defaultValue: value).value, v > 0 else { continue }
                     mode = "Total"; value = v
+                case .keyword("DYnamic"):
+                    // Drag the picked end: the new end is the cursor projected on the end tangent (lines) or its angle (arcs).
+                    while true {
+                        guard case .pick(let pk) = try await ed.pickObject("Select an object to change", filter: { ed.doc.entity($0) != nil }), let e = ed.doc.entity(pk.id) else { return }
+                        let g = e.geometry
+                        let atStart = SplineTools.nearestEndIsStart(g, to: pk.point, doc: ed.doc)
+                        guard let end = SplineTools.endTangent(g, atStart: atStart, doc: ed.doc) else { ed.print("This object cannot be lengthened."); continue }
+                        @MainActor func result(_ c: Vec2) -> Geometry? {
+                            Modify.lengthen(g, at: end.point, delta: dynamicDelta(g, end: end, cursor: c))
+                        }
+                        guard let q = try await ed.getPoint("Specify new end point", base: end.point, preview: { c in result(c).map { [$0] } ?? [] }).point else { continue }
+                        guard let res = result(q) else { ed.print("This object cannot be lengthened to that point."); continue }
+                        ed.replaceEntity(pk.id, with: [res])
+                    }
                 default: return
                 }
                 break loop
@@ -675,7 +694,7 @@ enum ModifyCommands {
             }
             while true {
                 let closed: Bool = { if let id = ids.first, case .polyline(let p) = ed.doc.entity(id)?.geometry { return p.closed }; return false }()
-                let k = try await ed.getKeyword("Enter an option", [closed ? "Open" : "Close", "Join", "Width", "Spline", "Decurve", "Reverse", "Addvertex", "delVertex", "Linearize", "Undo", "eXit"], defaultValue: "eXit") ?? "eXit"
+                let k = try await ed.getKeyword("Enter an option", [closed ? "Open" : "Close", "Join", "Width", "Edit", "SEgment", "APpend", "Spline", "Decurve", "Reverse", "Addvertex", "delVertex", "Linearize", "Undo", "eXit"], defaultValue: "eXit") ?? "eXit"
                 switch k {
                 case "Addvertex", "delVertex":
                     guard ids.count == 1 else { ed.print("Vertex editing works on a single polyline."); continue }
@@ -683,6 +702,33 @@ enum ModifyCommands {
                     guard case .polyline(let p)? = ed.doc.entity(ids[0])?.geometry,
                           let n = k == "Addvertex" ? DraftGeometry.insertVertex(p, near: q) : DraftGeometry.removeVertex(p, near: q) else { ed.print(k == "Addvertex" ? "No segment there." : "Cannot remove that vertex."); continue }
                     edit { $0 = n }
+                case "Edit":
+                    guard ids.count == 1 else { ed.print("Vertex editing works on a single polyline."); continue }
+                    try await editVertices(ed, ids[0], undo: &undo)
+                case "SEgment":
+                    guard ids.count == 1, case .polyline(let p)? = ed.doc.entity(ids[0])?.geometry else { ed.print("Segment editing works on a single polyline."); continue }
+                    let q = try await ed.requirePoint("Select the segment to change")
+                    guard let si = PolylineEdit.nearestSegment(p, to: q) else { continue }
+                    let t = try await ed.getKeyword("Segment type", ["Line", "Arc"], defaultValue: abs(p.vertices[si].bulge) > 1e-12 ? "Line" : "Arc") ?? "Line"
+                    var through: Vec2? = nil
+                    if t == "Arc" {
+                        let a = p.vertices[si].p, b = p.vertices[(si + 1) % p.vertices.count].p
+                        through = try await ed.getPoint("Specify a point on the arc", preview: { c in PolylineEdit.setSegment(p, si, arcThrough: c).map { [.polyline($0)] } ?? [] }).point
+                            ?? ((a + b) / 2 + (b - a).perp * 0.5)
+                    }
+                    guard let n = PolylineEdit.setSegment(p, si, arcThrough: through) else { ed.print("Cannot make that arc."); continue }
+                    edit { $0 = n }
+                case "APpend":
+                    guard ids.count == 1, case .polyline(let p)? = ed.doc.entity(ids[0])?.geometry, !p.closed, let f = p.vertices.first?.p, let l = p.vertices.last?.p else { ed.print("Append works on a single open polyline."); continue }
+                    let near = try await ed.getPoint("Specify a point near the end to continue from", base: l).point ?? l
+                    let atStart = near.distance(to: f) < near.distance(to: l)
+                    var added: [Vec2] = []
+                    var last = atStart ? f : l
+                    while let q = try await ed.getPoint("Specify next point", base: last, preview: { c in [.polyline(PolylineEdit.append(p, points: added + [c], atStart: atStart))] }).point {
+                        if !q.isClose(last, tol: 1e-9) { added.append(q); last = q }
+                    }
+                    guard !added.isEmpty else { continue }
+                    edit { $0 = PolylineEdit.append($0, points: added, atStart: atStart) }
                 case "Linearize":
                     let tol = ed.variableDouble("LINEARIZETOL", 0)
                     edit { $0 = DraftGeometry.linearize($0, maxDeviation: tol) }
@@ -720,6 +766,85 @@ enum ModifyCommands {
             }
         },
     ] }
+
+    /// ALIGN transform: s1→d1 exactly, s1s2 direction onto d1d2, optional uniform scale and mirror about the s1s2 line.
+    static func alignTransform(_ s1: Vec2, _ s2: Vec2, _ d1: Vec2, _ d2: Vec2, scale: Bool, mirror: Bool) -> Transform2D {
+        let ang = (d2 - d1).angle - (s2 - s1).angle
+        let f = scale && s1.distance(to: s2) > 1e-9 ? d1.distance(to: d2) / s1.distance(to: s2) : 1
+        var t = Transform2D.translation(d1) * Transform2D.rotation(ang) * Transform2D.scale(f, f) * Transform2D.translation(-s1)
+        if mirror && s1.distance(to: s2) > 1e-9 { t = t * Transform2D.mirror(s1, s2) }
+        return t
+    }
+
+    /// Length change for LENGTHEN DYnamic: arcs follow the cursor angle, other curves its projection on the end tangent.
+    static func dynamicDelta(_ g: Geometry, end: (point: Vec2, dir: Vec2), cursor c: Vec2) -> Double {
+        if case .arc(let a) = g {
+            let ang = (c - a.center).angle
+            let endAng = (end.point - a.center).angle
+            // Signed angle from the picked end, positive outward (in the direction of the end tangent).
+            let cross = Vec2.polar(1, endAng).cross(end.dir)
+            var d = normAngle(ang - endAng)
+            if d > .pi { d -= 2 * .pi }
+            return d * (cross >= 0 ? 1 : -1) * a.radius
+        }
+        return (c - end.point).dot(end.dir)
+    }
+
+    /// PEDIT Edit vertex: a current-vertex marker walks the polyline (Next/Previous); Break, Insert, Move, Straighten,
+    /// Tangent-free arcs are set with Arc (segment after the vertex).
+    @MainActor static func editVertices(_ ed: Editor, _ id: EntityID, undo: inout [ArchiDocument]) async throws {
+        var cur = 0
+        @MainActor func poly() -> PolylineGeom? { if case .polyline(let p)? = ed.doc.entity(id)?.geometry { return p }; return nil }
+        @MainActor func set(_ p: PolylineGeom) { if let i = ed.doc.entityIndex(id) { ed.doc.entities[i].geometry = .polyline(p) } }
+        while let p = poly(), !p.vertices.isEmpty {
+            cur = min(max(cur, 0), p.vertices.count - 1)
+            ed.print("Current vertex \(cur + 1) of \(p.vertices.count) at \(p.vertices[cur].p)")
+            let k = try await ed.getKeyword("Enter a vertex editing option", ["Next", "Previous", "Break", "Insert", "Move", "Straighten", "Arc", "eXit"], defaultValue: "Next") ?? "eXit"
+            switch k {
+            case "Next": cur = p.closed ? (cur + 1) % p.vertices.count : min(cur + 1, p.vertices.count - 1)
+            case "Previous": cur = p.closed ? (cur - 1 + p.vertices.count) % p.vertices.count : max(cur - 1, 0)
+            case "Move":
+                let from = p.vertices[cur].p, ci = cur
+                guard let q = try await ed.getPoint("Specify new location for marked vertex", base: from, preview: { c in PolylineEdit.moveVertex(p, ci, to: c).map { [.polyline($0)] } ?? [] }).point,
+                      let n = PolylineEdit.moveVertex(p, cur, to: q) else { continue }
+                undo.append(ed.doc); set(n)
+            case "Insert":
+                let ci = cur
+                guard let q = try await ed.getPoint("Specify location for new vertex", base: p.vertices[cur].p, preview: { c in PolylineEdit.insertAfter(p, ci, c).map { [.polyline($0)] } ?? [] }).point,
+                      let n = PolylineEdit.insertAfter(p, cur, q) else { ed.print("Cannot insert after the last vertex of an open polyline."); continue }
+                undo.append(ed.doc); set(n); cur += 1
+            case "Arc":
+                guard cur < PolylineEdit.segmentCount(p) else { ed.print("No segment after the last vertex."); continue }
+                let ci = cur
+                guard let q = try await ed.getPoint("Specify a point on the arc (Enter = straight)", preview: { c in PolylineEdit.setSegment(p, ci, arcThrough: c).map { [.polyline($0)] } ?? [] }).point else {
+                    if let n = PolylineEdit.setSegment(p, cur, arcThrough: nil) { undo.append(ed.doc); set(n) }
+                    continue
+                }
+                if let n = PolylineEdit.setSegment(p, cur, arcThrough: q) { undo.append(ed.doc); set(n) }
+            case "Break", "Straighten":
+                let start = cur
+                var other = cur
+                while true {
+                    let o = try await ed.getKeyword("Enter an option", ["Next", "Previous", "Go", "eXit"], defaultValue: "Go") ?? "eXit"
+                    if o == "Next" { other = p.closed ? (other + 1) % p.vertices.count : min(other + 1, p.vertices.count - 1); ed.print("Second vertex \(other + 1)"); continue }
+                    if o == "Previous" { other = p.closed ? (other - 1 + p.vertices.count) % p.vertices.count : max(other - 1, 0); ed.print("Second vertex \(other + 1)"); continue }
+                    if o == "eXit" { other = -1 }
+                    break
+                }
+                guard other >= 0 else { continue }
+                if k == "Straighten" {
+                    guard let n = PolylineEdit.straighten(p, start, other) else { ed.print("Select two different vertices."); continue }
+                    undo.append(ed.doc); set(n); cur = min(start, other)
+                } else {
+                    let pieces = PolylineEdit.breakBetween(p, start, other)
+                    undo.append(ed.doc)
+                    ed.replaceEntity(id, with: pieces.map { .polyline($0) })
+                    return
+                }
+            default: return
+            }
+        }
+    }
 
     // MARK: - ARRAY
     @MainActor static func rectArray(_ ed: Editor, _ ids: [EntityID]) async throws {

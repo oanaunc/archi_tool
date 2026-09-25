@@ -31,6 +31,7 @@ public enum BuiltinCommands {
         out += LayerToolCommands.all
         out += DraftAnnotationCommands.all
         out += DraftAidCommands.all
+        out += DraftDetailCommands.all
         return out
     }
 

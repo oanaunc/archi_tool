@@ -157,8 +157,10 @@ extension Editor {
         for id in ids {
             guard let i = doc.entityIndex(id) else { continue }
             let g = GeometryOps.transform(doc.entities[i].geometry, t)
-            if copy { var e = doc.entities[i]; e.geometry = g; out.append(doc.add(e)) }
-            else { doc.entities[i].geometry = g; out.append(id) }
+            var props = doc.entities[i].props
+            DraftProps.transform(&props, t)
+            if copy { var e = doc.entities[i]; e.geometry = g; e.props = props; out.append(doc.add(e)) }
+            else { doc.entities[i].geometry = g; doc.entities[i].props = props; out.append(id) }
         }
         // Elements (non-openings first so hosts exist)
         let els = ids.compactMap { doc.element($0) }
@@ -203,10 +205,35 @@ extension Editor {
     /// can be ended mid-script. A line that is not valid input for the running command's prompt but names a
     /// command ends the running command (unanswered prompts get Enter) and starts the new one.
     public func runScript(_ text: String) async {
-        for raw in CommandHelpers.scriptLines(text, keepBlank: true) {
+        await runScriptLines(CommandHelpers.scriptLines(text, keepBlank: true))
+    }
+
+    /// Runs script lines; an interruption (Escape) keeps the remaining lines for RESUME.
+    public func runScriptLines(_ lines: [String]) async {
+        scriptDepth += 1
+        if scriptDepth == 1 { scriptInterrupted = false }
+        defer { scriptDepth -= 1 }
+        for (idx, raw) in lines.enumerated() {
+            if scriptInterrupted {
+                pendingScript = Array(lines[idx...])
+                print("Script interrupted: \(lines.count - idx) line(s) left. Type RESUME to continue.")
+                await waitIdle()
+                return
+            }
             let line = raw.trimmingCharacters(in: .whitespaces)
             let isEnter = line.isEmpty || line == "\"\"" || line == ";"
-            if activeCommand != nil { await waitForInputOrIdle() }
+            if activeCommand != nil {
+                await waitForInputOrIdle()
+                // Commands busy without a prompt (DELAY) keep the script waiting.
+                var n = 0
+                while activeCommand != nil && request == nil && !scriptInterrupted && n < 40000 { try? await Task.sleep(nanoseconds: 1_000_000); n += 1 }
+            }
+            if scriptInterrupted {
+                pendingScript = Array(lines[idx...])
+                print("Script interrupted: \(lines.count - idx) line(s) left. Type RESUME to continue.")
+                await waitIdle()
+                return
+            }
             if isEnter {
                 if activeCommand != nil { feed(.enter); await Task.yield() }
                 continue

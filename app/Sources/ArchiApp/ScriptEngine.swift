@@ -271,6 +271,8 @@ final class ScriptEngine {
     private weak var model: AppModel?
     private var output: [String] = []
     private var lastException: String?
+    /// Source being evaluated (for error excerpts).
+    private var currentSource = ""
     /// Called on the main thread for every printed line.
     var onOutput: ((String) -> Void)?
 
@@ -286,7 +288,11 @@ final class ScriptEngine {
             queue.async {
                 self.output = []
                 self.lastException = nil
+                self.currentSource = code
+                let t0 = Date()
                 let v = self.context.evaluateScript(code)
+                let ms = Date().timeIntervalSince(t0) * 1000
+                if self.lastException == nil && code.contains("\n") { self.emit("✓ finished in \(ms < 10 ? String(format: "%.1f", ms) : String(Int(ms.rounded()))) ms") }
                 var value: String?
                 if let v, !v.isUndefined, self.lastException == nil { value = self.describe(v) }
                 cont.resume(returning: ScriptResult(output: self.output, value: value, error: self.lastException))
@@ -348,9 +354,16 @@ final class ScriptEngine {
         ctx.exceptionHandler = { [weak self] _, ex in
             guard let self, let ex else { return }
             var msg = ex.toString() ?? "Error"
-            if let line = ex.objectForKeyedSubscript("line"), line.isNumber { msg += " (line \(line.toInt32()))" }
+            var lineNo: Int?, col: Int?
+            if let line = ex.objectForKeyedSubscript("line"), line.isNumber { lineNo = Int(line.toInt32()) }
+            if let c = ex.objectForKeyedSubscript("column"), c.isNumber { col = Int(c.toInt32()) }
+            if let l = lineNo { msg += " (line \(l)\(col.map { ", column \($0)" } ?? ""))" }
             self.lastException = msg
             self.emit("✖ " + msg)
+            // Debugger output: the offending source line with a caret, then the JavaScript call stack.
+            if let l = lineNo { for x in ScriptDiagnostics.excerpt(source: self.currentSource, line: l, column: col) { self.emit("✖ " + x) } }
+            let stack = ex.objectForKeyedSubscript("stack")?.toString() ?? ""
+            for f in ScriptDiagnostics.frames(stack) { self.emit("✖    at " + f) }
         }
         let archi = JSValue(newObjectIn: ctx)!
         func def<F>(_ name: String, _ block: F) { archi.setObject(unsafeBitCast(block, to: AnyObject.self), forKeyedSubscript: name as NSString) }
@@ -361,8 +374,19 @@ final class ScriptEngine {
         }
         def("print", printFn)
         let console = JSValue(newObjectIn: ctx)!
-        for n in ["log", "info", "warn", "error"] { console.setObject(unsafeBitCast(printFn, to: AnyObject.self), forKeyedSubscript: n as NSString) }
+        for n in ["log", "info", "debug"] { console.setObject(unsafeBitCast(printFn, to: AnyObject.self), forKeyedSubscript: n as NSString) }
+        let warnFn: @convention(block) () -> Void = { [weak self] in
+            let args = JSContext.currentArguments() as? [JSValue] ?? []
+            self?.emit("⚠ " + args.map { self?.describe($0) ?? "" }.joined(separator: " "))
+        }
+        let errorFn: @convention(block) () -> Void = { [weak self] in
+            let args = JSContext.currentArguments() as? [JSValue] ?? []
+            self?.emit("✖ " + args.map { self?.describe($0) ?? "" }.joined(separator: " "))
+        }
+        console.setObject(unsafeBitCast(warnFn, to: AnyObject.self), forKeyedSubscript: "warn" as NSString)
+        console.setObject(unsafeBitCast(errorFn, to: AnyObject.self), forKeyedSubscript: "error" as NSString)
         ctx.setObject(console, forKeyedSubscript: "console" as NSString)
+        ctx.evaluateScript(ScriptDiagnostics.consolePrelude)
 
         let run: @convention(block) (JSValue) -> Any? = { [weak self] v in
             guard let self else { return nil }
@@ -430,6 +454,37 @@ final class ScriptEngine {
                 }
                 return obj is [Any] ? ids as Any : (ids.first as Any)
             } }
+        } as @convention(block) (JSValue) -> Any?)
+
+        // Node graphs (visual programming) from scripts: evaluate a graph object, or bake its output into the drawing.
+        func graph(_ v: JSValue) throws -> NodeGraph {
+            guard let o = self.arg(v), JSONSerialization.isValidJSONObject(o) else { throw ArchiJSON.fail("expected a node graph object") }
+            do { return try JSONDecoder().decode(NodeGraph.self, from: try JSONSerialization.data(withJSONObject: o)) }
+            catch { throw ArchiJSON.fail("not a node graph: \(error.localizedDescription)") }
+        }
+        def("evaluateGraph", { [weak self] (g: JSValue) -> Any? in
+            guard let self else { return nil }
+            return self.call {
+                let gr = try graph(g)
+                return try self.onMain { () -> Any in
+                    let ev = gr.evaluate()
+                    return ["objects": ev.output.count, "elements": ev.elementOutput.count,
+                            "errors": Dictionary(uniqueKeysWithValues: ev.errors.map { ("\($0.key)", $0.value) }),
+                            "geometry": ev.output.map { ArchiJSON.object($0) }] as [String: Any]
+                }
+            }
+        } as @convention(block) (JSValue) -> Any?)
+        def("bakeGraph", { [weak self] (g: JSValue) -> Any? in
+            guard let self else { return nil }
+            return self.call {
+                let gr = try graph(g)
+                return try self.onMain { () -> Any in
+                    let ev = gr.evaluate()
+                    var ids: [EntityID] = []
+                    try self.editor().transaction("Bake Node Graph") { d in ids = NodeGraphBake.bake(ev.output, elements: ev.elementOutput, into: &d) }
+                    return ids
+                }
+            }
         } as @convention(block) (JSValue) -> Any?)
 
         def("update", { [weak self] (idv: JSValue, p: JSValue) -> Any? in
@@ -625,5 +680,65 @@ extension ScriptEngine {
         let e = ScriptEngine(model: m)
         engines.setObject(e, forKey: m)
         return e
+    }
+}
+
+
+/// Script debugging helpers: error excerpts with a caret, readable stack frames, and console extras
+/// (assert, time/timeEnd, trace, count) installed in every script context.
+enum ScriptDiagnostics {
+    /// The source line `line` (1-based) with its neighbours and a caret under `column`.
+    static func excerpt(source: String, line: Int, column: Int?, context: Int = 1) -> [String] {
+        let lines = source.components(separatedBy: "\n")
+        guard line >= 1, line <= lines.count else { return [] }
+        var out: [String] = []
+        let w = String(min(lines.count, line + context)).count
+        for i in max(1, line - context)...min(lines.count, line + context) {
+            let n = String(i).leftPadded(to: w)
+            out.append("\(i == line ? ">" : " ") \(n) | \(lines[i - 1])")
+            if i == line, let c = column, c >= 1 { out.append("  " + String(repeating: " ", count: w) + " | " + String(repeating: " ", count: min(c - 1, 400)) + "^") }
+        }
+        return out
+    }
+    /// Stack frames ("fn@file:line:col" lines) without the global-code noise.
+    static func frames(_ stack: String) -> [String] {
+        stack.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty && $0 != "global code" }
+    }
+    static let consolePrelude = """
+    (function(){
+      var timers = {}, counts = {};
+      console.assert = function(c){ if(!c){ var a = Array.prototype.slice.call(arguments, 1); console.error.apply(null, ["Assertion failed:"].concat(a)); } };
+      console.time = function(l){ timers[l || "default"] = Date.now(); };
+      console.timeEnd = function(l){ l = l || "default"; if (timers[l] !== undefined){ console.log(l + ": " + (Date.now() - timers[l]) + " ms"); delete timers[l]; } else { console.warn("No timer " + l); } };
+      console.count = function(l){ l = l || "default"; counts[l] = (counts[l] || 0) + 1; console.log(l + ": " + counts[l]); };
+      console.trace = function(){ var s = (new Error()).stack || ""; console.log.apply(null, ["Trace:"].concat(Array.prototype.slice.call(arguments)));
+        s.split("\\n").slice(1).forEach(function(f){ if (f && f !== "global code") console.log("   at " + f); }); };
+    })();
+    """
+}
+
+private extension String {
+    func leftPadded(to n: Int) -> String { count >= n ? self : String(repeating: " ", count: n - count) + self }
+}
+
+
+/// Runs JavaScript plugins (PluginRegistry) in the app: plugin commands evaluate the plugin's main script in the
+/// document window's script engine (full `archi` API) once the command line is free, and call the command's function.
+@MainActor enum AppPlugins {
+    static func install() {
+        let reg = PluginRegistry.shared
+        reg.reload()
+        reg.register(into: .shared)
+        PluginRegistry.evaluator = { plugin, function, ed in
+            guard let m = AppModel.all.first(where: { $0.editor === ed }) else { throw CommandError.invalid("No document window to run the plugin in.") }
+            let engine = ScriptEngine.forModel(m)
+            let code = plugin.source + "\n;if (typeof \(function) !== 'function') { throw new Error('\(plugin.manifest.main) defines no function \(function)()'); }\n\(function)();"
+            Task { @MainActor in
+                await ed.waitIdle()
+                let r = await engine.evaluate(code)
+                for l in r.output { ed.print(l) }
+                if let e = r.error { ed.print("\(plugin.manifest.name): \(e)") }
+            }
+        }
     }
 }

@@ -117,25 +117,48 @@ enum BlockCommands {
                 angle = try await ed.getAngle("Specify rotation angle", base: pos, defaultValue: 0, preview: { c in [.insert(InsertGeom(block: name, position: pos, scale: Vec2(px, py), rotation: (c - pos).angle))] }).value ?? 0
             }
             var attrs: [String: String] = [:]
+            let ask = ed.doc.variable("ATTREQ") != "0"
             for e in blk.entities {
                 guard let tag = e.props["attdef"] else { continue }
-                let v = try await ed.getString(e.props["prompt"].flatMap { $0.isEmpty ? nil : $0 } ?? "Enter \(tag)", defaultValue: e.props["default"] ?? "")
-                attrs[tag] = v ?? e.props["default"] ?? ""
+                let def = e.props["default"] ?? ""
+                // Constant and preset attributes (and ATTREQ 0) take their default without prompting.
+                guard ask, !AttributeModes.has(e, "C"), !AttributeModes.has(e, "P") else { attrs[tag] = def; continue }
+                let msg = e.props["prompt"].flatMap { $0.isEmpty ? nil : $0 } ?? "Enter \(tag)"
+                var v = try await ed.getString(msg, defaultValue: def) ?? def
+                if AttributeModes.has(e, "V") { v = try await ed.getString("Verify " + msg, defaultValue: v) ?? v }
+                attrs[tag] = v
             }
             ed.addEntity(.insert(InsertGeom(block: name, position: pos, scale: Vec2(sx, sy), rotation: angle, attributes: attrs)))
         }
     }
 
     static var attdef: CommandDef {
-        CommandDef("ATTDEF", aliases: ["ATT", "-ATTDEF"], category: "Blocks", summary: "Defines an attribute (tag, prompt, default) to include in a block.") { ed in
-            guard let tag = try await ed.getWord("Enter attribute tag name"), !tag.isEmpty, !tag.contains(" ") else { throw CommandError.invalid("The tag must be one word.") }
-            let prompt = try await ed.getWord("Enter attribute prompt", defaultValue: tag) ?? tag
-            let def = try await ed.getWord("Enter default attribute value", defaultValue: "") ?? ""
-            let p = try await ed.requirePoint("Specify start point of text")
-            let h = try await ed.getPositive("Specify height", base: p, defaultValue: ed.settings.textHeight)
-            let rot = try await ed.getAngle("Specify rotation angle of text", base: p, defaultValue: 0).value ?? 0
-            let id = ed.addEntity(.text(TextGeom(position: p, height: h, content: tag.uppercased(), rotation: rot)))
-            if let i = ed.doc.entityIndex(id) { ed.doc.entities[i].props = ["attdef": tag.uppercased(), "prompt": prompt, "default": def] }
+        CommandDef("ATTDEF", aliases: ["ATT", "-ATTDEF"], category: "Blocks", summary: "Defines an attribute (modes Invisible/Constant/Verify/Preset/Lock, tag, prompt, default) to include in a block.") { ed in
+            var modes = Set((ed.doc.variable("AFLAGS") ?? "").map { String($0) })
+            while true {
+                let cur = AttributeModes.all.filter { modes.contains($0.prefix(1).uppercased()) }.joined(separator: ",")
+                let w = try await ed.getWord("Current attribute modes: \(cur.isEmpty ? "none" : cur). Enter an option to change [Invisible/Constant/Verify/Preset/Lock] or tag name",
+                                             keywords: AttributeModes.all)
+                guard let t = w else { throw CommandError.invalid("The tag must be one word.") }
+                if AttributeModes.all.contains(t) { let f = String(t.prefix(1)); if modes.contains(f) { modes.remove(f) } else { modes.insert(f) }; continue }
+                guard !t.isEmpty, !t.contains(" ") else { throw CommandError.invalid("The tag must be one word.") }
+                let tag = t
+                let flags = AttributeModes.text(modes)
+                ed.doc.setVariable("AFLAGS", flags)
+                let constant = modes.contains("C")
+                let prompt = constant ? tag : (try await ed.getWord("Enter attribute prompt", defaultValue: tag) ?? tag)
+                let def = try await ed.getWord(constant ? "Enter attribute value" : "Enter default attribute value", defaultValue: "") ?? ""
+                let p = try await ed.requirePoint("Specify start point of text")
+                let h = try await ed.getPositive("Specify height", base: p, defaultValue: ed.settings.textHeight)
+                let rot = try await ed.getAngle("Specify rotation angle of text", base: p, defaultValue: 0).value ?? 0
+                let id = ed.addEntity(.text(TextGeom(position: p, height: h, content: tag.uppercased(), rotation: rot)))
+                if let i = ed.doc.entityIndex(id) {
+                    ed.doc.entities[i].props = ["attdef": tag.uppercased(), "prompt": prompt, "default": def]
+                    if !flags.isEmpty { ed.doc.entities[i].props[AttributeModes.prop] = flags }
+                    if modes.contains("I") { ed.doc.entities[i].props["invisible"] = "1" }
+                }
+                return
+            }
         }
     }
 
@@ -143,7 +166,10 @@ enum BlockCommands {
         CommandDef("ATTEDIT", aliases: ["ATE", "-ATTEDIT", "EATTEDIT"], category: "Blocks", summary: "Changes attribute values of a block reference.") { ed in
             guard case .pick(let pk) = try await ed.pickObject("Select block reference", filter: { if case .insert? = ed.doc.entity($0)?.geometry { return true }; return false }),
                   let i = ed.doc.entityIndex(pk.id), case .insert(var ins) = ed.doc.entities[i].geometry else { return }
-            let tags = (ed.doc.blocks[ins.block]?.entities.compactMap { $0.props["attdef"] } ?? []) + ins.attributes.keys.sorted()
+            let defs = ed.doc.blocks[ins.block]?.entities ?? []
+            // Constant attributes cannot be edited.
+            let constant = Set(defs.filter { AttributeModes.has($0, "C") }.compactMap { $0.props["attdef"] })
+            let tags = (defs.compactMap { $0.props["attdef"] } + ins.attributes.keys.sorted()).filter { !constant.contains($0) }
             var seen = Set<String>()
             let unique = tags.filter { seen.insert($0).inserted }
             guard !unique.isEmpty else { throw CommandError.invalid("That block has no attributes.") }

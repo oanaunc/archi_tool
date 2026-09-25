@@ -75,6 +75,7 @@ public enum CSVText {
 public enum QuantityTakeoff {
     /// Quantities of BIM elements, optionally for one level. Wall areas are net of hosted openings (one face).
     public static func compute(_ doc: ArchiDocument, level: Int? = nil) -> Takeoff {
+        let doc = ModelSets.scheduleModel(doc)   // SCHEDULEFILTER: worksets, design options, phases
         let u = doc.units.mm / 1000        // model units → m
         let a2 = u * u, v3 = u * u * u
         var lines: [String: TakeoffLine] = [:]

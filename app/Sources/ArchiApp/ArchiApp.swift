@@ -58,6 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Clipboard.install()
         CommandRegistry.shared.ensureBuiltins()
         AppCommands.registerAll()
+        AppPlugins.install()
         _ = AppPreferences.shared
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { e in
             MainActor.assumeIsolated { ShortcutDispatcher.handle(e) || AppDelegate.handleFunctionKey(e) } ? nil : e

@@ -646,13 +646,13 @@ enum BIMExtCommands {
             let withOpenings = try await ed.getYesNo("Dimension openings?", defaultValue: true)
             let chains = AutoDimension.wallChains(doc: ed.doc, walls: ids, offset: off, openings: withOpenings)
             var n = 0
-            for c in chains {
-                for d in c.dims {
-                    var dg = d; dg.style = ed.doc.currentDimStyle
-                    let id = ed.addEntity(.dimension(dg), layer: "A-ANNO-DIMS")
-                    if let i = ed.doc.entityIndex(id) { ed.doc.entities[i].props["autoDim"] = "\(c.wall)" }
-                    n += 1
-                }
+            // Associative: the dimensions keep their walls and rebuild when walls or openings change (BIMUpdaters).
+            for (g, props) in AutoDimensions.tagWallChains(chains, set: ids, offset: off, openings: withOpenings) {
+                guard case .dimension(var dg) = g else { continue }
+                dg.style = ed.doc.currentDimStyle
+                let id = ed.addEntity(.dimension(dg), layer: "A-ANNO-DIMS")
+                if let i = ed.doc.entityIndex(id) { for (k, v) in props { ed.doc.entities[i].props[k] = v } }
+                n += 1
             }
             ed.doc.setVariable("AUTODIMOFFSET", fmt(off))
             ed.selection = []

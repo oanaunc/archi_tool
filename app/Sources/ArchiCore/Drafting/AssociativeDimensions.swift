@@ -114,6 +114,11 @@ public enum DimAssociation {
         let avg = moves.isEmpty ? Vec2.zero : moves.reduce(Vec2.zero, +) / Double(moves.count)
         let defs = DimensionRenderer.definitionCount(d.kind)
         if avg.length > 0 { for i in 0..<min(defs, pts.count) where m[i] == nil { pts[i] = pts[i] + avg } }
+        // Jog markers (zero-radius pairs after the definition points) travel with the dimension.
+        if avg.length > 0, pts.count > defs {
+            var i = defs
+            while i + 1 < pts.count { if pts[i] == pts[i + 1] { pts[i] = pts[i] + avg; pts[i + 1] = pts[i] }; i += 2 }
+        }
         var nd = d; nd.points = pts
         let newText = text(alive)
         if nd == d && newText == e.props[prop] { return nil }

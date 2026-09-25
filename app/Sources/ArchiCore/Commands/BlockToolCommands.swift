@@ -115,16 +115,31 @@ enum BlockToolCommands {
         }
     }
     static var battman: CommandDef {
-        CommandDef("BATTMAN", aliases: ["-BATTMAN"], category: "Blocks", summary: "Edits the attribute definitions of a block (prompt, default, tag, delete) and syncs references.") { ed in
+        CommandDef("BATTMAN", aliases: ["-BATTMAN"], category: "Blocks", summary: "Edits the attribute definitions of a block (prompt, default, tag, modes, order, delete) and syncs references.") { ed in
             guard let n = try await ed.getWord("Enter block name"), let name = BlockTools.blockName(n, ed.doc), var blk = ed.doc.blocks[name] else { throw CommandError.invalid("Block not found.") }
             let tags = blk.entities.compactMap { $0.props["attdef"] }
             guard !tags.isEmpty else { throw CommandError.invalid("Block \(name) has no attributes.") }
             ed.print("Attributes: " + tags.joined(separator: ", "))
             guard let t = try await ed.getWord("Enter attribute tag"), let idx = blk.entities.firstIndex(where: { $0.props["attdef"]?.caseInsensitiveCompare(t) == .orderedSame }) else { throw CommandError.invalid("Tag not found.") }
             let tag = blk.entities[idx].props["attdef"]!
-            let k = try await ed.getKeyword("Enter option", ["Prompt", "Default", "Tag", "Delete"], defaultValue: "Default") ?? "Default"
+            let k = try await ed.getKeyword("Enter option", ["Prompt", "Default", "Tag", "Mode", "UP", "DOwn", "Delete"], defaultValue: "Default") ?? "Default"
             var renamed: (String, String)? = nil
             switch k {
+            case "UP", "DOwn":
+                // Prompt order = order of the attribute definitions in the block.
+                let attIdx = blk.entities.indices.filter { blk.entities[$0].props["attdef"] != nil }
+                guard let pos = attIdx.firstIndex(of: idx) else { break }
+                let other = k == "UP" ? pos - 1 : pos + 1
+                guard attIdx.indices.contains(other) else { ed.print("Already \(k == "UP" ? "first" : "last")."); break }
+                blk.entities.swapAt(idx, attIdx[other])
+            case "Mode":
+                var flags = Set((blk.entities[idx].props[AttributeModes.prop] ?? "").map { String($0) })
+                while let m = try await ed.getKeyword("Toggle mode [Invisible/Constant/Verify/Preset/Lock] (current: \(AttributeModes.text(flags).isEmpty ? "none" : AttributeModes.text(flags)))", AttributeModes.all) {
+                    let f = String(m.prefix(1)); if flags.contains(f) { flags.remove(f) } else { flags.insert(f) }
+                }
+                let t = AttributeModes.text(flags)
+                blk.entities[idx].props[AttributeModes.prop] = t.isEmpty ? nil : t
+                blk.entities[idx].props["invisible"] = flags.contains("I") ? "1" : nil
             case "Prompt": blk.entities[idx].props["prompt"] = try await ed.getString("Enter new prompt", defaultValue: blk.entities[idx].props["prompt"] ?? tag) ?? tag
             case "Default": blk.entities[idx].props["default"] = try await ed.getString("Enter new default value", defaultValue: blk.entities[idx].props["default"] ?? "") ?? ""
             case "Tag":

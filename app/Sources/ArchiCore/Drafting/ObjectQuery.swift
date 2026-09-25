@@ -16,8 +16,18 @@ public enum ObjectQuery {
     ]
 
     /// Whether the object's type matches a type name, synonym, category ("annotation", "curve", "element") or "*".
+    /// IFC entity names → Archi element / entity type names.
+    static let ifcTypes: [String: String] = [
+        "ifcwall": "wall", "ifcwallstandardcase": "wall", "ifcslab": "slab", "ifccolumn": "column", "ifcbeam": "beam",
+        "ifcdoor": "door", "ifcwindow": "window", "ifcopeningelement": "opening", "ifcroof": "roof", "ifcstair": "stair",
+        "ifcstairflight": "stair", "ifcrailing": "railing", "ifcspace": "space", "ifccurtainwall": "curtainwall",
+        "ifcfurnishingelement": "component", "ifcfurniture": "component", "ifcbuildingelementproxy": "component",
+        "ifcgrid": "gridline", "ifcgridaxis": "gridline", "ifcannotation": "annotation",
+    ]
+
     public static func typeMatches(_ id: EntityID, _ type: String, doc: ArchiDocument) -> Bool {
-        let t = type.lowercased()
+        var t = type.lowercased()
+        if let m = ifcTypes[t] { t = m }
         if t == "*" || t == "all" || t == "any" { return true }
         if let e = doc.entity(id) {
             let tn = e.typeName
@@ -107,6 +117,13 @@ public enum ObjectQuery {
             if n.hasPrefix("prop.") { return el.props[String(name.dropFirst(5))] }
             if let v = PropertyAccess.getProperty(el, name) { return v }
             if let k = el.props.keys.first(where: { $0.lowercased() == n }) { return el.props[k] }
+            if n == "material" {
+                // Elements without their own material report their wall type's plies ("Brick+Insulation").
+                if let m = el.material, !m.isEmpty { return m }
+                if case .wall(let w) = el.geometry, let tn = w.wallType, let wt = doc.wallTypes.first(where: { $0.name == tn }) {
+                    return wt.plies.map(\.material).joined(separator: "+")
+                }
+            }
         }
         return nil
     }
@@ -132,6 +149,11 @@ public enum ObjectQuery {
                     guard !p.isEmpty else { return nil }
                     self.init(p, op, v); return
                 }
+            }
+            // A bare word is a type ("IfcWall", "circle", "doors").
+            let word = t.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+            if !word.isEmpty, word.allSatisfy({ $0.isLetter || $0.isNumber || $0 == "_" || $0 == "*" || $0 == "?" || $0 == "-" }) {
+                self.init("type", .eq, word); return
             }
             return nil
         }

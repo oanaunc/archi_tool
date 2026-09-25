@@ -628,6 +628,8 @@ final class PlanCanvasView: NSView {
     private(set) var scale: CGFloat = 0.04
     /// World point at the view center.
     private(set) var center = CGPoint(x: 12000, y: 7000)
+    /// World point at the centre of the view.
+    var viewCenterWorld: Vec2 { Vec2(Double(center.x), Double(center.y)) }
     private var scene: RenderScene?
     private var sceneKey: [Int] = []
     private var handledZoomRequest = -1
@@ -1064,6 +1066,8 @@ final class PlanCanvasView: NSView {
         if let h = hoverID, !ed.selection.contains(h), let s, let idx = s.index[h] {
             s.drawHighlight(idx, ctx: ctx, scale: scale, params: prm, color: CGColor(gray: 1, alpha: 0.85), extraWidth: 1.6, dashed: false, fillAlpha: 0.06)
         }
+        // Drawing compare overlay (Collaborate ▸ Compare).
+        CompareOverlay.byModel[ObjectIdentifier(model)]?.draw(ctx, scale: scale)
         // Command rubber-band preview.
         if let req = ed.request, req.kinds.contains(.point) || req.kinds.contains(.distance) || req.kinds.contains(.angle), let pv = req.preview, mouseView != nil {
             let geoms = pv(cursorPoint)
@@ -1374,6 +1378,34 @@ final class PlanCanvasView: NSView {
         return best?.0
     }
 
+    // MARK: Selection cycling (SEL-018)
+
+    /// Overlapping objects under the last pick: clicking again at the same spot swaps the selected one for the next.
+    private var cycle: (point: Vec2, ids: [EntityID], index: Int)?
+
+    /// Records the objects under a fresh pick: the canvas pick first, then the other candidates nearest first.
+    private func startCycle(at w: Vec2, first: EntityID) {
+        guard let model else { return }
+        let ids = [first] + model.editor.pickCandidates(at: w, tolerance: Double(6 / scale)).filter { $0 != first && model.editor.isSelectable($0) }
+        cycle = ids.count > 1 ? (w, ids, 0) : nil
+        if ids.count > 1 { model.live.snapHint = "1 of \(ids.count) overlapping objects — click again to cycle" }
+    }
+
+    /// Clicking again (without Shift) where overlapping objects were picked selects the next one instead. Returns true
+    /// when the click was consumed by cycling.
+    private func cycleSelection(at w: Vec2) -> Bool {
+        guard let model, var c = cycle else { return false }
+        let ed = model.editor
+        guard c.point.distance(to: w) <= Double(6 / scale), ed.selection.contains(c.ids[c.index]) else { cycle = nil; return false }
+        ed.selection.subtract(ed.expandGroups([c.ids[c.index]]))
+        c.index = (c.index + 1) % c.ids.count
+        ed.selection.formUnion(ed.expandGroups([c.ids[c.index]]))
+        cycle = c
+        let kind = ObjectQuery.typeName(c.ids[c.index], doc: model.doc) ?? "object"
+        model.live.snapHint = "\(c.index + 1) of \(c.ids.count): \(kind) #\(c.ids[c.index])"
+        return true
+    }
+
     /// Window (fully inside) or crossing selection over the drawn geometry.
     func selectIDs(in box: BBox2, crossing: Bool) -> [EntityID] {
         guard let model else { return [] }
@@ -1429,9 +1461,11 @@ final class PlanCanvasView: NSView {
             updateCursorPoint(v)
             return
         }
+        if !e.modifierFlags.contains(.shift), cycleSelection(at: rawWorld) { return }
         if let id = pick(at: rawWorld) {
             // Picking a group member selects the whole group (PICKSTYLE, see GROUP).
             let ids = Set(ed.expandGroups([id]))
+            startCycle(at: rawWorld, first: id)
             if e.modifierFlags.contains(.shift) {
                 if ed.selection.contains(id) { ed.selection.subtract(ids) } else { ed.selection.formUnion(ids) }
             } else {
@@ -1598,6 +1632,12 @@ final class PlanCanvasView: NSView {
             else if ed.isIdle && !ed.selection.isEmpty {
                 if model.has("ERASE") { model.runCommand("ERASE") } else { model.deleteSelection() }
             }
+        case 123, 124, 125, 126 where ed.isIdle && model.commandInput.isEmpty && !ed.selection.isEmpty:
+            // Arrow keys nudge the selection (MOD-028): one pixel, the snap spacing with grid snap, ×10 with Shift.
+            let step = ed.nudgeStep() * (flags.contains(.shift) ? 10 : 1)
+            let d: Vec2 = e.keyCode == 123 ? Vec2(-step, 0) : e.keyCode == 124 ? Vec2(step, 0) : e.keyCode == 125 ? Vec2(0, -step) : Vec2(0, step)
+            let n = ed.nudgeSelection(by: d)
+            model.live.snapHint = n > 0 ? "Nudged \(n) object(s) by \(fmt(d.length, 4))" : "Nothing to nudge (locked layer?)"
         case 126, 125: // arrows up/down → command history
             model.focusCommandLine()
         case 48: // Tab

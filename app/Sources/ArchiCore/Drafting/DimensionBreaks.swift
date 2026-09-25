@@ -89,6 +89,6 @@ public enum DimBreaks {
     /// Removes all breaks from a dimension entity.
     public static func remove(_ e: inout Entity) {
         e.props[prop] = nil; e.props[sizeProp] = nil
-        if case .dimension(let d) = e.geometry { e.geometry = .dimension(DimensionRenderer.withoutBreaks(d)) }
+        if case .dimension(let d) = e.geometry { e.geometry = .dimension(DimensionRenderer.withoutGaps(d)) }
     }
 }

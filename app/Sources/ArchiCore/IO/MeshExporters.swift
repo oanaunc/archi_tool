@@ -151,7 +151,27 @@ public enum GLTFExporter {
 
     /// `unitMM`: millimetres per drawing unit of the mesh positions.
     public static func exportGLB(_ groups: [MeshGroup], materials: [Material], unitMM: Double) -> Data {
+        exportGLB(groups, materials: materials, unitMM: unitMM, textureRoot: nil)
+    }
+
+    /// Reads a material's PNG/JPEG texture (absolute path, or relative to `root`, else to the working directory).
+    static func textureData(_ m: Material, root: URL?) -> (data: Data, mime: String)? {
+        guard let t = m.texture, !t.isEmpty else { return nil }
+        let ext = (t as NSString).pathExtension.lowercased()
+        guard ["png", "jpg", "jpeg"].contains(ext) else { return nil }
+        let expanded = (t as NSString).expandingTildeInPath
+        let url = expanded.hasPrefix("/") ? URL(fileURLWithPath: expanded) : (root ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath)).appendingPathComponent(t)
+        guard let data = try? Data(contentsOf: url), ImageHeader.size(data) != nil else { return nil }
+        return (data, ext == "png" ? "image/png" : "image/jpeg")
+    }
+
+    /// glTF 2.0 binary with the materials' textures embedded (images in the binary chunk, baseColorTexture, repeat
+    /// sampler). Meshes without UVs get box-projected TEXCOORD_0 with one texture tile per `Material.textureScale` mm.
+    public static func exportGLB(_ groups: [MeshGroup], materials: [Material], unitMM: Double, textureRoot: URL?) -> Data {
         var bin = Data()
+        var images: [[String: Any]] = []
+        var textures: [[String: Any]] = []
+        var textureIndex: [String: Int] = [:]
         var bufferViews: [[String: Any]] = []
         var accessors: [[String: Any]] = []
         var meshes: [[String: Any]] = []
@@ -185,7 +205,18 @@ public enum GLTFExporter {
                 "metallicFactor": max(0, min(1, m.metalness)),
                 "roughnessFactor": max(0, min(1, m.roughness)),
             ]
-            _ = pbr.count
+            if let t = textureData(m, root: textureRoot) {
+                align()
+                let off = bin.count
+                bin.append(t.data)
+                bufferViews.append(["buffer": 0, "byteOffset": off, "byteLength": t.data.count])
+                images.append(["bufferView": bufferViews.count - 1, "mimeType": t.mime, "name": MeshExport.safeName(m.name)])
+                textures.append(["source": images.count - 1, "sampler": 0])
+                textureIndex[key] = textures.count - 1
+                pbr["baseColorTexture"] = ["index": textures.count - 1, "texCoord": 0]
+                // The texture carries the colour: keep only the alpha of the base colour factor.
+                pbr["baseColorFactor"] = [1.0, 1.0, 1.0, alpha]
+            }
             var mat: [String: Any] = ["name": m.name, "pbrMetallicRoughness": pbr, "doubleSided": true]
             if alpha < 1 { mat["alphaMode"] = "BLEND" }
             pbr = [:]
@@ -224,18 +255,31 @@ public enum GLTFExporter {
                 accessors.append(["bufferView": bufferViews.count - 1, "componentType": 5126, "count": m.normals.count, "type": "VEC3"])
                 attributes["NORMAL"] = accessors.count - 1
             }
-            if m.uvs.count == m.positions.count {
-                var uv: [Float] = []; uv.reserveCapacity(m.uvs.count * 2)
-                for t in m.uvs { uv += [Float(t.x), Float(1 - t.y)] }
+            let mi = materialIndex(g.material)
+            var uvs = m.uvs
+            if uvs.count != m.positions.count, textureIndex[g.material.lowercased()] != nil {
+                // Box projection: the dominant normal axis picks the plane; one tile per textureScale mm.
+                let mat = MeshExport.material(g.material, in: materials)
+                let kk = unitMM / max(mat.textureScale, 1e-9)
+                uvs = m.positions.enumerated().map { i, p in
+                    let n = i < m.normals.count ? m.normals[i] : Vec3(0, 0, 1)
+                    let ax = abs(n.x), ay = abs(n.y), az = abs(n.z)
+                    let uv = az >= ax && az >= ay ? Vec2(p.x, p.y) : (ax >= ay ? Vec2(p.y, p.z) : Vec2(p.x, p.z))
+                    return uv * kk
+                }
+            }
+            if uvs.count == m.positions.count {
+                var uv: [Float] = []; uv.reserveCapacity(uvs.count * 2)
+                for t in uvs { uv += [Float(t.x), Float(1 - t.y)] }
                 let off = appendFloats(uv)
                 bufferViews.append(["buffer": 0, "byteOffset": off, "byteLength": uv.count * 4, "target": 34962])
-                accessors.append(["bufferView": bufferViews.count - 1, "componentType": 5126, "count": m.uvs.count, "type": "VEC2"])
+                accessors.append(["bufferView": bufferViews.count - 1, "componentType": 5126, "count": uvs.count, "type": "VEC2"])
                 attributes["TEXCOORD_0"] = accessors.count - 1
             }
             let idxOff = appendUInt32(tris)
             bufferViews.append(["buffer": 0, "byteOffset": idxOff, "byteLength": tris.count * 4, "target": 34963])
             accessors.append(["bufferView": bufferViews.count - 1, "componentType": 5125, "count": tris.count, "type": "SCALAR"])
-            let prim: [String: Any] = ["attributes": attributes, "indices": accessors.count - 1, "material": materialIndex(g.material), "mode": 4]
+            let prim: [String: Any] = ["attributes": attributes, "indices": accessors.count - 1, "material": mi, "mode": 4]
             let name = MeshExport.groupName(g, index: gi)
             meshes.append(["name": name, "primitives": [prim]])
             var node: [String: Any] = ["name": name, "mesh": meshes.count - 1]
@@ -253,6 +297,10 @@ public enum GLTFExporter {
             json["nodes"] = nodes; json["meshes"] = meshes; json["materials"] = mats
             json["accessors"] = accessors; json["bufferViews"] = bufferViews
             json["buffers"] = [["byteLength": bin.count]]
+            if !images.isEmpty {
+                json["images"] = images; json["textures"] = textures
+                json["samplers"] = [["magFilter": 9729, "minFilter": 9987, "wrapS": 10497, "wrapT": 10497]]
+            }
         }
         var jsonData = (try? JSONSerialization.data(withJSONObject: json, options: [.sortedKeys])) ?? Data("{}".utf8)
         while jsonData.count % 4 != 0 { jsonData.append(0x20) }

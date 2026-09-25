@@ -1,5 +1,6 @@
 // Oanarina Archi Tool — GPL-3.0-or-later
 import SwiftUI
+import UniformTypeIdentifiers
 import AppKit
 import ArchiCore
 
@@ -50,6 +51,13 @@ struct StartView: View {
                                 NSWorkspace.shared.activateFileViewerSelecting([FileLocations.templates])
                             }
                             .buttonStyle(FlatButtonStyle(compact: true)).help("Put .archi files here to use them as templates (or SAVEASTEMPLATE)")
+                            Button("Open Template…") {
+                                let p = NSOpenPanel()
+                                p.allowedContentTypes = [UTType(filenameExtension: TemplateLibrary.fileExtension) ?? .data, UTType(filenameExtension: ArchiFile.fileExtension) ?? .data]
+                                p.message = "Choose a template (.architemplate) to start a new drawing from"
+                                if p.runModal() == .OK, let u = p.url { TemplateLibrary.apply(TemplateLibrary.template(for: u), to: model) }
+                            }
+                            .buttonStyle(FlatButtonStyle(compact: true)).help("Start a new drawing from any .architemplate file")
                         }
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
                             ForEach(templates) { t in

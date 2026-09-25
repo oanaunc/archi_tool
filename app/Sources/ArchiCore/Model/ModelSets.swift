@@ -192,7 +192,7 @@ public enum DesignOptions {
 /// Combined model-set visibility used by the plan and 3D builders.
 public enum ModelSets {
     public static func isShown(_ props: [String: String], doc: ArchiDocument) -> Bool {
-        Worksets.isShown(props, doc: doc) && DesignOptions.isShown(props, doc: doc)
+        Worksets.isShown(props, doc: doc) && DesignOptions.isShown(props, doc: doc) && MEPSystemFilter.isShown(props, doc: doc)
     }
     /// The document with elements/entities hidden by worksets or design options removed (unchanged when no filter is active).
     public static func visibleModel(_ doc: ArchiDocument) -> ArchiDocument {
@@ -205,5 +205,131 @@ public enum ModelSets {
     /// True when any filter could hide something (fast path for documents without worksets/options).
     public static func active(_ doc: ArchiDocument) -> Bool {
         !(doc.variable(Worksets.hiddenVariable) ?? "").isEmpty || doc.variable(DesignOptions.setsVariable) != nil
+            || !(doc.variable(MEPSystemFilter.variable) ?? "").isEmpty
+    }
+
+    // MARK: Public filter API (views, schedules, exports and analyses)
+
+    /// Whether props pass an explicit filter (nil fields fall back to the document's settings).
+    public static func isShown(_ props: [String: String], doc: ArchiDocument, filter f: ModelFilter) -> Bool {
+        // Worksets.
+        if let only = f.worksets {
+            let n = Worksets.name(of: props).lowercased()
+            if !only.contains(where: { $0.lowercased() == n }) { return false }
+        } else if let hidden = f.hiddenWorksets {
+            let n = Worksets.name(of: props).lowercased()
+            if hidden.contains(where: { $0.lowercased() == n }) { return false }
+        } else if !Worksets.isShown(props, doc: doc) { return false }
+        // Design options.
+        if let p = DesignOptions.parse(props[DesignOptions.prop]) {
+            switch f.designOptions {
+            case .all: break
+            case .mainModelOnly: return false
+            case .document: if !DesignOptions.isShown(props, doc: doc) { return false }
+            case .primary:
+                if let s = DesignOptions.sets(doc).first(where: { $0.name.caseInsensitiveCompare(p.set) == .orderedSame }),
+                   s.primary.caseInsensitiveCompare(p.option) != .orderedSame { return false }
+            case .options(let m):
+                let shown = m.first { $0.key.caseInsensitiveCompare(p.set) == .orderedSame }?.value
+                    ?? DesignOptions.displayed(doc)[p.set.lowercased()]
+                if let s = shown, s.caseInsensitiveCompare(p.option) != .orderedSame { return false }
+            }
+        }
+        // MEP systems.
+        if let sys = f.systems {
+            if !sys.isEmpty, let s = props["system"], !s.isEmpty, !sys.contains(where: { $0.caseInsensitiveCompare(s) == .orderedSame }) { return false }
+        } else if !MEPSystemFilter.isShown(props, doc: doc) { return false }
+        // Phases: hide elements not existing in the phase (future / demolished before it).
+        if f.respectPhase, Phasing.isActive(doc) {
+            let st = Phasing.status(props, doc: doc, phase: f.phase.flatMap { Phasing.phaseIndex($0, doc) })
+            if st == .future || st == .gone { return false }
+        }
+        return true
+    }
+
+    /// Elements passing a filter (the document's own settings by default).
+    public static func elements(_ doc: ArchiDocument, filter: ModelFilter = .document) -> [BIMElement] {
+        doc.elements.filter { isShown($0.props, doc: doc, filter: filter) }
+    }
+
+    /// The document reduced to what a filter shows (elements and entities). Hosted openings follow their host wall.
+    public static func filtered(_ doc: ArchiDocument, _ filter: ModelFilter) -> ArchiDocument {
+        var d = doc
+        d.elements.removeAll { !isShown($0.props, doc: doc, filter: filter) }
+        d.entities.removeAll { !isShown($0.props, doc: doc, filter: filter) }
+        let walls = Set(d.elements.map(\.id))
+        d.elements.removeAll { if case .opening(let o) = $0.geometry { return !walls.contains(o.hostWall) }; return false }
+        return d
+    }
+
+    /// The model schedules and quantity take-offs should count: SCHEDULEFILTER = "document" (default: what the views show),
+    /// "primary" (main model + primary options, all worksets) or "all" (everything).
+    public static func scheduleModel(_ doc: ArchiDocument) -> ArchiDocument {
+        filtered(doc, ModelFilter.named(doc.variable("SCHEDULEFILTER")) ?? .document)
+    }
+
+    /// The model exporters should write: EXPORTFILTER = "document" | "primary" (default) | "all".
+    public static func exportModel(_ doc: ArchiDocument) -> ArchiDocument {
+        filtered(doc, ModelFilter.named(doc.variable("EXPORTFILTER")) ?? .primaryModel)
+    }
+}
+
+/// An explicit model filter for views, schedules and exports (worksets, design options, MEP systems, phase).
+/// Other areas call `ModelSets.filtered(doc, filter)` / `ModelSets.elements(doc, filter:)` / `scheduleModel` / `exportModel`.
+public struct ModelFilter: Hashable {
+    public enum Options: Hashable {
+        /// What the document's views show (primary options unless DESIGNOPTIONVIEW overrides).
+        case document
+        /// Main model plus each set's primary option.
+        case primary
+        /// Every option of every set.
+        case all
+        /// Main model only (no option elements).
+        case mainModelOnly
+        /// Explicit option per set (others as the document).
+        case options([String: String])
+    }
+    /// Only these worksets (nil = not restricted by this field).
+    public var worksets: Set<String>?
+    /// Hide these worksets (used when `worksets` is nil; nil = the document's hidden worksets).
+    public var hiddenWorksets: Set<String>?
+    public var designOptions: Options
+    /// Only these MEP systems (props["system"]); empty = all systems; nil = the document's MEPSYSTEMSHOW setting.
+    public var systems: Set<String>?
+    /// Hide elements that do not exist in `phase` (default: the current phase).
+    public var respectPhase: Bool
+    public var phase: String?
+    public init(worksets: Set<String>? = nil, hiddenWorksets: Set<String>? = nil, designOptions: Options = .document,
+                systems: Set<String>? = nil, respectPhase: Bool = false, phase: String? = nil) {
+        self.worksets = worksets; self.hiddenWorksets = hiddenWorksets; self.designOptions = designOptions
+        self.systems = systems; self.respectPhase = respectPhase; self.phase = phase
+    }
+    /// What the views show.
+    public static let document = ModelFilter()
+    /// All worksets, main model + primary options, all systems.
+    public static let primaryModel = ModelFilter(hiddenWorksets: [], designOptions: .primary, systems: [])
+    /// Everything in the file.
+    public static let everything = ModelFilter(hiddenWorksets: [], designOptions: .all, systems: [])
+    /// "document" / "primary" / "all" (nil for anything else).
+    public static func named(_ s: String?) -> ModelFilter? {
+        switch (s ?? "").lowercased() {
+        case "document", "view", "views": return .document
+        case "primary", "main": return .primaryModel
+        case "all", "everything": return .everything
+        default: return nil
+        }
+    }
+}
+
+/// MEP system display filter: MEPSYSTEMSHOW = "DCW|SAN" shows only those systems (elements without a system are unaffected).
+public enum MEPSystemFilter {
+    public static let variable = "MEPSYSTEMSHOW"
+    public static func shown(_ doc: ArchiDocument) -> Set<String>? {
+        let l = Worksets.split(doc.variable(variable)).map { $0.uppercased() }
+        return l.isEmpty ? nil : Set(l)
+    }
+    public static func isShown(_ props: [String: String], doc: ArchiDocument) -> Bool {
+        guard let only = shown(doc), let s = props["system"], !s.isEmpty else { return true }
+        return only.contains(s.uppercased())
     }
 }
