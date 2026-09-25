@@ -39,31 +39,87 @@ struct SectionBox: Equatable {
     var worldMin: SCNVector4 { SCNVector4(min.x * 0.001, min.z * 0.001, -max.y * 0.001, 0) }
     var worldMax: SCNVector4 { SCNVector4(max.x * 0.001, max.z * 0.001, -min.y * 0.001, 0) }
 
+    /// Clipping shader shared by the section box and the section plane (w = 1 enables each test).
     static let shader = """
     #pragma arguments
     float4 archiBoxMin;
     float4 archiBoxMax;
+    float4 archiPlaneP;
+    float4 archiPlaneN;
     #pragma body
     float4 archiWP = scn_frame.inverseViewTransform * float4(_surface.position, 1.0);
-    if (archiWP.x < archiBoxMin.x || archiWP.y < archiBoxMin.y || archiWP.z < archiBoxMin.z ||
-        archiWP.x > archiBoxMax.x || archiWP.y > archiBoxMax.y || archiWP.z > archiBoxMax.z) {
+    if (archiBoxMax.w > 0.5 && (archiWP.x < archiBoxMin.x || archiWP.y < archiBoxMin.y || archiWP.z < archiBoxMin.z ||
+        archiWP.x > archiBoxMax.x || archiWP.y > archiBoxMax.y || archiWP.z > archiBoxMax.z)) {
+        discard_fragment();
+    }
+    if (archiPlaneN.w > 0.5 && dot(archiWP.xyz - archiPlaneP.xyz, archiPlaneN.xyz) > 0.0) {
         discard_fragment();
     }
     """
 }
 
+// MARK: - Section plane (model millimetres, persisted in the SECTIONPLANE variable)
+
+/// A single live cutting plane in 3D: everything on the normal's side is hidden and the cut is capped with solid faces.
+struct SectionPlane: Equatable {
+    static let capsName = "sectionPlaneCaps"
+    var on: Bool
+    var point: Vec3
+    var normal: Vec3
+
+    static let variable = "SECTIONPLANE"
+
+    static func load(_ doc: ArchiDocument) -> SectionPlane? {
+        guard let s = doc.variables[variable] else { return nil }
+        let parts = s.split(separator: ";")
+        guard parts.count == 3 else { return nil }
+        let p = parts[1].split(separator: ",").compactMap { Double($0) }, n = parts[2].split(separator: ",").compactMap { Double($0) }
+        guard p.count == 3, n.count == 3, (p + n).allSatisfy(\.isFinite), Vec3(n[0], n[1], n[2]).length > 1e-9 else { return nil }
+        return SectionPlane(on: parts[0] == "on", point: Vec3(p[0], p[1], p[2]), normal: Vec3(n[0], n[1], n[2]).normalized)
+    }
+    var stored: String {
+        (on ? "on" : "off") + ";" + [point.x, point.y, point.z].map { fmt($0, 3) }.joined(separator: ",") + ";" + [normal.x, normal.y, normal.z].map { fmt($0, 6) }.joined(separator: ",")
+    }
+    func store(in doc: inout ArchiDocument) { doc.variables[SectionPlane.variable] = stored }
+
+    /// Horizontal cut at height z (keeps what is below).
+    static func horizontal(z: Double) -> SectionPlane { SectionPlane(on: true, point: Vec3(0, 0, z), normal: Vec3(0, 0, 1)) }
+    /// Vertical cut through the plan line a→b, hiding the side to the left of a→b.
+    static func vertical(_ a: Vec2, _ b: Vec2) -> SectionPlane? {
+        let d = b - a
+        guard d.length > 1e-9 else { return nil }
+        let left = Vec2(-d.y, d.x).normalized
+        return SectionPlane(on: true, point: Vec3(a.x, a.y, 0), normal: Vec3(left.x, left.y, 0))
+    }
+    var flipped: SectionPlane { SectionPlane(on: on, point: point, normal: normal * -1) }
+
+    var worldPoint: SCNVector4 { SCNVector4(point.x * 0.001, point.z * 0.001, -point.y * 0.001, 1) }
+    var worldNormal: SCNVector4 { SCNVector4(normal.x, normal.z, -normal.y, 1) }
+}
+
 extension Viewport3DController {
-    /// Applies (or removes) the section-box clipping shader on every model material.
+    /// Applies (or removes) the section-box clipping shader on every model material (the stored section plane is kept).
     func applySectionBox(_ box: SectionBox?) {
+        applyClipping(box: box, plane: model.flatMap { SectionPlane.load($0.doc) })
+    }
+
+    /// Applies the section box and the section plane together (one shader), with the plane's cap faces.
+    func applyClipping(box: SectionBox?, plane: SectionPlane?) {
         let active = box?.on == true ? box : nil
+        let cut = plane?.on == true ? plane : nil
         let root = builder.modelRoot
+        let off = SCNVector4(0, 0, 0, 0)
         root.enumerateHierarchy { n, _ in
-            guard n.name != "ground", let g = n.geometry else { return }
+            guard n.name != "ground", n.name != SectionPlane.capsName, let g = n.geometry else { return }
             for m in g.materials {
-                if let b = active {
+                if active != nil || cut != nil {
                     if m.shaderModifiers?[.surface] != SectionBox.shader { m.shaderModifiers = [.surface: SectionBox.shader] }
-                    m.setValue(NSValue(scnVector4: b.worldMin), forKey: "archiBoxMin")
-                    m.setValue(NSValue(scnVector4: b.worldMax), forKey: "archiBoxMax")
+                    m.setValue(NSValue(scnVector4: active?.worldMin ?? off), forKey: "archiBoxMin")
+                    var hi = active?.worldMax ?? off
+                    hi.w = active == nil ? 0 : 1
+                    m.setValue(NSValue(scnVector4: hi), forKey: "archiBoxMax")
+                    m.setValue(NSValue(scnVector4: cut?.worldPoint ?? off), forKey: "archiPlaneP")
+                    m.setValue(NSValue(scnVector4: cut?.worldNormal ?? off), forKey: "archiPlaneN")
                 } else if m.shaderModifiers != nil {
                     m.shaderModifiers = nil
                 }
@@ -71,6 +127,48 @@ extension Viewport3DController {
         }
         updateBoxOutline(active)
         sectionBoxApplied = active
+        updateCaps(cut)
+    }
+
+    /// Cap faces where the section plane cuts the model (recomputed when the plane or the drawing changes).
+    private func updateCaps(_ plane: SectionPlane?) {
+        let key = plane.map { "\($0.stored)|\(model?.editor.changeCount ?? 0)" }
+        guard key != capsKey else { return }
+        capsKey = key
+        builder.modelRoot.childNode(withName: SectionPlane.capsName, recursively: false)?.removeFromParentNode()
+        sectionPlaneApplied = plane
+        guard let p = plane, let doc = model?.doc else { return }
+        var verts: [SCNVector3] = [], normals: [SCNVector3] = [], idx: [UInt32] = []
+        let offset = p.normal * -0.5   // just inside the kept side (mm): no z-fighting with cut faces
+        for g in MeshBuilder.build(doc: doc) where !g.mesh.isEmpty {
+            let m = g.mesh
+            var tris: [(Vec3, Vec3, Vec3)] = []
+            var i = 0
+            while i + 2 < m.indices.count {
+                tris.append((m.positions[Int(m.indices[i])], m.positions[Int(m.indices[i + 1])], m.positions[Int(m.indices[i + 2])])); i += 3
+            }
+            let loops = SectionCap.loops(tris, point: p.point, normal: p.normal)
+            for (a, b, c) in SectionCap.triangles(loops, normal: p.normal) {
+                for q in [a, b, c] {
+                    let w = q + offset
+                    verts.append(SCNVector3(w.x, w.y, w.z)); normals.append(SCNVector3(p.normal.x, p.normal.y, p.normal.z))
+                    idx.append(UInt32(verts.count - 1))
+                }
+            }
+        }
+        guard !idx.isEmpty else { return }
+        let geo = SCNGeometry(sources: [SCNGeometrySource(vertices: verts), SCNGeometrySource(normals: normals)],
+                              elements: [SCNGeometryElement(indices: idx, primitiveType: .triangles)])
+        let mat = SCNMaterial()
+        mat.lightingModel = .constant
+        mat.diffuse.contents = NSColor(srgbRed: 0.55, green: 0.12, blue: 0.1, alpha: 1)
+        mat.isDoubleSided = true
+        geo.materials = [mat]
+        let node = SCNNode(geometry: geo)   // model coordinates: modelRoot converts mm → m and Z-up → Y-up
+        node.name = SectionPlane.capsName
+        node.castsShadow = false
+        builder.modelRoot.addChildNode(node)
+        view?.needsDisplay = true
     }
 
     private func updateBoxOutline(_ box: SectionBox?) {

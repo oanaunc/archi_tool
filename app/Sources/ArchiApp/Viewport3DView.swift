@@ -249,6 +249,24 @@ final class Scene3DBuilder {
             let k = CGFloat(1000 / max(src.textureScale, 1))
             m.diffuse.contentsTransform = SCNMatrix4MakeScale(k, k, 1)
             m.multiply.contents = color.blended(withFraction: 0.75, of: .white) ?? NSColor.white
+            // Per-material bump from the texture's luminance (MATBUMP:<name>, Materials panel).
+            if style == "Realistic", let tex = src.texture {
+                let k = BumpMap.strength(name, doc: doc)
+                if k > 0, let nm = BumpTextures.normalMap(texture: tex, image: img, strength: k) {
+                    m.normal.contents = nm
+                    m.normal.wrapS = .repeat; m.normal.wrapT = .repeat
+                    m.normal.mipFilter = .linear
+                    m.normal.contentsTransform = m.diffuse.contentsTransform
+                    m.normal.intensity = 1
+                }
+            }
+        }
+        // Glass: smooth dielectric so the environment (sky/HDRI) reflects in it.
+        if style == "Realistic" && t > 0.3 {
+            m.roughness.contents = NSNumber(value: min(max(src.roughness, 0.02), 0.08))
+            m.metalness.contents = NSNumber(value: 0)
+            m.fresnelExponent = 3
+            m.transparencyMode = .dualLayer
         }
         materialCache[name] = m
         return m
@@ -387,6 +405,9 @@ final class Viewport3DController: NSObject, ObservableObject {
     private var lastTick = Date()
     /// Section box currently applied to the scene materials.
     var sectionBoxApplied: SectionBox?
+    /// Section plane currently applied, and the key of its cap faces.
+    var sectionPlaneApplied: SectionPlane?
+    var capsKey: String?
     weak var cubeView: ViewCubeView?
     private var cubeTimer: Timer?
 
@@ -445,10 +466,11 @@ final class Viewport3DController: NSObject, ObservableObject {
         }
         builder.applySelection(model.editor.selection)
         let box = SectionBox.load(model.doc)
-        if box?.on == true || sectionBoxApplied != nil {
-            // Live slider edits are applied by the panel; here the stored box is re-applied after rebuilds.
-            if !model.showSectionBoxPanel || sectionBoxApplied == nil || box != sectionBoxApplied { applySectionBox(box) }
-            else { applySectionBox(sectionBoxApplied) }
+        let plane = SectionPlane.load(model.doc)
+        if box?.on == true || sectionBoxApplied != nil || plane?.on == true || sectionPlaneApplied != nil {
+            // Live slider edits are applied by the panel; here the stored box and plane are re-applied after rebuilds.
+            let b = (!model.showSectionBoxPanel || sectionBoxApplied == nil || box != sectionBoxApplied) ? box : sectionBoxApplied
+            applyClipping(box: b, plane: plane)
         }
         // Camera requests from the ribbon, menus and command line.
         if let action = model.pendingHostAction {

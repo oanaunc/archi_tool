@@ -48,9 +48,9 @@ enum FloatingPanels {
         p.hidesOnDeactivate = true
         p.becomesKeyOnlyIfNeeded = true
         p.isReleasedWhenClosed = false
-        p.appearance = NSAppearance(named: .darkAqua)
+        p.appearance = Theme.appearance
         p.backgroundColor = Theme.nsPanel
-        p.contentViewController = NSHostingController(rootView: FloatingPanelView(model: model, tab: tab).preferredColorScheme(.dark))
+        p.contentViewController = NSHostingController(rootView: FloatingPanelView(model: model, tab: tab).preferredColorScheme(Theme.colorScheme))
         p.setFrameAutosaveName("ArchiFloatingPanel.\(tab.rawValue)")
         if p.frame.origin == .zero, let w = model.window {
             p.setFrameTopLeftPoint(NSPoint(x: w.frame.maxX - 320, y: w.frame.maxY - 120))

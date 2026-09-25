@@ -47,7 +47,7 @@ enum SunPosition {
 struct RenderSettings {
     enum Background: String, CaseIterable { case sky = "Sky", white = "White", transparent = "Transparent" }
     /// Image-based lighting: procedural skies, or an equirectangular HDRI/EXR/JPEG file.
-    enum Environment: String, CaseIterable { case clearSky = "Clear Sky", overcast = "Overcast", sunset = "Sunset", studio = "Studio", night = "Night", hdri = "HDRI File" }
+    enum Environment: String, CaseIterable { case physicalSky = "Physical Sky", clearSky = "Clear Sky", overcast = "Overcast", sunset = "Sunset", studio = "Studio", night = "Night", hdri = "HDRI File" }
     enum ShadowQuality: String, CaseIterable { case off = "Off", low = "Low", medium = "Medium", high = "High", ultra = "Ultra"
         var mapSize: CGFloat { switch self { case .off, .low: return 2048; case .medium, .high: return 4096; case .ultra: return 8192 } }
         var samples: Int { switch self { case .off: return 1; case .low: return 4; case .medium: return 8; case .high: return 16; case .ultra: return 32 } }
@@ -65,6 +65,8 @@ struct RenderSettings {
     var shadowQuality: ShadowQuality = .high
     /// Penumbra radius in shadow-map texels (soft shadows).
     var shadowSoftness = 4.0
+    /// Soft-shadow samples per pixel (nil = the quality preset's count).
+    var shadowSamples: Int?
     var ambientOcclusion = 1.0
     var depthOfField = false
     /// Focus distance in metres (0 = the model centre).
@@ -86,7 +88,8 @@ struct RenderSettings {
 @MainActor
 enum EnvironmentMaps {
     private static var cache: [String: NSImage] = [:]
-    static func image(_ e: RenderSettings.Environment, hdriPath: String) -> Any? {
+    static func image(_ e: RenderSettings.Environment, hdriPath: String, sun: Vec3? = nil) -> Any? {
+        if e == .physicalSky { return PhysicalSky.image(sun: sun ?? Vec3(0.3, 0.3, 0.9).normalized) }
         if e == .hdri {
             let u = URL(fileURLWithPath: hdriPath)
             return FileManager.default.fileExists(atPath: u.path) ? u : image(.clearSky, hdriPath: "")
@@ -99,7 +102,7 @@ enum EnvironmentMaps {
             case .sunset: return (NSColor(srgbRed: 0.18, green: 0.22, blue: 0.45, alpha: 1), NSColor(srgbRed: 1.0, green: 0.62, blue: 0.35, alpha: 1), NSColor(srgbRed: 0.25, green: 0.2, blue: 0.18, alpha: 1), NSColor(srgbRed: 1, green: 0.8, blue: 0.5, alpha: 1))
             case .studio: return (NSColor(white: 0.95, alpha: 1), NSColor(white: 0.8, alpha: 1), NSColor(white: 0.55, alpha: 1), NSColor(white: 1, alpha: 1))
             case .night: return (NSColor(srgbRed: 0.02, green: 0.03, blue: 0.07, alpha: 1), NSColor(srgbRed: 0.08, green: 0.1, blue: 0.16, alpha: 1), NSColor(white: 0.03, alpha: 1), nil)
-            case .hdri: return (.gray, .gray, .gray, nil)
+            case .hdri, .physicalSky: return (.gray, .gray, .gray, nil)
             }
         }()
         let w: CGFloat = 1024, h: CGFloat = 512
@@ -132,7 +135,8 @@ enum RenderEngine {
         if alt < 0.25 { b.sunNode.light?.color = NSColor(srgbRed: 1, green: 0.78, blue: 0.55, alpha: 1) }
         b.ambientNode.light?.intensity = alt <= 0 ? 90 : 260
         // Image-based lighting and the visible background.
-        let env = EnvironmentMaps.image(settings.environment, hdriPath: settings.hdriPath)
+        let env = EnvironmentMaps.image(settings.environment, hdriPath: settings.hdriPath,
+                                        sun: SunPosition.direction(altitude: sun.altitude, azimuth: sun.azimuth, northAngleDegrees: doc.info.northAngle))
         b.scene.lightingEnvironment.contents = env
         b.scene.lightingEnvironment.intensity = CGFloat(settings.environmentIntensity)
         switch settings.background {
@@ -145,7 +149,7 @@ enum RenderEngine {
         if let l = b.sunNode.light {
             l.castsShadow = settings.shadowQuality != .off
             l.shadowMapSize = CGSize(width: settings.shadowQuality.mapSize, height: settings.shadowQuality.mapSize)
-            l.shadowSampleCount = settings.shadowQuality.samples
+            l.shadowSampleCount = max(1, min(64, settings.shadowSamples ?? settings.shadowQuality.samples))
             l.shadowRadius = CGFloat(max(0, settings.shadowSoftness))
             l.shadowCascadeCount = settings.shadowQuality.cascades
         }
@@ -378,6 +382,9 @@ private struct RenderPanel: View {
     @State private var status = ""
     @State private var resolution = "1920×1080"
     @State private var seconds = 8.0
+    @State private var animSeconds = 10.0
+    @State private var sunFrom = 7.0
+    @State private var sunTo = 19.0
     @State private var presetName = UserDefaults.standard.string(forKey: "render.lastPreset") ?? "Standard (1080p)"
     @State private var presets = RenderPreset.all
     private let resolutions = ["1280×720", "1920×1080", "2560×1440", "3840×2160", "1080×1080"]
@@ -437,6 +444,9 @@ private struct RenderPanel: View {
                     Picker("Shadow quality", selection: $settings.shadowQuality) { ForEach(RenderSettings.ShadowQuality.allCases, id: \.self) { Text($0.rawValue) } }
                     Slider(value: $settings.shadowSoftness, in: 0...20) { Text("Softness \(fmt(settings.shadowSoftness, 0))") }
                         .disabled(settings.shadowQuality == .off)
+                    Stepper("Soft shadow samples: \(settings.shadowSamples ?? settings.shadowQuality.samples)",
+                            value: Binding(get: { settings.shadowSamples ?? settings.shadowQuality.samples }, set: { settings.shadowSamples = $0 }), in: 1...64, step: 1)
+                        .disabled(settings.shadowQuality == .off)
                     Slider(value: $settings.ambientOcclusion, in: 0...2) { Text("Ambient occlusion \(fmt(settings.ambientOcclusion, 1))") }
                 }
                 Section("Sun") {
@@ -468,6 +478,22 @@ private struct RenderPanel: View {
                         Button("Export Video…") { turntable() }.disabled(busy)
                     }
                     if !status.isEmpty { Text(status).font(.caption).foregroundStyle(.secondary) }
+                }
+                Section("Animation & Panorama") {
+                    let cams = model.doc.namedViews.filter { $0.camera != nil }
+                    Stepper("Length \(Int(animSeconds)) s", value: $animSeconds, in: 3...120)
+                    HStack {
+                        Button("Walkthrough Video…") { walkthrough() }.disabled(busy || cams.count < 2)
+                            .help(cams.count < 2 ? "Save at least two cameras (SAVECAMERA); the path runs through them in order." : "Smooth path through the \(cams.count) saved cameras, in order")
+                        Text("\(cams.count) camera(s)").font(.caption).foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Stepper("From \(Int(sunFrom)):00", value: $sunFrom, in: 0...23)
+                        Stepper("to \(Int(sunTo)):00", value: $sunTo, in: 1...24)
+                    }
+                    Button("Sun Study Video…") { sunStudyVideo() }.disabled(busy || sunTo <= sunFrom)
+                    Button("360° Panorama…") { panorama() }.disabled(busy)
+                        .help("Equirectangular 2:1 panorama from the current 3D camera position")
                 }
             }
             .formStyle(.grouped)
@@ -557,6 +583,66 @@ private struct RenderPanel: View {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.writeObjects([image])
         status = "Copied to the clipboard."
+    }
+
+    private func videoURL(_ suffix: String) -> URL? {
+        applyResolution()
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.mpeg4Movie]
+        panel.nameFieldStringValue = "\(model.doc.info.name) \(suffix).mp4"
+        guard panel.runModal() == .OK, let url = panel.url else { return nil }
+        return url
+    }
+
+    private func walkthrough() {
+        guard let url = videoURL("walkthrough") else { return }
+        busy = true; progress = 0
+        var s = settings
+        if s.width > 1920 { s.width = 1920; s.height = 1080 }
+        let doc = model.doc, secs = animSeconds
+        let cams = doc.namedViews.compactMap(\.camera)
+        Task { @MainActor in
+            do {
+                try await RenderEngine.walkthrough(doc: doc, settings: s, cameras: cams, seconds: secs, to: url) { p in progress = p }
+                status = "Saved \(url.lastPathComponent)"
+            } catch { status = "Video export failed: \(error.localizedDescription)" }
+            busy = false
+        }
+    }
+
+    private func sunStudyVideo() {
+        guard let url = videoURL("sun study") else { return }
+        busy = true; progress = 0
+        var s = settings
+        if s.width > 1920 { s.width = 1920; s.height = 1080 }
+        let doc = model.doc, secs = animSeconds, a = sunFrom, b = sunTo
+        let day = Calendar.current.ordinality(of: .day, in: .year, for: settings.date) ?? 172
+        let cam = Viewport3DController.active?.currentCamera
+        Task { @MainActor in
+            do {
+                try await RenderEngine.sunStudy(doc: doc, settings: s, dayOfYear: day, fromHour: a, toHour: b, seconds: secs, camera: cam, to: url) { p in progress = p }
+                status = "Saved \(url.lastPathComponent)"
+            } catch { status = "Video export failed: \(error.localizedDescription)" }
+            busy = false
+        }
+    }
+
+    private func panorama() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.png, .jpeg]
+        panel.nameFieldStringValue = "\(model.doc.info.name) 360.jpg"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        busy = true; progress = 0
+        let doc = model.doc, s = settings
+        let eye = Viewport3DController.active?.currentCamera.eye ?? PanoramaDefaults.eye(doc)
+        Task { @MainActor in
+            await Task.yield()
+            if let img = RenderEngine.panorama(doc: doc, settings: s, eye: eye, width: max(2048, s.width * 2)) {
+                do { try RenderEngine.write(img, to: url); image = NSImage(cgImage: img, size: NSSize(width: img.width, height: img.height)); status = "Saved \(url.lastPathComponent) (\(img.width)×\(img.height))" }
+                catch { status = error.localizedDescription }
+            } else { status = "Panorama failed (Metal unavailable)." }
+            busy = false
+        }
     }
 
     private func turntable() {

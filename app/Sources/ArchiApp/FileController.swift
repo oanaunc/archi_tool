@@ -7,7 +7,7 @@ import ArchiCore
 
 /// What a new window should show.
 struct DocumentRequest: Codable, Hashable {
-    enum Kind: String, Codable { case start, blankMetric, blankImperial, building, open, sample }
+    enum Kind: String, Codable { case start, blankMetric, blankImperial, building, open, sample, template }
     var kind: Kind
     var path: String?
     var nonce = UUID()
@@ -414,7 +414,7 @@ final class FileController: EditorHost {
         if let t = UTType(filenameExtension: ext) { p.allowedContentTypes = [t] }
         p.nameFieldStringValue = suggested + "." + ext
         p.canCreateDirectories = true
-        if let dir = model?.editor.fileURL?.deletingLastPathComponent() { p.directoryURL = dir }
+        if let dir = FileLocations.exportFolder ?? model?.editor.fileURL?.deletingLastPathComponent() { p.directoryURL = dir }
         guard p.runModal() == .OK else { return nil }
         return p.url
     }
@@ -484,8 +484,8 @@ final class FileController: EditorHost {
             case "png":
                 try renderPNG(to: url)
             case "obj":
-                let (obj, mtl) = OBJExporter.export(meshes(), materials: doc.materials)
                 let mtlURL = url.deletingPathExtension().appendingPathExtension("mtl")
+                let (obj, mtl) = OBJExporter.export(meshes(), materials: doc.materials, mtlFileName: mtlURL.lastPathComponent, unitMM: doc.units.mm)
                 var o = obj
                 if !o.contains("mtllib") { o = "mtllib \(mtlURL.lastPathComponent)\n" + o }
                 try o.write(to: url, atomically: true, encoding: .utf8)
@@ -493,7 +493,7 @@ final class FileController: EditorHost {
             case "stl":
                 try STLExporter.export(meshes(), name: model.displayName).write(to: url, atomically: true, encoding: .utf8)
             case "glb":
-                try GLTFExporter.exportGLB(meshes(), materials: doc.materials).write(to: url, options: .atomic)
+                try GLTFExporter.exportGLB(meshes(), materials: doc.materials, unitMM: doc.units.mm).write(to: url, options: .atomic)
             case "ifc":
                 try IFCExporter.export(doc: doc, meshes: meshes()).write(to: url, atomically: true, encoding: .utf8)
             case "csv":

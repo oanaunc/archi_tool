@@ -29,8 +29,12 @@ enum PanelTab: String, CaseIterable, Identifiable {
 enum ModalSheet: Identifiable, Equatable {
     case units, drafting, schedule(String), commandReference, shortcuts
     case quickSelect, layerStates, pageSetup(Int), titleBlock(Int), connectClaude, saveCamera
+    case spelling, plotStyles, batchPublish
     var id: String {
         switch self {
+        case .spelling: return "spelling"
+        case .plotStyles: return "plotstyles"
+        case .batchPublish: return "batchpublish"
         case .quickSelect: return "qselect"
         case .layerStates: return "layerstates"
         case .pageSetup(let i): return "pagesetup-\(i)"

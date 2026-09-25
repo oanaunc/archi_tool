@@ -102,14 +102,133 @@ enum AppSelfTests {
         AppCommands.registerAll()
         let missing = CommandCatalog.allItems.filter { i in !i.names.contains { CommandRegistry.shared.lookup($0) != nil } }.map(\.title)
         check(missing.isEmpty, "ribbon items without a command: \(missing.joined(separator: ", "))")
+        // Every registered command is reachable from the ribbon, a menu or a palette (or intentionally elsewhere).
+        let cov = CommandCatalog.coverage(.shared)
+        lastCoverage = cov
+        check(cov.missing.isEmpty, "commands without a ribbon/menu/palette entry: \(cov.missing.joined(separator: ", "))")
+        extraChecks(check)
         check(CommandSearch.rank("prspl", registry: .shared).first?.name == "PRESSPULL", "fuzzy search finds PRESSPULL")
         check(CommandSearch.rank("tag all", registry: .shared).contains { $0.name == "TAGALL" }, "ribbon title search finds TAGALL")
         return r
     }
 
+    /// Coverage computed by the last run (listed by APPSELFTEST).
+    static var lastCoverage: CommandCatalog.Coverage?
+
+    /// Checks of the features added with the coverage work: camera path, panorama mapping, section caps, plot styles,
+    /// bump maps, new node graph nodes, templates.
+    static func extraChecks(_ check: (Bool, String) -> Void) {
+        // Camera path: passes through keys, stays smooth between them.
+        let keys = [Camera(eye: Vec3(0, 0, 1600), target: Vec3(1000, 0, 1600)), Camera(eye: Vec3(5000, 0, 1600), target: Vec3(6000, 0, 1600)),
+                    Camera(eye: Vec3(5000, 5000, 1600), target: Vec3(5000, 6000, 1600), fov: 70)]
+        check(CameraPath.sample(keys, t: 0)?.eye.isClose(keys[0].eye, tol: 1e-9) == true, "camera path starts at key 1")
+        check(CameraPath.sample(keys, t: 0.5)?.eye.isClose(keys[1].eye, tol: 1e-9) == true, "camera path passes key 2")
+        check(CameraPath.sample(keys, t: 1)?.eye.isClose(keys[2].eye, tol: 1e-9) == true && abs((CameraPath.sample(keys, t: 1)?.fov ?? 0) - 70) < 1e-9, "camera path ends at key 3")
+        check(abs((CameraPath.sample(Array(keys.prefix(2)), t: 0.5)?.eye.x ?? 0) - 2500) < 1e-6 && abs(CameraPath.sample(Array(keys.prefix(2)), t: 0.5)?.eye.y ?? 1) < 1e-9, "two keys: straight path")
+        check(CameraPath.length(Array(keys.prefix(2))) > 4999 && CameraPath.length(Array(keys.prefix(2))) < 5001, "path length")
+        // Panorama: equirect centre looks forward (-Z), faces map back consistently.
+        let fwd = Panorama.direction(u: 0.5, v: 0.5)
+        check(fwd.isClose(Vec3(0, 0, -1), tol: 1e-9), "panorama centre is -Z")
+        check(Panorama.direction(u: 0.5, v: 0).isClose(Vec3(0, 1, 0), tol: 1e-9), "panorama top is zenith")
+        let lk = Panorama.lookup(fwd)
+        check(lk.face == 5 && abs(lk.s - 0.5) < 1e-9 && abs(lk.t - 0.5) < 1e-9, "forward hits the -Z face centre")
+        let up = Panorama.lookup(Vec3(0, 0.3, -1).normalized)
+        check(up.face == 5 && up.t < 0.5, "looking up moves up in the face image")
+        var faces: [[UInt8]] = []
+        for i in 0..<6 { faces.append([UInt8](repeating: UInt8(i * 40), count: 4 * 4 * 4)) }
+        let eq = Panorama.equirect(faces: faces, faceSize: 4, width: 16, height: 8)
+        check(eq.count == 16 * 8 * 4 && eq[(4 * 16 + 8) * 4] == 200, "equirect samples the -Z face at the centre")
+        // Section caps: a unit cube cut at mid height gives one square loop of area 1.
+        let cube = MeshTools.triangles(MeshTools.mesh(of: SolidGeom(kind: .box, origin: .zero, size: Vec3(1000, 1000, 1000))))
+        let loops = SectionCap.loops(cube, point: Vec3(0, 0, 500), normal: Vec3(0, 0, 1))
+        check(loops.count == 1 && loops.first?.count ?? 0 >= 4, "cube cut gives one loop (got \(loops.count))")
+        let capArea = SectionCap.triangles(loops, normal: Vec3(0, 0, 1)).reduce(0.0) { $0 + ($1.1 - $1.0).cross($1.2 - $1.0).length / 2 }
+        check(abs(capArea - 1_000_000) < 1, "cap area of the cube section (got \(capArea))")
+        check(SectionCap.loops(cube, point: Vec3(0, 0, 2000), normal: Vec3(0, 0, 1)).isEmpty, "plane above the cube cuts nothing")
+        let ring = SectionCap.triangles([[Vec3(0, 0, 0), Vec3(10, 0, 0), Vec3(10, 10, 0), Vec3(0, 10, 0)], [Vec3(3, 3, 0), Vec3(7, 3, 0), Vec3(7, 7, 0), Vec3(3, 7, 0)]], normal: Vec3(0, 0, 1))
+        check(abs(ring.reduce(0.0) { $0 + ($1.1 - $1.0).cross($1.2 - $1.0).length / 2 } - 84) < 1e-6, "nested loop becomes a hole")
+        let pl = SectionPlane.vertical(Vec2(0, 0), Vec2(1000, 0))
+        var pd = ArchiDocument(); pl?.store(in: &pd)
+        check(SectionPlane.load(pd) == pl && pl?.normal.isClose(Vec3(0, 1, 0), tol: 1e-12) == true, "section plane round trip")
+        // Plot styles.
+        check(PlotStyleTable.aciIndex(aciColor(3)) == 3 && PlotStyleTable.aciIndex(RGBA(0.123, 0.456, 0.789)) == nil, "ACI index lookup")
+        let (c1, w1) = PlotStyleTable.archiPens.resolve(color: aciColor(5), lineweight: 0.25)
+        check(c1.r < 0.01 && c1.g < 0.01 && abs(w1 - 0.5) < 1e-12, "pen 5 plots black at 0.50 mm")
+        let (c8, _) = PlotStyleTable.archiPens.resolve(color: aciColor(8), lineweight: 0.25)
+        check(abs(c8.r - 0.5) < 0.01, "screening 50% lightens black to grey")
+        let (ct, wt) = PlotStyleTable.archiPens.resolve(color: RGBA(0.2, 0.4, 0.6), lineweight: 0.35)
+        check(abs(ct.b - 0.6) < 1e-9 && abs(wt - 0.35) < 1e-12, "true colours use the object pen without an Other entry")
+        var sd = ArchiDocument()
+        var custom = PlotStyleTable(name: "office.ctb"); custom.pens[1] = .init(color: 0x0000FF, lineweight: 0.7)
+        custom.store(in: &sd)
+        check(PlotStyleTable.named("OFFICE.CTB", in: sd)?.pens[1]?.lineweight == 0.7, "custom table stored in the drawing")
+        var ps = PageSetup(); ps.plotStyleTable = "office.ctb"; ps.store(in: &sd, layoutIndex: nil)
+        check(PageSetup.load(sd, layoutIndex: nil).plotStyleTable == "office.ctb", "page setup keeps the plot style table")
+        check((try? JSONDecoder().decode(PageSetup.self, from: Data(#"{"colorMode":"Color"}"#.utf8)))?.plotStyleTable == nil, "old page setups decode")
+        // Bump map: flat height gives a flat normal; a ramp tilts it.
+        let flat = BumpMap.normals(height: [Double](repeating: 0.5, count: 16), width: 4, height: 4, strength: 1)
+        check(flat[0] == 128 && flat[1] == 128 && flat[2] == 255, "flat height → (128,128,255)")
+        let ramp = BumpMap.normals(height: (0..<64).map { Double($0 % 8) / 8 }, width: 8, height: 8, strength: 1)
+        check(ramp[(3 * 8 + 3) * 4] < 128, "rising height tilts the normal against +x")
+        // New node graph nodes.
+        var g = NodeGraph()
+        let rnd = g.add(.random, x: 0, y: 0)
+        let e1 = g.evaluate().values[rnd], e2 = g.evaluate().values[rnd]
+        if case .numbers(let a)? = e1 { check(a.count == 5 && a.allSatisfy { $0 >= 0 && $0 < 1000 } && e1 == e2, "random is seeded and in range") } else { check(false, "random node output") }
+        var gl = NodeGraph()
+        let r1 = gl.add(.rectangle, x: 0, y: 0), c2 = gl.add(.circle, x: 0, y: 0), lo = gl.add(.loft, x: 0, y: 0)
+        gl.connect(from: r1, to: lo, port: "bottom"); gl.connect(from: c2, to: lo, port: "top")
+        let ev = gl.evaluate()
+        if case .solid(let so)? = ev.output.first { check(ev.errors.isEmpty && so.kind == .mesh && CSG.volume(so) > 0, "loft makes a closed positive solid") } else { check(false, "loft output (\(ev.errors))") }
+        var gb = NodeGraph()
+        let rr = gb.add(.rectangle, x: 0, y: 0), ex = gb.add(.extrude, x: 0, y: 0)
+        let cc = gb.add(.circle, x: 0, y: 0), ex2 = gb.add(.extrude, x: 0, y: 0), bo = gb.add(.boolean, x: 0, y: 0)
+        gb.nodes[2].params = ["radius": 200]
+        gb.connect(from: rr, to: ex, port: "profile"); gb.connect(from: cc, to: ex2, port: "profile")
+        gb.connect(from: ex, to: bo, port: "a"); gb.connect(from: ex2, to: bo, port: "b")
+        let evb = gb.evaluate()
+        if case .solid(let sb)? = evb.output.first {
+            let expect = 2000.0 * 1000 * 3000 - Double.pi * 200 * 200 * 3000
+            check(abs(CSG.volume(sb) - expect) / expect < 0.02, "boolean subtract volume (got \(CSG.volume(sb)))")
+        } else { check(false, "boolean output (\(evb.errors))") }
+        var gw = NodeGraph()
+        let rect = gw.add(.rectangle, x: 0, y: 0), wall = gw.add(.wall, x: 0, y: 0), slab = gw.add(.slab, x: 0, y: 0), roof = gw.add(.roof, x: 0, y: 0)
+        gw.connect(from: rect, to: wall, port: "path"); gw.connect(from: rect, to: slab, port: "boundary"); gw.connect(from: rect, to: roof, port: "boundary")
+        let evw = gw.evaluate()
+        let walls = evw.elementOutput.filter { if case .wall = $0 { return true }; return false }.count
+        check(walls == 4 && evw.elementOutput.count == 6, "rectangle → 4 walls, 1 slab, 1 roof (got \(evw.elementOutput.count))")
+        var bd = ArchiDocument()
+        _ = NodeGraphBake.bake([], elements: evw.elementOutput, into: &bd)
+        _ = NodeGraphBake.bake([], elements: evw.elementOutput, into: &bd)
+        check(bd.elements.count == 6 && NodeGraphBake.bakedCount(bd) == 6, "baking elements replaces the earlier bake")
+        var nd = ArchiDocument()
+        gw.store(in: &nd, name: "Shell")
+        check(NodeGraph.names(nd) == ["Shell"] && NodeGraph.load(nd, name: "Shell") == gw && NodeGraph.load(nd) == gw, "named graph stored in the drawing")
+        // Plot stamp fields and the physical sky.
+        var stampDoc = ArchiDocument(); stampDoc.info.name = "Cedar"; stampDoc.info.number = "P-7"; stampDoc.info.author = "OA"
+        let st = PlotStamp.text(doc: stampDoc, name: "A101", template: "{project}/{number}/{sheet}/{user}/{style}", style: "archi pens.ctb")
+        check(st == "Cedar/P-7/A101/OA/archi pens.ctb", "plot stamp fields (got \(st))")
+        let noon = Vec3(0.2, 0.9, -0.3).normalized
+        let z = SkyModel.color(Vec3(0, 1, 0), sun: noon), hz = SkyModel.color(Vec3(1, 0.02, 0), sun: noon), sunC = SkyModel.color(noon, sun: noon)
+        check(z.2 > z.0 && hz.0 > z.0 && sunC.0 > 2, "sky: blue zenith, paler horizon, bright sun")
+        check(SkyModel.color(Vec3(0, 1, 0), sun: Vec3(0, -0.5, 1).normalized).2 < 0.1, "sky is dark at night")
+        // Command reference export lists every registered command.
+        let csv = CommandReferenceExport.text(.shared, csv: true)
+        check(csv.split(separator: "\n").count == CommandRegistry.shared.sorted.count + 1, "command reference export has one row per command")
+        check(CommandReferenceExport.location(CommandRegistry.shared.lookup("LINE")!, registry: .shared) == "Draw", "LINE is on the Draw menu")
+        // Metric Architectural template.
+        let t = TemplateLibrary.metricArchitectural()
+        check(t.layer(named: "A-FURN") != nil && t.dimStyles.contains { $0.name == "Architectural 1:50" } && t.currentDimStyle == "Architectural 1:100", "metric architectural template")
+        check(DocumentThumbnails.stableKey("abc") == DocumentThumbnails.stableKey("abc") && DocumentThumbnails.stableKey("abc") != DocumentThumbnails.stableKey("abd"), "stable thumbnail keys")
+    }
+
     static var command: CommandDef {
         CommandDef("APPSELFTEST", aliases: ["SELFTEST"], category: "Help", summary: "Runs the app's built-in regression checks (node graph, sheet set, presets, clipboard, ribbon).", modifies: false) { ed in
             let r = run()
+            if let cov = lastCoverage {
+                ed.print("Command coverage: \(cov.total - cov.missing.count - cov.intentional.count) in ribbon/menus, \(cov.intentional.count) in palettes (system variables), \(cov.missing.count) without UI entry.")
+                if !cov.missing.isEmpty { ed.print("  Without UI entry: " + cov.missing.joined(separator: ", ")); NSLog("APPSELFTEST uncovered commands: %@", cov.missing.joined(separator: ", ")) }
+            }
             for f in r.failures { ed.print("FAIL: \(f)") }
             ed.print("\(r.passed) check(s) passed, \(r.failures.count) failed.")
             if !r.failures.isEmpty { throw CommandError.invalid("\(r.failures.count) self-test check(s) failed.") }

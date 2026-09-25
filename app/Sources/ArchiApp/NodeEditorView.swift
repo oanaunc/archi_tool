@@ -2,6 +2,7 @@
 import SwiftUI
 import AppKit
 import SceneKit
+import UniformTypeIdentifiers
 import ArchiCore
 
 @MainActor
@@ -13,8 +14,8 @@ enum NodeEditorWindow {
         let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1180, height: 720), styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)
         w.title = "Node Editor — \(model.displayName)"
         w.isReleasedWhenClosed = false
-        w.appearance = NSAppearance(named: .darkAqua)
-        w.contentViewController = NSHostingController(rootView: NodeEditorView(model: model).preferredColorScheme(.dark))
+        w.appearance = Theme.appearance
+        w.contentViewController = NSHostingController(rootView: NodeEditorView(model: model).preferredColorScheme(Theme.colorScheme))
         w.center(); w.makeKeyAndOrderFront(nil)
         windows[key] = w
         NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { _ in
@@ -83,7 +84,7 @@ struct NodeEditorView: View {
     private func toolbar(_ ev: NodeGraph.Evaluation) -> some View {
         HStack(spacing: 8) {
             Menu {
-                ForEach(["Numbers", "Geometry", "Solids", "Transform"], id: \.self) { cat in
+                ForEach(["Numbers", "Geometry", "Solids", "Transform", "Building"], id: \.self) { cat in
                     Section(cat) {
                         ForEach(NodeKind.allCases.filter { $0.category == cat }) { k in
                             Button(k.title) { let c = graph.nodes.count; graph.add(k, x: 40 + Double(c % 6) * 36, y: 40 + Double(c % 8) * 30) }
@@ -94,17 +95,32 @@ struct NodeEditorView: View {
             .menuStyle(.borderlessButton).fixedSize()
             Button { graph = NodeGraph.sample } label: { Label("Sample", systemImage: "wand.and.stars") }.buttonStyle(FlatButtonStyle(compact: true))
             Button { graph = NodeGraph() } label: { Label("Clear", systemImage: "trash") }.buttonStyle(FlatButtonStyle(compact: true))
+            Menu {
+                let names = NodeGraph.names(model.doc)
+                if names.isEmpty { Text("No named graphs in this drawing") }
+                ForEach(names, id: \.self) { n in Button("Open “\(n)”") { if let g = NodeGraph.load(model.doc, name: n) { graph = g; status = "Opened graph “\(n)”." } } }
+                Divider()
+                Button("Save As…") { saveNamed() }
+                Menu("Delete") {
+                    ForEach(names, id: \.self) { n in Button(n) { model.editor.transaction("Delete Node Graph") { NodeGraph.delete(n, in: &$0) }; status = "Deleted graph “\(n)”." } }
+                }.disabled(names.isEmpty)
+                Divider()
+                Button("Export JSON…") { exportJSON() }
+                Button("Import JSON…") { importJSON() }
+            } label: { Label("Graphs", systemImage: "folder") }
+            .menuStyle(.borderlessButton).fixedSize()
+            .help("Named graphs stored in the drawing, JSON import/export")
             Divider().frame(height: 16)
             Toggle("Live", isOn: $live).toggleStyle(.switch).controlSize(.mini)
                 .help("Update the drawing on every change (the baked objects are replaced)")
             Button { bake() } label: { Label("Bake to Drawing", systemImage: "square.and.arrow.down.on.square") }
-                .buttonStyle(FlatButtonStyle(prominent: true)).disabled(ev.output.isEmpty)
+                .buttonStyle(FlatButtonStyle(prominent: true)).disabled(ev.output.isEmpty && ev.elementOutput.isEmpty)
                 .help("Write the output geometry into the drawing (one undo step; replaces the previous bake)")
             Button { saveGraph() } label: { Label("Save Graph", systemImage: "square.and.arrow.down") }.buttonStyle(FlatButtonStyle(compact: true))
                 .help("Store the graph in the drawing (.archi)")
             Spacer()
             if !status.isEmpty { Text(status).font(Theme.fontSmall).foregroundStyle(Theme.accent) }
-            Text("\(graph.nodes.count) nodes · \(ev.output.count) objects\(ev.errors.isEmpty ? "" : " · \(ev.errors.count) error(s)")")
+            Text("\(graph.nodes.count) nodes · \(ev.output.count) objects · \(ev.elementOutput.count) elements\(ev.errors.isEmpty ? "" : " · \(ev.errors.count) error(s)")")
                 .font(Theme.fontSmall).foregroundStyle(ev.errors.isEmpty ? Theme.textDim : Theme.danger)
         }
         .padding(.horizontal, 10).padding(.vertical, 6)
@@ -151,9 +167,9 @@ struct NodeEditorView: View {
             Picker("", selection: $previewMode) { Text("3D").tag("3D"); Text("Plan").tag("Plan") }
                 .pickerStyle(.segmented).labelsHidden().padding(6)
             if previewMode == "3D" {
-                NodePreview3D(geometry: ev.output)
+                NodePreview3D(geometry: ev.output, elements: ev.elementOutput)
             } else {
-                NodePreviewPlan(geometry: ev.output)
+                NodePreviewPlan(geometry: ev.output, elements: ev.elementOutput)
             }
         }
         .background(Color(white: 0.1))
@@ -168,14 +184,47 @@ struct NodeEditorView: View {
     }
 
     private func bake() {
-        let out = graph.evaluate().output
+        let ev = graph.evaluate()
+        let out = ev.output, els = ev.elementOutput
         let g = graph
         var ids: [EntityID] = []
         model.editor.transaction("Node Graph") { d in
-            ids = NodeGraphBake.bake(out, into: &d)
+            ids = NodeGraphBake.bake(out, elements: els, into: &d)
             g.store(in: &d)
         }
         status = "Baked \(ids.count) object(s) on layer NODES."
+    }
+
+    private func saveNamed() {
+        let a = NSAlert()
+        a.messageText = "Save graph as"
+        a.informativeText = "Named graphs are stored in the drawing (.archi) and can be opened from the Graphs menu."
+        let f = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 22))
+        f.stringValue = "Graph \(NodeGraph.names(model.doc).count + 1)"
+        a.accessoryView = f
+        a.addButton(withTitle: "Save"); a.addButton(withTitle: "Cancel")
+        guard a.runModal() == .alertFirstButtonReturn else { return }
+        let name = f.stringValue.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty else { return }
+        let g = graph
+        model.editor.transaction("Save Node Graph") { g.store(in: &$0, name: name) }
+        status = "Graph saved as “\(name)”."
+    }
+
+    private func exportJSON() {
+        let p = NSSavePanel()
+        p.allowedContentTypes = [.json]
+        p.nameFieldStringValue = "graph.json"
+        guard p.runModal() == .OK, let u = p.url else { return }
+        do { try graph.json().write(to: u); status = "Exported \(u.lastPathComponent)." } catch { status = error.localizedDescription }
+    }
+
+    private func importJSON() {
+        let p = NSOpenPanel()
+        p.allowedContentTypes = [.json]
+        guard p.runModal() == .OK, let u = p.url else { return }
+        if let d = try? Data(contentsOf: u), let g = try? JSONDecoder().decode(NodeGraph.self, from: d) { graph = g; status = "Imported \(u.lastPathComponent)." }
+        else { status = "Not a node graph file."; NSSound.beep() }
     }
 
     private func saveGraph() {
@@ -257,7 +306,7 @@ private struct NodeBox: View {
                 case .number: field(p.name, p.defaultValue, width: 96)
                 case .point:
                     field(p.name + ".x", p.defaultValue, width: 36); field(p.name + ".y", 0, width: 36); field(p.name + ".z", 0, width: 30)
-                case .geometry: Text("connect").font(.system(size: 9.5)).foregroundStyle(Theme.textFaint)
+                case .geometry, .element: Text("connect").font(.system(size: 9.5)).foregroundStyle(Theme.textFaint)
                 }
             } else {
                 Text("linked").font(.system(size: 9.5)).foregroundStyle(Theme.textFaint)
@@ -302,6 +351,7 @@ private struct NodeBox: View {
         case .number: return Color(red: 0.45, green: 0.75, blue: 1)
         case .point: return Color(red: 0.5, green: 0.9, blue: 0.55)
         case .geometry: return Theme.accent
+        case .element: return Color(red: 0.95, green: 0.55, blue: 0.35)
         }
     }
 }
@@ -310,9 +360,17 @@ private struct NodeBox: View {
 
 private struct NodePreviewPlan: View {
     let geometry: [Geometry]
+    var elements: [BIMGeometry] = []
     var body: some View {
         Canvas { ctx, size in
-            let polys = geometry.flatMap { GeometryOps.tessellate($0, doc: nil) }
+            var d = ArchiDocument()
+            let footprints = elements.prefix(2000).map { g -> [Vec2] in
+                let id = d.addElement(g)
+                guard let el = d.element(id) else { return [] }
+                let f = CommandHelpers.footprint(el, doc: d)
+                return f.isEmpty ? f : f + [f[0]]
+            }
+            let polys = geometry.flatMap { GeometryOps.tessellate($0, doc: nil) } + footprints
             var b = BBox2.empty
             for p in polys { for v in p { b.add(v) } }
             guard !b.isEmpty else { return }
@@ -326,13 +384,14 @@ private struct NodePreviewPlan: View {
             ctx.stroke(path, with: .color(Theme.accent), lineWidth: 1.2)
         }
         .overlay(alignment: .bottomLeading) {
-            Text("\(geometry.count) object(s)").font(Theme.fontSmall).foregroundStyle(Theme.textDim).padding(6)
+            Text("\(geometry.count) object(s)\(elements.isEmpty ? "" : ", \(elements.count) element(s)")").font(Theme.fontSmall).foregroundStyle(Theme.textDim).padding(6)
         }
     }
 }
 
 private struct NodePreview3D: NSViewRepresentable {
     let geometry: [Geometry]
+    var elements: [BIMGeometry] = []
     func makeCoordinator() -> Scene3DBuilder { Scene3DBuilder() }
     func makeNSView(context: Context) -> SCNView {
         let v = SCNView()
@@ -352,6 +411,7 @@ private struct NodePreview3D: NSViewRepresentable {
         var d = ArchiDocument()
         d.layers = [Layer(name: "0")]
         for g in geometry.prefix(5000) { d.add(g, layer: "0", color: .aci(2)) }
+        for e in elements.prefix(2000) { _ = d.addElement(e) }
         let before = b.worldSphere
         b.update(doc: d, style: "Shaded with Edges")
         let s = b.worldSphere

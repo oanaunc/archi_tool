@@ -647,7 +647,8 @@ final class PlanCanvasView: NSView {
         var start: CGPoint; var current: CGPoint; var moved = false; var purpose: Purpose
     }
     private var windowSel: WindowSel?
-    private struct HotGrip { var id: EntityID; var index: Int; var origin: Vec2; var startView: CGPoint; var moved = false; var dragging = true }
+    /// A grip being edited. `solve` = live constraint drag (Editor.dragSolve keeps every constraint satisfied while moving).
+    private struct HotGrip { var id: EntityID; var index: Int; var origin: Vec2; var startView: CGPoint; var moved = false; var dragging = true; var solve = false }
     private var hotGrip: HotGrip?
     private var hoverGrip: (id: EntityID, index: Int, point: Vec2)?
     private var currentGrips: [(id: EntityID, index: Int, point: Vec2)] = []
@@ -1072,8 +1073,8 @@ final class PlanCanvasView: NSView {
                 RenderScene.drawItems(items, ctx: ctx, scale: scale, params: prm)
             }
         }
-        // Grip drag preview.
-        if let g = hotGrip {
+        // Grip drag preview (a constraint drag edits the drawing itself, live).
+        if let g = hotGrip, !g.solve {
             let doc = ed.doc
             if let e = doc.entity(g.id) {
                 let geo = GripEditor.moved(e.geometry, grip: g.index, from: g.origin, to: cursorPoint)
@@ -1165,6 +1166,20 @@ final class PlanCanvasView: NSView {
             ctx.strokeLineSegments(between: [a, CGPoint(x: b.x + ux * reach, y: b.y + uy * reach)])
         }
         ctx.restoreGState()
+        // Tracking readout: distance and angle from the acquired point along the active tracking vector.
+        if let l = tr.lines.last, let sn = snap, sn.kind == .extension || sn.kind == .parallel {
+            let d = sn.point - l.from
+            guard d.length > 1e-9 else { return }
+            var ang = atan2(d.y, d.x) * 180 / .pi
+            if ang < 0 { ang += 360 }
+            let v = toView(sn.point)
+            ctx.saveGState()
+            ctx.setStrokeColor(CGColor(srgbRed: 0.35, green: 0.85, blue: 0.45, alpha: 1)); ctx.setLineWidth(1.5)
+            ctx.strokeLineSegments(between: [CGPoint(x: v.x - 5, y: v.y - 5), CGPoint(x: v.x + 5, y: v.y + 5), CGPoint(x: v.x - 5, y: v.y + 5), CGPoint(x: v.x + 5, y: v.y - 5)])
+            ctx.restoreGState()
+            let label = tr.lines.count > 1 ? "Intersection of tracking paths" : "Tracking: \(fmt(d.length, 2)) < \(fmt(ang, 1))°"
+            drawTooltip(ctx, [label], at: CGPoint(x: v.x + 12, y: v.y - 32), accent: false)
+        }
     }
 
     private func drawSnapMarker(_ ctx: CGContext, _ sn: SnapResult) {
@@ -1301,7 +1316,7 @@ final class PlanCanvasView: NSView {
         model?.live.snapHint = nil
         overlay.needsDisplay = true
     }
-    override func mouseMoved(with event: NSEvent) { track(event) }
+    override func mouseMoved(with event: NSEvent) { track(event); if hotGrip?.solve == true { solveDrag() } }
 
     private func track(_ e: NSEvent) {
         let v = convert(e.locationInWindow, from: nil)
@@ -1409,7 +1424,7 @@ final class PlanCanvasView: NSView {
         guard ed.isIdle else { return }
         if e.clickCount == 2, let id = pick(at: rawWorld) { editObject(id); return }
         if let g = gripHit(v) {
-            hotGrip = HotGrip(id: g.id, index: g.index, origin: g.point, startView: v)
+            hotGrip = HotGrip(id: g.id, index: g.index, origin: g.point, startView: v, solve: beginConstraintDrag(g.id, at: g.point))
             hoverGrip = nil
             updateCursorPoint(v)
             return
@@ -1441,7 +1456,27 @@ final class PlanCanvasView: NSView {
             hotGrip = g
         }
         updateCursorPoint(v)
+        solveDrag()
         overlay.needsDisplay = true
+    }
+
+    /// Starts a live constraint drag when the grip is a constrainable point of a constrained object.
+    private func beginConstraintDrag(_ id: EntityID, at p: Vec2) -> Bool {
+        guard let model, let e = model.doc.entity(id) else { return false }
+        let set = ConstraintSet.load(model.doc)
+        guard set.constraints.contains(where: { c in c.refs.contains { $0.entity == id } }) else { return false }
+        let tol = Double(3 / scale) + 1e-9
+        guard let part = Constraints.points(e.geometry).first(where: { $0.point.distance(to: p) <= tol })?.part else { return false }
+        return model.editor.beginDragSolve(ref: CRef(id, part))
+    }
+
+    /// Moves the constraint-dragged point to the cursor and re-solves (the drawing updates live).
+    private func solveDrag() {
+        guard let g = hotGrip, g.solve, let model else { return }
+        if let r = model.editor.dragSolve(point: cursorPoint) {
+            let hint = r.converged ? "Constraints satisfied · \(r.dof) DOF" : "Over-constrained (residual \(fmt(r.residual, 4)))"
+            if model.live.snapHint != hint { model.live.snapHint = hint }
+        }
     }
 
     override func mouseUp(with e: NSEvent) {
@@ -1478,6 +1513,11 @@ final class PlanCanvasView: NSView {
     private func commitGrip() {
         guard let g = hotGrip, let model else { return }
         hotGrip = nil
+        if g.solve {
+            _ = model.editor.dragSolve(point: cursorPoint)
+            model.editor.endDragSolve(commit: cursorPoint.distance(to: g.origin) > 1e-12)
+            return
+        }
         let p = cursorPoint
         guard p.distance(to: g.origin) > 1e-12 else { return }
         GripEditor.apply(editor: model.editor, id: g.id, grip: g.index, from: g.origin, to: p)
@@ -1486,7 +1526,7 @@ final class PlanCanvasView: NSView {
     private func cancelLocalModes() -> Bool {
         var any = false
         if windowSel != nil { windowSel = nil; any = true }
-        if hotGrip != nil { hotGrip = nil; any = true }
+        if let g = hotGrip { if g.solve { model?.editor.endDragSolve(commit: false) }; hotGrip = nil; any = true }
         if model?.zoomWindowPending == true { model?.zoomWindowPending = false; any = true }
         if any { overlay.needsDisplay = true }
         return any

@@ -5,18 +5,25 @@ import ArchiCore
 
 /// Dark neutral workspace palette (AutoCAD / Revit dark) with a yellow accent.
 enum Theme {
+    /// Light interface theme (Settings ▸ Display ▸ Theme); the drawing canvas keeps its own background color.
+    static var light: Bool { ThemeColors.light }
+    static var colorScheme: ColorScheme { light ? .light : .dark }
+    static var appearance: NSAppearance? { NSAppearance(named: light ? .aqua : .darkAqua) }
+    private static func pick(_ dark: UInt32, _ lightHex: UInt32) -> Color { Color(hex: light ? lightHex : dark) }
+    private static func nsPick(_ dark: UInt32, _ lightHex: UInt32) -> NSColor { NSColor(hex: light ? lightHex : dark) }
+
     static var canvasHex: UInt32 { ThemeColors.canvasHex }
     static var canvas: Color { Color(hex: ThemeColors.canvasHex) }
-    static let panel = Color(hex: 0x26272B)
-    static let ribbon = Color(hex: 0x2F3035)
-    static let ribbonTabBar = Color(hex: 0x232428)
-    static let field = Color(hex: 0x1B1C1F)
-    static let hover = Color.white.opacity(0.07)
-    static let pressed = Color.white.opacity(0.12)
-    static let separator = Color.white.opacity(0.09)
-    static let text = Color(hex: 0xE6E6E6)
-    static let textDim = Color(hex: 0x9A9BA1)
-    static let textFaint = Color(hex: 0x6B6C72)
+    static var panel: Color { pick(0x26272B, 0xF2F2F4) }
+    static var ribbon: Color { pick(0x2F3035, 0xE9E9EC) }
+    static var ribbonTabBar: Color { pick(0x232428, 0xDADADF) }
+    static var field: Color { pick(0x1B1C1F, 0xFFFFFF) }
+    static var hover: Color { light ? Color.black.opacity(0.07) : Color.white.opacity(0.07) }
+    static var pressed: Color { light ? Color.black.opacity(0.12) : Color.white.opacity(0.12) }
+    static var separator: Color { light ? Color.black.opacity(0.12) : Color.white.opacity(0.09) }
+    static var text: Color { pick(0xE6E6E6, 0x1D1D20) }
+    static var textDim: Color { pick(0x9A9BA1, 0x5E5F66) }
+    static var textFaint: Color { pick(0x6B6C72, 0x9A9BA1) }
     static var accent: Color { Color(hex: ThemeColors.accentHex) }
     static let accentText = Color(hex: 0x1E1F22)
     static let danger = Color(hex: 0xE5534B)
@@ -24,11 +31,11 @@ enum Theme {
     static let crossingGreen = Color(red: 0.25, green: 0.8, blue: 0.4)
 
     static var nsCanvas: NSColor { NSColor(hex: ThemeColors.canvasHex) }
-    static let nsPanel = NSColor(hex: 0x26272B)
+    static var nsPanel: NSColor { nsPick(0x26272B, 0xF2F2F4) }
     static var nsAccent: NSColor { NSColor(hex: ThemeColors.accentHex) }
-    static let nsText = NSColor(hex: 0xE6E6E6)
-    static let nsTextDim = NSColor(hex: 0x9A9BA1)
-    static let nsField = NSColor(hex: 0x1B1C1F)
+    static var nsText: NSColor { nsPick(0xE6E6E6, 0x1D1D20) }
+    static var nsTextDim: NSColor { nsPick(0x9A9BA1, 0x5E5F66) }
+    static var nsField: NSColor { nsPick(0x1B1C1F, 0xFFFFFF) }
 
     static let font = Font.system(size: 11)
     static let fontSmall = Font.system(size: 10)

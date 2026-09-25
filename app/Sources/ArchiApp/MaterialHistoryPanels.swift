@@ -176,6 +176,14 @@ private struct MaterialEditor: View {
                         .darkField().frame(width: 80)
                     Text("mm").foregroundStyle(Theme.textDim)
                 }
+                HStack(spacing: 6) {
+                    Text("Bump").frame(width: 76, alignment: .leading).foregroundStyle(Theme.textDim)
+                    let key = "MATBUMP:" + material.name.uppercased()
+                    Slider(value: Binding(get: { BumpMap.strength(material.name, doc: model.doc) },
+                                          set: { v in model.editor.transaction("Material Bump") { $0.variables[key] = fmt(v, 2) } }), in: 0...2)
+                    Text(fmt(BumpMap.strength(material.name, doc: model.doc), 2)).font(Theme.mono).frame(width: 34, alignment: .trailing)
+                }
+                .help("Relief from the texture's luminance in Realistic 3D and renders (0 = off)")
             }
             HStack(spacing: 6) {
                 Text("Cut pattern").frame(width: 76, alignment: .leading).foregroundStyle(Theme.textDim)

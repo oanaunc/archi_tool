@@ -15,7 +15,9 @@ enum AppCommands {
         registered = true
         r.ensureBuiltins()
         r.register(all)
+        r.register(AppCommandsExtra.all)
         r.register(AppSelfTests.command)
+        AppCommandsExtra.installSpellChecker()
     }
 
     private static func ui(_ ed: Editor) throws -> AppModel {
@@ -89,31 +91,13 @@ enum AppCommands {
             CommandDef("QSELECTDIALOG", aliases: ["QSD", "QUICKSELECT"], category: "Select", summary: "Quick Select dialog: type, property, operator and value with a live match count.", modifies: false) { ed in
                 try ui(ed).sheet = .quickSelect
             },
-            CommandDef("LAYERSTATE", aliases: ["LAS", "LMAN", "-LAYERSTATE"], category: "Layers", summary: "Saves, restores, deletes or lists named layer states (saved in the drawing).") { ed in
-                let k = try await ed.getKeyword("Enter an option [Save/Restore/Delete/List/Dialog]", ["Save", "Restore", "Delete", "List", "Dialog"], defaultValue: "Dialog") ?? "Dialog"
-                switch k {
-                case "Save":
-                    guard let n = try await ed.getString("Enter new layer state name"), !n.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-                    var d = ed.doc; LayerStates.save(n.trimmingCharacters(in: .whitespaces), in: &d); ed.doc = d
-                    ed.print("Layer state \(n.uppercased()) saved (\(d.layers.count) layers).")
-                case "Restore":
-                    let names = LayerStates.names(ed.doc)
-                    guard !names.isEmpty else { throw CommandError.invalid("No layer states saved.") }
-                    guard let n = try await ed.getString("Enter layer state name to restore [\(names.joined(separator: "/"))]") else { return }
-                    var d = ed.doc
-                    guard let c = LayerStates.restore(n.trimmingCharacters(in: .whitespaces), in: &d) else { throw CommandError.invalid("Layer state \"\(n)\" not found.") }
-                    ed.doc = d
-                    ed.print("Layer state \(n.uppercased()) restored (\(c) layer(s) changed).")
-                case "Delete":
-                    guard let n = try await ed.getString("Enter layer state name to delete") else { return }
-                    guard LayerStates.state(n, in: ed.doc) != nil else { throw CommandError.invalid("Layer state \"\(n)\" not found.") }
-                    var d = ed.doc; LayerStates.delete(n, in: &d); ed.doc = d
-                case "List":
-                    let names = LayerStates.names(ed.doc)
-                    ed.print(names.isEmpty ? "No layer states." : "Layer states: " + names.joined(separator: ", "))
-                default:
-                    guard let m = model(ed) else { ed.print("Use LAYERSTATE Save/Restore/Delete/List."); return }
+            CommandDef("LAYERSTATE", aliases: ["LAS", "LMAN", "-LAYERSTATE"], category: "Layers", summary: "Layer states: Dialog, or ?/Save/Restore/Delete/Import/Export/Rename on the command line (saved in the drawing).") { ed in
+                let k = try await ed.getKeyword("Enter an option", ["Dialog"] + LayerToolCommands.layerStateOptions, defaultValue: model(ed) == nil ? "?" : "Dialog") ?? "Dialog"
+                if k == "Dialog" {
+                    guard let m = model(ed) else { try await LayerToolCommands.runLayerState("?", ed); return }
                     m.sheet = .layerStates
+                } else {
+                    try await LayerToolCommands.runLayerState(k, ed)
                 }
             },
             CommandDef("LAYERFILTER", aliases: ["LFILTER"], category: "Layers", summary: "Filters the Layers panel (A-*, ~*TEXT*, #on #used); Save/Delete/List named filters kept in the drawing.") { ed in

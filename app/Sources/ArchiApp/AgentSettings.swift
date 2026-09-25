@@ -198,8 +198,8 @@ struct ConnectClaudeSheet: View {
 @MainActor
 enum ScriptLibrary {
     static var folder: URL {
-        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first ?? URL(fileURLWithPath: NSTemporaryDirectory())
-        return base.appendingPathComponent("Oanarina Archi Tool/Scripts", isDirectory: true)
+        if let custom = UserDefaults.standard.string(forKey: "pref.scriptsFolder"), !custom.isEmpty { return URL(fileURLWithPath: custom, isDirectory: true) }
+        return FileLocations.defaultScripts
     }
 
     static func ensureFolder() {

@@ -13,6 +13,8 @@ final class AppPreferences: ObservableObject {
     // MARK: Display
     @Published var accentHex: UInt32 { didSet { d.set(Int(accentHex), forKey: "pref.accentHex"); ThemeColors.accentHex = accentHex; changed() } }
     @Published var canvasHex: UInt32 { didSet { d.set(Int(canvasHex), forKey: "pref.canvasHex"); ThemeColors.canvasHex = canvasHex; changed() } }
+    /// Interface theme: "dark" or "light" (applied to every window without restart).
+    @Published var theme: String { didSet { d.set(theme, forKey: "pref.theme"); ThemeColors.light = theme == "light"; applyTheme() } }
     /// Crosshair length as a percentage of the canvas (AutoCAD CURSORSIZE, 1…100).
     @Published var cursorSize: Int { didSet { d.set(cursorSize, forKey: "pref.cursorSize"); changed() } }
 
@@ -21,6 +23,10 @@ final class AppPreferences: ObservableObject {
     @Published var autosaveMinutes: Int { didSet { d.set(autosaveMinutes, forKey: "pref.autosaveMinutes"); AutosaveManager.rescheduleAll() } }
     @Published var recentLimit: Int { didSet { d.set(recentLimit, forKey: "pref.recentLimit") } }
     @Published var runStartupScript: Bool { didSet { d.set(runStartupScript, forKey: "pref.runStartupScript") } }
+    /// File locations ("" = default): drawing templates, script library, default export/publish folder.
+    @Published var templatesFolder: String { didSet { d.set(templatesFolder, forKey: "pref.templatesFolder") } }
+    @Published var scriptsFolder: String { didSet { d.set(scriptsFolder, forKey: "pref.scriptsFolder") } }
+    @Published var exportFolder: String { didSet { d.set(exportFolder, forKey: "pref.exportFolder") } }
 
     // MARK: New drawings
     @Published var defaultUnits: Units { didSet { d.set(defaultUnits.rawValue, forKey: "pref.defaultUnits") } }
@@ -32,6 +38,8 @@ final class AppPreferences: ObservableObject {
     @Published var shortcuts: [String: String] { didSet { d.set(shortcuts, forKey: "pref.shortcuts") } }
     /// Commands on the quick access toolbar (left to right).
     @Published var quickAccess: [String] { didSet { d.set(quickAccess, forKey: "pref.quickAccess"); changed() } }
+    /// Ribbon tabs the user hid (Settings ▸ Toolbar).
+    @Published var hiddenRibbonTabs: [String] { didSet { d.set(hiddenRibbonTabs, forKey: "pref.hiddenRibbonTabs"); changed() } }
 
     // MARK: Agents
     @Published var agentPort: Int { didSet { d.set(agentPort, forKey: "pref.agentPort") } }
@@ -53,10 +61,15 @@ final class AppPreferences: ObservableObject {
         autosaveMinutes = int("pref.autosaveMinutes", 5)
         recentLimit = int("pref.recentLimit", 12)
         runStartupScript = ud.object(forKey: "pref.runStartupScript") as? Bool ?? true
+        theme = ud.string(forKey: "pref.theme") == "light" ? "light" : "dark"
+        templatesFolder = ud.string(forKey: "pref.templatesFolder") ?? ""
+        scriptsFolder = ud.string(forKey: "pref.scriptsFolder") ?? ""
+        exportFolder = ud.string(forKey: "pref.exportFolder") ?? ""
         defaultUnits = Units(rawValue: ud.string(forKey: "pref.defaultUnits") ?? "") ?? .millimeters
         draft = (ud.data(forKey: "pref.draft")).flatMap { try? JSONDecoder().decode(DraftSettings.self, from: $0) } ?? DraftSettings()
         shortcuts = ud.dictionary(forKey: "pref.shortcuts") as? [String: String] ?? [:]
         quickAccess = ud.stringArray(forKey: "pref.quickAccess") ?? AppPreferences.defaultQuickAccess
+        hiddenRibbonTabs = ud.stringArray(forKey: "pref.hiddenRibbonTabs") ?? []
         agentPort = int("pref.agentPort", 47800)
         agentAutoStart = ud.bool(forKey: "pref.agentAutoStart")
         ThemeColors.accentHex = accentHex
@@ -71,12 +84,22 @@ final class AppPreferences: ObservableObject {
         autosaveMinutes = 5
         recentLimit = 12
         runStartupScript = true
+        theme = "dark"
+        templatesFolder = ""; scriptsFolder = ""; exportFolder = ""
         defaultUnits = .millimeters
         draft = DraftSettings()
         shortcuts = [:]
         quickAccess = AppPreferences.defaultQuickAccess
+        hiddenRibbonTabs = []
         agentPort = 47800
         agentAutoStart = false
+    }
+
+    /// Applies the interface theme to the application and every open window.
+    func applyTheme() {
+        NSApp?.appearance = Theme.appearance
+        for w in NSApp?.windows ?? [] { w.appearance = Theme.appearance; if AppModel.all.contains(where: { $0.window === w }) { w.backgroundColor = Theme.nsPanel } }
+        changed()
     }
 
     /// Redraws every open window so display preferences apply immediately.
@@ -111,6 +134,7 @@ enum ThemeColors {
     static var canvasHex: UInt32 = {
         (UserDefaults.standard.object(forKey: "pref.canvasHex") as? Int).map { UInt32(truncatingIfNeeded: $0) } ?? 0x1E1F22
     }()
+    static var light: Bool = UserDefaults.standard.string(forKey: "pref.theme") == "light"
 }
 
 // MARK: - Keyboard shortcuts
@@ -225,7 +249,7 @@ enum PreferencesWindow {
         let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 680, height: 520), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
         w.title = "Settings"
         w.isReleasedWhenClosed = false
-        w.appearance = NSAppearance(named: .darkAqua)
+        w.appearance = Theme.appearance
         w.backgroundColor = Theme.nsPanel
         w.isOpaque = true
         let host = NSHostingController(rootView: PreferencesView(prefs: .shared, selection: selection))
@@ -292,7 +316,7 @@ struct PreferencesView: View {
         .font(Theme.font)
         .foregroundStyle(Theme.text)
         .background(Theme.panel)
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(Theme.colorScheme)
         .frame(minWidth: 640, minHeight: 460)
     }
 }
@@ -316,11 +340,11 @@ private struct GeneralPrefs: View {
     @ObservedObject var prefs: AppPreferences
     var body: some View {
         PrefSection(title: "Autosave and recovery") {
-            Picker("Autosave every", selection: $prefs.autosaveMinutes) {
-                Text("Off").tag(0)
-                ForEach([1, 2, 5, 10, 15, 30], id: \.self) { Text("\($0) min").tag($0) }
+            HStack {
+                Toggle("Autosave", isOn: Binding(get: { prefs.autosaveMinutes > 0 }, set: { prefs.autosaveMinutes = $0 ? max(prefs.autosaveMinutes, 5) : 0 }))
+                Stepper(prefs.autosaveMinutes > 0 ? "every \(prefs.autosaveMinutes) min" : "off", value: $prefs.autosaveMinutes, in: 0...120)
+                    .disabled(prefs.autosaveMinutes == 0)
             }
-            .frame(width: 260)
             Text("Unsaved changes are written to a recovery file; after a crash the Start screen offers to restore them.")
                 .font(Theme.fontSmall).foregroundStyle(Theme.textDim).fixedSize(horizontal: false, vertical: true)
             Button("Show Recovery Folder") { NSWorkspace.shared.activateFileViewerSelecting([AutosaveManager.folder]) }
@@ -335,6 +359,15 @@ private struct GeneralPrefs: View {
                 ForEach(Units.allCases, id: \.self) { u in Text("\(u.rawValue.capitalized) (\(u.abbreviation))").tag(u) }
             }
             .frame(width: 300)
+        }
+        PrefSection(title: "File locations") {
+            FolderRow(title: "Templates", path: $prefs.templatesFolder, defaultURL: FileLocations.defaultTemplates)
+            FolderRow(title: "Script library", path: $prefs.scriptsFolder, defaultURL: FileLocations.defaultScripts)
+            FolderRow(title: "Export & publish", path: $prefs.exportFolder, defaultURL: nil)
+            HStack {
+                Text("Autosave / recovery").frame(width: 120, alignment: .leading)
+                Text(AutosaveManager.folder.path.replacingOccurrences(of: NSHomeDirectory(), with: "~")).font(Theme.mono).foregroundStyle(Theme.textDim).lineLimit(1).truncationMode(.middle)
+            }
         }
         PrefSection(title: "Scripts") {
             Toggle("Run startup.js from the script library in every new window", isOn: $prefs.runStartupScript)
@@ -384,6 +417,14 @@ private struct DraftingPrefs: View {
 private struct DisplayPrefs: View {
     @ObservedObject var prefs: AppPreferences
     var body: some View {
+        PrefSection(title: "Theme") {
+            Picker("Interface", selection: $prefs.theme) {
+                Text("Dark").tag("dark")
+                Text("Light").tag("light")
+            }
+            .pickerStyle(.segmented).frame(width: 220)
+            Text("Applies to the ribbon, panels and dialogs at once; the drawing background is set below.").font(Theme.fontSmall).foregroundStyle(Theme.textDim)
+        }
         PrefSection(title: "Accent color") {
             HStack(spacing: 8) {
                 ForEach(AppPreferences.accentPresets, id: \.1) { name, hex in
@@ -586,9 +627,33 @@ private struct ToolbarPrefs: View {
             HStack {
                 TextField("Command name (e.g. MATCHPROP)", text: $newCommand).darkField().frame(width: 220).onSubmit(add)
                 Button("Add") { add() }.buttonStyle(FlatButtonStyle(compact: true))
+                Menu("Browse") {
+                    ForEach(CommandCatalog.menus + CommandCatalog.coverageMenus, id: \.0) { name, items in
+                        Menu(name) {
+                            ForEach(items) { item in
+                                Button(item.title) {
+                                    if let n = item.names.first(where: { CommandRegistry.shared.lookup($0) != nil }), let d = CommandRegistry.shared.lookup(n), !prefs.quickAccess.contains(d.name) {
+                                        prefs.quickAccess.append(d.name)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                .fixedSize()
                 Button("Restore Default") { prefs.quickAccess = AppPreferences.defaultQuickAccess }.buttonStyle(FlatButtonStyle(compact: true))
             }
             if !message.isEmpty { Text(message).font(Theme.fontSmall).foregroundStyle(Theme.danger) }
+        }
+        PrefSection(title: "Ribbon tabs") {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), alignment: .leading)], alignment: .leading, spacing: 6) {
+                ForEach(RibbonTab.allCases) { t in
+                    Toggle(t.rawValue, isOn: Binding(get: { !prefs.hiddenRibbonTabs.contains(t.rawValue) },
+                                                     set: { on in if on { prefs.hiddenRibbonTabs.removeAll { $0 == t.rawValue } } else if t != .home { prefs.hiddenRibbonTabs.append(t.rawValue) } }))
+                        .disabled(t == .home)
+                }
+            }
+            Text("Hidden tabs keep their commands on the menus and the command line.").font(Theme.fontSmall).foregroundStyle(Theme.textDim)
         }
     }
     private func move(_ i: Int, _ d: Int) {
@@ -624,6 +689,33 @@ enum QuickAccess {
         case "View": return "eye"
         case "Architecture", "BIM": return "building.2"
         default: return "terminal"
+        }
+    }
+}
+
+
+/// A folder preference: path (empty = default), Choose…, Reveal and Reset.
+private struct FolderRow: View {
+    let title: String
+    @Binding var path: String
+    let defaultURL: URL?
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(title).frame(width: 120, alignment: .leading)
+            Text(path.isEmpty ? (defaultURL.map { $0.path.replacingOccurrences(of: NSHomeDirectory(), with: "~") + " (default)" } ?? "Next to the drawing (default)") : path.replacingOccurrences(of: NSHomeDirectory(), with: "~"))
+                .font(Theme.mono).foregroundStyle(path.isEmpty ? Theme.textDim : Theme.text).lineLimit(1).truncationMode(.middle)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Button("Choose…") {
+                let p = NSOpenPanel()
+                p.canChooseDirectories = true; p.canChooseFiles = false; p.canCreateDirectories = true
+                if p.runModal() == .OK, let u = p.url { path = u.path }
+            }
+            .buttonStyle(FlatButtonStyle(compact: true))
+            if let u = path.isEmpty ? defaultURL : URL(fileURLWithPath: path) {
+                Button("Reveal") { try? FileManager.default.createDirectory(at: u, withIntermediateDirectories: true); NSWorkspace.shared.activateFileViewerSelecting([u]) }
+                    .buttonStyle(FlatButtonStyle(compact: true))
+            }
+            if !path.isEmpty { Button("Reset") { path = "" }.buttonStyle(FlatButtonStyle(compact: true)) }
         }
     }
 }

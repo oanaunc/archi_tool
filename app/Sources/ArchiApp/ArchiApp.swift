@@ -8,6 +8,21 @@ import ArchiCore
 struct ArchiToolApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
+    /// `--selftest`: runs APPSELFTEST headless (no window), prints the report and exits with 0 (pass) or 1 (fail).
+    init() {
+        guard CommandLine.arguments.contains("--selftest") else { return }
+        let failed: Bool = MainActor.assumeIsolated {
+            let r = AppSelfTests.run()
+            if let cov = AppSelfTests.lastCoverage {
+                print("Command coverage: \(cov.total) commands, \(cov.intentional.count) system variables in palettes, \(cov.missing.count) without UI entry\(cov.missing.isEmpty ? "" : ": " + cov.missing.joined(separator: ", "))")
+            }
+            for f in r.failures { print("FAIL: \(f)") }
+            print("\(r.passed) check(s) passed, \(r.failures.count) failed.")
+            return !r.failures.isEmpty
+        }
+        exit(failed ? 1 : 0)
+    }
+
     var body: some Scene {
         WindowGroup("Oanarina Archi Tool", id: "document", for: DocumentRequest.self) { $request in
             MainWindow(request: request)
@@ -18,14 +33,14 @@ struct ArchiToolApp: App {
         Window("Command Reference", id: "command-reference") {
             CommandReferenceView(registry: .shared, onClose: nil)
                 .frame(minWidth: 620, minHeight: 460)
-                .preferredColorScheme(.dark)
+                .preferredColorScheme(Theme.colorScheme)
         }
         .defaultSize(width: 760, height: 620)
 
         Window("Keyboard Shortcuts", id: "keyboard-shortcuts") {
             ShortcutsView(onClose: nil)
                 .frame(minWidth: 520, minHeight: 460)
-                .preferredColorScheme(.dark)
+                .preferredColorScheme(Theme.colorScheme)
         }
         .defaultSize(width: 560, height: 560)
     }
@@ -37,7 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var keyMonitor: Any?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.appearance = NSAppearance(named: .darkAqua)
+        NSApp.appearance = Theme.appearance
         NSWindow.allowsAutomaticWindowTabbing = true
         AppIcon.install()
         Clipboard.install()
@@ -221,6 +236,14 @@ struct ArchiCommands: Commands {
                 Button("Metric Drawing (mm)") { openWindow(value: DocumentRequest(kind: .blankMetric)) }
                 Button("Imperial Drawing (in)") { openWindow(value: DocumentRequest(kind: .blankImperial)) }
                 Button("Building (levels, grid, sheets)") { openWindow(value: DocumentRequest(kind: .building)) }
+                ForEach(TemplateLibrary.all().filter { $0.id != "builtin:metric" && $0.id != "builtin:imperial" && $0.id != "builtin:building" }) { t in
+                    Button(t.name) { openWindow(value: DocumentRequest(kind: .template, path: t.id)) }
+                }
+                Button("Save Drawing as Template…") { model?.runCommand("SAVEASTEMPLATE") }.disabled(model == nil)
+                Button("Show Templates Folder") {
+                    try? FileManager.default.createDirectory(at: FileLocations.templates, withIntermediateDirectories: true)
+                    NSWorkspace.shared.activateFileViewerSelecting([FileLocations.templates])
+                }
                 Divider()
                 Button("Sample House") { openWindow(value: DocumentRequest(kind: .sample)) }
             }
@@ -278,6 +301,10 @@ struct ArchiCommands: Commands {
                 .disabled(model == nil)
             Button("Publish All Sheets to PDF…") { if let m = model { Plotter.publish(model: m, path: nil) } }
                 .disabled(model == nil || (model?.doc.layouts.isEmpty ?? true))
+            Button("Batch Publish…") { model?.sheet = .batchPublish }
+                .disabled(model == nil || (model?.doc.layouts.isEmpty ?? true))
+            Button("Plot Style Tables…") { model?.sheet = .plotStyles }
+                .disabled(model == nil)
             Button("Title Block…") { if let m = model, !m.doc.layouts.isEmpty { m.mode = .sheet; m.sheet = .titleBlock(min(max(m.activeLayout, 0), m.doc.layouts.count - 1)) } }
                 .disabled(model == nil || (model?.doc.layouts.isEmpty ?? true))
         }
@@ -410,6 +437,24 @@ struct ArchiCommands: Commands {
             Button("Node Editor…") { if let m = model { NodeEditorWindow.show(model: m) } }.disabled(model == nil)
         }
         CommandMenu("Analyze") { extraMenu(1) }
+        CommandMenu("Tools") {
+            ForEach(CommandCatalog.coverageMenus, id: \.0) { name, items in
+                Menu(name) { menuItems(items) }
+            }
+            Menu("System Variables") { menuItems(CommandCatalog.variableItems) }
+            Divider()
+            Menu("All Commands") {
+                let reg = CommandRegistry.shared
+                let groups = Dictionary(grouping: reg.sorted, by: \.category).sorted { $0.key < $1.key }
+                ForEach(groups, id: \.key) { cat, list in
+                    Menu(cat) {
+                        ForEach(list, id: \.name) { d in
+                            Button(d.name) { model?.runCommand(d.name) }.disabled(model == nil)
+                        }
+                    }
+                }
+            }
+        }
         CommandGroup(replacing: .help) {
             Button("Search Commands…") { model?.showCommandSearch = true }
                 .keyboardShortcut("k")
@@ -421,6 +466,9 @@ struct ArchiCommands: Commands {
             }
             .disabled(Bundle.main.url(forResource: "USER-GUIDE", withExtension: "md") == nil)
             Button("Keyboard Shortcuts") { openWindow(id: "keyboard-shortcuts") }
+            Button("Start Screen") { model?.showStart = true }.disabled(model == nil)
+            Button("Check Command Coverage") { model?.runCommand("APPSELFTEST") }.disabled(model == nil)
+            Button("Export Command Reference…") { model?.runCommand("EXPORTCOMMANDS") }.disabled(model == nil)
             Button("Customize Shortcuts…") { PreferencesWindow.show(.shortcuts) }
             Divider()
             Button("Connect Claude…") { model?.sheet = .connectClaude }

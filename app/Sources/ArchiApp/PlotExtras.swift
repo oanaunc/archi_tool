@@ -21,6 +21,10 @@ struct PageSetup: Codable, Hashable {
     var modelPaper = "A3"
     var modelPortrait = false
     var modelScale: Double?
+    /// Colour-dependent plot style table name (PLOTSTYLE); nil = none.
+    var plotStyleTable: String?
+    /// Plot stamp text with fields {project} {number} {sheet} {date} {time} {user} {file} {style}; nil = default.
+    var stampText: String?
 
     init() {}
     init(from decoder: Decoder) throws {
@@ -31,6 +35,8 @@ struct PageSetup: Codable, Hashable {
         modelPaper = try c.decodeIfPresent(String.self, forKey: .modelPaper) ?? "A3"
         modelPortrait = try c.decodeIfPresent(Bool.self, forKey: .modelPortrait) ?? false
         modelScale = try c.decodeIfPresent(Double.self, forKey: .modelScale)
+        plotStyleTable = try c.decodeIfPresent(String.self, forKey: .plotStyleTable)
+        stampText = try c.decodeIfPresent(String.self, forKey: .stampText)
     }
 
     static let modelKey = "PAGESETUP:*MODEL*"
@@ -57,13 +63,25 @@ struct PageSetup: Codable, Hashable {
 }
 
 enum PlotStamp {
-    static func text(doc: ArchiDocument, name: String) -> String {
-        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd HH:mm"
-        return "\(doc.info.name)  ·  \(name)  ·  plotted \(f.string(from: Date()))  ·  Oanarina Archi Tool"
+    static let defaultTemplate = "{project}  ·  {sheet}  ·  plotted {date} {time}  ·  Oanarina Archi Tool"
+    static let fields = ["{project}", "{number}", "{sheet}", "{date}", "{time}", "{user}", "{file}", "{style}"]
+
+    /// Stamp text from a template with fields.
+    static func text(doc: ArchiDocument, name: String, template: String? = nil, file: String? = nil, style: String? = nil, date: Date = Date()) -> String {
+        let df = DateFormatter(); df.dateFormat = "yyyy-MM-dd"
+        let tf = DateFormatter(); tf.dateFormat = "HH:mm"
+        var t = (template?.isEmpty == false ? template! : defaultTemplate)
+        let values: [String: String] = [
+            "{project}": doc.info.name, "{number}": doc.info.number, "{sheet}": name, "{date}": df.string(from: date), "{time}": tf.string(from: date),
+            "{user}": doc.info.author.isEmpty ? NSFullUserName() : doc.info.author, "{file}": file ?? "", "{style}": style ?? "",
+        ]
+        for (k, v) in values { t = t.replacingOccurrences(of: k, with: v) }
+        return t
     }
-    static func entry(doc: ArchiDocument, name: String, paperWidth: Double) -> DrawEntry {
-        DrawEntry(id: nil, items: [.text(TextGeom(position: Vec2(SheetComposer.bindingMargin + 1, 4), height: 1.8, content: text(doc: doc, name: name)),
-                                         font: "Helvetica", color: .black)])
+    static func entry(doc: ArchiDocument, name: String, paperWidth: Double, setup: PageSetup? = nil) -> DrawEntry {
+        let style = setup.map { $0.plotStyleTable ?? $0.colorMode.rawValue }
+        let content = text(doc: doc, name: name, template: setup?.stampText, file: nil, style: style)
+        return DrawEntry(id: nil, items: [.text(TextGeom(position: Vec2(SheetComposer.bindingMargin + 1, 4), height: 1.8, content: content), font: "Helvetica", color: .black)])
     }
 }
 
@@ -118,12 +136,12 @@ extension Plotter {
             let panel = NSSavePanel()
             panel.allowedContentTypes = [.pdf]
             panel.nameFieldStringValue = "\(model.displayName) — sheets.pdf"
-            if let dir = model.editor.fileURL?.deletingLastPathComponent() { panel.directoryURL = dir }
+            if let dir = FileLocations.exportFolder ?? model.editor.fileURL?.deletingLastPathComponent() { panel.directoryURL = dir }
             guard panel.runModal() == .OK, let u = panel.url else { return }
             url = u
         }
         do {
-            try writeSheetsPDF(doc: doc, to: url)
+            try publishPDF(doc: doc, layouts: Array(doc.layouts.indices), to: url, bookmarks: true)
             model.editor.print("Published \(doc.layouts.count) sheet(s) to \(url.path)")
         } catch { model.files.showError(error) }
     }
@@ -140,7 +158,7 @@ enum PlotPreviewWindow {
         let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1080, height: 720), styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)
         w.title = "Plot Preview — \(model.displayName)"
         w.isReleasedWhenClosed = false
-        w.appearance = NSAppearance(named: .darkAqua)
+        w.appearance = Theme.appearance
         w.backgroundColor = Theme.nsPanel
         let host = NSHostingController(rootView: PlotPreviewView(model: model, onClose: { windows[key]?.close(); windows[key] = nil }))
         host.sizingOptions = []
@@ -188,7 +206,7 @@ struct PlotPreviewView: View {
                     ForEach(Array(model.doc.layouts.enumerated()), id: \.offset) { i, l in Text("Sheet — \(l.name)").tag(What.sheet(i)) }
                     if model.doc.layouts.count > 1 { Text("All sheets (\(model.doc.layouts.count) pages)").tag(What.allSheets) }
                 }
-                PageSetupForm(setup: $setup, showModel: what == .model, scaleText: $scaleText)
+                PageSetupForm(setup: $setup, showModel: what == .model, scaleText: $scaleText, tables: PlotStyleTable.all(model.doc).map(\.name))
                 if what != .model {
                     Text("Sheets plot at 1:1 on their own paper; change paper and viewports in the Sheet view.")
                         .font(Theme.fontSmall).foregroundStyle(Theme.textDim).fixedSize(horizontal: false, vertical: true)
@@ -217,7 +235,7 @@ struct PlotPreviewView: View {
         }
         .font(Theme.font)
         .foregroundStyle(Theme.text)
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(Theme.colorScheme)
         .frame(minWidth: 760, minHeight: 500)
         .onAppear {
             what = model.mode == .sheet && model.doc.layouts.indices.contains(model.activeLayout) ? .sheet(model.activeLayout) : .model
@@ -302,18 +320,31 @@ struct PageSetupForm: View {
     @Binding var setup: PageSetup
     var showModel: Bool
     @Binding var scaleText: String
+    /// Plot style tables available in the document.
+    var tables: [String] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Picker("Plot style", selection: $setup.colorMode) {
                 ForEach(PlotColorMode.allCases) { Text($0.rawValue).tag($0) }
             }
+            if !tables.isEmpty {
+                Picker("Plot style table", selection: Binding(get: { setup.plotStyleTable ?? "" }, set: { setup.plotStyleTable = $0.isEmpty ? nil : $0 })) {
+                    Text("None").tag("")
+                    ForEach(tables, id: \.self) { Text($0).tag($0) }
+                }
+            }
             HStack {
                 Text("Lineweights")
                 Slider(value: $setup.lineweightScale, in: 0.25...3, step: 0.25)
                 Text("×\(fmt(setup.lineweightScale, 2))").font(Theme.mono).frame(width: 44, alignment: .trailing)
             }
-            Toggle("Plot stamp (name, sheet, date)", isOn: $setup.plotStamp)
+            Toggle("Plot stamp", isOn: $setup.plotStamp)
+            if setup.plotStamp {
+                TextField(PlotStamp.defaultTemplate, text: Binding(get: { setup.stampText ?? "" }, set: { setup.stampText = $0.isEmpty ? nil : $0 }))
+                    .darkField()
+                Text("Fields: " + PlotStamp.fields.joined(separator: " ")).font(Theme.fontSmall).foregroundStyle(Theme.textDim)
+            }
             if showModel {
                 Divider()
                 Picker("Paper", selection: $setup.modelPaper) {
@@ -367,7 +398,7 @@ struct PageSetupSheet: View {
                     .pickerStyle(.segmented)
                     Divider()
                 }
-                PageSetupForm(setup: $setup, showModel: !isSheet, scaleText: $scaleText)
+                PageSetupForm(setup: $setup, showModel: !isSheet, scaleText: $scaleText, tables: PlotStyleTable.all(model.doc).map(\.name))
             }
             .padding(14)
             .frame(width: 420)

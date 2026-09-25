@@ -228,12 +228,12 @@ enum MaterialThumbnails {
 enum MaterialLibraryWindow {
     private static var window: NSWindow?
     static func show(model: AppModel) {
-        let view = MaterialLibraryBrowser(model: model).preferredColorScheme(.dark)
+        let view = MaterialLibraryBrowser(model: model).preferredColorScheme(Theme.colorScheme)
         if let w = window { w.contentViewController = NSHostingController(rootView: view); w.makeKeyAndOrderFront(nil); return }
         let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 560), styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)
         w.title = "Material Library"
         w.isReleasedWhenClosed = false
-        w.appearance = NSAppearance(named: .darkAqua)
+        w.appearance = Theme.appearance
         w.contentViewController = NSHostingController(rootView: view)
         w.center(); w.makeKeyAndOrderFront(nil)
         window = w

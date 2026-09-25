@@ -22,14 +22,30 @@ struct PlotRenderer {
     var overrideColor: CGColor?
     /// Plot style: full color, monochrome (all black) or grayscale.
     var colorMode: PlotColorMode = .color
+    /// Colour-dependent plot style table (pen colour, lineweight, screening per ACI colour), applied before `colorMode`.
+    var penTable: PlotStyleTable?
+
+    /// Applies a page setup (colour mode, lineweight scale, plot style table of the document).
+    mutating func apply(_ setup: PageSetup, doc: ArchiDocument) {
+        colorMode = setup.colorMode
+        lineweightScale = CGFloat(setup.lineweightScale)
+        penTable = PlotStyleTable.named(setup.plotStyleTable, in: doc)
+    }
+
+    /// Plotted line width in device units for a stroke style (the plot style table may override the lineweight).
+    func width(_ style: ArchiCore.StrokeStyle) -> CGFloat {
+        let lw = penTable?.resolve(color: style.color, lineweight: style.lineweight).1 ?? style.lineweight
+        return max(minLineWidth, CGFloat(lw) * devicePerMM * lineweightScale)
+    }
 
     var scaleFactor: CGFloat { sqrt(abs(transform.a * transform.d - transform.b * transform.c)) }
     var rotation: CGFloat { atan2(transform.b, transform.a) }
 
     func point(_ p: Vec2) -> CGPoint { CGPoint(x: p.x, y: p.y).applying(transform) }
 
-    func color(_ c: RGBA) -> CGColor {
+    func color(_ c0: RGBA) -> CGColor {
         if let o = overrideColor { return o }
+        let c = penTable?.resolve(color: c0, lineweight: 0).0 ?? c0
         switch colorMode {
         case .monochrome: return CGColor(srgbRed: 0, green: 0, blue: 0, alpha: c.a)
         case .grayscale:
@@ -66,7 +82,7 @@ struct PlotRenderer {
             guard pts.count >= 2 else {
                 if let p = pts.first { // a point: tiny dot
                     let q = point(p); ctx.setFillColor(color(style.color))
-                    let r = max(minLineWidth, style.lineweight * devicePerMM * lineweightScale)
+                    let r = width(style)
                     ctx.fillEllipse(in: CGRect(x: q.x - r, y: q.y - r, width: 2 * r, height: 2 * r))
                 }
                 return
@@ -78,7 +94,7 @@ struct PlotRenderer {
             if closed { path.closeSubpath() }
             ctx.addPath(path)
             ctx.setStrokeColor(color(style.color))
-            ctx.setLineWidth(max(minLineWidth, CGFloat(style.lineweight) * devicePerMM * lineweightScale))
+            ctx.setLineWidth(width(style))
             ctx.setLineJoin(.round)
             ctx.setLineCap(.round)
             if !style.dash.isEmpty {
@@ -205,6 +221,7 @@ enum SheetComposer {
             var o = DrawOptions(level: vp.level)
             o.forPaper = true
             o.linetypeScale = max(1, vp.scale * 0.25)
+            if vp.view == .ceiling { o.reflectedCeiling = true }
             return DrawListBuilder.entries(doc: doc, options: o)
         case .section:
             return ElevationBuilder.entries(doc: doc, view: .section, sectionLine: defaultSectionLine(doc))
@@ -388,9 +405,15 @@ enum SheetComposer {
         guard doc.layouts.indices.contains(layoutIndex) else { return }
         let layout = doc.layouts[layoutIndex]
         for (i, vp) in layout.viewports.enumerated() {
-            let entries = entriesFor?(vp) ?? viewportEntries(doc: doc, vp: vp)
+            // Layers frozen in this viewport only (VPLAYER) bypass the caller's per-view cache.
+            let entries: [DrawEntry]
+            if ViewportLayers.frozen(doc, layout: layout.name, viewport: i).isEmpty {
+                entries = entriesFor?(vp) ?? viewportEntries(doc: doc, vp: vp)
+            } else {
+                entries = viewportEntries(doc: ViewportLayers.document(for: doc, layout: layout.name, viewport: i), vp: vp)
+            }
             var r = PlotRenderer(transform: modelToPaper(vp).concatenating(paperToDevice), devicePerMM: devicePerMM, paper: true, minLineWidth: 0.12)
-            if let setup { r.colorMode = setup.colorMode; r.lineweightScale = CGFloat(setup.lineweightScale) }
+            if let setup { r.apply(setup, doc: doc) }
             let a = CGPoint(x: vp.origin.x, y: vp.origin.y).applying(paperToDevice)
             let b = CGPoint(x: vp.origin.x + vp.size.x, y: vp.origin.y + vp.size.y).applying(paperToDevice)
             let rect = CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(b.x - a.x), height: abs(b.y - a.y))
@@ -409,11 +432,11 @@ enum SheetComposer {
             }
         }
         var paperR = PlotRenderer(transform: paperToDevice, devicePerMM: devicePerMM, paper: true, minLineWidth: 0.12)
-        if let setup { paperR.colorMode = setup.colorMode; paperR.lineweightScale = CGFloat(setup.lineweightScale) }
+        if let setup { paperR.apply(setup, doc: doc) }
         paperR.draw(paperEntities(doc: doc, layout: layout), in: ctx)
         paperR.draw(decorations(doc: doc, layout: layout, layoutIndex: layoutIndex), in: ctx)
         if let setup, setup.plotStamp {
-            paperR.draw([PlotStamp.entry(doc: doc, name: layout.name, paperWidth: layout.paper.width)], in: ctx)
+            paperR.draw([PlotStamp.entry(doc: doc, name: layout.name, paperWidth: layout.paper.width, setup: setup)], in: ctx)
         }
     }
 }
@@ -484,7 +507,7 @@ enum Plotter {
         let clip = CGRect(x: area.min.x * pointsPerMM, y: area.min.y * pointsPerMM, width: area.width * pointsPerMM, height: area.height * pointsPerMM)
         ctx.saveGState(); ctx.clip(to: clip.insetBy(dx: -3 * pointsPerMM, dy: -3 * pointsPerMM))
         var modelR = PlotRenderer(transform: t, devicePerMM: pointsPerMM, paper: true, minLineWidth: 0.12)
-        modelR.colorMode = setup.colorMode; modelR.lineweightScale = CGFloat(setup.lineweightScale)
+        modelR.apply(setup, doc: doc)
         modelR.draw(entries, in: ctx)
         ctx.restoreGState()
         // Frame and title strip.
@@ -500,10 +523,13 @@ enum Plotter {
         ]
         var decoR = PlotRenderer(transform: CGAffineTransform(scaleX: pointsPerMM, y: pointsPerMM), devicePerMM: pointsPerMM, paper: true)
         decoR.colorMode = setup.colorMode
+        decoR.penTable = PlotStyleTable.named(setup.plotStyleTable, in: doc)
         decoR.draw([DrawEntry(id: nil, items: deco)], in: ctx)
-        if setup.plotStamp { decoR.draw([PlotStamp.entry(doc: doc, name: levelName, paperWidth: paperW)], in: ctx) }
+        if setup.plotStamp { decoR.draw([PlotStamp.entry(doc: doc, name: levelName, paperWidth: paperW, setup: setup)], in: ctx) }
         ctx.endPDFPage()
         ctx.closePDF()
+        PlotLog.record(drawing: doc.info.name, output: "PDF (model, \(paperSize.name), 1:\(fmt(ratio, 0)))", sheets: levelName,
+                       style: setup.plotStyleTable ?? setup.colorMode.rawValue, file: url.path)
     }
 
     static func pdfInfo(_ doc: ArchiDocument, title: String) -> CFDictionary {

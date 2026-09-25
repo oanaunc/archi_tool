@@ -227,7 +227,7 @@ struct RibbonView: View {
                 .help("About Oanarina Archi Tool")
             quickAccessBar
             VSeparator().frame(height: 14).padding(.horizontal, 4)
-            ForEach(RibbonTab.allCases) { t in
+            ForEach(RibbonTab.allCases.filter { !prefs.hiddenRibbonTabs.contains($0.rawValue) || $0 == tab }) { t in
                 Button { tabRaw = t.rawValue; if collapsed { collapsed = false } } label: {
                     Text(t.rawValue)
                         .font(.system(size: 11, weight: tab == t ? .semibold : .regular))
@@ -331,6 +331,14 @@ struct RibbonView: View {
                 commandMenu("More", "ellipsis.circle", CommandCatalog.selection, help: "Selection tools: QSELECT, invert, by layer/type, chain, filter, named sets")
             }
             RibbonGroup(title: "Groups") { smallColumns(CommandCatalog.groups) }
+            RibbonGroup(title: "More") {
+                RibbonCatalogMenu(model: model, title: "Draw", symbol: "pencil.and.outline",
+                                  sections: [("Draw More", CommandCatalog.drawMore), ("Construction", CommandCatalog.construction)], help: "More drawing and construction tools")
+                RibbonCatalogMenu(model: model, title: "Modify", symbol: "wand.and.rays",
+                                  sections: [("Modify More", CommandCatalog.modifyMore), ("Clipboard & Selection", CommandCatalog.clipboard)], help: "More modify, clipboard and selection tools")
+                RibbonCatalogMenu(model: model, title: "Layers", symbol: "square.3.layers.3d.middle.filled",
+                                  sections: [("Layer Tools", CommandCatalog.layersMore)], help: "Layer tools (LAYISO, LAYFRZ, LAYMRG…)")
+            }
         }
     }
 
@@ -371,6 +379,10 @@ struct RibbonView: View {
                 componentMenu
             }
             RibbonGroup(title: "Export") { smallColumns(CommandCatalog.exportItems) }
+            RibbonGroup(title: "More") {
+                RibbonCatalogMenu(model: model, title: "Blocks", symbol: "square.on.square.dashed", sections: [("Blocks & Attributes", CommandCatalog.blocksMore)], help: "Block and attribute tools")
+                RibbonCatalogMenu(model: model, title: "Exchange", symbol: "arrow.left.arrow.right.square", sections: [("Import & Export", CommandCatalog.exchange), ("File", CommandCatalog.fileCommands)], help: "More import/export formats and file commands")
+            }
         }
     }
 
@@ -394,6 +406,7 @@ struct RibbonView: View {
                 cmd(CommandCatalog.site[0])
                 smallColumns(Array(CommandCatalog.site.dropFirst()), rows: 2)
             }
+            RibbonGroup(title: "Surfaces") { RibbonCatalogMenu(model: model, title: "Surfaces", symbol: "square.stack.3d.up", sections: [("Surfaces & Mesh", CommandCatalog.surfaces)], help: "Ruled, tabulated, revolved and edge surfaces; mesh repair") }
             RibbonGroup(title: "Visual Programming") {
                 action("Node Editor", "point.3.connected.trianglepath.dotted", help: "Visual node editor with live preview (NODEEDITOR)") { NodeEditorWindow.show(model: model) }
             }
@@ -413,6 +426,7 @@ struct RibbonView: View {
                 smallColumns(Array(CommandCatalog.analysis.dropFirst(2)), rows: 2)
             }
             RibbonGroup(title: "Coordination") { ForEach(CommandCatalog.coordination) { cmd($0) } }
+            RibbonGroup(title: "Building Physics") { RibbonCatalogMenu(model: model, title: "More", symbol: "ellipsis.circle", sections: [("Analysis & Checks", CommandCatalog.analysisMore)], help: "Energy, daylight, acoustics, carbon and code checks") }
         }
     }
 
@@ -424,6 +438,14 @@ struct RibbonView: View {
                 smallColumns(Array(CommandCatalog.dimensions[1..<5]))
             }
             RibbonGroup(title: "Leaders & Tables") { ForEach(CommandCatalog.dimensions.suffix(2)) { cmd($0) } }
+            RibbonGroup(title: "More") {
+                RibbonCatalogMenu(model: model, title: "Dims", symbol: "ruler", sections: [("Dimensions", CommandCatalog.dimMore)], help: "Baseline, continue, ordinate, QDIM, dimension editing")
+                RibbonCatalogMenu(model: model, title: "Text", symbol: "textformat", sections: [("Text, Leaders & Tables", CommandCatalog.textMore)], help: "Text editing, spelling, fields, tables, symbols")
+            }
+            RibbonGroup(title: "Parametric") {
+                RibbonCatalogMenu(model: model, title: "Constrain", symbol: "link.circle", sections: [("Parametric", CommandCatalog.parametric)], help: "Geometric and dimensional constraints")
+                action("Show Constraints", "eye.square", active: ConstraintGlyphs.isOn(model.doc), help: "Show or hide constraint glyphs in the plan (CONSTRAINTBAR)") { model.runCommand("CONSTRAINTBAR Toggle") }
+            }
             RibbonGroup(title: "Style") {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Dimension style").font(Theme.fontSmall).foregroundStyle(Theme.textDim)
@@ -465,6 +487,11 @@ struct RibbonView: View {
             RibbonGroup(title: "Model") {
                 componentMenu
                 cmd(CommandCatalog.spaces[3])
+            }
+            RibbonGroup(title: "More") {
+                RibbonCatalogMenu(model: model, title: "Systems", symbol: "square.stack.3d.up.fill",
+                                  sections: [("BIM Data", CommandCatalog.bimMore), ("Structure", CommandCatalog.structure), ("MEP", CommandCatalog.mep), ("Site", CommandCatalog.siteMore)],
+                                  help: "BIM data, structure, MEP and site tools")
             }
             RibbonGroup(title: "Level") {
                 VStack(alignment: .leading, spacing: 4) {
@@ -567,7 +594,9 @@ struct RibbonView: View {
             RibbonGroup(title: "Presentation") {
                 action("Render", "camera.aperture", help: "Render a photorealistic image") { RenderController.renderImage(model: model) }
                 action("Walk", "figure.walk", active: model.walkMode, help: "Walk through the model (WASD + mouse)") { model.files.handle(.walkthrough) }
+                RibbonCatalogMenu(model: model, title: "Animate", symbol: "film", sections: [("Animation & Export", CommandCatalog.animationItems)], help: "Walkthrough path, sun study video, 360° panorama")
             }
+            RibbonGroup(title: "More") { RibbonCatalogMenu(model: model, title: "View", symbol: "eye", sections: [("View", CommandCatalog.viewMore)], help: "Every view command") }
             RibbonGroup(title: "Interface") {
                 Menu {
                     ForEach(Workspaces.all) { w in
@@ -626,6 +655,9 @@ struct RibbonView: View {
                     }
                 }
             }
+            RibbonGroup(title: "More") {
+                RibbonCatalogMenu(model: model, title: "Output", symbol: "printer.dotmatrix", sections: [("Output", CommandCatalog.outputMore), ("Plot Styles", CommandCatalog.plotItems)], help: "Every output command, plot styles, batch publish")
+            }
             RibbonGroup(title: "Export") {
                 let items = ExportFormat.all.filter { $0.ext != "pdf" }
                 HStack(alignment: .top, spacing: 2) {
@@ -678,6 +710,10 @@ struct RibbonView: View {
                 action("Purge", "trash.slash", help: "Remove unused layers, blocks and styles") { model.purge() }
                 action("Audit", "checkmark.shield", help: "Check the drawing for errors and fix them") { model.audit() }
             }
+            RibbonGroup(title: "More") {
+                RibbonCatalogMenu(model: model, title: "Settings", symbol: "gearshape.2", sections: [("Settings", CommandCatalog.settingsMore), ("System Variables", CommandCatalog.variableItems)], help: "Settings and system variables")
+                RibbonCatalogMenu(model: model, title: "Tools", symbol: "wrench.and.screwdriver", sections: [("Tools & Scripting", CommandCatalog.tools), ("Help", CommandCatalog.helpCommands)], help: "Action recorder, aliases, scripting, help")
+            }
         }
     }
 
@@ -707,6 +743,9 @@ struct RibbonView: View {
                 }
                 .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
                 .help("Run a script from the library (startup.js runs in every new window)")
+            }
+            RibbonGroup(title: "Automation") {
+                RibbonCatalogMenu(model: model, title: "Tools", symbol: "wrench.and.screwdriver", sections: [("Tools & Scripting", CommandCatalog.tools)], help: "Action recorder, script recorder, aliases")
             }
             RibbonGroup(title: "AI Agents") {
                 action(model.agentRunning ? "Stop Server" : "Start Server", "antenna.radiowaves.left.and.right", active: model.agentRunning,

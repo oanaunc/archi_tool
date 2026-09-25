@@ -54,7 +54,7 @@ struct MainWindow: View {
         .navigationTitle(model.windowTitle)
         .background(WindowAccessor { w in attach(w) })
         .focusedSceneObject(model)
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(Theme.colorScheme)
         .frame(minWidth: 960, minHeight: 620)
         .onAppear(perform: setup)
         .onChange(of: model.revision) { _ in updateWindowState() }
@@ -89,13 +89,16 @@ struct MainWindow: View {
         case .titleBlock(let i): TitleBlockSheet(model: model, layoutIndex: i)
         case .connectClaude: ConnectClaudeSheet(onClose: { model.sheet = nil })
         case .saveCamera: SaveCameraSheet(model: model)
+        case .spelling: SpellingSheet(model: model)
+        case .plotStyles: PlotStyleSheet(model: model)
+        case .batchPublish: BatchPublishSheet(model: model)
         }
     }
 
     private func attach(_ w: NSWindow) {
         if model.window !== w {
             model.window = w
-            w.appearance = NSAppearance(named: .darkAqua)
+            w.appearance = Theme.appearance
             w.backgroundColor = Theme.nsPanel
             // Opaque window: inactive windows must never show through (no vibrancy).
             w.isOpaque = true
@@ -137,6 +140,8 @@ struct MainWindow: View {
         case .sample?:
             model.newDocument(.sample)
             model.buildSampleHouse()
+        case .template?:
+            if let id = request?.path, let t = TemplateLibrary.all().first(where: { $0.id == id }) { TemplateLibrary.apply(t, to: model) } else { model.showStart = true }
         case let k?:
             model.newDocument(k)
         }

@@ -46,7 +46,7 @@ enum AboutWindow {
         let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 560), styleMask: [.titled, .closable], backing: .buffered, defer: false)
         w.title = "About Oanarina Archi Tool"
         w.isReleasedWhenClosed = false
-        w.appearance = NSAppearance(named: .darkAqua)
+        w.appearance = Theme.appearance
         w.backgroundColor = Theme.nsPanel
         w.isOpaque = true
         w.contentViewController = NSHostingController(rootView: AboutView())
@@ -108,6 +108,6 @@ struct AboutView: View {
         .padding(.horizontal, 20)
         .frame(width: 460)
         .background(Theme.panel)
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(Theme.colorScheme)
     }
 }

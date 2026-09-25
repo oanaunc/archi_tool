@@ -348,11 +348,11 @@ final class AgentServer {
             try text(SVGExporter.export(entries: entries, bounds: b.expanded(by: max(b.width, b.height) * 0.02), background: nil,
                                         pixelsPerUnit: ArchiJSON.double(p["pixelsPerUnit"]) ?? 1))
         case "obj":
-            let r = OBJExporter.export(MeshBuilder.build(doc: doc), materials: doc.materials, mtlFileName: url.deletingPathExtension().lastPathComponent + ".mtl")
+            let r = OBJExporter.export(MeshBuilder.build(doc: doc), materials: doc.materials, mtlFileName: url.deletingPathExtension().lastPathComponent + ".mtl", unitMM: doc.units.mm)
             try text(r.obj)
             try r.mtl.write(to: url.deletingPathExtension().appendingPathExtension("mtl"), atomically: true, encoding: .utf8)
         case "stl": try text(STLExporter.export(MeshBuilder.build(doc: doc), name: doc.info.name))
-        case "glb", "gltf": try GLTFExporter.exportGLB(MeshBuilder.build(doc: doc), materials: doc.materials).write(to: url)
+        case "glb", "gltf": try GLTFExporter.exportGLB(MeshBuilder.build(doc: doc), materials: doc.materials, unitMM: doc.units.mm).write(to: url)
         case "ifc": try text(IFCExporter.export(doc: doc, meshes: MeshBuilder.build(doc: doc)))
         case "csv": try text(ScheduleExporter.csv(doc: doc, kind: p["kind"] as? String ?? "all"))
         case "archi": try ArchiFile.encode(doc).write(to: url)
