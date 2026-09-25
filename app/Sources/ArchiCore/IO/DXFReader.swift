@@ -1,0 +1,714 @@
+// Oanarina Archi Tool — GPL-3.0-or-later
+// ASCII DXF reader. Group-code semantics follow the AutoCAD DXF reference; hatch edge conventions
+// were cross-checked against LibreCAD's libdxfrw / rs_filterdxfrw (GPL-2.0-or-later, © LibreCAD team).
+import Foundation
+
+public enum DXFError: Error, LocalizedError, Equatable {
+    case notDXF
+    case binaryUnsupported
+    public var errorDescription: String? {
+        switch self {
+        case .notDXF: return "The file is not an ASCII DXF drawing."
+        case .binaryUnsupported: return "Binary DXF files are not supported; save the drawing as ASCII DXF."
+        }
+    }
+}
+
+/// One group code / value pair.
+struct DXFPair {
+    let code: Int
+    let value: String
+    var trimmed: String { value.trimmingCharacters(in: .whitespaces) }
+    var double: Double { Double(trimmed) ?? 0 }
+    var int: Int { Int(trimmed) ?? Int(Double(trimmed) ?? 0) }
+}
+
+/// A DXF object: its type (group 0) and the pairs that follow it.
+struct DXFRecord {
+    var type: String
+    var pairs: [DXFPair]
+    func first(_ code: Int) -> DXFPair? { pairs.first { $0.code == code } }
+    func s(_ code: Int) -> String? { first(code)?.value }
+    func d(_ code: Int) -> Double? { first(code)?.double }
+    func i(_ code: Int) -> Int? { first(code)?.int }
+    func all(_ code: Int) -> [DXFPair] { pairs.filter { $0.code == code } }
+    func v2(_ xc: Int) -> Vec2? {
+        guard let x = d(xc) else { return nil }
+        return Vec2(x, d(xc + 10) ?? 0)
+    }
+}
+
+enum DXFTokenizer {
+    static func pairs(_ text: String) throws -> [DXFPair] {
+        if text.hasPrefix("AutoCAD Binary DXF") { throw DXFError.binaryUnsupported }
+        let lines = normalize(text.hasPrefix("\u{FEFF}") ? String(text.dropFirst()) : text)
+        var out: [DXFPair] = []
+        out.reserveCapacity(lines.count / 2)
+        var i = 0
+        while i + 1 < lines.count {
+            let codeStr = lines[i].trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "\u{FEFF}", with: "")
+            guard let code = Int(codeStr) else { i += 1; continue } // resync
+            var v = lines[i + 1]
+            while v.hasSuffix(" ") && code != 1 && code != 3 { v.removeLast() }
+            out.append(DXFPair(code: code, value: v))
+            i += 2
+        }
+        return out
+    }
+
+    /// Splits on LF, CRLF or lone CR without creating empty lines for CRLF.
+    private static func normalize(_ text: String) -> [String] {
+        var lines: [String] = []
+        var cur: [UInt8] = []
+        var prevCR = false
+        for b in text.utf8 {
+            if b == 0x0D { lines.append(String(decoding: cur, as: UTF8.self)); cur.removeAll(keepingCapacity: true); prevCR = true; continue }
+            if b == 0x0A {
+                if !prevCR { lines.append(String(decoding: cur, as: UTF8.self)); cur.removeAll(keepingCapacity: true) }
+                prevCR = false; continue
+            }
+            prevCR = false
+            cur.append(b)
+        }
+        if !cur.isEmpty { lines.append(String(decoding: cur, as: UTF8.self)) }
+        return lines
+    }
+}
+
+public enum DXFReader {
+    /// Reads an ASCII DXF (R12…R2018) into a new document. Unknown entities are skipped.
+    public static func read(_ text: String) throws -> ArchiDocument {
+        let pairs = try DXFTokenizer.pairs(text)
+        guard pairs.contains(where: { $0.code == 0 && $0.trimmed == "SECTION" }) || pairs.contains(where: { $0.code == 0 && ($0.trimmed == "LINE" || $0.trimmed == "EOF") }) else {
+            throw DXFError.notDXF
+        }
+        var r = Reader()
+        r.run(pairs)
+        return r.doc
+    }
+
+    /// Converts ACI color to RGBA using the application palette.
+    static func rgb(fromTrueColor v: Int) -> RGBA {
+        RGBA(Double((v >> 16) & 255) / 255, Double((v >> 8) & 255) / 255, Double(v & 255) / 255)
+    }
+
+    /// Removes MTEXT inline formatting codes, converting paragraph breaks to newlines.
+    public static func stripMText(_ s: String) -> String {
+        let chars = Array(s)
+        var out = ""
+        var i = 0
+        func readUntilSemicolon() { while i < chars.count && chars[i] != ";" { i += 1 }; i += 1 }
+        while i < chars.count {
+            let c = chars[i]
+            if c == "\\" && i + 1 < chars.count {
+                let n = chars[i + 1]
+                i += 2
+                switch n {
+                case "P", "X": out.append("\n")
+                case "~": out.append(" ")
+                case "\\", "{", "}": out.append(n)
+                case "L", "l", "O", "o", "K", "k", "N": break
+                case "f", "F", "H", "W", "Q", "T", "A", "C", "c", "p": readUntilSemicolon()
+                case "S":
+                    var frac = ""
+                    while i < chars.count && chars[i] != ";" { frac.append(chars[i]); i += 1 }
+                    i += 1
+                    out += frac.replacingOccurrences(of: "^", with: "/").replacingOccurrences(of: "#", with: "/")
+                case "U":
+                    if i + 5 <= chars.count, chars[i] == "+", let v = UInt32(String(chars[(i + 1)..<(i + 5)]), radix: 16), let u = Unicode.Scalar(v) {
+                        out.unicodeScalars.append(u); i += 5
+                    } else { out.append("U") }
+                case "M":
+                    // \M+nXXXX multibyte (legacy) — skip the code
+                    i = min(chars.count, i + 6)
+                default: out.append(n)
+                }
+                continue
+            }
+            if c == "{" || c == "}" { i += 1; continue }
+            out.append(c); i += 1
+        }
+        return decodeSpecial(out)
+    }
+
+    /// Decodes %%c / %%d / %%p / %%nnn and \U+XXXX escapes in TEXT values.
+    public static func decodeSpecial(_ s: String) -> String {
+        guard s.contains("%%") || s.contains("\\U+") else { return s }
+        var out = ""
+        let chars = Array(s)
+        var i = 0
+        while i < chars.count {
+            if chars[i] == "%" && i + 2 < chars.count && chars[i + 1] == "%" {
+                let k = chars[i + 2]
+                switch k.lowercased() {
+                case "c": out.append("⌀"); i += 3; continue
+                case "d": out.append("°"); i += 3; continue
+                case "p": out.append("±"); i += 3; continue
+                case "u", "o", "k": i += 3; continue
+                case "%": out.append("%"); i += 3; continue
+                default:
+                    var j = i + 2, num = ""
+                    while j < chars.count && j < i + 5 && chars[j].isNumber { num.append(chars[j]); j += 1 }
+                    if let v = UInt32(num), let u = Unicode.Scalar(v) { out.unicodeScalars.append(u); i = j; continue }
+                }
+            }
+            if chars[i] == "\\" && i + 6 < chars.count + 0 && chars[i + 1] == "U" && chars[i + 2] == "+",
+               let v = UInt32(String(chars[(i + 3)..<min(chars.count, i + 7)]), radix: 16), let u = Unicode.Scalar(v) {
+                out.unicodeScalars.append(u); i += 7; continue
+            }
+            out.append(chars[i]); i += 1
+        }
+        return out
+    }
+
+    // MARK: - Reader state
+
+    struct Reader {
+        var doc = ArchiDocument()
+        var dimStyleNames: Set<String> = []
+        var textStyleNames: Set<String> = []
+
+        init() {
+            doc.layers = [Layer(name: "0")]
+            doc.entities = []
+            doc.blocks = [:]
+        }
+
+        mutating func run(_ pairs: [DXFPair]) {
+            var i = 0
+            var sawSection = false
+            while i < pairs.count {
+                let p = pairs[i]
+                if p.code == 0 && p.trimmed == "SECTION" {
+                    sawSection = true
+                    var name = ""
+                    if i + 1 < pairs.count, pairs[i + 1].code == 2 { name = pairs[i + 1].trimmed; i += 2 } else { i += 1 }
+                    var j = i
+                    while j < pairs.count && !(pairs[j].code == 0 && pairs[j].trimmed == "ENDSEC") { j += 1 }
+                    let body = Array(pairs[i..<j])
+                    switch name {
+                    case "HEADER": header(body)
+                    case "TABLES": tables(records(body))
+                    case "BLOCKS": blocks(records(body))
+                    case "ENTITIES":
+                        let ents = entities(records(body), inBlock: false)
+                        for e in ents { doc.add(e) }
+                    default: break
+                    }
+                    i = j + 1
+                    continue
+                }
+                if p.code == 0 && p.trimmed == "EOF" { break }
+                i += 1
+            }
+            if !sawSection {
+                // Entities-only fragment without sections.
+                let ents = entities(records(pairs), inBlock: false)
+                for e in ents { doc.add(e) }
+            }
+            doc.currentLayer = "0"
+            if doc.layer(named: "0") == nil { doc.layers.insert(Layer(name: "0"), at: 0) }
+        }
+
+        func records(_ pairs: [DXFPair]) -> [DXFRecord] {
+            var out: [DXFRecord] = []
+            var cur: DXFRecord?
+            for p in pairs {
+                if p.code == 0 {
+                    if let c = cur { out.append(c) }
+                    cur = DXFRecord(type: p.trimmed.uppercased(), pairs: [])
+                } else { cur?.pairs.append(p) }
+            }
+            if let c = cur { out.append(c) }
+            return out
+        }
+
+        // MARK: Header
+        mutating func header(_ pairs: [DXFPair]) {
+            var i = 0
+            while i < pairs.count {
+                guard pairs[i].code == 9 else { i += 1; continue }
+                let name = pairs[i].trimmed
+                var vals: [DXFPair] = []
+                i += 1
+                while i < pairs.count && pairs[i].code != 9 { vals.append(pairs[i]); i += 1 }
+                guard let v = vals.first else { continue }
+                switch name {
+                case "$INSUNITS":
+                    switch v.int {
+                    case 1: doc.units = .inches
+                    case 2: doc.units = .feet
+                    case 4: doc.units = .millimeters
+                    case 5: doc.units = .centimeters
+                    case 6: doc.units = .meters
+                    default: break
+                    }
+                case "$LTSCALE": doc.setVariable("LTSCALE", fmt(v.double, 6))
+                case "$TEXTSIZE": doc.setVariable("TEXTSIZE", fmt(v.double, 6))
+                case "$DIMSCALE": doc.setVariable("DIMSCALE", fmt(v.double, 6))
+                case "$PDMODE": doc.setVariable("PDMODE", "\(v.int)")
+                case "$PDSIZE": doc.setVariable("PDSIZE", fmt(v.double, 6))
+                case "$ACADVER": doc.setVariable("DXFVERSION", v.trimmed)
+                default: break // $EXTMIN/$EXTMAX etc. are ignored
+                }
+            }
+        }
+
+        // MARK: Tables
+        mutating func tables(_ recs: [DXFRecord]) {
+            for r in recs {
+                switch r.type {
+                case "LAYER":
+                    guard let name = r.s(2)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { continue }
+                    let aci = r.i(62) ?? 7
+                    var color = aciColor(abs(aci) == 0 ? 7 : abs(aci))
+                    if let tc = r.i(420) { color = DXFReader.rgb(fromTrueColor: tc) }
+                    let flags = r.i(70) ?? 0
+                    var lw = 0.25
+                    if let w = r.i(370), w >= 0 { lw = Double(w) / 100 }
+                    var lt = r.s(6)?.trimmingCharacters(in: .whitespaces) ?? "Continuous"
+                    if lt.uppercased() == "CONTINUOUS" { lt = "Continuous" }
+                    let layer = Layer(name: name, color: color, linetype: lt, lineweight: lw, visible: aci >= 0,
+                                      frozen: flags & 1 != 0, locked: flags & 4 != 0, plot: (r.i(290) ?? 1) != 0)
+                    if let idx = doc.layerIndex(name) { doc.layers[idx] = layer } else { doc.layers.append(layer) }
+                case "LTYPE":
+                    guard let name = r.s(2)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { continue }
+                    let up = name.uppercased()
+                    if up == "BYLAYER" || up == "BYBLOCK" || up == "CONTINUOUS" { continue }
+                    let pattern = r.all(49).map(\.double)
+                    let lt = Linetype(name: name, description: r.s(3) ?? "", pattern: pattern)
+                    if let idx = doc.linetypes.firstIndex(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) {
+                        doc.linetypes[idx] = Linetype(name: doc.linetypes[idx].name, description: lt.description.isEmpty ? doc.linetypes[idx].description : lt.description, pattern: pattern)
+                    } else { doc.linetypes.append(lt) }
+                case "STYLE":
+                    guard let name = r.s(2)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { continue }
+                    if (r.i(70) ?? 0) & 1 != 0 { continue } // shape file
+                    var font = r.s(3) ?? ""
+                    if font.isEmpty { font = "Helvetica" }
+                    font = (font as NSString).deletingPathExtension
+                    let st = TextStyle(name: name, font: font, height: r.d(40) ?? 0, widthFactor: r.d(41) ?? 1, oblique: rad(r.d(50) ?? 0))
+                    if let idx = doc.textStyles.firstIndex(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) { doc.textStyles[idx] = st } else { doc.textStyles.append(st) }
+                    textStyleNames.insert(name.lowercased())
+                case "DIMSTYLE":
+                    guard let name = r.s(2)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { continue }
+                    var ds = DimStyle(name: name)
+                    if let v = r.d(140) { ds.textHeight = v }
+                    if let v = r.d(41) { ds.arrowSize = v }
+                    if let v = r.d(42) { ds.extensionOffset = v }
+                    if let v = r.d(44) { ds.extensionExtend = v }
+                    if let v = r.d(147) { ds.textGap = abs(v) }
+                    if let v = r.i(271) { ds.decimals = v }
+                    if let v = r.d(40), v > 0 { ds.scale = v }
+                    if let v = r.d(144), v != 0 { ds.linearScale = v }
+                    if let post = r.s(3), !post.isEmpty {
+                        let parts = post.components(separatedBy: "<>")
+                        if parts.count == 2 { ds.prefix = parts[0]; ds.suffix = parts[1] } else { ds.suffix = post }
+                    }
+                    if (r.i(176) ?? 0) == 0, (r.d(142) ?? 0) > 0 || (r.d(143) ?? 0) > 0 { ds.arrow = .architecturalTick }
+                    if let idx = doc.dimStyles.firstIndex(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) { doc.dimStyles[idx] = ds } else { doc.dimStyles.append(ds) }
+                    dimStyleNames.insert(name.lowercased())
+                default: break
+                }
+            }
+        }
+
+        // MARK: Blocks
+        mutating func blocks(_ recs: [DXFRecord]) {
+            var i = 0
+            while i < recs.count {
+                guard recs[i].type == "BLOCK" else { i += 1; continue }
+                let b = recs[i]
+                var j = i + 1
+                while j < recs.count && recs[j].type != "ENDBLK" { j += 1 }
+                let name = (b.s(2) ?? b.s(3) ?? "").trimmingCharacters(in: .whitespaces)
+                let upper = name.uppercased()
+                let isLayoutBlock = upper.hasPrefix("*MODEL_SPACE") || upper.hasPrefix("*PAPER_SPACE") || upper.hasPrefix("$MODEL_SPACE") || upper.hasPrefix("$PAPER_SPACE")
+                if !name.isEmpty && !isLayoutBlock {
+                    var ents = entities(Array(recs[(i + 1)..<j]), inBlock: true)
+                    for k in ents.indices { ents[k].id = doc.allocateID() }
+                    doc.blocks[name] = Block(name: name, basePoint: b.v2(10) ?? .zero, entities: ents, description: b.s(4) ?? "")
+                }
+                i = j + 1
+            }
+        }
+
+        // MARK: Entities
+        func common(_ r: DXFRecord, geometry: Geometry) -> Entity {
+            var color = ColorRef.byLayer
+            if let tc = r.i(420) {
+                color = .rgb(UInt8((tc >> 16) & 255), UInt8((tc >> 8) & 255), UInt8(tc & 255))
+            } else if let c = r.i(62) {
+                if c == 0 { color = .byBlock } else if c == 256 || c < 0 { color = .byLayer } else { color = .aci(min(c, 255)) }
+            }
+            var lt: String? = r.s(6)?.trimmingCharacters(in: .whitespaces)
+            if let l = lt, ["BYLAYER", "BYBLOCK", ""].contains(l.uppercased()) { lt = nil }
+            if let l = lt, l.uppercased() == "CONTINUOUS" { lt = "Continuous" }
+            var lw: Double? = nil
+            if let w = r.i(370), w >= 0 { lw = Double(w) / 100 }
+            var props: [String: String] = [:]
+            if let h = r.s(5) { props["dxfHandle"] = h.trimmingCharacters(in: .whitespaces) }
+            let layer = (r.s(8)?.trimmingCharacters(in: .whitespaces)).flatMap { $0.isEmpty ? nil : $0 } ?? "0"
+            return Entity(id: 0, layer: layer, color: color, linetype: lt, lineweight: lw, geometry: geometry, props: props)
+        }
+
+        func entities(_ recs: [DXFRecord], inBlock: Bool) -> [Entity] {
+            var out: [Entity] = []
+            var i = 0
+            while i < recs.count {
+                let r = recs[i]
+                i += 1
+                if !inBlock && (r.i(67) ?? 0) == 1 { // paper space entity
+                    if r.type == "POLYLINE" || (r.type == "INSERT" && (r.i(66) ?? 0) == 1) {
+                        while i < recs.count && recs[i].type != "SEQEND" { i += 1 }; i += 1
+                    }
+                    continue
+                }
+                switch r.type {
+                case "POLYLINE":
+                    var verts: [DXFRecord] = []
+                    while i < recs.count && recs[i].type == "VERTEX" { verts.append(recs[i]); i += 1 }
+                    if i < recs.count && recs[i].type == "SEQEND" { i += 1 }
+                    if let g = polyline(r, verts) { out.append(common(r, geometry: g)) }
+                case "INSERT":
+                    var attribs: [String: String] = [:]
+                    if (r.i(66) ?? 0) == 1 {
+                        while i < recs.count && recs[i].type == "ATTRIB" {
+                            if let tag = recs[i].s(2) { attribs[tag.trimmingCharacters(in: .whitespaces)] = DXFReader.decodeSpecial(recs[i].s(1) ?? "") }
+                            i += 1
+                        }
+                        if i < recs.count && recs[i].type == "SEQEND" { i += 1 }
+                    }
+                    for g in inserts(r, attributes: attribs) { out.append(common(r, geometry: g)) }
+                default:
+                    for g in convert(r) { out.append(common(r, geometry: g)) }
+                }
+            }
+            return out
+        }
+
+        /// True when the entity's extrusion direction points down (OCS mirrored in X).
+        func mirrored(_ r: DXFRecord) -> Bool { (r.d(230) ?? 1) < -1e-9 }
+
+        func convert(_ r: DXFRecord) -> [Geometry] {
+            let m = mirrored(r)
+            func ocs(_ p: Vec2) -> Vec2 { m ? Vec2(-p.x, p.y) : p }
+            func ocsAngle(_ a: Double) -> Double { m ? .pi - a : a }
+            switch r.type {
+            case "LINE":
+                guard let a = r.v2(10), let b = r.v2(11) else { return [] }
+                return [.line(LineGeom(a, b))]
+            case "POINT":
+                guard let p = r.v2(10) else { return [] }
+                return [.point(p)]
+            case "CIRCLE":
+                guard let c = r.v2(10), let rad0 = r.d(40), rad0 > 0 else { return [] }
+                return [.circle(CircleGeom(ocs(c), rad0))]
+            case "ARC":
+                guard let c = r.v2(10), let rr = r.d(40), rr > 0 else { return [] }
+                var s = rad(r.d(50) ?? 0), e = rad(r.d(51) ?? 360)
+                if m { let s2 = Double.pi - e, e2 = Double.pi - s; s = s2; e = e2 }
+                return [.arc(ArcGeom(ocs(c), rr, normAngle(s), normAngle(e)))]
+            case "ELLIPSE":
+                guard let c = r.v2(10), let maj = r.v2(11), maj.length > geomEpsilon else { return [] }
+                var s = r.d(41) ?? 0, e = r.d(42) ?? 2 * .pi
+                if m { let s2 = -e, e2 = -s; s = s2; e = e2 }
+                let full = abs(abs(e - s) - 2 * .pi) < 1e-6 || abs(e - s) < 1e-9
+                return [.ellipse(EllipseGeom(center: c, majorAxis: maj, ratio: r.d(40) ?? 1, start: full ? 0 : normAngle(s), end: full ? 2 * .pi : normAngle(e)))]
+            case "LWPOLYLINE":
+                var verts: [PolyVertex] = []
+                for p in r.pairs {
+                    switch p.code {
+                    case 10: verts.append(PolyVertex(Vec2(p.double, 0)))
+                    case 20: if !verts.isEmpty { verts[verts.count - 1].p.y = p.double }
+                    case 42: if !verts.isEmpty { verts[verts.count - 1].bulge = p.double }
+                    default: break
+                    }
+                }
+                if m { verts = verts.map { PolyVertex(Vec2(-$0.p.x, $0.p.y), bulge: -$0.bulge) } }
+                guard verts.count >= 1 else { return [] }
+                let closed = ((r.i(70) ?? 0) & 1) != 0
+                if !closed, let last = verts.indices.last { verts[last].bulge = 0 }
+                return [.polyline(PolylineGeom(verts, closed: closed, width: r.d(43) ?? 0))]
+            case "SPLINE":
+                var ctrl: [Vec2] = [], fit: [Vec2] = []
+                for p in r.pairs {
+                    switch p.code {
+                    case 10: ctrl.append(Vec2(p.double, 0))
+                    case 20: if !ctrl.isEmpty { ctrl[ctrl.count - 1].y = p.double }
+                    case 11: fit.append(Vec2(p.double, 0))
+                    case 21: if !fit.isEmpty { fit[fit.count - 1].y = p.double }
+                    default: break
+                    }
+                }
+                let knots = r.all(40).map(\.double)
+                let w = r.all(41).map(\.double)
+                let flags = r.i(70) ?? 0
+                guard ctrl.count >= 2 || fit.count >= 2 else { return [] }
+                return [.spline(SplineGeom(degree: r.i(71) ?? 3, controlPoints: ctrl, knots: knots,
+                                           weights: (w.count == ctrl.count && w.contains { abs($0 - 1) > 1e-12 }) ? w : nil,
+                                           fitPoints: fit, closed: flags & 1 != 0))]
+            case "TEXT":
+                let content = DXFReader.decodeSpecial(r.s(1) ?? "")
+                guard !content.isEmpty else { return [] }
+                let h = r.d(40) ?? 2.5
+                var rot = rad(r.d(50) ?? 0)
+                let ha = r.i(72) ?? 0, va = r.i(73) ?? 0
+                var pos = r.v2(10) ?? .zero
+                var halign = HAlign.left, valign = VAlign.baseline
+                switch ha {
+                case 1: halign = .center
+                case 2: halign = .right
+                case 4: halign = .center; valign = .middle
+                default: break
+                }
+                if ha != 4 {
+                    switch va { case 1: valign = .bottom; case 2: valign = .middle; case 3: valign = .top; default: break }
+                }
+                if ha == 3 || ha == 5 {
+                    if let p2 = r.v2(11), p2.distance(to: pos) > geomEpsilon { rot = (p2 - pos).angle }
+                } else if (ha != 0 || va != 0), let p2 = r.v2(11) { pos = p2 }
+                if m { pos = ocs(pos); rot = ocsAngle(rot) }
+                let style = r.s(7).map { $0.trimmingCharacters(in: .whitespaces) } ?? "Standard"
+                return [.text(TextGeom(position: pos, height: h, content: content, rotation: normAngle(rot), style: style, halign: halign, valign: valign))]
+            case "MTEXT":
+                var raw = ""
+                for p in r.pairs where p.code == 3 { raw += p.value }
+                for p in r.pairs where p.code == 1 { raw += p.value }
+                let content = DXFReader.stripMText(raw)
+                guard !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return [] }
+                let pos = r.v2(10) ?? .zero
+                var rot = rad(r.d(50) ?? 0)
+                if let dir = r.v2(11), dir.length > geomEpsilon { rot = dir.angle }
+                let att = max(1, min(9, r.i(71) ?? 1))
+                let halign: HAlign = [.left, .center, .right][(att - 1) % 3]
+                let valign: VAlign = [.top, .middle, .bottom][(att - 1) / 3]
+                let style = r.s(7).map { $0.trimmingCharacters(in: .whitespaces) } ?? "Standard"
+                return [.text(TextGeom(position: pos, height: r.d(40) ?? 2.5, content: content, rotation: normAngle(rot), style: style,
+                                       halign: halign, valign: valign, width: max(0, r.d(41) ?? 0)))]
+            case "DIMENSION":
+                return dimension(r)
+            case "HATCH":
+                return hatch(r).map { [$0] } ?? []
+            case "LEADER":
+                var pts: [Vec2] = []
+                for p in r.pairs {
+                    if p.code == 10 { pts.append(Vec2(p.double, 0)) } else if p.code == 20, !pts.isEmpty { pts[pts.count - 1].y = p.double }
+                }
+                guard pts.count >= 2 else { return [] }
+                return [.leader(LeaderGeom(points: pts, text: "", textHeight: r.d(40) ?? 2.5))]
+            case "SOLID", "TRACE":
+                guard let a = r.v2(10), let b = r.v2(11), let c = r.v2(12) else { return [] }
+                let d = r.v2(13) ?? c
+                var pts = [a, b, d, c].map(ocs)
+                if pts[2].isClose(pts[3]) { pts.removeLast() }
+                return [.polyline(PolylineGeom(points: pts, closed: true))]
+            case "3DFACE":
+                guard let a = r.v2(10), let b = r.v2(11), let c = r.v2(12) else { return [] }
+                var pts = [a, b, c]
+                if let d = r.v2(13), !d.isClose(c) { pts.append(d) }
+                return [.polyline(PolylineGeom(points: pts, closed: true))]
+            case "XLINE", "RAY":
+                guard let p = r.v2(10), let d = r.v2(11), d.length > geomEpsilon else { return [] }
+                let big = 1e6, dir = d.normalized
+                return [.line(LineGeom(r.type == "RAY" ? p : p - dir * big, p + dir * big))]
+            default:
+                return [] // IMAGE, VIEWPORT, 3DSOLID, REGION, ATTDEF, ... are ignored
+            }
+        }
+
+        func polyline(_ r: DXFRecord, _ verts: [DXFRecord]) -> Geometry? {
+            let flags = r.i(70) ?? 0
+            if flags & 64 != 0 { // polyface mesh
+                var positions: [Vec3] = [], tris: [Int] = []
+                for v in verts {
+                    let vf = v.i(70) ?? 0
+                    if vf & 64 != 0 { positions.append(Vec3(v.d(10) ?? 0, v.d(20) ?? 0, v.d(30) ?? 0)) }
+                    else if vf & 128 != 0 {
+                        let idx = [71, 72, 73, 74].compactMap { v.i($0) }.map { abs($0) - 1 }.filter { $0 >= 0 && $0 < 1_000_000 }
+                        if idx.count >= 3 { tris += [idx[0], idx[1], idx[2]] }
+                        if idx.count == 4 { tris += [idx[0], idx[2], idx[3]] }
+                    }
+                }
+                tris = tris.filter { $0 < positions.count }
+                guard !positions.isEmpty, tris.count >= 3 else { return nil }
+                return .solid(SolidGeom(kind: .mesh, origin: .zero, meshVertices: positions, meshTriangles: Array(tris.prefix(tris.count / 3 * 3))))
+            }
+            if flags & 16 != 0 { // polygon mesh: keep vertices as a wire polyline
+                let pts = verts.compactMap { $0.v2(10) }
+                return pts.count >= 2 ? .polyline(PolylineGeom(points: pts)) : nil
+            }
+            let m = mirrored(r) && flags & 8 == 0
+            var pv: [PolyVertex] = verts.filter { (($0.i(70) ?? 0) & 16) == 0 }.map { v in
+                let p = v.v2(10) ?? .zero
+                return PolyVertex(m ? Vec2(-p.x, p.y) : p, bulge: m ? -(v.d(42) ?? 0) : (v.d(42) ?? 0))
+            }
+            guard !pv.isEmpty else { return nil }
+            let closed = flags & 1 != 0
+            if !closed { pv[pv.count - 1].bulge = 0 }
+            return .polyline(PolylineGeom(pv, closed: closed, width: r.d(40) ?? 0))
+        }
+
+        func inserts(_ r: DXFRecord, attributes: [String: String]) -> [Geometry] {
+            guard let name = r.s(2)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { return [] }
+            var p = r.v2(10) ?? .zero
+            var sx = r.d(41) ?? 1, sy = r.d(42) ?? 1
+            if sx == 0 { sx = 1 }; if sy == 0 { sy = 1 }
+            var rot = rad(r.d(50) ?? 0)
+            if mirrored(r) { p = Vec2(-p.x, p.y); rot = -rot; sx = -sx }
+            let cols = max(1, r.i(70) ?? 1), rows = max(1, r.i(71) ?? 1)
+            let cs = r.d(44) ?? 0, rs = r.d(45) ?? 0
+            var out: [Geometry] = []
+            for row in 0..<min(rows, 1000) {
+                for col in 0..<min(cols, 1000) {
+                    let off = Vec2(Double(col) * cs, Double(row) * rs).rotated(by: rot)
+                    out.append(.insert(InsertGeom(block: name, position: p + off, scale: Vec2(sx, sy), rotation: rot, attributes: attributes)))
+                }
+            }
+            return out
+        }
+
+        func dimension(_ r: DXFRecord) -> [Geometry] {
+            let type = (r.i(70) ?? 0) & 7
+            let p10 = r.v2(10), p11 = r.v2(11), p13 = r.v2(13), p14 = r.v2(14), p15 = r.v2(15), p16 = r.v2(16)
+            var over: String? = r.s(1)
+            if let o = over, o.isEmpty || o == "<>" { over = nil }
+            if let o = over { over = DXFReader.stripMText(o) }
+            let sname = (r.s(3) ?? "Standard").trimmingCharacters(in: .whitespaces)
+            let style = dimStyleNames.contains(sname.lowercased()) ? sname : (doc.dimStyles.contains { $0.name == sname } ? sname : "Standard")
+            var geom: DimensionGeom?
+            switch type {
+            case 0:
+                if let a = p13, let b = p14, let l = p10 { geom = DimensionGeom(kind: .linear, points: [a, b, l], rotation: rad(r.d(50) ?? 0), textOverride: over, style: style) }
+            case 1:
+                if let a = p13, let b = p14, let l = p10 { geom = DimensionGeom(kind: .aligned, points: [a, b, l], textOverride: over, style: style) }
+            case 2:
+                if let a1 = p13, let a2 = p14, let b1 = p15, let b2 = p10, let arc = p16,
+                   let v = GeometryOps.lineIntersection(a1, a2, b1, b2) {
+                    let l1 = a1.distance(to: v) > a2.distance(to: v) ? a1 : a2
+                    let l2 = b1.distance(to: v) > b2.distance(to: v) ? b1 : b2
+                    geom = DimensionGeom(kind: .angular, points: [v, l1, l2, arc], textOverride: over, style: style)
+                }
+            case 5:
+                if let v = p15, let a = p13, let b = p14, let arc = p10 { geom = DimensionGeom(kind: .angular, points: [v, a, b, arc], textOverride: over, style: style) }
+            case 3:
+                if let a = p15, let b = p10 { geom = DimensionGeom(kind: .diameter, points: [(a + b) / 2, a, p11 ?? a], textOverride: over, style: style) }
+            case 4:
+                if let c = p10, let a = p15 { geom = DimensionGeom(kind: .radius, points: [c, a, p11 ?? a], textOverride: over, style: style) }
+            case 6:
+                if let o = p10, let f = p13, let l = p14 { geom = DimensionGeom(kind: .ordinate, points: [f, l, o], rotation: ((r.i(70) ?? 0) & 64) != 0 ? 0 : .pi / 2, textOverride: over, style: style) }
+            default: break
+            }
+            if let g = geom { return [.dimension(g)] }
+            if let b = r.s(2)?.trimmingCharacters(in: .whitespaces), !b.isEmpty { return [.insert(InsertGeom(block: b, position: .zero))] }
+            return []
+        }
+
+        func hatch(_ r: DXFRecord) -> Geometry? {
+            let pairs = r.pairs
+            guard let start = pairs.firstIndex(where: { $0.code == 91 }) else { return nil }
+            let nPaths = pairs[start].int
+            var i = start + 1
+            var loops: [[PolyVertex]] = []
+            func at(_ c: Int) -> Bool { i < pairs.count && pairs[i].code == c }
+            func consume(_ codes: Set<Int>) -> [DXFPair] {
+                var got: [DXFPair] = []
+                while i < pairs.count && codes.contains(pairs[i].code) { got.append(pairs[i]); i += 1 }
+                return got
+            }
+            func pts(_ ps: [DXFPair], _ xc: Int) -> [Vec2] {
+                var out: [Vec2] = []
+                for p in ps { if p.code == xc { out.append(Vec2(p.double, 0)) } else if p.code == xc + 10, !out.isEmpty { out[out.count - 1].y = p.double } }
+                return out
+            }
+            for _ in 0..<max(0, min(nPaths, 100000)) {
+                while i < pairs.count && pairs[i].code != 92 { if pairs[i].code == 75 || pairs[i].code == 98 { break }; i += 1 }
+                guard at(92) else { break }
+                let flags = pairs[i].int; i += 1
+                var loop: [PolyVertex] = []
+                if flags & 2 != 0 {
+                    _ = consume([72, 73]); _ = consume([93])
+                    for p in consume([10, 20, 42]) {
+                        switch p.code {
+                        case 10: loop.append(PolyVertex(Vec2(p.double, 0)))
+                        case 20: if !loop.isEmpty { loop[loop.count - 1].p.y = p.double }
+                        default: if !loop.isEmpty { loop[loop.count - 1].bulge = p.double }
+                        }
+                    }
+                    if loop.count > 1, loop[0].p.isClose(loop[loop.count - 1].p, tol: 1e-9) { loop.removeLast() }
+                } else {
+                    let nEdges = at(93) ? pairs[i].int : 0
+                    if at(93) { i += 1 }
+                    for _ in 0..<max(0, min(nEdges, 100000)) {
+                        guard at(72) else { break }
+                        let et = pairs[i].int; i += 1
+                        switch et {
+                        case 1:
+                            let d = consume([10, 20, 11, 21])
+                            let a = pts(d, 10).first ?? .zero
+                            loop.append(PolyVertex(a))
+                        case 2:
+                            let d = consume([10, 20, 40, 50, 51, 73])
+                            let c = pts(d, 10).first ?? .zero
+                            let rr = d.first { $0.code == 40 }?.double ?? 0
+                            let s = rad(d.first { $0.code == 50 }?.double ?? 0), e = rad(d.first { $0.code == 51 }?.double ?? 360)
+                            let ccw = (d.first { $0.code == 73 }?.int ?? 1) != 0
+                            var sweep = normAngle(e - s)
+                            if sweep < 1e-9 { sweep = 2 * .pi }
+                            let sa = ccw ? s : -s
+                            let sw = ccw ? sweep : -sweep
+                            if abs(abs(sw) - 2 * .pi) < 1e-9 {
+                                let b = sw > 0 ? 1.0 : -1.0
+                                loop.append(PolyVertex(c + Vec2.polar(rr, sa), bulge: b))
+                                loop.append(PolyVertex(c + Vec2.polar(rr, sa + .pi), bulge: b))
+                            } else {
+                                loop.append(PolyVertex(c + Vec2.polar(rr, sa), bulge: tan(sw / 4)))
+                            }
+                        case 3:
+                            let d = consume([10, 20, 11, 21, 40, 50, 51, 73])
+                            let c = pts(d, 10).first ?? .zero, maj = pts(d, 11).first ?? Vec2(1, 0)
+                            let ratio = d.first { $0.code == 40 }?.double ?? 1
+                            let s = rad(d.first { $0.code == 50 }?.double ?? 0), e = rad(d.first { $0.code == 51 }?.double ?? 360)
+                            let ccw = (d.first { $0.code == 73 }?.int ?? 1) != 0
+                            var sweep = normAngle(e - s); if sweep < 1e-9 { sweep = 2 * .pi }
+                            let el = EllipseGeom(center: c, majorAxis: maj, ratio: ratio)
+                            let n = max(8, Int(sweep / (2 * .pi) * 64))
+                            for k in 0..<n {
+                                let t = ccw ? s + sweep * Double(k) / Double(n) : -s - sweep * Double(k) / Double(n)
+                                loop.append(PolyVertex(el.point(at: t)))
+                            }
+                        case 4:
+                            var d = consume([94, 73, 74, 95, 96, 40, 10, 20, 42])
+                            if at(97), i + 1 < pairs.count, [11, 12, 97].contains(pairs[i + 1].code) || pairs[i].int == 0 && [12, 13].contains(pairs[i + 1].code) {
+                                i += 1
+                                d += consume([11, 21, 12, 22, 13, 23])
+                            }
+                            let ctrl = pts(d, 10), fit = pts(d, 11)
+                            let knots = d.filter { $0.code == 40 }.map(\.double)
+                            let w = d.filter { $0.code == 42 }.map(\.double)
+                            let deg = d.first { $0.code == 94 }?.int ?? 3
+                            let sp = SplineGeom(degree: deg, controlPoints: ctrl, knots: knots, weights: w.count == ctrl.count ? w : nil, fitPoints: fit)
+                            let sampled = GeometryOps.splinePoints(sp)
+                            for p in sampled.dropLast() { loop.append(PolyVertex(p)) }
+                        default: break
+                        }
+                    }
+                }
+                // source boundary objects
+                if at(97) { let n = pairs[i].int; i += 1; for _ in 0..<n where at(330) { i += 1 } }
+                if loop.count >= 2 { loops.append(loop) }
+            }
+            guard !loops.isEmpty else { return nil }
+            let solid = (r.i(70) ?? 0) == 1 || (r.i(450) ?? 0) == 1
+            var pattern = (r.s(2) ?? "SOLID").trimmingCharacters(in: .whitespaces).uppercased()
+            if solid || pattern.isEmpty { pattern = "SOLID" }
+            // pattern angle/scale follow the boundary data
+            let tail = pairs[min(i, pairs.count)...]
+            let angle = tail.first { $0.code == 52 }?.double ?? 0
+            let scale = tail.first { $0.code == 41 }?.double ?? 1
+            if mirrored(r) {
+                loops = loops.map { $0.map { PolyVertex(Vec2(-$0.p.x, $0.p.y), bulge: -$0.bulge) } }
+            }
+            return .hatch(HatchGeom(loops: loops, pattern: pattern, scale: scale == 0 ? 1 : scale, angle: rad(angle)))
+        }
+    }
+}
