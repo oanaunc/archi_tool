@@ -1,0 +1,10 @@
+# Reference checkouts stay local and untouched.
+/other_projects/
+.DS_Store
+/.bridge/
+/build/
+/dist/
+.build/
+.swiftpm/
+*.xcuserstate
+xcuserdata/
