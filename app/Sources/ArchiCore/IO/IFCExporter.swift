@@ -28,6 +28,12 @@ public enum IFCExporter {
         return compress(bytes)
     }
 
+    /// True for a 22-character IFC GlobalId in the IFC base-64 alphabet (first character 0-3).
+    public static func isValidGuid(_ s: String) -> Bool {
+        guard s.count == 22, let f = s.first, "0123".contains(f) else { return false }
+        return s.allSatisfy { guidChars.contains($0) }
+    }
+
     /// Compresses 16 bytes into the IFC base-64 GUID form.
     static func compress(_ bs: [UInt8]) -> String {
         func b64(_ v: Int, _ len: Int) -> String {
@@ -89,6 +95,7 @@ final class IFCBuilder {
     var elementEntity: [EntityID: Int] = [:]
     var psets: [(String, [Int], [(String, String)])] = []
     var layerSetUsage: [String: Int] = [:]
+    var usedGuids = Set<String>()
 
     init(doc: ArchiDocument, meshes: [MeshGroup]) {
         self.doc = doc; self.meshes = meshes; self.k = doc.units.mm
@@ -99,6 +106,11 @@ final class IFCBuilder {
     func r(_ v: Double) -> String { IFCExporter.real(v) }
     func s(_ v: String) -> String { IFCExporter.str(v) }
     func g(_ key: String) -> String { s(IFCExporter.guid(key)) }
+    /// Element GlobalId: the one it was imported with (props "ifcGuid") when valid, else a deterministic id.
+    func eg(_ el: BIMElement) -> String {
+        if let v = el.props["ifcGuid"], IFCExporter.isValidGuid(v), !usedGuids.contains(v) { usedGuids.insert(v); return s(v) }
+        return g("element:\(el.id)")
+    }
     func refs(_ ids: [Int]) -> String { "(" + ids.map { "#\($0)" }.joined(separator: ",") + ")" }
 
     func point3(_ x: Double, _ y: Double, _ z: Double) -> Int { add("IFCCARTESIANPOINT((\(r(x)),\(r(y)),\(r(z))))") }
@@ -329,7 +341,7 @@ final class IFCBuilder {
         var p: [(String, String)] = [("Reference", ident(el.name.isEmpty ? el.typeName : el.name))]
         p += extra
         psets.append((pset, [entity], p))
-        let custom = el.props.sorted { $0.key < $1.key }.filter { !$0.key.isEmpty }
+        let custom = el.props.sorted { $0.key < $1.key }.filter { !$0.key.isEmpty && $0.key != "ifcGuid" }
         if !custom.isEmpty { psets.append(("Archi_Properties", [entity], custom.map { ($0.key, label($0.value)) })) }
     }
     func name(_ el: BIMElement, _ fallback: String) -> String { el.name.isEmpty ? "\(fallback) \(el.id)" : el.name }
@@ -355,7 +367,7 @@ final class IFCBuilder {
         items.forEach { style($0, material: el.material) }
         let axis: [Vec2] = abs(w.bulge) < 1e-9 ? [Vec2(0, 0), Vec2(w.length, 0)] : [w.centerStart, w.centerEnd]
         let rep = shape(items, type: "SweptSolid", axis: axis)
-        let e = add("IFCWALL(\(g("element:\(el.id)")),#\(oh),\(s(name(el, "Wall"))),$,\(w.wallType.map { s($0) } ?? "$"),#\(pl),#\(rep),\(s("\(el.id)")),.STANDARD.)")
+        let e = add("IFCWALL(\(eg(el)),#\(oh),\(s(name(el, "Wall"))),$,\(w.wallType.map { s($0) } ?? "$"),#\(pl),#\(rep),\(s("\(el.id)")),.STANDARD.)")
         wallPlacement[el.id] = pl; wallEntity[el.id] = e; elementEntity[el.id] = e
         contained[lv, default: []].append(e)
         // Material: layer set for typed walls.
@@ -430,7 +442,7 @@ final class IFCBuilder {
             case .revolving: op = ".REVOLVING."
             case .garage: op = ".ROLLINGUP."
             }
-            e = add("IFCDOOR(\(g("element:\(el.id)")),#\(oh),\(s(name(el, "Door"))),$,$,#\(fpl),#\(rep),\(s(el.props["mark"] ?? "\(el.id)")),\(r(Hh)),\(r(W)),.DOOR.,\(op),$)")
+            e = add("IFCDOOR(\(eg(el)),#\(oh),\(s(name(el, "Door"))),$,$,#\(fpl),#\(rep),\(s(el.props["mark"] ?? "\(el.id)")),\(r(Hh)),\(r(W)),.DOOR.,\(op),$)")
             commonProps(el, e, pset: "Pset_DoorCommon", [("IsExternal", bool(isExternal(el, default: isExternal(host, default: (w.wallType ?? "").lowercased().contains("exterior")))))])
         } else {
             let part: String
@@ -439,7 +451,7 @@ final class IFCBuilder {
             case .doubleCasement, .sliding: part = ".DOUBLE_PANEL_VERTICAL."
             case .hung: part = ".DOUBLE_PANEL_HORIZONTAL."
             }
-            e = add("IFCWINDOW(\(g("element:\(el.id)")),#\(oh),\(s(name(el, "Window"))),$,$,#\(fpl),#\(rep),\(s(el.props["mark"] ?? "\(el.id)")),\(r(Hh)),\(r(W)),.WINDOW.,\(part),$)")
+            e = add("IFCWINDOW(\(eg(el)),#\(oh),\(s(name(el, "Window"))),$,$,#\(fpl),#\(rep),\(s(el.props["mark"] ?? "\(el.id)")),\(r(Hh)),\(r(W)),.WINDOW.,\(part),$)")
             commonProps(el, e, pset: "Pset_WindowCommon", [("IsExternal", bool(isExternal(el, default: isExternal(host, default: true))))])
         }
         add("IFCRELFILLSELEMENT(\(g("rel:fills:\(el.id)")),#\(oh),$,$,#\(oe),#\(e))")
@@ -456,7 +468,7 @@ final class IFCBuilder {
         let item = extrusion(profile: prof, depth: sl.thickness * k)
         style(item, material: el.material)
         let rep = shape([item], type: "SweptSolid")
-        let e = add("IFCSLAB(\(g("element:\(el.id)")),#\(oh),\(s(name(el, "Slab"))),$,$,#\(pl),#\(rep),\(s("\(el.id)")),.FLOOR.)")
+        let e = add("IFCSLAB(\(eg(el)),#\(oh),\(s(name(el, "Slab"))),$,$,#\(pl),#\(rep),\(s("\(el.id)")),.FLOOR.)")
         elementEntity[el.id] = e; contained[lv, default: []].append(e); useMaterial(el.material, e)
         commonProps(el, e, pset: "Pset_SlabCommon", [("IsExternal", bool(isExternal(el, default: false))), ("LoadBearing", bool(true))])
     }
@@ -473,7 +485,7 @@ final class IFCBuilder {
         let item = extrusion(profile: prof, depth: c.height * k)
         style(item, material: el.material)
         let rep = shape([item], type: "SweptSolid")
-        let e = add("IFCCOLUMN(\(g("element:\(el.id)")),#\(oh),\(s(name(el, "Column"))),$,$,#\(pl),#\(rep),\(s("\(el.id)")),.COLUMN.)")
+        let e = add("IFCCOLUMN(\(eg(el)),#\(oh),\(s(name(el, "Column"))),$,$,#\(pl),#\(rep),\(s("\(el.id)")),.COLUMN.)")
         elementEntity[el.id] = e; contained[lv, default: []].append(e); useMaterial(el.material, e)
         commonProps(el, e, pset: "Pset_ColumnCommon", [("LoadBearing", bool(true)), ("IsExternal", bool(isExternal(el, default: false)))])
     }
@@ -487,7 +499,7 @@ final class IFCBuilder {
         let item = extrusion(profile: rectangle(center: Vec2(L / 2, 0), x: L, y: b.width * k), depth: b.depth * k)
         style(item, material: el.material)
         let rep = shape([item], type: "SweptSolid", axis: [Vec2(0, 0), Vec2(L / k, 0)])
-        let e = add("IFCBEAM(\(g("element:\(el.id)")),#\(oh),\(s(name(el, "Beam"))),$,$,#\(pl),#\(rep),\(s("\(el.id)")),.BEAM.)")
+        let e = add("IFCBEAM(\(eg(el)),#\(oh),\(s(name(el, "Beam"))),$,$,#\(pl),#\(rep),\(s("\(el.id)")),.BEAM.)")
         elementEntity[el.id] = e; contained[lv, default: []].append(e); useMaterial(el.material, e)
         commonProps(el, e, pset: "Pset_BeamCommon", [("LoadBearing", bool(true)), ("Span", length(L))])
     }
@@ -500,7 +512,7 @@ final class IFCBuilder {
         if let prof = arbitraryProfile(sp.boundary) {
             rep = "#\(shape([extrusion(profile: prof, depth: sp.height * k)], type: "SweptSolid"))"
         }
-        let e = add("IFCSPACE(\(g("element:\(el.id)")),#\(oh),\(s(sp.number.isEmpty ? "\(el.id)" : sp.number)),$,$,#\(pl),\(rep),\(s(sp.name)),.ELEMENT.,.INTERNAL.,$)")
+        let e = add("IFCSPACE(\(eg(el)),#\(oh),\(s(sp.number.isEmpty ? "\(el.id)" : sp.number)),$,$,#\(pl),\(rep),\(s(sp.name)),.ELEMENT.,.INTERNAL.,$)")
         elementEntity[el.id] = e
         spaces[lv, default: []].append(e)
         let area = abs(GeometryOps.signedArea(sp.boundary)) * k * k / 1_000_000
@@ -517,7 +529,7 @@ final class IFCBuilder {
         var repType = "Brep"
         if items.isEmpty, let fb = fallbackSolid(el) { items = [fb]; repType = "SweptSolid"; style(fb, material: el.material) }
         let rep = items.isEmpty ? "$" : "#\(shape(items, type: repType))"
-        let gid = g("element:\(el.id)"), nm = s(name(el, el.typeName.capitalized)), tag = s("\(el.id)")
+        let gid = eg(el), nm = s(name(el, el.typeName.capitalized)), tag = s("\(el.id)")
         let e: Int
         switch el.geometry {
         case .roof(let rf):

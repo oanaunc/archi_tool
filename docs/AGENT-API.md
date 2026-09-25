@@ -112,6 +112,13 @@ Tools:
 | `export` | `path`, `format?`, `level?` | dxf, svg, ifc, obj, stl, glb, csv, archi |
 | `list_commands` | `category?` | available commands |
 | `undo` | – | undo last change |
+| `import_file` | `path`, `format?`, `offset?` | merge .archi, .dxf, .ifc, .svg, .obj, .stl, .3mf, .geojson or CSV/XYZ points into the document |
+| `takeoff` | `level?`, `format?` (json, csv) | quantity takeoff of walls, slabs, roofs, columns, beams, openings and spaces |
+| `cost_estimate` | `prices?`, `path?`, `format?` | cost of the takeoff from unit rates (inline, a JSON file, or the drawing's UNITPRICE rates) |
+| `room_schedule` | `level?`, `format?` | rooms with net/gross area, perimeter, height and volume |
+| `clash` | `tolerance?`, `ids?`, `includeSpaces?` | hard clashes between elements and 3D solids |
+| `check_model` | – | model audit (walls, openings, rooms, duplicates, levels) |
+| `sun_position` | `datetime`, `latitude?`, `longitude?` | sun azimuth/altitude, sunrise and sunset |
 
 ### Claude Desktop
 

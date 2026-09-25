@@ -167,6 +167,15 @@ public enum DXFReader {
         var doc = ArchiDocument()
         var dimStyleNames: Set<String> = []
         var textStyleNames: Set<String> = []
+        /// IMAGEDEF handle → file path (from OBJECTS).
+        var imageDefs: [String: String] = [:]
+        /// LAYOUT objects: name, tab order, block record handle.
+        var layoutInfo: [(name: String, tab: Int, record: String)] = []
+        /// BLOCK_RECORD handle → block name.
+        var blockRecordNames: [String: String] = [:]
+        /// Paper space entities and viewports by layout name.
+        var paper: [String: [Entity]] = [:]
+        var paperViewports: [String: [Viewport]] = [:]
 
         init() {
             doc.layers = [Layer(name: "0")]
@@ -175,6 +184,7 @@ public enum DXFReader {
         }
 
         mutating func run(_ pairs: [DXFPair]) {
+            prescan(pairs)
             var i = 0
             var sawSection = false
             while i < pairs.count {
@@ -192,7 +202,10 @@ public enum DXFReader {
                     case "BLOCKS": blocks(records(body))
                     case "ENTITIES":
                         let ents = entities(records(body), inBlock: false)
-                        for e in ents { doc.add(e) }
+                        let active = activePaperLayout()
+                        for var e in ents {
+                            if e.props.removeValue(forKey: "_paper") != nil { addPaper(e, layout: active) } else { doc.add(e) }
+                        }
                     default: break
                     }
                     i = j + 1
@@ -204,10 +217,75 @@ public enum DXFReader {
             if !sawSection {
                 // Entities-only fragment without sections.
                 let ents = entities(records(pairs), inBlock: false)
-                for e in ents { doc.add(e) }
+                for var e in ents { e.props.removeValue(forKey: "_paper"); if e.props["_viewport"] == nil { doc.add(e) } }
             }
             doc.currentLayer = "0"
             if doc.layer(named: "0") == nil { doc.layers.insert(Layer(name: "0"), at: 0) }
+            buildLayouts()
+        }
+
+        /// Reads IMAGEDEF and LAYOUT objects before the entities that reference them.
+        mutating func prescan(_ pairs: [DXFPair]) {
+            guard let s = pairs.indices.first(where: { pairs[$0].code == 2 && pairs[$0].trimmed == "OBJECTS" && $0 > 0 && pairs[$0 - 1].trimmed == "SECTION" }) else { return }
+            var j = s + 1
+            while j < pairs.count && !(pairs[j].code == 0 && pairs[j].trimmed == "ENDSEC") { j += 1 }
+            for r in records(Array(pairs[(s + 1)..<j])) {
+                switch r.type {
+                case "IMAGEDEF":
+                    if let h = r.s(5)?.trimmingCharacters(in: .whitespaces), let path = r.s(1) { imageDefs[h.uppercased()] = path }
+                case "LAYOUT":
+                    guard let name = r.s(1)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { continue }
+                    let owners = r.all(330).map { $0.trimmed.uppercased() }
+                    layoutInfo.append((name, r.i(71) ?? 0, owners.last ?? ""))
+                default: break
+                }
+            }
+        }
+
+        /// Layout shown by *Paper_Space (the active paper layout).
+        func activePaperLayout() -> String {
+            if let h = blockRecordNames.first(where: { $0.value.uppercased() == "*PAPER_SPACE" })?.key,
+               let l = layoutInfo.first(where: { $0.record == h }) { return l.name }
+            return layoutInfo.filter { $0.name.uppercased() != "MODEL" }.min { $0.tab < $1.tab }?.name ?? "Layout1"
+        }
+
+        mutating func addPaper(_ e: Entity, layout: String) {
+            var e = e
+            if e.props["_viewport"] != nil {
+                if case .polyline(let pl) = e.geometry, pl.vertices.count == 4, let c = e.props["vpCenter"].flatMap(parseVec),
+                   let sc = e.props["vpScale"].flatMap(Double.init) {
+                    let b = BBox2(points: pl.vertices.map(\.p))
+                    paperViewports[layout, default: []].append(Viewport(origin: b.min, size: Vec2(b.width, b.height), viewCenter: c, scale: sc))
+                }
+                return
+            }
+            e.id = doc.allocateID()
+            doc.ensureLayer(e.layer)
+            paper[layout, default: []].append(e)
+        }
+
+        func parseVec(_ s: String) -> Vec2? {
+            let p = s.split(separator: ",").compactMap { Double($0) }
+            return p.count == 2 ? Vec2(p[0], p[1]) : nil
+        }
+
+        /// Replaces the default sheet with the drawing's paper space layouts (tab order).
+        mutating func buildLayouts() {
+            let names = Set(paper.keys).union(paperViewports.keys)
+            guard !names.isEmpty else { return }
+            let order = layoutInfo.sorted { $0.tab < $1.tab }.map(\.name)
+            let sorted = names.sorted { (order.firstIndex(of: $0) ?? Int.max, $0) < (order.firstIndex(of: $1) ?? Int.max, $1) }
+            doc.layouts = sorted.map { n in
+                let ents = paper[n] ?? []
+                var b = BBox2.empty
+                for e in ents { b.add(GeometryOps.bounds(e.geometry, doc: doc)) }
+                for v in paperViewports[n] ?? [] { b.add(v.origin); b.add(v.origin + v.size) }
+                // Smallest standard sheet (landscape) that holds the content.
+                let size = PaperSize.standard.map { $0.width >= $0.height ? $0 : PaperSize(name: $0.name, width: $0.height, height: $0.width) }
+                    .sorted { $0.width * $0.height < $1.width * $1.height }
+                    .first { b.isEmpty || ($0.width >= b.max.x - 1 && $0.height >= b.max.y - 1) } ?? PaperSize.standard[1]
+                return Layout(name: n, paper: size, viewports: paperViewports[n] ?? [], entities: ents)
+            }
         }
 
         func records(_ pairs: [DXFPair]) -> [DXFRecord] {
@@ -258,6 +336,8 @@ public enum DXFReader {
         mutating func tables(_ recs: [DXFRecord]) {
             for r in recs {
                 switch r.type {
+                case "BLOCK_RECORD":
+                    if let h = r.s(5)?.trimmingCharacters(in: .whitespaces), let n = r.s(2)?.trimmingCharacters(in: .whitespaces) { blockRecordNames[h.uppercased()] = n }
                 case "LAYER":
                     guard let name = r.s(2)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { continue }
                     let aci = r.i(62) ?? 7
@@ -323,6 +403,12 @@ public enum DXFReader {
                 let name = (b.s(2) ?? b.s(3) ?? "").trimmingCharacters(in: .whitespaces)
                 let upper = name.uppercased()
                 let isLayoutBlock = upper.hasPrefix("*MODEL_SPACE") || upper.hasPrefix("*PAPER_SPACE") || upper.hasPrefix("$MODEL_SPACE") || upper.hasPrefix("$PAPER_SPACE")
+                if upper.hasPrefix("*PAPER_SPACE") || upper.hasPrefix("$PAPER_SPACE") {
+                    // Paper layouts keep their entities in *Paper_SpaceN blocks (the active one may be empty here).
+                    let rec = (b.s(330) ?? "").trimmingCharacters(in: .whitespaces).uppercased()
+                    let lay = layoutInfo.first { $0.record == rec && !rec.isEmpty }?.name ?? (upper == "*PAPER_SPACE" ? activePaperLayout() : name)
+                    for var e in entities(Array(recs[(i + 1)..<j]), inBlock: true) { e.props.removeValue(forKey: "_paper"); addPaper(e, layout: lay) }
+                }
                 if !name.isEmpty && !isLayoutBlock {
                     var ents = entities(Array(recs[(i + 1)..<j]), inBlock: true)
                     for k in ents.indices { ents[k].id = doc.allocateID() }
@@ -357,13 +443,32 @@ public enum DXFReader {
             while i < recs.count {
                 let r = recs[i]
                 i += 1
-                if !inBlock && (r.i(67) ?? 0) == 1 { // paper space entity
-                    if r.type == "POLYLINE" || (r.type == "INSERT" && (r.i(66) ?? 0) == 1) {
-                        while i < recs.count && recs[i].type != "SEQEND" { i += 1 }; i += 1
-                    }
-                    continue
-                }
+                let isPaper = !inBlock && (r.i(67) ?? 0) == 1
+                let before = out.count
+                defer { if isPaper { for k in before..<out.count { out[k].props["_paper"] = "1" } } }
                 switch r.type {
+                case "ATTDEF":
+                    guard let tag = r.s(2)?.trimmingCharacters(in: .whitespaces), !tag.isEmpty else { break }
+                    // Shown as its tag, like the block editor; ATTDEF uses 74 for vertical alignment where TEXT uses 73.
+                    let tr = DXFRecord(type: "TEXT", pairs: r.pairs.filter { $0.code != 73 && $0.code != 1 }.map { $0.code == 74 ? DXFPair(code: 73, value: $0.value) : $0 } + [DXFPair(code: 1, value: tag)])
+                    for g in convert(tr) {
+                        var e = common(r, geometry: g)
+                        e.props["attdef"] = tag.uppercased()
+                        e.props["prompt"] = r.s(3) ?? tag
+                        e.props["default"] = DXFReader.decodeSpecial(r.s(1) ?? "")
+                        if ((r.i(70) ?? 0) & 1) != 0 { e.props["invisible"] = "1" }
+                        out.append(e)
+                    }
+                case "VIEWPORT":
+                    guard isPaper || inBlock, (r.i(69) ?? 2) != 1, let c = r.v2(10), let w = r.d(40), let h = r.d(41), w > 0, h > 0 else { break }
+                    let vc = r.v2(12) ?? .zero
+                    let vh = r.d(45) ?? h
+                    let pts = [c + Vec2(-w / 2, -h / 2), c + Vec2(w / 2, -h / 2), c + Vec2(w / 2, h / 2), c + Vec2(-w / 2, h / 2)]
+                    var e = common(r, geometry: .polyline(PolylineGeom(points: pts, closed: true)))
+                    e.props["_viewport"] = "1"; e.props["vpCenter"] = "\(vc.x),\(vc.y)"; e.props["vpScale"] = "\(vh / h)"
+                    out.append(e)
+                case "MULTILEADER", "MLEADER":
+                    for g in mleader(r) { out.append(common(r, geometry: g)) }
                 case "POLYLINE":
                     var verts: [DXFRecord] = []
                     while i < recs.count && recs[i].type == "VERTEX" { verts.append(recs[i]); i += 1 }
@@ -511,9 +616,60 @@ public enum DXFReader {
                 guard let p = r.v2(10), let d = r.v2(11), d.length > geomEpsilon else { return [] }
                 let big = 1e6, dir = d.normalized
                 return [.line(LineGeom(r.type == "RAY" ? p : p - dir * big, p + dir * big))]
+            case "IMAGE":
+                guard let o = r.v2(10), let u = r.v2(11), let v = r.v2(12) else { return [] }
+                let px = r.v2(13) ?? Vec2(1, 1)
+                let size = Vec2(u.length * max(px.x, 1), v.length * max(px.y, 1))
+                guard size.x > 0, size.y > 0 else { return [] }
+                let h = (r.s(340) ?? "").trimmingCharacters(in: .whitespaces).uppercased()
+                let rot = normAngle(u.angle)
+                return [.image(ImageGeom(path: imageDefs[h] ?? "", origin: o, size: size, rotation: rot < 1e-12 || abs(rot - 2 * .pi) < 1e-12 ? 0 : rot))]
             default:
-                return [] // IMAGE, VIEWPORT, 3DSOLID, REGION, ATTDEF, ... are ignored
+                return [] // 3DSOLID, REGION, ... are ignored
             }
+        }
+
+        /// MULTILEADER: each leader line (arrow tip first) ends at its landing point; the first carries the MText content.
+        func mleader(_ r: DXFRecord) -> [Geometry] {
+            var lines: [[Vec2]] = []
+            var landing: [Vec2] = []
+            var cur: [Vec2]? = nil
+            var inLeader = false
+            var text = ""
+            var textPos: Vec2? = nil
+            var height = 0.0
+            var pendingX: Double? = nil
+            for p in r.pairs {
+                switch p.code {
+                case 302 where p.trimmed == "LEADER{": inLeader = true
+                case 303: inLeader = false
+                case 304 where p.trimmed == "LEADER_LINE{": cur = []
+                case 305: if let c = cur, !c.isEmpty { lines.append(c) }; cur = nil
+                case 304: if text.isEmpty { text = DXFReader.stripMText(p.value) }
+                case 41 where cur == nil && !inLeader && height == 0: height = p.double
+                case 12: pendingX = p.double
+                case 22: if let x = pendingX, textPos == nil { textPos = Vec2(x, p.double) }; pendingX = nil
+                case 10: pendingX = p.double
+                case 20:
+                    guard let x = pendingX else { break }
+                    let v = Vec2(x, p.double)
+                    if cur != nil { cur!.append(v) } else if inLeader { landing.append(v) }
+                    pendingX = nil
+                default: break
+                }
+            }
+            if height <= 0 { height = 2.5 }
+            var out: [Geometry] = []
+            for (k, line) in lines.enumerated() {
+                var pts = line
+                if k < landing.count { pts.append(landing[k]) } else if let l = landing.first { pts.append(l) }
+                var clean: [Vec2] = []
+                for q in pts where !(clean.last.map { $0.isClose(q, tol: 1e-9) } ?? false) { clean.append(q) }
+                guard clean.count >= 2 else { continue }
+                out.append(.leader(LeaderGeom(points: clean, text: k == 0 ? text : "", textHeight: height)))
+            }
+            if out.isEmpty, !text.isEmpty, let tp = textPos { out.append(.text(TextGeom(position: tp, height: height, content: text, valign: .top))) }
+            return out
         }
 
         func polyline(_ r: DXFRecord, _ verts: [DXFRecord]) -> Geometry? {

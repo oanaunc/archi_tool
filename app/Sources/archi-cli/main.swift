@@ -1,6 +1,7 @@
 // Oanarina Archi Tool command-line runner — GPL-3.0-or-later
 //
-// archi-cli [file.archi|file.dxf] [--script file.scr] [--out file.archi|.dxf|.svg|.ifc|.obj|.stl|.glb|.csv] [--mcp]
+// archi-cli [file.archi|.dxf|.ifc|.svg|.obj|.stl|.3mf|.geojson|.csv] [--script file.scr]
+//           [--out file.archi|.dxf|.svg|.ifc|.obj|.stl|.glb|.csv|.3mf|.usda|.usdz|.geojson] [--mcp]
 // Headless: uses ArchiCore only. See docs/AGENT-API.md.
 import Foundation
 import ArchiCore
@@ -282,8 +283,11 @@ func loadDocument(_ url: URL) throws -> ArchiDocument {
         let data = try Data(contentsOf: url)
         let text = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1) ?? ""
         return try DXFReader.read(text)
-    default:
+    case "archi", "json":
         return try ArchiFile.decode(Data(contentsOf: url))
+    default:
+        // IFC, SVG, OBJ, STL, 3MF, GeoJSON, CSV points
+        return try FileImport.load(url).0
     }
 }
 
@@ -308,6 +312,8 @@ func writeDocument(_ doc: ArchiDocument, to url: URL, format: String? = nil, lev
     case "stl": try text(STLExporter.export(MeshBuilder.build(doc: doc), name: doc.info.name))
     case "glb", "gltf": try GLTFExporter.exportGLB(MeshBuilder.build(doc: doc), materials: doc.materials).write(to: url, options: .atomic)
     case "csv": try text(ScheduleExporter.csv(doc: doc, kind: "all"))
+    case "3mf", "usda", "usd", "usdz", "geojson", "dxf12", "points": try FileImport.export(doc, to: url, format: f)
+    case "takeoff": try text(QuantityTakeoff.compute(doc).csv)
     case "pdf": throw CLIError.message("PDF output needs the app (Core Graphics); export SVG instead")
     default: throw CLIError.message("unsupported output format '\(f)'")
     }
@@ -396,6 +402,28 @@ final class MCPServer {
         ["name": "list_commands", "title": "List commands", "description": "All command names, aliases, categories and summaries.",
          "inputSchema": MCPServer.schema(["category": ["type": "string"]])],
         ["name": "undo", "title": "Undo", "description": "Undoes the last change.", "inputSchema": MCPServer.schema([:])],
+        ["name": "import_file", "title": "Import file",
+         "description": "Imports a file into the document (merged with new ids): .archi, .dxf, .ifc (walls/slabs/columns/beams/doors/windows/spaces become BIM elements, other products meshes), .svg, .obj, .stl, .3mf, .geojson, .csv/.txt/.xyz survey points. Returns the new ids and a summary.",
+         "inputSchema": MCPServer.schema(["path": ["type": "string"], "format": ["type": "string", "description": "Override the format detected from the extension"],
+                                          "offset": ["type": "array", "items": ["type": "number"], "description": "[dx, dy] move in drawing units"]], required: ["path"])],
+        ["name": "takeoff", "title": "Quantity takeoff",
+         "description": "Quantities of BIM elements (SI units): wall length/net area/volume per type and material (openings deducted), slabs, roofs, columns, beams, door/window/opening counts, spaces; plus material volumes. format=csv returns CSV text.",
+         "inputSchema": MCPServer.schema(["level": ["type": "integer"], "format": ["type": "string", "enum": ["json", "csv"]]])],
+        ["name": "cost_estimate", "title": "Cost estimate",
+         "description": "Cost of the takeoff from unit rates: `prices` (object like {\"currency\":\"EUR\",\"wall:area\":45,\"door:count\":350} or {\"prices\":[{category,type,measure,price}]}), a JSON file `path`, or the drawing's COST:<category>[:<type>]:<measure> variables.",
+         "inputSchema": MCPServer.schema(["prices": ["type": "object"], "path": ["type": "string"], "format": ["type": "string", "enum": ["json", "csv"]]])],
+        ["name": "room_schedule", "title": "Room schedule",
+         "description": "Rooms with net area (minus columns), gross area (to wall centre lines), perimeter, height and volume.",
+         "inputSchema": MCPServer.schema(["level": ["type": "integer"], "format": ["type": "string", "enum": ["json", "csv"]]])],
+        ["name": "clash", "title": "Clash detection",
+         "description": "Hard clashes between BIM elements and 3D solids (mesh bounding boxes then triangle-triangle tests; touching, hosted and joined elements ignored). Optional `ids` limits one side of each pair.",
+         "inputSchema": MCPServer.schema(["tolerance": ["type": "number"], "ids": ["type": "array", "items": ["type": "integer"]], "includeSpaces": ["type": "boolean"]])],
+        ["name": "check_model", "title": "Check model",
+         "description": "Model audit: walls without height/length, openings wider than or outside their host, overlapping or duplicate walls, room problems (unnamed, duplicate numbers, overlapping, self-intersecting), duplicate entities, missing levels. Each issue has ids and a zoom box.",
+         "inputSchema": MCPServer.schema([:])],
+        ["name": "sun_position", "title": "Sun position",
+         "description": "Sun azimuth (clockwise from north) and altitude, sunrise/sunset for an ISO date-time (e.g. 2025-06-21T14:30:00+03:00) at the project location or given latitude/longitude.",
+         "inputSchema": MCPServer.schema(["datetime": ["type": "string"], "latitude": ["type": "number"], "longitude": ["type": "number"]], required: ["datetime"])],
     ]
 
     func write(_ obj: Any) {
@@ -526,6 +554,70 @@ final class MCPServer {
             return ["commands": cmds.map { ["name": $0.name, "aliases": $0.aliases, "category": $0.category, "summary": $0.summary] }]
         case "undo":
             ed.undo(); return ["ok": true]
+        case "import_file":
+            guard let p = a["path"] as? String else { throw CLIError.message("missing 'path'") }
+            let url = expand(p)
+            let off = ArchiJSON.point(a["offset"]) ?? .zero
+            var result: (DocumentMerge.Result, String)?
+            try ed.transaction("Agent Import") { d in result = try FileImport.importFile(url, into: &d, format: a["format"] as? String, offset: off) }
+            guard let r = result else { throw CLIError.message("import failed") }
+            return ["summary": r.1, "entityIds": r.0.entityIDs, "elementIds": r.0.elementIDs, "addedLevels": r.0.addedLevels]
+        case "takeoff":
+            let t = QuantityTakeoff.compute(ed.doc, level: ArchiJSON.int(a["level"]))
+            if (a["format"] as? String) == "csv" { return t.csv }
+            return ["lines": t.lines.map { l -> [String: Any] in
+                        ["category": l.category, "type": l.key, "material": l.material, "count": l.count, "length_m": l.length, "area_m2": l.area,
+                         "volume_m3": l.volume, "deducted_m2": l.deducted, "ids": l.ids] },
+                    "materials": t.materials.map { ["material": $0.material, "area_m2": $0.area, "volume_m3": $0.volume] }]
+        case "cost_estimate":
+            var table = CostTable.fromVariables(ed.doc)
+            if let pr = a["prices"] as? [String: Any] {
+                let d = try JSONSerialization.data(withJSONObject: pr)
+                table = try CostTable.fromJSON(String(decoding: d, as: UTF8.self))
+            } else if let p = a["path"] as? String {
+                table = try CostTable.fromJSON(try FileImport.readText(expand(p)))
+            }
+            guard !table.prices.isEmpty else { throw CLIError.message("no unit rates: pass 'prices' or 'path', or set COST:<category>:<measure> variables") }
+            let est = CostEstimate.compute(QuantityTakeoff.compute(ed.doc), table: table)
+            if (a["format"] as? String) == "csv" { return est.csv }
+            return ["currency": est.currency, "total": est.total,
+                    "lines": est.lines.map { ["category": $0.line.category, "type": $0.line.key, "measure": $0.measure, "quantity": $0.quantity, "unitPrice": $0.unitPrice, "total": $0.total] },
+                    "unpriced": est.unpriced.map { ["category": $0.category, "type": $0.key] }]
+        case "room_schedule":
+            let rows = RoomSchedule.compute(ed.doc, level: ArchiJSON.int(a["level"]))
+            if (a["format"] as? String) == "csv" { return RoomSchedule.csv(rows) }
+            return ["rooms": rows.map { ["id": $0.id, "number": $0.number, "name": $0.name, "level": $0.level, "netArea_m2": $0.netArea, "grossArea_m2": $0.grossArea,
+                                         "perimeter_m": $0.perimeter, "height_m": $0.height, "volume_m3": $0.volume] }]
+        case "clash":
+            var o = ClashOptions()
+            if let t = ArchiJSON.double(a["tolerance"]) { o.tolerance = t }
+            let ids = ArchiJSON.ids(a["ids"])
+            if !ids.isEmpty { o.setA = Set(ids) }
+            if let s = a["includeSpaces"] as? Bool { o.includeSpaces = s }
+            let cs = ClashDetector.detect(ed.doc, options: o)
+            return ["count": cs.count, "clashes": cs.map { ["a": $0.a, "kindA": $0.kindA, "b": $0.b, "kindB": $0.kindB, "point": [$0.point.x, $0.point.y, $0.point.z],
+                                                            "contained": $0.contained, "min": [$0.bounds.min.x, $0.bounds.min.y, $0.bounds.min.z], "max": [$0.bounds.max.x, $0.bounds.max.y, $0.bounds.max.z]] }]
+        case "check_model":
+            let issues = ModelChecker.check(ed.doc)
+            return ["count": issues.count, "issues": issues.map { i -> [String: Any] in
+                var o: [String: Any] = ["severity": i.severity.rawValue, "code": i.code, "message": i.message, "ids": i.ids]
+                if !i.bounds.isEmpty { o["zoom"] = ["min": [i.bounds.min.x, i.bounds.min.y], "max": [i.bounds.max.x, i.bounds.max.y]] }
+                return o
+            }]
+        case "sun_position":
+            guard let s = a["datetime"] as? String else { throw CLIError.message("missing 'datetime'") }
+            let iso = ISO8601DateFormatter()
+            var date = iso.date(from: s)
+            if date == nil { iso.formatOptions = [.withFullDate, .withTime, .withColonSeparatorInTime]; iso.timeZone = TimeZone(secondsFromGMT: 0); date = iso.date(from: s) }
+            guard let dt = date else { throw CLIError.message("datetime must be ISO 8601, e.g. 2025-06-21T14:30:00+03:00") }
+            let lat = ArchiJSON.double(a["latitude"]) ?? ed.doc.info.latitude, lon = ArchiJSON.double(a["longitude"]) ?? ed.doc.info.longitude
+            let p = SolarCalculator.position(date: dt, latitude: lat, longitude: lon)
+            let t = SolarCalculator.sunTimes(date: dt, latitude: lat, longitude: lon)
+            let out = ISO8601DateFormatter()
+            let dir = SolarCalculator.direction(p, northAngle: ed.doc.info.northAngle)
+            return ["azimuth": p.azimuth, "altitude": p.altitude, "declination": p.declination, "equationOfTime_min": p.equationOfTime,
+                    "sunriseUTC": t.sunrise.map { out.string(from: $0) as Any } ?? NSNull(), "solarNoonUTC": out.string(from: t.noon),
+                    "sunsetUTC": t.sunset.map { out.string(from: $0) as Any } ?? NSNull(), "direction": [dir.x, dir.y, dir.z], "latitude": lat, "longitude": lon]
         default:
             throw CLIError.message("unknown tool \(name)")
         }
@@ -540,7 +632,8 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
   (no options)     REPL: reads command lines from stdin and prints the command log.
                    Extra REPL lines: :save [path], :export <path>, :quit
   --script FILE    Runs the command lines in FILE (AutoCAD .scr style; ';' starts a comment).
-  --out FILE       Writes the result: .archi, .dxf, .svg, .ifc, .obj, .stl, .glb, .csv
+  --out FILE       Writes the result: .archi, .dxf, .svg, .ifc, .obj, .stl, .glb, .csv, .3mf, .usda, .usdz, .geojson
+                   (input may also be .ifc, .svg, .obj, .stl, .3mf, .geojson or a .csv of points)
   --mcp            Model Context Protocol server on stdin/stdout (for Claude and other agents).
   --version        Prints the version.
 """
@@ -563,6 +656,7 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
     }
 
     let host = CLIHost()
+    CommandRegistry.shared.ensureBuiltins()
     let ed = Editor()
     ed.host = host
     var fileURL: URL?
