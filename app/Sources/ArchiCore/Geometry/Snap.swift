@@ -168,7 +168,7 @@ public enum Snap {
             let t = ins.transform * Transform2D.translation(-blk.basePoint)
             var b = BBox2(points: lb.corners.map(t.apply)); b.add(ins.position)
             return b
-        case .dimension(let d): return BBox2(points: d.points)
+        case .dimension(let d): return BBox2(points: DimensionRenderer.definitionPoints(d))
         case .hatch: return .empty
         default: return GeometryOps.bounds(g, doc: doc)
         }
@@ -206,7 +206,7 @@ public enum Snap {
             if let path = CurvePath.make(g) { c.addPath(path, id, vertices: true, mids: false) }
         case .text(let t): c.offer(t.position, .insertion, id)
         case .dimension(let d):
-            c.offer(d.points, .node, id)
+            c.offer(DimensionRenderer.definitionPoints(d), .node, id)
             for p in CurvePath.all(g, doc: doc) { c.addPieces(p.pieces, id) }
         case .leader(let l):
             c.offer(l.points, .endpoint, id)
@@ -420,6 +420,7 @@ public enum Snap {
         let g = settings.gridSpacing
         let grid = settings.gridSnap && g > 0
         func roundG(_ v: Double) -> Double { (v / g).rounded() * g }
+        if settings.isometric { return constrainIso(base: base, cursor: cursor, settings: settings) }
         if d.length < 1e-12 { return grid ? Vec2(roundG(cursor.x), roundG(cursor.y)) : cursor }
         if settings.ortho {
             if abs(d.x) >= abs(d.y) {
@@ -442,5 +443,39 @@ public enum Snap {
             }
         }
         return grid ? Vec2(roundG(cursor.x), roundG(cursor.y)) : cursor
+    }
+
+    /// Isometric axis angles (degrees) of an isoplane: left 90/150, top 30/150, right 30/90.
+    public static func isoAxes(_ plane: Int) -> [Double] {
+        switch plane { case 1: return [30, 150]; case 2: return [30, 90]; default: return [90, 150] }
+    }
+    /// Nearest point of the isometric snap lattice (spacing g along the 30° and 150° axes).
+    public static func isoGridPoint(_ p: Vec2, spacing g: Double) -> Vec2 {
+        let u = Vec2.polar(g, rad(30)), v = Vec2.polar(g, rad(150))
+        let det = u.cross(v)
+        let a = p.cross(v) / det, b = u.cross(p) / det
+        var best = p, bd = Double.infinity
+        for da in [floor(a), ceil(a)] { for db in [floor(b), ceil(b)] {
+            let q = u * da + v * db
+            let dd = q.distance(to: p)
+            if dd < bd { bd = dd; best = q }
+        } }
+        // Lattice points on vertical lines between (a+b odd combinations) are covered by the 90° axis spacing too.
+        let w = Vec2(0, g)
+        for q in [best + w, best - w] where q.distance(to: p) < bd { bd = q.distance(to: p); best = q }
+        return best
+    }
+    static func constrainIso(base: Vec2, cursor: Vec2, settings: DraftSettings) -> Vec2 {
+        let g = settings.gridSpacing
+        let grid = settings.gridSnap && g > 0
+        let d = cursor - base
+        if settings.ortho && d.length > 1e-12 {
+            let dirs = isoAxes(settings.isoPlane).map { Vec2.polar(1, rad($0)) }
+            let dir = dirs.max { abs(d.dot($0)) < abs(d.dot($1)) }!
+            var dist = d.dot(dir)
+            if grid { dist = (dist / g).rounded() * g }
+            return base + dir * dist
+        }
+        return grid ? isoGridPoint(cursor, spacing: g) : cursor
     }
 }

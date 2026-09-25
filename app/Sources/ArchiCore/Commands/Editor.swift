@@ -119,11 +119,16 @@ public struct DraftSettings: Codable, Hashable {
     public var chamferDistance = 0.0
     /// Object snap tracking (OTRACK, F11): alignment paths from acquired snap points.
     public var objectSnapTracking = true
+    /// Isometric drafting (ISODRAFT / SNAPSTYL 1): ortho and grid snap follow the isometric axes.
+    public var isometric = false
+    /// Current isometric plane (ISOPLANE / SNAPISOPAIR): 0 left, 1 top, 2 right.
+    public var isoPlane = 0
     public init() {}
 
     private enum Keys: String, CodingKey {
         case ortho, gridSnap, gridSpacing, showGrid, objectSnap, snapModes, polarTracking, polarIncrement, dynamicInput, lineweightDisplay
         case textHeight, wallThickness, wallHeight, wallJustification, offsetDistance, filletRadius, chamferDistance, objectSnapTracking
+        case isometric, isoPlane
     }
     /// Tolerant decoding: settings saved by older builds (missing keys) keep the defaults for the new fields.
     public init(from decoder: Decoder) throws {
@@ -147,6 +152,8 @@ public struct DraftSettings: Codable, Hashable {
         filletRadius = try c.decodeIfPresent(Double.self, forKey: .filletRadius) ?? d.filletRadius
         chamferDistance = try c.decodeIfPresent(Double.self, forKey: .chamferDistance) ?? d.chamferDistance
         objectSnapTracking = try c.decodeIfPresent(Bool.self, forKey: .objectSnapTracking) ?? d.objectSnapTracking
+        isometric = try c.decodeIfPresent(Bool.self, forKey: .isometric) ?? d.isometric
+        isoPlane = try c.decodeIfPresent(Int.self, forKey: .isoPlane) ?? d.isoPlane
     }
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: Keys.self)
@@ -156,6 +163,7 @@ public struct DraftSettings: Codable, Hashable {
         try c.encode(lineweightDisplay, forKey: .lineweightDisplay); try c.encode(textHeight, forKey: .textHeight); try c.encode(wallThickness, forKey: .wallThickness)
         try c.encode(wallHeight, forKey: .wallHeight); try c.encode(wallJustification, forKey: .wallJustification); try c.encode(offsetDistance, forKey: .offsetDistance)
         try c.encode(filletRadius, forKey: .filletRadius); try c.encode(chamferDistance, forKey: .chamferDistance); try c.encode(objectSnapTracking, forKey: .objectSnapTracking)
+        try c.encode(isometric, forKey: .isometric); try c.encode(isoPlane, forKey: .isoPlane)
     }
 }
 
@@ -287,6 +295,12 @@ public final class Editor {
                 }
                 return
             }
+            // A system variable typed as a command ("USERI1 5", "DIMTXT").
+            if SysVarCatalog.info(name) != nil, registry.lookup("SETVAR") != nil {
+                queuedInputs.insert(name, at: 0)
+                start("SETVAR")
+                return
+            }
             var msg = "Unknown command \"\(name.uppercased())\". Press F1 or type HELP."
             let sugg = CommandSuggestions.suggest(name, registry: registry)
             if !sugg.isEmpty { msg += " Did you mean: " + sugg.joined(separator: ", ") + "?" }
@@ -312,6 +326,20 @@ public final class Editor {
             if def.modifies && self.doc.variable("CONSTRAINTINFER") == "1" && (def.category == "Draw" || def.category == "Modify") {
                 let newIDs = Set(self.doc.entities.map(\.id)).subtracting(before.entities.map(\.id))
                 if !newIDs.isEmpty { ConstraintCommands.inferConstraints(self, newIDs: newIDs) }
+            }
+            if def.name != "LAYERP" && (self.doc.layers != before.layers || self.doc.currentLayer != before.currentLayer) {
+                self.layerPrevious.append((before.layers, before.currentLayer))
+                if self.layerPrevious.count > 50 { self.layerPrevious.removeFirst() }
+            }
+            if def.modifies && self.doc.variable("DIMASSOC") != "0" && self.doc.entities.count > before.entities.count {
+                // New dimensions attach to the objects they were snapped to (DIMASSOC 2).
+                let old = Set(before.entities.map(\.id))
+                let tol = max(self.pickTolerance * 1e-3, 1e-6)
+                var d = self.doc
+                for i in d.entities.indices where !old.contains(d.entities[i].id) && d.entities[i].props[DimAssociation.prop] == nil {
+                    if case .dimension = d.entities[i].geometry { DimAssociation.associate(&d.entities[i], doc: d, tol: tol) }
+                }
+                if d != self.doc { self.doc = d }
             }
             if def.modifies && self.doc != before {
                 var d = self.doc
@@ -681,6 +709,12 @@ public final class Editor {
     public var lastRecordedScript: String?
     /// Objects removed by the last ERASE (restored by OOPS).
     public var lastErased: (entities: [Entity], elements: [BIMElement])?
+    /// Active solve-based drag (see `beginDragSolve` / `dragSolve(point:)` / `endDragSolve`).
+    public internal(set) var constraintDrag: ConstraintDragState?
+    /// Layer settings before each command that changed them (LAYERP), most recent last.
+    public var layerPrevious: [(layers: [Layer], current: String)] = []
+    /// Selection cycling state (SELECTIONCYCLING): last pick point and index into the overlapping candidates.
+    public var pickCycle: (point: Vec2, index: Int)?
     private var inSubmit = false
     /// Set by UNDO BEgin: commands inside the group are recorded as one undo step at UNDO End.
     public var undoGroupActive = false

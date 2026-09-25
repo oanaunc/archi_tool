@@ -137,7 +137,7 @@ public enum GeometryOps {
         case .hatch(let h): return h.loops.map { polylinePoints($0, closed: true) }
         case .leader(let l): return [l.points]
         case .text(let t): return [textBoxCorners(t) + [textBoxCorners(t)[0]]]
-        case .dimension(let d): return [d.points]
+        case .dimension(let d): return [DimensionRenderer.definitionPoints(d)]
         case .image(let im):
             let t = Transform2D.translation(im.origin) * Transform2D.rotation(im.rotation)
             return [[Vec2(0, 0), Vec2(im.size.x, 0), im.size, Vec2(0, im.size.y), Vec2(0, 0)].map(t.apply)]
@@ -182,7 +182,7 @@ public enum GeometryOps {
     public static func bounds(_ g: Geometry, doc: ArchiDocument?) -> BBox2 {
         switch g {
         case .circle(let c): return BBox2(min: c.center - Vec2(c.radius, c.radius), max: c.center + Vec2(c.radius, c.radius))
-        case .dimension(let d): return BBox2(points: d.points)
+        case .dimension(let d): return BBox2(points: DimensionRenderer.definitionPoints(d))
         default:
             var b = BBox2.empty
             for pl in tessellate(g, doc: doc) { for p in pl { b.add(p) } }
@@ -393,7 +393,7 @@ public enum GeometryOps {
         case .polyline(let p): return p.vertices.map(\.p)
         case .spline(let s): return s.fitPoints.isEmpty ? s.controlPoints : s.fitPoints
         case .text(let t): return [t.position]
-        case .dimension(let d): return d.points
+        case .dimension(let d): return DimensionRenderer.definitionPoints(d)
         case .hatch: return []
         case .insert(let i): return [i.position]
         case .leader(let l): return l.points

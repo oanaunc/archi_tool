@@ -9,9 +9,13 @@ public enum ConstraintKind: String, Codable, CaseIterable {
     case coincident, horizontal, vertical, parallel, perpendicular, collinear, equal, fixed, concentric, tangent, pointOnCurve, midpoint, symmetric
     // Dimensional (value in drawing units; angles in radians)
     case distance, horizontalDistance, verticalDistance, length, angle, radius, diameter
+    /// Explicit length ratio: length(a) = value × length(b) (segments, arcs by arc length, circles by radius).
+    case ratio
+    /// Length difference: length(a) − length(b) = value.
+    case lengthDifference
 
     public var isDimensional: Bool {
-        switch self { case .distance, .horizontalDistance, .verticalDistance, .length, .angle, .radius, .diameter: return true; default: return false }
+        switch self { case .distance, .horizontalDistance, .verticalDistance, .length, .angle, .radius, .diameter, .ratio, .lengthDifference: return true; default: return false }
     }
 }
 
@@ -274,12 +278,33 @@ public enum Constraints {
         case .diameter:
             guard let t = target, let ci = C(0) else { return nil }
             return [2 * ci.1 - t]
+        case .ratio:
+            guard let t = target, r.count >= 2, let a = lengthOf(x, r[0], A), let b = lengthOf(x, r[1], A) else { return nil }
+            return [a - t * b]
+        case .lengthDifference:
+            guard let t = target, r.count >= 2, let a = lengthOf(x, r[0], A), let b = lengthOf(x, r[1], A) else { return nil }
+            return [a - b - t]
+        }
+    }
+
+    /// Length used by ratio/difference constraints: segment length, arc length of an arc, radius of a circle.
+    static func lengthOf(_ x: [Double], _ r: CRef, _ A: Access) -> Double? {
+        if let s = A.segment(x, r) { return s.0.distance(to: s.1) }
+        guard let o = A.offset[r.entity], let sh = A.shapes[r.entity] else { return nil }
+        switch sh {
+        case .arc: return abs(x[o + 2]) * normAngle(x[o + 4] - x[o + 3])
+        case .circle: return abs(x[o + 2])
+        default: return nil
         }
     }
 
     /// Current measured value of a dimensional constraint (signed the way the constraint stores it).
     public static func measure(_ c: GeoConstraint, doc: ArchiDocument) -> Double? {
         guard let (x, A) = vector(doc, ids: Set(c.refs.map(\.entity))) else { return nil }
+        if c.kind == .ratio {
+            guard c.refs.count >= 2, let a = lengthOf(x, c.refs[0], A), let b = lengthOf(x, c.refs[1], A), b > 1e-12 else { return nil }
+            return a / b
+        }
         var zero = c; zero.reference = false
         guard let r = residuals(zero, x, A, target: 0)?.first else { return nil }
         return r
@@ -550,6 +575,65 @@ public enum Constraints {
         guard !ids.isEmpty, let (x, A) = vector(doc, ids: ids) else { return (0, 0) }
         let (rank, _) = rankAnalysis(cs, x, A, targets: cs.map { target($0, set: set, doc: doc) })
         return (x.count - rank, x.count)
+    }
+
+    // MARK: Solve-based dragging
+    /// Moves one constrainable point of a geometry (line end, circle/arc centre, arc end, polyline vertex, point).
+    public static func movePart(_ g: Geometry, part: Int, to p: Vec2) -> Geometry {
+        switch g {
+        case .point: return .point(p)
+        case .line(var l): if part == 1 { l.b = p } else { l.a = p }; return .line(l)
+        case .circle(var c): c.center = p; return .circle(c)
+        case .arc(var a):
+            switch part {
+            case 1: a.start = (p - a.center).angle
+            case 2: a.end = (p - a.center).angle
+            default: a.center = p
+            }
+            return .arc(a)
+        case .polyline(var pl):
+            guard part >= 0, part < pl.vertices.count else { return g }
+            pl.vertices[part].p = p; return .polyline(pl)
+        default: return g
+        }
+    }
+
+    /// Solve-based dragging (SolveSpace style): pulls the point `ref` to `target` while every driving constraint stays satisfied.
+    /// The rest of the sketch moves as little as possible (minimum-norm steps). When the target cannot be reached, the point
+    /// goes as far towards it as the constraints allow. Unconstrained entities simply follow the point.
+    /// Returns the solve report (nil when `ref` is not a constrainable point).
+    @discardableResult
+    public static func dragSolve(_ doc: inout ArchiDocument, ref: CRef, to target: Vec2) -> SolveReport? {
+        guard let e = doc.entity(ref.entity), params(e.geometry) != nil, let start = point(e.geometry, part: ref.part) else { return nil }
+        let set = ConstraintSet.load(doc)
+        let constrained = set.constraints.contains { c in !c.reference && c.refs.contains { $0.entity == ref.entity } }
+        if !constrained {
+            guard let i = doc.entityIndex(ref.entity) else { return nil }
+            doc.entities[i].geometry = movePart(doc.entities[i].geometry, part: ref.part, to: target)
+            return SolveReport(converged: true, residual: 0, iterations: 0, dof: 0, parameters: 0, equations: 0, redundant: [])
+        }
+        func attempt(_ p: Vec2) -> (ArchiDocument, SolveReport)? {
+            var trial = doc
+            var ts = set
+            let tempID = (ts.constraints.map(\.id).max() ?? 0) + 1_000_000
+            ts.constraints.append(GeoConstraint(id: tempID, kind: .fixed, refs: [ref], anchor: p))
+            ts.save(&trial)
+            guard let r = solve(&trial, prefer: [], maxIterations: 60), r.converged else { return nil }
+            var after = ConstraintSet.load(trial)
+            after.constraints.removeAll { $0.id == tempID }
+            after.save(&trial)
+            return (trial, r)
+        }
+        if let (d, r) = attempt(target) { doc = d; return r }
+        // Unreachable: bisect along the drag path for the farthest feasible position.
+        var lo = 0.0, hi = 1.0
+        var best: (ArchiDocument, SolveReport)? = nil
+        for _ in 0..<8 {
+            let mid = (lo + hi) / 2
+            if let ok = attempt(start + (target - start) * mid) { best = ok; lo = mid } else { hi = mid }
+        }
+        if let (d, r) = best { doc = d; return r }
+        return SolveReport(converged: false, residual: .infinity, iterations: 0, dof: 0, parameters: 0, equations: 0, redundant: [])
     }
 
     // MARK: Picking helpers

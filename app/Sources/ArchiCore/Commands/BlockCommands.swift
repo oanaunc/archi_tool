@@ -2,7 +2,7 @@
 import Foundation
 
 enum BlockCommands {
-    static var all: [CommandDef] { [block, insert, attdef, attedit, wblock, xref, imageAttach] }
+    static var all: [CommandDef] { [block, insert, attdef, attedit, wblock, xref, xattach, xbind, blockLibrary, imageAttach] }
 
     static func validName(_ n: String) -> Bool {
         !n.isEmpty && n.count <= 255 && n.rangeOfCharacter(from: CharacterSet(charactersIn: "<>/\\\":;?*|=`")) == nil
@@ -189,10 +189,126 @@ enum BlockCommands {
     }
 
     static var xref: CommandDef {
-        CommandDef("XREF", aliases: ["XR", "ATTACH", "XATTACH"], category: "Blocks", summary: "Attaches an external drawing (the host imports it).", modifies: false) { ed in
-            let path = try await ed.getWord("Enter file name (Enter = choose)")
-            guard let h = ed.host else { throw CommandError.invalid("Attaching files requires the application window.") }
-            h.perform(.importFile(path), editor: ed)
+        CommandDef("XREF", aliases: ["XR", "-XREF", "EXTERNALREFERENCES", "ERHIGHLIGHT"], category: "Blocks", summary: "External references: list, Attach/Overlay a drawing (.archi/.dxf), Reload, Unload, Detach, Bind, Path, Notify (changed files).") { ed in
+            let kws = ["?", "Attach", "Overlay", "Reload", "Unload", "Detach", "Bind", "Path", "Notify"]
+            let w = try await ed.getWord("Enter an option", defaultValue: "?", keywords: kws)
+            guard let k = w else {
+                guard let h = ed.host else { return }
+                h.perform(.importFile(nil), editor: ed); return
+            }
+            let base = ed.fileURL?.deletingLastPathComponent()
+            @MainActor func names(_ msg: String) async throws -> [String] {
+                let pat = try await ed.getWord(msg, defaultValue: "*") ?? "*"
+                return Xrefs.all(ed.doc).map(\.name).filter { n in pat.split(separator: ",").contains { SettingsCommands.glob(String($0).trimmingCharacters(in: .whitespaces), n) } }
+            }
+            do {
+                switch k {
+                case "?":
+                    let list = Xrefs.all(ed.doc)
+                    if list.isEmpty { ed.print("No external references."); return }
+                    let changed = Set(Xrefs.changed(ed.doc, base: base)), missing = Set(Xrefs.missing(ed.doc, base: base))
+                    for x in list {
+                        let n = ed.doc.entities.filter { if case .insert(let i) = $0.geometry { return i.block == x.name }; return false }.count
+                        let status = missing.contains(x.name) ? "Not found" : !x.loaded ? "Unloaded" : changed.contains(x.name) ? "Needs reloading" : "Loaded"
+                        ed.print("  \(x.name)  \(x.overlay ? "Overlay" : "Attach")  \(status)  \(n) reference(s)  \(x.path)")
+                    }
+                case "Attach", "Overlay":
+                    guard let path = try await ed.getWord("Enter file name (.archi or .dxf)") else { return }
+                    try await attachXref(ed, path: path, overlay: k == "Overlay")
+                case "Reload":
+                    let ns = try await names("Enter xref name(s) to reload")
+                    let r = try Xrefs.reload(&ed.doc, names: ns, base: base)
+                    ed.print("\(r.count) xref(s) reloaded.")
+                case "Unload":
+                    for n in try await names("Enter xref name(s) to unload") { try Xrefs.unload(&ed.doc, name: n) }
+                case "Detach":
+                    let ns = try await names("Enter xref name(s) to detach")
+                    for n in ns { try Xrefs.detach(&ed.doc, name: n) }
+                    ed.print("\(ns.count) xref(s) detached.")
+                case "Bind":
+                    let ns = try await names("Enter xref name(s) to bind")
+                    let t = try await ed.getKeyword("Bind type", ["Bind", "Insert"], defaultValue: "Bind") ?? "Bind"
+                    for n in ns { try Xrefs.bind(&ed.doc, name: n, insert: t == "Insert") }
+                    ed.print("\(ns.count) xref(s) bound.")
+                case "Path":
+                    guard let n = try await ed.getWord("Enter xref name"), var info = Xrefs.named(n, ed.doc) else { throw CommandError.invalid("Xref not found.") }
+                    ed.print("Old path: \(info.path)")
+                    guard let p = try await ed.getWord("Enter new path", defaultValue: info.path) else { return }
+                    info.path = p
+                    Xrefs.store(Xrefs.all(ed.doc).filter { $0.name != info.name } + [info], &ed.doc)
+                    try Xrefs.reload(&ed.doc, names: [info.name], base: base)
+                case "Notify":
+                    let c = Xrefs.changed(ed.doc, base: base), m = Xrefs.missing(ed.doc, base: base)
+                    if c.isEmpty && m.isEmpty { ed.print("All external references are up to date.") }
+                    if !c.isEmpty { ed.print("Changed since loaded: \(c.joined(separator: ", ")) — use XREF Reload.") }
+                    if !m.isEmpty { ed.print("Not found: \(m.joined(separator: ", ")).") }
+                default:
+                    // A file name typed directly attaches it.
+                    try await attachXref(ed, path: k, overlay: false)
+                }
+            } catch let e as Xrefs.XrefError { throw CommandError.invalid(e.localizedDescription) }
+        }
+    }
+
+    @MainActor static func attachXref(_ ed: Editor, path: String, overlay: Bool) async throws {
+        do {
+            let n = try Xrefs.attach(&ed.doc, path: path, overlay: overlay, base: ed.fileURL?.deletingLastPathComponent(), host: ed.fileURL)
+            ed.print("Attach Xref \"\(n)\": \(path)")
+            try await continueInsert(ed, n)
+        } catch let e as Xrefs.XrefError { throw CommandError.invalid(e.localizedDescription) }
+    }
+
+    static var xattach: CommandDef {
+        CommandDef("XATTACH", aliases: ["ATTACH", "XA"], category: "Blocks", summary: "Attaches a drawing (.archi/.dxf) as an external reference and places it.") { ed in
+            guard let path = try await ed.getWord("Enter file name (.archi or .dxf)") else {
+                if let h = ed.host { h.perform(.importFile(nil), editor: ed) }
+                return
+            }
+            let t = try await ed.getKeyword("Reference type", ["Attach", "Overlay"], defaultValue: "Attach") ?? "Attach"
+            try await attachXref(ed, path: path, overlay: t == "Overlay")
+        }
+    }
+
+    static var xbind: CommandDef {
+        CommandDef("XBIND", aliases: ["-XBIND"], category: "Blocks", summary: "Binds external references into the drawing as ordinary blocks (Bind: X$0$name, Insert: merged names).") { ed in
+            guard let n = try await ed.getWord("Enter xref name(s) to bind", defaultValue: "*") else { return }
+            let t = try await ed.getKeyword("Bind type", ["Bind", "Insert"], defaultValue: "Bind") ?? "Bind"
+            let ns = Xrefs.all(ed.doc).map(\.name).filter { SettingsCommands.glob(n, $0) }
+            guard !ns.isEmpty else { throw CommandError.invalid("No matching xref.") }
+            do { for x in ns { try Xrefs.bind(&ed.doc, name: x, insert: t == "Insert") } }
+            catch let e as Xrefs.XrefError { throw CommandError.invalid(e.localizedDescription) }
+            ed.print("\(ns.count) xref(s) bound.")
+        }
+    }
+
+    static var blockLibrary: CommandDef {
+        CommandDef("BLOCKLIBRARY", aliases: ["BLIB", "CONTENTBROWSER"], category: "Blocks", summary: "Browses a folder of drawings as a block library: List, Search, Insert (files and the blocks inside them).") { ed in
+            let def = ed.doc.variable("BLOCKLIBRARYPATH") ?? "~/Documents"
+            guard let folder = try await ed.getWord("Enter library folder", defaultValue: def) else { return }
+            let url = URL(fileURLWithPath: (folder as NSString).expandingTildeInPath)
+            var isDir: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue else { throw CommandError.invalid("Folder not found: \(url.path)") }
+            ed.doc.setVariable("BLOCKLIBRARYPATH", folder)
+            var items = BlockLibrary.scan(url)
+            while true {
+                let k = try await ed.getWord("Enter item name to insert or [List/Search]", defaultValue: "List", keywords: ["List", "Search"]) ?? "List"
+                switch k {
+                case "List":
+                    if items.isEmpty { ed.print("No drawings in \(url.path).") }
+                    for i in items.prefix(500) { ed.print("  \(i.folder.isEmpty ? "" : i.folder + "/")\(i.file.lastPathComponent)\(i.block.map { " : " + $0 } ?? "")") }
+                    return
+                case "Search":
+                    let q = try await ed.getString("Enter search words") ?? ""
+                    items = BlockLibrary.search(items, q)
+                    for i in items.prefix(200) { ed.print("  \(i.name)  (\(i.file.lastPathComponent))") }
+                    if items.isEmpty { ed.print("Nothing found."); return }
+                default:
+                    guard let item = items.first(where: { $0.name.caseInsensitiveCompare(k) == .orderedSame }) ?? BlockLibrary.search(items, k).first else { throw CommandError.invalid("No library item \(k).") }
+                    do { let n = try BlockLibrary.load(item, into: &ed.doc); try await continueInsert(ed, n) }
+                    catch let e as Xrefs.XrefError { throw CommandError.invalid(e.localizedDescription) }
+                    return
+                }
+            }
         }
     }
 

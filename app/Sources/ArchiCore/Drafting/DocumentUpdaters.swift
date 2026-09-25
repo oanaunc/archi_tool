@@ -12,6 +12,10 @@ public enum DocumentUpdaters {
         if Annotative.updateAll(&doc) { changed = true }
         if TableFormulas.updateAll(&doc) { changed = true }
         if AssociativeMarks.updateAll(&doc) { changed = true }
+        if AssociativeHatch.updateAll(&doc) { changed = true }
+        if DimAssociation.updateAll(&doc) { changed = true }
+        if DimOverrides.updateAll(&doc) { changed = true }
+        if DimBreaks.updateAll(&doc) { changed = true }
         return changed
     }
 }

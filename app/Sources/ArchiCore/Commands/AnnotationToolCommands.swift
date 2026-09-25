@@ -101,6 +101,51 @@ enum AnnotationToolCommands {
             for (id, d) in zip(ids, spaced) { if let i = ed.doc.entityIndex(id) { ed.doc.entities[i].geometry = .dimension(d) } }
             ed.selection = []
         },
+        CommandDef("DIMBREAK", category: "Annotate", summary: "Breaks dimension and extension lines where objects cross them (Auto, chosen objects or Manual gaps; associative).") { ed in
+            var ids: [EntityID] = []
+            switch try await ed.pickObject("Select dimension to add/remove break or [Multiple]", keywords: ["Multiple"], filter: { isDim(ed.doc.entity($0)?.geometry) }) {
+            case .pick(let p): ids = [p.id]
+            case .keyword: ids = try await ed.getEntitySelection("Select dimensions").filter { isDim(ed.doc.entity($0)?.geometry) }
+            case .none: return
+            }
+            guard !ids.isEmpty else { return }
+            var breakers: [EntityID] = []
+            var mode = "*"
+            loop: while true {
+                let kws = ids.count == 1 ? ["Auto", "Manual", "Remove", "Size"] : ["Auto", "Remove", "Size"]
+                switch try await ed.pickObject(breakers.isEmpty ? "Select object to break dimension or [\(kws.joined(separator: "/"))] <Auto>" : "Select object to break dimension",
+                                               keywords: kws, filter: { id in !ids.contains(id) && ed.doc.entity(id).map { DimBreaks.breaks($0.geometry) } == true }) {
+                case .pick(let p): if !breakers.contains(p.id) { breakers.append(p.id) }
+                case .keyword("Remove"):
+                    for id in ids { if let i = ed.doc.entityIndex(id) { DimBreaks.remove(&ed.doc.entities[i]) } }
+                    ed.print("\(ids.count) dimension(s) without breaks."); ed.selection = []; return
+                case .keyword("Size"):
+                    let cur = ed.doc.entity(ids[0]).map { DimBreaks.size($0, doc: ed.doc) } ?? 1
+                    let v = try await ed.getPositive("Specify break size", defaultValue: cur)
+                    for id in ids { if let i = ed.doc.entityIndex(id) { ed.doc.entities[i].props[DimBreaks.sizeProp] = fmt(v, 8) } }
+                case .keyword("Manual"):
+                    guard let i = ed.doc.entityIndex(ids[0]), case .dimension(let d) = ed.doc.entities[i].geometry else { return }
+                    let a = try await ed.requirePoint("Specify first break point")
+                    let b = try await ed.requirePoint("Specify second break point", base: a)
+                    let st = ed.doc.dimStyle(d.style)
+                    ed.doc.entities[i].geometry = .dimension(DimBreaks.addManual(d, from: a, to: b, style: st))
+                    ed.doc.entities[i].props[DimBreaks.prop] = "manual"
+                    ed.print("1 break added."); ed.selection = []; return
+                case .keyword: mode = "*"; breakers = []; break loop
+                case .none: break loop
+                }
+            }
+            if !breakers.isEmpty { mode = breakers.map(String.init).joined(separator: ",") }
+            var count = 0
+            for id in ids {
+                guard let i = ed.doc.entityIndex(id) else { continue }
+                ed.doc.entities[i].props[DimBreaks.prop] = mode
+                if let g = DimBreaks.recompute(ed.doc.entities[i], doc: ed.doc) { ed.doc.entities[i].geometry = g }
+                if case .dimension(let d) = ed.doc.entities[i].geometry { count += DimensionRenderer.breaks(d).count }
+            }
+            ed.selection = []
+            ed.print("\(count) break(s) in \(ids.count) dimension(s).")
+        },
         CommandDef("DIMEDIT", aliases: ["DED", "DIMED"], category: "Annotate", summary: "Edits dimension text: Home (measured value), New text (<> = measurement).") { ed in
             let k = try await ed.getKeyword("Enter type of dimension editing", ["Home", "New"], defaultValue: "Home") ?? "Home"
             var newText: String? = nil

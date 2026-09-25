@@ -237,6 +237,14 @@ enum ConstraintCommands {
         case "Radius", "Diameter":
             guard let c = try await ed.pickConstraintCircle("Select arc or circle") else { return }
             refs = [c]; kind = mode == "Radius" ? .radius : .diameter; prefix = mode == "Radius" ? "rad" : "dia"
+        case "RAtio", "Ratio", "DIfference", "Difference":
+            guard let s1 = try await ed.pickConstraintSegment("Select first line (driven length)").0,
+                  let s2 = try await ed.pickConstraintSegment("Select second line (reference length)").0, s1 != s2 else { return }
+            kind = mode.uppercased().hasPrefix("R") ? .ratio : .lengthDifference
+            refs = [s1, s2]; hold = [s2.entity]; prefix = kind == .ratio ? "ratio" : "diff"
+            if kind == .lengthDifference, let m = Constraints.measure(GeoConstraint(id: 0, kind: kind, refs: refs), doc: ed.doc), m < 0 {
+                refs = [s2, s1]; hold = [s1.entity]
+            }
         default: return
         }
         let probe = GeoConstraint(id: 0, kind: kind, refs: refs)
@@ -393,7 +401,7 @@ enum ConstraintCommands {
                 try await geometric(kind, ed)
             },
             CommandDef("DIMCONSTRAINT", aliases: ["DCON"], category: "Parametric", summary: "Applies a dimensional (driving) constraint: LInear/Horizontal/Vertical/Aligned distance, ANgular, Radius, Diameter, or Convert dimensions; values may be expressions of parameters.") { ed in
-                guard let k = try await ed.getKeyword("Enter constraint option", ["LInear", "Horizontal", "Vertical", "Aligned", "ANgular", "Radius", "Diameter", "Convert"], defaultValue: "Aligned") else { return }
+                guard let k = try await ed.getKeyword("Enter constraint option", ["LInear", "Horizontal", "Vertical", "Aligned", "ANgular", "Radius", "Diameter", "RAtio", "DIfference", "Convert"], defaultValue: "Aligned") else { return }
                 if k == "Convert" { try await convert(ed); return }
                 try await dimensional(k == "LInear" ? "Linear" : k, ed)
             },
@@ -413,7 +421,14 @@ enum ConstraintCommands {
                 set.save(&ed.doc)
                 ed.print("\(before - set.constraints.count) constraint(s) removed.")
             },
-            CommandDef("CONSTRAINTLIST", aliases: ["LISTCONSTRAINTS", "CONSTRAINTBAR", "CBAR"], category: "Parametric", summary: "Lists the constraints (of the selected objects, or all) with their values and the remaining degrees of freedom.", modifies: false) { ed in
+            CommandDef("CONSTRAINTBAR", aliases: ["CBAR", "CONSTRAINTGLYPHS", "SHOWCONSTRAINTS"], category: "Parametric",
+                       summary: "Shows or hides constraint glyphs next to constrained objects in the plan [Show/Hide/Toggle] (CONSTRAINTBAR variable).") { ed in
+                let k = try await ed.getKeyword("Constraint bars [Show/Hide/Toggle]", ["Show", "Hide", "Toggle"], defaultValue: "Toggle") ?? "Toggle"
+                let on = k == "Show" ? true : (k == "Hide" ? false : !ConstraintGlyphs.isOn(ed.doc))
+                ed.doc.setVariable(ConstraintGlyphs.variable, on ? "1" : "0")
+                ed.print("Constraint bars \(on ? "shown" : "hidden").")
+            },
+            CommandDef("CONSTRAINTLIST", aliases: ["LISTCONSTRAINTS"], category: "Parametric", summary: "Lists the constraints (of the selected objects, or all) with their values and the remaining degrees of freedom.", modifies: false) { ed in
                 let set = ConstraintSet.load(ed.doc)
                 let sel = ed.selection
                 let list = sel.isEmpty ? set.constraints : set.constraints.filter { $0.refs.contains { sel.contains($0.entity) } }
@@ -484,7 +499,8 @@ enum ConstraintCommands {
             cmds.append(CommandDef(n, aliases: al, category: "Parametric", summary: "Applies the \(k.rawValue) geometric constraint.") { ed in try await geometric(k, ed) })
         }
         let dims: [(String, String)] = [("DCLINEAR", "Linear"), ("DCHORIZONTAL", "Horizontal"), ("DCVERTICAL", "Vertical"), ("DCALIGNED", "Aligned"),
-                                        ("DCANGULAR", "ANgular"), ("DCRADIUS", "Radius"), ("DCDIAMETER", "Diameter")]
+                                        ("DCANGULAR", "ANgular"), ("DCRADIUS", "Radius"), ("DCDIAMETER", "Diameter"),
+                                        ("DCRATIO", "RAtio"), ("DCDIFFERENCE", "DIfference")]
         for (n, m) in dims {
             cmds.append(CommandDef(n, category: "Parametric", summary: "Applies the \(m.lowercased()) dimensional constraint.") { ed in try await dimensional(m, ed) })
         }

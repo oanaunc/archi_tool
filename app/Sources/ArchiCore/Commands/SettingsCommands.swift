@@ -25,7 +25,7 @@ public enum SystemVariables {
     public static let stored = ["CANNOSCALE", "PICKSTYLE", "SELECTSIMILARMODE", "INSBASE", "CENTEREXE", "CHAMFERB", "DIMSCALE", "DIMDLI", "LUPREC", "PDMODE", "PDSIZE", "MIRRTEXT", "DELOBJ", "HPNAME", "HPSCALE", "HPANG", "PLINEWID", "TRIMMODE", "DIMLAYER", "TEXTLAYER", "CONSTRAINTINFER", "AUTOCONSTRAINDIST", "AUTOCONSTRAINANGLE"]
 
     static func flag(_ b: Bool) -> String { b ? "1" : "0" }
-    static func parseFlag(_ s: String) -> Bool? {
+    public static func parseFlag(_ s: String) -> Bool? {
         switch s.lowercased() { case "1", "on", "yes", "true": return true; case "0", "off", "no", "false": return false; default: return nil }
     }
 
@@ -57,7 +57,13 @@ public enum SystemVariables {
         case "CELWEIGHT": return ed.doc.variable("CELWEIGHT") ?? "ByLayer"
         case "LTSCALE": return ed.doc.variable("LTSCALE") ?? "1"
         case "INSUNITS": return ed.doc.units.rawValue
-        default: return ed.doc.variable(name)
+        case "SNAPSTYL": return s.isometric ? "1" : "0"
+        case "SNAPISOPAIR": return "\(s.isoPlane)"
+        default:
+            let n = name.uppercased()
+            if let info = SysVarCatalog.info(n), info.readOnly, let c = SysVarCatalog.computed(n, ed) { return c }
+            if SysVarCatalog.dimStyleVars.contains(n), let v = SysVarCatalog.dimGet(n, ed.doc.dimStyle) { return v }
+            return ed.doc.variable(name) ?? SysVarCatalog.info(n)?.defaultValue
         }
     }
 
@@ -128,13 +134,27 @@ public enum SystemVariables {
             ed.doc.setVariable("INSBASE", "\(fmt(p.x, 8)),\(fmt(p.y, 8))"); return nil
         case "CENTEREXE":
             return pos({ ed.doc.setVariable("CENTEREXE", fmt($0, 8)) }, allowZero: true)
+        case "SNAPSTYL":
+            guard let v = num, v == 0 || v == 1 else { return "Requires 0 (rectangular) or 1 (isometric)." }
+            ed.settings.isometric = v == 1; return nil
+        case "SNAPISOPAIR":
+            guard let v = num, [0, 1, 2].contains(Int(v)), v == v.rounded() else { return "Requires 0 (left), 1 (top) or 2 (right)." }
+            ed.settings.isoPlane = Int(v); return nil
         case "UCSORG", "UCSANG", "UCSPREV":
             return "\(n) is read-only; use the UCS command."
         case "INSUNITS":
             guard let u = Units.allCases.first(where: { $0.rawValue.hasPrefix(value.lowercased()) || $0.abbreviation == value.lowercased() }) else { return "Unknown units." }
             ed.doc.units = u; return nil
         default:
-            ed.doc.setVariable(n, value); return nil
+            guard let info = SysVarCatalog.info(n) else { ed.doc.setVariable(n, value); return nil }
+            if info.readOnly { return "\(n) is read-only." }
+            let (norm, err) = SysVarCatalog.validate(info, value)
+            guard let v = norm else { return err }
+            if SysVarCatalog.dimStyleVars.contains(n), let i = ed.doc.dimStyles.firstIndex(where: { $0.name == ed.doc.dimStyle.name }) {
+                guard SysVarCatalog.dimSet(n, v, &ed.doc.dimStyles[i]) else { return "Invalid value for \(n)." }
+                if n != "DIMSCALE" { return nil }
+            }
+            ed.doc.setVariable(n, v); return nil
         }
     }
 }
@@ -430,7 +450,12 @@ enum SettingsCommands {
         CommandDef("SETVAR", aliases: ["SET"], category: "Settings", summary: "Lists or changes system variables.") { ed in
             guard let n = try await ed.getWord("Enter variable name or [?]") else { return }
             if n == "?" {
-                for k in (SystemVariables.known + Array(ed.doc.variables.keys)).sorted() where !k.hasPrefix("LAYISO") { ed.print("\(k) = \(SystemVariables.get(k, ed) ?? "")") }
+                let pat = try await ed.getWord("Enter variable(s) to list", defaultValue: "*") ?? "*"
+                let names = Set(SystemVariables.known + SysVarCatalog.all.map(\.name) + Array(ed.doc.variables.keys)).filter { !$0.hasPrefix("LAYISO") && SettingsCommands.glob(pat, $0) }
+                for k in names.sorted() {
+                    let v = SystemVariables.get(k, ed) ?? ""
+                    ed.print("\(k) = \(v.count > 60 ? String(v.prefix(57)) + "..." : v)\(SysVarCatalog.info(k)?.readOnly == true ? "  (read only)" : "")")
+                }
                 return
             }
             guard let v = try await ed.getWord("Enter new value for \(n.uppercased())", defaultValue: SystemVariables.get(n, ed)) else { return }

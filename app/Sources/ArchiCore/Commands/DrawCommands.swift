@@ -672,6 +672,10 @@ enum DrawCommands {
                 case .point(let p):
                     guard let region = RegionFinder.region(at: p, curves: hatchCurves(ed), doc: ed.doc) else { ed.print("Valid hatch boundary not found."); continue }
                     make([region.outer] + region.holes)
+                    if ed.doc.variable("HPASSOC") != "0", let h = created.last {
+                        let bnd = AssociativeHatch.boundaryObjects(of: [region.outer] + region.holes, candidates: ed.doc.entities.filter { $0.id != h && ed.doc.isVisible(layer: $0.layer) }, doc: ed.doc)
+                        AssociativeHatch.attach(&ed.doc, hatch: h, boundary: bnd, seed: p)
+                    }
                     ed.print("Hatch created: area = \(CommandHelpers.areaText(region.area, units: ed.doc.units)).")
                 case .keyword("Select"):
                     let ids = try await ed.getEntitySelection("Select objects")
@@ -683,6 +687,14 @@ enum DrawCommands {
                     guard !loops.isEmpty else { ed.print("No closed boundary in the selection."); continue }
                     loops.sort { abs(GeometryOps.signedArea(CommandHelpers.loopPoints($0))) > abs(GeometryOps.signedArea(CommandHelpers.loopPoints($1))) }
                     make(loops); ed.selection = []
+                    if ed.doc.variable("HPASSOC") != "0", let h = created.last {
+                        let bnd = ids.filter { id in
+                            guard let e = ed.doc.entity(id) else { return false }
+                            if case .hatch = e.geometry { return false }
+                            return true
+                        }
+                        AssociativeHatch.attach(&ed.doc, hatch: h, boundary: bnd, seed: nil)
+                    }
                 case .keyword("Pattern"):
                     let name = try await ed.getWord("Enter a pattern name or [?]", defaultValue: pattern) ?? pattern
                     if name == "?" { ed.print("Patterns: " + HatchPatterns.names.joined(separator: ", ")); continue }

@@ -28,6 +28,9 @@ public enum BuiltinCommands {
         out += DraftConstructionCommands.all
         out += ModifyToolCommands.all
         out += WorkflowCommands.all
+        out += LayerToolCommands.all
+        out += DraftAnnotationCommands.all
+        out += DraftAidCommands.all
         return out
     }
 

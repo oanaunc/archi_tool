@@ -30,6 +30,7 @@ public enum DimensionRenderer {
 
     /// Angular sector (start angle, ccw sweep) chosen by the arc location point.
     static func angularSector(_ d: DimensionGeom) -> (start: Double, sweep: Double)? {
+        let d = withoutBreaks(d)
         guard d.points.count >= 3 else { return nil }
         let c = d.points[0]
         let a2 = (d.points[1] - c).angle, a3 = (d.points[2] - c).angle
@@ -45,6 +46,7 @@ public enum DimensionRenderer {
 
     /// Raw measured value in drawing units (radians for angular).
     public static func measurement(_ d: DimensionGeom) -> Double {
+        let d = withoutBreaks(d)
         let p = d.points
         guard p.count >= 2 else { return 0 }
         switch d.kind {
@@ -120,7 +122,15 @@ public enum DimensionRenderer {
 
     static func isTick(_ s: DimStyle) -> Bool { s.arrow == .tick || s.arrow == .architecturalTick }
 
+    /// Graphics of a dimension; dimension and extension lines are interrupted at its DIMBREAK gaps.
     public static func primitives(_ d: DimensionGeom, style: DimStyle) -> Primitives {
+        let gaps = breaks(d)
+        var prim = basePrimitives(withoutBreaks(d), style: style)
+        if !gaps.isEmpty { prim.lines = clip(prim.lines, gaps: gaps) }
+        return prim
+    }
+
+    static func basePrimitives(_ d: DimensionGeom, style: DimStyle) -> Primitives {
         var prim = Primitives()
         let p = d.points
         guard p.count >= 2 else { return prim }
@@ -261,5 +271,119 @@ public enum DimensionRenderer {
                                  halign: pointsForward ? .left : .right, valign: .middle)
         }
         return prim
+    }
+
+    // MARK: - Dimension breaks (DIMBREAK)
+
+    /// A gap cut out of the dimension and extension lines: everything inside the circle is not drawn.
+    public struct DimBreak: Hashable {
+        public var center: Vec2; public var radius: Double
+        public init(center: Vec2, radius: Double) { self.center = center; self.radius = radius }
+    }
+
+    /// Number of definition points of a dimension kind. Points after them encode breaks as pairs
+    /// (gap centre, a point on the gap circle), so breaks move, rotate and scale with the dimension.
+    public static func definitionCount(_ k: DimKind) -> Int {
+        switch k { case .angular, .arcLength: return 4; default: return 3 }
+    }
+    /// The definition points only (breaks stripped).
+    public static func definitionPoints(_ d: DimensionGeom) -> [Vec2] { Array(d.points.prefix(definitionCount(d.kind))) }
+    public static func withoutBreaks(_ d: DimensionGeom) -> DimensionGeom {
+        guard d.points.count > definitionCount(d.kind) else { return d }
+        var x = d; x.points = definitionPoints(d); return x
+    }
+    /// Break gaps stored on a dimension.
+    public static func breaks(_ d: DimensionGeom) -> [DimBreak] {
+        let n = definitionCount(d.kind)
+        guard d.points.count >= n + 2 else { return [] }
+        var out: [DimBreak] = []
+        var i = n
+        while i + 1 < d.points.count {
+            let c = d.points[i], r = c.distance(to: d.points[i + 1])
+            if r > 1e-12 { out.append(DimBreak(center: c, radius: r)) }
+            i += 2
+        }
+        return out
+    }
+    /// Completes missing optional definition points with the values the renderer uses by default, so appending breaks
+    /// never changes how the dimension looks.
+    public static func padded(_ d: DimensionGeom, style: DimStyle) -> DimensionGeom {
+        var x = withoutBreaks(d)
+        let p = x.points
+        guard p.count >= 2 else { return x }
+        let n = definitionCount(d.kind)
+        guard p.count < n else { return x }
+        let sc = style.scale > 0 ? style.scale : 1
+        switch d.kind {
+        case .linear, .aligned, .radius, .diameter: x.points.append(p[1])
+        case .ordinate: x.points.append(.zero)
+        case .angular:
+            guard p.count == 3, let s = angularSector(x) else { return x }
+            var R = min(p[0].distance(to: p[1]), p[0].distance(to: p[2])) * 0.6
+            if R < 1e-9 { R = style.arrowSize * sc * 4 }
+            x.points.append(p[0] + Vec2.polar(R, s.start + s.sweep / 2))
+        case .arcLength:
+            guard p.count == 3 else { return x }
+            let start = (p[1] - p[0]).angle, sweep = normAngle((p[2] - p[0]).angle - start)
+            var R = p[0].distance(to: p[1]) + style.arrowSize * sc * 3
+            if R < 1e-9 { R = style.arrowSize * sc * 4 }
+            x.points.append(p[0] + Vec2.polar(R, start + sweep / 2))
+        }
+        while x.points.count < n { x.points.append(x.points[x.points.count - 1]) }
+        return x
+    }
+    /// The dimension with exactly these break gaps (replacing any previous ones).
+    public static func withBreaks(_ d: DimensionGeom, _ gaps: [DimBreak], style: DimStyle) -> DimensionGeom {
+        guard !gaps.isEmpty else { return withoutBreaks(d) }
+        var x = padded(d, style: style)
+        guard x.points.count == definitionCount(d.kind) else { return withoutBreaks(d) }
+        for g in gaps { x.points.append(g.center); x.points.append(g.center + Vec2(g.radius, 0)) }
+        return x
+    }
+
+    /// Removes the parts of polylines inside any gap circle.
+    public static func clip(_ lines: [[Vec2]], gaps: [DimBreak]) -> [[Vec2]] {
+        guard !gaps.isEmpty else { return lines }
+        var out: [[Vec2]] = []
+        for pl in lines {
+            guard pl.count >= 2 else { out.append(pl); continue }
+            var cur: [Vec2] = []
+            func flush() { if cur.count >= 2 { out.append(cur) }; cur = [] }
+            for k in 0..<(pl.count - 1) {
+                let a = pl[k], b = pl[k + 1], v = b - a
+                let vv = v.dot(v)
+                // Parameter intervals inside the gaps.
+                var cut: [(Double, Double)] = []
+                if vv > 1e-24 {
+                    for g in gaps {
+                        let w = a - g.center
+                        let B = 2 * v.dot(w), C = w.dot(w) - g.radius * g.radius
+                        let disc = B * B - 4 * vv * C
+                        guard disc > 0 else { continue }
+                        let sq = disc.squareRoot()
+                        let t0 = max(0, (-B - sq) / (2 * vv)), t1 = min(1, (-B + sq) / (2 * vv))
+                        if t1 > t0 { cut.append((t0, t1)) }
+                    }
+                }
+                cut.sort { $0.0 < $1.0 }
+                var merged: [(Double, Double)] = []
+                for c in cut { if let l = merged.last, c.0 <= l.1 { merged[merged.count - 1].1 = max(l.1, c.1) } else { merged.append(c) } }
+                var t = 0.0
+                for (c0, c1) in merged {
+                    if c0 > t + 1e-12 {
+                        if cur.isEmpty { cur.append(a + v * t) }
+                        cur.append(a + v * c0)
+                    }
+                    flush()
+                    t = c1
+                }
+                if t < 1 - 1e-12 {
+                    if cur.isEmpty { cur.append(a + v * t) }
+                    cur.append(b)
+                } else { flush() }
+            }
+            flush()
+        }
+        return out
     }
 }
