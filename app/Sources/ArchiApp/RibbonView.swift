@@ -87,7 +87,8 @@ enum CommandCatalog {
 }
 
 enum RibbonTab: String, CaseIterable, Identifiable {
-    case home = "Home", annotate = "Annotate", architecture = "Architecture", view = "View", output = "Output", manage = "Manage", script = "Script"
+    case home = "Home", insert = "Insert", annotate = "Annotate", architecture = "Architecture", modeling = "Modeling", analyze = "Analyze"
+    case view = "View", output = "Output", manage = "Manage", script = "Script"
     var id: String { rawValue }
 }
 
@@ -284,8 +285,11 @@ struct RibbonView: View {
     @ViewBuilder private var content: some View {
         switch tab {
         case .home: homeTab
+        case .insert: insertTab
         case .annotate: annotateTab
         case .architecture: architectureTab
+        case .modeling: modelingTab
+        case .analyze: analyzeTab
         case .view: viewTab
         case .output: outputTab
         case .manage: manageTab
@@ -324,7 +328,91 @@ struct RibbonView: View {
                     cmd(CmdItem(title: "Similar", symbol: "square.on.square.intersection.dashed", names: ["SELECTSIMILAR"]), .small)
                     action("Properties", "slider.horizontal.3", .small, help: "Show the Properties panel") { model.showPanels = true; model.panelTab = .properties }
                 }
+                commandMenu("More", "ellipsis.circle", CommandCatalog.selection, help: "Selection tools: QSELECT, invert, by layer/type, chain, filter, named sets")
             }
+            RibbonGroup(title: "Groups") { smallColumns(CommandCatalog.groups) }
+        }
+    }
+
+    /// Large button opening a menu of commands.
+    private func commandMenu(_ title: String, _ symbol: String, _ items: [CmdItem], help: String) -> some View {
+        Menu {
+            ForEach(items) { item in
+                let r = model.command(item.names)
+                Button { if let r { model.runCommand(item.args.isEmpty ? r : r + " " + item.args) } } label: { Label(item.title, systemImage: item.symbol) }
+                    .disabled(r == nil)
+            }
+        } label: {
+            VStack(spacing: 3) {
+                Image(systemName: symbol).font(.system(size: 19)).frame(height: 24)
+                Text(title).font(.system(size: 10))
+            }
+            .frame(width: 50, height: 58, alignment: .top).padding(.top, 4)
+            .foregroundStyle(Theme.text)
+        }
+        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+        .help(help)
+    }
+
+    private var insertTab: some View {
+        Group {
+            RibbonGroup(title: "Import") {
+                cmd(CommandCatalog.importItems[0])
+                cmd(CommandCatalog.importItems[1])
+                smallColumns(Array(CommandCatalog.importItems.dropFirst(2)))
+            }
+            RibbonGroup(title: "Block & Reference") {
+                cmd(CommandCatalog.referenceItems[0])
+                smallColumns(Array(CommandCatalog.referenceItems.dropFirst()))
+            }
+            RibbonGroup(title: "Content") {
+                action("Tool Palettes", "square.grid.3x3.square", active: model.showPanels && model.panelTab == .tools, help: "Blocks, components and tools; drag onto the drawing (TOOLPALETTES)") { model.showPanels = true; model.panelTab = .tools }
+                action("Materials", "paintpalette", help: "Material library browser (MATBROWSER)") { MaterialLibraryWindow.show(model: model) }
+                componentMenu
+            }
+            RibbonGroup(title: "Export") { smallColumns(CommandCatalog.exportItems) }
+        }
+    }
+
+    private var modelingTab: some View {
+        Group {
+            RibbonGroup(title: "Solids") {
+                cmd(CommandCatalog.solids[0])
+                cmd(CommandCatalog.solids[4])
+                smallColumns([CommandCatalog.solids[1], CommandCatalog.solids[2], CommandCatalog.solids[3], CommandCatalog.solids[5]], rows: 2)
+            }
+            RibbonGroup(title: "Solid Editing") {
+                cmd(CommandCatalog.modeling[0])
+                smallColumns(Array(CommandCatalog.modeling.dropFirst()))
+            }
+            RibbonGroup(title: "Booleans") {
+                ForEach(CommandCatalog.booleans.prefix(3)) { cmd($0) }
+                smallColumns(Array(CommandCatalog.booleans.dropFirst(3)), rows: 2)
+            }
+            RibbonGroup(title: "3D Operations") { smallColumns(CommandCatalog.transform3D) }
+            RibbonGroup(title: "Site") {
+                cmd(CommandCatalog.site[0])
+                smallColumns(Array(CommandCatalog.site.dropFirst()), rows: 2)
+            }
+            RibbonGroup(title: "Visual Programming") {
+                action("Node Editor", "point.3.connected.trianglepath.dotted", help: "Visual node editor with live preview (NODEEDITOR)") { NodeEditorWindow.show(model: model) }
+            }
+        }
+    }
+
+    private var analyzeTab: some View {
+        Group {
+            RibbonGroup(title: "Inquiry") {
+                cmd(CommandCatalog.inquiry[0])
+                cmd(CommandCatalog.inquiry[1])
+                smallColumns(Array(CommandCatalog.inquiry.dropFirst(2)), rows: 2)
+            }
+            RibbonGroup(title: "Quantities") {
+                cmd(CommandCatalog.analysis[0])
+                cmd(CommandCatalog.analysis[1])
+                smallColumns(Array(CommandCatalog.analysis.dropFirst(2)), rows: 2)
+            }
+            RibbonGroup(title: "Coordination") { ForEach(CommandCatalog.coordination) { cmd($0) } }
         }
     }
 
@@ -364,9 +452,15 @@ struct RibbonView: View {
                 ForEach(CommandCatalog.build.prefix(3)) { cmd($0) }
                 smallColumns(Array(CommandCatalog.build.dropFirst(3)))
             }
+            RibbonGroup(title: "Build+") { smallColumns(Array(CommandCatalog.buildMore.prefix(6))) }
             RibbonGroup(title: "Room & Area") {
                 cmd(CommandCatalog.spaces[0])
                 cmd(CommandCatalog.spaces[1])
+                smallColumns(CommandCatalog.roomsMore)
+            }
+            RibbonGroup(title: "Documentation") {
+                smallColumns(Array(CommandCatalog.documentation.prefix(9)))
+                commandMenu("More", "ellipsis.circle", Array(CommandCatalog.documentation.dropFirst(9)) + Array(CommandCatalog.buildMore.dropFirst(6)), help: "More BIM tools")
             }
             RibbonGroup(title: "Model") {
                 componentMenu
@@ -515,6 +609,21 @@ struct RibbonView: View {
                 action("Title Block", "list.bullet.rectangle.portrait", enabled: !model.doc.layouts.isEmpty, help: "Edit the title block and project info (TITLEBLOCK)") {
                     model.mode = .sheet
                     model.sheet = .titleBlock(min(max(model.activeLayout, 0), max(model.doc.layouts.count - 1, 0)))
+                }
+                action("Sheet Set", "rectangle.stack", active: model.showPanels && model.panelTab == .sheets, help: "Sheet set manager: numbering, order, index, revisions (SHEETSET)") {
+                    model.showPanels = true; model.panelTab = .sheets
+                }
+                VStack(alignment: .leading, spacing: 1) {
+                    action("View Titles", "textformat.size", .small, enabled: !model.doc.layouts.isEmpty, help: "Add or refresh view titles under the viewports of the active sheet (VIEWTITLE)") {
+                        let li = min(max(model.activeLayout, 0), max(model.doc.layouts.count - 1, 0))
+                        if model.doc.layouts.indices.contains(li) { model.runCommand("VIEWTITLE \(model.doc.layouts[li].name)") }
+                    }
+                    action("Revision", "clock.badge.checkmark", .small, enabled: !model.doc.layouts.isEmpty, help: "Add a revision to the active sheet (SHEETREVISION)") {
+                        model.showPanels = true; model.panelTab = .sheets
+                    }
+                    action("Sheet Index", "list.number", .small, enabled: !model.doc.layouts.isEmpty, help: "Place or refresh the sheet list table on the active sheet (SHEETINDEX)") {
+                        model.runCommand("SHEETINDEX")
+                    }
                 }
             }
             RibbonGroup(title: "Export") {

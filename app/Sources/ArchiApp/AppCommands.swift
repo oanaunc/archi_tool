@@ -15,6 +15,7 @@ enum AppCommands {
         registered = true
         r.ensureBuiltins()
         r.register(all)
+        r.register(AppSelfTests.command)
     }
 
     private static func ui(_ ed: Editor) throws -> AppModel {
@@ -241,6 +242,51 @@ enum AppCommands {
             },
             CommandDef("SCRIPTLIBRARY", aliases: ["SCRIPTS"], category: "Scripting", summary: "Opens the script library folder (startup.js runs in every new window).", modifies: false) { _ in
                 ScriptLibrary.revealFolder()
+            },
+            CommandDef("SHEETSET", aliases: ["SSM", "SHEETSETMANAGER", "SHEETS"], category: "Output", summary: "Sheet set manager: numbering, order, duplicate, revisions, sheet index.", modifies: false) { ed in
+                let m = try ui(ed); m.showPanels = true; m.panelTab = .sheets
+            },
+            CommandDef("SHEETINDEX", aliases: ["SHEETLIST", "DRAWINGLIST"], category: "Output", summary: "Places or refreshes the sheet list table (number, title, paper, revision) on the active sheet.") { ed in
+                guard !ed.doc.layouts.isEmpty else { throw CommandError.invalid("There are no sheets.") }
+                let i = model(ed).map { min(max($0.activeLayout, 0), ed.doc.layouts.count - 1) } ?? 0
+                SheetSet.placeIndex(&ed.doc, on: i)
+                ed.print("Sheet index with \(ed.doc.layouts.count) sheet(s) on \(ed.doc.layouts[i].name).")
+            },
+            CommandDef("SHEETREVISION", aliases: ["REVISION", "REVTABLE", "ADDREVISION"], category: "Output", summary: "Adds a revision (next code, date, description, by) to the active sheet's revision table.") { ed in
+                guard !ed.doc.layouts.isEmpty else { throw CommandError.invalid("There are no sheets.") }
+                let i = model(ed).map { min(max($0.activeLayout, 0), ed.doc.layouts.count - 1) } ?? 0
+                let next = SheetSet.nextCode(after: SheetSet.revisions(ed.doc.layouts[i]).last?.code)
+                guard let d = try await ed.getString("Revision \(next) description"), !d.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+                let by = try await ed.getString("Revised by <\(ed.doc.info.author)>", defaultValue: ed.doc.info.author) ?? ed.doc.info.author
+                SheetSet.addRevision(&ed.doc, i, description: d.trimmingCharacters(in: .whitespaces), by: by)
+                SheetSet.refreshIndexes(&ed.doc)
+                ed.print("Revision \(next) added to \(ed.doc.layouts[i].name).")
+            },
+            CommandDef("SHEETRENUMBER", aliases: ["RENUMBERSHEETS"], category: "Output", summary: "Numbers all sheets in order with a prefix and start number (e.g. A- 101).") { ed in
+                guard !ed.doc.layouts.isEmpty else { throw CommandError.invalid("There are no sheets.") }
+                let prefix = try await ed.getString("Enter number prefix <A->", defaultValue: "A-") ?? "A-"
+                guard let start = try await ed.getInteger("Enter first number <101>", defaultValue: 101) else { return }
+                SheetSet.renumber(&ed.doc, prefix: prefix, start: start)
+                SheetSet.refreshIndexes(&ed.doc)
+                ed.print("\(ed.doc.layouts.count) sheet(s) numbered \(SheetSet.number(ed.doc, 0))…")
+            },
+            CommandDef("SHEETVIEWTITLES", aliases: ["VPTITLES", "EDITABLEVIEWTITLES"], category: "Output", summary: "Editable view titles (number bubble, title, scale) under every viewport of the active sheet; keeps edited titles.") { ed in
+                guard !ed.doc.layouts.isEmpty else { throw CommandError.invalid("There are no sheets.") }
+                let i = model(ed).map { min(max($0.activeLayout, 0), ed.doc.layouts.count - 1) } ?? 0
+                SheetSet.refreshViewTitles(&ed.doc, i)
+                ed.print("\(ed.doc.layouts[i].viewports.count) view title(s) on \(ed.doc.layouts[i].name).")
+            },
+            CommandDef("MATBROWSER", aliases: ["MATLIB", "MATERIALLIBRARY"], category: "View", summary: "Material library browser with rendered thumbnails: add to the drawing or assign to the selection.", modifies: false) { ed in
+                MaterialLibraryWindow.show(model: try ui(ed))
+            },
+            CommandDef("NODEEDITOR", aliases: ["NODES", "VISUALSCRIPT", "GRAPH"], category: "Scripting", summary: "Visual node editor (number, point, line, circle, extrude, array…) with live preview; bakes geometry into the drawing.", modifies: false) { ed in
+                NodeEditorWindow.show(model: try ui(ed))
+            },
+            CommandDef("FLOATPANEL", aliases: ["UNDOCKPANEL", "PANELFLOAT"], category: "View", summary: "Floats a panel (Properties, Layers, Levels, Browser, Materials, Tools, Sheets, History) in its own window.", modifies: false) { ed in
+                let m = try ui(ed)
+                let names = PanelTab.allCases.map(\.rawValue)
+                guard let k = try await ed.getKeyword("Panel [\(names.joined(separator: "/"))]", names, defaultValue: m.panelTab.rawValue), let t = PanelTab(rawValue: k) else { return }
+                FloatingPanels.float(t, model: m)
             },
             CommandDef("ABOUT", category: "Help", summary: "About Oanarina Archi Tool: version, license and credits.", modifies: false) { _ in
                 AboutWindow.show()

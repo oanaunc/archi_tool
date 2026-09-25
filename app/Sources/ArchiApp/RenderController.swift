@@ -46,17 +46,75 @@ enum SunPosition {
 
 struct RenderSettings {
     enum Background: String, CaseIterable { case sky = "Sky", white = "White", transparent = "Transparent" }
+    /// Image-based lighting: procedural skies, or an equirectangular HDRI/EXR/JPEG file.
+    enum Environment: String, CaseIterable { case clearSky = "Clear Sky", overcast = "Overcast", sunset = "Sunset", studio = "Studio", night = "Night", hdri = "HDRI File" }
+    enum ShadowQuality: String, CaseIterable { case off = "Off", low = "Low", medium = "Medium", high = "High", ultra = "Ultra"
+        var mapSize: CGFloat { switch self { case .off, .low: return 2048; case .medium, .high: return 4096; case .ultra: return 8192 } }
+        var samples: Int { switch self { case .off: return 1; case .low: return 4; case .medium: return 8; case .high: return 16; case .ultra: return 32 } }
+        var cascades: Int { switch self { case .ultra: return 4; case .high: return 3; default: return 2 } }
+    }
     var width = 1920
     var height = 1080
     var date = RenderSettings.defaultDate
     var exposure = 0.0
     var background: Background = .sky
     var antialias = true
+    var environment: Environment = .clearSky
+    var hdriPath = ""
+    var environmentIntensity = 1.3
+    var shadowQuality: ShadowQuality = .high
+    /// Penumbra radius in shadow-map texels (soft shadows).
+    var shadowSoftness = 4.0
+    var ambientOcclusion = 1.0
+    var depthOfField = false
+    /// Focus distance in metres (0 = the model centre).
+    var focusDistance = 0.0
+    var fStop = 2.8
+    var whiteBalance = 6500.0
+    var bloom = 0.15
+    /// Clay / white model: every surface uses one matte white material.
+    var clay = false
 
     static var defaultDate: Date {
         var c = Calendar.current.dateComponents([.year], from: Date())
         c.month = 6; c.day = 21; c.hour = 15; c.minute = 0
         return Calendar.current.date(from: c) ?? Date()
+    }
+}
+
+/// Procedural equirectangular environment maps (sky dome + ground) used for image-based lighting.
+@MainActor
+enum EnvironmentMaps {
+    private static var cache: [String: NSImage] = [:]
+    static func image(_ e: RenderSettings.Environment, hdriPath: String) -> Any? {
+        if e == .hdri {
+            let u = URL(fileURLWithPath: hdriPath)
+            return FileManager.default.fileExists(atPath: u.path) ? u : image(.clearSky, hdriPath: "")
+        }
+        if let i = cache[e.rawValue] { return i }
+        let (zenith, horizon, ground, glow): (NSColor, NSColor, NSColor, NSColor?) = {
+            switch e {
+            case .clearSky: return (NSColor(srgbRed: 0.24, green: 0.45, blue: 0.78, alpha: 1), NSColor(srgbRed: 0.78, green: 0.86, blue: 0.94, alpha: 1), NSColor(srgbRed: 0.36, green: 0.35, blue: 0.32, alpha: 1), nil)
+            case .overcast: return (NSColor(white: 0.72, alpha: 1), NSColor(white: 0.88, alpha: 1), NSColor(white: 0.42, alpha: 1), nil)
+            case .sunset: return (NSColor(srgbRed: 0.18, green: 0.22, blue: 0.45, alpha: 1), NSColor(srgbRed: 1.0, green: 0.62, blue: 0.35, alpha: 1), NSColor(srgbRed: 0.25, green: 0.2, blue: 0.18, alpha: 1), NSColor(srgbRed: 1, green: 0.8, blue: 0.5, alpha: 1))
+            case .studio: return (NSColor(white: 0.95, alpha: 1), NSColor(white: 0.8, alpha: 1), NSColor(white: 0.55, alpha: 1), NSColor(white: 1, alpha: 1))
+            case .night: return (NSColor(srgbRed: 0.02, green: 0.03, blue: 0.07, alpha: 1), NSColor(srgbRed: 0.08, green: 0.1, blue: 0.16, alpha: 1), NSColor(white: 0.03, alpha: 1), nil)
+            case .hdri: return (.gray, .gray, .gray, nil)
+            }
+        }()
+        let w: CGFloat = 1024, h: CGFloat = 512
+        let img = NSImage(size: NSSize(width: w, height: h))
+        img.lockFocus()
+        NSGradient(colors: [horizon, zenith], atLocations: [0, 1], colorSpace: .sRGB)?.draw(in: NSRect(x: 0, y: h / 2, width: w, height: h / 2), angle: 90)
+        NSGradient(colors: [ground, horizon.blended(withFraction: 0.5, of: ground) ?? ground], atLocations: [0, 1], colorSpace: .sRGB)?.draw(in: NSRect(x: 0, y: 0, width: w, height: h / 2), angle: 90)
+        if let g = glow {
+            // Soft light source (sun glow or studio softbox) above the horizon.
+            let c = NSPoint(x: w * 0.3, y: e == .studio ? h * 0.85 : h * 0.56)
+            NSGradient(colors: [g.withAlphaComponent(0.95), g.withAlphaComponent(0)])?.draw(fromCenter: c, radius: 0, toCenter: c, radius: e == .studio ? 160 : 120, options: [])
+        }
+        img.unlockFocus()
+        cache[e.rawValue] = img
+        return img
     }
 }
 
@@ -73,20 +131,35 @@ enum RenderEngine {
         b.sunNode.light?.intensity = alt <= 0 ? 0 : CGFloat(1800 * min(1, sin(alt) * 2.2 + 0.1))
         if alt < 0.25 { b.sunNode.light?.color = NSColor(srgbRed: 1, green: 0.78, blue: 0.55, alpha: 1) }
         b.ambientNode.light?.intensity = alt <= 0 ? 90 : 260
+        // Image-based lighting and the visible background.
+        let env = EnvironmentMaps.image(settings.environment, hdriPath: settings.hdriPath)
+        b.scene.lightingEnvironment.contents = env
+        b.scene.lightingEnvironment.intensity = CGFloat(settings.environmentIntensity)
         switch settings.background {
-        case .sky: break
+        case .sky: b.scene.background.contents = env
         case .white: b.scene.background.contents = NSColor.white
         case .transparent: b.scene.background.contents = NSColor.clear
         }
+        if settings.environment == .night { b.sunNode.light?.intensity = min(b.sunNode.light?.intensity ?? 0, 60) }
+        // Shadow quality and softness.
+        if let l = b.sunNode.light {
+            l.castsShadow = settings.shadowQuality != .off
+            l.shadowMapSize = CGSize(width: settings.shadowQuality.mapSize, height: settings.shadowQuality.mapSize)
+            l.shadowSampleCount = settings.shadowQuality.samples
+            l.shadowRadius = CGFloat(max(0, settings.shadowSoftness))
+            l.shadowCascadeCount = settings.shadowQuality.cascades
+        }
+        if settings.clay { RenderEngine.applyClay(b.modelRoot) }
         let cam = SCNNode()
         let c = SCNCamera()
         c.automaticallyAdjustsZRange = true
         c.wantsHDR = true
         c.exposureOffset = CGFloat(settings.exposure)
         c.wantsExposureAdaptation = false
-        c.bloomIntensity = 0.15
+        c.bloomIntensity = CGFloat(settings.bloom)
         c.bloomThreshold = 0.9
-        c.screenSpaceAmbientOcclusionIntensity = 1.0
+        c.whiteBalanceTemperature = CGFloat(settings.whiteBalance)
+        c.screenSpaceAmbientOcclusionIntensity = CGFloat(settings.ambientOcclusion)
         c.screenSpaceAmbientOcclusionRadius = 0.45
         c.vignettingIntensity = 0.3
         c.vignettingPower = 0.6
@@ -104,8 +177,35 @@ enum RenderEngine {
             cam.position = SCNVector3(s.center.x + dir.x * d, s.center.y + dir.y * d, s.center.z + dir.z * d)
             cam.look(at: s.center)
         }
+        if settings.depthOfField {
+            c.wantsDepthOfField = true
+            let s = b.worldSphere
+            let p = cam.position
+            let auto = sqrt(pow(p.x - s.center.x, 2) + pow(p.y - s.center.y, 2) + pow(p.z - s.center.z, 2))
+            c.focusDistance = settings.focusDistance > 0 ? CGFloat(settings.focusDistance) : auto
+            c.fStop = CGFloat(max(0.5, settings.fStop))
+            c.apertureBladeCount = 6
+            c.focalBlurSampleCount = 16
+        }
         b.scene.rootNode.addChildNode(cam)
         return (b, cam)
+    }
+
+    /// Clay render: one matte white material on every model surface (glass stays translucent).
+    static func applyClay(_ root: SCNNode) {
+        let clay = SCNMaterial()
+        clay.lightingModel = .physicallyBased
+        clay.diffuse.contents = NSColor(white: 0.92, alpha: 1)
+        clay.roughness.contents = NSNumber(value: 0.85)
+        clay.metalness.contents = NSNumber(value: 0)
+        root.enumerateHierarchy { n, _ in
+            guard let g = n.geometry, n.name != "ground" else { return }
+            g.materials = g.materials.map { m in
+                if m.transparency < 0.95 { let t = clay.copy() as! SCNMaterial; t.transparency = m.transparency; t.isDoubleSided = true; return t }
+                if m.lightingModel == .constant { return m }   // edges and lines
+                return clay
+            }
+        }
     }
 
     static func render(doc: ArchiDocument, settings: RenderSettings, camera override: SCNMatrix4? = nil) -> NSImage? {
@@ -190,6 +290,16 @@ struct RenderPreset: Codable, Hashable, Identifiable {
     var antialias: Bool
     var exposure: Double
     var background: String
+    // Added later: optional so presets saved by earlier versions still decode.
+    var environment: String?
+    var environmentIntensity: Double?
+    var shadowQuality: String?
+    var shadowSoftness: Double?
+    var ambientOcclusion: Double?
+    var depthOfField: Bool?
+    var fStop: Double?
+    var whiteBalance: Double?
+    var clay: Bool?
 
     static let builtIn: [RenderPreset] = [
         RenderPreset(name: "Draft (720p, fast)", width: 1280, height: 720, antialias: false, exposure: 0, background: "Sky"),
@@ -198,6 +308,14 @@ struct RenderPreset: Codable, Hashable, Identifiable {
         RenderPreset(name: "Print (4K)", width: 3840, height: 2160, antialias: true, exposure: 0, background: "Sky"),
         RenderPreset(name: "Presentation (white)", width: 2560, height: 1440, antialias: true, exposure: 0.3, background: "White"),
         RenderPreset(name: "Square (1080×1080)", width: 1080, height: 1080, antialias: true, exposure: 0, background: "Sky"),
+        RenderPreset(name: "Clay Model (studio)", width: 1920, height: 1080, antialias: true, exposure: 0.2, background: "Sky",
+                     environment: "Studio", environmentIntensity: 1.6, shadowQuality: "High", shadowSoftness: 8, ambientOcclusion: 1.5, clay: true),
+        RenderPreset(name: "Golden Hour", width: 1920, height: 1080, antialias: true, exposure: 0.1, background: "Sky",
+                     environment: "Sunset", environmentIntensity: 1.1, shadowQuality: "Ultra", shadowSoftness: 6, ambientOcclusion: 1.0, whiteBalance: 5200),
+        RenderPreset(name: "Overcast Soft", width: 1920, height: 1080, antialias: true, exposure: 0.3, background: "Sky",
+                     environment: "Overcast", environmentIntensity: 1.8, shadowQuality: "Medium", shadowSoftness: 14, ambientOcclusion: 1.4),
+        RenderPreset(name: "Eye Level (depth of field)", width: 1920, height: 1080, antialias: true, exposure: 0, background: "Sky",
+                     environment: "Clear Sky", shadowQuality: "High", depthOfField: true, fStop: 2.0),
     ]
     private static let key = "render.presets"
     static var custom: [RenderPreset] {
@@ -207,11 +325,24 @@ struct RenderPreset: Codable, Hashable, Identifiable {
     static var all: [RenderPreset] { builtIn + custom }
 
     func apply(to s: inout RenderSettings) {
+        let d = RenderSettings()
         s.width = width; s.height = height; s.antialias = antialias; s.exposure = exposure
         s.background = RenderSettings.Background(rawValue: background) ?? .sky
+        s.environment = environment.flatMap(RenderSettings.Environment.init(rawValue:)) ?? d.environment
+        s.environmentIntensity = environmentIntensity ?? d.environmentIntensity
+        s.shadowQuality = shadowQuality.flatMap(RenderSettings.ShadowQuality.init(rawValue:)) ?? d.shadowQuality
+        s.shadowSoftness = shadowSoftness ?? d.shadowSoftness
+        s.ambientOcclusion = ambientOcclusion ?? d.ambientOcclusion
+        s.depthOfField = depthOfField ?? false
+        s.fStop = fStop ?? d.fStop
+        s.whiteBalance = whiteBalance ?? d.whiteBalance
+        s.clay = clay ?? false
     }
     static func from(_ s: RenderSettings, name: String) -> RenderPreset {
-        RenderPreset(name: name, width: s.width, height: s.height, antialias: s.antialias, exposure: s.exposure, background: s.background.rawValue)
+        RenderPreset(name: name, width: s.width, height: s.height, antialias: s.antialias, exposure: s.exposure, background: s.background.rawValue,
+                     environment: s.environment.rawValue, environmentIntensity: s.environmentIntensity, shadowQuality: s.shadowQuality.rawValue,
+                     shadowSoftness: s.shadowSoftness, ambientOcclusion: s.ambientOcclusion, depthOfField: s.depthOfField, fStop: s.fStop,
+                     whiteBalance: s.whiteBalance, clay: s.clay)
     }
 }
 
@@ -290,6 +421,24 @@ private struct RenderPanel: View {
                     Picker("Background", selection: $settings.background) { ForEach(RenderSettings.Background.allCases, id: \.self) { Text($0.rawValue) } }
                     Toggle("Antialiasing (4× MSAA + jitter)", isOn: $settings.antialias)
                 }
+                Section("Environment") {
+                    Picker("Lighting", selection: $settings.environment) { ForEach(RenderSettings.Environment.allCases, id: \.self) { Text($0.rawValue) } }
+                    if settings.environment == .hdri {
+                        HStack {
+                            Text(settings.hdriPath.isEmpty ? "No file" : URL(fileURLWithPath: settings.hdriPath).lastPathComponent).font(.caption).lineLimit(1)
+                            Spacer()
+                            Button("Choose…") { chooseHDRI() }
+                        }
+                    }
+                    Slider(value: $settings.environmentIntensity, in: 0...3) { Text("Intensity \(fmt(settings.environmentIntensity, 1))") }
+                    Toggle("Clay model (white)", isOn: $settings.clay)
+                }
+                Section("Shadows & Occlusion") {
+                    Picker("Shadow quality", selection: $settings.shadowQuality) { ForEach(RenderSettings.ShadowQuality.allCases, id: \.self) { Text($0.rawValue) } }
+                    Slider(value: $settings.shadowSoftness, in: 0...20) { Text("Softness \(fmt(settings.shadowSoftness, 0))") }
+                        .disabled(settings.shadowQuality == .off)
+                    Slider(value: $settings.ambientOcclusion, in: 0...2) { Text("Ambient occlusion \(fmt(settings.ambientOcclusion, 1))") }
+                }
                 Section("Sun") {
                     DatePicker("Date", selection: $settings.date, displayedComponents: .date)
                     Slider(value: Binding(get: { hourOfDay }, set: setHour), in: 5...21, step: 0.25) { Text("Time \(timeText)") }
@@ -298,6 +447,13 @@ private struct RenderPanel: View {
                 }
                 Section("Camera") {
                     Slider(value: $settings.exposure, in: -2...2) { Text("Exposure \(fmt(settings.exposure, 1)) EV") }
+                    Slider(value: $settings.whiteBalance, in: 3000...9000, step: 100) { Text("White balance \(Int(settings.whiteBalance)) K") }
+                    Slider(value: $settings.bloom, in: 0...1) { Text("Bloom \(fmt(settings.bloom, 2))") }
+                    Toggle("Depth of field", isOn: $settings.depthOfField)
+                    if settings.depthOfField {
+                        Slider(value: $settings.fStop, in: 0.8...16) { Text("f/\(fmt(settings.fStop, 1))") }
+                        Slider(value: $settings.focusDistance, in: 0...200) { Text(settings.focusDistance == 0 ? "Focus: model centre" : "Focus \(fmt(settings.focusDistance, 1)) m") }
+                    }
                     Text(Viewport3DController.active == nil ? "Default iso view (open the 3D view to set the camera)" : "Uses the current 3D view camera")
                         .font(.caption).foregroundStyle(.secondary)
                 }
@@ -333,7 +489,7 @@ private struct RenderPanel: View {
         applyResolution()
         let a = NSAlert()
         a.messageText = "Save Render Preset"
-        a.informativeText = "Resolution \(settings.width)×\(settings.height), exposure \(fmt(settings.exposure, 1)) EV, \(settings.background.rawValue) background."
+        a.informativeText = "Resolution \(settings.width)×\(settings.height), exposure \(fmt(settings.exposure, 1)) EV, \(settings.environment.rawValue) lighting, \(settings.shadowQuality.rawValue.lowercased()) shadows\(settings.depthOfField ? ", depth of field" : "")\(settings.clay ? ", clay" : "")."
         let tf = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 22))
         tf.stringValue = "My Preset \(RenderPreset.custom.count + 1)"
         a.accessoryView = tf
@@ -347,6 +503,13 @@ private struct RenderPanel: View {
         presets = RenderPreset.all
         presetName = n
         UserDefaults.standard.set(n, forKey: "render.lastPreset")
+    }
+
+    private func chooseHDRI() {
+        let p = NSOpenPanel()
+        p.allowedContentTypes = ["hdr", "exr", "jpg", "jpeg", "png", "tif", "tiff"].compactMap { UTType(filenameExtension: $0) }
+        p.message = "Choose an equirectangular (2:1) environment image"
+        if p.runModal() == .OK, let u = p.url { settings.hdriPath = u.path }
     }
 
     private var hourOfDay: Double {

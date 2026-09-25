@@ -8,38 +8,42 @@ struct PanelsView: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
+        let floating = FloatingPanels.floatingTabs(model)
+        let tabs = PanelTab.allCases.filter { !floating.contains($0) }
+        let current = tabs.contains(model.panelTab) ? model.panelTab : (tabs.first ?? .properties)
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                ForEach(PanelTab.allCases) { t in
+                ForEach(tabs) { t in
                     Button { model.panelTab = t } label: {
                         VStack(spacing: 2) {
                             Image(systemName: t.symbol).font(.system(size: 12))
-                            Text(t.rawValue).font(.system(size: 8.5)).lineLimit(1).minimumScaleFactor(0.75)
+                            Text(t.rawValue).font(.system(size: 8.5)).lineLimit(1).minimumScaleFactor(0.7)
                         }
-                        .foregroundStyle(model.panelTab == t ? Theme.accent : Theme.textDim)
+                        .foregroundStyle(current == t ? Theme.accent : Theme.textDim)
                         .frame(maxWidth: .infinity)
                         .frame(height: 36)
-                        .background(model.panelTab == t ? Theme.hover : Color.clear)
-                        .overlay(alignment: .bottom) { if model.panelTab == t { Rectangle().fill(Theme.accent).frame(height: 2) } }
+                        .background(current == t ? Theme.hover : Color.clear)
+                        .overlay(alignment: .bottom) { if current == t { Rectangle().fill(Theme.accent).frame(height: 2) } }
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .help(t.rawValue)
+                    .help(t.rawValue + " — right-click to float")
+                    .contextMenu { Button("Float \(t.rawValue) Panel") { FloatingPanels.float(t, model: model) } }
                 }
-                IconButton(symbol: "xmark", help: "Hide panels") { model.showPanels = false }
-                    .padding(.horizontal, 2)
+                VStack(spacing: 0) {
+                    IconButton(symbol: "macwindow.on.rectangle", help: "Float this panel in its own window (FLOATPANEL)") { FloatingPanels.float(current, model: model) }
+                        .disabled(tabs.isEmpty)
+                    IconButton(symbol: "xmark", help: "Hide panels") { model.showPanels = false }
+                }
+                .padding(.horizontal, 2)
             }
             .background(Theme.ribbonTabBar)
             HSeparator()
             Group {
-                switch model.panelTab {
-                case .properties: PropertiesPanel(model: model)
-                case .layers: LayersPanel(model: model)
-                case .levels: LevelsPanel(model: model)
-                case .browser: ProjectBrowserPanel(model: model)
-                case .materials: MaterialsPanel(model: model)
-                case .history: HistoryPanel(model: model)
-                case .tools: ToolPalettePanel(model: model)
+                if tabs.isEmpty {
+                    Text("All panels are floating.").font(Theme.font).foregroundStyle(Theme.textDim).padding()
+                } else {
+                    PanelContent(model: model, tab: current)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

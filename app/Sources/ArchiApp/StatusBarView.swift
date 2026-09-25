@@ -8,15 +8,17 @@ struct StatusBarView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            CoordinateReadout(live: model.live, units: model.doc.units)
+            CoordinateReadout(live: model.live, units: model.doc.units, ucs: UCSFrame.current(model.doc))
                 .frame(width: 210, alignment: .leading)
                 .padding(.leading, 8)
+            ucsIndicator
             VSeparator().padding(.vertical, 4)
             HStack(spacing: 1) {
                 toggle("GRID", "F7", \.showGrid)
                 toggle("SNAP", "F9", \.gridSnap)
                 toggle("ORTHO", "F8", \.ortho)
                 toggle("POLAR", "F10", \.polarTracking)
+                toggle("OTRACK", "F11", \.objectSnapTracking)
                 toggle("OSNAP", "F3", \.objectSnap)
                 toggle("DYN", "F12", \.dynamicInput)
                 toggle("LWT", "", \.lineweightDisplay)
@@ -67,6 +69,30 @@ struct StatusBarView: View {
         .help("\(title) \(on ? "on" : "off")" + (key.isEmpty ? "" : " (\(key))"))
     }
 
+    /// Current coordinate system (WCS or UCS with origin and angle); the menu switches or edits it.
+    private var ucsIndicator: some View {
+        let ucs = UCSFrame.current(model.doc)
+        return Menu {
+            Button("World (WCS)") { model.runCommand("UCS W") }.disabled(ucs.isWorld)
+            Button("Previous") { model.runCommand("UCS P") }
+            Button("New Origin…") { model.runCommand("UCS O") }
+            Button("Rotate About Z…") { model.runCommand("UCS Z") }
+            Button("3 Points…") { model.runCommand("UCS 3") }
+            Button("Align to Object…") { model.runCommand("UCS OB") }
+            Divider()
+            Button("Named UCS…") { model.runCommand("UCSMAN") }
+        } label: {
+            Text(ucs.isWorld ? "WCS" : "UCS")
+                .font(.system(size: 9.5, weight: .semibold, design: .rounded))
+                .foregroundStyle(ucs.isWorld ? Theme.textDim : Theme.accentText)
+                .padding(.horizontal, 5).frame(height: 16)
+                .background(RoundedRectangle(cornerRadius: 3).fill(ucs.isWorld ? Color.white.opacity(0.04) : Theme.accent))
+        }
+        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+        .padding(.trailing, 6)
+        .help(ucs.isWorld ? "World coordinate system — coordinates are world X,Y" : "User coordinate system: origin \(fmt(ucs.origin.x, 2)),\(fmt(ucs.origin.y, 2)), X axis \(fmt(deg(ucs.angle), 2))°. Coordinates are shown in the UCS.")
+    }
+
     private var agentIndicator: some View {
         Button { model.toggleAgentServer() } label: {
             HStack(spacing: 4) {
@@ -83,9 +109,11 @@ struct StatusBarView: View {
 private struct CoordinateReadout: View {
     @ObservedObject var live: LiveState
     let units: Units
+    var ucs: UCSFrame = .world
     var body: some View {
+        let p = ucs.isWorld ? live.cursorWorld : ucs.fromWorld(live.cursorWorld)
         HStack(spacing: 6) {
-            Text(String(format: "%.2f, %.2f", live.cursorWorld.x, live.cursorWorld.y))
+            Text(String(format: "%.2f, %.2f", p.x, p.y))
                 .font(.system(size: 10.5, design: .monospaced))
                 .foregroundStyle(Theme.text)
             Text(units.abbreviation).font(Theme.fontSmall).foregroundStyle(Theme.textFaint)

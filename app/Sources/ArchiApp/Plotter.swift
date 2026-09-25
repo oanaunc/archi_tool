@@ -326,8 +326,33 @@ enum SheetComposer {
             out.append(DrawEntry(id: nil, items: sb))
         }
 
-        // Viewport captions.
-        for vp in layout.viewports {
+        // Revision table stacked on the title block (header row at the bottom, latest revision on top).
+        let revs = SheetSet.revisions(layout)
+        if !revs.isEmpty {
+            let rh = 5.0, cols = [14.0, 24, tb.x - 14 - 24 - 24, 24]
+            var ri: [DrawItem] = []
+            let rows = revs.count + 1
+            let top = y1 + Double(rows) * rh
+            ri.append(rect(Vec2(x0, y1), Vec2(x1, top), 0.35))
+            for r in 1..<rows { let y = y1 + Double(r) * rh
+                ri.append(.stroke(points: [Vec2(x0, y), Vec2(x1, y)], closed: false, style: s(r == 1 ? 0.35 : 0.18))) }
+            var cx = x0
+            for w in cols.dropLast() { cx += w; ri.append(.stroke(points: [Vec2(cx, y1), Vec2(cx, top)], closed: false, style: s(0.18))) }
+            func rowText(_ r: Int, _ vals: [String], _ h: Double) {
+                var x = x0
+                for (k, v) in vals.enumerated() {
+                    let maxChars = max(1, Int(cols[k] / (h * 0.62)))
+                    ri.append(text(Vec2(x + 1.5, y1 + Double(r) * rh + rh / 2), h, v.count > maxChars ? String(v.prefix(maxChars - 1)) + "…" : v, .left, .middle))
+                    x += cols[k]
+                }
+            }
+            rowText(0, ["REV", "DATE", "DESCRIPTION", "BY"], 1.8)
+            for (k, r) in revs.enumerated() { rowText(k + 1, [r.code, r.date, r.description, r.by], 2.2) }
+            out.append(DrawEntry(id: nil, items: ri))
+        }
+
+        // Viewport captions (unless the sheet has editable view titles, see SheetSet.refreshViewTitles).
+        for vp in layout.viewports where !SheetSet.hasViewTitleEntities(layout) {
             let p = vp.origin + Vec2(0, -6)
             let title = viewTitle(vp, doc: doc)
             out.append(DrawEntry(id: nil, items: [

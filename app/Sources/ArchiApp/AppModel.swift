@@ -9,7 +9,7 @@ enum WorkspaceMode: String, CaseIterable, Identifiable { case plan = "2D", model
 
 /// Side panel tabs.
 enum PanelTab: String, CaseIterable, Identifiable {
-    case properties = "Properties", layers = "Layers", levels = "Levels", browser = "Browser", materials = "Materials", tools = "Tools", history = "History"
+    case properties = "Properties", layers = "Layers", levels = "Levels", browser = "Browser", materials = "Materials", tools = "Tools", sheets = "Sheets", history = "History"
     var id: String { rawValue }
     var symbol: String {
         switch self {
@@ -20,6 +20,7 @@ enum PanelTab: String, CaseIterable, Identifiable {
         case .materials: return "paintpalette"
         case .history: return "clock.arrow.circlepath"
         case .tools: return "square.grid.3x3.square"
+        case .sheets: return "rectangle.stack"
         }
     }
 }
@@ -67,6 +68,13 @@ final class AppModel: ObservableObject {
     @Published var showProperties = true
     @Published var showScriptConsole = false
     @Published var activeLayout: Int = 0
+
+    /// Keeps the core CTAB variable (read by VIEWTITLE, LAYOUT and other sheet commands) in step with the sheet shown in the window.
+    func syncCurrentTab() {
+        let layouts = editor.doc.layouts
+        let name = mode == .sheet && layouts.indices.contains(activeLayout) ? layouts[activeLayout].name : "Model"
+        if editor.doc.variable("CTAB") != name { editor.doc.setVariable("CTAB", name) }
+    }
 
     // Additions
     @Published var showStart = false
@@ -169,6 +177,7 @@ final class AppModel: ObservableObject {
 
     /// Runs a command like a ribbon button: cancels the active command first (AutoCAD behaviour).
     func runCommand(_ line: String) {
+        syncCurrentTab()
         if !editor.isIdle { editor.cancel() }
         let l = line
         // Let the cancelled command unwind before starting the next one.
@@ -182,6 +191,7 @@ final class AppModel: ObservableObject {
 
     /// Submits a command line typed by the user.
     func submitLine(_ line: String) {
+        if editor.isIdle { syncCurrentTab() }
         let t = line.trimmingCharacters(in: .whitespaces)
         if !t.isEmpty { inputHistory.append(t); if inputHistory.count > 200 { inputHistory.removeFirst(50) } }
         editor.submit(line)

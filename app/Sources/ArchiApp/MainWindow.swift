@@ -9,6 +9,8 @@ struct MainWindow: View {
     @StateObject private var model = AppModel()
     @Environment(\.openWindow) private var openWindow
     @State private var didSetup = false
+    /// Docked panel column width (drag the divider; remembered across launches).
+    @AppStorage("panelWidth") private var panelWidth = 300.0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -21,8 +23,8 @@ struct MainWindow: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .overlay(alignment: .topLeading) { ViewportBadge(model: model).padding(8) }
                 if model.showPanels && !model.cleanScreen {
-                    VSeparator()
-                    PanelsView(model: model).frame(width: 300)
+                    PanelResizeHandle(width: $panelWidth)
+                    PanelsView(model: model).frame(width: CGFloat(panelWidth))
                 }
             }
             if model.showScriptConsole {
@@ -101,6 +103,7 @@ struct MainWindow: View {
             WindowRepaint.install(on: w)
             w.tabbingIdentifier = "OanarinaArchiDocument"
             updateWindowState()
+            if AppModel.all.count == 1 { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { FloatingPanels.restore(for: model) } }
         }
         model.files.installCloseGuard(on: w)
     }
@@ -425,5 +428,22 @@ enum WindowRepaint {
         mark(v)
         v.needsLayout = true
         w.displayIfNeeded()
+    }
+}
+
+/// Draggable divider on the left edge of the docked panel column (double-click restores the default width).
+struct PanelResizeHandle: View {
+    @Binding var width: Double
+    @State private var start: Double?
+    var body: some View {
+        Rectangle().fill(Theme.separator).frame(width: 1)
+            .overlay(Color.clear.frame(width: 7).contentShape(Rectangle())
+                .onHover { inside in if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() } }
+                .gesture(DragGesture(minimumDistance: 1).onChanged { g in
+                    if start == nil { start = width }
+                    width = min(620, max(220, (start ?? width) - Double(g.translation.width)))
+                }.onEnded { _ in start = nil })
+                .onTapGesture(count: 2) { width = 300 })
+            .help("Drag to resize the panels · double-click for the default width")
     }
 }

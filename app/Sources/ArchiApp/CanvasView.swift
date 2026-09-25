@@ -678,8 +678,30 @@ final class PlanCanvasView: NSView {
             needsInitialZoom = !model.planUserZoomed
         }
         model.$revision.receive(on: DispatchQueue.main).sink { [weak self] _ in self?.modelChanged() }.store(in: &cancellables)
+        registerForDraggedTypes([.string])
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+
+    // MARK: Drag and drop from tool palettes (blocks, components, commands) and the material library
+
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        guard let s = sender.draggingPasteboard.string(forType: .string), ToolDrop.accepts(s) else { return [] }
+        return .copy
+    }
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+        guard let s = sender.draggingPasteboard.string(forType: .string), ToolDrop.accepts(s) else { return [] }
+        let v = convert(sender.draggingLocation, from: nil)
+        model?.cursorWorld = toWorld(v)
+        return .copy
+    }
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        guard let model, let s = sender.draggingPasteboard.string(forType: .string) else { return false }
+        let v = convert(sender.draggingLocation, from: nil)
+        let hit = pick(at: toWorld(v))
+        let ok = ToolDrop.drop(s, at: toWorld(v), onto: hit, model: model)
+        if ok { window?.makeKeyAndOrderFront(nil); focus() }
+        return ok
+    }
 
     override var isFlipped: Bool { false }
     override var isOpaque: Bool { true }
@@ -917,22 +939,36 @@ final class PlanCanvasView: NSView {
         drawAxes(ctx)
     }
 
+    /// UCS icon (UCSICON ORigin): drawn at the UCS origin when it is on screen, else in the lower-left corner,
+    /// with its axes rotated to the current UCS. A square at the origin marks the world coordinate system.
     private func drawUCSIcon(_ ctx: CGContext) {
-        let o = CGPoint(x: 26, y: 26), len: CGFloat = 34
+        let ucs = model.map { UCSFrame.current($0.doc) } ?? .world
+        let len: CGFloat = 34
+        let corner = CGPoint(x: 26, y: 26)
+        var o = corner
+        let atOrigin = toView(ucs.origin)
+        if !ucs.isWorld, bounds.insetBy(dx: 40, dy: 40).contains(atOrigin) { o = atOrigin }
+        let a = CGFloat(ucs.angle)
+        let ux = CGPoint(x: cos(a), y: sin(a)), uy = CGPoint(x: -sin(a), y: cos(a))
+        func pt(_ d: CGPoint, _ k: CGFloat) -> CGPoint { CGPoint(x: o.x + d.x * k, y: o.y + d.y * k) }
+        func arrow(_ d: CGPoint, _ color: CGColor) {
+            ctx.setStrokeColor(color)
+            ctx.strokeLineSegments(between: [o, pt(d, len)])
+            let tip = pt(d, len), back = pt(d, len - 6), n = CGPoint(x: -d.y, y: d.x)
+            ctx.move(to: tip); ctx.addLine(to: CGPoint(x: back.x + n.x * 3, y: back.y + n.y * 3)); ctx.addLine(to: CGPoint(x: back.x - n.x * 3, y: back.y - n.y * 3)); ctx.closePath()
+            ctx.setFillColor(color); ctx.fillPath()
+        }
         ctx.setLineWidth(1.5)
-        ctx.setStrokeColor(CGColor(srgbRed: 0.9, green: 0.35, blue: 0.35, alpha: 0.9))
-        ctx.strokeLineSegments(between: [o, CGPoint(x: o.x + len, y: o.y)])
-        ctx.move(to: CGPoint(x: o.x + len, y: o.y)); ctx.addLine(to: CGPoint(x: o.x + len - 6, y: o.y + 3)); ctx.addLine(to: CGPoint(x: o.x + len - 6, y: o.y - 3)); ctx.closePath()
-        ctx.setFillColor(CGColor(srgbRed: 0.9, green: 0.35, blue: 0.35, alpha: 0.9)); ctx.fillPath()
-        ctx.setStrokeColor(CGColor(srgbRed: 0.35, green: 0.85, blue: 0.45, alpha: 0.9))
-        ctx.strokeLineSegments(between: [o, CGPoint(x: o.x, y: o.y + len)])
-        ctx.move(to: CGPoint(x: o.x, y: o.y + len)); ctx.addLine(to: CGPoint(x: o.x - 3, y: o.y + len - 6)); ctx.addLine(to: CGPoint(x: o.x + 3, y: o.y + len - 6)); ctx.closePath()
-        ctx.setFillColor(CGColor(srgbRed: 0.35, green: 0.85, blue: 0.45, alpha: 0.9)); ctx.fillPath()
+        arrow(ux, CGColor(srgbRed: 0.9, green: 0.35, blue: 0.35, alpha: 0.9))
+        arrow(uy, CGColor(srgbRed: 0.35, green: 0.85, blue: 0.45, alpha: 0.9))
         ctx.setStrokeColor(CGColor(gray: 0.85, alpha: 0.9)); ctx.setLineWidth(1)
-        ctx.stroke(CGRect(x: o.x - 3, y: o.y - 3, width: 6, height: 6))
+        if ucs.isWorld { ctx.stroke(CGRect(x: o.x - 3, y: o.y - 3, width: 6, height: 6)) }
+        else { ctx.addEllipse(in: CGRect(x: o.x - 2.5, y: o.y - 2.5, width: 5, height: 5)); ctx.strokePath() }
         let attrs: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 9, weight: .semibold), .foregroundColor: NSColor(white: 0.85, alpha: 0.9)]
-        ("X" as NSString).draw(at: CGPoint(x: o.x + len + 3, y: o.y - 6), withAttributes: attrs)
-        ("Y" as NSString).draw(at: CGPoint(x: o.x - 3, y: o.y + len + 2), withAttributes: attrs)
+        let xl = pt(ux, len + 8), yl = pt(uy, len + 8)
+        ("X" as NSString).draw(at: CGPoint(x: xl.x - 3, y: xl.y - 6), withAttributes: attrs)
+        ("Y" as NSString).draw(at: CGPoint(x: yl.x - 3, y: yl.y - 6), withAttributes: attrs)
+        if ucs.isWorld { ("W" as NSString).draw(at: CGPoint(x: o.x + 6, y: o.y + 4), withAttributes: attrs) }
     }
 
     private func computeGrips() {
@@ -1078,6 +1114,8 @@ final class PlanCanvasView: NSView {
         // Hovered / hot grip.
         if let hg = hoverGrip, hotGrip == nil { drawGripMark(ctx, toView(hg.point), color: CGColor(srgbRed: 1, green: 0.45, blue: 0.55, alpha: 1)) }
         if let g = hotGrip { drawGripMark(ctx, toView(g.origin), color: CGColor(srgbRed: 0.9, green: 0.2, blue: 0.2, alpha: 1)) }
+        // Object snap tracking: acquired points and alignment vectors (OTRACK).
+        if mouseView != nil, !ed.isIdle { drawTracking(ctx) }
         // Snap marker.
         if let sn = snap, mouseView != nil { drawSnapMarker(ctx, sn) }
         // Crosshair.
@@ -1104,6 +1142,29 @@ final class PlanCanvasView: NSView {
         ctx.strokeLineSegments(between: [CGPoint(x: x - arm, y: y), CGPoint(x: x - gap, y: y), CGPoint(x: x + gap, y: y), CGPoint(x: x + arm, y: y),
                                          CGPoint(x: x, y: y - arm), CGPoint(x: x, y: y - gap), CGPoint(x: x, y: y + gap), CGPoint(x: x, y: y + arm)])
         if pickbox { ctx.stroke(CGRect(x: x - 5, y: y - 5, width: 10, height: 10)) }
+    }
+
+    /// Draws the acquired tracking points as small crosses and the active tracking vectors as dotted rays through them.
+    private func drawTracking(_ ctx: CGContext) {
+        let tr = Snap.tracker
+        guard tr.active, !(tr.points.isEmpty && tr.lines.isEmpty) else { return }
+        ctx.saveGState()
+        let col = CGColor(srgbRed: 0.35, green: 0.85, blue: 0.45, alpha: 0.95)
+        ctx.setStrokeColor(col); ctx.setLineWidth(1)
+        for p in tr.points {
+            let v = toView(p), s: CGFloat = 4
+            ctx.strokeLineSegments(between: [CGPoint(x: v.x - s, y: v.y), CGPoint(x: v.x + s, y: v.y), CGPoint(x: v.x, y: v.y - s), CGPoint(x: v.x, y: v.y + s)])
+        }
+        let reach = hypot(bounds.width, bounds.height)
+        ctx.setLineDash(phase: 0, lengths: [2, 4])
+        for l in tr.lines {
+            let a = toView(l.from), b = toView(l.to)
+            let dx = b.x - a.x, dy = b.y - a.y, len = hypot(dx, dy)
+            guard len > 0.5 else { continue }
+            let ux = dx / len, uy = dy / len
+            ctx.strokeLineSegments(between: [a, CGPoint(x: b.x + ux * reach, y: b.y + uy * reach)])
+        }
+        ctx.restoreGState()
     }
 
     private func drawSnapMarker(_ ctx: CGContext, _ sn: SnapResult) {
@@ -1339,7 +1400,8 @@ final class PlanCanvasView: NSView {
         if let req = ed.request {
             if req.kinds.contains(.point) { ed.feed(.point(cursorPoint)); return }
             if !req.kinds.isDisjoint(with: [.selection, .entity]) {
-                if let id = pick(at: rawWorld) { ed.feed(.selection([id])) }
+                // Selection prompts pick whole groups (PICKSTYLE); single-entity prompts pick the member itself.
+                if let id = pick(at: rawWorld) { ed.feed(.selection(req.kinds.contains(.selection) ? ed.expandGroups([id]) : [id])) }
                 else if req.kinds.contains(.selection) { windowSel = WindowSel(start: v, current: v, purpose: .request) }
             }
             return
@@ -1408,7 +1470,7 @@ final class PlanCanvasView: NSView {
             let ids = Set(model.editor.expandGroups(Array(selectIDs(in: box, crossing: w.current.x < w.start.x))))
             if shift { model.editor.selection.subtract(ids) } else { model.editor.selection.formUnion(ids) }
         case .request:
-            model.editor.feed(.selection(selectIDs(in: box, crossing: w.current.x < w.start.x)))
+            model.editor.feed(.selection(model.editor.expandGroups(selectIDs(in: box, crossing: w.current.x < w.start.x))))
         }
         overlay.needsDisplay = true
     }

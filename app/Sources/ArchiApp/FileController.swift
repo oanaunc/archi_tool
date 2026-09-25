@@ -149,6 +149,13 @@ final class FileController: EditorHost {
             model.revision &+= 1
         case .setView("zoomPrevious"):
             model.canvas?.zoomPrevious()
+        case .setView(let v) where v.hasPrefix("layout:"):
+            let name = String(v.dropFirst("layout:".count))
+            if let i = model.doc.layouts.firstIndex(where: { $0.name == name }) { model.activeLayout = i; model.mode = .sheet }
+            model.revision &+= 1
+        case .setView("model") where model.mode == .sheet:
+            model.mode = .plan
+            model.revision &+= 1
         case .setView(let v):
             model.viewDirection = v
             if model.mode == .plan && v.lowercased() != "top" && v.lowercased() != "plan" { model.mode = .model }

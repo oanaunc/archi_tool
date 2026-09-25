@@ -1,6 +1,7 @@
 // Oanarina Archi Tool — GPL-3.0-or-later
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 import ArchiCore
 
 /// Application-wide preferences (OPTIONS), persisted in UserDefaults and applied without restart.
@@ -458,6 +459,16 @@ private struct ShortcutPrefs: View {
     @State private var combo: KeyCombo?
     @State private var commandText = ""
     @State private var message = ""
+    @State private var search = ""
+
+    /// Menu shortcuts of the app; a custom shortcut with the same keys replaces them (the user is warned).
+    static let reserved: [String: String] = [
+        "cmd+n": "New", "cmd+o": "Open", "cmd+s": "Save", "shift+cmd+s": "Save As", "cmd+w": "Close", "cmd+p": "Plot", "shift+cmd+p": "Page Setup",
+        "cmd+z": "Undo", "shift+cmd+z": "Redo", "cmd+x": "Cut", "cmd+c": "Copy", "cmd+v": "Paste", "cmd+a": "Select All", "shift+cmd+a": "Deselect All",
+        "cmd+k": "Search Commands", "cmd+0": "Zoom Extents", "cmd+=": "Zoom In", "cmd+-": "Zoom Out", "opt+cmd+p": "Show/Hide Panels",
+        "opt+cmd+j": "Script Console", "cmd+,": "Settings", "shift+cmd+i": "Import", "cmd+q": "Quit", "cmd+h": "Hide", "cmd+m": "Minimize",
+        "opt+cmd+1": "2D Plan", "opt+cmd+2": "3D Model", "opt+cmd+3": "Split View", "opt+cmd+4": "Sheets", "ctrl+0": "Clean Screen",
+    ]
 
     var body: some View {
         PrefSection(title: "Assign a shortcut") {
@@ -490,8 +501,30 @@ private struct ShortcutPrefs: View {
                 }
             }
         }
+        PrefSection(title: "Commands") {
+            HStack(spacing: 6) {
+                TextField("Search commands to assign", text: $search).darkField().frame(width: 240)
+                Spacer()
+                Button("Export…") { exportShortcuts() }.buttonStyle(FlatButtonStyle(compact: true))
+                Button("Import…") { importShortcuts() }.buttonStyle(FlatButtonStyle(compact: true))
+            }
+            let q = search.trimmingCharacters(in: .whitespaces).lowercased()
+            if !q.isEmpty {
+                let byCommand = Dictionary(grouping: prefs.shortcuts, by: { $0.value.split(separator: " ").first.map(String.init)?.uppercased() ?? $0.value })
+                ForEach(CommandRegistry.shared.sorted.filter { $0.name.lowercased().contains(q) || $0.aliases.contains { $0.lowercased() == q } || $0.summary.lowercased().contains(q) }.prefix(40), id: \.name) { c in
+                    HStack(spacing: 8) {
+                        Text(c.name).font(.system(size: 11, weight: .semibold, design: .monospaced)).foregroundStyle(Theme.accent).frame(width: 130, alignment: .leading)
+                        Text(c.summary).font(Theme.fontSmall).foregroundStyle(Theme.textDim).lineLimit(1)
+                        Spacer()
+                        Text((byCommand[c.name] ?? []).compactMap { KeyCombo($0.key)?.description }.joined(separator: " ")).font(Theme.mono).foregroundStyle(Theme.text)
+                        Button("Set") { commandText = c.name; recorder.start { k in combo = k; message = "" } }.buttonStyle(FlatButtonStyle(compact: true))
+                            .help("Record keys for \(c.name), then press Assign")
+                    }
+                }
+            }
+        }
         PrefSection(title: "Built-in") {
-            Text("F3 Osnap · F7 Grid · F8 Ortho · F9 Snap · F10 Polar · F12 Dynamic input · ⌘K Command search · ⌥⌘1…4 workspaces views · See Help ▸ Keyboard Shortcuts.")
+            Text("F3 Osnap · F7 Grid · F8 Ortho · F9 Snap · F10 Polar · F11 Object snap tracking · F12 Dynamic input · ⌘K Command search · ⌥⌘1…4 workspaces views · See Help ▸ Keyboard Shortcuts.")
                 .font(Theme.fontSmall).foregroundStyle(Theme.textDim).fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -503,9 +536,33 @@ private struct ShortcutPrefs: View {
         let first = cmd.split(separator: " ").first.map(String.init) ?? cmd
         CommandRegistry.shared.ensureBuiltins()
         guard CommandRegistry.shared.lookup(first) != nil else { message = "Unknown command \(first.uppercased())."; return }
+        let previous = prefs.shortcuts[c.normalized]
         prefs.shortcuts[c.normalized] = cmd.uppercased() == cmd ? cmd : cmd.uppercased()
-        message = "\(c) now runs \(cmd.uppercased())."
+        var note = "\(c) now runs \(cmd.uppercased())."
+        if let r = ShortcutPrefs.reserved[c.normalized] { note += " It replaces the menu shortcut for \(r)." }
+        if let p = previous, p.uppercased() != cmd.uppercased() { note += " (Was \(p).)" }
+        message = note
         combo = nil; commandText = ""
+    }
+
+    private func exportShortcuts() {
+        let p = NSSavePanel()
+        p.allowedContentTypes = [.json]
+        p.nameFieldStringValue = "Archi Shortcuts.json"
+        guard p.runModal() == .OK, let u = p.url else { return }
+        let e = JSONEncoder(); e.outputFormatting = [.prettyPrinted, .sortedKeys]
+        do { try e.encode(prefs.shortcuts).write(to: u); message = "Exported \(prefs.shortcuts.count) shortcut(s)." }
+        catch { message = error.localizedDescription }
+    }
+
+    private func importShortcuts() {
+        let p = NSOpenPanel()
+        p.allowedContentTypes = [.json]
+        guard p.runModal() == .OK, let u = p.url, let d = try? Data(contentsOf: u),
+              let map = try? JSONDecoder().decode([String: String].self, from: d) else { message = "Not a shortcuts file."; return }
+        var n = 0
+        for (k, v) in map { if let c = KeyCombo(k), c.isAssignable { prefs.shortcuts[c.normalized] = v; n += 1 } }
+        message = "Imported \(n) shortcut(s)."
     }
 }
 

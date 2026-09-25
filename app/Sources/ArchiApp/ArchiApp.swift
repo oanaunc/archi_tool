@@ -66,11 +66,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// F3/F7/F8/F9/F10/F12 drafting toggles work wherever the keyboard focus is (canvas or command line).
+    /// F3/F7/F8/F9/F10/F11/F12 drafting toggles work wherever the keyboard focus is (canvas or command line).
     @MainActor static func handleFunctionKey(_ e: NSEvent) -> Bool {
         let map: [UInt16: (WritableKeyPath<DraftSettings, Bool>, String)] = [
             99: (\.objectSnap, "Osnap"), 98: (\.showGrid, "Grid"), 100: (\.ortho, "Ortho"), 101: (\.gridSnap, "Snap"),
-            109: (\.polarTracking, "Polar"), 111: (\.dynamicInput, "Dyn"),
+            109: (\.polarTracking, "Polar"), 103: (\.objectSnapTracking, "Object snap tracking"), 111: (\.dynamicInput, "Dyn"),
         ]
         let win = e.window ?? NSApp.keyWindow
         // ⌃0 toggles clean screen; ⌘K opens command search.
@@ -82,6 +82,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let on = m.editor.settings[keyPath: kp]
         if on && e.keyCode == 100 { m.editor.settings.polarTracking = false }
         if on && e.keyCode == 109 { m.editor.settings.ortho = false }
+        if !on && e.keyCode == 103 { Snap.tracker.clear() }
         m.editor.print("<\(name) \(on ? "on" : "off")>")
         m.revision &+= 1
         return true
@@ -198,6 +199,12 @@ struct ArchiCommands: Commands {
         }
     }
 
+    @ViewBuilder private func extraMenu(_ i: Int) -> some View {
+        ForEach(CommandCatalog.extraMenus[i].1, id: \.0) { name, items in
+            Section(name) { menuItems(items) }
+        }
+    }
+
     var body: some Commands {
         CommandGroup(replacing: .appInfo) {
             Button("About Oanarina Archi Tool") { AboutWindow.show() }
@@ -242,10 +249,14 @@ struct ArchiCommands: Commands {
             Button("Import…") { model?.files.importPanel() }
                 .keyboardShortcut("i", modifiers: [.command, .shift])
                 .disabled(model == nil)
+            Menu("Insert") { menuItems(CommandCatalog.importItems + CommandCatalog.referenceItems) }
+                .disabled(model == nil)
             Menu("Export") {
                 ForEach(ExportFormat.all, id: \.ext) { f in
                     Button("\(f.title)…") { model?.files.export(format: f.ext, path: nil) }
                 }
+                Divider()
+                menuItems(CommandCatalog.exportItems)
                 Divider()
                 Menu("Schedules (CSV)") {
                     ForEach(ScheduleExporter.kinds, id: \.self) { k in
@@ -312,6 +323,10 @@ struct ArchiCommands: Commands {
                 .keyboardShortcut("a", modifiers: [.command, .shift])
             Button("Quick Select…") { model?.sheet = .quickSelect }
                 .disabled(model == nil)
+            Menu("Selection Tools") { menuItems(CommandCatalog.selection) }
+                .disabled(model == nil)
+            Menu("Groups & Isolation") { menuItems(CommandCatalog.groups) }
+                .disabled(model == nil)
             Button("Match Properties") { model?.runCommand("MATCHPROP") }
                 .disabled(model == nil)
         }
@@ -350,6 +365,13 @@ struct ArchiCommands: Commands {
             Button("Project Browser") { model?.showPanels = true; model?.panelTab = .browser }
             Button("Materials Panel") { model?.showPanels = true; model?.panelTab = .materials }
             Button("History Panel") { model?.showPanels = true; model?.panelTab = .history }
+            Button("Sheet Set Manager") { model?.showPanels = true; model?.panelTab = .sheets }
+            Button("Tool Palettes") { model?.showPanels = true; model?.panelTab = .tools }
+            Menu("Float Panel") {
+                ForEach(PanelTab.allCases) { t in Button(t.rawValue) { if let m = model { FloatingPanels.float(t, model: m) } } }
+            }
+            .disabled(model == nil)
+            Button("Material Library…") { if let m = model { MaterialLibraryWindow.show(model: m) } }.disabled(model == nil)
             Button("Layer States…") { model?.sheet = .layerStates }
             Menu("Workspace") {
                 ForEach(Workspaces.all) { w in
@@ -375,7 +397,19 @@ struct ArchiCommands: Commands {
         CommandMenu("Draw") { menuItems(CommandCatalog.draw) }
         CommandMenu("Modify") { menuItems(CommandCatalog.modify) }
         CommandMenu("Annotate") { menuItems(CommandCatalog.text + CommandCatalog.dimensions) }
-        CommandMenu("Architecture") { menuItems(CommandCatalog.build + CommandCatalog.spaces) }
+        CommandMenu("Architecture") {
+            menuItems(CommandCatalog.build + CommandCatalog.spaces)
+            Divider()
+            Menu("More Building Tools") { menuItems(CommandCatalog.buildMore) }
+            Menu("Rooms & Areas") { menuItems(CommandCatalog.roomsMore) }
+            Menu("Documentation") { menuItems(CommandCatalog.documentation) }
+        }
+        CommandMenu("Model") {
+            extraMenu(0)
+            Divider()
+            Button("Node Editor…") { if let m = model { NodeEditorWindow.show(model: m) } }.disabled(model == nil)
+        }
+        CommandMenu("Analyze") { extraMenu(1) }
         CommandGroup(replacing: .help) {
             Button("Search Commands…") { model?.showCommandSearch = true }
                 .keyboardShortcut("k")
@@ -459,7 +493,7 @@ struct ShortcutsView: View {
         ("Esc", "Cancel the command · clear the selection"),
         ("Right-click", "Enter while a command runs · context menu when idle"),
         ("Tab", "Accept autocomplete"), ("↑ / ↓", "Command history / suggestions"),
-        ("F3", "Object snap on/off"), ("F7", "Grid display"), ("F8", "Ortho mode"), ("F9", "Grid snap"), ("F10", "Polar tracking"), ("F12", "Dynamic input"),
+        ("F3", "Object snap on/off"), ("F7", "Grid display"), ("F8", "Ortho mode"), ("F9", "Grid snap"), ("F10", "Polar tracking"), ("F11", "Object snap tracking"), ("F12", "Dynamic input"),
         ("Scroll wheel / pinch", "Zoom about the cursor"), ("Two-finger scroll", "Pan"), ("Middle-drag · Space+drag", "Pan"),
         ("Double middle-click", "Zoom extents"), ("⌘0", "Zoom extents"), ("⌘= / ⌘-", "Zoom in / out"),
         ("Drag left → right", "Window selection (fully inside)"), ("Drag right → left", "Crossing selection (touching)"),

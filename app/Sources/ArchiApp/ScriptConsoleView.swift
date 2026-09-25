@@ -32,6 +32,23 @@ struct ScriptConsoleView: View {
                 Menu("Examples") {
                     ForEach(ScriptExamples.all, id: \.name) { ex in Button(ex.name) { code = ex.code } }
                 }.fixedSize()
+                Menu("Snippets") {
+                    Section("Built-in") {
+                        ForEach(ScriptSnippets.builtIn, id: \.0) { name, body in Button(name) { insertSnippet(body) } }
+                    }
+                    let user = ScriptSnippets.user
+                    if !user.isEmpty {
+                        Section("My Snippets") {
+                            ForEach(user.keys.sorted(), id: \.self) { k in Button(k) { insertSnippet(user[k] ?? "") } }
+                        }
+                        Menu("Delete Snippet") {
+                            ForEach(user.keys.sorted(), id: \.self) { k in Button(k) { ScriptSnippets.remove(k); lines.append(ConsoleLine(kind: .output, text: "Snippet \"\(k)\" deleted.")) } }
+                        }
+                    }
+                    Divider()
+                    Button("Save Selection as Snippet…") { saveSnippet() }
+                        .disabled(selectedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }.fixedSize().help("Insert a code snippet at the cursor (⌃Space or Esc completes the archi API)")
                 Menu("Library") {
                     let scripts = ScriptLibrary.scripts()
                     if scripts.isEmpty { Text("The library is empty") }
@@ -101,6 +118,25 @@ struct ScriptConsoleView: View {
     }
 
     private func runSelection() { run(source: selectedText) }
+
+    private func insertSnippet(_ body: String) {
+        if let tv = ScriptTextView.active, tv.window != nil { tv.insertAtCursor(body) }
+        else { code += (code.hasSuffix("\n") || code.isEmpty ? "" : "\n") + body }
+    }
+
+    private func saveSnippet() {
+        let a = NSAlert()
+        a.messageText = "Save Snippet"
+        let tf = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 22))
+        tf.stringValue = "My snippet \(ScriptSnippets.user.count + 1)"
+        a.accessoryView = tf
+        a.addButton(withTitle: "Save"); a.addButton(withTitle: "Cancel")
+        guard a.runModal() == .alertFirstButtonReturn else { return }
+        let n = tf.stringValue.trimmingCharacters(in: .whitespaces)
+        guard !n.isEmpty else { return }
+        ScriptSnippets.save(n, selectedText)
+        lines.append(ConsoleLine(kind: .output, text: "Snippet \"\(n)\" saved."))
+    }
 
     private func saveToLibrary(name: String? = nil) {
         var n = name
@@ -234,6 +270,14 @@ private struct CodeEditor: NSViewRepresentable {
             guard let tv = n.object as? NSTextView else { return }
             parent.text = tv.string
             highlight(tv)
+            // Typing "archi." or the opening quote of archi.run(" pops up the completion list.
+            let loc = tv.selectedRange().location
+            let ns = tv.string as NSString
+            if loc >= 6, ns.substring(with: NSRange(location: loc - 6, length: 6)) == "archi." {
+                DispatchQueue.main.async { tv.complete(nil) }
+            } else if loc >= 11, ns.substring(with: NSRange(location: loc - 11, length: 11)) == "archi.run(\"" {
+                DispatchQueue.main.async { tv.complete(nil) }
+            }
         }
 
         static let keywords = try! NSRegularExpression(pattern: "\\b(const|let|var|function|return|if|else|for|while|do|of|in|new|break|continue|switch|case|default|try|catch|finally|throw|typeof|class|this|true|false|null|undefined)\\b")
@@ -261,11 +305,30 @@ private struct CodeEditor: NSViewRepresentable {
     }
 }
 
-private final class ScriptTextView: NSTextView {
+final class ScriptTextView: NSTextView {
     var onRun: (() -> Void)?
+    /// The editor that last had focus (snippets insert at its cursor).
+    static weak var active: ScriptTextView?
+    override func becomeFirstResponder() -> Bool { ScriptTextView.active = self; return super.becomeFirstResponder() }
     override func keyDown(with event: NSEvent) {
         if event.keyCode == 36 && event.modifierFlags.contains(.command) { onRun?(); return }
+        // ⌃Space or Esc: complete the archi API / command names.
+        let f = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        if (event.keyCode == 49 && f == .control) || (event.keyCode == 53 && f.isEmpty) { complete(nil); return }
         super.keyDown(with: event)
+    }
+    override func completions(forPartialWordRange charRange: NSRange, indexOfSelectedItem index: UnsafeMutablePointer<Int>) -> [String]? {
+        let ns = string as NSString
+        let prefix = ns.substring(with: charRange)
+        let before = ns.substring(to: charRange.location)
+        let list = ScriptCompletion.candidates(prefix: prefix, before: before)
+        index.pointee = list.isEmpty ? -1 : 0
+        return list
+    }
+    /// Inserts text at the cursor (snippets), keeping undo.
+    func insertAtCursor(_ text: String) {
+        window?.makeFirstResponder(self)
+        insertText(text, replacementRange: selectedRange())
     }
     override func insertTab(_ sender: Any?) { insertText("  ", replacementRange: selectedRange()) }
     override func insertNewline(_ sender: Any?) {
@@ -404,4 +467,60 @@ struct ScriptAPIReference: View {
         .frame(width: 460, height: 480)
         .background(Theme.panel)
     }
+}
+
+// MARK: - Completion and snippets
+
+/// Completion candidates for the script editor: archi API members after "archi.", command names inside
+/// archi.run("…"), otherwise JavaScript keywords, globals and archi.
+@MainActor
+enum ScriptCompletion {
+    static let apiMembers: [String] = {
+        var names = ScriptAPIReference.entries.flatMap { sig, _, _ -> [String] in
+            sig.components(separatedBy: " / ").compactMap { part in
+                let t = part.trimmingCharacters(in: .whitespaces)
+                guard t.hasPrefix("archi.") || !t.contains(".") else { return nil }
+                let name = t.hasPrefix("archi.") ? String(t.dropFirst(6)) : t
+                return name.split(separator: "(").first.map(String.init)
+            }
+        }
+        names += ["print", "run", "doc", "summary", "entities", "elements", "get", "add", "addElement", "update", "remove", "select", "selection",
+                  "setVar", "getVar", "layers", "levels", "wall", "door", "window", "opening", "slab", "room", "column", "undo", "redo", "commands"]
+        return Array(Set(names)).sorted()
+    }()
+    static let globals = ["archi", "console", "Math", "JSON", "Array", "Object", "Number", "String", "const", "let", "function", "return",
+                          "for", "while", "if", "else", "true", "false", "null", "undefined", "Math.PI", "Math.sin", "Math.cos", "Math.sqrt", "Math.round"]
+
+    static func candidates(prefix: String, before: String) -> [String] {
+        let p = prefix.lowercased()
+        if before.hasSuffix("archi.") {
+            return apiMembers.filter { p.isEmpty || $0.lowercased().hasPrefix(p) }
+        }
+        // Inside archi.run("…: complete command names (and aliases).
+        if let r = before.range(of: "archi.run(\"", options: .backwards), !before[r.upperBound...].contains("\"") {
+            CommandRegistry.shared.ensureBuiltins()
+            let all = CommandRegistry.shared.sorted.flatMap { [$0.name] + $0.aliases }
+            return Array(Set(all.filter { p.isEmpty || $0.lowercased().hasPrefix(p) })).sorted().prefix(200).map { $0 }
+        }
+        guard !p.isEmpty else { return [] }
+        return globals.filter { $0.lowercased().hasPrefix(p) && $0.lowercased() != p }
+    }
+}
+
+/// Reusable code snippets: built-in patterns plus user snippets kept in the preferences.
+enum ScriptSnippets {
+    static let key = "archi.script.snippets"
+    static let builtIn: [(String, String)] = [
+        ("Loop over selection", "for (const id of archi.selection()) {\n  const o = archi.get(id);\n  archi.print(id, o.type);\n}\n"),
+        ("Walls of a rectangle", "const [w, h] = [8000, 6000];\nconst pts = [[0,0],[w,0],[w,h],[0,h]];\nfor (let i = 0; i < 4; i++) {\n  const a = pts[i], b = pts[(i + 1) % 4];\n  archi.wall(a[0], a[1], b[0], b[1], { thickness: 250, height: 3000 });\n}\n"),
+        ("Grid of points", "for (let i = 0; i < 5; i++) {\n  for (let j = 0; j < 5; j++) {\n    archi.add({ type: \"point\", p: [i * 1000, j * 1000] });\n  }\n}\n"),
+        ("Circle array", "const n = 12, r = 3000;\nfor (let i = 0; i < n; i++) {\n  const t = 2 * Math.PI * i / n;\n  archi.add({ type: \"circle\", center: [r * Math.cos(t), r * Math.sin(t)], radius: 200 });\n}\n"),
+        ("Run commands", "archi.run(\"LAYER M A-NOTES \");\narchi.run(\"ZOOM E\");\n"),
+        ("Count by type", "const counts = {};\nfor (const e of archi.entities()) counts[e.type] = (counts[e.type] || 0) + 1;\narchi.print(JSON.stringify(counts));\n"),
+        ("Rename layers", "for (const l of archi.layers()) {\n  if (l.name.startsWith(\"OLD-\")) archi.run(`RENAME LA ${l.name} ${l.name.slice(4)} `);\n}\n"),
+        ("Try / catch", "try {\n  \n} catch (e) {\n  archi.print(\"Error:\", e.message);\n}\n"),
+    ]
+    static var user: [String: String] { UserDefaults.standard.dictionary(forKey: key) as? [String: String] ?? [:] }
+    static func save(_ name: String, _ body: String) { var u = user; u[name] = body; UserDefaults.standard.set(u, forKey: key) }
+    static func remove(_ name: String) { var u = user; u[name] = nil; UserDefaults.standard.set(u, forKey: key) }
 }

@@ -88,6 +88,11 @@ struct SheetView: View {
                 }.fixedSize()
             }
             Spacer()
+            Button { let i = layoutIndex; model.editor.transaction("View Titles") { SheetSet.refreshViewTitles(&$0, i) } } label: { Label("View Titles", systemImage: "textformat.size") }
+                .disabled(layout?.viewports.isEmpty ?? true)
+                .help("Editable view titles under every viewport (SHEETVIEWTITLES)")
+            Button { model.showPanels = true; model.panelTab = .sheets } label: { Label("Sheet Set", systemImage: "rectangle.stack") }
+                .help("Sheet set manager: numbering, order, revisions, sheet index (SHEETSET)")
             Button { model.sheet = .titleBlock(layoutIndex) } label: { Label("Title Block", systemImage: "list.bullet.rectangle.portrait") }.disabled(layout == nil)
                 .help("Edit the title block (TITLEBLOCK)")
             Button { model.sheet = .pageSetup(layoutIndex) } label: { Label("Page Setup", systemImage: "doc.badge.gearshape") }.disabled(layout == nil)

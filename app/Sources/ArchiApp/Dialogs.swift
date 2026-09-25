@@ -239,7 +239,7 @@ struct LayerStatesSheet: View {
 
 enum CommandSearch {
     /// Ranks commands for a query: exact name/alias, then name prefix (shorter first), alias prefix, name contains, summary words.
-    static func rank(_ query: String, registry: CommandRegistry, limit: Int = 12) -> [CommandDef] {
+    @MainActor static func rank(_ query: String, registry: CommandRegistry, limit: Int = 12) -> [CommandDef] {
         let q = query.trimmingCharacters(in: .whitespaces).uppercased()
         guard !q.isEmpty else { return [] }
         var scored: [(Int, CommandDef)] = []
@@ -250,11 +250,41 @@ enum CommandSearch {
             else if c.name.hasPrefix(q) { s = 10 + c.name.count }
             else if c.aliases.contains(where: { $0.hasPrefix(q) }) { s = 60 + c.name.count }
             else if c.name.contains(q) { s = 120 + c.name.count }
+            else if let t = ribbonTitles[c.name], t.contains(where: { $0.uppercased().contains(q) }) { s = 200 + c.name.count }
             else if c.summary.uppercased().contains(q) { s = 300 + c.name.count }
             else if c.category.uppercased().hasPrefix(q) { s = 500 + c.name.count }
+            else if q.count >= 3, isSubsequence(q, of: c.name) { s = 700 + c.name.count }
             if s != Int.max { scored.append((s, c)) }
         }
         return scored.sorted { ($0.0, $0.1.name) < ($1.0, $1.1.name) }.prefix(limit).map(\.1)
+    }
+
+    /// "PRSPL" finds PRESSPULL: letters in order, gaps allowed.
+    static func isSubsequence(_ q: String, of s: String) -> Bool {
+        var it = s.makeIterator()
+        for ch in q { var found = false; while let c = it.next() { if c == ch { found = true; break } }; if !found { return false } }
+        return true
+    }
+
+    /// Ribbon/menu button titles per registered command name (so "Press/Pull" or "Tag All" find their commands).
+    @MainActor static var ribbonTitles: [String: [String]] = {
+        var map: [String: [String]] = [:]
+        CommandRegistry.shared.ensureBuiltins()
+        for item in CommandCatalog.allItems { if let d = item.names.lazy.compactMap({ CommandRegistry.shared.lookup($0) }).first { map[d.name, default: []].append(item.title) } }
+        return map
+    }()
+
+    /// Where a command lives in the ribbon ("Modeling ▸ Booleans"), when it has a button.
+    @MainActor static func location(_ name: String) -> String? {
+        let groups: [(String, [CmdItem])] = [("Home ▸ Draw", CommandCatalog.draw), ("Home ▸ Modify", CommandCatalog.modify), ("Home ▸ Selection", CommandCatalog.selection),
+            ("Home ▸ Groups", CommandCatalog.groups), ("Insert ▸ Import", CommandCatalog.importItems), ("Insert ▸ Block & Reference", CommandCatalog.referenceItems),
+            ("Insert ▸ Export", CommandCatalog.exportItems), ("Annotate", CommandCatalog.text + CommandCatalog.dimensions), ("Architecture ▸ Build", CommandCatalog.build + CommandCatalog.buildMore),
+            ("Architecture ▸ Room & Area", CommandCatalog.spaces + CommandCatalog.roomsMore), ("Architecture ▸ Documentation", CommandCatalog.documentation),
+            ("Modeling ▸ Solids", CommandCatalog.solids), ("Modeling ▸ Solid Editing", CommandCatalog.modeling), ("Modeling ▸ Booleans", CommandCatalog.booleans),
+            ("Modeling ▸ 3D Operations", CommandCatalog.transform3D), ("Modeling ▸ Site", CommandCatalog.site), ("Analyze ▸ Inquiry", CommandCatalog.inquiry),
+            ("Analyze ▸ Quantities", CommandCatalog.analysis), ("Analyze ▸ Coordination", CommandCatalog.coordination)]
+        for (g, items) in groups where items.contains(where: { $0.names.contains { CommandRegistry.shared.lookup($0)?.name == name } }) { return g }
+        return nil
     }
 }
 
@@ -265,7 +295,7 @@ struct CommandSearchPalette: View {
     @FocusState private var focused: Bool
 
     var body: some View {
-        let results = CommandSearch.rank(query, registry: model.editor.registry)
+        let results = query.trimmingCharacters(in: .whitespaces).isEmpty ? recent : CommandSearch.rank(query, registry: model.editor.registry)
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass").foregroundStyle(Theme.accent)
@@ -288,6 +318,9 @@ struct CommandSearchPalette: View {
                                         .foregroundStyle(i == index ? Theme.accentText : Theme.accent).frame(width: 150, alignment: .leading)
                                     Text(c.summary).font(Theme.font).foregroundStyle(i == index ? Theme.accentText : Theme.text).lineLimit(1)
                                     Spacer()
+                                    if let loc = CommandSearch.location(c.name) {
+                                        Text(loc).font(Theme.fontSmall).foregroundStyle(i == index ? Theme.accentText.opacity(0.75) : Theme.textDim).lineLimit(1)
+                                    }
                                     Text(c.aliases.prefix(3).joined(separator: " ")).font(Theme.mono).foregroundStyle(i == index ? Theme.accentText.opacity(0.7) : Theme.textFaint)
                                 }
                                 .padding(.horizontal, 12).frame(height: 28)
@@ -311,7 +344,19 @@ struct CommandSearchPalette: View {
         .background(KeyArrowCatcher(onUp: { index = max(0, index - 1) }, onDown: { index = min(max(results.count - 1, 0), index + 1) }))
     }
 
+    /// Recently used commands (from the command line history), shown before typing.
+    private var recent: [CommandDef] {
+        var seen: Set<String> = [], out: [CommandDef] = []
+        for line in model.inputHistory.reversed() {
+            guard let w = line.split(separator: " ").first, let d = model.editor.registry.lookup(String(w)), seen.insert(d.name).inserted else { continue }
+            out.append(d)
+            if out.count >= 8 { break }
+        }
+        return out
+    }
+
     private func run(_ c: CommandDef) {
+        model.inputHistory.append(c.name)
         model.showCommandSearch = false
         model.runCommand(c.name)
     }
