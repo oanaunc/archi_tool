@@ -456,6 +456,8 @@ struct ScriptAPIReference: View {
         ("archi.undo() / archi.redo()", "Undo and redo.", "archi.undo();"),
         ("archi.commands()", "All command names with aliases and summaries.", "archi.commands().length;"),
         ("archi.evaluateGraph(graph) / archi.bakeGraph(graph)", "Evaluates a node graph object (Node Editor ▸ Graphs ▸ Export as Script) or bakes its output (one undo step).", "archi.bakeGraph(graph).length;"),
+        ("archi.on(event, fn) / archi.off(event?)", "Event hooks: selectionChanged (ids), documentChanged ({changeCount}), elementAdded (ids), elementRemoved (ids), saved (path), commandEnded (name). Edits made inside a handler do not fire the hooks again.", "archi.on(\"elementAdded\", ids => archi.print(\"added\", ids.length));"),
+        ("archi.panel({title, items})", "Script-defined panel: items {type:'number'|'field'|'toggle'|'text'|'button', name, label, value, min, max, call:'fnName' | command:'LINE'}. Buttons call the global function with the field values.", "function build(v) { archi.print(v.rise); }\narchi.panel({ title: \"Stairs\", items: [{ type: \"number\", name: \"rise\", label: \"Rise\", value: 175 }, { type: \"button\", label: \"Build\", call: \"build\" }] });"),
         ("console.warn / console.error / console.assert / console.time / console.timeEnd / console.count / console.trace", "Debug output: warnings and errors are coloured; errors show the source line and the call stack.", "console.time(\"walls\"); /* … */ console.timeEnd(\"walls\");"),
     ]
     var body: some View {
@@ -534,6 +536,8 @@ enum ScriptSnippets {
         ("Run commands", "archi.run(\"LAYER M A-NOTES \");\narchi.run(\"ZOOM E\");\n"),
         ("Count by type", "const counts = {};\nfor (const e of archi.entities()) counts[e.type] = (counts[e.type] || 0) + 1;\narchi.print(JSON.stringify(counts));\n"),
         ("Rename layers", "for (const l of archi.layers()) {\n  if (l.name.startsWith(\"OLD-\")) archi.run(`RENAME LA ${l.name} ${l.name.slice(4)} `);\n}\n"),
+        ("Event hook", "archi.on(\"selectionChanged\", function (ids) {\n  archi.print(ids.length + \" selected\");\n});\n"),
+        ("Script panel", "function offsetAll(v) {\n  archi.run(\"OFFSET \" + v.distance);\n}\narchi.panel({ title: \"Tools\", items: [\n  { type: \"number\", name: \"distance\", label: \"Distance\", value: 100, min: 1 },\n  { type: \"button\", label: \"Offset\", call: \"offsetAll\" },\n  { type: \"button\", label: \"Line\", command: \"LINE\" }\n] });\n"),
         ("Try / catch", "try {\n  \n} catch (e) {\n  archi.print(\"Error:\", e.message);\n}\n"),
     ]
     static var user: [String: String] { UserDefaults.standard.dictionary(forKey: key) as? [String: String] ?? [:] }

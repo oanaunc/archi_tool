@@ -118,7 +118,7 @@ final class DraftToolsTests: XCTestCase {
         let log = await ed.run("LNE")
         XCTAssertTrue(log.joined().contains("LINE"), log.joined())
         XCTAssertEqual(UserAliases.parsePGP("; comment\nLL,  *LINE\nSQ, RECTANG 0,0 1,1;\n"), ["LL": "LINE", "SQ": "RECTANG 0,0 1,1;"])
-        XCTAssertEqual(UserAliases.macroTokens("^C^CCIRCLE 0,0 5;"), ["CIRCLE", "0,0", "5", ""])
+        XCTAssertEqual(UserAliases.macroTokens("^C^CCIRCLE 0,0 5;"), ["CIRCLE", "0,0", "5"])
     }
 
     func testScriptRecording() async {

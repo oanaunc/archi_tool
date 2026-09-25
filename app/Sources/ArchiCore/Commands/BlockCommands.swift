@@ -96,7 +96,10 @@ enum BlockCommands {
             var pos: Vec2
             while true {
                 let s = scale ?? 1, r = rot ?? 0
-                let a = try await ed.getPoint("Specify insertion point", keywords: ["Scale", "Rotate"]) { c in [.insert(InsertGeom(block: name, position: c, scale: Vec2(s, s), rotation: r))] }
+                let (a, turn) = try await ed.getRotatablePoint("Specify insertion point", keywords: ["Scale", "Rotate"]) { c, q in
+                    [.insert(InsertGeom(block: name, position: c, scale: Vec2(s, s), rotation: r + q))] }
+                // Quarter turns given while dragging (Space / Turn90) add to the rotation (MOD-029).
+                if turn != 0 { rot = r + turn }
                 switch a {
                 case .point(let p): pos = p
                 case .keyword("Scale"):

@@ -68,6 +68,9 @@ public struct LoadedPlugin: Hashable {
     public var source: String
     public var enabled: Bool
     public var id: String { manifest.id }
+    public init(manifest: PluginManifest, directory: URL, source: String, enabled: Bool = true) {
+        self.manifest = manifest; self.directory = directory; self.source = source; self.enabled = enabled
+    }
 }
 
 public typealias PluginEvaluator = @MainActor (_ plugin: LoadedPlugin, _ function: String, _ editor: Editor) async throws -> Void
@@ -114,10 +117,13 @@ public final class PluginRegistry {
         return m
     }
 
-    /// Scans the plugin folders (one sub-folder per plugin). Replaces the loaded list.
+    /// Plugins created at run time by scripts (`archi.registerCommand`); kept across `reload()`.
+    public private(set) var scriptPlugins: [LoadedPlugin] = []
+
+    /// Scans the plugin folders (one sub-folder per plugin). Replaces the loaded list (script-registered commands stay).
     @discardableResult
     public func reload() -> [LoadedPlugin] {
-        plugins = []; problems = []
+        plugins = scriptPlugins; problems = []
         let fm = FileManager.default
         for folder in folders {
             let disabled = disabledIDs(folder)
@@ -158,20 +164,76 @@ public final class PluginRegistry {
     public func commandDefinitions() -> [CommandDef] {
         var out: [CommandDef] = []
         for p in plugins where p.enabled {
-            for c in p.manifest.commands {
-                let pid = p.id, fn = c.function
-                out.append(CommandDef(c.name, aliases: c.aliases, category: c.category, summary: c.summary.isEmpty ? "\(p.manifest.name) plugin command." : c.summary,
-                                      modifies: c.modifies) { [weak self] ed in
-                    guard let reg = self, let plug = reg.plugins.first(where: { $0.id == pid }) else { throw CommandError.invalid("The plugin is not loaded.") }
-                    guard plug.enabled else { throw CommandError.invalid("The plugin \(plug.manifest.name) is disabled (PLUGINS Enable).") }
-                    guard let run = PluginRegistry.evaluator else { throw CommandError.invalid("No script engine is available to run plugin commands.") }
-                    do { try await run(plug, fn, ed) }
-                    catch let e as CommandError { throw e }
-                    catch { throw CommandError.invalid("\(plug.manifest.name): \((error as? LocalizedError)?.errorDescription ?? "\(error)")") }
-                })
-            }
+            for c in p.manifest.commands { out.append(definition(pluginID: p.id, pluginName: p.manifest.name, command: c)) }
         }
         return out
+    }
+
+    func definition(pluginID pid: String, pluginName: String, command c: PluginCommand) -> CommandDef {
+        let fn = c.function
+        return CommandDef(c.name, aliases: c.aliases, category: c.category, summary: c.summary.isEmpty ? "\(pluginName) plugin command." : c.summary,
+                          modifies: c.modifies) { [weak self] ed in
+            guard let reg = self, let plug = reg.plugins.first(where: { $0.id == pid }) else { throw CommandError.invalid("The plugin is not loaded.") }
+            guard plug.enabled else { throw CommandError.invalid("The plugin \(plug.manifest.name) is disabled (PLUGINS Enable).") }
+            guard let run = PluginRegistry.evaluator else { throw CommandError.invalid("No script engine is available to run plugin commands.") }
+            do { try await run(plug, fn, ed) }
+            catch let e as CommandError { throw e }
+            catch { throw CommandError.invalid("\(plug.manifest.name): \((error as? LocalizedError)?.errorDescription ?? "\(error)")") }
+        }
+    }
+
+    /// Registers a command implemented by a JavaScript function of a script (SCR-006, `archi.registerCommand(name, fn, opts)`).
+    /// The script becomes a run-time plugin with id `script.<file name>`; running the command evaluates the script source
+    /// again and calls `command.function`. Built-in commands cannot be replaced; re-registering a command of the same
+    /// script updates it (new source / summary). Returns the command name.
+    @discardableResult
+    public func registerScriptCommand(_ command: PluginCommand, source: String, sourceURL: URL, into registry: CommandRegistry = .shared) throws -> String {
+        let ok = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "_-"))
+        guard !command.name.isEmpty, command.name.unicodeScalars.allSatisfy({ ok.contains($0) }) else {
+            throw DocumentIO.IOError(message: "invalid command name '\(command.name)' (letters, digits, _ and - only)")
+        }
+        guard !command.function.isEmpty else { throw DocumentIO.IOError(message: "command \(command.name) has no function") }
+        let base = sourceURL.deletingPathExtension().lastPathComponent
+        let pid = "script." + (base.isEmpty ? "untitled" : base)
+        if let existing = registry.lookup(command.name) {
+            guard let owner = commandOwner[existing.name] else { throw DocumentIO.IOError(message: "\(command.name) is a built-in command and cannot be replaced") }
+            guard owner == pid, existing.name == command.name else { throw DocumentIO.IOError(message: "\(command.name) is already defined by the plugin \(owner)") }
+        }
+        var plug: LoadedPlugin
+        if let i = scriptPlugins.firstIndex(where: { $0.id == pid }) { plug = scriptPlugins[i] } else {
+            plug = LoadedPlugin(manifest: PluginManifest(id: pid, name: base.isEmpty ? "Script" : base, description: "Commands registered by \(sourceURL.lastPathComponent).",
+                                                         main: sourceURL.lastPathComponent, commands: []),
+                                directory: sourceURL.deletingLastPathComponent(), source: source, enabled: true)
+        }
+        plug.source = source
+        plug.manifest.commands.removeAll { $0.name == command.name }
+        plug.manifest.commands.append(command)
+        if let i = scriptPlugins.firstIndex(where: { $0.id == pid }) { scriptPlugins[i] = plug } else { scriptPlugins.append(plug) }
+        if let i = plugins.firstIndex(where: { $0.id == pid }) { plugins[i] = plug } else { plugins.append(plug) }
+        var def = definition(pluginID: pid, pluginName: plug.manifest.name, command: command)
+        def.aliases = command.aliases.filter { a in registry.lookup(a).map { commandOwner[$0.name] == pid } ?? true }
+        registry.register(def)
+        commandOwner[command.name] = pid
+        return command.name
+    }
+
+    /// Removes the commands a script registered (all of them, or one by name).
+    public func unregisterScriptCommands(script sourceURL: URL, name: String? = nil, registry: CommandRegistry = .shared) {
+        let pid = "script." + sourceURL.deletingPathExtension().lastPathComponent
+        guard let i = scriptPlugins.firstIndex(where: { $0.id == pid }) else { return }
+        if let n = name?.uppercased() { scriptPlugins[i].manifest.commands.removeAll { $0.name == n } } else { scriptPlugins[i].manifest.commands = [] }
+        let keep = scriptPlugins[i]
+        if keep.manifest.commands.isEmpty { scriptPlugins.remove(at: i) }
+        plugins.removeAll { $0.id == pid }
+        if !keep.manifest.commands.isEmpty { plugins.append(keep) }
+        for (cmd, owner) in commandOwner where owner == pid && (name == nil || cmd == name?.uppercased()) { commandOwner[cmd] = nil; disabledCommand(cmd, registry) }
+    }
+
+    /// Commands that lost their owner are kept registered but refuse to run.
+    func disabledCommand(_ name: String, _ registry: CommandRegistry) {
+        registry.register(CommandDef(name, category: "Plugins", summary: "Removed script command.", modifies: false) { _ in
+            throw CommandError.invalid("\(name) was removed by its script.")
+        })
     }
 
     /// Registers the enabled plugins' commands. Names taken by other commands (built-ins or other plugins) are skipped

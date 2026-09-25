@@ -9,10 +9,12 @@ public enum BIMUpdaters {
     @discardableResult
     public static func run(_ doc: inout ArchiDocument) -> Bool {
         var changed = false
+        if GlobalParameters.updateAll(&doc) { changed = true }
         if AreaSchemes.updateAll(&doc) { changed = true }
         if AutoDimensions.updateAll(&doc) { changed = true }
         if AssociativeSolids.updateAll(&doc) { changed = true }
         if FamilyInstances.updateAll(&doc) { changed = true }
+        if SectionPlaneObjects.updateAll(&doc) { changed = true }
         return changed
     }
 
@@ -21,9 +23,10 @@ public enum BIMUpdaters {
         doc.elements.contains { $0.props["areaAuto"] == "1" }
             || doc.entities.contains { e in
                 if case .solid(let s) = e.geometry { return s.source != nil }
-                return e.props["autoDimSet"] != nil || e.props["autoDimGrids"] != nil
+                return e.props["autoDimSet"] != nil || e.props["autoDimGrids"] != nil || e.props["sectionBlock"] != nil || e.props["sectionLive"] != nil
             }
             || !doc.families.isEmpty
+            || GlobalParameters.hasBindings(doc)
     }
 
     private static let lock = NSLock()

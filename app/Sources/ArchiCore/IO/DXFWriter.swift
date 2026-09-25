@@ -709,7 +709,7 @@ public enum DXFWriter {
 
         mutating func text(_ t: TextGeom, _ s: Style, owner: String) {
             let style = DXFWriter.enc(DXFWriter.safeName(t.style.isEmpty ? "Standard" : t.style))
-            if t.content.contains("\n") || t.width > 0 || entityProps["mtext"] != nil {
+            if t.content.contains("\n") || t.width > 0 || entityProps["mtext"] != nil || entityProps[DraftRendering.textMaskProp] != nil {
                 head("MTEXT", s, owner: owner, sub: "AcDbMText")
                 pt(10, t.position); g(40, t.height)
                 if t.width > 0 { g(41, t.width) }
@@ -726,6 +726,8 @@ public enum DXFWriter {
                 g(1, cur)
                 g(7, style)
                 g(11, cos(t.rotation)); g(21, sin(t.rotation)); g(31, 0.0)
+                // Background mask (ANN-013).
+                for (code, v) in TextMaskExchange.mtextGroups(entityProps) { g(code, v) }
                 return
             }
             head("TEXT", s, owner: owner, sub: "AcDbText")

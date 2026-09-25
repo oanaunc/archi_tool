@@ -182,6 +182,7 @@ final class CommandTests: XCTestCase {
 
     func testArrays() async {
         let ed = Editor()
+        ed.doc.setVariable("ARRAYASSOCIATIVITY", "0")
         await ed.run("CIRCLE 0,0 100")
         ed.selection = [ed.doc.entities[0].id]
         await ed.run("ARRAY R 3 4 1000 1500")
@@ -189,6 +190,7 @@ final class CommandTests: XCTestCase {
         let xs = Set(ed.doc.entities.compactMap { e -> Double? in if case .circle(let c) = e.geometry { return c.center.x }; return nil })
         XCTAssertEqual(xs, [0, 1500, 3000, 4500])
         let ed2 = Editor()
+        ed2.doc.setVariable("ARRAYASSOCIATIVITY", "0")
         await ed2.run("CIRCLE 1000,0 100")
         ed2.selection = [ed2.doc.entities[0].id]
         await ed2.run("ARRAYPOLAR 0,0 4")

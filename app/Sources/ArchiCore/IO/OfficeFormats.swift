@@ -217,11 +217,43 @@ public enum HPGLExporter {
 
     /// HP-GL/2 plot of a draw list: 40 plotter units per millimetre on paper at 1:`scale` (drawing mm per paper mm),
     /// one pen per distinct colour (up to 8). Text is drawn with the plotter's LB font.
-    public static func export(_ entries: [DrawEntry], bounds: BBox2, scale: Double = 100, unitMM: Double = 1) -> String {
+    /// Roll-paper media for large-format plotters (SHT-038): the plot is sized to the drawing at scale plus margins, rotated
+    /// 90° when that makes it fit the roll width (or saves paper), and the HP-GL/2 PS command sets the page.
+    public struct RollMedia: Hashable {
+        public var width: Double          // roll width, mm
+        public var margin: Double = 10    // mm on every side
+        public init(width: Double, margin: Double = 10) { self.width = width; self.margin = margin }
+        /// Plot layout for a drawing extent on paper (mm): (rotated, length along the roll, fits across the roll).
+        public func layout(paperWidth w: Double, paperHeight h: Double) -> (rotated: Bool, length: Double, fits: Bool) {
+            let usable = width - 2 * margin
+            let normalFits = h <= usable, rotatedFits = w <= usable
+            // Prefer the orientation that fits; if both fit, the one using less roll length.
+            let rotated: Bool
+            if normalFits && rotatedFits { rotated = h > w } else { rotated = !normalFits && rotatedFits }
+            let length = (rotated ? h : w) + 2 * margin
+            return (rotated, length, rotated ? rotatedFits : normalFits)
+        }
+    }
+
+    public static func export(_ entries: [DrawEntry], bounds: BBox2, scale: Double = 100, unitMM: Double = 1, roll: RollMedia? = nil) -> String {
         let k = 40.0 * unitMM / max(scale, 1e-9)
-        func P(_ p: Vec2) -> String { "\(Int(((p.x - bounds.min.x) * k).rounded())),\(Int(((p.y - bounds.min.y) * k).rounded()))" }
+        var rotate = false, offset = Vec2(0, 0)
+        var header: [String] = []
+        if let roll {
+            let wPaper = bounds.width * unitMM / max(scale, 1e-9), hPaper = bounds.height * unitMM / max(scale, 1e-9)
+            let lay = roll.layout(paperWidth: wPaper, paperHeight: hPaper)
+            rotate = lay.rotated
+            offset = Vec2(roll.margin * 40, roll.margin * 40)
+            // PS length (along the roll), width (across) in plotter units.
+            header.append("PS\(Int((lay.length * 40).rounded())),\(Int((roll.width * 40).rounded()));")
+        }
+        func P(_ p: Vec2) -> String {
+            var x = (p.x - bounds.min.x) * k, y = (p.y - bounds.min.y) * k
+            if rotate { (x, y) = (y, bounds.width * k - x) }
+            return "\(Int((x + offset.x).rounded())),\(Int((y + offset.y).rounded()))"
+        }
         var pens: [String: Int] = [:]
-        var out = ["IN;", "SP1;"]
+        var out = ["IN;"] + header + ["SP1;"]
         var curPen = 1
         func pen(_ c: RGBA) {
             let key = c.hex
@@ -244,7 +276,7 @@ public enum HPGLExporter {
                 case .text(let t, _, let color):
                     pen(color)
                     let h = max(t.height * k / 40 / 10, 0.05) // cm
-                    let ang = t.rotation
+                    let ang = t.rotation - (rotate ? Double.pi / 2 : 0)
                     out.append("PU\(P(t.position));SI\(fmt(h * 0.7, 3)),\(fmt(h, 3));DI\(fmt(cos(ang), 4)),\(fmt(sin(ang), 4));LB\(ascii(t.content))\u{3};")
                 default: continue
                 }

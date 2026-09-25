@@ -4,7 +4,7 @@ import Foundation
 /// 3D modelling commands: solid booleans (BSP CSG), slice, interference, press/pull, loft, sweep, pipe,
 /// and site topography (surface from points/contours, contours, building pads).
 enum ModelingCommands {
-    static var all: [CommandDef] { booleans + forming + site + SolidEditCommands.all + SurfaceCommands.all + FeatureCommands.all }
+    static var all: [CommandDef] { booleans + forming + site + SolidEditCommands.all + SurfaceCommands.all + FeatureCommands.all + PrimitiveCommands.all }
 
     static func solidOf(_ doc: ArchiDocument, _ id: EntityID) -> SolidGeom? {
         if case .solid(let s)? = doc.entity(id)?.geometry { return s }
@@ -308,7 +308,11 @@ enum ModelingCommands {
             var acc = MeshAcc()
             SweepMesh.loft(rings, into: &acc)
             guard !acc.mesh.isEmpty else { throw CommandError.invalid("Loft failed.") }
-            let s = MeshTools.solid(from: MeshTools.triangles(acc.mesh), tolerance: 1e-6)
+            var s = MeshTools.solid(from: MeshTools.triangles(acc.mesh), tolerance: 1e-6)
+            // Associative loft: regenerates when a cross-section is edited (unless the sections are deleted).
+            if ed.variableDouble("DELOBJ", 0) == 0 && ed.doc.variable("SWEEPASSOC") != "0" {
+                s = AssociativeSolids.attach(s, source: SolidSource(kind: .loft, profiles: profiles.map(\.0), heights: heights), doc: ed.doc)
+            }
             ed.addEntity(.solid(s))
             if ed.variableDouble("DELOBJ", 0) != 0 { ed.doc.remove(ids: Set(profiles.map(\.0))) }
             ed.print("Loft created through \(profiles.count) sections: volume " + volumeText(CSG.volume(s), units: ed.doc.units) + ".")
@@ -360,22 +364,33 @@ enum ModelingCommands {
             let z = try await ed.getDistance("Specify path elevation", defaultValue: ed.variableDouble("ELEVATION", 0)).value ?? 0
             ed.doc.setVariable("PIPERADIUS", fmt(r))
             let path3 = pth.points.map { Vec3($0.x, $0.y, z) }
-            let n = max(16, min(64, GeometryOps.segments(radius: r, sweep: 2 * .pi)))
-            func circle(_ rr: Double) -> [Vec2] { (0..<n).map { Vec2.polar(rr, 2 * .pi * Double($0) / Double(n)) } }
-            guard var s = sweepSolid(circle(r), path: path3, closedPath: pth.closed) else { throw CommandError.invalid("Path too short.") }
-            if wall > 0 && wall < r, let inner = sweepSolid(circle(r - wall), path: path3, closedPath: pth.closed) {
-                if pth.closed { if let h = CSG.apply(.subtract, s, inner) { s = h } }
-                else {
-                    // Open pipe: extend the bore beyond both ends so the ends are open.
-                    let a = path3[0], b = path3[1], c = path3[path3.count - 1], d = path3[path3.count - 2]
-                    let ext = [a + (a - b).normalized * r] + path3 + [c + (c - d).normalized * r]
-                    if let bore = sweepSolid(circle(r - wall), path: ext, closedPath: false), let h = CSG.apply(.subtract, s, bore) { s = h }
-                }
+            guard var s = pipeSolid(path3, closed: pth.closed, radius: r, wall: wall) else { throw CommandError.invalid("Path too short.") }
+            // Associative pipe: follows its path when it is edited (SWEEPASSOC = 0 turns it off).
+            if ed.doc.variable("SWEEPASSOC") != "0" {
+                s = AssociativeSolids.attach(s, source: SolidSource(kind: .pipe, profiles: [], path: pk.id, elevation: z, heights: [r, wall]), doc: ed.doc)
             }
             ed.addEntity(.solid(s))
             ed.print("Pipe created: volume " + volumeText(CSG.volume(s), units: ed.doc.units) + ".")
         },
     ] }
+
+    /// Round pipe (optionally hollow, open ends) along a 3D path.
+    static func pipeSolid(_ path3: [Vec3], closed: Bool, radius r: Double, wall: Double) -> SolidGeom? {
+        guard r > 0, path3.count >= 2 else { return nil }
+        let n = max(16, min(64, GeometryOps.segments(radius: r, sweep: 2 * .pi)))
+        func circle(_ rr: Double) -> [Vec2] { (0..<n).map { Vec2.polar(rr, 2 * .pi * Double($0) / Double(n)) } }
+        guard var s = sweepSolid(circle(r), path: path3, closedPath: closed) else { return nil }
+        if wall > 0 && wall < r, let inner = sweepSolid(circle(r - wall), path: path3, closedPath: closed) {
+            if closed { if let h = CSG.apply(.subtract, s, inner) { s = h } }
+            else {
+                // Open pipe: extend the bore beyond both ends so the ends are open.
+                let a = path3[0], b = path3[1], c = path3[path3.count - 1], d = path3[path3.count - 2]
+                let ext = [a + (a - b).normalized * r] + path3 + [c + (c - d).normalized * r]
+                if let bore = sweepSolid(circle(r - wall), path: ext, closedPath: false), let h = CSG.apply(.subtract, s, bore) { s = h }
+            }
+        }
+        return s
+    }
 
     // MARK: Site
 

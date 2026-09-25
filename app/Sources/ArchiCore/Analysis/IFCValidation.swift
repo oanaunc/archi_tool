@@ -36,6 +36,34 @@ public enum IFCValidator {
         "IFCPROPERTYSET": 5, "IFCPROPERTYSINGLEVALUE": 4, "IFCLOCALPLACEMENT": 2, "IFCAXIS2PLACEMENT3D": 3, "IFCCARTESIANPOINT": 1,
         "IFCDIRECTION": 1, "IFCEXTRUDEDAREASOLID": 4, "IFCSHAPEREPRESENTATION": 4, "IFCPRODUCTDEFINITIONSHAPE": 3,
     ]
+    /// Attribute counts that differ in IFC4.3 (ADD2) from IFC4.
+    static let counts4x3: [String: Int] = ["IFCCARTESIANPOINTLIST3D": 2]
+    static let extra4: [String: Int] = [
+        "IFCTRIANGULATEDFACESET": 5, "IFCPOLYGONALFACESET": 4, "IFCCARTESIANPOINTLIST3D": 1, "IFCMAPCONVERSION": 8, "IFCPROJECTEDCRS": 7,
+        "IFCQUANTITYLENGTH": 5, "IFCQUANTITYAREA": 5, "IFCQUANTITYVOLUME": 5, "IFCQUANTITYCOUNT": 5, "IFCELEMENTQUANTITY": 6,
+        "IFCMATERIALLAYER": 7, "IFCMATERIALLAYERSET": 3, "IFCMATERIALLAYERSETUSAGE": 5, "IFCDOORTYPE": 13, "IFCWINDOWTYPE": 13,
+        "IFCWALLTYPE": 10, "IFCRELDEFINESBYTYPE": 6, "IFCSTYLEDITEM": 3, "IFCFURNITURE": 9, "IFCSANITARYTERMINAL": 9, "IFCLIGHTFIXTURE": 9,
+        "IFCELECTRICAPPLIANCE": 9, "IFCMEMBER": 9, "IFCPLATE": 9, "IFCTRANSPORTELEMENT": 9, "IFCGEOGRAPHICELEMENT": 9,
+        "IFCWORKSCHEDULE": 14, "IFCTASK": 13, "IFCTASKTIME": 20, "IFCRELSEQUENCE": 9, "IFCRELASSIGNSTOPROCESS": 8, "IFCRELASSIGNSTOCONTROL": 7,
+        "IFCRELDECLARES": 6, "IFCLAGTIME": 5,
+    ]
+    static let extra2x3: [String: Int] = [
+        "IFCQUANTITYLENGTH": 4, "IFCQUANTITYAREA": 4, "IFCQUANTITYVOLUME": 4, "IFCQUANTITYCOUNT": 4, "IFCELEMENTQUANTITY": 6,
+        "IFCMATERIAL": 1, "IFCMATERIALLAYER": 3, "IFCMATERIALLAYERSET": 2, "IFCMATERIALLAYERSETUSAGE": 4, "IFCDOORSTYLE": 12, "IFCWINDOWSTYLE": 12,
+        "IFCWALLTYPE": 10, "IFCRELDEFINESBYTYPE": 6, "IFCSTYLEDITEM": 3, "IFCPRESENTATIONSTYLEASSIGNMENT": 1, "IFCFLOWTERMINAL": 8,
+        "IFCFURNISHINGELEMENT": 8, "IFCCURTAINWALL": 8, "IFCRAMPFLIGHT": 8, "IFCMEMBER": 8, "IFCPLATE": 8, "IFCTRANSPORTELEMENT": 11,
+        "IFCRELDEFINESBYPROPERTIES": 6, "IFCRELASSOCIATESMATERIAL": 6, "IFCOWNERHISTORY": 8, "IFCSIUNIT": 4, "IFCGEOMETRICREPRESENTATIONCONTEXT": 6,
+    ]
+    /// Entities that do not exist in a schema (written by mistake for that schema).
+    static let notIn2x3: Set<String> = ["IFCDOORTYPE", "IFCWINDOWTYPE", "IFCTRIANGULATEDFACESET", "IFCPOLYGONALFACESET", "IFCCARTESIANPOINTLIST3D",
+                                        "IFCMAPCONVERSION", "IFCPROJECTEDCRS", "IFCFURNITURE", "IFCSANITARYTERMINAL", "IFCLIGHTFIXTURE",
+                                        "IFCELECTRICAPPLIANCE", "IFCGEOGRAPHICELEMENT", "IFCSHADINGDEVICE", "IFCCHIMNEY", "IFCINDEXEDPOLYCURVE",
+                                        "IFCSURFACESTYLEWITHTEXTURES_X", "IFCCIVILELEMENT"]
+    static let notIn4x3: Set<String> = ["IFCWALLSTANDARDCASE", "IFCSLABSTANDARDCASE", "IFCCOLUMNSTANDARDCASE", "IFCBEAMSTANDARDCASE", "IFCMEMBERSTANDARDCASE",
+                                        "IFCPLATESTANDARDCASE", "IFCDOORSTANDARDCASE", "IFCWINDOWSTANDARDCASE", "IFCOPENINGSTANDARDCASE",
+                                        "IFCWALLELEMENTEDCASE", "IFCSLABELEMENTEDCASE", "IFCDOORSTYLE", "IFCWINDOWSTYLE", "IFCPRESENTATIONSTYLEASSIGNMENT"]
+    static let notIn4: Set<String> = ["IFCPRESENTATIONSTYLEASSIGNMENT_NONE", "IFCALIGNMENTSEGMENT", "IFCFACILITY", "IFCROAD", "IFCBRIDGE", "IFCRAILWAY",
+                                      "IFCFACILITYPART", "IFCCOURSE", "IFCPAVEMENT", "IFCKERB", "IFCEARTHWORKSFILL"]
     static let spatial: Set<String> = ["IFCPROJECT", "IFCSITE", "IFCBUILDING", "IFCBUILDINGSTOREY", "IFCSPACE"]
 
     public static func validate(_ text: String) -> [IFCValidationIssue] {
@@ -48,7 +76,23 @@ public enum IFCValidator {
         let schema = f.schema.uppercased()
         if schema.isEmpty { issue(.error, "HEADER-SCHEMA", "FILE_SCHEMA is missing") }
         else if !schema.hasPrefix("IFC") { issue(.error, "HEADER-SCHEMA", "FILE_SCHEMA '\(f.schema)' is not an IFC schema") }
-        let counts = schema.hasPrefix("IFC2X3") ? counts2x3 : counts4
+        let is2x3 = schema.hasPrefix("IFC2X3"), is4x3 = schema.hasPrefix("IFC4X3")
+        var counts = is2x3 ? counts2x3 : counts4
+        counts.merge(is2x3 ? extra2x3 : extra4) { $1 }
+        if is4x3 { counts.merge(counts4x3) { $1 } }
+        // Entities outside the declared schema.
+        let foreign = is2x3 ? notIn2x3 : is4x3 ? notIn4x3 : notIn4
+        let wrong = f.entities.values.filter { foreign.contains($0.type) }.map(\.id).sorted()
+        if !wrong.isEmpty {
+            let names = Set(wrong.compactMap { f.entities[$0]?.type }).sorted().joined(separator: ", ")
+            issue(.error, "SCHEMA-ENTITY", "\(wrong.count) instance(s) of entities not defined in \(schema): \(names)", wrong)
+        }
+        // Model view definition: Reference View geometry is tessellated or swept; faceted B-reps belong to DTV / CV 2.0.
+        let header = (text.range(of: "DATA;").map { String(text[..<$0.lowerBound]) } ?? "").uppercased()
+        if header.contains("REFERENCEVIEW") {
+            let breps = f.all("IFCFACETEDBREP").map(\.id)
+            if !breps.isEmpty { issue(.warning, "MVD-REFERENCEVIEW", "\(breps.count) IfcFacetedBrep item(s) in a Reference View file (use IfcTriangulatedFaceSet)", breps) }
+        }
         // References
         var dangling: [Int] = []
         func refs(_ v: StepValue) -> [Int] {
@@ -63,7 +107,7 @@ public enum IFCValidator {
             let rs = e.args.flatMap(refs) + e.parts.values.flatMap { $0.flatMap(refs) }
             if rs.contains(where: { f.entities[$0] == nil }) { dangling.append(e.id) }
             if let n = counts[e.type], e.parts.isEmpty, e.args.count != n {
-                issue(.error, "ATTRIBUTE-COUNT", "\(e.type) has \(e.args.count) attributes, \(schema.hasPrefix("IFC2X3") ? "IFC2X3" : "IFC4") expects \(n)", [e.id])
+                issue(.error, "ATTRIBUTE-COUNT", "\(e.type) has \(e.args.count) attributes, \(is2x3 ? "IFC2X3" : is4x3 ? "IFC4X3" : "IFC4") expects \(n)", [e.id])
             }
         }
         if !dangling.isEmpty { issue(.error, "DANGLING-REFERENCE", "\(dangling.count) instance(s) reference undefined instances", dangling) }

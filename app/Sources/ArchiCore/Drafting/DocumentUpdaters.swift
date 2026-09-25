@@ -17,6 +17,7 @@ public enum DocumentUpdaters {
         if DimAssociation.updateAll(&doc) { changed = true }
         if DimOverrides.updateAll(&doc) { changed = true }
         if DimBreaks.updateAll(&doc) { changed = true }
+        if AssocArray.updateAll(&doc) { changed = true }
         return changed
     }
 }

@@ -67,6 +67,7 @@ public enum ComponentLibrary {
         ComponentFamily("panel", "Electrical Panel", "Electrical", Vec3(450, 150, 600), baseOffset: 1300, aliases: ["DistributionBoard", "Panelboard"]),
         ComponentFamily("smoke-detector", "Smoke Detector", "Electrical", Vec3(120, 120, 50), baseOffset: 2650, aliases: ["SmokeDetector"]),
         ComponentFamily("elevator", "Elevator Car", "Vertical Circulation", Vec3(1100, 1400, 2300), aliases: ["Lift", "Elevator", "LiftCar"]),
+        ComponentFamily("escalator", "Escalator", "Vertical Circulation", Vec3(1600, 12_600, 4000), aliases: ["Escalator", "MovingStair"]),
         ComponentFamily("truss-pratt", "Pratt Truss", "Structural", Vec3(12000, 100, 1500), baseOffset: 3000, aliases: ["Truss", "PrattTruss"]),
         ComponentFamily("truss-howe", "Howe Truss", "Structural", Vec3(12000, 100, 1500), baseOffset: 3000, aliases: ["HoweTruss"]),
         ComponentFamily("truss-warren", "Warren Truss", "Structural", Vec3(12000, 100, 1500), baseOffset: 3000, aliases: ["WarrenTruss"]),
@@ -190,6 +191,18 @@ public enum ComponentLibrary {
             p.box("Aluminium", -dw, -2, y0, y0 + 25, 60, min(2100, H - 80)); p.box("Aluminium", 2, dw, y0, y0 + 25, 60, min(2100, H - 80))
             p.box("Steel", x0, -dw, y0, y0 + 80, 60, H - 60); p.box("Steel", dw, x1, y0, y0 + 80, 60, H - 60)
             p.box("Glass", x0 + t, x0 + t + 6, y0 + 200, y1 - 200, 900, H - 300)
+        case "escalator":
+            let e = Escalators.Section(width: W, length: D, rise: H)
+            // Step band with a sawtooth top between the balustrades, side decks, glass balustrades and handrails.
+            p.plate("Aluminium", e.sawtooth() + e.underside(to: e.y0 + e.landing), origin: .zero, ax: Vec2(0, 1), ay: Vec2(1, 0), -e.stepWidth / 2, e.stepWidth / 2)
+            p.box("Aluminium", -e.stepWidth / 2, e.stepWidth / 2, e.y0, e.y0 + e.landing, 0, 20)   // lower landing plate
+            for sgn in [-1.0, 1.0] {
+                let inner = sgn * e.stepWidth / 2, outer = sgn * W / 2
+                p.plate("Steel", e.stepLine(dz: 100) + e.underside(to: e.y0), origin: .zero, ax: Vec2(0, 1), ay: Vec2(1, 0), min(inner, outer), max(inner, outer))
+                let gx = sgn * (e.stepWidth / 2 + 60)
+                p.plate("Glass", e.stepLine(dz: 100) + e.stepLine(dz: 950).reversed(), origin: .zero, ax: Vec2(0, 1), ay: Vec2(1, 0), gx - 8, gx + 8)
+                p.plate("Rubber", e.stepLine(dz: 950) + e.stepLine(dz: 1000).reversed(), origin: .zero, ax: Vec2(0, 1), ay: Vec2(1, 0), gx - 40, gx + 40)
+            }
         case "bed-single", "bed-double":
             let leg = min(100, H * 0.2), frameTop = H * 0.6
             for (cx, cy) in [(x0 + 60, y0 + 60), (x1 - 60, y0 + 60), (x0 + 60, y1 - 60), (x1 - 60, y1 - 60)] { p.cyl("Wood", Vec2(cx, cy), 25, 0, leg) }
@@ -441,6 +454,25 @@ public enum ComponentLibrary {
             add([Vec2(x0, y0), Vec2(x1, y1)]); add([Vec2(x0, y1), Vec2(x1, y0)])
             let dw = min(W * 0.8, 900.0) / 2
             add([Vec2(-dw, y0 - 60), Vec2(dw, y0 - 60)], outline: true)
+        case "escalator":
+            // Outline, balustrades, treads, travel arrow; the part above the plan cut plane is dashed beyond a cut line.
+            let e = Escalators.Section(width: W, length: D, rise: max(s.z, 1))
+            let cutY = e.y(atHeight: Escalators.planCutHeight)
+            rect(x0, x1, y0, y1, outline: true)
+            let hw = e.stepWidth / 2
+            for x in [-hw - 60, hw + 60] {
+                add([Vec2(x, y0), Vec2(x, cutY)], outline: true)
+                if cutY < y1 { add([Vec2(x, cutY), Vec2(x, y1)], hidden: true) }
+            }
+            for y in e.treadLines() { add([Vec2(-hw, y), Vec2(hw, y)], hidden: y > cutY) }
+            // Cut line: double zig-zag across the flight at the cut position.
+            let z = min(150.0, hw / 3)
+            add([Vec2(x0, cutY - z), Vec2(-z, cutY - z), Vec2(0, cutY + z), Vec2(z, cutY - z), Vec2(x1, cutY - z)], outline: true)
+            // Travel arrow (up direction) from the lower landing to the cut.
+            let a0 = y0 + e.landing / 2, a1 = max(a0 + 1, cutY - 2 * z)
+            add([Vec2(0, a0), Vec2(0, a1)])
+            add([Vec2(-z, a1 - 2 * z), Vec2(0, a1), Vec2(z, a1 - 2 * z)])
+            add([Vec2(-hw / 2, y0 + 60), Vec2(hw / 2, y0 + 60)], outline: true)   // comb plate
         case "bed-single", "bed-double":
             rect(x0, x1, y0, y1, outline: true)
             rect(x0, x1, y1 - 60, y1)

@@ -46,15 +46,15 @@ struct ToolPalettePanel: View {
                             Text("No blocks in this drawing. Create one with BLOCK or insert a drawing with INSERT.").font(Theme.fontSmall).foregroundStyle(Theme.textDim)
                         }
                         ForEach(names, id: \.self) { n in
-                            ShapeTile(title: n, shapes: BlockThumb.shapes(n, doc: model.doc), help: "Click to insert \(n) · drag onto the drawing to place it") {
-                                model.runCommand("INSERT \(n)")
+                            ShapeTile(title: n, shapes: BlockThumb.shapes(n, doc: model.doc), help: "Click, then click in the drawing to place \(n) (Space rotates 90°) · or drag onto the drawing") {
+                                model.startPlacement(ToolDrop.blockPrefix + n)
                             }
                             .onDrag { NSItemProvider(object: (ToolDrop.blockPrefix + n) as NSString) }
                         }
                     case "Components":
                         ForEach(ComponentLibrary.families, id: \.id) { f in
-                            ShapeTile(title: f.name, shapes: BlockThumb.shapes(f), help: "\(f.category) · \(fmt(f.size.x, 0))×\(fmt(f.size.y, 0))×\(fmt(f.size.z, 0)) — click to place, or drag onto the drawing") {
-                                if let r = model.command(["COMPONENT"]) { model.runCommand("\(r) \(f.name.replacingOccurrences(of: " ", with: ""))") }
+                            ShapeTile(title: f.name, shapes: BlockThumb.shapes(f), help: "\(f.category) · \(fmt(f.size.x, 0))×\(fmt(f.size.y, 0))×\(fmt(f.size.z, 0)) — click, then click in the drawing to place (Space rotates 90°), or drag onto the drawing") {
+                                model.startPlacement(ToolDrop.componentPrefix + f.id)
                             }
                             .onDrag { NSItemProvider(object: (ToolDrop.componentPrefix + f.id) as NSString) }
                         }
@@ -173,7 +173,7 @@ enum ToolDrop {
 
     /// Places a dropped item at a world point. One undo step per drop. Returns false when nothing happened.
     @discardableResult
-    static func drop(_ s: String, at p: Vec2, onto hit: EntityID?, model: AppModel) -> Bool {
+    static func drop(_ s: String, at p: Vec2, onto hit: EntityID?, model: AppModel, rotation: Double = 0) -> Bool {
         if s.hasPrefix(libraryBlockPrefix) {
             guard let item = BlockLibraryStore.item(fromKey: String(s.dropFirst(libraryBlockPrefix.count))) else { return false }
             return BlockLibraryStore.shared.insert(item, at: p, model: model) != nil
@@ -182,7 +182,7 @@ enum ToolDrop {
             let name = String(s.dropFirst(blockPrefix.count))
             guard model.doc.blocks[name] != nil else { return false }
             var id: EntityID = 0
-            model.editor.transaction("Insert \(name)") { id = $0.add(.insert(InsertGeom(block: name, position: p)), layer: $0.currentLayer) }
+            model.editor.transaction("Insert \(name)") { id = $0.add(.insert(InsertGeom(block: name, position: p, rotation: rotation)), layer: $0.currentLayer) }
             model.editor.selection = [id]
             model.editor.print("Inserted block \(name) at \(fmt(p.x, 2)),\(fmt(p.y, 2)).")
             return true
@@ -192,7 +192,7 @@ enum ToolDrop {
             var id: EntityID = 0
             model.editor.transaction("Place \(f.name)") { d in
                 ComponentLibrary.ensureMaterials(&d)
-                id = d.addElement(.component(ComponentGeom(category: f.category, position: p, rotation: 0, size: f.size, baseOffset: f.baseOffset, family: f.id)), name: f.name)
+                id = d.addElement(.component(ComponentGeom(category: f.category, position: p, rotation: rotation, size: f.size, baseOffset: f.baseOffset, family: f.id)), name: f.name)
             }
             model.editor.selection = [id]
             model.editor.print("Placed \(f.name.lowercased()) at \(fmt(p.x, 2)),\(fmt(p.y, 2)).")

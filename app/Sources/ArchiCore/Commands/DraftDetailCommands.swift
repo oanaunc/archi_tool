@@ -372,9 +372,25 @@ enum DraftDetailCommands {
     }
 
     static var txtexp: CommandDef {
-        CommandDef("TXTEXP", aliases: ["TEXTEXPLODE", "EXPLODETEXT"], category: "Modify", summary: "Explodes text into single-letter text objects.") { ed in
+        CommandDef("TXTEXP", aliases: ["TEXTEXPLODE", "EXPLODETEXT"], category: "Modify", summary: "Explodes text into line geometry drawn with the built-in stroke font (or [Letters]: single-letter text objects).") { ed in
             let ids = try await textSelection(ed)
+            let mode = try await ed.getKeyword("Explode to [Geometry/Letters]", ["Geometry", "Letters"], defaultValue: "Geometry") ?? "Geometry"
             var n = 0
+            if mode == "Geometry" {
+                for id in ids {
+                    guard case .text(let t)? = ed.doc.entity(id)?.geometry else { continue }
+                    let gs = StrokeFont.geometry(t, doc: ed.doc)
+                    for nid in ed.replaceEntity(id, with: gs) {
+                        guard let i = ed.doc.entityIndex(nid) else { continue }
+                        for k in ["field", DraftRendering.textMaskProp, DraftRendering.maskColorProp, DraftRendering.textFrameProp, "mtext", "font", "bold", "italic", "underline", "attdef", "prompt", "default"] {
+                            ed.doc.entities[i].props[k] = nil
+                        }
+                    }
+                    n += gs.count
+                }
+                ed.print("\(n) stroke(s) created.")
+                return
+            }
             for id in ids {
                 guard case .text(let t)? = ed.doc.entity(id)?.geometry else { continue }
                 let letters = TextExplode.letters(t)
@@ -567,10 +583,22 @@ extension DraftDetailCommands {
     }
 
     static var ellipseQuad: CommandDef {
-        CommandDef("ELLIPSEQUAD", aliases: ["ELQ", "ELLIPSEPARALLELOGRAM", "ISOCIRCLE"], category: "Draw", summary: "Draws the ellipse inscribed in a parallelogram (e.g. an isometric circle): three corners, or a 4-sided closed polyline.") { ed in
-            let a = try await ed.getPoint("Specify first corner or [Object]", keywords: ["Object"])
+        CommandDef("ELLIPSEQUAD", aliases: ["ELQ", "ELLIPSEPARALLELOGRAM", "ISOCIRCLE", "ELLIPSE4"], category: "Draw", summary: "Draws the largest ellipse inscribed in a quadrilateral (tangent to its four sides): four corners, a 4-sided closed polyline, or four lines.") { ed in
+            let a = try await ed.getPoint("Specify first corner or [Object/Lines]", keywords: ["Object", "Lines"])
             var q: [Vec2]
+            func fit(_ q: [Vec2]) -> EllipseGeom? {
+                InscribedEllipse.inParallelogram(q[0], q[1], q[2], q[3]) ?? InscribedEllipse.inQuadrilateral(q[0], q[1], q[2], q[3])
+            }
             switch a {
+            case .keyword("Lines"):
+                var ls: [(Vec2, Vec2)] = []
+                for k in ["first", "second", "third", "fourth"] {
+                    guard case .pick(let pk) = try await ed.pickObject("Select \(k) line (in order around the quadrilateral)") else { return }
+                    guard case .line(let l)? = ed.doc.entity(pk.id)?.geometry else { throw CommandError.invalid("Select lines.") }
+                    ls.append((l.a, l.b))
+                }
+                guard let e = InscribedEllipse.tangentToFourLines(ls) else { throw CommandError.invalid("The four lines must bound a convex quadrilateral.") }
+                ed.addEntity(.ellipse(e)); return
             case .keyword:
                 guard case .pick(let pk) = try await ed.pickObject("Select a closed 4-sided polyline"), case .polyline(let p)? = ed.doc.entity(pk.id)?.geometry,
                       p.vertices.count == 4 else { throw CommandError.invalid("Select a closed polyline with four vertices.") }
@@ -579,10 +607,12 @@ extension DraftDetailCommands {
                 let p1 = try await ed.requirePoint("Specify second corner (adjacent)", base: p0)
                 let p3 = try await ed.requirePoint("Specify third corner (adjacent to the first)", base: p0) { c in
                     InscribedEllipse.inParallelogram(p0, p1, p1 + (c - p0), c).map { [.ellipse($0), .polyline(PolylineGeom(points: [p0, p1, p1 + (c - p0), c], closed: true))] } ?? [] }
-                q = [p0, p1, p1 + (p3 - p0), p3]
+                let p2 = try await ed.getPoint("Specify opposite corner or <parallelogram>", base: p1) { c in
+                    fit([p0, p1, c, p3]).map { [.ellipse($0), .polyline(PolylineGeom(points: [p0, p1, c, p3], closed: true))] } ?? [] }
+                q = [p0, p1, p2.point ?? p1 + (p3 - p0), p3]
             default: return
             }
-            guard let e = InscribedEllipse.inParallelogram(q[0], q[1], q[2], q[3]) else { throw CommandError.invalid("The four corners must form a parallelogram.") }
+            guard let e = fit(q) else { throw CommandError.invalid("The four corners must form a convex quadrilateral.") }
             ed.addEntity(.ellipse(e))
         }
     }

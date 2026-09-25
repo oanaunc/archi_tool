@@ -32,6 +32,7 @@ public enum BuiltinCommands {
         out += DraftAnnotationCommands.all
         out += DraftAidCommands.all
         out += DraftDetailCommands.all
+        out += DraftFeatureCommands.all
         return out
     }
 

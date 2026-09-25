@@ -519,7 +519,7 @@ enum RoofShapes {
         eave = ((eave % b.count) + b.count) % b.count
         var fp = g.overhang > 0 ? RG.offsetPolygon(b, g.overhang) : b
         let k = tan(rad(max(0, min(g.pitch, 89))))
-        if g.kind == .hip && !RG.isConvex(b) {
+        if g.kind == .hip && g.profile == nil && !RG.isConvex(b) {
             // Non-convex footprint: straight-skeleton faces of the overhang outline, heights measured from the eave line.
             var out: [RoofFace] = []
             var f = RG.dedupe(fp, closed: true)
@@ -538,7 +538,10 @@ enum RoofShapes {
             let n = (c - a).normalized.perp
             return RoofFace(poly: [], grad: n * k, c: -k * a.dot(n))
         }
-        var fns: [RoofFace]
+        var fns: [RoofFace] = []
+        if let pr = g.profile, let special = profileFaces(g, pr, b: RG.isConvex(b) ? b : RG.convexHull(b), eave: eave, k: k) {
+            fns = special
+        } else {
         switch g.kind {
         case .flat: return (b, fp, [RoofFace(poly: fp, grad: .zero, c: 0)])
         case .shed: fns = [edgeFn(eave)]
@@ -547,6 +550,7 @@ enum RoofShapes {
             let depth = b.map { e.height($0) }.max() ?? 0
             fns = [e, RoofFace(poly: [], grad: -e.grad, c: depth - e.c)]
         case .hip: fns = (0..<b.count).map(edgeFn)
+        }
         }
         var out: [RoofFace] = []
         for (i, f) in fns.enumerated() {
@@ -560,6 +564,66 @@ enum RoofShapes {
             if poly.count >= 3, abs(GeometryOps.signedArea(poly)) > 1e-6 { out.append(RoofFace(poly: poly, grad: f.grad, c: f.c)) }
         }
         return (b, fp, out)
+    }
+
+    /// Planes whose lower envelope is the special roof form (heights above the eave line).
+    static func profileFaces(_ g: RoofGeom, _ pr: RoofProfile, b: [Vec2], eave: Int, k: Double) -> [RoofFace]? {
+        guard b.count >= 3 else { return nil }
+        let k2 = tan(rad(max(0, min(pr.upperPitch, 89))))
+        let br = max(pr.breakDistance, 0)
+        func inward(_ i: Int) -> (n: Vec2, a: Vec2) { let a = b[i], c = b[(i + 1) % b.count]; return ((c - a).normalized.perp, a) }
+        // Two-pitch eave: steep k up to the break, then k2 (concave, so the minimum of the two planes).
+        func twoPitch(_ i: Int) -> [RoofFace] {
+            let (n, a) = inward(i)
+            return [RoofFace(poly: [], grad: n * k, c: -k * a.dot(n)), RoofFace(poly: [], grad: n * k2, c: -k2 * a.dot(n) + (k - k2) * br)]
+        }
+        switch pr.form {
+        case .mansard:
+            return (0..<b.count).flatMap(twoPitch)
+        case .gambrel:
+            let (n, a) = inward(eave)
+            let depth = b.map { n.dot($0 - a) }.max() ?? 0
+            guard depth > 1e-9 else { return nil }
+            // Opposite side mirrors the eave side about the ridge.
+            let mirrored = [RoofFace(poly: [], grad: -n * k, c: k * (a.dot(n) + depth)),
+                            RoofFace(poly: [], grad: -n * k2, c: k2 * (a.dot(n) + depth) + (k - k2) * br)]
+            return twoPitch(eave) + mirrored
+        case .dome:
+            let c = GeometryOps.centroid(b)
+            let R = b.map { $0.distance(to: c) }.max() ?? 0
+            guard R > 1e-9 else { return nil }
+            let H = min(R * max(k, 1e-3), R)
+            let rho = (R * R + H * H) / (2 * H), zc = H - rho
+            func z(_ r: Double) -> Double { zc + (rho * rho - r * r).squareRoot() }
+            var out = [RoofFace(poly: [], grad: .zero, c: H)]
+            let rings = 8, seg = 32
+            for j in 1...rings {
+                let r = R * min(Double(j) / Double(rings), 0.985)
+                for s in 0..<seg {
+                    let q = c + Vec2.polar(r, 2 * .pi * (Double(s) + (j % 2 == 0 ? 0.5 : 0)) / Double(seg))
+                    let gr = (q - c) * (-1 / (rho * rho - r * r).squareRoot())
+                    out.append(RoofFace(poly: [], grad: gr, c: z(r) - gr.dot(q)))
+                }
+            }
+            return out
+        case .barrel:
+            let (n, a) = inward(eave)
+            let s = b.map { n.dot($0 - a) }
+            let W = ((s.max() ?? 0) - (s.min() ?? 0)) / 2
+            guard W > 1e-9 else { return nil }
+            let H = min(W * max(k, 1e-3), W)
+            let rho = (W * W + H * H) / (2 * H), zc = H - rho, mid = (s.min() ?? 0) + W
+            var out: [RoofFace] = []
+            let steps = 24
+            for i in 0...steps {
+                let t = -W * 0.985 + 2 * W * 0.985 * Double(i) / Double(steps)
+                let slope = -t / (rho * rho - t * t).squareRoot()
+                let zt = zc + (rho * rho - t * t).squareRoot()
+                // Height = zt + slope · (n·(p − a) − mid − t).
+                out.append(RoofFace(poly: [], grad: n * slope, c: zt - slope * (n.dot(a) + mid + t)))
+            }
+            return out
+        }
     }
 
     /// Whether segment a–b lies on the polygon outline.

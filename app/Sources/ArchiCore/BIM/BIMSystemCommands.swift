@@ -162,7 +162,7 @@ enum BIMSystemCommands {
 
     static var family: CommandDef {
         CommandDef("FAMILY", aliases: ["FAMILYEDIT", "FAMILIES", "FAM"], category: "Architecture", summary: "Family editor: new family, parameters and formulas, forms (box, cylinder, extrusion, sweep, revolve, void, nested, arrays), types, place instances, set instance values, flex, door/window builder, assign to openings.") { ed in
-            let k = try await ed.getKeyword("Family option", ["New", "Param", "Form", "Profile", "Type", "Place", "Set", "Flex", "Builder", "Assign", "List", "Delete"], defaultValue: "List") ?? "List"
+            let k = try await ed.getKeyword("Family option", ["New", "Param", "Form", "Profile", "Type", "Place", "Set", "Flex", "Builder", "Assign", "List", "Delete", "Ref", "Purge"], defaultValue: "List") ?? "List"
             @MainActor func pickFamily(_ msg: String) async throws -> Int {
                 let names = ed.doc.families.map(\.name)
                 guard !names.isEmpty else { throw CommandError.invalid("No families in this document (FAMILY New or Builder).") }
@@ -182,10 +182,11 @@ enum BIMSystemCommands {
             case "Param":
                 let i = try await pickFamily("Family")
                 guard let pn = try await ed.getWord("Parameter name"), !pn.isEmpty, pn.first!.isLetter else { throw CommandError.invalid("Names start with a letter.") }
-                let kind = try await ed.getKeyword("Type", ["Length", "Angle", "Number", "Integer", "YesNo", "Text", "Material"], defaultValue: "Length") ?? "Length"
-                let pk = FamilyParameterKind(rawValue: kind == "YesNo" ? "yesNo" : kind.lowercased()) ?? .length
+                let kind = try await ed.getKeyword("Type", ["Length", "Angle", "Number", "Integer", "YesNo", "Text", "Material", "Area", "VOlume", "Url", "FamilyType"], defaultValue: "Length") ?? "Length"
+                let pk: FamilyParameterKind = kind == "YesNo" ? .yesNo : kind == "FamilyType" ? .familyType : (FamilyParameterKind(rawValue: kind.lowercased()) ?? .length)
                 let v = try await ed.getString("Value or =formula", defaultValue: ed.doc.families[i].parameter(pn)?.value ?? "0") ?? "0"
-                var p = FamilyParameter(pn, pk, value: v.hasPrefix("=") ? "0" : v, formula: v.hasPrefix("=") ? String(v.dropFirst()) : nil)
+                if let msg = pk.validate(v, families: ed.doc.families) { throw CommandError.invalid("\(pn): \(msg).") }
+                var p = FamilyParameter(pn, pk, value: v.hasPrefix("=") && pk.isNumeric ? "0" : v, formula: v.hasPrefix("=") && pk.isNumeric ? String(v.dropFirst()) : nil)
                 p.instance = try await ed.getYesNo("Instance parameter?", defaultValue: true)
                 if let j = ed.doc.families[i].parameters.firstIndex(where: { $0.name.caseInsensitiveCompare(pn) == .orderedSame }) { ed.doc.families[i].parameters[j] = p }
                 else { ed.doc.families[i].parameters.append(p) }
@@ -193,8 +194,8 @@ enum BIMSystemCommands {
                 ed.print("\(pn) = \(r.values[pn.lowercased()].map { fmt($0, 3) } ?? r.text[pn.lowercased()] ?? v)" + (r.errors.isEmpty ? "" : "  (" + r.errors.joined(separator: "; ") + ")"))
             case "Form":
                 let i = try await pickFamily("Family")
-                let kind = try await ed.getKeyword("Form", ["Box", "Cylinder", "Extrusion", "Sweep", "Revolve", "Nested"], defaultValue: "Box") ?? "Box"
-                var f = FamilyForm(FamilyFormKind(rawValue: kind.lowercased()) ?? .box, name: "\(kind) \(ed.doc.families[i].forms.count + 1)")
+                let kind = try await ed.getKeyword("Form", ["Box", "Cylinder", "Extrusion", "Sweep", "Revolve", "Nested", "BLend", "SweptBlend"], defaultValue: "Box") ?? "Box"
+                var f = FamilyForm(kind == "SweptBlend" ? .sweptBlend : (FamilyFormKind(rawValue: kind.lowercased()) ?? .box), name: "\(kind) \(ed.doc.families[i].forms.count + 1)")
                 f.x = try await ed.getString("X (expression)", defaultValue: "0") ?? "0"
                 f.y = try await ed.getString("Y (expression)", defaultValue: "0") ?? "0"
                 f.z = try await ed.getString("Z (expression)", defaultValue: "0") ?? "0"
@@ -220,8 +221,28 @@ enum BIMSystemCommands {
                             f.path.append(pt.split(separator: ";").map { $0.trimmingCharacters(in: .whitespaces) })
                         }
                     }
+                case .blend, .sweptBlend:
+                    let first = ed.doc.families[i].profiles.first?.name ?? "rect"
+                    f.profile = try await ed.getWord(f.kind == .blend ? "Base profile name" : "Start profile name", defaultValue: first)
+                    f.profile2 = try await ed.getWord(f.kind == .blend ? "Top profile name" : "End profile name", defaultValue: f.profile)
+                    if f.kind == .blend {
+                        f.dims["height"] = try await ed.getString("Blend height (expression)", defaultValue: "Height") ?? "Height"
+                        f.dims["width"] = try await ed.getString("Library base width (expression)", defaultValue: "Width") ?? "Width"
+                        f.dims["depth"] = try await ed.getString("Library base depth (expression)", defaultValue: "Depth") ?? "Depth"
+                        f.dims["width2"] = try await ed.getString("Library top width (expression)", defaultValue: f.dims["width"]) ?? f.dims["width"]
+                        f.dims["depth2"] = try await ed.getString("Library top depth (expression)", defaultValue: f.dims["depth"]) ?? f.dims["depth"]
+                    } else {
+                        f.dims["width"] = try await ed.getString("Start profile width (expression)", defaultValue: "50") ?? "50"
+                        f.dims["height"] = try await ed.getString("Start profile height (expression)", defaultValue: "50") ?? "50"
+                        f.dims["width2"] = try await ed.getString("End profile width (expression)", defaultValue: f.dims["width"]) ?? f.dims["width"]
+                        f.dims["height2"] = try await ed.getString("End profile height (expression)", defaultValue: f.dims["height"]) ?? f.dims["height"]
+                        while true {
+                            guard let pt = try await ed.getString("Path point \(f.path.count + 1) as x;y;z expressions (Enter when done)"), !pt.isEmpty else { break }
+                            f.path.append(pt.split(separator: ";").map { $0.trimmingCharacters(in: .whitespaces) })
+                        }
+                    }
                 case .nested:
-                    f.family = try await ed.getWord("Nested family name")
+                    f.family = try await ed.getWord("Nested family name (or =FamilyTypeParam)")
                     while true {
                         guard let b = try await ed.getString("Binding Param=expression (Enter when done)"), let eq = b.firstIndex(of: "=") else { break }
                         f.dims[String(b[..<eq]).trimmingCharacters(in: .whitespaces)] = String(b[b.index(after: eq)...]).trimmingCharacters(in: .whitespaces)
@@ -336,6 +357,20 @@ enum BIMSystemCommands {
                 for id in ids { if let j = ed.doc.elementIndex(id) { ed.doc.elements[j].props["family"] = ed.doc.families[i].name } }
                 ed.selection = []
                 ed.print("\(ed.doc.families[i].name) assigned to \(ids.count) opening(s); they flex with the opening size.")
+            case "Ref":
+                let i = try await pickFamily("Family")
+                guard let rn = try await ed.getWord("Reference plane name"), !rn.isEmpty, rn.first!.isLetter else { throw CommandError.invalid("Names start with a letter.") }
+                guard ed.doc.families[i].parameter(rn) == nil else { throw CommandError.invalid("\(rn) is already a parameter name.") }
+                let ax = try await ed.getKeyword("Perpendicular to axis", ["X", "Y", "Z"], defaultValue: "X") ?? "X"
+                let off = try await ed.getString("Offset (expression)", defaultValue: "0") ?? "0"
+                ed.doc.families[i].referencePlanes.removeAll { $0.name.caseInsensitiveCompare(rn) == .orderedSame }
+                ed.doc.families[i].referencePlanes.append(FamilyReferencePlane(rn, axis: ax.lowercased(), offset: off))
+                let r = FamilyEngine.evaluate(ed.doc.families[i], doc: ed.doc)
+                ed.print("Reference plane \(rn) (\(ax) = \(r.planes[rn].map { fmt($0.offset) } ?? "?")); use its name in form expressions." + (r.errors.isEmpty ? "" : " Warnings: " + r.errors.joined(separator: "; ")))
+            case "Purge":
+                let (fams, types) = FamilyPurge.unused(ed.doc)
+                FamilyPurge.apply(&ed.doc, families: fams, types: types)
+                ed.print(fams.isEmpty && types.isEmpty ? "Nothing to purge." : "Purged \(fams.count) family(ies)" + (fams.isEmpty ? "" : " (" + fams.joined(separator: ", ") + ")") + " and \(types.count) type(s).")
             case "Delete":
                 let i = try await pickFamily("Family")
                 let n = ed.doc.families[i].name

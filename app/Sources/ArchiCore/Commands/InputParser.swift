@@ -9,7 +9,9 @@ public enum InputParser {
     public static var context = ParseContext()
 
     /// Point-entry modifiers accepted wherever a point is requested (object snap overrides are handled by the UI).
-    public static let pointModifiers = ["FROM", "FRO", "M2P", "MTP", "TT", ".X", ".Y", ".XY", ".XZ", ".YZ", ".Z"]
+    /// INTOF: intersection of two picked objects (PRC-017); RH / RV: the next point restricted horizontally / vertically
+    /// from the last point (PRC-021).
+    public static let pointModifiers = ["FROM", "FRO", "M2P", "MTP", "TT", ".X", ".Y", ".XY", ".XZ", ".YZ", ".Z", "INTOF", "RH", "RV"]
     public static func pointModifier(_ token: String) -> String? {
         let t = token.uppercased().trimmingCharacters(in: CharacterSet(charactersIn: "_'"))
         guard pointModifiers.contains(t) else { return nil }

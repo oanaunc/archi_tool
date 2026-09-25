@@ -410,7 +410,7 @@ final class DraftDetailTests: XCTestCase {
         guard case .line(let l2)? = ed.doc.entity(lid)?.geometry else { return XCTFail() }
         close(l2.a, Vec2(0, 0), 1e-9)
         let tid = ed.doc.add(.text(TextGeom(position: Vec2(0, 0), height: 10, content: "AB C", rotation: .pi / 2)))
-        await ed.run("TXTEXP #\(tid) ")
+        await ed.run("TXTEXP #\(tid)  Letters")
         let letters = ed.doc.entities.compactMap { e -> TextGeom? in if case .text(let t) = e.geometry { return t }; return nil }
         XCTAssertEqual(letters.map(\.content), ["A", "B", "C"])
         close(letters[0].position, .zero, 1e-9)
@@ -593,7 +593,8 @@ final class DraftDetailTests: XCTestCase {
         await ed.waitIdle()
         guard case .line(let l)? = ed.doc.entities.last?.geometry else { return XCTFail() }
         close(l.a, Vec2(10, 20)); close(l.b, Vec2(110, 20))
-        XCTAssertEqual(UserAliases.macroTokens("LINE \\ 0,0;"), ["LINE", MacroPause.mark, "0,0", ""])
+        XCTAssertEqual(UserAliases.macroTokens("LINE \\ 0,0;"), ["LINE", MacroPause.mark, "0,0"])
+        XCTAssertEqual(UserAliases.macroTokens("LINE;0,0;100,0;;"), ["LINE", "0,0", "100,0", ""])
     }
 
     func testScriptDelayInterruptAndResume() async {

@@ -991,6 +991,19 @@ final class IFCReader {
             if let la = dms(site[9]) { doc.info.latitude = la }
             if let lo = dms(site[10]) { doc.info.longitude = lo }
         }
+        // Georeferencing (IFC4/IFC4.3 IfcMapConversion + IfcProjectedCRS): the model origin in map coordinates.
+        if let mc = f.all("IFCMAPCONVERSION").first, let crsEnt = f[mc[1].ref], crsEnt.type == "IFCPROJECTEDCRS",
+           let crsName = crsEnt[0].string, let crs = GeoCRS.parse(crsName), crs != .wgs84, crs != .local,
+           let e = mc[2].double, let n = mc[3].double {
+            var mapUnit = 1.0
+            if let u = f[crsEnt[6].ref], u.type == "IFCSIUNIT", u[2].enumValue == "MILLI" { mapUnit = 0.001 }
+            let ll = crs.toLonLat(e * mapUnit, n * mapUnit)
+            if ll.lat.isFinite, ll.lon.isFinite, abs(ll.lat) <= 90 { doc.info.latitude = ll.lat; doc.info.longitude = ll.lon }
+            if let h = mc[4].double { doc.info.elevation = h * mapUnit }
+            let ax = mc[5].double ?? 1, ay = mc[6].double ?? 0
+            if abs(ax) + abs(ay) > 1e-12 { doc.info.northAngle = -atan2(ay, ax) * 180 / .pi }
+            doc.setVariable("GEOCRS", crs.description)
+        }
 
         let products = f.entities.values.filter { isProduct($0) }.sorted { $0.id < $1.id }
         var handled = Set<Int>()

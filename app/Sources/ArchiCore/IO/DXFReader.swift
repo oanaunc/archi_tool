@@ -84,6 +84,8 @@ public enum DXFReader {
         }
         var r = Reader()
         r.run(pairs)
+        // WIPEOUTs written as text masks by other programs (or by the R12/SVG fallbacks) become masks again (ANN-013).
+        TextMaskExchange.absorbWipeouts(&r.doc)
         return r.doc
     }
 
@@ -552,7 +554,10 @@ public enum DXFReader {
             for (k, v) in DXFXData.read(r.pairs) where props[k] == nil { props[k] = v }
             if let t = r.i(440).flatMap({ DXFColors.transparencyPercent(code: $0) }) { props["transparency"] = fmt(t, 0) }
             if r.type == "HATCH", (r.i(70) ?? 0) == 0, let d = Reader.hatchDefinition(r) { props["_hatchdef"] = d }
+            if r.type == "WIPEOUT" { props["wipeout"] = "1" }
             if r.type == "MTEXT" {
+                // Background mask (ANN-013): group codes 90/63/421/45/441.
+                for (k, v) in TextMaskExchange.props(fromMTextGroups: r.pairs.map { (code: $0.code, value: $0.value) }) where props[k] == nil { props[k] = v }
                 var raw = ""
                 for p in r.pairs where p.code == 3 { raw += p.value }
                 for p in r.pairs where p.code == 1 { raw += p.value }
@@ -776,6 +781,22 @@ public enum DXFReader {
                 let h = (r.s(340) ?? "").trimmingCharacters(in: .whitespaces).uppercased()
                 let rot = normAngle(u.angle)
                 return [.image(ImageGeom(path: imageDefs[h] ?? "", origin: o, size: size, rotation: rot < 1e-12 || abs(rot - 2 * .pi) < 1e-12 ? 0 : rot))]
+            case "WIPEOUT":
+                // Clip boundary (group 14) in image pixel coordinates, (−0.5, −0.5) = upper-left of the first pixel.
+                guard let o = r.v2(10), let u = r.v2(11), let v = r.v2(12) else { return [] }
+                let px = r.v2(13) ?? Vec2(1, 1)
+                var cp: [Vec2] = []
+                for p in r.pairs {
+                    if p.code == 14 { cp.append(Vec2(p.double, 0)) } else if p.code == 24, !cp.isEmpty { cp[cp.count - 1].y = p.double }
+                }
+                if cp.count == 2 || (r.i(71) ?? 2) == 1, cp.count >= 2 {
+                    let a = cp[0], b = cp[1]
+                    cp = [a, Vec2(b.x, a.y), b, Vec2(a.x, b.y)]
+                }
+                if cp.count < 3 { cp = [Vec2(-0.5, -0.5), Vec2(px.x - 0.5, -0.5), Vec2(px.x - 0.5, px.y - 0.5), Vec2(-0.5, px.y - 0.5)] }
+                if cp.count > 3, cp.first!.isClose(cp.last!) { cp.removeLast() }
+                let world = cp.map { c in o + u * (c.x + 0.5) + v * (max(px.y, 1) - (c.y + 0.5)) }
+                return [.polyline(PolylineGeom(points: world, closed: true))]
             default:
                 return [] // 3DSOLID, REGION, ... are ignored
             }

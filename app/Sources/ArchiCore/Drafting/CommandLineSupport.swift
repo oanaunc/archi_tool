@@ -84,14 +84,22 @@ public enum UserAliases {
     public static func macroTokens(_ macro: String) -> [String] {
         var m = macro
         while m.hasPrefix("^C") || m.hasPrefix("^c") { m.removeFirst(2) }
-        var out: [String] = [], cur = "", inQuote = false, quoted = false
+        // AutoCAD rules: a space or ";" ends the input before it; a separator with no input before it is an Enter
+        // (";;" = one input then Enter). "\\" pauses for the user, whose input ends itself.
+        var out: [String] = [], cur = "", inQuote = false, quoted = false, pending = false
         func flush() { if !cur.isEmpty || quoted { out.append(cur) }; cur = ""; quoted = false }
         for ch in m {
             if ch == "\"" { inQuote.toggle(); quoted = true; continue }
             if inQuote { cur.append(ch); continue }
-            if ch == " " { flush(); continue }
-            if ch == ";" { flush(); out.append(""); continue }
-            if ch == "\\" { flush(); out.append(MacroPause.mark); continue }   // pause for user input
+            if ch == " " || ch == ";" {
+                if !cur.isEmpty || quoted { flush() }
+                else if pending { pending = false }
+                else { out.append("") }
+                pending = false
+                continue
+            }
+            if ch == "\\" { flush(); out.append(MacroPause.mark); pending = true; continue }   // pause for user input
+            pending = false
             cur.append(ch)
         }
         flush()

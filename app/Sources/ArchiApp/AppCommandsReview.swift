@@ -34,9 +34,9 @@ enum AppCommandsReview {
                 Measure3DState.shared.set(k == "On")
                 ed.print(k == "On" ? "Click two points on the model in the 3D view." : "3D measuring is off.")
             },
-            CommandDef("GIZMO3D", aliases: ["GIZMO", "3DGIZMO"], category: "3D", summary: "Shows a move (X/Y arrows) or rotate (ring) gizmo on the selection in the 3D view; drag it to transform (one undo step).", modifies: false) { ed in
+            CommandDef("GIZMO3D", aliases: ["GIZMO", "3DGIZMO"], category: "3D", summary: "Shows a move (X/Y/Z arrows), rotate (ring) or uniform scale gizmo on the selection in the 3D view; drag it to transform (one undo step).", modifies: false) { ed in
                 let m = try ui(ed)
-                let k = try await ed.getKeyword("Gizmo [Move/Rotate/Off]", ["Move", "Rotate", "Off"], defaultValue: Gizmo3DState.shared.mode == .off ? "Move" : "Off") ?? "Off"
+                let k = try await ed.getKeyword("Gizmo [Move/Rotate/Scale/Off]", ["Move", "Rotate", "Scale", "Off"], defaultValue: Gizmo3DState.shared.mode == .off ? "Move" : "Off") ?? "Off"
                 show3D(m)
                 Gizmo3DState.shared.mode = Gizmo3DState.Mode(rawValue: k) ?? .off
                 if Gizmo3DState.shared.mode != .off && ed.selection.isEmpty { ed.print("Select objects to show the gizmo.") }

@@ -16,6 +16,7 @@ public enum SysVarCatalog {
     ANGBASE|r|0||0|Base angle (degrees) for angle 0
     ANGDIR|i|0|0,1|0|Positive angle direction: 0 counterclockwise, 1 clockwise
     APERTURE|i|10|1..50|0|Object snap target height in pixels
+    ARRAYASSOCIATIVITY|b|1||0|New arrays are associative (one editable array object)
     ATTDIA|b|0||0|Attribute prompts in a dialog
     ATTMODE|i|1|0,1,2|0|Attribute display: 0 off, 1 normal, 2 all
     ATTREQ|b|1||0|Prompt for attribute values when inserting blocks

@@ -200,7 +200,7 @@ public enum ElevationBuilder {
         }
         let r = 400 * u
         for el in doc.elements {
-            guard case .gridLine(let g) = el.geometry, g.start.distance(to: g.end) > 1e-9 else { continue }
+            guard case .gridLine(let g) = el.geometry, g.start.distance(to: g.end) > 1e-9, abs(g.bulge) < 1e-12 else { continue }
             let a = Vec3(g.start.x, g.start.y, 0), b = Vec3(g.end.x, g.end.y, 0)
             let xa = proj.xf(a), xb = proj.xf(b)
             guard abs(xa - xb) < g.start.distance(to: g.end) * 0.02 else { continue }

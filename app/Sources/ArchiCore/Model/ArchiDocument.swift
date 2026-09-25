@@ -242,7 +242,25 @@ public struct ProjectInfo: Codable, Hashable {
     public var longitude: Double = 26.10
     /// Angle of project north from up, degrees.
     public var northAngle: Double = 0
+    /// Site elevation above sea level (metres) and time zone (IANA name, e.g. "Europe/Bucharest"; nil = from UTCOFFSET).
+    public var elevation: Double = 0
+    public var timeZone: String?
     public init() {}
+    enum CodingKeys: String, CodingKey { case name, number, client, address, author, latitude, longitude, northAngle, elevation, timeZone }
+    /// Tolerant decoding: absent keys keep their defaults.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        name = try c.decodeIfPresent(String.self, forKey: .name) ?? name
+        number = try c.decodeIfPresent(String.self, forKey: .number) ?? number
+        client = try c.decodeIfPresent(String.self, forKey: .client) ?? client
+        address = try c.decodeIfPresent(String.self, forKey: .address) ?? address
+        author = try c.decodeIfPresent(String.self, forKey: .author) ?? author
+        latitude = try c.decodeIfPresent(Double.self, forKey: .latitude) ?? latitude
+        longitude = try c.decodeIfPresent(Double.self, forKey: .longitude) ?? longitude
+        northAngle = try c.decodeIfPresent(Double.self, forKey: .northAngle) ?? northAngle
+        elevation = try c.decodeIfPresent(Double.self, forKey: .elevation) ?? elevation
+        timeZone = try c.decodeIfPresent(String.self, forKey: .timeZone)
+    }
 }
 
 public struct ArchiDocument: Codable, Hashable {
@@ -289,6 +307,10 @@ public struct ArchiDocument: Codable, Hashable {
     public var viewTemplates: [ViewTemplate] = ViewTemplate.library
     /// Model group definitions (repeated element groups).
     public var modelGroups: [ModelGroup] = []
+    /// Global (project) parameters: named values/formulas that drive bound element dimensions and family formulas.
+    public var globalParameters: [FamilyParameter] = []
+    /// Custom property set templates (IFC-style Psets) in addition to the built-in standard ones.
+    public var psetTemplates: [PsetTemplate] = []
 
     public init() {
         layers = [
@@ -307,7 +329,7 @@ public struct ArchiDocument: Codable, Hashable {
     enum CodingKeys: String, CodingKey {
         case formatVersion, info, units, layers, currentLayer, linetypes, textStyles, dimStyles, currentDimStyle, blocks, entities, elements
         case levels, currentLevel, materials, wallTypes, layouts, namedViews, variables, nextID, openingTypes, phases, keynotes
-        case families, slabTypes, viewTemplates, modelGroups
+        case families, slabTypes, viewTemplates, modelGroups, globalParameters, psetTemplates
     }
 
     /// Tolerant decoding: every collection falls back to its default when absent, so older files keep opening.
@@ -322,6 +344,7 @@ public struct ArchiDocument: Codable, Hashable {
         try opt(.layouts, &layouts); try opt(.namedViews, &namedViews); try opt(.variables, &variables); try opt(.nextID, &nextID)
         try opt(.openingTypes, &openingTypes); try opt(.phases, &phases); try opt(.keynotes, &keynotes)
         try opt(.families, &families); try opt(.slabTypes, &slabTypes); try opt(.viewTemplates, &viewTemplates); try opt(.modelGroups, &modelGroups)
+        try opt(.globalParameters, &globalParameters); try opt(.psetTemplates, &psetTemplates)
         let maxID = max(entities.map(\.id).max() ?? 0, elements.map(\.id).max() ?? 0)
         if nextID <= maxID { nextID = maxID + 1 }
     }

@@ -144,7 +144,7 @@ public enum MeshBuilder {
         var box = BBox2.empty
         for el in doc.elements {
             switch el.geometry {
-            case .gridLine(let g): box.add(g.start); box.add(g.end)
+            case .gridLine(let g): g.points.forEach { box.add($0) }
             case .opening: continue
             default: for p in CommandHelpers.footprint(el, doc: doc) { box.add(p) }
             }
@@ -166,9 +166,10 @@ public enum MeshBuilder {
         for el in doc.elements {
             guard case .gridLine(let g) = el.geometry, g.start.distance(to: g.end) > 1e-9 else { continue }
             var e: [[Vec3]] = []
-            for l in levels { e.append([Vec3(g.start.x, g.start.y, l.elevation), Vec3(g.end.x, g.end.y, l.elevation)]) }
+            let gp = g.points
+            for l in levels { e.append(gp.map { Vec3($0.x, $0.y, l.elevation) }) }
             for p in [g.start, g.end] { e.append([Vec3(p.x, p.y, zLow), Vec3(p.x, p.y, zTop)]) }
-            let d = (g.end - g.start).normalized, r = 400 * u
+            let d = (gp[1] - gp[0]).normalized, r = 400 * u
             let c = Vec3(g.start.x, g.start.y, zTop + r)
             e.append((0...32).map { k in let a = 2 * Double.pi * Double(k) / 32; return c + Vec3(d.x * cos(a) * r, d.y * cos(a) * r, sin(a) * r) })
             out.append(MeshGroup(id: el.id, kind: "datum", material: "Datum", mesh: Mesh(), edges: e))

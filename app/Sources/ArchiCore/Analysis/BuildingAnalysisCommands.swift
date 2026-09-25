@@ -117,9 +117,14 @@ public enum BuildingAnalysisCommands {
             let m = StructuralAnalysis.model(ed.doc, options: o)
             ed.print("Analytical model: \(m.nodes.count) nodes (\(m.nodes.filter(\.isSupported).count) supported), \(m.members.count) members, \(m.panels.count) panels, \(m.nodeLoads.count) nodal loads.")
             for w in m.warnings { ed.print("Warning: " + w) }
-            guard let p = try await ed.getWord("Enter JSON file name to save <none>"), !p.isEmpty else { return }
+            guard let p = try await ed.getWord("Enter file name to save (.json analytical model, .tcl OpenSees) <none>"), !p.isEmpty else { return }
             var url = IOCommands.resolve(ed, p)
             if url.pathExtension.isEmpty { url.appendPathExtension("json") }
+            if url.pathExtension.lowercased() == "tcl" {
+                let tcl = StructuralLoads.openSeesTcl(m, name: ed.doc.info.name)
+                try IOCommands.write(ed, url, "OpenSees model", { try tcl.write(to: url, atomically: true, encoding: .utf8) })
+                return
+            }
             let data = try JSONSerialization.data(withJSONObject: m.json(name: ed.doc.info.name), options: [.prettyPrinted, .sortedKeys])
             try IOCommands.write(ed, url, "analytical model", { try data.write(to: url, options: .atomic) })
         }

@@ -5,7 +5,7 @@
 import Foundation
 
 public enum CollabCommands {
-    public static var all: [CommandDef] { [versions, recover, drawingRecovery, journal, modelMerge, standards, ifcOptions, plugins, scriptToJS] }
+    public static var all: [CommandDef] { [versions, recover, drawingRecovery, journal, modelMerge, standards, ifcOptions, ifcMap, plugins, scriptToJS, TraceReview.command, gitVersions, CentralModel.command, LaserExporter.command, ViewerExport.command, DWFxImporter.command] + PointCloudCommands.all + LispInterpreter.commands + PDFImport.commands + DGN.commands }
 
     @MainActor static func requireFile(_ ed: Editor) throws -> URL {
         guard let u = ed.fileURL else { throw CommandError.invalid("Save the drawing first: versions are stored next to the file.") }
@@ -191,16 +191,85 @@ public enum CollabCommands {
 
     static var ifcOptions: CommandDef {
         CommandDef("IFCOPTIONS", aliases: ["IFCEXPORTOPTIONS", "IFCSETTINGS"], category: "File",
-                   summary: "IFC export settings saved in the drawing: schema (IFC4 or IFC4X3), model view definition (ReferenceView or DesignTransferView) and base quantities (Qto_*).") { ed in
+                   summary: "IFC export settings saved in the drawing: schema (IFC2X3 Coordination View 2.0, IFC4 or IFC4X3), model view definition (ReferenceView = tessellated or DesignTransferView), base quantities (Qto_*) and georeferencing (IfcMapConversion).") { ed in
             let cur = IFCExportOptions.from(ed.doc)
-            let sch = try await ed.getKeyword("Schema [IFC4/IFC4X3] <\(cur.schema == .ifc4 ? "IFC4" : "IFC4X3")>", ["IFC4", "IFC4X3"], defaultValue: cur.schema == .ifc4 ? "IFC4" : "IFC4X3") ?? "IFC4"
-            let mvd = try await ed.getKeyword("Model view [ReferenceView/DesignTransferView]", ["ReferenceView", "DesignTransferView"], defaultValue: cur.modelView.shortName) ?? "ReferenceView"
+            let curName = cur.schema == .ifc4 ? "IFC4" : cur.schema == .ifc4x3 ? "IFC4X3" : "IFC2X3"
+            let sch = try await ed.getKeyword("Schema [IFC2X3/IFC4/IFC4X3] <\(curName)>", ["IFC2X3", "IFC4", "IFC4X3"], defaultValue: curName) ?? "IFC4"
+            if sch != "IFC2X3" {
+                let mvd = try await ed.getKeyword("Model view [ReferenceView/DesignTransferView]", ["ReferenceView", "DesignTransferView"], defaultValue: cur.effectiveView == .designTransferView ? "DesignTransferView" : "ReferenceView") ?? "ReferenceView"
+                ed.doc.setVariable("IFCMVD", mvd)
+            }
             let q = try await ed.getYesNo("Export base quantities (Qto_*)?", defaultValue: cur.quantities)
             ed.doc.setVariable("IFCSCHEMA", sch)
-            ed.doc.setVariable("IFCMVD", mvd)
             ed.doc.setVariable("IFCQUANTITIES", q ? "1" : "0")
+            if sch != "IFC2X3" {
+                let geo = try await ed.getYesNo("Georeference with IfcMapConversion (project latitude/longitude, GEOCRS)?", defaultValue: cur.georeference)
+                ed.doc.setVariable("IFCGEOREF", geo ? "1" : "0")
+            }
             let o = IFCExportOptions.from(ed.doc)
-            ed.print("IFC export: \(o.schema.rawValue), \(o.modelView.rawValue), quantities \(o.quantities ? "on" : "off").")
+            ed.print("IFC export: \(o.schema.rawValue), \(o.effectiveView.rawValue), quantities \(o.quantities ? "on" : "off")" + (o.schema == .ifc2x3 ? "." : ", georeference \(o.georeference ? "on" : "off")."))
+        }
+    }
+
+    static var ifcMap: CommandDef {
+        CommandDef("IFCMAP", aliases: ["IFCMAPPING", "IFCCLASSMAP"], category: "File",
+                   summary: "IFC class mapping for export: Set a component category or element type to an IFC class and predefined type (e.g. Plumbing → IfcSanitaryTerminal.WASHHANDBASIN), List, Remove, Clear. Element props IfcExportAs override the table.") { ed in
+            let k = try await ed.getKeyword("Enter an option [Set/List/Remove/Clear]", ["Set", "List", "Remove", "Clear"], defaultValue: "List") ?? "List"
+            switch k {
+            case "Set":
+                guard let cat = try await ed.getWord("Category or element type (component category, wall, slab, column, beam, roof, stair, railing, curtainWall)"), !cat.isEmpty else { return }
+                guard let cls = try await ed.getWord("IFC class[.PREDEFINEDTYPE]"), !cls.isEmpty else { return }
+                guard let m = IFCClassMap.parse(cls) else { throw CommandError.invalid("\(cls) is not a supported IFC element class (\(IFCClassMap.supported.keys.sorted().prefix(12).joined(separator: ", "))…).") }
+                ed.doc.setVariable("IFCMAP:" + cat, m.description)
+                ed.print("\(cat) → \(m.description)")
+            case "Remove":
+                guard let cat = try await ed.getWord("Category to remove"), !cat.isEmpty else { return }
+                ed.doc.variables = ed.doc.variables.filter { $0.key.caseInsensitiveCompare("IFCMAP:" + cat) != .orderedSame }
+            case "Clear":
+                ed.doc.variables = ed.doc.variables.filter { !$0.key.uppercased().hasPrefix("IFCMAP:") }
+                ed.print("IFC class mapping cleared.")
+            default:
+                let rows = IFCClassMap.table(ed.doc)
+                if rows.isEmpty { ed.print("No IFC class mapping (defaults: \(IFCClassMap.defaults.map { "\($0.key) → \($0.value)" }.sorted().joined(separator: ", ")).") }
+                for r in rows { ed.print("\(r.key) → \(r.value.description)") }
+            }
+        }
+    }
+
+    static var gitVersions: CommandDef {
+        CommandDef("GITVERSION", aliases: ["GIT", "GITCOMMIT", "GITLOG"], category: "Collaborate",
+                   summary: "Git versioning of the drawing as a line-per-object .archit file next to it: Commit (with message), Log, Diff two revisions (or a revision and the drawing) object by object, Checkout a revision (undoable).") { ed in
+            guard let base = ed.fileURL else { throw CommandError.invalid("Save the drawing first: the .archit file is written next to it.") }
+            let file = base.deletingPathExtension().appendingPathExtension(ArchiText.fileExtension)
+            let k = try await ed.getKeyword("Enter an option [Commit/Log/Diff/Checkout]", ["Commit", "Log", "Diff", "Checkout"], defaultValue: "Log") ?? "Log"
+            do {
+                switch k {
+                case "Commit":
+                    let msg = try await ed.getString("Commit message", defaultValue: "") ?? ""
+                    let author = ed.doc.variable("USERNAME") ?? (ed.doc.info.author.isEmpty ? NSUserName() : ed.doc.info.author)
+                    if let h = try GitVersioning.commit(ed.doc, file: file, message: msg, author: author) { ed.print("Committed \(h.prefix(10)) \(file.lastPathComponent).") }
+                    else { ed.print("No changes to commit.") }
+                case "Log":
+                    let log = try GitVersioning.log(file: file)
+                    if log.isEmpty { ed.print("No commits yet (GITVERSION Commit).") }
+                    for c in log { ed.print("\(c.hash.prefix(10))  \(c.date)  \(c.author)  \(c.message)") }
+                case "Diff":
+                    let a = try await ed.getWord("Older revision <HEAD>", defaultValue: "HEAD") ?? "HEAD"
+                    let b = try await ed.getWord("Newer revision or . for the drawing <.>", defaultValue: ".") ?? "."
+                    let changes: [ArchiText.Change]
+                    if b == "." { changes = ArchiText.diff(try GitVersioning.text(file: file, revision: a), try ArchiText.encode(ed.doc)) }
+                    else { changes = try GitVersioning.diff(file: file, from: a, to: b) }
+                    ed.print("\(changes.filter { $0.kind == .added }.count) added, \(changes.filter { $0.kind == .removed }.count) removed, \(changes.filter { $0.kind == .modified }.count) modified.")
+                    for c in changes.prefix(300) { ed.print("  " + c.description) }
+                    ed.selection = Set(changes.filter { $0.kind != .removed && ($0.object == "entity" || $0.object == "element") }.compactMap { Int($0.key) }.filter { ed.doc.contains($0) })
+                default:
+                    let r = try await ed.getWord("Revision to check out <HEAD>", defaultValue: "HEAD") ?? "HEAD"
+                    ed.doc = try GitVersioning.document(file: file, revision: r)
+                    ed.selection = []
+                    ed.print("Checked out \(r) (U to undo).")
+                }
+            } catch let e as CommandError { throw e }
+            catch { throw CommandError.invalid((error as? LocalizedError)?.errorDescription ?? "\(error)") }
         }
     }
 

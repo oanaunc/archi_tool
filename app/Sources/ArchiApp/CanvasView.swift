@@ -564,15 +564,30 @@ enum GripEditor {
         }
     }
 
+    /// Rotation of `turns` quarter turns (counter-clockwise) about the dragged grip point — Space while dragging (MOD-029).
+    static func quarterTurn(_ turns: Int, about p: Vec2) -> Transform2D? {
+        let t = ((turns % 4) + 4) % 4
+        return t == 0 ? nil : .rotation(Double(t) * .pi / 2, around: p)
+    }
+    /// A grip drag of an entity followed by `turns` quarter turns about the new grip position.
+    static func moved(_ g: Geometry, grip i: Int, from o: Vec2, to p: Vec2, turns: Int) -> Geometry {
+        let m = moved(g, grip: i, from: o, to: p)
+        return quarterTurn(turns, about: p).map { GeometryOps.transform(m, $0) } ?? m
+    }
+    static func moved(_ el: BIMElement, grip i: Int, from o: Vec2, to p: Vec2, doc: ArchiDocument, turns: Int) -> BIMGeometry {
+        let m = moved(el, grip: i, from: o, to: p, doc: doc)
+        return quarterTurn(turns, about: p).map { CommandHelpers.transform(m, $0) } ?? m
+    }
+
     /// Applies a grip edit as one undoable transaction. Wall endpoints drag joined walls along.
-    @MainActor static func apply(editor: Editor, id: EntityID, grip i: Int, from o: Vec2, to p: Vec2) {
-        editor.transaction("Grip Edit") { d in
+    @MainActor static func apply(editor: Editor, id: EntityID, grip i: Int, from o: Vec2, to p: Vec2, turns: Int = 0) {
+        editor.transaction(quarterTurn(turns, about: p) == nil ? "Grip Edit" : "Grip Edit + Rotate") { d in
             if let k = d.entityIndex(id) {
-                d.entities[k].geometry = moved(d.entities[k].geometry, grip: i, from: o, to: p)
+                d.entities[k].geometry = moved(d.entities[k].geometry, grip: i, from: o, to: p, turns: turns)
             } else if let k = d.elementIndex(id) {
                 let el = d.elements[k]
-                d.elements[k].geometry = moved(el, grip: i, from: o, to: p, doc: d)
-                if case .wall(let w) = el.geometry, i <= 1 {
+                d.elements[k].geometry = moved(el, grip: i, from: o, to: p, doc: d, turns: turns)
+                if case .wall(let w) = el.geometry, i <= 1, quarterTurn(turns, about: p) == nil {
                     let old = i == 0 ? w.start : w.end
                     let tol = max(w.thickness * 0.01, 1e-6)
                     for j in d.elements.indices where j != k && d.elements[j].level == el.level {
@@ -650,7 +665,9 @@ final class PlanCanvasView: NSView {
     }
     private var windowSel: WindowSel?
     /// A grip being edited. `solve` = live constraint drag (Editor.dragSolve keeps every constraint satisfied while moving).
-    private struct HotGrip { var id: EntityID; var index: Int; var origin: Vec2; var startView: CGPoint; var moved = false; var dragging = true; var solve = false }
+    private struct HotGrip { var id: EntityID; var index: Int; var origin: Vec2; var startView: CGPoint; var moved = false; var dragging = true; var solve = false
+        /// Quarter turns added with Space while dragging (MOD-029).
+        var turns = 0 }
     private var hotGrip: HotGrip?
     private var hoverGrip: (id: EntityID, index: Int, point: Vec2)?
     private var currentGrips: [(id: EntityID, index: Int, point: Vec2)] = []
@@ -833,6 +850,14 @@ final class PlanCanvasView: NSView {
         scale = newScale
         model?.planUserZoomed = true
         center = CGPoint(x: CGFloat(w.x) - (p.x - bounds.midX) / scale, y: CGFloat(w.y) - (p.y - bounds.midY) / scale)
+        viewChanged()
+    }
+    /// World rectangle currently visible (navigator).
+    var visibleWorldBox: BBox2 { BBox2(points: [toWorld(CGPoint(x: bounds.minX, y: bounds.minY)), toWorld(CGPoint(x: bounds.maxX, y: bounds.maxY))]) }
+    /// Pans so that `w` is at the centre of the view, keeping the zoom (navigator).
+    func centre(on w: Vec2) {
+        center = CGPoint(x: w.x, y: w.y)
+        model?.planUserZoomed = true
         viewChanged()
     }
     func panView(dx: CGFloat, dy: CGFloat) {
@@ -1081,13 +1106,24 @@ final class PlanCanvasView: NSView {
         if let g = hotGrip, !g.solve {
             let doc = ed.doc
             if let e = doc.entity(g.id) {
-                let geo = GripEditor.moved(e.geometry, grip: g.index, from: g.origin, to: cursorPoint)
+                let geo = GripEditor.moved(e.geometry, grip: g.index, from: g.origin, to: cursorPoint, turns: g.turns)
                 var items = DrawListBuilder.previewItems([geo], doc: doc, color: previewColor)
                 if items.isEmpty { items = fallbackItems([geo], doc: doc, color: previewColor) }
                 RenderScene.drawItems(items, ctx: ctx, scale: scale, params: prm, colorOverride: Theme.nsAccent.cgColor)
             } else if var el = doc.element(g.id) {
-                el.geometry = GripEditor.moved(el, grip: g.index, from: g.origin, to: cursorPoint, doc: doc)
+                el.geometry = GripEditor.moved(el, grip: g.index, from: g.origin, to: cursorPoint, doc: doc, turns: g.turns)
                 RenderScene.drawItems(elementPreview(el, doc: doc, color: previewColor), ctx: ctx, scale: scale, params: prm, colorOverride: Theme.nsAccent.cgColor)
+            }
+        }
+        // Click-to-place preview from the tool palette, rotated by Space (MOD-029).
+        if let pl = model.placement, let pv = Placement.preview(pl.item, at: cursorPoint, turns: pl.turns, doc: ed.doc) {
+            switch pv {
+            case .geometry(let geo):
+                var items = DrawListBuilder.previewItems([geo], doc: ed.doc, color: previewColor)
+                if items.isEmpty { items = fallbackItems([geo], doc: ed.doc, color: previewColor) }
+                RenderScene.drawItems(items, ctx: ctx, scale: scale, params: prm, colorOverride: Theme.nsAccent.cgColor)
+            case .element(let el):
+                RenderScene.drawItems(elementPreview(el, doc: ed.doc, color: previewColor), ctx: ctx, scale: scale, params: prm, colorOverride: Theme.nsAccent.cgColor)
             }
         }
         ctx.restoreGState()
@@ -1288,7 +1324,7 @@ final class PlanCanvasView: NSView {
         } else if let g = hotGrip {
             let d = cursorPoint - g.origin
             var a = deg(d.angle); if a < 0 { a += 360 }
-            lines.append("Stretch point")
+            lines.append(g.turns % 4 == 0 ? "Stretch point  (Space rotates 90°)" : "Stretch point, rotated \((g.turns % 4 + 4) % 4 * 90)°  (Space: +90°, Shift+Space: −90°)")
             lines.append("L \(fmt(d.length, 2))   ∠ \(fmt(a, 1))°")
         }
         if !model.commandInput.isEmpty { lines.append("› " + model.commandInput) }
@@ -1454,6 +1490,11 @@ final class PlanCanvasView: NSView {
             return
         }
         guard ed.isIdle else { return }
+        if let pl = model.placement {
+            // Shift-click keeps placing copies; a plain click places one and ends.
+            if ToolDrop.drop(pl.item, at: cursorPoint, onto: pick(at: rawWorld), model: model, rotation: Placement.angle(pl.turns)), !e.modifierFlags.contains(.shift) { model.placement = nil; model.live.snapHint = nil }
+            return
+        }
         if e.clickCount == 2, let id = pick(at: rawWorld) { editObject(id); return }
         if let g = gripHit(v) {
             hotGrip = HotGrip(id: g.id, index: g.index, origin: g.point, startView: v, solve: beginConstraintDrag(g.id, at: g.point))
@@ -1553,8 +1594,8 @@ final class PlanCanvasView: NSView {
             return
         }
         let p = cursorPoint
-        guard p.distance(to: g.origin) > 1e-12 else { return }
-        GripEditor.apply(editor: model.editor, id: g.id, grip: g.index, from: g.origin, to: p)
+        guard p.distance(to: g.origin) > 1e-12 || ((g.turns % 4) + 4) % 4 != 0 else { return }
+        GripEditor.apply(editor: model.editor, id: g.id, grip: g.index, from: g.origin, to: p, turns: g.turns)
     }
 
     private func cancelLocalModes() -> Bool {
@@ -1562,6 +1603,7 @@ final class PlanCanvasView: NSView {
         if windowSel != nil { windowSel = nil; any = true }
         if let g = hotGrip { if g.solve { model?.editor.endDragSolve(commit: false) }; hotGrip = nil; any = true }
         if model?.zoomWindowPending == true { model?.zoomWindowPending = false; any = true }
+        if model?.placement != nil { model?.placement = nil; model?.live.snapHint = nil; any = true }
         if any { overlay.needsDisplay = true }
         return any
     }
@@ -1618,6 +1660,22 @@ final class PlanCanvasView: NSView {
         case 36, 76: // Return / Enter
             model.enterPressed()
         case 49: // Space
+            if var pl = model.placement {
+                pl.turns += flags.contains(.shift) ? -1 : 1
+                model.placement = pl
+                model.live.snapHint = "Rotation \(Placement.degrees(pl.turns))° · click to place · Esc cancels"
+                overlay.needsDisplay = true
+                return
+            }
+            if var g = hotGrip, !g.solve {
+                // Space while dragging a grip rotates the object 90° about the grip (Shift = clockwise).
+                g.turns += flags.contains(.shift) ? -1 : 1
+                g.moved = true
+                hotGrip = g
+                model.live.snapHint = "Rotated \(((g.turns % 4) + 4) % 4 * 90)° about the grip"
+                overlay.needsDisplay = true
+                return
+            }
             if e.isARepeat { return }
             if !model.commandInput.isEmpty {
                 if let r = ed.request, r.kinds.contains(.string), !r.kinds.contains(.point) { model.commandInput += " "; model.focusCommandLine() }

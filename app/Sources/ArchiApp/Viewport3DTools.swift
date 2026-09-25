@@ -42,7 +42,7 @@ final class Measure3DState: ObservableObject {
 
 @MainActor
 final class Gizmo3DState: ObservableObject {
-    enum Mode: String, CaseIterable { case off = "Off", move = "Move", rotate = "Rotate" }
+    enum Mode: String, CaseIterable { case off = "Off", move = "Move", rotate = "Rotate", scale = "Scale" }
     static let shared = Gizmo3DState()
     @Published var mode: Mode = .off {
         didSet { if mode != .off && Measure3DState.shared.active { Measure3DState.shared.set(false) }; Viewport3DController.active?.refreshGizmo(force: true) }
@@ -64,6 +64,14 @@ enum GizmoMath {
         while d > .pi { d -= 2 * .pi }
         while d < -.pi { d += 2 * .pi }
         return d
+    }
+    static func axisName(_ axis: Int) -> String { ["X", "Y", "rotation", "Z", "scale"][min(max(axis, 0), 4)] }
+    /// Uniform scale factor of a drag of the scale handle: distance to the gizmo centre now / at the start
+    /// (snapped to `step` when > 0, limited to 0.01…100).
+    static func scaleFactor(center c: CGPoint, from a: CGPoint, to b: CGPoint, step: Double = 0) -> Double {
+        let d0 = hypot(Double(a.x - c.x), Double(a.y - c.y)), d1 = hypot(Double(b.x - c.x), Double(b.y - c.y))
+        guard d0 > 1e-6 else { return 1 }
+        return min(max(snap(d1 / d0, step: step), 0.01), 100)
     }
     /// Snaps an angle to `step` radians (0 = no snapping).
     static func snap(_ v: Double, step: Double) -> Double { step > 0 ? (v / step).rounded() * step : v }
@@ -189,7 +197,7 @@ extension Viewport3DController {
         rt.mode = mode; rt.selection = model.editor.selection; rt.pivot = nil
         func mat(_ col: NSColor) -> SCNMaterial { let m = SCNMaterial(); m.diffuse.contents = col; m.emission.contents = col; m.readsFromDepthBuffer = false; m.lightingModel = .constant; return m }
         if mode == .move {
-            for (axis, col) in [(0, NSColor.systemRed), (1, NSColor.systemGreen)] {
+            for (axis, col) in [(0, NSColor.systemRed), (1, NSColor.systemGreen), (3, NSColor.systemBlue)] {
                 let shaft = SCNNode(geometry: SCNCylinder(radius: size * 0.03, height: size)); shaft.geometry?.materials = [mat(col)]
                 let tip = SCNNode(geometry: SCNCone(topRadius: 0, bottomRadius: size * 0.09, height: size * 0.25)); tip.geometry?.materials = [mat(col)]
                 tip.position = SCNVector3(0, size * 0.6, 0)
@@ -199,11 +207,23 @@ extension Viewport3DController {
                 arm.addChildNode(shaft); arm.addChildNode(tip)
                 // Cylinders point along +Y: a −90° turn about Z puts the X arm on +X.
                 if axis == 0 { arm.eulerAngles = SCNVector3(0, 0, -CGFloat.pi / 2) }
+                // … and a +90° turn about X puts the Z arm on +Z (up).
+                if axis == 3 { arm.eulerAngles = SCNVector3(CGFloat.pi / 2, 0, 0) }
                 for n in [shaft, tip] { n.name = "axis\(axis)"; n.renderingOrder = 110 }
                 g.addChildNode(arm)
             }
+        } else if mode == .scale {
+            // One uniform scale handle on the +X+Y diagonal, joined to the centre.
+            let h = SCNNode(geometry: SCNBox(width: size * 0.18, height: size * 0.18, length: size * 0.18, chamferRadius: 0)); h.geometry?.materials = [mat(NSColor.white)]
+            h.position = SCNVector3(size * 0.75, size * 0.75, 0); h.name = "axis4"; h.renderingOrder = 110
+            let c = SCNNode(geometry: SCNBox(width: size * 0.1, height: size * 0.1, length: size * 0.1, chamferRadius: 0)); c.geometry?.materials = [mat(Scene3DBuilder.accent)]
+            c.name = "axis4"; c.renderingOrder = 110
+            let src = SCNGeometrySource(vertices: [SCNVector3(0, 0, 0), SCNVector3(size * 0.75, size * 0.75, 0)])
+            let line = SCNGeometry(sources: [src], elements: [SCNGeometryElement(indices: [Int32(0), 1], primitiveType: .line)]); line.materials = [mat(NSColor.white)]
+            let ln = SCNNode(geometry: line); ln.renderingOrder = 110
+            g.addChildNode(ln); g.addChildNode(h); g.addChildNode(c)
         } else {
-            let ring = SCNNode(geometry: SCNTorus(ringRadius: size * 0.7, pipeRadius: size * 0.035)); ring.geometry?.materials = [mat(NSColor.systemBlue)]
+            let ring = SCNNode(geometry: SCNTorus(ringRadius: size * 0.7, pipeRadius: size * 0.035)); ring.geometry?.materials = [mat(NSColor.systemPurple)]
             ring.eulerAngles = SCNVector3(CGFloat.pi / 2, 0, 0)   // torus lies in XZ; turn it into the model XY plane
             ring.name = "axis2"; ring.renderingOrder = 110
             g.addChildNode(ring)
@@ -211,7 +231,7 @@ extension Viewport3DController {
         toolsRoot.addChildNode(g)
     }
 
-    /// Gizmo handle under a view point (0 = X, 1 = Y, 2 = rotation ring).
+    /// Gizmo handle under a view point (0 = X, 1 = Y, 2 = rotation ring, 3 = Z).
     func gizmoAxis(at p: CGPoint) -> Int? {
         guard let v = view, toolsRoot.childNode(withName: "gizmo", recursively: false) != nil else { return nil }
         let hits = v.hitTest(p, options: [.searchMode: SCNHitTestSearchMode.all.rawValue, .ignoreHiddenNodes: true, .rootNode: toolsRoot])
@@ -231,11 +251,14 @@ extension Viewport3DController {
         guard let g = toolsRoot.childNode(withName: "gizmo", recursively: false) else { return 0 }
         let c = Vec3(Double(g.position.x), Double(g.position.y), Double(g.position.z))
         guard let sc = screen(c) else { return 0 }
+        if axis == 4 {
+            return GizmoMath.scaleFactor(center: sc, from: a, to: b, step: NSEvent.modifierFlags.contains(.shift) ? 0.1 : 0)
+        }
         if axis == 2 {
             return GizmoMath.snap(GizmoMath.sweep(center: sc, from: a, to: b), step: NSEvent.modifierFlags.contains(.shift) ? .pi / 12 : 0)
         }
         let unit = 1000.0
-        guard let se = screen(c + (axis == 0 ? Vec3(unit, 0, 0) : Vec3(0, unit, 0))) else { return 0 }
+        guard let se = screen(c + (axis == 0 ? Vec3(unit, 0, 0) : axis == 1 ? Vec3(0, unit, 0) : Vec3(0, 0, unit))) else { return 0 }
         let axisScreen = CGVector(dx: (se.x - sc.x) / unit, dy: (se.y - sc.y) / unit)
         var d = GizmoMath.axisDelta(drag: CGVector(dx: b.x - a.x, dy: b.y - a.y), axisScreen: axisScreen)
         if let m = model, m.editor.settings.gridSnap, m.editor.settings.gridSpacing > 0 { d = GizmoMath.snap(d, step: m.editor.settings.gridSpacing) }
@@ -250,16 +273,19 @@ extension Viewport3DController {
         gizmoRT.dragging = true
         for id in model.editor.selection {
             guard let n = builder.modelRoot.childNode(withName: "el:\(id)", recursively: false) else { continue }
-            if axis == 2 {
+            if axis == 4 {
+                let f = CGFloat(amount > 0 ? amount : 1)
+                n.transform = SCNMatrix4Mult(SCNMatrix4Mult(SCNMatrix4MakeTranslation(-pivot.x, -pivot.y, 0), SCNMatrix4MakeScale(f, f, 1)), SCNMatrix4MakeTranslation(pivot.x, pivot.y, 0))
+            } else if axis == 2 {
                 let t = SCNMatrix4Mult(SCNMatrix4Mult(SCNMatrix4MakeTranslation(-pivot.x, -pivot.y, 0), SCNMatrix4MakeRotation(CGFloat(amount), 0, 0, 1)), SCNMatrix4MakeTranslation(pivot.x, pivot.y, 0))
                 n.transform = t
             } else {
-                n.transform = SCNMatrix4MakeTranslation(axis == 0 ? CGFloat(amount) : 0, axis == 1 ? CGFloat(amount) : 0, 0)
+                n.transform = SCNMatrix4MakeTranslation(axis == 0 ? CGFloat(amount) : 0, axis == 1 ? CGFloat(amount) : 0, axis == 3 ? CGFloat(amount) : 0)
             }
         }
-        if axis != 2 { g.position = SCNVector3(pivot.x + (axis == 0 ? CGFloat(amount) : 0), pivot.y + (axis == 1 ? CGFloat(amount) : 0), pivot.z) }
+        if axis == 4 { } else if axis != 2 { g.position = SCNVector3(pivot.x + (axis == 0 ? CGFloat(amount) : 0), pivot.y + (axis == 1 ? CGFloat(amount) : 0), pivot.z + (axis == 3 ? CGFloat(amount) : 0)) }
         else { g.eulerAngles = SCNVector3(0, 0, CGFloat(amount)) }
-        model.live.snapHint = axis == 2 ? "Rotate \(fmt(amount * 180 / .pi, 1))° (Shift snaps 15°)" : "Move \(axis == 0 ? "X" : "Y") \(fmt(amount, 1))"
+        model.live.snapHint = axis == 4 ? "Scale ×\(fmt(amount > 0 ? amount : 1, 3)) in plan (Shift snaps 0.1)" : axis == 2 ? "Rotate \(fmt(amount * 180 / .pi, 1))° (Shift snaps 15°)" : "Move \(GizmoMath.axisName(axis)) \(fmt(amount, 1))"
     }
 
     /// Ends a gizmo drag: resets the preview and applies the transform to the drawing as one undo step.
@@ -270,7 +296,20 @@ extension Viewport3DController {
         gizmoRT.pivot = nil; gizmoRT.selection = []; gizmoRT.dragging = false
         for id in model.editor.selection { builder.modelRoot.childNode(withName: "el:\(id)", recursively: false)?.transform = SCNMatrix4Identity }
         g?.removeFromParentNode()
+        if axis == 4 {
+            guard amount > 0, abs(amount - 1) > 1e-9 else { refreshGizmo(force: true); return }
+            let n = GizmoMath.apply(model.editor, ids: Array(model.editor.selection), .scale(amount, amount, around: Vec2(Double(pivot.x), Double(pivot.y))), label: "Scale (3D gizmo)")
+            model.editor.print("Scaled \(n) object(s) by \(fmt(amount, 4)) in plan.")
+            model.revision &+= 1
+            return
+        }
         guard abs(amount) > 1e-9 else { refreshGizmo(force: true); return }
+        if axis == 3 {
+            let r = ZMove.apply(model.editor, ids: Array(model.editor.selection), dz: amount, label: "Move Z (3D gizmo)")
+            model.editor.print("Moved \(r.moved) object(s) by \(fmt(amount, 2)) along Z" + (r.skipped > 0 ? "; \(r.skipped) object(s) have no height to change." : "."))
+            model.revision &+= 1
+            return
+        }
         let t = GizmoMath.transform(axis: axis, amount: amount, pivot: Vec2(Double(pivot.x), Double(pivot.y)))
         let n = GizmoMath.apply(model.editor, ids: Array(model.editor.selection), t, label: axis == 2 ? "Rotate (3D gizmo)" : "Move (3D gizmo)")
         model.editor.print(axis == 2 ? "Rotated \(n) object(s) by \(fmt(amount * 180 / .pi, 2))°." : "Moved \(n) object(s) by \(fmt(amount, 2)) along \(axis == 0 ? "X" : "Y").")
@@ -298,7 +337,7 @@ struct Viewport3DToolBar: View {
             Button { measure.toggle() } label: { Image(systemName: "ruler").foregroundStyle(measure.active ? Theme.accent : Theme.text) }
                 .buttonStyle(.borderless).help("Measure in 3D: click two points on the model (MEASURE3D)")
             Picker("", selection: $gizmo.mode) { ForEach(Gizmo3DState.Mode.allCases, id: \.self) { Text($0.rawValue) } }
-                .pickerStyle(.segmented).labelsHidden().frame(width: 170).help("Move/rotate gizmo for the selection (GIZMO3D); Shift snaps rotation to 15°")
+                .pickerStyle(.segmented).labelsHidden().frame(width: 220).help("Move (X/Y/Z arrows) or rotate gizmo for the selection (GIZMO3D); Shift snaps rotation to 15°")
             if measure.active || !measure.text.isEmpty { Text(measure.text).font(Theme.mono).foregroundStyle(Theme.text).lineLimit(1) }
         }
         .padding(.horizontal, 10).padding(.vertical, 5)

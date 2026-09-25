@@ -38,12 +38,31 @@ public enum DrawListBuilder {
             }
             let phased = Phasing.isActive(doc)
             let pf = Phasing.filter(doc)
-            for (_, el) in els {
+            if let l = options.level { out += ViewRange.underlayEntries(doc, level: l, ctx: ctx, options: options) }
+            // View range: elements above the top or below the view depth are left out; those below the bottom (and
+            // lower-level elements within the view depth) are drawn as "beyond".
+            var elsInRange = els.map { ($0.element, false) }
+            if let l = options.level, let vr = ViewRange.range(doc) {
+                elsInRange = []
+                for (_, el) in els {
+                    switch ViewRange.visibility(el, level: l, range: vr, doc: doc) {
+                    case .normal: elsInRange.append((el, false))
+                    case .beyond: elsInRange.append((el, true))
+                    case .hidden: break
+                    }
+                }
+                let shown = Set(els.map { $0.element.id })
+                for el in doc.elements where el.level != l && layerShown(el.layer, doc, options) && !shown.contains(el.id) {
+                    if ViewRange.visibility(el, level: l, range: vr, doc: doc) == .beyond { elsInRange.insert((el, true), at: 0) }
+                }
+            }
+            for (el, isBeyond) in elsInRange {
                 var st = Phasing.Status.new
                 if phased { st = Phasing.status(el.props, doc: doc); if !Phasing.visible(st, pf) { continue } }
                 if el.props["kind"] == "ceiling" && !(options.showCeilings ?? (doc.variable("CEILINGS") != "0")) { continue }
                 if options.reflectedCeiling && !ReflectedCeiling.shows(el) { continue }
                 var items = PlanRepresentation.items(el, ctx: ctx, options: options)
+                if isBeyond { items = ViewRange.beyond(items) }
                 if phased { items = phaseStyled(items, Phasing.style(st, pf), doc: doc, options: options) }
                 items = items.map { paper($0, options) }
                 if !items.isEmpty { out.append(DrawEntry(id: el.id, items: items)) }
@@ -65,6 +84,7 @@ public enum DrawListBuilder {
             if !items.isEmpty { out.append(DrawEntry(id: e.id, items: items)) }
         }
         out += ConstraintGlyphs.entries(doc: doc, options: options)
+        out += ViewRange.revealEntries(doc, options: options)
         return out
     }
 

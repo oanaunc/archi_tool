@@ -1,6 +1,7 @@
 // Oanarina Archi Tool — GPL-3.0-or-later
 import Foundation
 import JavaScriptCore
+import Combine
 import ArchiCore
 
 // MARK: - JSON bridge (shared by scripts and the agent server)
@@ -273,6 +274,8 @@ final class ScriptEngine {
     private var lastException: String?
     /// Source being evaluated (for error excerpts).
     private var currentSource = ""
+    /// File name used for commands registered by console scripts (script.<name> plugin id).
+    var scriptName = "console.js"
     /// Called on the main thread for every printed line.
     var onOutput: ((String) -> Void)?
 
@@ -281,7 +284,105 @@ final class ScriptEngine {
         queue.sync { self.setupContext() }
     }
 
+    /// Watches the document window for the event hooks (called once by `forModel`).
+    @MainActor func startHooks(_ model: AppModel) {
+        hookSink = model.$revision.receive(on: DispatchQueue.main).sink { [weak self] _ in
+            MainActor.assumeIsolated { self?.checkEvents() }
+        }
+    }
+
     func reset() { queue.async { self.setupContext() } }
+
+    // MARK: Event hooks (SCR-007)
+
+    /// Events scripts can subscribe to with archi.on(name, fn).
+    static let hookEvents = ["selectionChanged", "documentChanged", "elementAdded", "elementRemoved", "saved", "commandEnded"]
+    /// Handlers by event (touched on the script queue only).
+    private var handlers: [String: [JSValue]] = [:]
+    /// Events with at least one handler (written on the script queue, read on the main thread; never read with
+    /// queue.sync from the main thread, which could deadlock against a script waiting for the main thread).
+    private let hookLock = NSLock()
+    private var hookedStore = Set<String>()
+    private var hooked: Set<String> {
+        get { hookLock.lock(); defer { hookLock.unlock() }; return hookedStore }
+        set { hookLock.lock(); hookedStore = newValue; hookLock.unlock() }
+    }
+    private var hookSink: AnyCancellable?
+    private var lastSelection: Set<EntityID>?
+    private var lastChange = -1
+    private var lastIDs: Set<EntityID> = []
+    private var lastDirty = false
+    private var lastCommand: String?
+    private var dispatching = false
+
+    /// Compares the document with the last seen state and calls the subscribed handlers (on the script queue).
+    /// Changes made by the handlers themselves do not fire events again.
+    @MainActor func checkEvents() {
+        guard let m = model else { return }
+        let ed = m.editor
+        let hk = hooked
+        guard !hk.isEmpty else { lastSelection = nil; lastChange = -1; return }
+        var fire: [(String, Any)] = []
+        let sel = ed.selection
+        if let last = lastSelection, last != sel, hk.contains("selectionChanged") { fire.append(("selectionChanged", sel.sorted())) }
+        if lastChange >= 0 && ed.changeCount != lastChange {
+            if hk.contains("documentChanged") { fire.append(("documentChanged", ["changeCount": ed.changeCount, "entities": ed.doc.entities.count, "elements": ed.doc.elements.count])) }
+            if hk.contains("elementAdded") || hk.contains("elementRemoved") {
+                let ids = Set(ed.doc.entities.map(\.id)).union(ed.doc.elements.map(\.id))
+                let added = ids.subtracting(lastIDs).sorted(), removed = lastIDs.subtracting(ids).sorted()
+                if !added.isEmpty, hk.contains("elementAdded") { fire.append(("elementAdded", added)) }
+                if !removed.isEmpty, hk.contains("elementRemoved") { fire.append(("elementRemoved", removed)) }
+                lastIDs = ids
+            }
+        } else if lastChange < 0, hk.contains("elementAdded") || hk.contains("elementRemoved") {
+            lastIDs = Set(ed.doc.entities.map(\.id)).union(ed.doc.elements.map(\.id))
+        }
+        if lastDirty && !ed.isDirty && ed.fileURL != nil && hk.contains("saved") { fire.append(("saved", ed.fileURL?.path ?? "")) }
+        let cmd = ed.activeCommand?.name
+        if let c = lastCommand, cmd == nil, hk.contains("commandEnded") { fire.append(("commandEnded", c)) }
+        lastSelection = sel; lastChange = ed.changeCount; lastDirty = ed.isDirty; lastCommand = cmd
+        guard !fire.isEmpty, !dispatching else { return }
+        dispatching = true
+        queue.async {
+            for (ev, arg) in fire {
+                for h in self.handlers[ev] ?? [] {
+                    self.lastException = nil
+                    _ = h.call(withArguments: [arg])
+                    if let e = self.lastException { self.emit("✖ in \(ev) handler: \(e)") }
+                }
+            }
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    // Re-baseline after the handlers so their own edits do not trigger another round.
+                    if let ed = self.model?.editor {
+                        self.lastSelection = ed.selection; self.lastChange = ed.changeCount; self.lastDirty = ed.isDirty; self.lastCommand = ed.activeCommand?.name
+                        if !self.hooked.isDisjoint(with: ["elementAdded", "elementRemoved"]) { self.lastIDs = Set(ed.doc.entities.map(\.id)).union(ed.doc.elements.map(\.id)) }
+                    }
+                    self.dispatching = false
+                }
+            }
+        }
+    }
+
+    /// Calls a global script function with one argument on the script queue (buttons of script panels).
+    func callGlobal(_ name: String, argument: Any) {
+        queue.async {
+            guard let f = self.context.objectForKeyedSubscript(name), f.isObject, f.hasProperty("call") else { self.emit("✖ No function \(name)() in the script."); return }
+            self.lastException = nil
+            _ = f.call(withArguments: [argument])
+        }
+    }
+
+    /// Evaluates pure JavaScript synchronously (no calls back into the document: those would wait for the main
+    /// thread). Used by the self-tests to register hooks and read results.
+    func evaluateNow(_ code: String) -> String? {
+        queue.sync {
+            lastException = nil
+            let v = context.evaluateScript(code)
+            if lastException != nil { return nil }
+            return v.flatMap { $0.isUndefined ? nil : $0.toString() }
+        }
+    }
 
     func evaluate(_ code: String) async -> ScriptResult {
         await withCheckedContinuation { (cont: CheckedContinuation<ScriptResult, Never>) in
@@ -349,6 +450,7 @@ final class ScriptEngine {
     // MARK: API
 
     private func setupContext() {
+        handlers = [:]; hooked = []
         let ctx = JSContext()!
         ctx.name = "Oanarina Archi Tool"
         ctx.exceptionHandler = { [weak self] _, ex in
@@ -396,6 +498,35 @@ final class ScriptEngine {
             }
         }
         def("run", run)
+
+        // Event hooks: archi.on("selectionChanged", function(ids) {...}), archi.off(name).
+        def("on", { [weak self] (name: JSValue, fn: JSValue) -> Any? in
+            guard let self else { return nil }
+            let n = name.toString() ?? ""
+            guard ScriptEngine.hookEvents.contains(n) else { self.throwJS("unknown event '\(n)' (\(ScriptEngine.hookEvents.joined(separator: ", ")))"); return nil }
+            guard fn.isObject, fn.hasProperty("call") else { self.throwJS("archi.on needs a function"); return nil }
+            self.handlers[n, default: []].append(fn)
+            self.hooked.insert(n)
+            return self.handlers[n]?.count ?? 0
+        } as @convention(block) (JSValue, JSValue) -> Any?)
+        // Script-defined UI panels (SCR-008).
+        def("panel", { [weak self] (v: JSValue) -> Any? in
+            guard let self else { return nil }
+            let o = self.arg(v) ?? NSNull()
+            return self.call {
+                let spec = try ScriptPanelSpec.parse(o)
+                return try self.onMain { () -> Any in
+                    guard let m = self.model else { throw ArchiJSON.fail("the document was closed") }
+                    _ = ScriptPanels.show(spec, model: m)
+                    return spec.title
+                }
+            }
+        } as @convention(block) (JSValue) -> Any?)
+        def("off", { [weak self] (name: JSValue) -> Any? in
+            guard let self else { return nil }
+            if name.isUndefined { self.handlers = [:]; self.hooked = [] } else if let n = name.toString() { self.handlers[n] = nil; self.hooked.remove(n) }
+            return true
+        } as @convention(block) (JSValue) -> Any?)
 
         def("doc", { [weak self] () -> Any? in
             self?.call { try self?.onMain { () -> Any in ArchiJSON.documentJSON(try self!.editor().doc) } }
@@ -634,6 +765,24 @@ final class ScriptEngine {
             self?.call { try self?.onMain { () -> Any in CommandRegistry.shared.sorted.map { ["name": $0.name, "aliases": $0.aliases, "category": $0.category, "summary": $0.summary] } } }
         } as @convention(block) () -> Any?)
 
+        // archi.registerCommand(name, fn | "fnName", {aliases, summary, category, modifies}) — SCR-006: the script
+        // becomes a run-time plugin (PluginRegistry) and the command re-evaluates it and calls the function.
+        def("registerCommand", { [weak self] (n: JSValue, f: JSValue, o: JSValue) -> Any? in
+            guard let self else { return nil }
+            guard n.isString, let name = n.toString()?.uppercased(), !name.isEmpty else { self.throwJS("registerCommand(name, function[, options]) needs a command name"); return nil }
+            var fname = ""
+            if f.isString { fname = f.toString() ?? "" } else if f.isObject, let nm = f.objectForKeyedSubscript("name"), nm.isString { fname = nm.toString() ?? "" }
+            guard !fname.isEmpty else { self.throwJS("registerCommand: pass a named global function (or its name) for \(name)"); return nil }
+            let opts = (o.isObject ? o.toObject() as? [String: Any] : nil) ?? [:]
+            let cmd = PluginCommand(name: name, aliases: ((opts["aliases"] as? [Any])?.compactMap { $0 as? String } ?? []).map { $0.uppercased() },
+                                    summary: opts["summary"] as? String ?? "", function: fname,
+                                    category: opts["category"] as? String ?? "Scripts", modifies: opts["modifies"] as? Bool ?? true)
+            // Plugin runs append a call after a marker; keep only the script itself as the command's source.
+            let source = self.currentSource.components(separatedBy: AppPlugins.callMarker).first ?? self.currentSource
+            let url = URL(fileURLWithPath: self.scriptName)
+            return self.call { try self.onMain { () -> Any in try PluginRegistry.shared.registerScriptCommand(cmd, source: source, sourceURL: url) } }
+        } as @convention(block) (JSValue, JSValue, JSValue) -> Any?)
+
         ctx.setObject(archi, forKeyedSubscript: "archi" as NSString)
         context = ctx
     }
@@ -678,6 +827,7 @@ extension ScriptEngine {
     @MainActor static func forModel(_ m: AppModel) -> ScriptEngine {
         if let e = engines.object(forKey: m) { return e }
         let e = ScriptEngine(model: m)
+        e.startHooks(m)
         engines.setObject(e, forKey: m)
         return e
     }
@@ -725,6 +875,8 @@ private extension String {
 /// Runs JavaScript plugins (PluginRegistry) in the app: plugin commands evaluate the plugin's main script in the
 /// document window's script engine (full `archi` API) once the command line is free, and call the command's function.
 @MainActor enum AppPlugins {
+    /// Separates a plugin's source from the call appended when one of its commands runs.
+    nonisolated static let callMarker = "\n;/*archi-plugin-call*/"
     static func install() {
         let reg = PluginRegistry.shared
         reg.reload()
@@ -732,10 +884,14 @@ private extension String {
         PluginRegistry.evaluator = { plugin, function, ed in
             guard let m = AppModel.all.first(where: { $0.editor === ed }) else { throw CommandError.invalid("No document window to run the plugin in.") }
             let engine = ScriptEngine.forModel(m)
-            let code = plugin.source + "\n;if (typeof \(function) !== 'function') { throw new Error('\(plugin.manifest.main) defines no function \(function)()'); }\n\(function)();"
+            let code = plugin.source + callMarker + "\nif (typeof \(function) !== 'function') { throw new Error('\(plugin.manifest.main) defines no function \(function)()'); }\n\(function)();"
             Task { @MainActor in
                 await ed.waitIdle()
+                // Everything the plugin does (commands, archi.add/update…) becomes one undo step named after the command.
+                let step = UndoStep.begin(ed)
                 let r = await engine.evaluate(code)
+                await ed.waitIdle()
+                step.end(ed, label: plugin.manifest.commands.first { $0.function == function }?.name ?? plugin.manifest.name)
                 for l in r.output { ed.print(l) }
                 if let e = r.error { ed.print("\(plugin.manifest.name): \(e)") }
             }

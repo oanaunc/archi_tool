@@ -10,6 +10,7 @@ enum WorkspaceMode: String, CaseIterable, Identifiable { case plan = "2D", model
 /// Side panel tabs.
 enum PanelTab: String, CaseIterable, Identifiable {
     case properties = "Properties", layers = "Layers", levels = "Levels", browser = "Browser", materials = "Materials", tools = "Tools", sheets = "Sheets", history = "History"
+    case selection = "Selection", navigator = "Navigator", alerts = "Alerts"
     var id: String { rawValue }
     var symbol: String {
         switch self {
@@ -21,6 +22,9 @@ enum PanelTab: String, CaseIterable, Identifiable {
         case .history: return "clock.arrow.circlepath"
         case .tools: return "square.grid.3x3.square"
         case .sheets: return "rectangle.stack"
+        case .selection: return "info.square"
+        case .navigator: return "map"
+        case .alerts: return "bell.badge"
         }
     }
 }
@@ -114,6 +118,15 @@ final class AppModel: ObservableObject {
     var recoveredOriginalPath: String?
     /// True while the 2D canvas waits for a zoom-window rectangle.
     var zoomWindowPending = false
+    /// Click-to-place item from the tool palette (drop string) and its quarter turns (Space rotates 90°, MOD-029).
+    var placement: (item: String, turns: Int)?
+    func startPlacement(_ item: String) {
+        if !editor.isIdle { editor.cancel() }
+        placement = (item, 0)
+        live.snapHint = "Click to place · Space rotates 90° (Shift+Space −90°) · Esc cancels"
+        canvas?.focus()
+        revision &+= 1
+    }
 
     let live = LiveState()
     var cursorWorld: Vec2 {
@@ -181,6 +194,7 @@ final class AppModel: ObservableObject {
 
     /// Runs a command like a ribbon button: cancels the active command first (AutoCAD behaviour).
     func runCommand(_ line: String) {
+        placement = nil
         syncCurrentTab()
         if !editor.isIdle { editor.cancel() }
         let l = line

@@ -516,6 +516,9 @@ final class MCPServer {
             defer { ed.onLog = nil }
             for line in text.components(separatedBy: .newlines) where !line.trimmingCharacters(in: .whitespaces).isEmpty {
                 log += await ed.run(line)
+                let mark = ed.log.count
+                await drainBackground(ed)
+                if ed.log.count > mark { log += ed.log[mark...] }
             }
             let maxLines = max(ArchiJSON.int(a["maxLines"]) ?? 500, 1)
             if log.count > maxLines { return ["log": Array(log.suffix(maxLines)), "truncated": log.count - maxLines, "totalLines": log.count] }
@@ -674,6 +677,16 @@ final class MCPServer {
 
 // MARK: - Main
 
+/// Waits for work a command left running (queued plugin `archi.run` lines, SCRIPT, ACTPLAY).
+@MainActor func drainBackground(_ ed: Editor) async {
+    var n = 0
+    while let t = ed.backgroundTask, n < 100 {
+        await t.value
+        if ed.backgroundTask == t { ed.backgroundTask = nil }
+        n += 1
+    }
+}
+
 let usage = """
 Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
 
@@ -690,6 +703,13 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
   --batch FILE     Runs the jobs of a JSON batch file (open/import, commands or script, outputs, reports, save);
                    prints one line per job and a JSON summary, exits non-zero if any job failed.
   --plugins DIR    Also loads JavaScript plugins from DIR (folders with plugin.json; see docs/AGENT-API.md).
+  --js FILE        Runs a JavaScript file with the archi API (repeatable; before --script). Functions registered with
+                   archi.registerCommand(name, fn) become commands for the following script / REPL / MCP session.
+  --py SCRIPT [args]  Runs a Python 3 script with the `archi` module (same calls as the JavaScript API) on the drawing
+                   given before --py; the drawing is saved when the script ends.
+  --watch DIR --rules FILE [--once]  Automation: runs the rules' batch jobs for every new or changed file in DIR that
+                   matches a rule's pattern (then POSTs to the rule's webhook); --once processes pending files and exits.
+  --python-module [DIR]  Writes archi.py (the Python bridge module) to DIR (default: the current folder).
   --version        Prints the version.
 """
 
@@ -714,7 +734,7 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
 }
 
 @MainActor func runCLI() async -> Int32 {
-    var input: String?, script: String?, out: String?, mcp = false, pluginDir: URL?
+    var input: String?, script: String?, out: String?, mcp = false, pluginDir: URL?, jsFiles: [URL] = []
     var args = Array(CommandLine.arguments.dropFirst())
     if let bi = args.firstIndex(of: "--batch") {
         guard bi + 1 < args.count else { eprint(usage); return 2 }
@@ -729,6 +749,36 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
             eprint("Batch file \(u.lastPathComponent): \((error as? LocalizedError)?.errorDescription ?? "\(error)")")
             return 2
         }
+    }
+    if let wi = args.firstIndex(of: "--watch") {
+        guard wi + 1 < args.count, let ri = args.firstIndex(of: "--rules"), ri + 1 < args.count else { eprint("--watch DIR --rules rules.json [--once]"); return 2 }
+        let dir = expand(args[wi + 1]), rulesURL = expand(args[ri + 1])
+        CommandRegistry.shared.ensureBuiltins()
+        let watcher: AutomationWatcher
+        do { watcher = try AutomationWatcher(folder: dir, rulesData: Data(contentsOf: rulesURL)) }
+        catch { eprint("Rules \(rulesURL.lastPathComponent): \((error as? LocalizedError)?.errorDescription ?? "\(error)")"); return 2 }
+        let host = CLIHost()
+        let once = args.contains("--once")
+        var failures = 0
+        repeat {
+            for r in await watcher.runOnce(host: host, progress: { print($0) }) {
+                print(ArchiJSON.jsonString(r))
+                if (r["ok"] as? Bool) != true { failures += 1 }
+            }
+            if !once { try? await Task.sleep(nanoseconds: UInt64(watcher.interval * 1_000_000_000)) }
+        } while !once
+        withExtendedLifetime(host) {}
+        return failures == 0 ? 0 : 1
+    }
+    if let mi = args.firstIndex(of: "--python-module") {
+        let dir = mi + 1 < args.count ? expand(args[mi + 1]) : URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        do { print(try PythonBridge.writeModule(to: dir).path); return 0 } catch { eprint("Cannot write archi.py: \(error.localizedDescription)"); return 1 }
+    }
+    if let pi = args.firstIndex(of: "--py") {
+        guard pi + 1 < args.count else { eprint(usage); return 2 }
+        let script = expand(args[pi + 1])
+        let before = Array(args[..<pi]).filter { !$0.hasPrefix("-") }
+        return PythonBridge.run(script: script, file: before.first.map(expand), args: Array(args[(pi + 2)...]))
     }
     if let ci = args.firstIndex(of: "--convert") {
         var rest = Array(args[(ci + 1)...])
@@ -748,6 +798,7 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
         case "--out", "-o": guard !args.isEmpty else { eprint(usage); return 2 }; out = args.removeFirst()
         case "--mcp": mcp = true
         case "--plugins": guard !args.isEmpty else { eprint(usage); return 2 }; pluginDir = expand(args.removeFirst())
+        case "--js": guard !args.isEmpty else { eprint(usage); return 2 }; jsFiles.append(expand(args.removeFirst()))
         case "--help", "-h": print(usage); return 0
         case "--version": print("archi-cli \(cliVersion) (Oanarina Archi Tool)"); return 0
         default:
@@ -776,6 +827,11 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
         }
     }
 
+    if !mcp { ed.onLog = { print($0) } }
+    for js in jsFiles {
+        do { try await CLIPlugins.runScriptFile(js, ed) }
+        catch { eprint("\(js.lastPathComponent): \((error as? LocalizedError)?.errorDescription ?? "\(error)")"); return 1 }
+    }
     if mcp {
         let server = MCPServer(editor: ed, path: fileURL?.pathExtension.lowercased() == "archi" ? fileURL : nil)
         await server.serve()
@@ -783,13 +839,16 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
     }
 
     ed.onLog = { print($0) }
-    if let script {
+    if !jsFiles.isEmpty && script == nil {
+        // JavaScript only: no REPL.
+    } else if let script {
         let url = expand(script)
         guard let text = try? String(contentsOf: url, encoding: .utf8) else { eprint("Cannot read script \(url.path)"); return 1 }
         for raw in text.components(separatedBy: .newlines) {
             let line = raw.trimmingCharacters(in: .whitespaces)
             if line.isEmpty || line.hasPrefix(";") { continue }
             await ed.run(line)
+            await drainBackground(ed)
         }
     } else {
         let interactive = isatty(STDIN_FILENO) != 0
@@ -808,6 +867,7 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
                 continue
             }
             await ed.run(line)
+            await drainBackground(ed)
         }
     }
 

@@ -29,6 +29,7 @@ struct StatusBarView: View {
                 .frame(width: 210, alignment: .leading)
                 .padding(.leading, 8)
             ucsIndicator
+            MacroButtonBar(model: model)
             VSeparator().padding(.vertical, 4)
             HStack(spacing: 1) {
                 toggle("GRID", "F7", \.showGrid)
@@ -152,5 +153,34 @@ private struct ZoomReadout: View {
         else if p >= 100 { text = String(format: "%.1f:1", p / 100) }
         else { text = "1:\(Int((100 / p).rounded()))" }
         return Text("Zoom \(text)").help("Screen scale relative to real size")
+    }
+}
+
+
+/// Custom macro buttons (CMD-041, MACROBUTTON): user-profile and drawing buttons, run like AutoCAD CUI macros.
+struct MacroButtonBar: View {
+    @ObservedObject var model: AppModel
+    var body: some View {
+        let buttons = MacroButtons.all(model.doc)
+        if !buttons.isEmpty {
+            HStack(spacing: 2) {
+                VSeparator().padding(.vertical, 4)
+                ForEach(buttons.prefix(12)) { b in
+                    Button { model.editor.runMacro(b.macro) } label: {
+                        Image(systemName: NSImage(systemSymbolName: b.icon, accessibilityDescription: nil) == nil ? "command" : b.icon)
+                            .foregroundStyle(Theme.textDim).frame(width: 20)
+                    }
+                    .buttonStyle(.borderless)
+                    .help(b.tooltip.isEmpty ? "\(b.name): \(b.macro)" : b.tooltip)
+                }
+                if buttons.count > 12 {
+                    Menu {
+                        ForEach(buttons.dropFirst(12)) { b in Button(b.name) { model.editor.runMacro(b.macro) } }
+                    } label: { Image(systemName: "ellipsis") }
+                    .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                }
+            }
+            .padding(.horizontal, 4)
+        }
     }
 }

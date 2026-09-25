@@ -4,9 +4,9 @@ import Foundation
 /// Headless import/export by file extension, used by the IO commands, the CLI and agents.
 public enum FileImport {
     public static let importFormats = ["archi", "dxf", "dwg", "ifc", "ifczip", "svg", "obj", "usda", "usdz", "usd", "stl", "3mf", "gltf", "glb", "ply", "off", "amf", "dae", "stp", "step",
-                                       "geojson", "cityjson", "shp", "osm", "asc", "xlsx", "csv", "tsv", "txt", "xyz", "pts",
+                                       "geojson", "cityjson", "shp", "osm", "asc", "xlsx", "csv", "tsv", "txt", "xyz", "pts", "las", "igs", "iges", "fbx", "pdf", "dwfx", "dwf", "dgn",
                                        "png", "jpg", "jpeg", "gif", "bmp", "tif", "tiff", "webp", "heic", "heif", "avif"]
-    public static let exportFormats = ["3mf", "usda", "usdz", "geojson", "dxf12", "points", "stp", "step", "ply", "plt", "hpgl", "xlsx", "ifczip", "dwg", "analytical", "gbxml", "cobie", "dae",
+    public static let exportFormats = ["3mf", "usda", "usdz", "geojson", "dxf12", "points", "stp", "step", "ply", "plt", "hpgl", "xlsx", "ifczip", "dwg", "analytical", "opensees", "tcl", "laser", "igs", "iges", "fbx", "html", "dgn", "gbxml", "cobie", "dae",
                                        "kml", "kmz", "bcfzip", "bcf", "boq", "svglayers"]
 
     public enum ImportError: Error, LocalizedError {
@@ -88,6 +88,36 @@ public enum FileImport {
             }
             let ents = PointCloud.entities(ply.points, options: PointCloudOptions(scale: 1000 / reference.units.mm))
             return (entityDoc(ents, native: true), "\(ents.count) of \(ply.points.count) PLY points")
+        case "dgn":
+            let r = try DGN.read(try Data(contentsOf: url))
+            return (entityDoc(r.entities), "\(r.entities.count) DGN elements" + (r.is3D ? " (3D file, Z dropped)" : ""))
+        case "dwfx", "dwf":
+            let ents = try DWFxImporter.entities(try Data(contentsOf: url))
+            return (entityDoc(ents), "\(ents.count) DWFx objects")
+        case "pdf":
+            let pdf = try PDFFile(try Data(contentsOf: url))
+            var ents: [Entity] = []
+            var o = PDFImportOptions(); o.unitsPerPoint = 25.4 / 72
+            for n in 1...max(1, pdf.pages.count) where n <= pdf.pages.count {
+                // Pages side by side, 20 mm apart.
+                o.origin = Vec2(ents.isEmpty ? 0 : (ents.map { GeometryOps.bounds($0.geometry, doc: nil).max.x }.max() ?? 0) + 20, 0)
+                ents += try PDFImport.entities(pdf, page: n, options: o)
+            }
+            return (entityDoc(ents), "\(ents.count) PDF objects from \(pdf.pages.count) page(s)")
+        case "fbx":
+            let r = try FBX.entities(try Data(contentsOf: url))
+            var d = entityDoc(r.entities)
+            d.ensureLayer("IMPORT-FBX")
+            for m in r.materials { if let i = d.materials.firstIndex(where: { $0.name.caseInsensitiveCompare(m.name) == .orderedSame }) { d.materials[i] = m } else { d.materials.append(m) } }
+            return (d, "\(r.entities.count) FBX meshes, \(r.materials.count) materials")
+        case "igs", "iges":
+            let ents = try IGES.read(try readText(url))
+            return (entityDoc(ents), "\(ents.count) IGES curves")
+        case "las":
+            let r = try LASReader.entities(try Data(contentsOf: url), options: PointCloudOptions(scale: 1000 / reference.units.mm))
+            return (entityDoc(r.entities, native: true), "\(r.entities.count) of \(r.total) LAS points")
+        case "laz":
+            throw PointCloud.CloudError.invalid("LAZ is compressed: decompress it to LAS first (laszip -i file.laz -o file.las).")
         case "pointcloud":
             let r = try PointCloud.load(try Data(contentsOf: url), ext: url.pathExtension, options: PointCloudOptions(scale: 1000 / reference.units.mm))
             return (entityDoc(r.entities, native: true), "\(r.entities.count) of \(r.total) points")
@@ -194,7 +224,9 @@ public enum FileImport {
             var b = entries.reduce(BBox2.empty) { $0.union($1.bounds) }
             if b.isEmpty { b = BBox2(min: .zero, max: Vec2(1000, 1000)) }
             let scale = Double(doc.variable("PLOTSCALE") ?? "") ?? 100
-            try HPGLExporter.export(entries, bounds: b, scale: scale, unitMM: unitMM).write(to: url, atomically: true, encoding: .ascii)
+            // PLOTROLL = roll width in mm (large-format plotters); PLOTMARGIN = margin mm.
+            let roll = Double(doc.variable("PLOTROLL") ?? "").flatMap { $0 > 0 ? HPGLExporter.RollMedia(width: $0, margin: Double(doc.variable("PLOTMARGIN") ?? "") ?? 10) : nil }
+            try HPGLExporter.export(entries, bounds: b, scale: scale, unitMM: unitMM, roll: roll).write(to: url, atomically: true, encoding: .ascii)
         case "xlsx": try XLSX.schedules(doc).write(to: url, options: .atomic)
         case "ifczip":
             let ifc = IFCExporter.export(doc: doc, meshes: MeshBuilder.build(doc: doc))
@@ -214,6 +246,14 @@ public enum FileImport {
             var b = entries.reduce(BBox2.empty) { $0.union($1.bounds) }
             if b.isEmpty { b = BBox2(min: .zero, max: Vec2(1000, 1000)) }
             try SVGExporter.exportLayered(doc: doc, entries: entries, bounds: b.expanded(by: max(b.width, b.height) * 0.02), background: nil).write(to: url, atomically: true, encoding: .utf8)
+        case "html", "htm", "viewer": try ViewerExport.html(doc).write(to: url, atomically: true, encoding: .utf8)
+        case "dgn": try DGN.write(doc).write(to: url, options: .atomic)
+        case "fbx": try FBX.export(MeshBuilder.build(doc: doc), materials: doc.materials, unitMM: unitMM, name: doc.info.name).write(to: url, options: .atomic)
+        case "igs", "iges": try IGES.export(doc).write(to: url, atomically: true, encoding: .ascii)
+        case "laser", "lasersvg", "cnc":
+            try LaserExporter.export(doc, options: LaserOptions.from(doc)).svg.write(to: url, atomically: true, encoding: .utf8)
+        case "opensees", "tcl":
+            try StructuralLoads.openSeesTcl(StructuralAnalysis.model(doc, options: AnalyticalOptions.from(doc)), name: doc.info.name).write(to: url, atomically: true, encoding: .utf8)
         case "analytical":
             let m = StructuralAnalysis.model(doc, options: AnalyticalOptions.from(doc))
             try JSONSerialization.data(withJSONObject: m.json(name: doc.info.name), options: [.prettyPrinted, .sortedKeys]).write(to: url, options: .atomic)

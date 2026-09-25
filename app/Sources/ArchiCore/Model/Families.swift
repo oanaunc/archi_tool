@@ -6,7 +6,37 @@ import Foundation
 
 public enum FamilyParameterKind: String, Codable, CaseIterable {
     case length, angle, number, integer, text, yesNo, material, area, volume
-    public var isNumeric: Bool { self != .text && self != .material }
+    /// A web address (text; validated as an absolute URL with a scheme).
+    case url
+    /// A family type: "Family" or "Family:Type" naming a document family; nested forms can use it via family "=Param".
+    case familyType
+    public var isNumeric: Bool { self != .text && self != .material && self != .url && self != .familyType }
+
+    /// Validates a text value of this kind (nil = valid). `families` lists the known family names (for familyType).
+    public func validate(_ value: String, families: [FamilyDefinition]) -> String? {
+        let v = value.trimmingCharacters(in: .whitespaces)
+        switch self {
+        case .url:
+            if v.isEmpty { return nil }
+            guard let u = URL(string: v), let sch = u.scheme, !sch.isEmpty, (u.host != nil || sch == "mailto" || sch == "file") else { return "\"\(v)\" is not a valid URL" }
+            return nil
+        case .familyType:
+            if v.isEmpty { return nil }
+            let (f, t) = FamilyParameterKind.splitFamilyType(v)
+            guard let def = families.first(where: { $0.name.caseInsensitiveCompare(f) == .orderedSame }) else { return "family \"\(f)\" not found" }
+            if let t = t, !def.types.keys.contains(where: { $0.caseInsensitiveCompare(t) == .orderedSame }) { return "type \"\(t)\" not found in \(def.name)" }
+            return nil
+        default: return nil
+        }
+    }
+
+    /// Splits "Family:Type" into its parts (type nil when absent).
+    public static func splitFamilyType(_ s: String) -> (family: String, type: String?) {
+        let v = s.trimmingCharacters(in: .whitespaces)
+        guard let c = v.firstIndex(of: ":") else { return (v, nil) }
+        let t = String(v[v.index(after: c)...]).trimmingCharacters(in: .whitespaces)
+        return (String(v[..<c]).trimmingCharacters(in: .whitespaces), t.isEmpty ? nil : t)
+    }
 }
 
 public struct FamilyParameter: Codable, Hashable {
@@ -53,7 +83,9 @@ public struct FamilyProfile: Codable, Hashable {
     }
 }
 
-public enum FamilyFormKind: String, Codable, CaseIterable { case box, cylinder, extrusion, sweep, revolve, nested }
+/// Form kinds. `blend` lofts `profile` (base, z = 0) to `profile2` (top, z = height); `sweptBlend` sweeps along `path`
+/// while morphing from `profile` to `profile2` (PAR-004).
+public enum FamilyFormKind: String, Codable, CaseIterable { case box, cylinder, extrusion, sweep, revolve, nested, blend, sweptBlend }
 
 /// One solid (or void) form of a family. Numeric fields are expressions over the parameters.
 public struct FamilyForm: Codable, Hashable {
@@ -66,6 +98,8 @@ public struct FamilyForm: Codable, Hashable {
     public var dims: [String: String]
     /// Profile name (a FamilyProfile of this family or a ProfileLibrary name) for extrusion, sweep and revolve.
     public var profile: String?
+    /// End profile of a blend / swept blend (defaults to `profile`).
+    public var profile2: String?
     /// Sweep path vertices (x, y, z expressions).
     public var path: [[String]]
     /// Material name, or "=Param" to use a material parameter.
@@ -81,7 +115,9 @@ public struct FamilyForm: Codable, Hashable {
     public var family: String?
     public init(_ kind: FamilyFormKind, name: String = "", x: String = "0", y: String = "0", z: String = "0", rotation: String = "0",
                 dims: [String: String] = [:], profile: String? = nil, path: [[String]] = [], material: String? = nil, visible: String? = nil,
-                void: Bool = false, arrayCount: String? = nil, arrayDX: String? = nil, arrayDY: String? = nil, arrayDZ: String? = nil, family: String? = nil) {
+                void: Bool = false, arrayCount: String? = nil, arrayDX: String? = nil, arrayDY: String? = nil, arrayDZ: String? = nil, family: String? = nil,
+                profile2: String? = nil) {
+        self.profile2 = profile2
         self.kind = kind; self.name = name; self.x = x; self.y = y; self.z = z; self.rotation = rotation; self.dims = dims
         self.profile = profile; self.path = path; self.material = material; self.visible = visible; self.void = void
         self.arrayCount = arrayCount; self.arrayDX = arrayDX; self.arrayDY = arrayDY; self.arrayDZ = arrayDZ; self.family = family
@@ -96,8 +132,18 @@ public struct FamilyForm: Codable, Hashable {
                   visible: try c.decodeIfPresent(String.self, forKey: .visible), void: try c.decodeIfPresent(Bool.self, forKey: .void) ?? false,
                   arrayCount: try c.decodeIfPresent(String.self, forKey: .arrayCount), arrayDX: try c.decodeIfPresent(String.self, forKey: .arrayDX),
                   arrayDY: try c.decodeIfPresent(String.self, forKey: .arrayDY), arrayDZ: try c.decodeIfPresent(String.self, forKey: .arrayDZ),
-                  family: try c.decodeIfPresent(String.self, forKey: .family))
+                  family: try c.decodeIfPresent(String.self, forKey: .family), profile2: try c.decodeIfPresent(String.self, forKey: .profile2))
     }
+}
+
+/// A named reference plane of a family (PAR-003): perpendicular to `axis` ("x", "y" or "z") at `offset` (an expression
+/// over the parameters and earlier planes). Its name can be used in form and profile expressions, so geometry drawn
+/// "to the plane" follows it when parameters flex.
+public struct FamilyReferencePlane: Codable, Hashable {
+    public var name: String
+    public var axis: String
+    public var offset: String
+    public init(_ name: String, axis: String = "x", offset: String) { self.name = name; self.axis = axis; self.offset = offset }
 }
 
 /// A loadable family defined in the document (Revit .rfa / ArchiCAD GDL object equivalent).
@@ -111,10 +157,12 @@ public struct FamilyDefinition: Codable, Hashable {
     /// Family types: type name → parameter values (the family types table).
     public var types: [String: [String: String]]
     public var description: String
+    /// Named reference planes (evaluated in order after the parameters).
+    public var referencePlanes: [FamilyReferencePlane]
     public init(name: String, category: String = "Generic Model", parameters: [FamilyParameter] = [], profiles: [FamilyProfile] = [],
-                forms: [FamilyForm] = [], types: [String: [String: String]] = [:], description: String = "") {
+                forms: [FamilyForm] = [], types: [String: [String: String]] = [:], description: String = "", referencePlanes: [FamilyReferencePlane] = []) {
         self.name = name; self.category = category; self.parameters = parameters; self.profiles = profiles; self.forms = forms
-        self.types = types; self.description = description
+        self.types = types; self.description = description; self.referencePlanes = referencePlanes
     }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -123,7 +171,8 @@ public struct FamilyDefinition: Codable, Hashable {
                   profiles: try c.decodeIfPresent([FamilyProfile].self, forKey: .profiles) ?? [],
                   forms: try c.decodeIfPresent([FamilyForm].self, forKey: .forms) ?? [],
                   types: try c.decodeIfPresent([String: [String: String]].self, forKey: .types) ?? [:],
-                  description: try c.decodeIfPresent(String.self, forKey: .description) ?? "")
+                  description: try c.decodeIfPresent(String.self, forKey: .description) ?? "",
+                  referencePlanes: try c.decodeIfPresent([FamilyReferencePlane].self, forKey: .referencePlanes) ?? [])
     }
     public func parameter(_ n: String) -> FamilyParameter? { parameters.first { $0.name.caseInsensitiveCompare(n) == .orderedSame } }
     public func profile(_ n: String) -> FamilyProfile? { profiles.first { $0.name.caseInsensitiveCompare(n) == .orderedSame } }

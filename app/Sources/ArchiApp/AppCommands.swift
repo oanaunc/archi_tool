@@ -17,6 +17,7 @@ enum AppCommands {
         r.register(all)
         r.register(AppCommandsExtra.all)
         r.register(AppCommandsReview.all)
+        r.register(AppCommandsStudio.all)
         r.register(AppSelfTests.command)
         AppCommandsExtra.installSpellChecker()
     }

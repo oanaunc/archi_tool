@@ -67,6 +67,7 @@ enum ModifyCommands {
                     n.geometry = .text(tx); n.props = [:]
                 }
                 n.geometry = GeometryOps.transform(n.geometry, t)
+                n.props["arrItem"] = nil
                 if n.layer == "0" { n.layer = e.layer }
                 if n.color == .byBlock { n.color = e.color }
                 out.append(n)
@@ -146,16 +147,18 @@ enum ModifyCommands {
             let ids = try await ed.getSelection()
             guard !ids.isEmpty else { return }
             let a = try await ed.getPoint("Specify base point", keywords: ["Displacement"])
-            var delta: Vec2
+            var t: Transform2D
             switch a {
             case .point(let b):
-                let s = try await ed.getPoint("Specify second point or <use first point as displacement>", base: b) { c in ed.transformedPreview(ids, .translation(c - b)) }
-                delta = s.point.map { $0 - b } ?? b
+                // Space (or Turn90) turns the moved objects 90° about the destination point while dragging (MOD-029).
+                let (s, rot) = try await ed.getRotatablePoint("Specify second point or <use first point as displacement>", base: b) { c, r in
+                    ed.transformedPreview(ids, Editor.dragTransform(from: b, to: c, rotation: r)) }
+                t = s.point.map { Editor.dragTransform(from: b, to: $0, rotation: rot) } ?? .translation(b)
             case .keyword:
-                delta = try await ed.requirePoint("Specify displacement", base: .zero) { c in ed.transformedPreview(ids, .translation(c)) }
+                t = .translation(try await ed.requirePoint("Specify displacement", base: .zero) { c in ed.transformedPreview(ids, .translation(c)) })
             default: return
             }
-            ed.transformObjects(ids, .translation(delta), copy: false)
+            ed.transformObjects(ids, t, copy: false)
             ed.selection = []
             ed.print("\(ids.count) object(s) moved.")
         },
@@ -174,9 +177,10 @@ enum ModifyCommands {
             var batches: [[EntityID]] = []
             while true {
                 let b = base
-                let s = try await ed.getPoint("Specify second point", base: base, keywords: batches.isEmpty ? ["Array"] : ["Array", "Exit", "Undo"]) { c in ed.transformedPreview(ids, .translation(c - b)) }
+                let (s, rot) = try await ed.getRotatablePoint("Specify second point", base: base, keywords: batches.isEmpty ? ["Array"] : ["Array", "Exit", "Undo"]) { c, r in
+                    ed.transformedPreview(ids, Editor.dragTransform(from: b, to: c, rotation: r)) }
                 switch s {
-                case .point(let p): batches.append(ed.transformObjects(ids, .translation(p - base), copy: true))
+                case .point(let p): batches.append(ed.transformObjects(ids, Editor.dragTransform(from: base, to: p, rotation: rot), copy: true))
                 case .keyword("Array"):
                     guard let n = try await ed.getInteger("Enter number of items to array", defaultValue: 3), n >= 2, n <= 10000 else { ed.print("Enter 2 or more items."); continue }
                     var fit = false
@@ -847,6 +851,12 @@ enum ModifyCommands {
     }
 
     // MARK: - ARRAY
+    /// Creates an associative array when ARRAYASSOCIATIVITY is on and the selection holds only drawing entities.
+    @MainActor static func associativeArray(_ ed: Editor, _ ids: [EntityID], _ p: ArrayParams) -> Bool {
+        guard AssocArray.enabled(ed.doc), !ed.forceClassicArray, ids.allSatisfy({ ed.doc.entity($0) != nil }) else { return false }
+        return AssocArray.create(ids, p, &ed.doc) != nil
+    }
+
     @MainActor static func rectArray(_ ed: Editor, _ ids: [EntityID]) async throws {
         let b = ed.selectionBounds(ids)
         guard let rows = try await ed.getInteger("Enter the number of rows", defaultValue: 3), rows >= 1,
@@ -856,6 +866,9 @@ enum ModifyCommands {
         var dy = 0.0, dx = 0.0
         if rows > 1 { dy = try await ed.getDistance("Specify the distance between rows", defaultValue: max(b.height * 1.5, 1)).value ?? max(b.height * 1.5, 1) }
         if cols > 1 { dx = try await ed.getDistance("Specify the distance between columns", defaultValue: max(b.width * 1.5, 1)).value ?? max(b.width * 1.5, 1) }
+        var prm = ArrayParams(kind: .rect)
+        prm.rows = rows; prm.columns = cols; prm.rowSpacing = dy; prm.columnSpacing = dx
+        if associativeArray(ed, ids, prm) { ed.print("Associative rectangular array: \(rows * cols) items (\(rows) row(s) × \(cols) column(s))."); return }
         var n = 0
         for r in 0..<rows { for c in 0..<cols where r > 0 || c > 0 {
             ed.transformObjects(ids, .translation(Vec2(Double(c) * dx, Double(r) * dy)), copy: true); n += 1
@@ -870,6 +883,9 @@ enum ModifyCommands {
         let rotate = try await ed.getYesNo("Rotate arrayed objects?", defaultValue: true)
         let full = abs(abs(fill) - 2 * .pi) < 1e-9
         let step = full ? fill / Double(n) : fill / Double(n - 1)
+        var prm = ArrayParams(kind: .polar)
+        prm.count = n; prm.center = c; prm.fill = fill; prm.rotateItems = rotate; prm.base = ed.selectionBounds(ids).center
+        if associativeArray(ed, ids, prm) { ed.print("Associative polar array: \(n) items."); return }
         for k in 1..<n {
             let a = step * Double(k)
             let t: Transform2D
@@ -888,6 +904,9 @@ enum ModifyCommands {
         let total = CommandHelpers.polylineLength(pl)
         let closed = CommandHelpers.closedLoop(path.geometry) != nil
         let (p0, t0) = CommandHelpers.pointAt(pl, distance: 0)
+        var prm = ArrayParams(kind: .path)
+        prm.count = n; prm.path = path.id; prm.align = align; prm.base = base
+        if associativeArray(ed, ids, prm) { ed.print("Associative path array: \(n) items."); return }
         for k in 0..<n {
             let s = closed ? total * Double(k) / Double(n) : total * Double(k) / Double(n - 1)
             let (p, t) = CommandHelpers.pointAt(pl, distance: s)
@@ -1032,9 +1051,19 @@ enum ModifyCommands {
             ed.doc.entities = rest
             ed.selection = []
         },
-        CommandDef("TEXTTOFRONT", category: "Modify", summary: "Brings all text, dimensions and leaders in front of other objects.") { ed in
-            func isAnno(_ e: Entity) -> Bool { switch e.geometry { case .text, .dimension, .leader: return true; default: return false } }
-            ed.doc.entities = ed.doc.entities.filter { !isAnno($0) } + ed.doc.entities.filter(isAnno)
+        CommandDef("TEXTTOFRONT", category: "Modify", summary: "Brings text, dimensions and/or leaders in front of other objects (options: Text/Dimensions/Leaders/All).") { ed in
+            let k = try await ed.getKeyword("Bring to front [Text/Dimensions/Leaders/All]", ["Text", "Dimensions", "Leaders", "All"], defaultValue: "All") ?? "All"
+            func isAnno(_ e: Entity) -> Bool {
+                switch e.geometry {
+                case .text: return k == "Text" || k == "All"
+                case .dimension: return k == "Dimensions" || k == "All"
+                case .leader: return k == "Leaders" || k == "All"
+                default: return false
+                }
+            }
+            let front = ed.doc.entities.filter(isAnno)
+            ed.doc.entities = ed.doc.entities.filter { !isAnno($0) } + front
+            ed.print("\(front.count) object(s) brought to front.")
         },
         CommandDef("HATCHTOBACK", category: "Modify", summary: "Sends all hatches behind other objects.") { ed in
             func isH(_ e: Entity) -> Bool { if case .hatch = e.geometry { return true }; return false }

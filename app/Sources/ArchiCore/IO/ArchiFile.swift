@@ -36,6 +36,22 @@ public enum ArchiFile {
     }
 
     public static func decode(_ data: Data) throws -> ArchiDocument {
+        // Fast path (SYS-020): a current-format file decodes in one pass; older or damaged files take the migrating path.
+        if let fast = try? decoder().decode(Envelope.self, from: data), fast.formatVersion == ArchiDocument.currentFormatVersion,
+           fast.document.formatVersion == ArchiDocument.currentFormatVersion {
+            return fast.document
+        }
+        return try decodeMigrating(data)
+    }
+
+    static func decoder() -> JSONDecoder {
+        let dec = JSONDecoder()
+        dec.nonConformingFloatDecodingStrategy = .convertFromString(positiveInfinity: "inf", negativeInfinity: "-inf", nan: "nan")
+        return dec
+    }
+
+    /// Generic path: parses the JSON, runs the migrations from the file's format version, then decodes.
+    static func decodeMigrating(_ data: Data) throws -> ArchiDocument {
         let raw: Any
         do { raw = try JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]) }
         catch { throw FileError.corrupt("invalid JSON (\(error.localizedDescription))") }

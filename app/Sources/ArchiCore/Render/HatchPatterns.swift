@@ -83,8 +83,111 @@ public enum HatchPatterns {
         p["ZIGZAG"] = [Family(0, 0, 0, 0.125 * i, 0.125 * i, [0.125 * i, -0.125 * i]), Family(90, 0.125 * i, 0, 0.125 * i, 0.125 * i, [0.125 * i, -0.125 * i])]
         p["AR-B816"] = [Family(0, 0, 0, 0, 203.2), Family(90, 0, 0, 203.2, 203.2, [203.2, -203.2])]
         p["AR-HBONE"] = [Family(45, 0, 0, 101.6, 101.6, [304.8, -101.6]), Family(135, 71.84, 71.84, 101.6, -101.6, [304.8, -101.6])]
+        for (k, v) in libraryFamilies where p[k] == nil { p[k] = v }
         return p
     }()
+
+    /// The rest of the standard acad.pat / acadiso.pat names (ANSI, AR-, ISO 128 line hatches, GOST and the classic
+    /// drafting patterns), defined clean-room from their published appearance (not copied from Autodesk files).
+    static let libraryFamilies: [String: [Family]] = {
+        var p: [String: [Family]] = [:]
+        let h3 = 0.866025403784 // √3 / 2
+        p["ANGLE"] = [Family(0, 0, 0, 0, 0.275 * i, [0.2 * i, -0.075 * i]), Family(90, 0, 0, 0, 0.275 * i, [0.2 * i, -0.075 * i])]
+        p["BOX"] = [Family(0, 0, 0, 0, 0.5 * i, [0.25 * i, -0.25 * i]), Family(0, 0, 0.25 * i, 0, 0.5 * i, [0.25 * i, -0.25 * i]),
+                    Family(90, 0, 0, 0, 0.5 * i, [0.25 * i, -0.25 * i]), Family(90, 0.25 * i, 0, 0, 0.5 * i, [0.25 * i, -0.25 * i]),
+                    Family(0, 0.0625 * i, 0.0625 * i, 0, 0.5 * i, [0.125 * i, -0.375 * i]), Family(0, 0.0625 * i, 0.1875 * i, 0, 0.5 * i, [0.125 * i, -0.375 * i]),
+                    Family(90, 0.0625 * i, 0.0625 * i, 0, 0.5 * i, [0.125 * i, -0.375 * i]), Family(90, 0.1875 * i, 0.0625 * i, 0, 0.5 * i, [0.125 * i, -0.375 * i])]
+        p["BRASS"] = [Family(0, 0, 0, 0, 0.25 * i), Family(0, 0, 0.125 * i, 0, 0.25 * i, [0.125 * i, -0.0625 * i])]
+        p["BRSTONE"] = [Family(0, 0, 0, 0, 0.33 * i), Family(90, 0, 0, 0.33 * i, 0.45 * i, [0.33 * i, -0.33 * i]),
+                        Family(0, 0.1 * i, 0.11 * i, 0.45 * i, 0.33 * i, [0.25 * i, -0.65 * i]), Family(0, 0.1 * i, 0.22 * i, 0.45 * i, 0.33 * i, [0.25 * i, -0.65 * i])]
+        p["CLAY"] = [Family(0, 0, 0, 0, 0.1875 * i), Family(0, 0, 0.03125 * i, 0, 0.1875 * i), Family(0, 0, 0.0625 * i, 0, 0.1875 * i),
+                     Family(0, 0, 0.125 * i, 0, 0.1875 * i, [0.1875 * i, -0.125 * i])]
+        p["CORK"] = [Family(0, 0, 0, 0, 0.125 * i), Family(135, 0.0625 * i, -0.0625 * i, 0, 0.353553 * i, [0.176777 * i, -0.176777 * i]),
+                     Family(135, 0.09375 * i, -0.0625 * i, 0, 0.353553 * i, [0.176777 * i, -0.176777 * i])]
+        p["DASH"] = [Family(0, 0, 0, 0.0625 * i, 0.125 * i, [0.125 * i, -0.125 * i])]
+        p["DOLMIT"] = [Family(0, 0, 0, 0, 0.25 * i), Family(45, 0, 0, 0.353553 * i, 0.176777 * i, [0.353553 * i, -0.707107 * i])]
+        p["ESCHER"] = [Family(60, 0, 0, -0.6 * i, 1.039230 * i, [1.1 * i, -0.1 * i]), Family(180, 0, 0, -0.6 * i, 1.039230 * i, [1.1 * i, -0.1 * i]),
+                       Family(300, 0, 0, 0.6 * i, 1.039230 * i, [1.1 * i, -0.1 * i]), Family(60, 0.1 * i, 0, -0.6 * i, 1.039230 * i, [0.2 * i, -1 * i]),
+                       Family(300, 0.1 * i, 0, 0.6 * i, 1.039230 * i, [0.2 * i, -1 * i]), Family(180, -0.05 * i, 0.086603 * i, -0.6 * i, 1.039230 * i, [0.2 * i, -1 * i])]
+        p["FLEX"] = [Family(0, 0, 0, 0, 0.25 * i, [0.25 * i, -0.25 * i]),
+                     Family(45, 0.25 * i, 0, 0.176777 * i, 0.176777 * i, [0.0625 * i, -0.228553 * i, 0.0625 * i, -0.353553 * i])]
+        p["GRATE"] = [Family(0, 0, 0, 0, 0.03125 * i), Family(90, 0, 0, 0, 0.125 * i)]
+        let s = 0.125 * i
+        p["HEX"] = [Family(0, 0, 0, 1.5 * s, h3 * s, [s, -2 * s]), Family(120, 0, 0, 1.5 * s, h3 * s, [s, -2 * s]),
+                    Family(60, s, 0, 1.5 * s, h3 * s, [s, -2 * s])]
+        p["HOUND"] = [Family(0, 0, 0, 0.25 * i, 0.0625 * i, [1 * i, -0.5 * i]), Family(90, 0, 0, -0.25 * i, 0.0625 * i, [1 * i, -0.5 * i])]
+        p["MUDST"] = [Family(0, 0, 0, 0.5 * i, 0.25 * i, [0.25 * i, -0.25 * i, 0, -0.25 * i, 0, -0.25 * i])]
+        p["NET3"] = [Family(0, 0, 0, 0, 0.125 * i), Family(60, 0, 0, 0, 0.125 * i), Family(120, 0, 0, 0, 0.125 * i)]
+        p["PLAST"] = [Family(0, 0, 0, 0, 0.25 * i), Family(0, 0, 0.03125 * i, 0, 0.25 * i), Family(0, 0, 0.0625 * i, 0, 0.25 * i)]
+        p["PLASTI"] = p["PLAST"]! + [Family(0, 0, 0.15625 * i, 0, 0.25 * i)]
+        p["SACNCR"] = [Family(45, 0, 0, 0, 0.09375 * i), Family(45, 0.066291 * i, 0, 0, 0.09375 * i, [0, -0.09375 * i])]
+        p["STARS"] = [Family(0, 0, 0, 0.25 * i, 0.216506 * i, [0.125 * i, -0.125 * i]), Family(60, 0, 0, 0.25 * i, 0.216506 * i, [0.125 * i, -0.125 * i]),
+                      Family(120, 0.125 * i, 0, 0.25 * i, 0.216506 * i, [0.125 * i, -0.125 * i])]
+        p["STEEL"] = [Family(45, 0, 0, 0, 0.125 * i), Family(45, 0, 0.0625 * i, 0, 0.125 * i)]
+        p["SWAMP"] = [Family(0, 0, 0, 0.5 * i, 0.866025 * i, [0.125 * i, -0.875 * i]),
+                      Family(90, 0.0625 * i, 0, 0.866025 * i, 0.5 * i, [0.0625 * i, -1.669551 * i]),
+                      Family(90, 0.078125 * i, 0, 0.866025 * i, 0.5 * i, [0.05 * i, -1.682051 * i]),
+                      Family(90, 0.046875 * i, 0, 0.866025 * i, 0.5 * i, [0.05 * i, -1.682051 * i]),
+                      Family(60, 0.09375 * i, 0, 0.5 * i, 0.866025 * i, [0.04 * i, -0.96 * i]),
+                      Family(120, 0.03125 * i, 0, 0.5 * i, 0.866025 * i, [0.04 * i, -0.96 * i])]
+        p["TRANS"] = [Family(0, 0, 0, 0, 0.25 * i), Family(0, 0, 0.125 * i, 0, 0.25 * i, [0.125 * i, -0.125 * i])]
+        p["TRIANG"] = [Family(60, 0, 0, 0.1875 * i, 0.324760 * i, [0.1875 * i, -0.1875 * i]),
+                       Family(120, 0, 0, 0.1875 * i, 0.324760 * i, [0.1875 * i, -0.1875 * i]),
+                       Family(0, -0.09375 * i, 0.162380 * i, 0.1875 * i, 0.324760 * i, [0.1875 * i, -0.1875 * i])]
+        // Architectural (real-world mm).
+        p["AR-B816C"] = [Family(0, 0, 0, 203.2, 203.2, [396.875, -9.525]), Family(0, -203.2, 9.525, 203.2, 203.2, [396.875, -9.525]),
+                         Family(90, 0, 0, 203.2, 203.2, [-9.525, 193.675]), Family(90, -9.525, 0, 203.2, 203.2, [-9.525, 193.675])]
+        p["AR-B88"] = [Family(0, 0, 0, 0, 203.2), Family(90, 0, 0, 203.2, 101.6, [203.2, -203.2])]
+        p["AR-BRELM"] = [Family(0, 0, 0, 0, 67.7), Family(90, 0, 0, 0, 203.2, [67.7, -67.7]), Family(90, 50.8, 67.7, 0, 101.6, [67.7, -67.7])]
+        var parq: [Family] = []
+        for k in 0...6 {
+            let o = 50.8 * Double(k)
+            parq.append(Family(90, o, 0, 304.8, 304.8, [304.8, -304.8]))
+            parq.append(Family(0, 0, 304.8 + o, 304.8, -304.8, [304.8, -304.8]))
+        }
+        p["AR-PARQ1"] = parq
+        p["AR-RROOF"] = [Family(0, 0, 0, 55.88, 25.4, [381, -50.8, 127, -50.8]), Family(0, 33.87, 12.7, -25.4, 33.87, [76.2, -8.5, 152.4, -19.05]),
+                         Family(0, 12.7, 21.17, 132.08, 17.72, [203.2, -35.56, 101.6, -25.4])]
+        p["AR-RSHKE"] = [Family(0, 0, 0, 647.7, 304.8, [152.4, -127, 177.8, -76.2, 228.6, -76.2]),
+                         Family(0, 152.4, 12.7, 647.7, 304.8, [127, -482.6, 101.6, -152.4]),
+                         Family(0, 457.2, -19.05, 647.7, 304.8, [76.2, -787.4]),
+                         Family(90, 0, 0, 304.8, 215.9, [292.1, -927.1]),
+                         Family(90, 152.4, 0, 304.8, 215.9, [285.75, -933.45]),
+                         Family(90, 279.4, 0, 304.8, 215.9, [266.7, -952.5])]
+        // ISO 128 line hatches (acadiso ACAD_ISOnnW100: dash patterns of the ISO linetypes, 5 mm spacing, pen width 1 mm).
+        let iso: [(String, [Double])] = [
+            ("02", [12, -3]), ("03", [12, -18]), ("04", [24, -3, 0.5, -3]), ("05", [24, -3, 0.5, -3, 0.5, -3]),
+            ("06", [24, -3, 0.5, -3, 0.5, -6.5]), ("07", [0.5, -3]), ("08", [24, -3, 6, -3]), ("09", [24, -3, 6, -3, 6, -3]),
+            ("10", [12, -3, 0.5, -3]), ("11", [12, -3, 12, -3, 0.5, -3]), ("12", [12, -3, 0.5, -3, 0.5, -3]),
+            ("13", [12, -3, 12, -3, 0.5, -6.5]), ("14", [12, -3, 0.5, -3, 0.5, -6.5]), ("15", [12, -3, 12, -3, 0.5, -10])]
+        for (n, d) in iso { p["ACAD_ISO\(n)W100"] = [Family(0, 0, 0, 0, 5, d)] }
+        // GOST (Russian drafting standard) glass, wood and ground.
+        p["GOST_GLASS"] = [Family(45, 0, 0, 6, -6, [5, -7]), Family(45, 2.12132, 0, 6, -6, [2, -10]), Family(45, 0, 2.12132, 6, -6, [2, -10])]
+        p["GOST_WOOD"] = [Family(90, 0, 0, 0, -6, [10, -2]), Family(90, 2, -2, 0, -6, [6, -1.5, 5, -1.5]), Family(90, 4, -5, 0, -6, [10, -2])]
+        p["GOST_GROUND"] = [Family(45, 0, 0, 10, -10, [20]), Family(45, 3, 0, 10, -10, [20]), Family(45, 6, 0, 10, -10, [20])]
+        return p
+    }()
+
+    /// Short descriptions of the library patterns (pattern palette tooltips).
+    public static let descriptions: [String: String] = [
+        "SOLID": "Solid fill", "ANGLE": "Angle steel", "ANSI31": "ANSI iron, brick, stone masonry", "ANSI32": "ANSI steel",
+        "ANSI33": "ANSI bronze, brass, copper", "ANSI34": "ANSI plastic, rubber", "ANSI35": "ANSI fire brick, refractory material",
+        "ANSI36": "ANSI marble, slate, glass", "ANSI37": "ANSI lead, zinc, magnesium, sound/heat/elec insulation", "ANSI38": "ANSI aluminum",
+        "AR-B816": "8x16 block elevation stretcher bond", "AR-B816C": "8x16 block elevation stretcher bond with mortar joints",
+        "AR-B88": "8x8 block elevation stretcher bond", "AR-BRELM": "Standard brick elevation English bond with mortar joints",
+        "AR-BRSTD": "Standard brick elevation stretcher bond", "AR-CONC": "Random dot and stone pattern (concrete)",
+        "AR-HBONE": "Standard brick herringbone pattern @ 45 degrees", "AR-PARQ1": "2x12 parquet flooring: pattern of 12x12",
+        "AR-RROOF": "Roof shingle texture", "AR-RSHKE": "Roof wood shake texture", "AR-SAND": "Random dot pattern (sand)",
+        "BOX": "Box steel", "BRASS": "Brass material", "BRICK": "Brick or masonry-type surface", "BRSTONE": "Brick and stone",
+        "CLAY": "Clay material", "CORK": "Cork material", "CROSS": "A series of crosses", "DASH": "Dashed lines", "DOLMIT": "Geological rock layering",
+        "DOTS": "A series of dots", "EARTH": "Earth or ground (subterranean)", "ESCHER": "Escher pattern", "FLEX": "Flexible material",
+        "GOST_GLASS": "Glass (GOST)", "GOST_WOOD": "Wood (GOST)", "GOST_GROUND": "Ground (GOST)", "GRASS": "Grass area", "GRATE": "Grated area",
+        "GRAVEL": "Gravel pattern", "HEX": "Hexagons", "HONEY": "Honeycomb pattern", "HOUND": "Houndstooth check", "INSUL": "Insulation material",
+        "LINE": "Parallel horizontal lines", "MUDST": "Mud and sand", "NET": "Horizontal / vertical grid", "NET3": "Network pattern 0-60-120",
+        "PLAST": "Plastic material", "PLASTI": "Plastic material", "SACNCR": "Concrete", "SQUARE": "Small aligned squares", "STARS": "Star of David",
+        "STEEL": "Steel material", "SWAMP": "Swampy area", "TRANS": "Heat transfer material", "TRIANG": "Equilateral triangles", "WOOD": "Timber grain",
+        "ZIGZAG": "Staircase effect",
+    ].merging((2...15).map { (String(format: "ACAD_ISO%02dW100", $0), "ISO 128 hatch, linetype \(String(format: "%02d", $0))") }) { a, _ in a }
 
     // MARK: Custom patterns (.pat files)
 
@@ -143,7 +246,11 @@ public enum HatchPatterns {
     /// Pattern names understood by `lines(...)` (SOLID is a plain fill).
     public static let names: [String] = ["SOLID", "ANSI31", "ANSI32", "ANSI33", "ANSI34", "ANSI35", "ANSI36", "ANSI37", "ANSI38", "AR-CONC", "AR-SAND",
                                          "INSUL", "BRICK", "AR-BRSTD", "AR-B816", "AR-HBONE", "GRASS", "NET", "DOTS", "HONEY", "LINE", "CROSS",
-                                         "EARTH", "GRAVEL", "WOOD", "SQUARE", "ZIGZAG"]
+                                         "EARTH", "GRAVEL", "WOOD", "SQUARE", "ZIGZAG",
+                                         "ANGLE", "AR-B816C", "AR-B88", "AR-BRELM", "AR-PARQ1", "AR-RROOF", "AR-RSHKE", "BOX", "BRASS", "BRSTONE",
+                                         "CLAY", "CORK", "DASH", "DOLMIT", "ESCHER", "FLEX", "GOST_GLASS", "GOST_WOOD", "GOST_GROUND", "GRATE", "HEX",
+                                         "HOUND", "MUDST", "NET3", "PLAST", "PLASTI", "SACNCR", "STARS", "STEEL", "SWAMP", "TRANS", "TRIANG"]
+                                         + (2...15).map { String(format: "ACAD_ISO%02dW100", $0) }
 
     /// Whether the pattern is defined at real-world size (AR-*, WOOD, GRAVEL, INSUL) rather than drafting size.
     public static func isRealWorld(_ pattern: String) -> Bool {

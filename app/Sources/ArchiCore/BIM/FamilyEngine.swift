@@ -24,6 +24,8 @@ public enum FamilyEngine {
         /// Plan outlines (world XY).
         public var outlines: [[Vec2]] = []
         public var errors: [String] = []
+        /// Reference plane positions (family coordinates of the top-level family): name → (axis, offset).
+        public var planes: [String: (axis: String, offset: Double)] = [:]
         public var bounds: BBox3 {
             var b = BBox3.empty
             for (_, a) in parts { for p in a.mesh.positions { b.add(p) } }
@@ -66,9 +68,20 @@ public enum FamilyEngine {
     static func build(_ def: FamilyDefinition, doc: ArchiDocument, overrides: [String: String], type: String?, extra: [String: Double] = [:],
                       placement: FamilyPlacement, depth: Int = 0, into r: inout Result) {
         guard depth < 6 else { r.errors.append("\(def.name): nesting too deep"); return }
-        let res = FamilyExpr.resolve(def, overrides: overrides, type: type, extra: extra)
+        var ext = GlobalParameters.values(doc)
+        for (k, x) in extra { ext[k.lowercased()] = x }
+        let res = FamilyExpr.resolve(def, overrides: overrides, type: type, extra: ext)
         r.errors += res.errors.map { "\(def.name).\($0)" }
-        let v = res.values
+        var v = res.values
+        // Reference planes: evaluated in order; their names become values usable by forms and profiles.
+        for rp in def.referencePlanes {
+            if let x = FamilyExpr.evaluate(rp.offset, v) { v[rp.name.lowercased()] = x; r.planes[rp.name] = (rp.axis.lowercased(), x) }
+            else { r.errors.append("\(def.name).\(rp.name): cannot evaluate \"\(rp.offset)\"") }
+        }
+        // Text-typed parameters with validation (URL, family type — PAR-020).
+        for p in def.parameters where p.kind == .url || p.kind == .familyType {
+            if let msg = p.kind.validate(res.text[p.name.lowercased()] ?? p.value, families: doc.families) { r.errors.append("\(def.name).\(p.name): \(msg)") }
+        }
         func e(_ s: String?, _ d: Double) -> Double { guard let s = s, !s.isEmpty else { return d }; return FamilyExpr.evaluate(s, v) ?? d }
         var solids: [String: MeshAcc] = [:]
         var voids = MeshAcc()
@@ -82,13 +95,20 @@ public enum FamilyEngine {
                 let local = FamilyPlacement(origin: Vec3(e(f.x, 0), e(f.y, 0), e(f.z, 0)) + step * Double(k), angle: e(f.rotation, 0) * .pi / 180)
                 let pl = placement.then(local)
                 if f.kind == .nested {
-                    guard let n = f.family, let sub = doc.family(named: n), sub.name.caseInsensitiveCompare(def.name) != .orderedSame else {
-                        r.errors.append("\(def.name): nested family \(f.family ?? "?") not found"); continue
+                    // family "=Param" reads a family-type parameter ("Family" or "Family:Type").
+                    var fam = f.family, ftype = f.dims["type"]
+                    if let n = fam, n.hasPrefix("=") {
+                        let (a, b) = FamilyParameterKind.splitFamilyType(res.text[String(n.dropFirst()).lowercased()] ?? "")
+                        fam = a.isEmpty ? nil : a
+                        if let b = b { ftype = b }
+                    }
+                    guard let n = fam, let sub = doc.family(named: n), sub.name.caseInsensitiveCompare(def.name) != .orderedSame else {
+                        r.errors.append("\(def.name): nested family \(fam ?? f.family ?? "?") not found"); continue
                     }
                     var ov: [String: String] = [:]
-                    for (pk, ex) in f.dims { if let x = FamilyExpr.evaluate(ex, v) { ov[pk] = fmt(x, 9) } else { ov[pk] = ex } }
+                    for (pk, ex) in f.dims where pk != "type" { if let x = FamilyExpr.evaluate(ex, v) { ov[pk] = fmt(x, 9) } else { ov[pk] = ex } }
                     var sr = Result()
-                    build(sub, doc: doc, overrides: ov, type: f.dims["type"], placement: pl, depth: depth + 1, into: &sr)
+                    build(sub, doc: doc, overrides: ov, type: ftype, placement: pl, depth: depth + 1, into: &sr)
                     for (m, a) in sr.parts { var t = solids[m] ?? MeshAcc(); append(&t, a); solids[m] = t }
                     r.outlines += sr.outlines; r.errors += sr.errors
                     continue
@@ -147,6 +167,34 @@ public enum FamilyEngine {
                     acc = tmp
                     let rmax = p.map { abs($0.x) }.max() ?? 0
                     if rmax > 1e-9 { outline = RG.circle(.zero, rmax, segments: 24) }
+                case .blend:
+                    let h = e(f.dims["height"], 100)
+                    let w1 = e(f.dims["width"], 100), d1 = e(f.dims["depth"], 100)
+                    guard abs(h) > 1e-9, let p1 = profile(f.profile, def, values: v, doc: doc, w: w1, h: d1),
+                          let p2 = profile(f.profile2 ?? f.profile, def, values: v, doc: doc, w: e(f.dims["width2"], w1), h: e(f.dims["depth2"], d1)) else {
+                        r.errors.append("\(def.name).\(f.name): blend needs a base and a top profile"); continue
+                    }
+                    FamilyEngine.blend(p1, p2, height: h, into: &acc)
+                    outline = abs(GeometryOps.signedArea(p1)) >= abs(GeometryOps.signedArea(p2)) ? p1 : p2
+                case .sweptBlend:
+                    let path = f.path.compactMap { q -> Vec3? in
+                        guard q.count >= 2, let x = FamilyExpr.evaluate(q[0], v), let y = FamilyExpr.evaluate(q[1], v) else { return nil }
+                        return Vec3(x, y, q.count > 2 ? (FamilyExpr.evaluate(q[2], v) ?? 0) : 0)
+                    }
+                    let pw = e(f.dims["width"], 50), ph = e(f.dims["height"], 50)
+                    guard path.count >= 2, let p1 = profile(f.profile, def, values: v, doc: doc, w: pw, h: ph),
+                          let p2 = profile(f.profile2 ?? f.profile, def, values: v, doc: doc, w: e(f.dims["width2"], pw), h: e(f.dims["height2"], ph)) else {
+                        r.errors.append("\(def.name).\(f.name): swept blend needs two profiles and a path"); continue
+                    }
+                    let corner = f.dims["anchor"] == "corner"
+                    let a = corner ? p1 : p1.map { $0 - GeometryOps.centroid(p1) }, b = corner ? p2 : p2.map { $0 - GeometryOps.centroid(p2) }
+                    FamilyEngine.sweptBlend(a, b, along: path, into: &acc)
+                    let half = max(a.map { abs($0.x) }.max() ?? 0, b.map { abs($0.x) }.max() ?? 0)
+                    let flat = path.map(\.xy)
+                    if half > 1e-9, flat.count >= 2 {
+                        let l = PlanRepresentation.offsetPolyline(flat, half), rr = PlanRepresentation.offsetPolyline(flat, -half)
+                        outline = l + rr.reversed()
+                    }
                 case .nested: continue
                 }
                 let placed = transformed(acc, pl)
@@ -162,6 +210,38 @@ public enum FamilyEngine {
             }
         }
         for (m, a) in solids { var t = r.parts[m] ?? MeshAcc(); append(&t, a); r.parts[m] = t }
+    }
+
+    /// Ring vertex count for morphing two profiles.
+    static func blendCount(_ a: [Vec2], _ b: [Vec2]) -> Int { min(256, max(24, max(a.count, b.count) * 4)) }
+
+    /// Blend (PAR-004): lofts profile `a` at z = 0 to profile `b` at z = `height` (both resampled to equal counts).
+    static func blend(_ a: [Vec2], _ b: [Vec2], height: Double, into acc: inout MeshAcc) {
+        let n = blendCount(a, b)
+        let ra = SweepMesh.resample(a, count: n), rb = SweepMesh.resample(b, count: n)
+        guard ra.count == n, rb.count == n else { return }
+        var rings = [ra.map { Vec3($0.x, $0.y, 0) }, rb.map { Vec3($0.x, $0.y, height) }]
+        if height < 0 { rings = rings.map { $0.reversed() } }
+        SweepMesh.loft(rings, into: &acc)
+    }
+
+    /// Swept blend (PAR-004): sweeps along `path`, morphing from `a` to `b` by arc length.
+    static func sweptBlend(_ a: [Vec2], _ b: [Vec2], along path0: [Vec3], into acc: inout MeshAcc) {
+        var path: [Vec3] = []
+        for p in path0 where !(path.last.map { $0.distance(to: p) < 1e-9 } ?? false) { path.append(p) }
+        guard path.count >= 2 else { return }
+        let n = blendCount(a, b)
+        let ra = SweepMesh.resample(a, count: n), rb = SweepMesh.resample(b, count: n)
+        guard ra.count == n, rb.count == n else { return }
+        var cum: [Double] = [0]
+        for i in 1..<path.count { cum.append(cum[i - 1] + path[i - 1].distance(to: path[i])) }
+        let total = max(cum.last!, 1e-12)
+        let fr = SweepMesh.frames(path)
+        let rings: [[Vec3]] = fr.enumerated().map { i, f in
+            let t = cum[i] / total
+            return (0..<n).map { k in let q = ra[k].lerp(rb[k], t); return f.o + f.x * q.x + f.y * q.y }
+        }
+        SweepMesh.loft(rings, into: &acc)
     }
 
     static func append(_ a: inout MeshAcc, _ b: MeshAcc) { a.mesh.append(b.mesh); a.edges += b.edges }

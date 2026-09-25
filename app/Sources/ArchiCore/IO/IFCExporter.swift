@@ -6,11 +6,20 @@ import Foundation
 /// IFC export settings. Defaults come from the document variables IFCSCHEMA (IFC4 / IFC4X3), IFCMVD
 /// (ReferenceView / DesignTransferView) and IFCQUANTITIES (1/0), so every export path honours IFCOPTIONS.
 public struct IFCExportOptions: Hashable {
-    public enum Schema: String, CaseIterable { case ifc4 = "IFC4", ifc4x3 = "IFC4X3_ADD2" }
+    public enum Schema: String, CaseIterable { case ifc2x3 = "IFC2X3", ifc4 = "IFC4", ifc4x3 = "IFC4X3_ADD2" }
     public enum ModelView: String, CaseIterable {
-        case referenceView = "ReferenceView_V1.2", designTransferView = "DesignTransferView_V1.0"
-        public var shortName: String { self == .referenceView ? "ReferenceView" : "DesignTransferView" }
+        case referenceView = "ReferenceView_V1.2", designTransferView = "DesignTransferView_V1.0", coordinationView = "CoordinationView_V2.0"
+        public var shortName: String { self == .referenceView ? "ReferenceView" : self == .designTransferView ? "DesignTransferView" : "CoordinationView" }
     }
+    /// Model view written in the header: IFC2x3 files always use Coordination View 2.0; IFC4/IFC4.3 use RV or DTV.
+    public var effectiveView: ModelView {
+        if schema == .ifc2x3 { return .coordinationView }
+        return modelView == .coordinationView ? .referenceView : modelView
+    }
+    /// Reference View geometry is tessellated (IfcTriangulatedFaceSet); DTV and IFC2x3 use faceted B-reps.
+    public var tessellated: Bool { schema != .ifc2x3 && effectiveView == .referenceView }
+    /// Writes IfcMapConversion + IfcProjectedCRS (IFC4/IFC4.3) from the project location (drawing variable IFCGEOREF=0 turns it off).
+    public var georeference = true
     public var schema: Schema = .ifc4
     public var modelView: ModelView = .referenceView
     /// Writes Qto_*BaseQuantities (IfcElementQuantity) for walls, slabs, columns, beams, spaces, doors and windows.
@@ -22,6 +31,7 @@ public struct IFCExportOptions: Hashable {
         switch s.uppercased().replacingOccurrences(of: ".", with: "").replacingOccurrences(of: "_", with: "") {
         case "IFC4", "IFC4ADD2", "4": return .ifc4
         case "IFC4X3", "IFC43", "IFC4X3ADD2", "43", "4X3": return .ifc4x3
+        case "IFC2X3", "IFC2X3TC1", "2X3", "IFC23", "23": return .ifc2x3
         default: return nil
         }
     }
@@ -29,6 +39,7 @@ public struct IFCExportOptions: Hashable {
         let u = s.uppercased()
         if u.hasPrefix("REF") { return .referenceView }
         if u.hasPrefix("DES") || u.hasPrefix("DTV") { return .designTransferView }
+        if u.hasPrefix("COORD") || u.hasPrefix("CV") { return .coordinationView }
         return nil
     }
     public static func from(_ doc: ArchiDocument) -> IFCExportOptions {
@@ -36,6 +47,7 @@ public struct IFCExportOptions: Hashable {
         if let v = doc.variable("IFCSCHEMA"), let sc = parseSchema(v) { o.schema = sc }
         if let v = doc.variable("IFCMVD"), let mv = parseView(v) { o.modelView = mv }
         if let v = doc.variable("IFCQUANTITIES") { o.quantities = !["0", "no", "off", "false"].contains(v.lowercased()) }
+        if let v = doc.variable("IFCGEOREF") { o.georeference = !["0", "no", "off", "false"].contains(v.lowercased()) }
         return o
     }
 }
@@ -242,13 +254,52 @@ final class IFCBuilder {
         return add("IFCPRODUCTDEFINITIONSHAPE($,$,\(refs(reps)))")
     }
 
-    /// Faceted B-rep of all mesh groups with this element id; `map` converts model coordinates to the local frame (mm).
+    /// Representation type of the items `brep(for:map:)` writes.
+    var meshRepType: String { options.tessellated ? "Tessellation" : "Brep" }
+
+    /// Mesh body of all mesh groups with this element id; `map` converts model coordinates to the local frame (mm).
+    /// Reference View (IFC4/IFC4.3): IfcTriangulatedFaceSet; Design Transfer View and IFC2x3: IfcFacetedBrep.
     func brep(for id: EntityID, map: (Vec3) -> Vec3) -> [Int] {
         var items: [Int] = []
         for grp in meshes where grp.id == id {
             let m = grp.mesh
             let tris = MeshExport.triangles(m)
             guard !tris.isEmpty else { continue }
+            if options.tessellated {
+                // Welded coordinate list + 1-based triangle indices.
+                var index: [String: Int] = [:]
+                var coords: [String] = []
+                var remap: [Int: Int] = [:]
+                func vid(_ i: Int) -> Int {
+                    if let e = remap[i] { return e }
+                    let p = map(m.positions[i])
+                    let key = "\(Int((p.x * 100).rounded())),\(Int((p.y * 100).rounded())),\(Int((p.z * 100).rounded()))"
+                    if let e = index[key] { remap[i] = e; return e }
+                    coords.append("(\(r(p.x)),\(r(p.y)),\(r(p.z)))"); index[key] = coords.count; remap[i] = coords.count
+                    return coords.count
+                }
+                var triIdx: [String] = []
+                var t = 0
+                while t + 2 < tris.count {
+                    let a = vid(Int(tris[t])), b = vid(Int(tris[t + 1])), c = vid(Int(tris[t + 2]))
+                    t += 3
+                    if a == b || b == c || a == c { continue }
+                    triIdx.append("(\(a),\(b),\(c))")
+                }
+                guard !triIdx.isEmpty else { continue }
+                let item: Int
+                if options.schema == .ifc4x3 {
+                    // IFC4.3: Closed moved to IfcTessellatedFaceSet; IfcCartesianPointList3D gained TagList.
+                    let pl = add("IFCCARTESIANPOINTLIST3D((\(coords.joined(separator: ","))),$)")
+                    item = add("IFCTRIANGULATEDFACESET(#\(pl),$,$,(\(triIdx.joined(separator: ","))),$)")
+                } else {
+                    let pl = add("IFCCARTESIANPOINTLIST3D((\(coords.joined(separator: ","))))")
+                    item = add("IFCTRIANGULATEDFACESET(#\(pl),$,$,(\(triIdx.joined(separator: ","))),$)")
+                }
+                style(item, material: grp.material)
+                items.append(item)
+                continue
+            }
             var ptIds: [Int: Int] = [:]
             var weld: [String: Int] = [:]
             func pid(_ i: Int) -> Int {
@@ -326,6 +377,7 @@ final class IFCBuilder {
         axisCtx = add("IFCGEOMETRICREPRESENTATIONSUBCONTEXT('Axis','Model',*,*,*,*,#\(ctx),$,.GRAPH_VIEW.,$)")
 
         let project = add("IFCPROJECT(\(g("project")),#\(oh),\(s(doc.info.name)),\(doc.info.number.isEmpty ? "$" : s(doc.info.number)),$,$,$,(#\(ctx)),#\(units))")
+        if options.georeference && options.schema != .ifc2x3 { georeference(context: ctx) }
         let sitePl = placement(relTo: nil, .zero)
         func dms(_ v: Double) -> String {
             let sign = v < 0 ? -1.0 : 1.0
@@ -382,6 +434,7 @@ final class IFCBuilder {
         for key in rampOrder { ramp(key, rampGroups[key] ?? []) }
         phaseGroups()
         writeTypes()
+        if options.schema != .ifc2x3, let ws = Scheduler.load(doc) { writeSchedule(ws, project: project) }
 
         for lv in levels {
             if let els = contained[lv.id], !els.isEmpty, let st = storeyEntity[lv.id] {
@@ -413,12 +466,64 @@ final class IFCBuilder {
         let iso = ISO8601DateFormatter()
         iso.formatOptions = [.withInternetDateTime]
         var out = "ISO-10303-21;\nHEADER;\n"
-        out += "FILE_DESCRIPTION(('ViewDefinition [\(options.modelView.rawValue)]'),'2;1');\n"
+        out += "FILE_DESCRIPTION(('ViewDefinition [\(options.effectiveView.rawValue)]'),'2;1');\n"
         out += "FILE_NAME(\(s(doc.info.name + ".ifc")),\(s(iso.string(from: Date()))),(\(s(author))),('Oanarina'),'Oanarina Archi Tool','Oanarina Archi Tool','');\n"
         out += "FILE_SCHEMA(('\(options.schema.rawValue)'));\nENDSEC;\nDATA;\n"
-        out += lines.joined(separator: "\n")
+        out += (options.schema == .ifc2x3 ? IFCSchemaConvert.toIFC2X3(lines, nextId: nextId) : lines).joined(separator: "\n")
         out += "\nENDSEC;\nEND-ISO-10303-21;\n"
         return out
+    }
+
+    /// IfcMapConversion + IfcProjectedCRS (IO-022): the model origin sits at the project latitude/longitude in the CRS of
+    /// the drawing variable GEOCRS (EPSG code; default the UTM zone of the site), rotated by the project north angle.
+    func georeference(context ctx: Int) {
+        let lat = doc.info.latitude, lon = doc.info.longitude
+        guard lat.isFinite, lon.isFinite, abs(lat) <= 84 else { return }
+        var crs = GeoCRS.utmZone(lon: lon, lat: lat)
+        if let v = doc.variable("GEOCRS"), let c = GeoCRS.parse(v) { crs = c }
+        let name: String, zone: String, projection: String
+        switch crs {
+        case .utm(let z, let n): name = crs.description; zone = "\(z)\(n ? "N" : "S")"; projection = "UTM zone \(z)\(n ? "N" : "S")"
+        case .webMercator: name = crs.description; zone = ""; projection = "Popular Visualisation Pseudo-Mercator"
+        default: return
+        }
+        let en = crs.fromLonLat(lon, lat)
+        guard en.x.isFinite, en.y.isFinite else { return }
+        let na = rad(doc.info.northAngle)
+        let metre = add("IFCSIUNIT(*,.LENGTHUNIT.,$,.METRE.)")
+        let pcrs = add("IFCPROJECTEDCRS(\(s(name)),\(s("WGS 84 / " + projection)),'WGS84',$,\(s(projection)),\(zone.isEmpty ? "$" : s(zone)),#\(metre))")
+        add("IFCMAPCONVERSION(#\(ctx),#\(pcrs),\(r(en.x)),\(r(en.y)),\(r(doc.info.elevation)),\(r(cos(na))),\(r(-sin(na))),1.)")
+    }
+
+    /// 4D work schedule (IFC4): IfcWorkSchedule declared by the project, IfcTask with IfcTaskTime (dates, float, critical),
+    /// IfcRelSequence (finish-to-start with lag), IfcRelAssignsToProcess (elements built by a task) and
+    /// IfcRelAssignsToControl (tasks controlled by the schedule).
+    func writeSchedule(_ ws: WorkSchedule, project: Int) {
+        guard !ws.tasks.isEmpty, let tm = try? Scheduler.cpm(ws) else { return }
+        let f = Scheduler.dayFormatter()
+        func dt(_ day: Int, end: Bool) -> String { s(f.string(from: Scheduler.date(ws, workday: day)) + (end ? "T17:00:00" : "T08:00:00")) }
+        let finish = tm.values.map(\.ef).max() ?? 0
+        let sched = add("IFCWORKSCHEDULE(\(g("schedule")),#\(oh),\(s(ws.name)),$,$,$,\(dt(0, end: false)),$,$,'P\(finish)D',$,\(dt(0, end: false)),\(dt(max(0, finish - 1), end: true)),.PLANNED.)")
+        add("IFCRELDECLARES(\(g("rel:declares:schedule")),#\(oh),$,$,#\(project),(#\(sched)))")
+        var taskEnt: [Int: Int] = [:]
+        for t in ws.tasks {
+            guard let x = tm[t.id] else { continue }
+            let time = add("IFCTASKTIME($,$,$,.WORKTIME.,'P\(t.duration)D',\(dt(x.es, end: false)),\(dt(max(x.es, x.ef - 1), end: true)),\(dt(x.es, end: false)),\(dt(max(x.es, x.ef - 1), end: true)),\(dt(x.ls, end: false)),\(dt(max(x.ls, x.lf - 1), end: true)),$,'P\(x.totalFloat)D',\(x.critical ? ".T." : ".F."),$,$,$,$,$,$)")
+            let e = add("IFCTASK(\(g("task:\(t.id)")),#\(oh),\(s(t.name)),$,\(s(t.trade)),\(s("\(t.id)")),$,$,$,.F.,$,#\(time),.CONSTRUCTION.)")
+            taskEnt[t.id] = e
+            let objs = t.elements.compactMap { elementEntity[$0] }
+            if !objs.isEmpty { add("IFCRELASSIGNSTOPROCESS(\(g("rel:process:\(t.id)")),#\(oh),$,$,\(refs(objs)),.PRODUCT.,#\(e),$)") }
+        }
+        for t in ws.tasks {
+            guard let b = taskEnt[t.id] else { continue }
+            for p in t.predecessors {
+                guard let a = taskEnt[p] else { continue }
+                let lag = t.lag == 0 ? "$" : "#\(add("IFCLAGTIME($,$,$,IFCDURATION('P\(t.lag)D'),.WORKTIME.)"))"
+                add("IFCRELSEQUENCE(\(g("rel:seq:\(p):\(t.id)")),#\(oh),$,$,#\(a),#\(b),\(lag),.FINISH_START.,$)")
+            }
+        }
+        let all = ws.tasks.compactMap { taskEnt[$0.id] }
+        if !all.isEmpty { add("IFCRELASSIGNSTOCONTROL(\(g("rel:control:schedule")),#\(oh),$,$,\(refs(all)),.PROCESS.,#\(sched))") }
     }
 
     // MARK: property helpers
@@ -599,7 +704,7 @@ final class IFCBuilder {
             style(item, material: el.material)
             items = [item]
         }
-        let rep = shape(items, type: usedMesh ? "Brep" : "SweptSolid")
+        let rep = shape(items, type: usedMesh ? meshRepType : "SweptSolid")
         let e: Int
         if o.kind == .door {
             let op: String
@@ -837,11 +942,21 @@ final class IFCBuilder {
         // Mesh coordinates are absolute model coordinates; the storey placement already lifts by its elevation.
         let kk = k
         var items = brep(for: el.id) { p in p * kk - Vec3(0, 0, elev) }
-        var repType = "Brep"
+        var repType = meshRepType
         if items.isEmpty, let fb = fallbackSolid(el) { items = [fb]; repType = "SweptSolid"; style(fb, material: el.material) }
         let rep = items.isEmpty ? "$" : "#\(shape(items, type: repType))"
         let gid = eg(el), nm = s(name(el, el.typeName.capitalized)), tag = s("\(el.id)")
         let e: Int
+        if let m = IFCClassMap.resolve(el, doc: doc) {
+            // Mapped class (IfcExportAs / IFCMAP / category defaults).
+            let lit = IFCClassMap.literal(m)
+            var objType = lit.objectType
+            if objType == nil, case .component(let c) = el.geometry { objType = c.category }
+            e = add("\(lit.entity)(\(gid),#\(oh),\(nm),$,\(objType.map { s($0) } ?? "$"),#\(pl),\(rep),\(tag),\(lit.pdt))")
+            commonProps(el, e, pset: IFCClassMap.supported[lit.entity]?.pset ?? "Pset_BuildingElementProxyCommon", [])
+            elementEntity[el.id] = e; contained[lv, default: []].append(e); useMaterial(el.material, e)
+            return
+        }
         switch el.geometry {
         case .roof(let rf):
             let t: String

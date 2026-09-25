@@ -17,6 +17,9 @@ struct PanelContent: View {
         case .history: HistoryPanel(model: model)
         case .tools: ToolPalettePanel(model: model)
         case .sheets: SheetSetPanel(model: model)
+        case .selection: SelectionInfoPanel(model: model)
+        case .navigator: NavigatorPanel(model: model)
+        case .alerts: NotificationsPanel(model: model)
         }
     }
 }

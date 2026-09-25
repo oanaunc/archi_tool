@@ -79,6 +79,9 @@ public enum AssociativeSolids {
                 return m.isEmpty ? nil : MeshTools.solid(from: MeshTools.triangles(m), tolerance: 1e-6)
             }
             return ModelingCommands.sweepSolid(p, path: path3, closedPath: pth.closed)
+        case .pipe:
+            guard let path = src.path, let pth = ModelingCommands.path(doc, path), src.heights.count >= 2 else { return nil }
+            return ModelingCommands.pipeSolid(pth.points.map { Vec3($0.x, $0.y, src.elevation) }, closed: pth.closed, radius: src.heights[0], wall: src.heights[1])
         case .loft:
             let loops = src.profiles.compactMap { ModelingCommands.loop(doc, $0) }
             guard loops.count == src.profiles.count, loops.count >= 2, src.heights.count == loops.count else { return nil }

@@ -252,13 +252,13 @@ public struct SolidHistory: Codable, Hashable {
 
 /// Associative source of a generated solid.
 public struct SolidSource: Codable, Hashable {
-    public enum Kind: String, Codable { case sweep, loft }
+    public enum Kind: String, Codable { case sweep, loft, pipe }
     public var kind: Kind
     /// Profile entity ids (sweep: one profile; loft: sections in order).
     public var profiles: [EntityID]
     /// Path entity (sweep).
     public var path: EntityID?
-    /// Path elevation (sweep) or section heights (loft).
+    /// Path elevation (sweep, pipe) or section heights (loft); pipe: heights = [outer radius, wall thickness].
     public var elevation: Double
     public var heights: [Double]
     public var twist: Double

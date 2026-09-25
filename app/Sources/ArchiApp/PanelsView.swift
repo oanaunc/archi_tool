@@ -13,6 +13,7 @@ struct PanelsView: View {
         let current = tabs.contains(model.panelTab) ? model.panelTab : (tabs.first ?? .properties)
         VStack(spacing: 0) {
             HStack(spacing: 0) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: max(1, min(tabs.count, 6))), spacing: 0) {
                 ForEach(tabs) { t in
                     Button { model.panelTab = t } label: {
                         VStack(spacing: 2) {
@@ -29,6 +30,7 @@ struct PanelsView: View {
                     .buttonStyle(.plain)
                     .help(t.rawValue + " — right-click to float")
                     .contextMenu { Button("Float \(t.rawValue) Panel") { FloatingPanels.float(t, model: model) } }
+                }
                 }
                 VStack(spacing: 0) {
                     IconButton(symbol: "macwindow.on.rectangle", help: "Float this panel in its own window (FLOATPANEL)") { FloatingPanels.float(current, model: model) }

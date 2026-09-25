@@ -129,6 +129,22 @@ public enum USDImporter {
     struct Prim {
         var type: String; var name: String; var path: String
         var translate = Vec3(0, 0, 0); var scale = Vec3(1, 1, 1)
+        /// xformOps by attribute name (4×4, column vectors) in declaration order, and xformOpOrder when given.
+        var ops: [(name: String, m: USDMatrix)] = []
+        var opOrder: [String]?
+        var displayColor: RGBA?
+        /// Local transform: ops applied in xformOpOrder (first = outermost), "!invert!" inverts an op.
+        var local: USDMatrix {
+            let names = opOrder ?? ops.map(\.name)
+            var m = USDMatrix.identity
+            for n in names {
+                let inv = n.hasPrefix("!invert!")
+                let key = inv ? String(n.dropFirst(8)) : n
+                guard let op = ops.last(where: { $0.name == key })?.m else { continue }
+                m = m * (inv ? (op.inverse ?? .identity) : op)
+            }
+            return m
+        }
         var points: [Vec3] = []; var counts: [Int] = []; var indices: [Int] = []
         var binding: String?
         var color: RGBA?; var roughness: Double?; var metallic: Double?; var opacity: Double?; var file: String?
@@ -202,10 +218,20 @@ public enum USDImporter {
                 cur.counts = numbers(value(lines, &i, from: line)).map { Int($0) }
             } else if line.contains("faceVertexIndices") && line.contains("=") {
                 cur.indices = numbers(value(lines, &i, from: line)).map { Int($0) }
-            } else if line.contains("xformOp:translate") && line.contains("=") {
-                let n = numbers(value(lines, &i, from: line)); if n.count >= 3 { cur.translate = Vec3(n[0], n[1], n[2]) }
-            } else if line.contains("xformOp:scale") && line.contains("=") {
-                let n = numbers(value(lines, &i, from: line)); if n.count >= 3 { cur.scale = Vec3(n[0], n[1], n[2]) } else if n.count == 1 { cur.scale = Vec3(n[0], n[0], n[0]) }
+            } else if line.contains("xformOpOrder") && line.contains("=") {
+                let v = value(lines, &i, from: line)
+                cur.opOrder = v.split(separator: "\"").enumerated().filter { $0.offset % 2 == 1 }.map { String($0.element) }
+            } else if line.contains("xformOp:") && line.contains("="), let nameRange = line.range(of: "xformOp:") {
+                // Attribute name up to the first space or '=' (e.g. xformOp:rotateXYZ, xformOp:translate:pivot).
+                let nm = String(line[nameRange.lowerBound...].prefix { $0 != " " && $0 != "=" })
+                let n = numbers(value(lines, &i, from: line))
+                if let m = USDMatrix.op(nm, n) {
+                    cur.ops.append((nm, m))
+                    if nm == "xformOp:translate", n.count >= 3 { cur.translate = Vec3(n[0], n[1], n[2]) }
+                    if nm == "xformOp:scale" { cur.scale = n.count >= 3 ? Vec3(n[0], n[1], n[2]) : Vec3(n.first ?? 1, n.first ?? 1, n.first ?? 1) }
+                }
+            } else if line.contains("primvars:displayColor") && line.contains("=") {
+                let n = numbers(value(lines, &i, from: line)); if n.count >= 3 { cur.displayColor = RGBA(n[0], n[1], n[2]) }
             } else if line.contains("material:binding") && line.contains("<") {
                 if let a = line.firstIndex(of: "<"), let b = line.lastIndex(of: ">"), a < b { cur.binding = String(line[line.index(after: a)..<b]) }
             } else if line.contains("inputs:diffuseColor.connect") {
@@ -252,10 +278,11 @@ public enum USDImporter {
                 guard let cut = path.lastIndex(of: "/") else { break }
                 path = String(path[..<cut])
             }
+            // World matrix = root … parent × prim (chain is innermost first).
+            var wm = USDMatrix.identity
+            for c in chain.reversed() { wm = wm * c.local }
             func world(_ v: Vec3) -> Vec3 {
-                var q = v
-                for c in chain { q = Vec3(q.x * c.scale.x, q.y * c.scale.y, q.z * c.scale.z) + c.translate }
-                q = q * k
+                let q = wm.apply(v) * k
                 return zUp ? q : Vec3(q.x, -q.z, q.y)
             }
             let verts = p.points.map(world)
@@ -271,6 +298,12 @@ public enum USDImporter {
             guard !tris.isEmpty else { continue }
             var props = ["name": p.name]
             if let b = p.binding, let m = matByPath[b] { props["material"] = m }
+            else if let c = p.displayColor {
+                // Unbound mesh with primvars:displayColor: a colour material named after it.
+                let nm = "USD " + c.hex
+                if !materials.contains(where: { $0.name == nm }) { materials.append(Material(name: nm, color: c)) }
+                props["material"] = nm
+            }
             ents.append(Entity(layer: "IMPORT-USD", geometry: .solid(SolidGeom(kind: .mesh, origin: .zero, meshVertices: verts, meshTriangles: tris)), props: props))
         }
         if ents.isEmpty { throw USDError.empty }
@@ -285,5 +318,74 @@ public enum USDImporter {
         if let r = s.metallic { m.metallic = r }
         if let o = s.opacity { m.opacity = o }
         if let f = s.file { m.file = f }
+    }
+}
+
+/// 4×4 transform for USD xformOps (column-vector convention; USD's row-vector matrices are transposed on read).
+public struct USDMatrix: Equatable {
+    public var m: [Double]   // row-major, 16 values
+    public static let identity = USDMatrix(m: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
+    public static func * (a: USDMatrix, b: USDMatrix) -> USDMatrix {
+        var r = [Double](repeating: 0, count: 16)
+        for i in 0..<4 { for j in 0..<4 { var s = 0.0; for k in 0..<4 { s += a.m[i * 4 + k] * b.m[k * 4 + j] }; r[i * 4 + j] = s } }
+        return USDMatrix(m: r)
+    }
+    public func apply(_ p: Vec3) -> Vec3 {
+        Vec3(m[0] * p.x + m[1] * p.y + m[2] * p.z + m[3], m[4] * p.x + m[5] * p.y + m[6] * p.z + m[7], m[8] * p.x + m[9] * p.y + m[10] * p.z + m[11])
+    }
+    static func translation(_ x: Double, _ y: Double, _ z: Double) -> USDMatrix { USDMatrix(m: [1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z, 0, 0, 0, 1]) }
+    static func scaling(_ x: Double, _ y: Double, _ z: Double) -> USDMatrix { USDMatrix(m: [x, 0, 0, 0, 0, y, 0, 0, 0, 0, z, 0, 0, 0, 0, 1]) }
+    static func rot(_ axis: Character, _ deg: Double) -> USDMatrix {
+        let a = deg * .pi / 180, c = cos(a), s = sin(a)
+        switch axis {
+        case "X": return USDMatrix(m: [1, 0, 0, 0, 0, c, -s, 0, 0, s, c, 0, 0, 0, 0, 1])
+        case "Y": return USDMatrix(m: [c, 0, s, 0, 0, 1, 0, 0, -s, 0, c, 0, 0, 0, 0, 1])
+        default: return USDMatrix(m: [c, -s, 0, 0, s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
+        }
+    }
+    /// Matrix of an xformOp attribute (name like "xformOp:rotateXYZ" or "xformOp:translate:pivot") with its numbers.
+    static func op(_ name: String, _ n: [Double]) -> USDMatrix? {
+        let parts = name.split(separator: ":")
+        guard parts.count >= 2 else { return nil }
+        let kind = String(parts[1])
+        switch kind {
+        case "translate": return n.count >= 3 ? translation(n[0], n[1], n[2]) : nil
+        case "scale": return n.count >= 3 ? scaling(n[0], n[1], n[2]) : n.first.map { scaling($0, $0, $0) }
+        case "rotateX", "rotateY", "rotateZ": return n.first.map { rot(kind.last!, $0) }
+        case "orient":
+            guard n.count >= 4 else { return nil }
+            let w = n[0], x = n[1], y = n[2], z = n[3]
+            let l = (w * w + x * x + y * y + z * z).squareRoot()
+            guard l > 1e-12 else { return nil }
+            let (qw, qx, qy, qz) = (w / l, x / l, y / l, z / l)
+            return USDMatrix(m: [1 - 2 * (qy * qy + qz * qz), 2 * (qx * qy - qz * qw), 2 * (qx * qz + qy * qw), 0,
+                                 2 * (qx * qy + qz * qw), 1 - 2 * (qx * qx + qz * qz), 2 * (qy * qz - qx * qw), 0,
+                                 2 * (qx * qz - qy * qw), 2 * (qy * qz + qx * qw), 1 - 2 * (qx * qx + qy * qy), 0, 0, 0, 0, 1])
+        case "transform":
+            guard n.count >= 16 else { return nil }
+            // USD matrices are row-vector (translation in the last row): transpose.
+            var r = [Double](repeating: 0, count: 16)
+            for i in 0..<4 { for j in 0..<4 { r[i * 4 + j] = n[j * 4 + i] } }
+            return USDMatrix(m: r)
+        default:
+            guard kind.hasPrefix("rotate"), kind.count == 9, n.count >= 3 else { return nil }
+            // rotateXYZ etc.: rotate about the first axis first, i.e. M = R(third) · R(second) · R(first).
+            let axes = Array(kind.dropFirst(6))
+            let angles = Dictionary(uniqueKeysWithValues: zip(["X", "Y", "Z"], n.prefix(3)).map { ($0.0, $0.1) })
+            var m = USDMatrix.identity
+            for a in axes { m = rot(a, angles[String(a)] ?? 0) * m }
+            return m
+        }
+    }
+    /// Inverse of an affine matrix (nil when singular).
+    var inverse: USDMatrix? {
+        let a = m
+        let det = a[0] * (a[5] * a[10] - a[6] * a[9]) - a[1] * (a[4] * a[10] - a[6] * a[8]) + a[2] * (a[4] * a[9] - a[5] * a[8])
+        guard abs(det) > 1e-15 else { return nil }
+        let i00 = (a[5] * a[10] - a[6] * a[9]) / det, i01 = (a[2] * a[9] - a[1] * a[10]) / det, i02 = (a[1] * a[6] - a[2] * a[5]) / det
+        let i10 = (a[6] * a[8] - a[4] * a[10]) / det, i11 = (a[0] * a[10] - a[2] * a[8]) / det, i12 = (a[2] * a[4] - a[0] * a[6]) / det
+        let i20 = (a[4] * a[9] - a[5] * a[8]) / det, i21 = (a[1] * a[8] - a[0] * a[9]) / det, i22 = (a[0] * a[5] - a[1] * a[4]) / det
+        let tx = -(i00 * a[3] + i01 * a[7] + i02 * a[11]), ty = -(i10 * a[3] + i11 * a[7] + i12 * a[11]), tz = -(i20 * a[3] + i21 * a[7] + i22 * a[11])
+        return USDMatrix(m: [i00, i01, i02, tx, i10, i11, i12, ty, i20, i21, i22, tz, 0, 0, 0, 1])
     }
 }

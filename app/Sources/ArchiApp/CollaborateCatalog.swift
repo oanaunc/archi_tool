@@ -79,11 +79,18 @@ extension CommandCatalog {
         c("Plug-ins", "puzzlepiece.extension", "PLUGINS"), c("Script to JavaScript", "curlybraces", "SCRIPT2JS"), c("Menu Macro", "command", "MACRO"), c("Delay", "timer", "DELAY"), c("Resume Script", "playpause", "RESUME"),
     ]
 
+    static let studio: [CmdItem] = [
+        c("Family Editor Panel", "cube.box.fill", "FAMILYPANEL"), c("Move Up/Down (Z)", "arrow.up.and.down.square", "MOVEZ"), c("Levels in 3D", "square.stack.3d.up", "LEVELVIEW3D"),
+        c("Field of View", "camera.aperture", "FOV"), c("Save 3D View Image", "photo", "VIEWIMAGE"), c("Sheet to Image", "photo.on.rectangle", "SHEETIMAGE"),
+        c("Selection Info", "info.square", "SELECTIONINFO"), c("Notifications", "bell.badge", "NOTIFICATIONS"), c("Navigator", "map", "NAVIGATOR"),
+        c("What's New", "sparkles", "WHATSNEW"),
+    ]
+
     /// Sections added to the coverage menus (names unique across `coverageMenus`).
     static var coverageMenus2: [(String, [CmdItem])] {
         [("Review & Markup", review), ("Versions & Issues", versioning), ("Inquiry Extras", inquiryExtra), ("Sharing & Exchange", sharing), ("Checks & Quantities", checks), ("Images & Geo", imagesGeo),
          ("Drafting Extras", draftingExtra), ("Annotation Extras", annotateExtra), ("Dynamic Blocks", blocksExtra), ("BIM Authoring", bimAuthoring),
          ("Views & Graphics", viewsExtra), ("Solid Features", solidsExtra), ("Script Control", scriptingExtra),
-         ("Review Panels", panels), ("3D, Render & Print", presentation3D)]
+         ("Review Panels", panels), ("3D, Render & Print", presentation3D), ("Families, Views & Panels", studio)] + coverageMenus3
     }
 }

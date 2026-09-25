@@ -54,7 +54,7 @@ public enum PlanRepresentation {
         case .railing(let g): return g.path
         case .curtainWall(let g): return [g.start, g.end, (g.start + g.end) / 2]
         case .component(let g): return g.path != nil ? g.worldPath : [g.position] + componentPoly(g)
-        case .gridLine(let g): return [g.start, g.end]
+        case .gridLine(let g): return g.points
         }
     }
 
@@ -186,7 +186,7 @@ public enum PlanRepresentation {
             var out: [DrawItem] = [stroke(r.footprint, closed: true, color, lwHidden, dash)]
             var seen = Set<[Double]>()
             let tol = 1e-6 * max(1, BBox2(points: r.footprint).width)
-            for f in r.faces {
+            for f in r.faces where !(g.profile?.isCurved ?? false) {
                 for i in 0..<f.poly.count {
                     let a = f.poly[i], b = f.poly[(i + 1) % f.poly.count]
                     if a.distance(to: b) < tol || RoofShapes.onOutline(a, b, r.footprint, tol: tol * 10 + 1e-6) { continue }
@@ -196,7 +196,11 @@ public enum PlanRepresentation {
                 }
             }
             if g.overhang > 0 { out.append(stroke(r.boundary, closed: true, color, lwFine, dash)) }
-            if options.showAnnotations && doc.variable("ROOFSLOPEARROWS") != "0" { out += roofSlopeArrows(g, faces: r.faces, doc: doc, color: color) }
+            if let pr = g.profile, pr.isCurved, let top = r.faces.max(by: { $0.height(GeometryOps.centroid($0.poly)) < $1.height(GeometryOps.centroid($1.poly)) }) {
+                // Curved roofs: crown line (barrel) or crown circle (dome) instead of facet lines.
+                if pr.form == .dome { out.append(stroke(RG.circle(GeometryOps.centroid(r.boundary), 150 * u, segments: 24), closed: true, color, lwHidden, dash)) }
+                else { out.append(stroke(top.poly, closed: true, color, lwHidden, dash)) }
+            } else if options.showAnnotations && doc.variable("ROOFSLOPEARROWS") != "0" { out += roofSlopeArrows(g, faces: r.faces, doc: doc, color: color) }
             return out
         case .space(let g):
             guard g.boundary.count >= 3 else { return [] }
@@ -277,10 +281,11 @@ public enum PlanRepresentation {
         case .gridLine(let g):
             let len = g.start.distance(to: g.end)
             guard len > 1e-9 else { return [] }
-            let d = (g.end - g.start) / len
+            let pts = g.points
+            let d = (pts[1] - pts[0]).normalized
             let r = 400 * u
             let c = g.start - d * r
-            var out: [DrawItem] = [stroke([g.start, g.end], color, lwFine, centerDash(doc, options)), stroke(RG.circle(c, r, segments: 48), closed: true, color, lwAnno)]
+            var out: [DrawItem] = [stroke(pts, color, lwFine, centerDash(doc, options)), stroke(RG.circle(c, r, segments: 48), closed: true, color, lwAnno)]
             if options.showAnnotations { out.append(.text(TextGeom(position: c, height: 350 * u, content: g.label, halign: .center, valign: .middle), font: font(doc), color: color)) }
             return out
         }

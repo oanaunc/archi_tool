@@ -410,6 +410,8 @@ final class Viewport3DController: NSObject, ObservableObject {
     var capsKey: String?
     weak var cubeView: ViewCubeView?
     private var cubeTimer: Timer?
+    /// Whether isolate/explode levels was applied at the last sync (so turning it off restores the nodes).
+    var levelViewApplied = false
 
     override init() {
         super.init()
@@ -465,6 +467,7 @@ final class Viewport3DController: NSObject, ObservableObject {
             applyCameraEffects(style)
             if !positioned && !builder.bounds.isEmpty { positioned = true; setView("Iso", animated: false) }
         }
+        if LevelView3DState.shared.isActive || levelViewApplied { levelViewApplied = LevelView3DState.shared.isActive; applyLevelView() }
         builder.applySelection(model.editor.selection)
         let box = SectionBox.load(model.doc)
         let plane = SectionPlane.load(model.doc)
@@ -808,6 +811,7 @@ struct Viewport3DView: View {
             pill("Clipping plane (SECTIONPLANE)", "square.split.diagonal", active: clip.visible || SectionPlane.load(model.doc)?.on == true) { clip.visible.toggle() }
             pill(model.showViewCube ? "Hide the view cube" : "Show the view cube", "cube", active: model.showViewCube) { model.showViewCube.toggle() }
             CamerasMenu(model: model, controller: controller)
+            Level3DMenu(model: model, controller: controller)
             Divider().frame(height: 16).padding(.horizontal, 3)
             Menu {
                 ForEach(Scene3DBuilder.visualStyles, id: \.self) { s in

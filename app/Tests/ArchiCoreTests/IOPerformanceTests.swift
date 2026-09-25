@@ -72,4 +72,69 @@ final class IOPerformanceTests: XCTestCase {
         let tr = try time { XCTAssertEqual(try DocumentJournal.recover(url).doc, d) }
         XCTAssertLessThan(tr, 15, "replay took \(tr) s")
     }
+
+    /// SYS-020: a ~50 MB .archi file opens in under 3 s (debug build; release is faster).
+    func testFiftyMegabyteFileOpensUnderThreeSeconds() throws {
+        var d = ArchiDocument()
+        var i = 0
+        while i < 110_000 {
+            let x = Double(i % 400) * 500, y = Double(i / 400) * 500
+            switch i % 4 {
+            case 0: d.add(.line(LineGeom(Vec2(x, y), Vec2(x + 400, y + 100))), layer: "A-WALL")
+            case 1: d.add(.polyline(PolylineGeom(points: [Vec2(x, y), Vec2(x + 200, y), Vec2(x + 200, y + 200), Vec2(x, y + 200)], closed: true)), layer: "A-FURN")
+            case 2: d.add(.text(TextGeom(position: Vec2(x, y), height: 100, content: "Label \(i)")), layer: "A-ANNO")
+            default: d.add(.arc(ArcGeom(Vec2(x, y), 150, 0, 1.5)), layer: "0")
+            }
+            i += 1
+        }
+        let data = try ArchiFile.encode(d)
+        XCTAssertGreaterThan(data.count, 40_000_000, "file is \(data.count / 1_000_000) MB")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("large-\(UUID().uuidString).archi")
+        try data.write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+        var back = ArchiDocument()
+        let t = try time { back = try ArchiFile.decode(Data(contentsOf: url)) }
+        XCTAssertEqual(back.entities.count, 110_000)
+        XCTAssertEqual(back.entities.last, d.entities.last)
+        XCTAssertLessThan(t, 3, "opening \(data.count / 1_000_000) MB took \(t) s")
+        print("\(data.count / 1_000_000) MB file: open \(fmt(t, 3)) s")
+    }
+
+    /// An older-format file still goes through the migrating decoder and upgrades.
+    func testOlderFormatTakesMigratingPath() throws {
+        var d = ArchiDocument()
+        d.add(.circle(CircleGeom(Vec2(1, 2), 3)))
+        var obj = try XCTUnwrap(JSONSerialization.jsonObject(with: ArchiFile.encode(d)) as? [String: Any])
+        obj["formatVersion"] = 1
+        var inner = try XCTUnwrap(obj["document"] as? [String: Any]); inner["formatVersion"] = 1; obj["document"] = inner
+        let back = try ArchiFile.decode(JSONSerialization.data(withJSONObject: obj))
+        XCTAssertEqual(back.formatVersion, ArchiDocument.currentFormatVersion)
+        XCTAssertEqual(back.entities.count, 1)
+        XCTAssertThrowsError(try ArchiFile.decode(Data("{\"app\":\"x\",\"formatVersion\":99,\"document\":{}}".utf8)))
+    }
+
+    /// SYS-014 (core part): with 100 000 objects, building the spatial index and culling a viewport stay far below one
+    /// 60 fps frame per query.
+    func testHundredThousandEntityViewportQueries() throws {
+        var d = ArchiDocument()
+        for i in 0..<100_000 {
+            let x = Double(i % 316) * 1000, y = Double(i / 316) * 1000
+            d.add(i % 2 == 0 ? .line(LineGeom(Vec2(x, y), Vec2(x + 700, y + 400))) : .circle(CircleGeom(Vec2(x + 500, y + 500), 200)))
+        }
+        var idx = SpatialIndex(items: [])
+        let tb = time { idx = SpatialIndex(doc: d) }
+        XCTAssertEqual(idx.count, 100_000)
+        XCTAssertLessThan(tb, 5, "index build took \(tb) s")
+        var rng = SystemRandomNumberGenerator()
+        var total = 0
+        let tq = time {
+            for _ in 0..<600 {
+                let cx = Double.random(in: 0...316_000, using: &rng), cy = Double.random(in: 0...316_000, using: &rng)
+                total += idx.query(BBox2(min: Vec2(cx - 10_000, cy - 6_000), max: Vec2(cx + 10_000, cy + 6_000))).count
+            }
+        }
+        XCTAssertGreaterThan(total, 0)
+        XCTAssertLessThan(tq / 600, 1.0 / 60, "a viewport query took \(tq / 600 * 1000) ms")
+        print("100k entities: index \(fmt(tb, 3)) s, viewport query \(fmt(tq / 600 * 1000, 3)) ms")
+    }
 }

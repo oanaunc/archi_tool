@@ -125,6 +125,7 @@ struct MainWindow: View {
         didSetup = true
         AppCommands.registerAll()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { ScriptLibrary.runStartup(for: model) }
+        if AppModel.all.count <= 1 { DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { WhatsNew.checkOnLaunch(model: model) } }
         if !WindowRouter.pendingURLs.isEmpty {
             let url = WindowRouter.pendingURLs.removeFirst()
             model.files.load(url)

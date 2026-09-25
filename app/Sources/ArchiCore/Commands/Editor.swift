@@ -13,6 +13,8 @@ public struct InputRequest {
     /// Live preview geometry for the given cursor position.
     public var preview: ((Vec2) -> [Geometry])?
     public var allowEmpty: Bool
+    /// The preview can be turned 90° while dragging (Space / `Editor.rotateDrag90`, MOD-029).
+    public var rotatable = false
     public init(_ message: String, kinds: Set<Kind>, keywords: [String] = [], defaultValue: String? = nil, base: Vec2? = nil,
                 allowEmpty: Bool = true, preview: ((Vec2) -> [Geometry])? = nil) {
         self.message = message; self.kinds = kinds; self.keywords = keywords; self.defaultValue = defaultValue
@@ -207,6 +209,8 @@ public final class Editor {
     public var onChange: (() -> Void)?
     public var onSelectionChange: (() -> Void)?
     public var onPromptChange: (() -> Void)?
+    /// Monitored system variables (SYSVARMONITOR) changed by the last command.
+    public var onSysVarChange: (([String]) -> Void)?
     /// Every line echoed to the command history.
     public var onLog: ((String) -> Void)?
     public private(set) var log: [String] = []
@@ -216,10 +220,20 @@ public final class Editor {
     private var continuation: CheckedContinuation<CommandInput, Never>?
     private var queuedInputs: [String] = []
     public private(set) var lastCommand: String?
-    public var lastPoint: Vec2?
+    public var lastPoint: Vec2? {
+        get { relativeZeroLock ?? storedLastPoint }
+        set { storedLastPoint = newValue }
+    }
+    private var storedLastPoint: Vec2?
+    /// Locked relative zero (PRC-029): while set, relative input (@dx,dy) is measured from it instead of the last point.
+    public var relativeZeroLock: Vec2?
     /// Last cursor position reported by the UI (world coordinates) — used for direct distance entry.
     public var cursor: Vec2?
     private var commandTask: Task<Void, Never>?
+    /// Quarter-turn rotation applied to the current rotatable drag preview (radians, a multiple of π/2).
+    public internal(set) var dragRotation: Double = 0
+    /// Set by ARRAYCLASSIC: the array commands make separate copies whatever ARRAYASSOCIATIVITY says.
+    public internal(set) var forceClassicArray = false
 
     public init(document: ArchiDocument = ArchiDocument(), registry: CommandRegistry = .shared) {
         self.doc = document
@@ -368,6 +382,11 @@ public final class Editor {
                 if DocumentUpdaters.run(&d) { self.doc = d }
                 if !self.undoGroupActive { self.history.record(def.name, before: before) }
                 self.isDirty = true
+            }
+            let monitored = SysVarMonitor.changes(from: before, to: self.doc)
+            if !monitored.isEmpty && self.doc.variable(SysVarMonitor.notifyVariable) != "0" {
+                for c in monitored { self.print("System variable \(c.name) changed: \(c.old) → \(c.new)") }
+                self.onSysVarChange?(monitored.map(\.name))
             }
             self.activeCommand = nil
             self.request = nil
@@ -527,6 +546,22 @@ public final class Editor {
             lastPoint = t
             var r = req; r.base = t
             return await ask(r)
+        case "INTOF":
+            // Manual intersection: the intersection of two picked objects nearest the second pick (extensions if they do not cross).
+            guard let a = await pt("First object for intersection") else { return .cancel }
+            guard let ida = pickFiltered(at: a, filter: { self.doc.entity($0) != nil }), let ga = doc.entity(ida)?.geometry else { print("No object found."); return .cancel }
+            guard let b = await pt("Second object for intersection") else { return .cancel }
+            guard let idb = pickFiltered(at: b, filter: { self.doc.entity($0) != nil && $0 != ida }), let gb = doc.entity(idb)?.geometry else { print("No second object found."); return .cancel }
+            var xs = Intersections.of(ga, gb, doc: doc)
+            if xs.isEmpty { xs = Intersections.of(ga, gb, doc: doc, extended: true) }
+            guard let p = xs.min(by: { $0.distance(to: b) < $1.distance(to: b) }) else { print("The objects do not intersect."); return .cancel }
+            lastPoint = p; return .point(p)
+        case "RH", "RV":
+            // Restrict: keep the last point's Y (horizontal) or X (vertical) and take the other coordinate from the next point.
+            guard let base = lastPoint ?? req.base else { print("No last point to restrict from."); return await ask(req) }
+            guard let a = await pt(m == "RH" ? "(horizontal from last point)" : "(vertical from last point)", base: base) else { return .cancel }
+            let p = m == "RH" ? Vec2(a.x, base.y) : Vec2(base.x, a.y)
+            lastPoint = p; return .point(p)
         case ".X", ".Y":
             guard let a = await pt("\(m.lowercased()) of") else { return .cancel }
             guard let b = await pt(m == ".X" ? "(need Y)" : "(need X)") else { return .cancel }

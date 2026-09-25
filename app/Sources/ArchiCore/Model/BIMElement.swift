@@ -129,6 +129,23 @@ public struct OpeningGeom: Codable, Hashable {
 }
 
 public enum RoofKind: String, Codable, CaseIterable { case flat, shed, gable, hip }
+/// Two-pitch and curved roof forms (BIM-058). Mansard: every eave rises at `pitch` for `breakDistance` (plan distance
+/// from the eave), then at `upperPitch`. Gambrel: the same on the two gable slopes. Dome: spherical cap over the
+/// footprint (rise = radius × tan(pitch), at most a hemisphere). Barrel: circular vault spanning across the eave edge.
+public struct RoofProfile: Codable, Hashable {
+    public enum Form: String, Codable, CaseIterable { case mansard, gambrel, dome, barrel }
+    public var form: Form
+    public var upperPitch: Double
+    public var breakDistance: Double
+    public init(form: Form, upperPitch: Double = 20, breakDistance: Double = 1200) { self.form = form; self.upperPitch = upperPitch; self.breakDistance = breakDistance }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(form: try c.decode(Form.self, forKey: .form), upperPitch: try c.decodeIfPresent(Double.self, forKey: .upperPitch) ?? 20,
+                  breakDistance: try c.decodeIfPresent(Double.self, forKey: .breakDistance) ?? 1200)
+    }
+    public var isCurved: Bool { form == .dome || form == .barrel }
+}
+
 public struct RoofGeom: Codable, Hashable {
     public var boundary: [Vec2]; public var kind: RoofKind
     /// Pitch in degrees.
@@ -137,6 +154,8 @@ public struct RoofGeom: Codable, Hashable {
     public var baseOffset: Double
     /// Gable/shed direction: index of the boundary edge that is an eave (slopes up away from it).
     public var eaveEdge: Int
+    /// Special roof forms (mansard, gambrel, dome, barrel vault); nil = the plain `kind`.
+    public var profile: RoofProfile?
     public init(boundary: [Vec2], kind: RoofKind = .gable, pitch: Double = 30, thickness: Double = 250, overhang: Double = 500, baseOffset: Double = 3000, eaveEdge: Int = 0) {
         self.boundary = boundary; self.kind = kind; self.pitch = pitch; self.thickness = thickness; self.overhang = overhang; self.baseOffset = baseOffset; self.eaveEdge = eaveEdge
     }
@@ -306,7 +325,27 @@ public struct ComponentGeom: Codable, Hashable {
 
 public struct GridLineGeom: Codable, Hashable {
     public var start: Vec2; public var end: Vec2; public var label: String
-    public init(start: Vec2, end: Vec2, label: String) { self.start = start; self.end = end; self.label = label }
+    /// Arc grid (radial grid systems): bulge like a polyline segment (0 = straight).
+    public var bulge: Double
+    public init(start: Vec2, end: Vec2, label: String, bulge: Double = 0) { self.start = start; self.end = end; self.label = label; self.bulge = bulge }
+    enum CodingKeys: String, CodingKey { case start, end, label, bulge }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(start: try c.decode(Vec2.self, forKey: .start), end: try c.decode(Vec2.self, forKey: .end),
+                  label: try c.decodeIfPresent(String.self, forKey: .label) ?? "", bulge: try c.decodeIfPresent(Double.self, forKey: .bulge) ?? 0)
+    }
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(start, forKey: .start); try c.encode(end, forKey: .end); try c.encode(label, forKey: .label)
+        if bulge != 0 { try c.encode(bulge, forKey: .bulge) }
+    }
+    /// Points along the grid line (tessellated for arc grids).
+    public var points: [Vec2] {
+        guard abs(bulge) > 1e-12, start.distance(to: end) > 1e-9 else { return [start, end] }
+        let a = GeometryOps.bulgeArc(start, end, bulge)
+        let n = max(8, Int(abs(a.sweep) / (Double.pi / 48)))
+        return (0...n).map { k in a.center + Vec2.polar(a.radius, a.start + a.sweep * Double(k) / Double(n)) }
+    }
 }
 
 public enum BIMGeometry: Hashable {

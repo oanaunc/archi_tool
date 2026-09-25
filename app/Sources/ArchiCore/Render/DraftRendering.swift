@@ -27,6 +27,9 @@ public enum DraftRendering {
     public static let maskColorProp = "maskColor"
     /// "1" draws a frame around text.
     public static let textFrameProp = "textFrame"
+    /// Multiline text columns "count,gutter[,height]" (height 0 = balanced static columns, > 0 = dynamic: fill each column
+    /// to that height). The text position is the top-left corner of the first column.
+    public static let textColumnsProp = "textColumns"
 
     /// Number of colour bands used to draw a gradient.
     public static var gradientBands = 48
@@ -51,9 +54,11 @@ public enum DraftRendering {
         switch e.geometry {
         case .hatch: return e.props[gradientProp] != nil || e.props[hatchOriginProp] != nil
         case .table: return !(e.props[tableMergeProp] ?? "").isEmpty
-        case .text: return e.props[textMaskProp] != nil || e.props[textFrameProp] == "1"
+        case .text(let t): return e.props[textMaskProp] != nil || e.props[textFrameProp] == "1" || e.props[textColumnsProp] != nil || TextStacks.hasStack(t.content)
         case .leader: return e.props["mleaderstyle"] != nil
         case .point: return true
+        case .insert: return BlockClip.active(e)
+        case .dimension: return DimExtras.has(e)
         default: return false
         }
     }
@@ -71,6 +76,12 @@ public enum DraftRendering {
             let mode = doc.variable("PDMODE").flatMap(Int.init) ?? 0
             guard mode != 0 else { return nil }
             return pointItems(p, mode: mode, size: pointSize(doc), style: solid)
+        case .insert:
+            guard let b = BlockClip.boundary(e) else { return nil }
+            var plain = e; plain.props[BlockClip.prop] = nil
+            return clipItems(DrawListBuilder.items(plain, doc: doc, options: options, inherit: DrawListBuilder.Inherit()), to: b)
+        case .dimension(let d):
+            return dimensionItems(d, props: e.props, doc: doc, color: color, lineweight: lineweight)
         case .leader(let l):
             guard let n = e.props["mleaderstyle"], let txt = doc.variable("MLSTYLE:" + n),
                   let st = AnnotationToolCommands.MLeaderStyle(name: n, text: txt), st.isCustomGraphics else { return nil }
@@ -398,7 +409,9 @@ public enum DraftRendering {
 
     public static func textItems(_ t: TextGeom, props: [String: String], doc: ArchiDocument, options: DrawOptions, color: RGBA, lineweight: Double) -> [DrawItem] {
         var out: [DrawItem] = []
-        let text = DrawListBuilder.textItems(t, doc: doc, color: color)
+        let text = props[textColumnsProp].flatMap { columnTextItems(t, spec: $0, doc: doc, color: color) }
+            ?? stackedTextItems(t, doc: doc, color: color, lineweight: lineweight)
+            ?? DrawListBuilder.textItems(t, doc: doc, color: color)
         if let f = props[textMaskProp] {
             let factor = Double(f).map { $0 > 0 ? $0 : 1.5 } ?? 1.5
             let mc = props[maskColorProp] ?? "background"
@@ -411,5 +424,306 @@ public enum DraftRendering {
             out.append(.stroke(points: textBox(t, doc: doc, factor: max(factor, 1)), closed: true, style: StrokeStyle(color: color, lineweight: lineweight)))
         }
         return out
+    }
+}
+
+// MARK: - Text masks in DXF (ANN-013)
+
+/// Exchange helpers for text background masks: MTEXT background-fill group codes (90/63/421/45/441) and the WIPEOUT
+/// polygon fallback, plus the reverse mapping so a mask written by `wipeouts(for:)` comes back as a mask on import.
+public enum TextMaskExchange {
+    /// Mask polygon of a masked text entity in world coordinates (nil when the entity has no mask).
+    public static func boundary(_ e: Entity, doc: ArchiDocument) -> [Vec2]? {
+        guard case .text(let t) = e.geometry, let f = e.props[DraftRendering.textMaskProp] else { return nil }
+        let factor = Double(f).map { $0 > 0 ? $0 : 1.5 } ?? 1.5
+        return DraftRendering.textBox(t, doc: doc, factor: factor)
+    }
+
+    /// MTEXT group codes for a mask: 90 = 1 (colour) or 3 (drawing background), 63 = ACI colour, 421 = true colour,
+    /// 45 = border offset factor, 441 = fill transparency (0). Empty when there is no mask.
+    public static func mtextGroups(_ props: [String: String]) -> [(code: Int, value: String)] {
+        guard let f = props[DraftRendering.textMaskProp] else { return [] }
+        let factor = Double(f).map { $0 > 0 ? $0 : 1.5 } ?? 1.5
+        let mc = props[DraftRendering.maskColorProp] ?? "background"
+        var out: [(Int, String)] = []
+        if mc.lowercased() == "background" {
+            out = [(90, "3"), (63, "256")]
+        } else {
+            out = [(90, "1")]
+            switch ColorRef.parse(mc) {
+            case .aci(let i)?: out.append((63, "\(i)"))
+            case .rgb(let r, let g, let b)?: out.append((63, "7")); out.append((421, "\(Int(r) << 16 | Int(g) << 8 | Int(b))"))
+            default: out.append((63, "7"))
+            }
+        }
+        out.append((45, fmt(factor, 6)))
+        out.append((441, "0"))
+        return out
+    }
+
+    /// Mask props from MTEXT group codes (inverse of `mtextGroups`); empty when the flags ask for no fill.
+    public static func props(fromMTextGroups g: [(code: Int, value: String)]) -> [String: String] {
+        func v(_ c: Int) -> String? { g.last { $0.code == c }?.value.trimmingCharacters(in: .whitespaces) }
+        guard let flags = v(90).flatMap(Int.init), flags & 1 != 0 || flags & 2 != 0 else { return [:] }
+        var p: [String: String] = [DraftRendering.textMaskProp: v(45).flatMap(Double.init).map { fmt($0, 6) } ?? "1.5"]
+        if flags & 2 != 0 { p[DraftRendering.maskColorProp] = "background" }
+        else if let tc = v(421).flatMap(Int.init) {
+            p[DraftRendering.maskColorProp] = ColorRef.rgb(UInt8((tc >> 16) & 255), UInt8((tc >> 8) & 255), UInt8(tc & 255)).text
+        } else if let a = v(63).flatMap(Int.init), a > 0, a < 256 { p[DraftRendering.maskColorProp] = "\(a)" }
+        else { p[DraftRendering.maskColorProp] = "background" }
+        return p
+    }
+
+    /// WIPEOUT polygons for every masked text (for writers without MTEXT background fill, e.g. R12, SVG): each wipeout
+    /// carries props wipeout = 1 and maskFor = <text id> and must be drawn just before its text.
+    public static func wipeouts(for doc: ArchiDocument) -> [(before: EntityID, wipeout: Entity)] {
+        doc.entities.compactMap { e in
+            guard let b = boundary(e, doc: doc), b.count >= 3 else { return nil }
+            var w = Entity(id: 0, layer: e.layer, geometry: .polyline(PolylineGeom(points: b, closed: true)))
+            w.props = ["wipeout": "1", "maskFor": "\(e.id)"]
+            if let mc = e.props[DraftRendering.maskColorProp] { w.props[DraftRendering.maskColorProp] = mc }
+            return (e.id, w)
+        }
+    }
+
+    /// After import: a WIPEOUT polygon that matches the mask box of a text drawn right after it (within `tolerance` times the
+    /// text height) becomes that text's mask again; the wipeout is removed. Returns the number of masks restored.
+    @discardableResult
+    public static func absorbWipeouts(_ doc: inout ArchiDocument, tolerance: Double = 0.05) -> Int {
+        var remove = Set<EntityID>()
+        var n = 0
+        for i in doc.entities.indices where doc.entities[i].props["wipeout"] == "1" {
+            guard case .polyline(let pl) = doc.entities[i].geometry, pl.vertices.count >= 4 else { continue }
+            let pts = pl.vertices.map(\.p)
+            // The text drawn next (skipping other wipeouts) whose box, at some factor, matches the polygon.
+            var j = i + 1
+            while j < doc.entities.count, doc.entities[j].props["wipeout"] == "1" { j += 1 }
+            guard j < doc.entities.count, case .text(let t) = doc.entities[j].geometry, doc.entities[j].props[DraftRendering.textMaskProp] == nil else { continue }
+            let tight = DraftRendering.textBox(t, doc: doc, factor: 1)
+            guard tight.count >= 4 else { continue }
+            // Factor from the polygon's extent across the text height direction.
+            let up = Vec2.polar(1, t.rotation + .pi / 2)
+            func span(_ ps: [Vec2]) -> Double { let d = ps.map { $0.dot(up) }; return (d.max() ?? 0) - (d.min() ?? 0) }
+            let h0 = span(tight)
+            guard h0 > 1e-12 else { continue }
+            // textBox grows by (factor − 1) · height on each side.
+            let factor = 1 + (span(pts) - h0) / (2 * t.height)
+            guard factor >= 1 - 1e-9 else { continue }
+            let expect = DraftRendering.textBox(t, doc: doc, factor: factor)
+            let tol = tolerance * t.height
+            guard pts.allSatisfy({ p in expect.contains { $0.distance(to: p) <= tol } }) else { continue }
+            doc.entities[j].props[DraftRendering.textMaskProp] = fmt(factor, 6)
+            doc.entities[j].props[DraftRendering.maskColorProp] = doc.entities[i].props[DraftRendering.maskColorProp] ?? "background"
+            remove.insert(doc.entities[i].id); n += 1
+        }
+        if !remove.isEmpty { doc.remove(ids: remove) }
+        return n
+    }
+}
+
+// MARK: - Block clipping and dimension extras
+
+extension DraftRendering {
+    /// Draw items clipped to a closed boundary: strokes are cut, fills intersected, text and images kept when their
+    /// insertion point is inside.
+    static func clipItems(_ items: [DrawItem], to boundary: [Vec2]) -> [DrawItem] {
+        let loops = [boundary]
+        var out: [DrawItem] = []
+        for it in items {
+            switch it {
+            case .stroke(let pts, let closed, let st):
+                let path = closed && pts.count > 2 ? pts + [pts[0]] : pts
+                out += RG.clipPolyline(path, loops).filter { $0.count >= 2 }.map { .stroke(points: $0, closed: false, style: st) }
+            case .fill(let ls, let c):
+                let r = PolygonBoolean.apply(.intersect, ls, loops)
+                if !r.isEmpty { out.append(.fill(loops: r, color: c)) }
+            case .text(let t, _, _):
+                if PolygonBoolean.contains(loops, t.position) { out.append(it) }
+            case .image(let im):
+                if PolygonBoolean.contains(loops, im.origin + im.size / 2) { out.append(it) }
+            }
+        }
+        return out
+    }
+
+    /// Dimension with tolerance / alternate units / inspection text and its frame.
+    static func dimensionItems(_ d: DimensionGeom, props: [String: String], doc: ArchiDocument, color: RGBA, lineweight: Double) -> [DrawItem] {
+        let ds = doc.dimStyle(d.style)
+        var dd = d
+        dd.textOverride = DimExtras.text(d, style: ds, props: props)
+        let prim = DimensionRenderer.primitives(dd, style: ds)
+        let st = StrokeStyle(color: color, lineweight: lineweight)
+        var out: [DrawItem] = prim.lines.filter { $0.count >= 2 }.map { .stroke(points: $0, closed: false, style: st) }
+        out += prim.arrows.filter { $0.count >= 3 }.map { .fill(loops: [$0], color: color) }
+        if let t = prim.text {
+            out.append(.text(t, font: DrawListBuilder.textFont(t.style, doc: doc).font, color: color))
+            if let shape = DimExtras.frame(props) { out += frameItems(t, shape: shape, doc: doc, style: st) }
+        }
+        return out
+    }
+
+    /// Frame around a dimension text: box (basic), round-ended or angular-ended (inspection) with separators.
+    static func frameItems(_ t: TextGeom, shape: String, doc: ArchiDocument, style: StrokeStyle) -> [DrawItem] {
+        let box = textBox(t, doc: doc, factor: 1.2)
+        guard box.count == 4 else { return [] }
+        let back = Transform2D.translation(t.position) * Transform2D.rotation(t.rotation)
+        let fwd = back.inverted
+        let lb = box.map(fwd.apply)
+        let x0 = lb[0].x, x1 = lb[1].x, y0 = lb[0].y, y1 = lb[2].y
+        let h = (y1 - y0) / 2, ym = (y0 + y1) / 2
+        var out: [[Vec2]] = []
+        switch shape {
+        case "box": out.append([Vec2(x0, y0), Vec2(x1, y0), Vec2(x1, y1), Vec2(x0, y1), Vec2(x0, y0)])
+        case "angular":
+            out.append([Vec2(x0, ym), Vec2(x0 + h, y0), Vec2(x1 - h, y0), Vec2(x1, ym), Vec2(x1 - h, y1), Vec2(x0 + h, y1), Vec2(x0, ym)])
+        default:
+            var pts: [Vec2] = []
+            for k in 0...12 { let a = -Double.pi / 2 + Double.pi * Double(k) / 12; pts.append(Vec2(x1 - h + h * cos(a), ym + h * sin(a))) }
+            for k in 0...12 { let a = Double.pi / 2 + Double.pi * Double(k) / 12; pts.append(Vec2(x0 + h + h * cos(a), ym + h * sin(a))) }
+            pts.append(pts[0])
+            out.append(pts)
+        }
+        // Separators between label | value | rate, at the " | " positions.
+        if shape != "box", t.content.contains(" | ") {
+            let parts = t.content.components(separatedBy: " | ")
+            let total = StrokeFont.lineWidth(t.content)
+            if total > 0 {
+                var acc = 0.0
+                for p in parts.dropLast() {
+                    acc += StrokeFont.lineWidth(p + " |") - StrokeFont.lineWidth("|") / 2
+                    let x = x0 + h + (x1 - x0 - 2 * h) * (acc / total)
+                    out.append([Vec2(x, y0), Vec2(x, y1)])
+                    acc += StrokeFont.lineWidth("| ") - StrokeFont.lineWidth("|") / 2 + StrokeFont.letterGap
+                }
+            }
+        }
+        return out.map { .stroke(points: $0.map(back.apply), closed: false, style: style) }
+    }
+}
+
+// MARK: - Text columns (ANN-006) and stacked fractions (ANN-007)
+
+extension DraftRendering {
+    /// Parsed column spec: count, gutter, height (0 = balanced).
+    public static func columnSpec(_ s: String) -> (count: Int, gutter: Double, height: Double)? {
+        let v = s.split(separator: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) }
+        guard let n = v.first, n >= 1, n <= 100 else { return nil }
+        return (Int(n), v.count > 1 ? max(0, v[1]) : 0, v.count > 2 ? max(0, v[2]) : 0)
+    }
+
+    /// Wrapped lines laid out in columns: (line, column, row).
+    public static func columnLayout(_ t: TextGeom, spec: String, widthFactor: Double) -> (lines: [(text: String, column: Int, row: Int)], columnWidth: Double, gutter: Double)? {
+        guard let c = columnSpec(spec), t.width > 0, t.height > 0 else { return nil }
+        let colW = (t.width - c.gutter * Double(c.count - 1)) / Double(c.count)
+        guard colW > 0 else { return nil }
+        let lines = DrawListBuilder.wrapLines(t.content, height: t.height, width: colW, widthFactor: widthFactor)
+        let spacing = 1.5 * t.height
+        let perCol: Int
+        if c.height > 0 { perCol = max(1, Int(((c.height - t.height) / spacing + 1e-9).rounded(.down)) + 1) }
+        else { perCol = max(1, Int((Double(lines.count) / Double(c.count)).rounded(.up))) }
+        return (lines.enumerated().map { (i, l) in (l, i / perCol, i % perCol) }, colW, c.gutter)
+    }
+
+    static func columnTextItems(_ t0: TextGeom, spec: String, doc: ArchiDocument, color: RGBA) -> [DrawItem]? {
+        var t = t0
+        let st = DrawListBuilder.textFont(t.style, doc: doc)
+        if t.height <= 0 { t.height = st.height > 0 ? st.height : 2.5 }
+        guard let lay = columnLayout(t, spec: spec, widthFactor: st.width) else { return nil }
+        let right = Vec2.polar(1, t.rotation), down = Vec2.polar(1, t.rotation - .pi / 2)
+        let spacing = 1.5 * t.height
+        return lay.lines.filter { !$0.text.isEmpty }.map { l in
+            var lt = t
+            lt.content = l.text; lt.width = 0; lt.halign = .left; lt.valign = .baseline
+            lt.position = t.position + right * (Double(l.column) * (lay.columnWidth + lay.gutter)) + down * (t.height + spacing * Double(l.row))
+            return .text(lt, font: st.font, color: color)
+        }
+    }
+
+    /// Single-line text with \S stacks: plain runs as text, stacks as two small texts with a bar (a/b), a diagonal (a#b)
+    /// or none (a^b, tolerance style).
+    static func stackedTextItems(_ t0: TextGeom, doc: ArchiDocument, color: RGBA, lineweight: Double) -> [DrawItem]? {
+        guard TextStacks.hasStack(t0.content), !t0.content.contains("\\P"), !t0.content.contains("\n") else { return nil }
+        var t = t0
+        let st = DrawListBuilder.textFont(t.style, doc: doc)
+        if t.height <= 0 { t.height = st.height > 0 ? st.height : 2.5 }
+        let h = t.height, cw = 0.6 * h * st.width, small = 0.5
+        let runs = TextStacks.runs(t.content)
+        func width(_ r: TextStacks.Run) -> Double {
+            switch r {
+            case .plain(let s): return Double(s.count) * cw
+            case .stack(let a, let b, _): return Double(max(a.count, b.count)) * cw * small + 0.2 * cw
+            }
+        }
+        let total = runs.reduce(0) { $0 + width($1) }
+        var x: Double
+        switch t.halign { case .left: x = 0; case .center: x = -total / 2; case .right: x = -total }
+        let by: Double
+        switch t.valign { case .baseline: by = 0; case .bottom: by = 0.2 * h; case .middle: by = -h / 2; case .top: by = -h }
+        let tr = Transform2D.translation(t.position) * Transform2D.rotation(t.rotation)
+        func text(_ s: String, _ px: Double, _ py: Double, _ size: Double) -> DrawItem {
+            .text(TextGeom(position: tr.apply(Vec2(px, py)), height: size, content: s, rotation: t.rotation, style: t.style, halign: .left, valign: .baseline), font: st.font, color: color)
+        }
+        let style = StrokeStyle(color: color, lineweight: lineweight)
+        var out: [DrawItem] = []
+        for r in runs {
+            let w = width(r)
+            switch r {
+            case .plain(let s): if !s.isEmpty { out.append(text(s, x, by, h)) }
+            case .stack(let a, let b, let kind):
+                let sh = h * small, inner = w - 0.2 * cw, x0 = x + 0.1 * cw
+                let wa = Double(a.count) * cw * small, wb = Double(b.count) * cw * small
+                switch kind {
+                case "#":
+                    out.append(text(a, x0, by + 0.55 * h, sh))
+                    out.append(text(b, x0 + inner - wb, by - 0.05 * h, sh))
+                    out.append(.stroke(points: [tr.apply(Vec2(x0, by - 0.05 * h)), tr.apply(Vec2(x0 + inner, by + 1.05 * h))], closed: false, style: style))
+                case "^":
+                    out.append(text(a, x0, by + 0.55 * h, sh))
+                    out.append(text(b, x0, by - 0.05 * h, sh))
+                default:
+                    out.append(text(a, x0 + (inner - wa) / 2, by + 0.6 * h, sh))
+                    out.append(text(b, x0 + (inner - wb) / 2, by - 0.05 * h, sh))
+                    out.append(.stroke(points: [tr.apply(Vec2(x0, by + 0.5 * h)), tr.apply(Vec2(x0 + inner, by + 0.5 * h))], closed: false, style: style))
+                }
+            }
+            x += w
+        }
+        return out
+    }
+}
+
+/// MTEXT stacks "\\Sa/b;" (fraction), "\\Sa#b;" (diagonal), "\\Sa^b;" (tolerance) and AutoStack of typed fractions.
+public enum TextStacks {
+    public enum Run: Equatable { case plain(String), stack(String, String, String) }
+
+    public static func hasStack(_ s: String) -> Bool { s.contains("\\S") }
+
+    /// Splits text into plain runs and stacks.
+    public static func runs(_ s: String) -> [Run] {
+        var out: [Run] = [], cur = "", i = s.startIndex
+        while i < s.endIndex {
+            if s[i] == "\\", s.index(after: i) < s.endIndex, s[s.index(after: i)] == "S", let semi = s[i...].firstIndex(of: ";") {
+                let body = String(s[s.index(i, offsetBy: 2)..<semi])
+                if let k = body.firstIndex(where: { "/#^".contains($0) }) {
+                    if !cur.isEmpty { out.append(.plain(cur)); cur = "" }
+                    out.append(.stack(String(body[..<k]), String(body[body.index(after: k)...]), String(body[k])))
+                    i = s.index(after: semi); continue
+                }
+            }
+            cur.append(s[i]); i = s.index(after: i)
+        }
+        if !cur.isEmpty { out.append(.plain(cur)) }
+        return out
+    }
+
+    static let fraction = try! NSRegularExpression(pattern: "(?<![\\\\\\w/.#^])([0-9]+)([/#^])([0-9]+)(?![\\w/#^])")
+
+    /// AutoStack: numeric fractions typed as 1/2, 3#4 or 1^2 become stacks.
+    public static func autoStack(_ s: String) -> String {
+        fraction.stringByReplacingMatches(in: s, range: NSRange(s.startIndex..., in: s), withTemplate: "\\\\S$1$2$3;")
+    }
+    /// Stacks back to plain a/b text.
+    public static func unstack(_ s: String) -> String {
+        runs(s).map { r -> String in if case .stack(let a, let b, let k) = r { return a + k + b }; if case .plain(let p) = r { return p }; return "" }.joined()
     }
 }

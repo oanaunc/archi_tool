@@ -61,6 +61,8 @@ public struct NodeLoad: Hashable {
     public var node: Int
     /// Force (kN) and moment (kNm) in global axes.
     public var force: Vec3, moment: Vec3
+    /// Load case name ("" = the default case: self weight and slab loads).
+    public var loadCase: String = ""
 }
 
 public struct AnalyticalModel {
@@ -70,6 +72,8 @@ public struct AnalyticalModel {
     public var nodeLoads: [NodeLoad] = []
     /// Uniform member loads (kN/m, global) — self weight.
     public var memberLoads: [Int: Vec3] = [:]
+    /// Load cases contributing to a member's uniform load (user line loads).
+    public var memberLoadCases: [Int: [String]] = [:]
     public var warnings: [String] = []
 
     /// JSON document (format "archi-analytical-1").
@@ -93,7 +97,11 @@ public struct AnalyticalModel {
             "panels": panels.map { ["id": $0.id, "element": $0.element, "type": $0.kind, "outline": $0.outline.map(v), "thickness": $0.thickness,
                                     "material": $0.material.name, "areaLoad_kN_m2": $0.areaLoad] },
             "loads": [
-                "nodal": nodeLoads.map { ["node": $0.node, "F": v($0.force), "M": v($0.moment)] },
+                "nodal": nodeLoads.map { l -> [String: Any] in
+                    var o: [String: Any] = ["node": l.node, "F": v(l.force), "M": v(l.moment)]
+                    if !l.loadCase.isEmpty { o["case"] = l.loadCase }
+                    return o
+                },
                 "memberUniform": memberLoads.sorted { $0.key < $1.key }.map { ["member": $0.key, "w": v($0.value)] },
             ] as [String: Any],
             "warnings": warnings,
@@ -193,6 +201,8 @@ public enum StructuralAnalysis {
             for mem in m.members { m.memberLoads[mem.id] = Vec3(0, 0, -mem.material.weight * mem.area) }
         }
         if m.members.isEmpty { m.warnings.append("No columns or beams: the frame is empty.") }
+        // User loads and supports drawn on S-LOADS (point / line / area loads, supports).
+        StructuralLoads.apply(doc, to: &m, tolerance: max(o.tolerance, Double(doc.variable("LOADSNAP") ?? "") ?? 0.3))
         return m
     }
 

@@ -378,7 +378,7 @@ final class IOTests: XCTestCase {
         let ifc = IFCExporter.export(doc: doc, meshes: meshes)
         XCTAssertEqual(ifc.components(separatedBy: "\n").filter { $0.contains("=IFCWALL(") }.count, 2)
         if meshes.contains(where: { m in doc.elements.contains { $0.id == m.id && $0.typeName == "stair" } }) {
-            XCTAssertTrue(ifc.contains("IFCFACETEDBREP("))
+            XCTAssertTrue(ifc.contains("IFCTRIANGULATEDFACESET("), "Reference View (default) writes tessellated meshes")
         }
         let glb = GLTFExporter.exportGLB(meshes, materials: doc.materials)
         XCTAssertEqual(Array(glb.prefix(4)), Array("glTF".utf8))

@@ -109,10 +109,10 @@ Tools:
 | `update_entity` | `id`, `patch` | modify an entity/element |
 | `delete` | `ids` | delete |
 | `save` | `path?` | save as `.archi` (default: the opened file) |
-| `export` | `path`, `format?`, `level?` | dxf, dxf12, svg, ifc, ifczip, obj, stl, glb, 3mf, usda, usdz, step, ply, plt (HP-GL/2), xlsx, csv, geojson, points, analytical, gbxml, cobie, dae, dwg (converter needed), archi |
+| `export` | `path`, `format?`, `level?` | dxf, dxf12, svg, ifc, ifczip, obj, stl, glb, 3mf, usda, usdz, step, ply, plt (HP-GL/2), xlsx, csv, geojson, points, analytical, opensees (Tcl), gbxml, cobie, dae, fbx, igs (IGES), dgn (V7), laser (CNC/laser SVG), html (read-only viewer), archit (git-friendly text), dwg (converter needed), archi |
 | `list_commands` | `category?` | available commands |
 | `undo` | – | undo last change |
-| `import_file` | `path`, `format?`, `offset?` | merge .archi, .dxf, .dwg (converter), .ifc/.ifczip, .svg, .obj, .stl, .3mf, .gltf/.glb, .ply, .off, .amf, .dae, .step, .geojson, .cityjson, .shp, .osm, .asc, .xlsx, CSV points or XYZ/PTS point clouds into the document |
+| `import_file` | `path`, `format?`, `offset?` | merge .archi, .archit, .dxf, .dwg (converter), .ifc/.ifczip, .svg, .obj, .stl, .3mf, .gltf/.glb, .fbx, .usd/.usda/.usdz, .igs/.iges, .dgn (V7), .pdf (vectors and text), .dwfx, .ply, .off, .amf, .dae, .step, .geojson, .cityjson, .shp, .osm, .asc, .xlsx, CSV points, XYZ/PTS or LAS point clouds into the document |
 | `takeoff` | `level?`, `format?` (json, csv) | quantity takeoff of walls, slabs, roofs, columns, beams, openings and spaces |
 | `cost_estimate` | `prices?`, `path?`, `format?` | cost of the takeoff from unit rates (inline, a JSON file, or the drawing's UNITPRICE rates) |
 | `room_schedule` | `level?`, `format?` | rooms with net/gross area, perimeter, height and volume |
@@ -262,6 +262,13 @@ archi-cli model.archi --out model.step                # also .ifczip .gltf/.glb 
 Script files contain one command line per line; lines starting with `;` are comments. `archi-cli --batch jobs.json` runs
 batch jobs (see above).
 
+```sh
+archi-cli model.archi --js tools.js --script run.scr --out model.archi   # JavaScript first (may register commands), then the script
+archi-cli model.archi --py build.py arg1 arg2                          # Python 3 with the archi module; the drawing is saved at the end
+archi-cli --python-module ~/lib/python                                 # writes archi.py
+archi-cli --watch ~/Inbox --rules rules.json [--once]                  # automation triggers (section 8)
+```
+
 Batch conversion (one line per file; exit status 1 when any file failed):
 
 ```sh
@@ -305,6 +312,31 @@ function roomBox() {
   `plugins-state.json` of the plugin folder; a disabled plugin's commands refuse to run), `Info`, `New` (creates a plugin
   skeleton, optionally replaying a `.scr` script or the running `SCRIPTRECORD` recording), `Folder`.
 - `SCRIPT2JS` converts a command script (`.scr`) or the current recording into JavaScript with one `archi.run(...)` per command.
+
+**Commands from scripts (`archi.registerCommand`).** A script or plugin file can define commands at load time:
+
+```js
+function grid() {
+  const n = Number(archi.getVar("GRIDN") || 3);
+  for (let i = 0; i < n; i++) archi.add({type: "line", a: [i * 1000, 0], b: [i * 1000, 5000], layer: "S-GRID"});
+}
+archi.registerCommand("JSGRID", grid, {aliases: ["JG"], summary: "Grid lines", category: "Scripts", modifies: true});
+if (archi.mode === "load") archi.print("tools loaded");   // top-level code also runs when a command runs; guard it
+```
+
+`archi.registerCommand(name, fn | "fnName", options?)` registers a command backed by a *named global* function of the same
+file (run with `archi-cli --js file.js`, or evaluated by the app's script engine through the core hook below). Rules: names
+are letters/digits/`_`/`-`; built-in commands and other scripts' commands cannot be replaced (the call is reported and
+ignored); registering again from the same file updates the command. Each run re-evaluates the file (`archi.mode` is
+`"load"` at registration, `"command"` when the command runs), calls the function, and is one undo step; lines queued with
+`archi.run` run after the command, each its own undo step (scripts, the REPL and MCP wait for them).
+
+Core API for hosts: `PluginRegistry.registerScriptCommand(_ command: PluginCommand, source: String, sourceURL: URL, into:
+CommandRegistry) throws -> String` (plugin id `script.<file name>`, kept across `reload()`), `unregisterScriptCommands(script:
+name:registry:)`, `LoadedPlugin.init(manifest:directory:source:enabled:)`, `PluginRegistry.scriptPlugins`. The evaluator
+hook `PluginRegistry.evaluator` is called with the script's pseudo-plugin and the function name, exactly as for manifest
+plugins; a host collects `registerCommand` calls made during a top-level evaluation and passes them to
+`registerScriptCommand` (see `app/Sources/archi-cli/PluginRunner.swift`, `CLIPlugins.run(_:function:_:)`).
 
 The `archi` object available to plugin functions (archi-cli; the app's script engine provides the same calls):
 
@@ -369,3 +401,74 @@ paths made absolute). Swift: `DocumentVersions`, `ArchiFile.recover(_:)`, `Archi
   objects back to wall types and opening types and reads quantities in the file's area/volume units (props in m, m², m³).
 - OBJ import reads the `mtllib` materials (Kd, d/Tr, Ns, Pr/Pm, `map_Kd` with `-s` tiling); USD import reads USDA and
   USDZ (meshes, transforms, UsdPreviewSurface colours and textures). glTF/GLB export embeds PNG/JPEG textures with UVs.
+- USD import applies full xformOp stacks in `xformOpOrder` (translate, rotateX/Y/Z/XYZ…, orient, scale, transform, `!invert!`),
+  `metersPerUnit`, `upAxis` and `primvars:displayColor`. FBX: binary 7.4 export (meshes, materials, mm, Z up) and binary
+  (7.x, compressed arrays, 7.5 64-bit headers) / ASCII import with model transforms, units, up axis and material colours.
+  IGES 5.3: lines, arcs/circles, polylines (106), B-splines (126), points; units from the global section.
+- IFC import reads `IfcMapConversion` + `IfcProjectedCRS` back into the project latitude/longitude, elevation, north angle and
+  `GEOCRS`.
+
+## 7. Python bridge
+
+`archi.py` (standard library only) drives `archi-cli --mcp` over stdio and mirrors the JavaScript API:
+
+```python
+import archi
+doc = archi.open("house.archi")                      # or module functions on $ARCHI_FILE (set by archi-cli --py)
+doc.run("WALL 0,0 5000,0 ")                          # log lines
+w = doc.add_element({"type": "wall", "start": [0, 0], "end": [0, 4000]})[0]
+doc.add_element({"type": "door", "hostWall": w, "offset": 1500})
+ids = doc.add([{"type": "circle", "center": [0, 0], "radius": 250}])
+doc.update(ids[0], {"radius": 400}); doc.remove(ids)
+print(doc.entities(type="line"), doc.elements(type="wall"), doc.summary())
+doc.call("takeoff", format="csv")                      # any MCP tool
+doc.save(); doc.close()
+```
+
+Functions: `open(path, cli)`, `run`, `summary`, `doc`, `entities(type, layer, limit)`, `elements(type, level)`, `add`,
+`add_element`, `update`, `remove`, `save(path)`, `export(path, format, level)`, `undo`, `commands(category)`, `get_var`,
+`set_var`, `call(tool, **args)`; errors raise `archi.ArchiError`. The executable comes from `$ARCHI_CLI`, the `PATH` or the app
+bundle. `archi-cli file.archi --py script.py [args]` puts the module on `PYTHONPATH`, sets `ARCHI_FILE` and saves the drawing
+when the script ends; `archi-cli --python-module DIR` writes `archi.py`.
+
+## 8. Automation triggers
+
+`archi-cli --watch DIR --rules rules.json [--once]` (Swift: `AutomationWatcher(folder:rulesData:)`, `pending()`,
+`runOnce(host:progress:)`) runs a batch job for every new or changed file in `DIR` matching a rule, then POSTs the job summary
+(`{file, rule, ok, written[], error?}`) as JSON to the rule's `webhook`:
+
+```json
+{"interval": 5, "rules": [{"name": "dxf to archi", "pattern": "*.dxf",
+  "job": {"input": "{file}", "commands": ["AUDIT"], "outputs": ["out/{name}.archi", "out/{name}.ifc"],
+          "reports": [{"tool": "check_model", "path": "out/{name}-check.json"}]},
+  "webhook": "https://example.org/hooks/archi"}]}
+```
+
+Placeholders: `{file}`, `{name}`, `{ext}`, `{dir}`; jobs use the batch-job format (section 2). Processed files are remembered
+in `DIR/.archi-automation.json`; `--once` handles the pending files and exits (status 1 when a job failed).
+
+## 9. More commands and formats (this release)
+
+| Command | What it does |
+| --- | --- |
+| `GITVERSION Commit/Log/Diff/Checkout` | git versioning of the drawing as `<name>.archit` (one line per layer, block, material, level, object and element; `ArchiText.encode/decode/diff`, `GitVersioning`); Diff lists every added/removed/modified object; Checkout is undoable |
+| `CENTRAL Create/Local/Sync/Borrow/Relinquish/Owners` | work sharing: central `.archi` + local copies (`CENTRALFILE`), element borrowing (`<central>.owners.json`), synchronise under a lock: edits to objects owned by others are rejected, concurrent edits keep central, new ids are renumbered (`CentralModel`) |
+| `TRACEREVIEW New/Enter/Exit/Show/Hide/Zoom/List/Close/Import/Delete` | trace overlays (`TRACE-<name>` layers, non-plotting) with author, view window and linked elements (variable `TRACES`) |
+| `SHAREVIEW` | self-contained read-only HTML viewer (all level plans, pan/zoom, element info, rooms, layers); export format `html` |
+| `PDFIMPORT`, `PDFMARKUPS` | PDF page vectors/text (optional content → layers, ToUnicode text, form XObjects, object streams) at a scale; PDF comments → markups linked to the elements under them (`PDFFile`, `PDFImport`) |
+| `DWFIMPORT` | DWFx (XPS) sheets: paths, colours, line weights, glyph text |
+| `DGNIMPORT`, `DGNEXPORT` | MicroStation V7 design files: lines, line strings, shapes, curves, circles/ellipses, arcs, text; levels ↔ layers (V8 files are not supported) |
+| `LASEREXPORT` | CNC/laser SVG in mm: joined paths, red cut / blue engrave, kerf compensation (`LASERSCALE`, `LASERKERF`) |
+| `IFCOPTIONS` | adds `IFC2X3` (Coordination View 2.0; IFC4 stream converted: attributes, door/window styles, flow terminals, style assignments) and georeferencing (`IfcMapConversion` + `IfcProjectedCRS` from the project location, `GEOCRS`, `IFCGEOREF`); Reference View writes `IfcTriangulatedFaceSet`, DTV/2x3 faceted B-reps |
+| `IFCMAP Set/List/Remove/Clear` | IFC class mapping per component category / element type (`IFCMAP:<key>`); element prop `IfcExportAs` (`IfcSanitaryTerminal.WASHHANDBASIN`) wins |
+| `STRUCTLOAD Point/Line/Area`, `STRUCTSUPPORT` | loads (kN, kN/m, kN/m²; case) and supports (Fixed/Pinned/Roller/6-digit code) on layer `S-LOADS`, attached to the analytical model; `ANALYTICALMODEL` writes `.tcl` for OpenSees (export format `opensees`) |
+| `THERMALBRIDGES` | linear thermal bridges (corners, floor edges, balconies, eaves, reveals, columns) with ψ (`PSI:<kind>`) and H_TB |
+| `WORKSCHEDULE Generate/List/Duration/Link/Simulate/Resources/Level/Gantt/Csv` | 4D: tasks by level and trade from quantities, CPM on a working-day calendar, element states at a date, resources (histogram, over-allocation, cost, levelling), Gantt SVG; exported to IFC as `IfcWorkSchedule`/`IfcTask`/`IfcRelSequence` |
+| `ENERGYPLUS Export/Run` | EnergyPlus 9.4 IDF from rooms (zones, outward-ordered surfaces, windows, layered constructions, ideal loads); Run uses an installed EnergyPlus + EPW |
+| `AUTODIMPLAN`, `AUTONAMEROOMS`, `QAASSIST`, `PLANGEN`, `ASK` | plan dimension chains; room names/numbers from fixtures and shape; model-checker explanations and fixes; plan options from a room programme; natural-language requests — all ask before bulk edits and are one undo step |
+| `POINTCLOUDVIEW Clip/Density/Reset`, `PCPLANE`, `SCANTOBIM` | section-box clipping and octree LOD of point clouds (`PointOctree`), snap + local plane fit, RANSAC planes → walls/slabs; LAS 1.0–1.4 import (`LASReader`) |
+| `LISPLOAD`, `LISP` | AutoLISP subset (`LispInterpreter`): `defun c:NAME` becomes a command; `(command …)`, `entget/entmod/ssget`, list/string/math functions |
+
+Plotting: `PLOTROLL` (roll width mm) and `PLOTMARGIN` make HP-GL/2 output (`plt`) size the page (`PS`) and rotate to fit the
+roll. Performance: `SpatialIndex` (STR R-tree: window/point queries, k-nearest) for culling and picking; current-format
+`.archi` files decode in one pass.
