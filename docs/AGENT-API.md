@@ -522,3 +522,47 @@ roll. Performance: `SpatialIndex` (STR R-tree: window/point queries, k-nearest) 
 
 Text: DXF writes characters outside the Basic Multilingual Plane as `\U+D83D\U+DE00` surrogate pairs (read back as one
 character, also in layer names); SVG marks right-to-left paragraphs with `direction="rtl"` (`TextDirection`).
+
+## 11. Exchange, validation, analysis and sharing (round 10)
+
+### Command-line options
+
+| Option | What it does |
+| --- | --- |
+| `--docs DIR [--source DOCSDIR]` | writes the documentation as an offline HTML site with search (user guide, scripting, agent API, architecture, roadmap, command reference); sources default to the app bundle's resources or `./docs` (`DocSite`, `Markdown`) |
+| `--verify-download FILE --ed-signature SIG --public-key KEY` | Sparkle EdDSA (Ed25519) check of a downloaded update; `UpdateCheck.check(download:item:publicKey:)` also checks the appcast length and falls back to `SHA256SUMS.txt` |
+| `--convert FMT FILES…` | new formats: `dxf2004` … `dxf2018` (written as `.dxf`), `ifcxml`, `saf` (Structural Analysis Format `.xlsx`), `ifcstructural` (IFC4 structural analysis view) |
+
+### Commands
+
+| Command | What it does |
+| --- | --- |
+| `DXFOUTVERSION` | DXF of a chosen version: R12, R2000, R2004 (AC1018), R2007 (AC1021, UTF-8 text), R2010, R2013, R2018 (AC1032) (`DXFWriter.write(_:version:)`, `DXFVersion`) |
+| `IFCXMLOUT` | ifcXML (IFC4, ISO 10303-28): every instance an element with `id`, simple attributes as XML attributes, references as `ref`/`xsi:nil`, typed values as `…-wrapper`; `.zip`/`.ifczip` names write an IfcZIP holding the ifcXML. `.ifcXML` (and ifcXML inside IfcZIP) imports through `IMPORTFILE` (`IFCXML.fromSTEP` / `IFCXML.toSTEP`) |
+| `IFCVALIDATE` | now checks every instance against the full IFC2X3 / IFC4 / IFC4X3 ADD2 schema tables (unknown/abstract classes, attribute counts, `*` for derived attributes, required attributes, value kinds), normative rules (spatial decomposition, unused resources, closed shells) and the standard `Pset_`/`Qto_` templates (names, properties, measure types, enumeration values, applicability); issues of the model's own export list and zoom to the drawing's elements (`IFCValidator.elements(for:in:doc:)`, `IFCSchemaTable`, `IFCPsetTable`) |
+| `ANALYTICALMODEL` | also writes `.xlsx` (SAF 2.x sheets: materials, cross-sections, point connections, curve and surface members, supports, load groups/cases, surface and point actions) and `.ifc` (IfcStructuralAnalysisModel with point connections, boundary conditions, curve/surface members, material profiles, load groups and actions, SI units) (`StructuralExchange`) |
+| `LAZCONVERTER` | shows/sets the LAZ decompressor (laszip, pdal or las2las); `.laz` then imports like `.las` (`LAZConverter`) |
+| `PRESENTOUT` | sheets and saved views as a self-contained HTML slide show: vector SVG slides, arrow keys/click, F full screen, N speaker notes (sheet title-block field `notes`) (`Presentation`) |
+| `DOCSITE` | the documentation site from inside the app |
+| `SIGNKEY`, `SIGNFILE`, `VERIFYSIGNATURE`, `TRUSTSIGNER` | Ed25519 signing key (kept in Application Support), detached `<file>.sig` signatures of any file (signer, time, SHA-256, signature), verification (valid / modified / invalid, trusted via the drawing's `TRUSTEDSIGNERS`) (`Ed25519`, `SHA512`, `FileSignature`) |
+| `COLORBLINDCHECK` | layer colours checked for protanopia, deuteranopia and tritanopia (Machado 2009 simulation, CIEDE2000) and against the background; Fix re-colours conflicting layers from the Okabe–Ito palette, undoable (`ColourAccessibility`) |
+| `SHADOWDIAGRAM` | ground shadows for a date and times (`9:00,12:00,15:00` or `8-18/1`) at the project location: hatches on `A-SHADOW-hhmm` layers with areas, and/or an SVG image sequence with an animated HTML page (`ShadowStudy`) |
+| `ENERGYPLUS Run` | also reads the results: completion and errors (`eplusout.err`), site energy, EUI, end uses, unmet hours (`eplustbl.csv`), per-zone heating/cooling energy and peaks (`eplusout.csv`), written to the rooms as `energyHeating_kWh`, `energyCooling_kWh`, `peakHeating_kW`…; walls, floors and ceilings between rooms are exported as interzone surface pairs (`EnergyPlusExport.results`, `applyResults`) |
+| `SURVEYLINES` | survey field-to-finish: coded points (`EP1 B` … `EP1 E`, `C` closes) joined into polylines with their elevations, points moved to feature layers from the description keys (`SURVEYCODES`: `EP=V-ROAD-EDGE:line; TREE=V-TREE:point`) (`SurveyCodes`) |
+| `DAYLIGHTRADIANCE Export/Import` | Radiance study for climate-based daylight: scene and materials (glass transmissivity from the glazing transmittance), the rooms' work-plane sensors, sky receiver and `run.sh` (epw2wea, gendaymtx, rfluxmtx, dctimestep, rmtxop); Import reads `total.ill`/`direct.ill` and reports sDA300/50% and ASE1000,250h per room (`RadianceDaylight`) |
+| `MEMORYREPORT` | memory estimate of the drawing by kind (drafting, elements, meshes, point clouds, blocks, sheets, images), the app's footprint and the budget (`MEMORYBUDGET` MB, default ¼ of the Mac's memory) with advice; point-cloud imports are limited to what fits (`POINTLIMIT`) (`MemoryBudget`) |
+
+
+IFC 4.3: plan polylines on a layer whose name contains `ALIGNMENT` (or with prop `alignment = 1`) export as `IfcAlignment`
+(horizontal LINE / CIRCULARARC segments from the polyline and its bulges, a constant-gradient vertical layout from the
+prop `elevations`, an `Axis` curve), aggregated into the project with the site; importing reads `IfcAlignment` layouts
+(lines, arcs, clothoids and other transitions, vertical gradients) back onto layer `IFC-ALIGNMENT` (`AlignmentGeometry`).
+
+Core APIs for the viewers: `ParallelMesh.build(doc:)` (same result as `MeshBuilder.build`, built concurrently),
+`BackgroundRegenerator` (off-main-thread rebuilds, only the newest document state delivered) and `MeshLOD`
+(coarser levels per mesh group and the level to draw from the projected size; sub-pixel objects skipped).
+
+STEP import (`STEPIN`, `IMPORTFILE`) now reads curved B-reps — planes, cylinders, cones, spheres, tori, B-spline/Bézier/rational
+surfaces, extrusion and revolution surfaces with line, circle, ellipse, B-spline and composite edges — as well as AP242
+tessellated geometry and assembly placements (mapped items, transformed representation relationships), with colours
+(`StepBRepReader`, `STEPImporter.assemble`).
