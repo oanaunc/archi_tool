@@ -429,7 +429,7 @@ extension CommandCatalog {
         c10("Node Packages", "shippingbox", "NODEPACKAGE"), c10("Graphic Styles", "paintpalette", "GRAPHICSTYLES"), c10("Redraw", "arrow.clockwise.circle", "REDRAW"), c10("AR Quick Look", "arkit", "ARQUICKLOOK"),
         c10("Command Line Options", "terminal", "CMDLINEOPTIONS"), c10("Customizer Panel", "slider.horizontal.below.square.filled.and.square", "CUSTOMIZERPANEL"),
     ]
-    static var coverageMenus6: [(String, [CmdItem])] { [("Render, Materials & Environment", renderRound10)] }
+    static var coverageMenus6: [(String, [CmdItem])] { [("Render, Materials & Environment", renderRound10)] + coverageMenus7 }
 }
 
 /// AR Quick Look (VIS-085): exports the model as USDZ at real-world scale (metersPerUnit from the drawing units,

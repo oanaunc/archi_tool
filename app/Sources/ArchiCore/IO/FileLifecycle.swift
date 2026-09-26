@@ -206,7 +206,7 @@ public enum SpotlightMetadata {
 /// Imports content from the pasteboard or a drag and drop: vector formats become drawing objects, images are placed
 /// as image entities (bytes saved into `assetFolder`), .archi content is merged, plain text becomes a text object.
 public enum ExternalContent {
-    public enum Kind: String, CaseIterable { case archi, dxf, svg, pdf, image, text, file }
+    public enum Kind: String, CaseIterable { case archi, dxf, svg, pdf, image, text, file, geojson }
 
     public struct Result {
         public var kind: Kind
@@ -228,6 +228,8 @@ public enum ExternalContent {
         let trimmed = head.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.hasPrefix("<?xml") || trimmed.hasPrefix("<svg"), head.contains("<svg") { return .svg }
         if trimmed.hasPrefix("{"), head.contains("\"document\"") || head.contains("\"entities\"") { return .archi }
+        if t.contains("geo+json") || t.contains("geojson") { return .geojson }
+        if trimmed.hasPrefix("{"), head.contains("\"coordinates\""), head.contains("\"type\"") { return .geojson }
         if trimmed.hasPrefix("0") && (head.contains("SECTION") && (head.contains("ENTITIES") || head.contains("HEADER"))) { return .dxf }
         if t.contains("text") || t.contains("string") || String(data: data, encoding: .utf8) != nil { return .text }
         return nil
@@ -254,6 +256,12 @@ public enum ExternalContent {
             let src = try DXFReader.read(String(decoding: data, as: UTF8.self))
             let r = DocumentMerge.merge(src, into: &doc, offset: at, scale: src.units.mm / doc.units.mm)
             return Result(kind: k, ids: r.allIDs, summary: "\(r.allIDs.count) object(s) from DXF")
+        case .geojson:
+            // Map coordinates (WGS 84 longitude/latitude) are placed with the project location, not at the paste point.
+            var src = ArchiDocument(); src.entities = []; src.elements = []; src.units = doc.units; src.levels = doc.levels
+            for e in try GeoJSON.entities(String(decoding: data, as: UTF8.self), doc: doc) { src.add(e) }
+            let r = DocumentMerge.merge(src, into: &doc, offset: .zero)
+            return Result(kind: k, ids: r.allIDs, summary: "\(r.allIDs.count) GeoJSON feature object(s), georeferenced")
         case .svg:
             return mergeEntities(try SVGImporter.entities(String(decoding: data, as: UTF8.self)), "SVG")
         case .pdf:
@@ -308,13 +316,28 @@ public enum ExternalContent {
         return .unsupported
     }
 
+    /// Files whose coordinates are real-world (map / survey) positions: GIS formats, terrain grids, point clouds, survey
+    /// point tables and images with a world file. Dropping them keeps their georeferenced place instead of the drop point.
+    public static func isGeoreferenced(_ url: URL) -> Bool {
+        let f = FileImport.format(for: url)
+        if ["geojson", "shp", "osm", "cityjson", "asc", "dem", "las", "laz", "e57", "pointcloud", "csv"].contains(f) { return true }
+        if f == "image" { return WorldFile.candidates(for: url).contains { FileManager.default.fileExists(atPath: $0.path) } }
+        return false
+    }
+
     /// Imports dropped files (not drawings or scripts) into `doc`, placing each at `at` (files side by side).
+    /// Georeferenced files (see `isGeoreferenced`) land at their map position, converted with the project location.
     public static func drop(_ urls: [URL], into doc: inout ArchiDocument, at: Vec2 = .zero) -> [(url: URL, result: Result?, error: String?)] {
         var out: [(URL, Result?, String?)] = []
         var x = at
         for u in urls {
             do {
                 let r: Result
+                if isGeoreferenced(u) {
+                    let (m, s) = try FileImport.importFile(u, into: &doc, offset: .zero)
+                    out.append((u, Result(kind: .file, ids: m.allIDs, summary: s + " — georeferenced"), nil))
+                    continue
+                }
                 switch dropAction(for: u) {
                 case .attachImage:
                     r = try insert(Data(contentsOf: u), type: "image", into: &doc, at: x, assetFolder: u.deletingLastPathComponent(), name: u.deletingPathExtension().lastPathComponent)

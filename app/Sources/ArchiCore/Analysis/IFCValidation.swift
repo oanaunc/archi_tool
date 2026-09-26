@@ -4,7 +4,8 @@
 // classes, attribute counts, DERIVED redeclarations written as *, required attributes left unset, attribute value kinds:
 // references, enumerations, booleans, numbers, strings, lists, typed values of defined types), required
 // project/units/context, and products outside the spatial structure. Issues on the model's own export map back to the
-// drawing's elements (zoom-to). Where-rules and global rules of the EXPRESS schemas are not evaluated.
+// drawing's elements (zoom-to). WHERE rules of the common resource/product entities are evaluated in IFCWhereRules.swift;
+// global rules and functions of the EXPRESS schemas are not.
 import Foundation
 
 public struct IFCValidationIssue: Hashable {
@@ -361,6 +362,7 @@ public enum IFCValidator {
         if let table = IFCSchemaTable.forSchema(schema) {
             out += schemaIssues(f, table, skip: foreign)
             out += normativeIssues(f, table)
+            out += whereRuleIssues(f, table)
             if let psets = IFCPsetTable.forSchema(schema) { out += propertySetIssues(f, table, psets) }
         }
         // GlobalIds of rooted entities (first attribute is a 22-character string on IfcRoot subtypes).
@@ -379,7 +381,9 @@ public enum IFCValidator {
         if !dup.isEmpty { issue(.error, "GLOBALID-DUPLICATE", "\(dup.count) GlobalId(s) are used more than once", dup) }
         // Project, units, context
         let projects = f.all("IFCPROJECT")
-        if projects.count != 1 { issue(.error, "PROJECT-COUNT", "The file must contain exactly one IfcProject (found \(projects.count))", projects.map(\.id)) }
+        // Global rule IfcSingleProjectInstance: at most one project; a file without one is only a model fragment.
+        if projects.count > 1 { issue(.error, "PROJECT-COUNT", "The file must contain exactly one IfcProject (found \(projects.count))", projects.map(\.id)) }
+        if projects.isEmpty { issue(.warning, "PROJECT-MISSING", "The file contains no IfcProject (a model fragment)") }
         if let p = projects.first {
             if f[p[8].ref]?.type != "IFCUNITASSIGNMENT" { issue(.error, "PROJECT-UNITS", "IfcProject has no unit assignment", [p.id]) }
             if (p[7].list ?? []).isEmpty { issue(.warning, "PROJECT-CONTEXT", "IfcProject has no representation context", [p.id]) }

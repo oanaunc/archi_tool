@@ -91,6 +91,9 @@ struct StatusBarView: View {
         }
         .buttonStyle(.plain)
         .help("\(title) \(on ? "on" : "off")" + (key.isEmpty ? "" : " (\(key))"))
+        .accessibilityLabel(A11y.toggleNames[title] ?? title)
+        .accessibilityValue(on ? "On" : "Off")
+        .accessibilityHint(key.isEmpty ? "Toggles \(title)" : "Toggles \(title), shortcut \(key)")
     }
 
     /// Current coordinate system (WCS or UCS with origin and angle); the menu switches or edits it.

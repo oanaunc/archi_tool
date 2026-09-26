@@ -48,8 +48,12 @@ public enum AgentTools {
          "description": "Checks the model's IFC export (or `ifcPath`) against an Information Delivery Specification file (`idsPath`): entity, attribute, property and material requirements per specification.",
          "inputSchema": schema(["idsPath": ["type": "string"], "ifcPath": ["type": "string"]], required: ["idsPath"])],
         ["name": "ifc_validate", "title": "Validate IFC",
-         "description": "Validates an IFC file (`path`) or the model's own IFC export: syntax, schema, references, GlobalIds, attribute counts, units, spatial containment.",
-         "inputSchema": schema(["path": ["type": "string"]])],
+         "description": "Validates an IFC file (`path`) or the model's own IFC export (`schema` IFC2X3 / IFC4 / IFC4X3_ADD2, `modelView` ReferenceView / DesignTransferView): syntax, schema, references, GlobalIds, attribute kinds, EXPRESS WHERE rules (codes WR-<Entity>.<Rule>), units, spatial containment. For the model's own export each issue lists the drawing `elements` to zoom to.",
+         "inputSchema": schema(["path": ["type": "string"], "schema": ["type": "string", "enum": ["IFC2X3", "IFC4", "IFC4X3_ADD2"]],
+                                "modelView": ["type": "string", "enum": ["ReferenceView", "DesignTransferView"]]])],
+        ["name": "validate_file", "title": "Validate exchange file",
+         "description": "Validates a file on disk: IFC / IfcZIP / ifcXML (schema and WHERE rules), DXF (group-code audit and read-back), gbXML (XSD requirements), .archi (round trip plus its IFC and DXF exports; `schema` picks the IFC schema). Returns valid, counts and issues with locations.",
+         "inputSchema": schema(["path": ["type": "string"], "schema": ["type": "string", "enum": ["IFC2X3", "IFC4", "IFC4X3_ADD2"]]], required: ["path"])],
     ]
 
     public static var names: Set<String> { Set(definitions.compactMap { $0["name"] as? String }) }
@@ -163,13 +167,35 @@ public enum AgentTools {
             return ["passed": rs.allSatisfy(\.passed), "specifications": rs.map { r in
                 ["name": r.specification, "passed": r.passed, "applicable": r.applicable, "notes": r.notes,
                  "failures": r.failed.sorted { $0.key < $1.key }.prefix(200).map { ["instance": $0.key, "reasons": $0.value] }] as [String: Any] }]
+        case "validate_file":
+            guard let p = a["path"] as? String else { throw ToolError(message: "path is required") }
+            var sc = IFCExportOptions.Schema.ifc4
+            if let x = (a["schema"] as? String)?.uppercased() {
+                guard let v = IFCExportOptions.Schema.allCases.first(where: { $0.rawValue == x || $0.rawValue.hasPrefix(x) }) else { throw ToolError(message: "unknown IFC schema \(x)") }
+                sc = v
+            }
+            return try FileValidation.validate(resolve(p), ifcSchema: sc).json
         case "ifc_validate":
             let text: String
+            let own = a["path"] == nil
             if let p = a["path"] as? String { text = try FileImport.readText(resolve(p)) }
-            else { text = IFCExporter.export(doc: doc, meshes: MeshBuilder.build(doc: doc)) }
+            else {
+                var o = IFCExportOptions()
+                if let sc = (a["schema"] as? String)?.uppercased() {
+                    guard let v = IFCExportOptions.Schema.allCases.first(where: { $0.rawValue == sc || $0.rawValue.hasPrefix(sc) }) else { throw ToolError(message: "unknown IFC schema \(sc)") }
+                    o.schema = v
+                }
+                if let mv = (a["modelView"] as? String)?.lowercased() { o.modelView = mv.hasPrefix("design") ? .designTransferView : .referenceView }
+                text = IFCExporter.export(doc: doc, meshes: MeshBuilder.build(doc: doc), options: o)
+            }
             let issues = IFCValidator.validate(text)
+            let parsed = own ? try? STEPParser.parse(text) : nil
             return ["valid": !issues.contains { $0.severity == .error }, "count": issues.count,
-                    "issues": issues.map { ["severity": $0.severity.rawValue, "code": $0.code, "message": $0.message, "instances": Array($0.instances.prefix(50))] }]
+                    "issues": issues.map { i -> [String: Any] in
+                        var o: [String: Any] = ["severity": i.severity.rawValue, "code": i.code, "message": i.message, "instances": Array(i.instances.prefix(50))]
+                        if let f = parsed { o["elements"] = Array(IFCValidator.elements(for: i, in: f, doc: doc).prefix(50)) }
+                        return o
+                    }]
         default:
             if AgentExtraTools.names.contains(name) { return try AgentExtraTools.call(name, a, doc: doc, resolve: resolve) }
             throw ToolError(message: "unknown tool \(name)")

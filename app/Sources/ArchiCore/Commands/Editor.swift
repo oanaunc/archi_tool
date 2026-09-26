@@ -356,6 +356,7 @@ public final class Editor {
         }
         if activeCommand != nil { cancelCommand() }
         activeCommand = def
+        dynamicFace = nil
         lastCommand = def.name
         registry.usage[def.name, default: 0] += 1
         print("Command: \(def.name)")
@@ -409,6 +410,7 @@ public final class Editor {
                 self.onSysVarChange?(monitored.map(\.name))
             }
             self.activeCommand = nil
+            self.dynamicFace = nil
             self.request = nil
             Snap.tracker.active = false
             Snap.tracker.clear()
@@ -907,6 +909,8 @@ public final class Editor {
 
     /// World-space pick tolerance supplied by the UI (≈ 6 px).
     public var pickTolerance: Double = 10
+    /// Dynamic UCS (PRC-036): the solid face that became the temporary work plane of the running command.
+    public var dynamicFace: DynamicUCS.Face?
 
     public func isSelectable(_ id: EntityID) -> Bool {
         if let e = doc.entity(id) { return doc.isEditable(layer: e.layer) }

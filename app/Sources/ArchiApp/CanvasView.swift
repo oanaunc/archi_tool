@@ -702,7 +702,10 @@ final class PlanCanvasView: NSView {
         }
         twist = CGFloat(rad(ViewTwist.degrees(model.doc)))
         model.$revision.receive(on: DispatchQueue.main).sink { [weak self] _ in self?.modelChanged() }.store(in: &cancellables)
-        registerForDraggedTypes([.string])
+        registerForDraggedTypes([.string, .fileURL])
+        setAccessibilityElement(true)
+        setAccessibilityRole(.layoutArea)
+        setAccessibilityLabel("Drawing canvas")
         model.gripInput = { [weak self] line in self?.handleGripInput(line) ?? false }
         model.cancelLocalModes = { [weak self] in self?.cancelLocalModes() ?? false }
     }
@@ -711,16 +714,28 @@ final class PlanCanvasView: NSView {
     // MARK: Drag and drop from tool palettes (blocks, components, commands) and the material library
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        // Files from the Finder (IO-065): drawings open, images/PDFs attach, exchange formats import at the drop point.
+        let files = FileDrop.urls(sender.draggingPasteboard)
+        if !files.isEmpty { return FileDrop.accepts(files) ? .copy : [] }
         guard let s = sender.draggingPasteboard.string(forType: .string), ToolDrop.accepts(s) else { return [] }
         return .copy
     }
     override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
-        guard let s = sender.draggingPasteboard.string(forType: .string), ToolDrop.accepts(s) else { return [] }
+        let files = FileDrop.urls(sender.draggingPasteboard)
+        if files.isEmpty { guard let s = sender.draggingPasteboard.string(forType: .string), ToolDrop.accepts(s) else { return [] } }
+        else if !FileDrop.accepts(files) { return [] }
         let v = convert(sender.draggingLocation, from: nil)
         model?.cursorWorld = toWorld(v)
         return .copy
     }
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        let files = FileDrop.urls(sender.draggingPasteboard)
+        if let model, !files.isEmpty {
+            let v = convert(sender.draggingLocation, from: nil)
+            FileDrop.perform(files, at: toWorld(v), model: model)
+            window?.makeKeyAndOrderFront(nil); focus()
+            return true
+        }
         guard let model, let s = sender.draggingPasteboard.string(forType: .string) else { return false }
         let v = convert(sender.draggingLocation, from: nil)
         let hit = pick(at: toWorld(v))
@@ -782,6 +797,7 @@ final class PlanCanvasView: NSView {
 
     private func modelChanged() {
         guard let model else { return }
+        A11y.promptChanged(model)
         let tw = CGFloat(rad(ViewTwist.degrees(model.doc)))
         if abs(tw - twist) > 1e-12 { twist = tw; viewChanged() }
         if handledZoomRequest != model.zoomExtentsRequest { zoomExtents() }
@@ -1192,6 +1208,8 @@ final class PlanCanvasView: NSView {
         }
         // Drawing compare overlay (Collaborate ▸ Compare).
         CompareOverlay.byModel[ObjectIdentifier(model)]?.draw(ctx, scale: scale)
+        // Mechanism playback (MECHANISMPLAY).
+        if let items = MechanismPlayback.items(for: model), !items.isEmpty { RenderScene.drawItems(items, ctx: ctx, scale: scale, params: prm) }
         // Command rubber-band preview.
         if let req = ed.request, req.kinds.contains(.point) || req.kinds.contains(.distance) || req.kinds.contains(.angle), let pv = req.preview, mouseView != nil {
             let geoms = pv(cursorPoint)
@@ -1200,6 +1218,10 @@ final class PlanCanvasView: NSView {
                 if items.isEmpty { items = fallbackItems(geoms, doc: ed.doc, color: previewColor) }
                 RenderScene.drawItems(items, ctx: ctx, scale: scale, params: prm)
             }
+        }
+        // Dynamic UCS (PRC-036): the face that is (or would become) the work plane, with its axes, at the crosshair.
+        if let req = ed.request, req.kinds.contains(.point), mouseView != nil, let f = DUCSOverlay.face(editor: ed, cursor: cursorPoint) {
+            DUCSOverlay.draw(DUCSOverlay.segments(f, at: cursorPoint, length: Double(36 / scale)), ctx: ctx, scale: scale)
         }
         // Grip drag preview (a constraint drag edits the drawing itself, live).
         if let g = hotGrip, !g.solve, g.mode != .stretch {
@@ -1482,6 +1504,7 @@ final class PlanCanvasView: NSView {
     override func mouseMoved(with event: NSEvent) { track(event); if hotGrip?.solve == true { solveDrag() } }
 
     private func track(_ e: NSEvent) {
+        keyboardCursorActive = false
         let v = convert(e.locationInWindow, from: nil)
         mouseView = v
         updateCursorPoint(v)
@@ -1851,8 +1874,67 @@ final class PlanCanvasView: NSView {
 
     // MARK: Keyboard
 
+    /// Redraws the overlay only (animations drawn over the drawing).
+    func needsDisplayOverlay() { overlay.needsDisplay = true }
+
+    // MARK: Accessibility (SYS-028) and keyboard crosshair (SYS-029)
+
+    override func accessibilityValue() -> Any? { model.map { A11y.summary($0) } }
+    override func accessibilityHelp() -> String? { KeyboardCursor.help.joined(separator: " ") }
+    /// The crosshair was last moved with the keyboard (Return picks it, Tab selects under it).
+    private(set) var keyboardCursorActive = false
+
+    /// Moves the crosshair by a screen offset (snaps and tracking apply as for the mouse).
+    func moveKeyboardCursor(_ off: CGVector) {
+        let base = mouseView ?? CGPoint(x: bounds.midX, y: bounds.midY)
+        let v = CGPoint(x: min(max(base.x + off.dx, 0), bounds.width), y: min(max(base.y + off.dy, 0), bounds.height))
+        mouseView = v
+        keyboardCursorActive = true
+        updateCursorPoint(v)
+        if let model {
+            model.cursorWorld = cursorPoint
+            model.live.snapHint = "Crosshair \(fmt(cursorPoint.x, 2)), \(fmt(cursorPoint.y, 2))" + (snap.map { " · \($0.kind)" } ?? "") + " · Return picks"
+            A11y.announce("\(fmt(cursorPoint.x, 1)), \(fmt(cursorPoint.y, 1))" + (snap.map { ", \($0.kind)" } ?? ""))
+        }
+        overlay.needsDisplay = true
+    }
+    /// Keyboard crosshair state for the self tests.
+    var keyboardCursorWorld: Vec2 { cursorPoint }
+
+    /// Keys of keyboard-only drawing; true when handled.
+    func handleKeyboardCursor(_ e: NSEvent) -> Bool {
+        guard let model else { return false }
+        let ed = model.editor
+        let flags = e.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        let req = ed.request
+        let input = model.commandInput.isEmpty
+        let prompt = input && (req.map { !$0.kinds.isDisjoint(with: [.point, .selection, .entity]) } ?? false)
+        if let off = KeyboardCursor.offset(keyCode: e.keyCode, shift: flags.contains(.shift), option: prompt && flags.contains(.option)),
+           !flags.contains(.command), !flags.contains(.control) {
+            if prompt || (ed.isIdle && input && flags.contains(.option)) { moveKeyboardCursor(off); return true }
+            return false
+        }
+        guard keyboardCursorActive, input else { return false }
+        switch e.keyCode {
+        case 36, 76 where req?.kinds.contains(.point) == true:
+            ed.feed(.point(cursorPoint)); return true
+        case 48:
+            guard let id = pick(at: rawWorld) else { model.live.snapHint = "Nothing under the crosshair"; return true }
+            if let r = req, !r.kinds.isDisjoint(with: [.selection, .entity]) {
+                ed.feed(.selection(r.kinds.contains(.selection) ? ed.expandGroups([id]) : [id]))
+            } else if ed.isIdle {
+                ed.selection.formUnion(ed.expandGroups([id]))
+                A11y.announce("Selected \(model.doc.entity(id)?.typeName ?? model.doc.element(id)?.typeName ?? "object")")
+            } else { return false }
+            overlay.needsDisplay = true
+            return true
+        default: return false
+        }
+    }
+
     override func keyDown(with e: NSEvent) {
         guard let model else { super.keyDown(with: e); return }
+        if handleKeyboardCursor(e) { return }
         let flags = e.modifierFlags.intersection(.deviceIndependentFlagsMask)
         if flags.contains(.command) || flags.contains(.control) { super.keyDown(with: e); return }
         let ed = model.editor

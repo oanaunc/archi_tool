@@ -1,5 +1,5 @@
 // Oanarina Archi Tool command-line runner — GPL-3.0-or-later
-// File life-cycle options: --upgrade, --verify, --metadata, --api-reference, --docs, --run-samples, --license.
+// File life-cycle options: --upgrade, --verify, --validate, --metadata, --api-reference, --docs, --run-samples, --license.
 import Foundation
 import ArchiCore
 
@@ -91,6 +91,36 @@ configure, the local agent server on 127.0.0.1 when you enable it).
             } else { print("Up to date (\(current)).") }
             return 0
         } catch { eprint((error as? LocalizedError)?.errorDescription ?? "\(error)"); return 1 }
+    }
+    if let i = args.firstIndex(of: "--validate") {
+        // --validate FILES… [--schema IFC2X3|IFC4|IFC4X3] [--json]: exit 1 when a file has errors, 2 when unreadable.
+        var files: [String] = [], k = i + 1
+        while k < args.count, !args[k].hasPrefix("--") { files.append(args[k]); k += 1 }
+        guard !files.isEmpty else { eprint("--validate FILES… [--schema IFC2X3|IFC4|IFC4X3] [--json]"); return 2 }
+        var schema = IFCExportOptions.Schema.ifc4
+        if let si = args.firstIndex(of: "--schema"), si + 1 < args.count {
+            let x = args[si + 1].uppercased()
+            guard let v = IFCExportOptions.Schema.allCases.first(where: { $0.rawValue == x || $0.rawValue.hasPrefix(x) }) else { eprint("Unknown IFC schema \(x)"); return 2 }
+            schema = v
+        }
+        let json = args.contains("--json")
+        var worst: Int32 = 0, reports: [[String: Any]] = []
+        for f in files {
+            let u = expand(f)
+            do {
+                let r = try FileValidation.validate(u, ifcSchema: schema)
+                if !r.valid { worst = max(worst, 1) }
+                if json { reports.append(r.json); continue }
+                print("\(r.valid ? "VALID  " : "INVALID") \(r.file) (\(r.format)): \(r.summary)")
+                for x in r.issues { print("  [\(x.severity.uppercased())] \(x.code)\(x.location.isEmpty ? "" : " (\(x.location))"): \(x.message)") }
+            } catch {
+                worst = 2
+                let m = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+                if json { reports.append(["file": u.lastPathComponent, "valid": false, "error": m]) } else { eprint("\(u.lastPathComponent): \(m)") }
+            }
+        }
+        if json { print(ArchiJSON.jsonString(reports, pretty: true)) }
+        return worst
     }
     if args.contains("--run-samples") {
         CommandRegistry.shared.ensureBuiltins()

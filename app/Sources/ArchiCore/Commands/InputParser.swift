@@ -226,10 +226,14 @@ public enum InputParser {
     public static var lastZ = 0.0
     /// Z of the last point parsed since it was cleared (nil when the point was picked, not typed).
     public static var lastParsedZ: Double?
+    /// Last point typed in current-UCS coordinates (not world "*", survey "S:" or dynamic-input forms): the typed
+    /// local x, y, z and whether it was relative. Dynamic UCS (PRC-036) re-reads it in the plane of the active face.
+    public static var lastTypedLocal: (local: Vec3, relative: Bool)?
 
     /// 3D coordinate entry (CMD-026): x,y,z (absolute or @relative), cylindrical d<a,z and spherical d<a<b (b = angle up
     /// from the XY plane). Two-component forms get z = 0 (absolute) or the last point's z (relative). Angles are in degrees.
     public static func parsePoint3(_ s: String, last: Vec3?) -> Vec3? {
+        lastTypedLocal = nil
         var t = s
         // Dynamic input: length Tab angle = relative polar.
         if t.contains("\t") {
@@ -274,6 +278,7 @@ public enum InputParser {
             if parts.count == 3 { guard let zz = parseNumber(parts[2]) else { return nil }; z = zz }
             local = Vec2(x, y)
         }
+        if ucs == context.ucs { lastTypedLocal = (Vec3(local.x, local.y, z ?? 0), relative) }
         if relative {
             let b = last ?? Vec3(0, 0, 0)
             let w = Vec2(b.x, b.y) + ucs.vectorToWorld(local)

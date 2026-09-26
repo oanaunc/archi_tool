@@ -2,7 +2,7 @@
 import Foundation
 
 enum ArchitectureCommands {
-    static var all: [CommandDef] { walls + openings + horizontals + structure + spaces + management + extendedBIM + documentation + multiStorey + sheetViews + ModelingCommands.all + BIMExtCommands.all + BIMDetailCommands.all + BIMSystemCommands.all + BIMMoreCommands.all + Round7ViewCommands.all + Round7Commands.all + Round7ModelingCommands.all + Round7FormCommands.all + FeatureCommands9.all + SurfaceCommands9.all + ModelingTools9.all + BIMCommands9.all + SCADObjectCommands.all }
+    static var all: [CommandDef] { walls + openings + horizontals + structure + spaces + management + extendedBIM + documentation + multiStorey + sheetViews + ModelingCommands.all + BIMExtCommands.all + BIMDetailCommands.all + BIMSystemCommands.all + BIMMoreCommands.all + Round7ViewCommands.all + Round7Commands.all + Round7ModelingCommands.all + Round7FormCommands.all + FeatureCommands9.all + SurfaceCommands9.all + ModelingTools9.all + BIMCommands9.all + SCADObjectCommands.all + Round11Commands.all }
 
     static func wallPreview(_ w: WallGeom) -> Geometry { .polyline(PolylineGeom(points: CommandHelpers.wallRect(w), closed: true)) }
     static func footprintPreview(_ pts: [Vec2]) -> Geometry { .polyline(PolylineGeom(points: pts, closed: true)) }

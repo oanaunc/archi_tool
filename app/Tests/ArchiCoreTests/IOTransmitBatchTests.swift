@@ -55,7 +55,9 @@ final class IOTransmitBatchTests: XCTestCase {
             try DocumentIO.write(d, to: u, format: f)
             XCTAssertGreaterThan((try? Data(contentsOf: u).count) ?? 0, 0, f)
         }
-        XCTAssertThrowsError(try DocumentIO.write(d, to: dir.appendingPathComponent("m.pdf")))
+        // PDF is plotted headless (PDFWriter).
+        try DocumentIO.write(d, to: dir.appendingPathComponent("m.pdf"))
+        XCTAssertTrue((try Data(contentsOf: dir.appendingPathComponent("m.pdf"))).starts(with: Array("%PDF".utf8)))
         XCTAssertThrowsError(try DocumentIO.write(d, to: dir.appendingPathComponent("m.nope")))
         XCTAssertEqual(try DocumentIO.read(dir.appendingPathComponent("m.archi")).elements.count, 1)
         XCTAssertFalse(try DocumentIO.read(dir.appendingPathComponent("m.dxf")).entities.isEmpty)

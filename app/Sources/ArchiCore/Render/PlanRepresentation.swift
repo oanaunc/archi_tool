@@ -211,6 +211,7 @@ public enum PlanRepresentation {
             }
             return out
         case .roof(let g):
+            if el.props[RoofJoins.key] != nil, let j = RoofJoins.planItems(el, g, doc: doc, color: color) { return j }
             let r = RoofShapes.faces(g)
             guard r.footprint.count >= 3 else { return [] }
             let dash = hiddenDash(doc, options)
@@ -244,7 +245,13 @@ public enum PlanRepresentation {
             var out: [DrawItem] = [stroke([g.start + n * m, g.end + n * m], color, lwProj), stroke([g.start - n * m, g.end - n * m], color, lwProj),
                                    stroke([g.start, g.end], color, lwFine)]
             let positions: [Double] = [0] + g.uPositions + [len]
+            let corner = ctx.curtainCorners[el.id]
             for (xi, x) in positions.enumerated() {
+                // Corner joins: one shared corner post replaces both border mullions.
+                if let ce = xi == 0 ? corner?.start : (xi == positions.count - 1 ? corner?.end : nil), ce.joined {
+                    if let post = ce.post { out.append(.fill(loops: [post], color: color)); out.append(stroke(post, closed: true, color, lwFine)) }
+                    continue
+                }
                 let sec = CurtainMullion.planSection(g, x: x, border: xi == 0 || xi == positions.count - 1)
                 guard sec.count >= 3 else { continue }
                 out.append(.fill(loops: [sec], color: color))
@@ -543,7 +550,11 @@ public enum PlanRepresentation {
             // return into the opening jambs and the inner ply lines stop short of them.
             if plies.count > 1 {
                 let w = wrap.enabled && !f.isCurved ? wrap.width : 0
-                let cutStart = w > 0 && cutEnds.contains { abs($0 - pc.s0) < 1e-6 }, cutEnd = w > 0 && cutStarts.contains { abs($0 - pc.s1) < 1e-6 }
+                // Wrapping at free ends too (props wrapEnds = 1 or WALLWRAPENDS = 1).
+                let ends = wrapsEnds(el, doc: doc)
+                let ins = wrapsInserts(el, doc: doc)
+                let cutStart = w > 0 && ((ins && cutEnds.contains { abs($0 - pc.s0) < 1e-6 }) || (ends && pc.s0 < 1e-6 && j.startCap))
+                let cutEnd = w > 0 && ((ins && cutStarts.contains { abs($0 - pc.s1) < 1e-6 }) || (ends && pc.s1 > f.L - 1e-6 && j.endCap))
                 let lo = pc.s0 + (cutStart ? w : 0), hi = pc.s1 - (cutEnd ? w : 0)
                 for ply in plies.dropLast() {
                     let line = f.isCurved ? f.face(ply.tlo, pc.s0, pc.s1) : [f.pt(pc.s0 - 10 * f.h - 1, ply.tlo), f.pt(pc.s1 + 10 * f.h + 1, ply.tlo)]
@@ -601,9 +612,19 @@ public enum PlanRepresentation {
 
     /// Layer wrapping at inserts: the finish plies on each face return into opening jambs. `width` = wrap depth into
     /// the jamb (the exterior finish thickness), `top`/`bottom` = the core band the return line spans (wall t offsets).
+    /// Whether a wall's finish layers wrap into door/window openings.
+    static func wrapsInserts(_ el: BIMElement, doc: ArchiDocument) -> Bool {
+        el.props["wrapInserts"] == "1" || (el.props["wrapInserts"] != "0" && doc.variable("WALLWRAP") == "1")
+    }
+
+    /// Whether a wall's finish layers wrap around its free ends.
+    static func wrapsEnds(_ el: BIMElement, doc: ArchiDocument) -> Bool {
+        el.props["wrapEnds"] == "1" || (el.props["wrapEnds"] != "0" && doc.variable("WALLWRAPENDS") == "1")
+    }
+
     static func layerWrap(_ el: BIMElement, plies: [(material: String?, thi: Double, tlo: Double)], doc: ArchiDocument, h: Double)
         -> (enabled: Bool, width: Double, top: Double, bottom: Double) {
-        let on = el.props["wrapInserts"] == "1" || (el.props["wrapInserts"] != "0" && doc.variable("WALLWRAP") == "1")
+        let on = wrapsInserts(el, doc: doc) || wrapsEnds(el, doc: doc)
         guard on, plies.count > 1, case .wall(let g) = el.geometry, let tn = g.wallType, let wt = doc.wallTypes.first(where: { $0.name == tn }), wt.thickness > 0 else {
             return (false, 0, 0, 0)
         }
@@ -617,7 +638,8 @@ public enum PlanRepresentation {
     // MARK: Openings
 
     static func openingItems(_ el: BIMElement, _ o: OpeningGeom, ctx: BIMContext, color: RGBA, options: DrawOptions) -> [DrawItem] {
-        openingSymbol(el, o, ctx: ctx, color: color, options: options) + OpeningTrim.planItems(el, o, ctx: ctx, color: color, options: options)
+        if el.props[CornerWindows.endKey] != nil, o.kind == .window { return CornerWindows.planItems(el, o, ctx: ctx, color: color) }
+        return openingSymbol(el, o, ctx: ctx, color: color, options: options) + OpeningTrim.planItems(el, o, ctx: ctx, color: color, options: options)
     }
 
     static func openingSymbol(_ el: BIMElement, _ o: OpeningGeom, ctx: BIMContext, color: RGBA, options: DrawOptions) -> [DrawItem] {

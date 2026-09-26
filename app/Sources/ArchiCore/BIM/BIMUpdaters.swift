@@ -23,6 +23,12 @@ public enum BIMUpdaters {
         if Schedules.updateAll(&doc) { changed = true }
         if ProjectViews.updateAll(&doc) { changed = true }
         if Round7Updaters.updateAll(&doc) { changed = true }
+        if Datums.hasContent(doc), Datums.updateAll(&doc) { changed = true }
+        if StructuralDetails.hasContent(doc), StructuralDetails.updateAll(&doc) { changed = true }
+        if AdaptiveComponents.hasContent(doc), AdaptiveComponents.updateAll(&doc) { changed = true }
+        if CornerWindows.hasContent(doc), CornerWindows.updateAll(&doc) { changed = true }
+        if ScriptedComponents.hasContent(doc), ScriptedComponents.updateAll(&doc) { changed = true }
+        if Sketches.hasContent(doc), Sketches.updateAll(&doc) { changed = true }
         return changed
     }
 
@@ -42,6 +48,12 @@ public enum BIMUpdaters {
             || !doc.schedules.isEmpty
             || ProjectViews.hasContent(doc)
             || Round7Updaters.hasContent(doc)
+            || Datums.hasContent(doc)
+            || StructuralDetails.hasContent(doc)
+            || AdaptiveComponents.hasContent(doc)
+            || CornerWindows.hasContent(doc)
+            || ScriptedComponents.hasContent(doc)
+            || Sketches.hasContent(doc)
     }
 
     private static let lock = NSLock()

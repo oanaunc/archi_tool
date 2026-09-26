@@ -44,7 +44,7 @@ public enum DocumentIO {
         case "glb", "gltf": try GLTFExporter.exportGLB(MeshBuilder.build(doc: doc), materials: doc.materials, unitMM: mm).write(to: url, options: .atomic)
         case "csv": try text(ScheduleExporter.csv(doc: doc, kind: "all"))
         case "takeoff": try text(QuantityTakeoff.compute(doc).csv)
-        case "pdf": throw IOError(message: "PDF output needs the app (Core Graphics); export SVG instead")
+        case "pdf": try PDFWriter.document(doc, level: level).write(to: url, options: .atomic)
         default:
             guard try FileImport.export(doc, to: url, format: f == "usd" ? "usda" : f) else { throw IOError(message: "unsupported output format '\(f)'") }
         }

@@ -380,12 +380,11 @@ final class IFCBuilder {
         if options.georeference && options.schema != .ifc2x3 { georeference(context: ctx) }
         let sitePl = placement(relTo: nil, .zero)
         func dms(_ v: Double) -> String {
-            let sign = v < 0 ? -1.0 : 1.0
-            var a = abs(v)
-            let d = Int(a); a = (a - Double(d)) * 60
-            let m = Int(a); a = (a - Double(m)) * 60
-            let sec = Int(a); let micro = Int(((a - Double(sec)) * 1_000_000).rounded())
-            return "(\(Int(sign) * d),\(Int(sign) * m),\(Int(sign) * sec),\(Int(sign) * micro))"
+            // Whole microseconds first, so rounding carries into seconds/minutes/degrees (microseconds stay < 10⁶).
+            let sign = v < 0 ? -1 : 1
+            let total = Int64((abs(v) * 3_600_000_000).rounded())
+            let d = total / 3_600_000_000, m = (total / 60_000_000) % 60, sec = (total / 1_000_000) % 60, micro = total % 1_000_000
+            return "(\(Int64(sign) * d),\(Int64(sign) * m),\(Int64(sign) * sec),\(Int64(sign) * micro))"
         }
         let address = doc.info.address.isEmpty ? "$" : "#\(add("IFCPOSTALADDRESS($,$,$,$,(\(s(doc.info.address))),$,$,$,$,$)"))"
         let site = add("IFCSITE(\(g("site")),#\(oh),'Site',$,$,#\(sitePl),$,$,.ELEMENT.,\(dms(doc.info.latitude)),\(dms(doc.info.longitude)),0.,$,\(address))")
@@ -434,6 +433,8 @@ final class IFCBuilder {
             }
         }
         for key in rampOrder { ramp(key, rampGroups[key] ?? []) }
+        // Imported IFC products kept as meshes (furniture, MEP terminals, assemblies' parts…) go back out as their class.
+        for e in doc.entities where e.props["ifcType"] != nil || e.props["ifcGuid"] != nil { if case .solid = e.geometry { importedProduct(e) } }
         phaseGroups()
         writeTypes()
         if options.schema != .ifc2x3, let ws = Scheduler.load(doc) { writeSchedule(ws, project: project) }
@@ -983,6 +984,40 @@ final class IFCBuilder {
             e = add("IFCBUILDINGELEMENTPROXY(\(gid),#\(oh),\(nm),$,$,#\(pl),\(rep),\(tag),.NOTDEFINED.)")
         }
         elementEntity[el.id] = e; contained[lv, default: []].append(e); useMaterial(el.material, e)
+    }
+
+    /// IFC class a drawing object imported from IFC can be written as in the target schema: its original class when that
+    /// is a non-abstract element class whose attributes after Tag are all optional, else IfcBuildingElementProxy.
+    func productClass(_ ifcType: String?) -> (entity: String, count: Int) {
+        let table = IFCSchemaTable.forSchema(options.schema.rawValue)
+        let proxy = ("IFCBUILDINGELEMENTPROXY", options.schema == .ifc2x3 ? 9 : 9)
+        guard let t = ifcType?.uppercased(), let table, table.contains(t), !table.isAbstract(t), table.isSubtype(t, of: "IFCELEMENT"),
+              !table.isSubtype(t, of: "IFCFEATUREELEMENT"), let attrs = table.attributes(t), attrs.count >= 8 else { return proxy }
+        if attrs.dropFirst(8).contains(where: { !$0.attr.optional && !$0.derived }) { return proxy }
+        return (t, attrs.count)
+    }
+
+    /// A solid drawing object that came from an IFC file (props ifcType / ifcGuid), written with its GlobalId, name and
+    /// class, contained in its storey (props "level").
+    func importedProduct(_ en: Entity) {
+        let lvID = doc.levels.first { $0.name == en.props["level"] }?.id ?? (doc.levels.first?.id ?? 0)
+        let lv = storeyPlacement[lvID] != nil ? lvID : (storeyPlacement.keys.sorted().first ?? 0)
+        let elev = storeyElevation[lv] ?? 0
+        let pl = placement(relTo: storeyPlacement[lv], Vec3(0, 0, 0))
+        let kk = k
+        let items = brep(for: en.id) { p in p * kk - Vec3(0, 0, elev) }
+        guard !items.isEmpty else { return }
+        let rep = "#\(shape(items, type: meshRepType))"
+        var gid = g("entity:\(en.id)")
+        if let v = en.props["ifcGuid"], IFCExporter.isValidGuid(v), !usedGuids.contains(v) { usedGuids.insert(v); gid = s(v) }
+        let (cls, count) = productClass(en.props["ifcType"])
+        let original = en.props["ifcType"].flatMap { IFCSchemaTable.forSchema(options.schema.rawValue)?.className($0) ?? $0 }
+        let objType = cls == "IFCBUILDINGELEMENTPROXY" && original != nil && original?.uppercased() != cls ? s(original!) : "$"
+        var args = [gid, "#\(oh)", s(en.props["name"] ?? "Object \(en.id)"), "$", objType, "#\(pl)", rep, s("\(en.id)")]
+        while args.count < count { args.append("$") }
+        let e = add("\(cls)(\(args.joined(separator: ",")))")
+        contained[lv, default: []].append(e)
+        useMaterial(en.props["material"], e)
     }
 
     /// Simple extruded solid (storey-relative) for elements without a mesh.

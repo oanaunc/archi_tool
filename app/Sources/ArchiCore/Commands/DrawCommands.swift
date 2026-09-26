@@ -911,17 +911,19 @@ enum DrawCommands {
 
     // MARK: - 3D solids
     static var solids: [CommandDef] { [
-        CommandDef("BOX", category: "Draw", summary: "Creates a 3D solid box.") { ed in
-            let z = elevation(ed)
+        CommandDef("BOX", category: "Draw", summary: "Creates a 3D solid box (on the face under the first corner when DUCS is on).") { ed in
+            var z = elevation(ed)
             let a = try await ed.getPoint("Specify first corner", keywords: ["Center"])
             var p1: Vec2, p2: Vec2
             switch a {
             case .keyword("Center"):
                 let c = try await ed.requirePoint("Specify center")
+                z = ed.dynamicBaseElevation(at: c, fallback: z)
                 let k = try await ed.requirePoint("Specify corner", base: c) { p in [.polyline(PolylineGeom(points: BBox2(points: [p, c * 2 - p]).corners, closed: true))] }
                 p1 = c * 2 - k; p2 = k
             case .point(let p):
                 p1 = p
+                z = ed.dynamicBaseElevation(at: p, fallback: z)
                 let r = try await ed.getPoint("Specify other corner", base: p, keywords: ["Cube", "Length"]) { c in [.polyline(PolylineGeom(points: BBox2(points: [p, c]).corners, closed: true))] }
                 switch r {
                 case .point(let q): p2 = q
@@ -954,13 +956,13 @@ enum DrawCommands {
                 hAns = try await ed.getDistance("Specify height", base: c, defaultValue: ed.variableDouble("BOXHEIGHT", 1000))
             }
             guard let h = hAns.value, abs(h) > 1e-9 else { throw CommandError.invalid("Height must not be zero.") }
-            let z = elevation(ed)
+            let z = ed.dynamicBaseElevation(at: c, fallback: elevation(ed))
             ed.addEntity(.solid(SolidGeom(kind: .cone, origin: Vec3(c.x, c.y, h < 0 ? z + h : z), size: Vec3(radius, top, abs(h)))))
         },
         CommandDef("SPHERE", category: "Draw", summary: "Creates a 3D solid sphere.") { ed in
             let c = try await ed.requirePoint("Specify center point")
             guard let r = try await ed.getDistance("Specify radius", base: c, preview: { p in [.circle(CircleGeom(c, c.distance(to: p)))] }).value, r > 0 else { throw CommandError.invalid("Radius must be positive.") }
-            ed.addEntity(.solid(SolidGeom(kind: .sphere, origin: Vec3(c.x, c.y, elevation(ed)), size: Vec3(r, r, r))))
+            ed.addEntity(.solid(SolidGeom(kind: .sphere, origin: Vec3(c.x, c.y, ed.dynamicBaseElevation(at: c, fallback: elevation(ed))), size: Vec3(r, r, r))))
         },
     ] }
 }

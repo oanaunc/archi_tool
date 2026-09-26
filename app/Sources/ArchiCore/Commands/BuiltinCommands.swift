@@ -39,6 +39,7 @@ public enum BuiltinCommands {
         out += WorkplaneCommands.all
         out += BlockEditCommands.all
         out += Round8AnnotationCommands.all
+        out += LinkImageCommands.all
         return out
     }
 

@@ -23,6 +23,10 @@ public enum CentralModel {
         public var conflicts: [MergeConflict] = []
         /// Objects of this user that were renumbered in the merge (old → new id).
         public var renumbered: [EntityID: EntityID] = [:]
+        /// Local changes refused by the permissions policy: (id, reason).
+        public var denied: [(id: EntityID, reason: String)] = []
+        /// Where the refused local objects were saved (nothing is lost).
+        public var rejectedFile: URL?
         public var applied = 0
         public var received = 0
     }
@@ -139,6 +143,19 @@ public enum CentralModel {
             let mineIDs = Set(mine.entities.map(\.id) + mine.elements.map(\.id))
             for (id, b) in baseEnt where !mineIDs.contains(id) { if let who = ownedByOther(id) { mine.entities.append(b); res.rejected.append((id, who)) } }
             for (id, b) in baseEl where !mineIDs.contains(id) { if let who = ownedByOther(id) { mine.elements.append(b); res.rejected.append((id, who)) } }
+            // Permissions policy (signed, pinned in central): restrict the local changes to what this user may do.
+            mine.variables[Permissions.keyVariable] = base.variables[Permissions.keyVariable]
+            switch Permissions.load(central: central, pinnedKey: theirsCentral.variable(Permissions.keyVariable)) {
+            case .none: break
+            case .valid(let p, _):
+                let r = Permissions.enforce(local: mine, base: base, user: user, policy: p)
+                mine = r.doc; res.denied = r.rejected
+            case .invalid(let why):
+                let r = Permissions.enforce(local: mine, base: base, user: user, policy: AccessPolicy(defaultRole: .viewer), reason: "permissions locked: \(why)")
+                mine = r.doc; res.denied = r.rejected
+            }
+            let refused = res.rejected.map(\.id) + res.denied.map(\.id)
+            if !refused.isEmpty { res.rejectedFile = try? Permissions.saveRejected(refused, from: local, localURL: localURL) }
             // Central is "ours" in the merge: shared objects keep their ids; local additions that collide are renumbered.
             let m = ThreeWayMerge.merge(base: base, ours: theirsCentral, theirs: mine)
             res.conflicts = m.conflicts
@@ -163,8 +180,9 @@ public enum CentralModel {
 
     static var command: CommandDef {
         CommandDef("CENTRAL", aliases: ["WORKSHARING", "SYNCCENTRAL", "STC"], category: "Collaborate",
-                   summary: "Work sharing with a central model: Create (make this drawing the central file), Local (open a local copy of a central file), Sync (synchronise with central, optionally keeping borrowed elements), Borrow / Relinquish selected elements, Owners (who owns what).") { ed in
-            let k = try await ed.getKeyword("Enter an option [Create/Local/Sync/Borrow/Relinquish/Owners]", ["Create", "Local", "Sync", "Borrow", "Relinquish", "Owners"], defaultValue: "Sync") ?? "Sync"
+                   summary: "Work sharing with a central model: Create (make this drawing the central file), Local (open a local copy of a central file), Sync (synchronise with central, optionally keeping borrowed elements), Borrow / Relinquish selected elements, Owners (who owns what), Permissions (signed access policy: viewer/editor/admin roles and protected layers, enforced on Sync; refused changes are saved beside the local copy).") { ed in
+            let k = try await ed.getKeyword("Enter an option [Create/Local/Sync/Borrow/Relinquish/Owners/Permissions]", ["Create", "Local", "Sync", "Borrow", "Relinquish", "Owners", "Permissions"], defaultValue: "Sync") ?? "Sync"
+            if k == "Permissions" { try await Permissions.run(ed); return }
             let user = ed.doc.variable("USERNAME") ?? NSUserName()
             @MainActor func central() throws -> URL {
                 guard let p = ed.doc.variable("CENTRALFILE"), !p.isEmpty else { throw CommandError.invalid("This drawing is not a local copy of a central model (CENTRAL Local).") }
@@ -188,11 +206,13 @@ public enum CentralModel {
                     let keep = try await ed.getYesNo("Keep borrowed elements?", defaultValue: false)
                     let r = try sync(local: ed.doc, localURL: local, user: user, relinquishAll: !keep)
                     ed.doc = r.doc
-                    ed.print("Synchronised with central: \(r.applied) local change(s) sent, \(r.received) received, \(r.conflicts.count) conflict(s) (central kept), \(r.rejected.count) rejected.")
+                    ed.print("Synchronised with central: \(r.applied) local change(s) sent, \(r.received) received, \(r.conflicts.count) conflict(s) (central kept), \(r.rejected.count + r.denied.count) rejected.")
                     for x in r.rejected { ed.print("  #\(x.id) is owned by \(x.owner): your change was not saved.") }
+                    for x in r.denied { ed.print("  #\(x.id) not sent: \(x.reason).") }
+                    if let f = r.rejectedFile { ed.print("  Your refused changes are kept in \(f.lastPathComponent).") }
                     for c in r.conflicts { ed.print("  conflict \(c.kind) \(c.key): \(c.reason)") }
                     for (a, b) in r.renumbered { ed.print("  your new object #\(a) is now #\(b).") }
-                    ed.selection = Set(r.rejected.map(\.id)).filter { ed.doc.contains($0) }
+                    ed.selection = Set(r.rejected.map(\.id) + r.denied.map(\.id)).filter { ed.doc.contains($0) }
                 case "Borrow":
                     let ids = try await ed.getSelection("Select elements to borrow")
                     let r = try borrow(ids, user: user, central: try central())

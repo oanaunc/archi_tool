@@ -440,3 +440,12 @@ enum RenderPrompt {
         return true
     }
 }
+
+
+/// Online lookups the user starts explicitly. The core stays network-free; the app supplies fetchers here.
+enum OnlineLookups {
+    static func install() {
+        // bSDD search (BIM-131): used only when the user runs BSDD Search or opens an online class.
+        BSDD.fetch = { url in try await URLSession.shared.data(from: url).0 }
+    }
+}

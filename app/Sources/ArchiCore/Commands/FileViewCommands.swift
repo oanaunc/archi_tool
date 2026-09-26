@@ -91,6 +91,8 @@ enum FileViewCommands {
                 case .point(let p): try await window(p)
                 case .number(let d): if d > 0 { host(ed, .zoomScale(d)) }
                 case .text(let t):
+                    // nXP (relative to paper space) is handled by the app when it installs ZoomHooks.paperZoom (VIS-005).
+                    if t.lowercased().hasSuffix("xp"), let pz = ZoomHooks.paperZoom, try await pz(ed, t) { return }
                     let s = t.lowercased().replacingOccurrences(of: "xp", with: "").replacingOccurrences(of: "x", with: "")
                     if let d = InputParser.parseNumber(s), d > 0 { host(ed, .zoomScale(d)) } else { ed.print("Invalid zoom input.") }
                 case .keyword("All"), .keyword("Extents"): host(ed, .zoomExtents)
@@ -260,4 +262,11 @@ enum FileViewCommands {
             for c in ed.registry.sorted { ed.print("\(c.name)\(c.aliases.isEmpty ? "" : " [" + c.aliases.joined(separator: ",") + "]") — \(c.summary)") }
         },
     ] }
+}
+
+
+/// Hooks the app installs for zoom behaviour that needs the view (ZOOM nXP, VIS-005).
+@MainActor public enum ZoomHooks {
+    /// Called by ZOOM for input ending in "XP"; returns true when the app handled it.
+    public static var paperZoom: ((Editor, String) async throws -> Bool)?
 }

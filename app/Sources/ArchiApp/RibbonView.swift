@@ -103,9 +103,11 @@ struct RibbonButton: View {
     var help: String = ""
     var action: () -> Void
     @State private var hovering = false
+    @AppStorage(L10n.key) private var language = "auto"
 
     var body: some View {
-        Button(action: action) {
+        let title = L10n.t(self.title, language)
+        return Button(action: action) {
             Group {
                 if size == .large {
                     VStack(spacing: 3) {
@@ -140,6 +142,7 @@ struct RibbonButton: View {
         .disabled(!enabled)
         .onHover { hovering = $0 }
         .help(help.isEmpty ? title : help)
+        .accessibilityLabel(title)
     }
 }
 
@@ -147,6 +150,7 @@ struct RibbonButton: View {
 struct RibbonGroup<Content: View>: View {
     let title: String
     @ViewBuilder var content: Content
+    @AppStorage(L10n.key) private var language = "auto"
     var body: some View {
         if RibbonCustom.isHidden(title) { EmptyView() } else { panel }
     }
@@ -157,7 +161,7 @@ struct RibbonGroup<Content: View>: View {
                     .padding(.horizontal, 6)
                     .padding(.top, 4)
                     .frame(maxHeight: .infinity, alignment: .top)
-                Text(title)
+                Text(L10n.t(title, language))
                     .font(.system(size: 9.5))
                     .foregroundStyle(Theme.textDim)
                     .lineLimit(1)
@@ -172,6 +176,7 @@ struct RibbonView: View {
     @ObservedObject var model: AppModel
     @AppStorage("ribbonTab") private var tabRaw = RibbonTab.home.rawValue
     @AppStorage("ribbonCollapsed") private var collapsed = false
+    @AppStorage(L10n.key) private var language = "auto"
 
     private var tab: RibbonTab { RibbonTab(rawValue: tabRaw) ?? .home }
 
@@ -232,7 +237,7 @@ struct RibbonView: View {
             VSeparator().frame(height: 14).padding(.horizontal, 4)
             ForEach(RibbonTab.allCases.filter { !prefs.hiddenRibbonTabs.contains($0.rawValue) || $0 == tab }) { t in
                 Button { tabRaw = t.rawValue; if collapsed { collapsed = false } } label: {
-                    Text(t.rawValue)
+                    Text(L10n.t(t.rawValue, language))
                         .font(.system(size: 11, weight: tab == t ? .semibold : .regular))
                         .foregroundStyle(tab == t ? Theme.text : Theme.textDim)
                         .padding(.horizontal, 10)

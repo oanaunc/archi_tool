@@ -655,7 +655,13 @@ public enum DXFWriter {
             }
         }
 
-        mutating func spline(_ sp: SplineGeom, _ s: Style, owner: String) {
+        mutating func spline(_ sp0: SplineGeom, _ s: Style, owner: String) {
+            var sp = sp0
+            // Fit-point-only open splines: write a real SPLINE (control points of the interpolating cubic + the fit
+            // points) so other CAD programs keep an editable curve through the same points.
+            if sp.controlPoints.count < 2, !sp.closed, sp.fitPoints.count >= 2, let fit = SplineFit.interpolate(sp.fitPoints) {
+                sp.controlPoints = fit.controlPoints; sp.knots = fit.knots; sp.degree = fit.degree; sp.weights = nil
+            }
             if sp.controlPoints.count < 2 {
                 let pts = GeometryOps.splinePoints(sp)
                 lwpolyline(pts.map { PolyVertex($0) }, closed: sp.closed, width: 0, s, owner: owner); return

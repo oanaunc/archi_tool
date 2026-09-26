@@ -301,6 +301,7 @@ final class FileController: EditorHost {
             // Re-open the Model / layout tab that was current when the drawing was saved (CTAB, APP-013).
             LayoutTabs.restore(model)
             RecentFiles.add(url)
+            SyncWatcher.track(model, url: url, doc: d)
             model.editor.print("Opened \(url.lastPathComponent) — \(d.entities.count) objects, \(d.elements.count) building elements.")
             model.revision &+= 1
             model.zoomExtents()
@@ -353,6 +354,8 @@ final class FileController: EditorHost {
             model.autosave?.discard()
             model.recoveredOriginalPath = nil
             RecentFiles.add(u)
+            SaveExtras.afterSave(model.doc, url: u, level: model.doc.currentLevel)
+            SyncWatcher.track(model, url: u, doc: model.doc)
             model.editor.print("Saved \(u.lastPathComponent)")
             model.revision &+= 1
             return true

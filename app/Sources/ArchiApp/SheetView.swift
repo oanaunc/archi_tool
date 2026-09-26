@@ -271,7 +271,10 @@ final class SheetCanvasNSView: NSView {
     override var acceptsFirstResponder: Bool { true }
 
     // Views dragged from the project browser become viewports at the view scale (SHT-010).
-    override func viewDidMoveToWindow() { super.viewDidMoveToWindow(); registerForDraggedTypes([.string]) }
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow(); registerForDraggedTypes([.string])
+        setAccessibilityElement(true); setAccessibilityRole(.layoutArea); setAccessibilityLabel("Sheet (paper space)")
+    }
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         (sender.draggingPasteboard.string(forType: .string).flatMap(ViewDrop.parse) != nil) ? .copy : []
     }

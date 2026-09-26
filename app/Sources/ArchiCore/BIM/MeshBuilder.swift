@@ -210,10 +210,56 @@ public enum MeshBuilder {
                     for part in WallPlies.clip(poly, f: f, tlo: band.tlo, thi: band.thi) { plyAcc[k].prism(part, z0: za, z1: zb2, smooth: f.isCurved) }
                 }
             }
-            for pc in ctx.pieces(f) { emit(pc.poly, z0, z1) }
+            // Layer wrapping at inserts (BIM-015): beside each opening, over its height, the finish layers return into
+            // the jamb — a strip as wide as the finish build-up replaces the core layers there (as the plan shows).
+            let wrap = PlanRepresentation.layerWrap(el, plies: plies.map { ($0.material, $0.thi, $0.tlo) }, doc: doc, h: f.h)
+            var jambs: [(s0: Double, s1: Double, zlo: Double, zhi: Double)] = []
+            if wrap.enabled, plies.count > 1, !f.isCurved {
+                // Free ends wrap over the full height when end wrapping is on.
+                if PlanRepresentation.wrapsEnds(el, doc: doc) {
+                    let j = ctx.join(f)
+                    if j.startCap { jambs.append((-f.h, wrap.width, z0, z1)) }
+                    if j.endCap { jambs.append((f.L - wrap.width, f.L + f.h, z0, z1)) }
+                }
+                for c in ctx.cuts(f) where PlanRepresentation.wrapsInserts(el, doc: doc) {
+                    let parts = wallCutBands(c, f: f, z0: z0, z1: z1, openingBase: zb)
+                    if let first = parts.first { for b in first.bands where b.kind == .open { jambs.append((c.s0 - wrap.width, c.s0, b.z0, b.z1)) } }
+                    if let last = parts.last { for b in last.bands where b.kind == .open { jambs.append((c.s1, c.s1 + wrap.width, b.z0, b.z1)) } }
+                }
+            }
+            func emitPiece(_ pc: WallPiece) {
+                let js = jambs.filter { $0.s1 > pc.s0 + 1e-9 && $0.s0 < pc.s1 - 1e-9 }
+                guard !js.isEmpty else { emit(pc.poly, z0, z1); return }
+                var zs = [z0, z1] + js.flatMap { [$0.zlo, $0.zhi] }
+                zs = zs.map { min(max($0, z0), z1) }.sorted()
+                var zb2: [Double] = []
+                for z in zs where zb2.last.map({ z - $0 > 1e-7 }) ?? true { zb2.append(z) }
+                for i in 0..<max(zb2.count - 1, 0) {
+                    let za = zb2[i], zc = zb2[i + 1], zm = (za + zc) / 2
+                    let act = js.filter { $0.zlo <= zm && $0.zhi >= zm }
+                    guard !act.isEmpty else { emit(pc.poly, za, zc); continue }
+                    let strips = act.map { j in [f.pt(j.s0, wrap.bottom), f.pt(j.s1, wrap.bottom), f.pt(j.s1, wrap.top), f.pt(j.s0, wrap.top)] }
+                        .map { GeometryOps.signedArea($0) < 0 ? Array($0.reversed()) : $0 }
+                    for (k, band) in plies.enumerated() {
+                        var parts = WallPlies.clip(pc.poly, f: f, tlo: band.tlo, thi: band.thi)
+                        let core = band.tlo >= wrap.bottom - 1e-9 && band.thi <= wrap.top + 1e-9
+                        if core { parts = parts.flatMap { PolygonBoolean.apply(.subtract, [$0], strips) }.filter { abs(GeometryOps.signedArea($0)) > 1e-9 } }
+                        for part in parts { plyAcc[k].prism(part, z0: za, z1: zc) }
+                    }
+                    var poly = pc.poly
+                    if GeometryOps.signedArea(poly) < 0 { poly.reverse() }
+                    for part in PolygonBoolean.apply(.intersect, [poly], strips) where abs(GeometryOps.signedArea(part)) > 1e-9 { plyAcc[0].prism(part, z0: za, z1: zc) }
+                }
+            }
+            for pc in ctx.pieces(f) { emitPiece(pc) }
             for c in ctx.cuts(f) {
                 for part in wallCutBands(c, f: f, z0: z0, z1: z1, openingBase: zb) {
-                    let poly = f.face(-f.h, part.s0, part.s1) + f.face(f.h, part.s0, part.s1).reversed()
+                    var poly = f.face(-f.h, part.s0, part.s1) + f.face(f.h, part.s0, part.s1).reversed()
+                    // Past a wall end (corner windows): keep the band inside the mitred outline.
+                    if !f.isCurved && (part.s0 < -1e-9 || part.s1 > f.L + 1e-9) {
+                        guard let clipped = CornerWindows.clip(poly, to: ctx.outline(f)) else { continue }
+                        poly = clipped
+                    }
                     for b in part.bands {
                         switch b.kind {
                         case .solid: emit(poly, b.z0, b.z1)
@@ -336,6 +382,8 @@ public enum MeshBuilder {
                 return [frame.group(el.id, kind, el.material ?? "Wood"), metal.group(el.id, kind, "Aluminium"), glass.group(el.id, kind, "Glass")].compactMap { $0 }
                     + OpeningTrim.meshGroups(el, o, f: f, zb: zb, zt: zt, unit: u)
             }
+            // Corner window (BIM-041): glazing runs to the corner, where it meets its partner at a slim post.
+            if el.props[CornerWindows.endKey] != nil { return CornerWindows.meshGroups(el, o, f: f, ctx: ctx, zb: zb, zt: zt, unit: u) }
             // Window.
             let fd = min(h, 35 * u)
             if fw > 0 {
@@ -430,6 +478,7 @@ public enum MeshBuilder {
             return [acc.group(el.id, kind, el.material ?? "Concrete")].compactMap { $0 }
 
         case .roof(let g):
+            if el.props[RoofJoins.key] != nil, let j = RoofJoins.groups(el, g, elev: elev, doc: doc) { return j }
             return RoofDetails.groups(el, g, elev: elev, doc: doc)
 
         case .stair(let g):
@@ -525,7 +574,13 @@ public enum MeshBuilder {
             let zs: [Double] = [0] + g.vPositions + [g.height]
             func P(_ x: Double, _ y: Double) -> Vec2 { g.start + d * x + n * y }
             var frame = MeshAcc(), glass = MeshAcc(), solid = MeshAcc(), spandrel = MeshAcc()
+            let corner = ctx.curtainCorners[el.id]
             for (xi, x) in xs.enumerated() {
+                // Corner joins (BIM-028): the lower-id wall builds the shared corner post; both skip their border mullion.
+                if let ce = xi == 0 ? corner?.start : (xi == xs.count - 1 ? corner?.end : nil), ce.joined {
+                    if let post = ce.post { frame.prism(post, z0: zb, z1: zt) }
+                    continue
+                }
                 frame.prism(CurtainMullion.planSection(g, x: x, border: xi == 0 || xi == xs.count - 1), z0: zb, z1: zt)
             }
             let mdepth = CurtainMullion.depth(g)
@@ -648,7 +703,8 @@ public enum MeshBuilder {
         var ops: [Op] = []
         for oe in c.els {
             guard case .opening(let o) = oe.geometry, o.width > 0, o.height > 0 else { continue }
-            let a = max(o.offset - o.width / 2, c.s0), b = min(o.offset + o.width / 2, c.s1)
+            let (ra, rb) = CornerWindows.range(oe, o, f)
+            let a = max(ra, c.s0), b = min(rb, c.s1)
             let lo = max(openingBase + o.sill, z0), hi = min(openingBase + o.sill + o.height, z1)
             guard b - a > 1e-9, hi - lo > 1e-9 else { continue }
             ops.append(Op(a: a, b: b, lo: lo, hi: hi, niche: o.isNiche ? o : nil))
@@ -873,6 +929,8 @@ public enum MeshBuilder {
             solid(s, into: &acc)
             // Softened edges (M3D-101): smooth shading and hidden edges below the angle.
             if let a = props["softenAngle"].flatMap(Double.init), a > 0 { SoftEdges.apply(&acc, angle: a) }
+            // Imprinted edges (M3D-040/107) lie inside planar faces, so they are not feature edges: draw them explicitly.
+            for seg in SubObjects.decode(props[SubObjects.imprintKey]) { acc.edges.append([seg.0, seg.1]) }
             return [acc.group(id, "solid", props["material"] ?? "Concrete")].compactMap { $0 }
         case .insert(let ins):
             guard depth < 8, let b = doc.blocks[ins.block] else { return [] }

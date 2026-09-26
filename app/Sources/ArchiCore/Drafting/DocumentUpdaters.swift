@@ -14,6 +14,7 @@ public enum DocumentUpdaters {
         if TableFormulas.updateAll(&doc) { changed = true }
         if AssociativeMarks.updateAll(&doc) { changed = true }
         if AssociativeHatch.updateAll(&doc) { changed = true }
+        if MaterialPatterns.updateAll(&doc) { changed = true }
         if EqualityDimensions.updateAll(&doc) { changed = true }
         if DimAssociation.updateAll(&doc) { changed = true }
         if LeaderAssociation.updateAll(&doc) { changed = true }

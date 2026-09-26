@@ -98,6 +98,8 @@ final class BIMContext {
     var joins: [EntityID: WallJoinInfo] = [:]
     var openings: [EntityID: [BIMElement]] = [:]
     let tol: Double
+    /// Curtain wall corner joins (BIM-028).
+    let curtainCorners: [EntityID: CurtainCorners.Ends]
 
     /// Join overrides per wall end (props "joinStart"/"joinEnd"): miter (default), butt, square, none.
     var joinModes: [EntityID: (start: String, end: String)] = [:]
@@ -105,6 +107,7 @@ final class BIMContext {
     init(doc: ArchiDocument, level: Int? = nil) {
         self.doc = doc
         tol = max(2.0 / doc.units.mm, 1e-6)
+        curtainCorners = CurtainCorners.compute(doc)
         var byLevel: [Int: [WallFrame]] = [:]
         for el in doc.elements {
             if let f = WallFrame(el), level == nil || el.level == level {
@@ -302,7 +305,9 @@ final class BIMContext {
         for el in openings[f.id] ?? [] {
             if let only = only, !only.contains(el.id) { continue }
             guard case .opening(let o) = el.geometry, o.width > 0 else { continue }
-            let a = max(o.offset - o.width / 2, sMin), b = min(o.offset + o.width / 2, sMax)
+            // Corner windows (BIM-041) cut through the wall end, mitre zone included.
+            let (ra, rb) = CornerWindows.range(el, o, f)
+            let a = max(ra, ra < -1e-9 ? ra : sMin), b = min(rb, rb > f.L + 1e-9 ? rb : sMax)
             if b - a > 1e-6 { raw.append((a, b, el)) }
         }
         raw.sort { $0.0 < $1.0 }
@@ -326,6 +331,9 @@ final class BIMContext {
         var out: [WallPiece] = []
         for s in segs {
             if s.aCut && s.bCut && s.b - s.a < 1e-6 { continue }
+            // A corner window cutting through the wall end leaves no end piece.
+            if s.aCut && !s.bCut && s.a >= f.L - 1e-6 { continue }
+            if !s.aCut && s.bCut && s.b <= 1e-6 { continue }
             var fr = f.face(-f.h, s.a, s.b), fl = f.face(f.h, s.a, s.b)
             if !s.aCut { fr[0] = j.startR; fl[0] = j.startL }
             if !s.bCut { fr[fr.count - 1] = j.endR; fl[fl.count - 1] = j.endL }

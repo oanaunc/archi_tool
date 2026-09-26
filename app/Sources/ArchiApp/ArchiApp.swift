@@ -60,6 +60,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         CommandRegistry.shared.ensureBuiltins()
         AppCommands.registerAll()
         AppPlugins.install()
+        PaperZoom.installZoomHook()
+        OnlineLookups.install()
         AppleScriptBridge.shared.install()
         LaunchArguments.apply(LaunchArguments.parse(Array(CommandLine.arguments.dropFirst())))
         _ = AppPreferences.shared
@@ -165,6 +167,8 @@ enum Clipboard {
         pb.clearContents()
         pb.setData(data, forType: ClipboardPayload.type)
         pb.setString(String(data: data, encoding: .utf8) ?? "", forType: .string)
+        // Other apps paste a picture (vector PDF, PNG) of the copied objects (IO-064).
+        ExternalPaste.addPictures(clip, to: pb)
     }
 
     static func copy(_ model: AppModel) -> Bool {
@@ -180,7 +184,9 @@ enum Clipboard {
         return true
     }
 
-    static var canPaste: Bool { NSPasteboard.general.data(forType: ClipboardPayload.type) != nil || !(DraftClipboard.current?.isEmpty ?? true) }
+    static var canPaste: Bool {
+        NSPasteboard.general.data(forType: ClipboardPayload.type) != nil || !(DraftClipboard.current?.isEmpty ?? true) || ExternalPaste.hasContent(.general)
+    }
 
     /// The system pasteboard's objects (from any open drawing), else the in-process clipboard.
     static var current: DraftClipboard? {
@@ -190,6 +196,11 @@ enum Clipboard {
     }
 
     static func paste(_ model: AppModel) {
+        // Content copied in another app (pictures, PDF, SVG, text, Finder files) when the pasteboard holds no Archi objects.
+        if NSPasteboard.general.data(forType: ClipboardPayload.type) == nil, ExternalPaste.hasContent(.general) {
+            ExternalPaste.paste(.general, into: model, at: model.canvas != nil ? model.cursorWorld : .zero)
+            return
+        }
         guard let clip = current, !clip.isEmpty else { return }
         DraftClipboard.current = clip   // PASTECLIP / PASTEORIG / PASTEBLOCK use the same objects
         let target = model.canvas != nil ? model.cursorWorld : clip.base

@@ -74,3 +74,54 @@ public enum CurtainMullion {
         return out
     }
 }
+
+/// Corner joins of curtain walls (BIM-028): where two curtain walls on a level meet end to end at an angle, their
+/// border mullions are replaced by one corner post — the convex hull of both border sections centred on the corner —
+/// drawn (plan) and built (3D) once, by the wall with the lower id.
+enum CurtainCorners {
+    struct End { var joined = false; var post: [Vec2]? = nil }
+    struct Ends { var start = End(); var end = End() }
+
+    /// Border section centred on the wall end (not pulled inside the wall).
+    static func centredSection(_ g: CurtainWallGeom, atStart: Bool) -> [Vec2] {
+        let len = g.length
+        guard len > 1e-9 else { return [] }
+        let d = (g.end - g.start) / len, n = d.perp
+        let x = atStart ? 0 : len
+        return CurtainMullion.section(CurtainMullion.type(g, border: true), width: g.mullionSize, depth: CurtainMullion.depth(g)).map { g.start + d * (x + $0.x) + n * $0.y }
+    }
+
+    static func compute(_ doc: ArchiDocument) -> [EntityID: Ends] {
+        let cws = doc.elements.compactMap { el -> (BIMElement, CurtainWallGeom)? in
+            if case .curtainWall(let g) = el.geometry, g.length > 1e-9, el.props["hostWall"] == nil { return (el, g) }; return nil
+        }
+        guard cws.count >= 2 else { return [:] }
+        let tol = max(1.0 / doc.units.mm, 1e-6)
+        var out: [EntityID: Ends] = [:]
+        for i in 0..<cws.count {
+            for j in (i + 1)..<cws.count {
+                let (ea, a) = cws[i], (eb, b) = cws[j]
+                guard ea.level == eb.level else { continue }
+                for sa in [true, false] {
+                    for sb in [true, false] {
+                        let pa = sa ? a.start : a.end, pb = sb ? b.start : b.end
+                        guard pa.distance(to: pb) <= tol else { continue }
+                        if (sa ? out[ea.id]?.start.joined : out[ea.id]?.end.joined) == true { continue }
+                        if (sb ? out[eb.id]?.start.joined : out[eb.id]?.end.joined) == true { continue }
+                        let da = (a.end - a.start).normalized, db = (b.end - b.start).normalized
+                        guard abs(da.cross(db)) > sin(10 * Double.pi / 180) else { continue }   // (near) collinear: no corner
+                        let post = RG.convexHull(centredSection(a, atStart: sa) + centredSection(b, atStart: sb))
+                        guard post.count >= 3 else { continue }
+                        let owner = ea.id < eb.id ? ea.id : eb.id
+                        var xa = out[ea.id] ?? Ends(), xb = out[eb.id] ?? Ends()
+                        let endA = End(joined: true, post: owner == ea.id ? post : nil), endB = End(joined: true, post: owner == eb.id ? post : nil)
+                        if sa { xa.start = endA } else { xa.end = endA }
+                        if sb { xb.start = endB } else { xb.end = endB }
+                        out[ea.id] = xa; out[eb.id] = xb
+                    }
+                }
+            }
+        }
+        return out
+    }
+}

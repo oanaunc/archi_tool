@@ -59,6 +59,7 @@ public enum DraftRendering {
         case .point: return true
         case .insert: return BlockClip.active(e)
         case .dimension: return DimExtras.has(e)
+        case .image: return ImageDisplay.active(e)
         default: return false
         }
     }
@@ -96,6 +97,7 @@ public enum DraftRendering {
             guard let n = e.props["mleaderstyle"], let txt = doc.variable("MLSTYLE:" + n),
                   let st = AnnotationToolCommands.MLeaderStyle(name: n, text: txt), st.isCustomGraphics else { return nil }
             return leaderItems(l, style: st, doc: doc, color: color, lineweight: lineweight)
+        case .image(let im): return ImageDisplay.items(e, im, doc: doc, options: options, color: color)
         default: return nil
         }
     }

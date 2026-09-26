@@ -29,6 +29,8 @@ public struct DynamicInputFields: Equatable {
     public var x: Double
     public var y: Double
     public var relative: Bool
+    /// True when the fields are in the coordinate system of the active dynamic-UCS face (PRC-036).
+    public var onFace: Bool = false
 }
 
 extension Editor {
@@ -50,6 +52,20 @@ extension Editor {
         }
         if let b = base, relativeDefault { let v = ucs.fromWorld(cursor) - ucs.fromWorld(b); f.x = v.x; f.y = v.y; f.relative = true }
         else { let p = ucs.fromWorld(cursor); f.x = p.x; f.y = p.y }
+        // Dynamic UCS on a sloped face: lengths, angles and coordinates are measured in the face plane, matching how
+        // typed values are read.
+        if let face = dynamicFaceFrame, !face.isHorizontal, let c3 = face.planePoint(cursor) {
+            let lc = face.fromWorld(c3)
+            f.onFace = true
+            if let b = base {
+                let b3 = face.planePoint(b) ?? Vec3(b.x, b.y, InputParser.lastZ)
+                let v = lc - face.fromWorld(b3)
+                f.length = Vec2(v.x, v.y).length
+                var a = deg(Vec2(v.x, v.y).angle); if a < 0 { a += 360 }
+                f.angle = a
+                if relativeDefault { f.x = v.x; f.y = v.y; f.relative = true } else { f.x = lc.x; f.y = lc.y; f.relative = false }
+            } else { f.x = lc.x; f.y = lc.y; f.relative = false }
+        }
         return f
     }
 

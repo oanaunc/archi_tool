@@ -713,6 +713,9 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
   --template FILE  Starts a new untitled drawing from a template (.architemplate or .archi) instead of an input file.
   --upgrade FILES… Upgrades older .archi/.architemplate files to the current format (originals kept as .vN.archi.bak).
   --verify FILE    Checks that the drawing saves and reopens identically (exit 1 if not).
+  --validate FILES… [--schema IFC2X3|IFC4|IFC4X3] [--json]  Validates exchange files: IFC/IfcZIP/ifcXML (schema and WHERE
+                   rules), DXF (conformance audit), gbXML, and .archi drawings (round trip + IFC and DXF exports); exit 1
+                   if any file has errors.
   --metadata FILE  Prints the Spotlight metadata of a drawing as JSON.
   --api-reference [FILE]  Writes the generated Markdown API reference (commands, agent tools, formats, samples).
   --docs DIR [--source DOCSDIR]  Writes the documentation as an offline HTML site with search (user guide, scripting,

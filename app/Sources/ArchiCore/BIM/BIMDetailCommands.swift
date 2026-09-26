@@ -114,8 +114,15 @@ enum BIMDetailCommands {
     }
 
     static var wallWrap: CommandDef {
-        CommandDef("WALLWRAP", aliases: ["LAYERWRAP", "WRAPINSERTS"], category: "Architecture", summary: "Wraps the finish layers of compound walls into door/window openings (all walls or selected walls).") { ed in
-            let k = try await ed.getKeyword("Layer wrapping at inserts", ["On", "Off", "Select"], defaultValue: ed.doc.variable("WALLWRAP") == "1" ? "On" : "Off") ?? "On"
+        CommandDef("WALLWRAP", aliases: ["LAYERWRAP", "WRAPINSERTS"], category: "Architecture", summary: "Wraps the finish layers of compound walls into door/window openings (all walls or selected walls) and around free wall Ends.") { ed in
+            let k = try await ed.getKeyword("Layer wrapping at inserts [On/Off/Select] or at free [Ends]", ["On", "Off", "Select", "Ends"], defaultValue: ed.doc.variable("WALLWRAP") == "1" ? "On" : "Off") ?? "On"
+            if k == "Ends" {
+                // Wrapping at wall ends (BIM-015): the finish layers turn around free wall ends.
+                let on = try await ed.getYesNo("Wrap finish layers around free wall ends?", defaultValue: ed.doc.variable("WALLWRAPENDS") != "1")
+                ed.doc.setVariable("WALLWRAPENDS", on ? "1" : "0")
+                ed.print("Layer wrapping at wall ends \(on ? "on" : "off").")
+                return
+            }
             if k == "Select" {
                 let ids = try await ArchitectureCommands.elements(ed, "Select walls", ArchitectureCommands.isWallGeom)
                 let on = try await ed.getYesNo("Wrap these walls?", defaultValue: true)

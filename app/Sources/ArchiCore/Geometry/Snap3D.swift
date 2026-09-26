@@ -282,12 +282,14 @@ public enum DynamicUCS {
     /// The topmost solid face under a plan point.
     public static func face(at p: Vec2, doc: ArchiDocument) -> Face? {
         var best: (z: Double, t: (Vec3, Vec3, Vec3), id: EntityID)?
-        let o = Vec3(p.x, p.y, 1e12)
         for e in doc.entities where doc.isVisible(layer: e.layer) {
             guard case .solid = e.geometry, let f = Snap3D.features(e, doc: doc), f.bounds.contains(p) else { continue }
+            // Ray from just above the solid (a far start point would lose precision in the elevation).
+            let top = (f.triangles.map { max($0.0.z, $0.1.z, $0.2.z) }.max() ?? 0) + 1
+            let o = Vec3(p.x, p.y, top)
             for t in f.triangles {
                 guard let h = Snap3D.hit(o, Vec3(0, 0, -1), t) else { continue }
-                let z = 1e12 - h
+                let z = top - h
                 if z > (best?.z ?? -.infinity) { best = (z, t, e.id) }
             }
         }
@@ -304,5 +306,30 @@ public enum DynamicUCS {
     public static func elevation(at p: Vec2, doc: ArchiDocument) -> Double? {
         guard isOn(doc) else { return nil }
         return face(at: p, doc: doc)?.origin.z
+    }
+
+    /// The face under a plan point when DUCS is on (nil otherwise).
+    public static func activeFace(at p: Vec2, doc: ArchiDocument) -> Face? { isOn(doc) ? face(at: p, doc: doc) : nil }
+}
+
+extension DynamicUCS.Face {
+    /// Face Y axis (normal × X).
+    public var yAxis: Vec3 { normal.cross(xAxis).normalized }
+    public var isHorizontal: Bool { normal.z > 1 - 1e-9 }
+    /// Face-local coordinates (x along `xAxis`, y along `yAxis`, z along the normal) → world.
+    public func toWorld(_ l: Vec3) -> Vec3 { origin + xAxis * l.x + yAxis * l.y + normal * l.z }
+    public func vectorToWorld(_ l: Vec3) -> Vec3 { xAxis * l.x + yAxis * l.y + normal * l.z }
+    /// World → face-local coordinates.
+    public func fromWorld(_ w: Vec3) -> Vec3 { let d = w - origin; return Vec3(d.dot(xAxis), d.dot(yAxis), d.dot(normal)) }
+    /// Point of the face plane above or below a plan point (nil for a vertical plane).
+    public func planePoint(_ p: Vec2) -> Vec3? {
+        guard abs(normal.z) > 1e-9 else { return nil }
+        let z = origin.z - ((p.x - origin.x) * normal.x + (p.y - origin.y) * normal.y) / normal.z
+        return Vec3(p.x, p.y, z)
+    }
+    /// The face frame with its X axis turned to a plan angle (used on horizontal faces to follow the current UCS).
+    public func rotatedX(to angle: Double) -> DynamicUCS.Face {
+        guard isHorizontal else { return self }
+        var f = self; f.xAxis = Vec3(cos(angle), sin(angle), 0); return f
     }
 }

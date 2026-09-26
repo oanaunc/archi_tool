@@ -798,15 +798,23 @@ final class ArchiSCNView: SCNView {
     private var boxDrag: (face: SectionBox.Face, start: CGPoint, base: SectionBox, amount: Double)?
 
     // Materials, blocks and components dragged from the libraries onto the model.
-    func registerDrops() { registerForDraggedTypes([.string]) }
+    func registerDrops() {
+        registerForDraggedTypes([.string, .fileURL])
+        setAccessibilityLabel("3D model view")
+        setAccessibilityHelp("Drag to orbit, scroll to zoom; Control-click a solid to edit its face, edge or vertex; drop files to import them.")
+    }
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        let files = MainActor.assumeIsolated { FileDrop.urls(sender.draggingPasteboard) }
+        if !files.isEmpty { return MainActor.assumeIsolated { FileDrop.accepts(files) } ? .copy : [] }
         guard let s = sender.draggingPasteboard.string(forType: .string), ToolDrop.accepts(s) else { return [] }
         return .copy
     }
     override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation { draggingEntered(sender) }
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
-        guard let s = sender.draggingPasteboard.string(forType: .string) else { return false }
         let p = convert(sender.draggingLocation, from: nil)
+        let files = MainActor.assumeIsolated { FileDrop.urls(sender.draggingPasteboard) }
+        if !files.isEmpty { return MainActor.assumeIsolated { controller?.dropFiles(files, at: p) ?? false } }
+        guard let s = sender.draggingPasteboard.string(forType: .string) else { return false }
         return MainActor.assumeIsolated { controller?.drop(s, at: p) ?? false }
     }
 
@@ -859,6 +867,13 @@ final class ArchiSCNView: SCNView {
         }
         if let d = downPoint, hypot(p.x - d.x, p.y - d.y) < 4, MainActor.assumeIsolated({ Measure3DState.shared.active }) {
             MainActor.assumeIsolated { controller?.measurePick(at: p) }
+            downPoint = nil
+            super.mouseUp(with: event)
+            return
+        }
+        if let d = downPoint, hypot(p.x - d.x, p.y - d.y) < 4, event.modifierFlags.contains(.control),
+           MainActor.assumeIsolated({ controller?.subObjectPick(at: p) ?? false }) {
+            // Ctrl-click on a solid: sub-object editing of the face / edge / vertex under the cursor (M3D-052).
             downPoint = nil
             super.mouseUp(with: event)
             return
