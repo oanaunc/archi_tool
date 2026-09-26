@@ -391,7 +391,14 @@ final class ScriptEngine {
                 self.lastException = nil
                 self.currentSource = code
                 let t0 = Date()
-                let v = self.context.evaluateScript(code)
+                var v = self.context.evaluateScript(code)
+                // Running the same script again redeclares its top-level const/let in the shared context
+                // ("Can't create duplicate variable"). Give the rerun its own block scope instead of failing.
+                if let e = self.lastException, e.contains("duplicate variable"), code.contains("\n") {
+                    self.output = []
+                    self.lastException = nil
+                    v = self.context.evaluateScript("{\n" + code + "\n}")
+                }
                 let ms = Date().timeIntervalSince(t0) * 1000
                 if self.lastException == nil && code.contains("\n") { self.emit("✓ finished in \(ms < 10 ? String(format: "%.1f", ms) : String(Int(ms.rounded()))) ms") }
                 var value: String?

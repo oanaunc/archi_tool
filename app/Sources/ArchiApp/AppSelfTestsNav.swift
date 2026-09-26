@@ -635,6 +635,13 @@ extension AppSelfTests {
         check(result?.error == nil && lines.count == 1, "archi.run(\"LINE 0,0 100,0 \") adds a line from the console (error: \(result?.error ?? "none"), lines \(lines.count))")
         if case .line(let l)? = lines.first?.geometry { check(l.b.isClose(Vec2(100, 0), tol: 1e-9), "console line ends at 100,0") }
 
+        // Running the same multi-line script twice must not fail on its own top-level const/let.
+        let twice = "const w = [1, 2, 3];\nlet total = w.length;\ntotal"
+        var rerun1: ScriptResult?, rerun2: ScriptResult?
+        Task { @MainActor in rerun1 = await engine.evaluate(twice); rerun2 = await engine.evaluate(twice) }
+        spin(10) { rerun2 != nil }
+        check(rerun1?.error == nil && rerun2?.error == nil && rerun2?.value == "3", "console: a script with const/let runs a second time (error: \(rerun2?.error ?? "none"), value \(rerun2?.value ?? "nil"))")
+
         // SCR-009: every archi member is documented, and the reference examples run.
         var keys: ScriptResult?
         Task { @MainActor in keys = await engine.evaluate("Object.keys(archi).join(',')") }
