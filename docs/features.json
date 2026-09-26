@@ -2505,7 +2505,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Image clip displays correctly on screen, in PDF and after reopening."
  },
  {
@@ -2518,7 +2518,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Image adjust displays correctly on screen, in PDF and after reopening."
  },
  {
@@ -4377,7 +4377,7 @@
   "reference": "AutoCAD",
   "phase": 4,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Dynamic UCS changes coordinate input and display consistently."
  },
  {
@@ -5859,7 +5859,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Fill patterns for materials fills the right area, updates with its boundary and prints correctly."
  },
  {
@@ -5963,7 +5963,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Text-linked parameters in tags updates automatically when scale or source data changes."
  },
  {
@@ -6418,7 +6418,7 @@
   "reference": "Revit",
   "phase": 6,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Linked BIM models loads, displays and reloads the referenced file."
  },
  {
@@ -6431,7 +6431,7 @@
   "reference": "Revit",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Copy/monitor from links loads, displays and reloads the referenced file."
  },
  {
@@ -7224,7 +7224,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Wall type editor generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -7393,7 +7393,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Curtain walls generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -7562,7 +7562,7 @@
   "reference": "ArchiCAD",
   "phase": 3,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Corner windows cuts the host wall and shows correct plan symbol and 3D."
  },
  {
@@ -7796,7 +7796,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Roof join and cut generates the correct 3D shape and plan projection."
  },
  {
@@ -8134,7 +8134,7 @@
   "reference": "Revit, Allplan",
   "phase": 7,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Rebar basics places structural members with correct profiles and connections."
  },
  {
@@ -8160,7 +8160,7 @@
   "reference": "Revit",
   "phase": 7,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Connections (steel) places structural members with correct profiles and connections."
  },
  {
@@ -8732,7 +8732,7 @@
   "reference": "IfcOpenShell/Bonsai",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "bSDD lookup filters elements correctly in views and schedules."
  },
  {
@@ -8927,7 +8927,7 @@
   "reference": "Revit",
   "phase": 4,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Adaptive components works in the family editor and flexes correctly when parameters change."
  },
  {
@@ -8940,7 +8940,7 @@
   "reference": "ArchiCAD",
   "phase": 4,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "GDL-like scripted objects works in the family editor and flexes correctly when parameters change."
  },
  {
@@ -10279,7 +10279,7 @@
   "reference": "FreeCAD",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Datum planes/axes/points regenerates when the source sketch changes."
  },
  {
@@ -10435,7 +10435,7 @@
   "reference": "AutoCAD",
   "phase": 4,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Imprint produces a valid manifold solid."
  },
  {
@@ -10591,7 +10591,7 @@
   "reference": "AutoCAD",
   "phase": 4,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Sub-object selection produces a valid manifold solid."
  },
  {
@@ -10786,7 +10786,7 @@
   "reference": "AutoCAD, Sverchok",
   "phase": 4,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Blend surface matches continuity requirements (G0/G1/G2) where specified."
  },
  {
@@ -10877,7 +10877,7 @@
   "reference": "AutoCAD, Sverchok",
   "phase": 7,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Surface analysis matches continuity requirements (G0/G1/G2) where specified."
  },
  {
@@ -10903,7 +10903,7 @@
   "reference": "FreeCAD, SolveSpace, CAD Sketcher",
   "phase": 4,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Sketch environment is solved by the constraint solver and persists after edits."
  },
  {
@@ -11007,7 +11007,7 @@
   "reference": "SolveSpace, CAD Sketcher",
   "phase": 4,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "3D sketches is solved by the constraint solver and persists after edits."
  },
  {
@@ -11059,7 +11059,7 @@
   "reference": "SolveSpace",
   "phase": 7,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Linkages and mechanism simulation is solved by the constraint solver and persists after edits."
  },
  {
@@ -11202,7 +11202,7 @@
   "reference": "SketchUp",
   "phase": 4,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Sandbox/terrain from contours can be converted into BIM elements."
  },
  {
@@ -11241,7 +11241,7 @@
   "reference": "SketchUp",
   "phase": 4,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Components & groups (SketchUp) can be converted into BIM elements."
  },
  {
@@ -11254,7 +11254,7 @@
   "reference": "SketchUp",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Outliner can be converted into BIM elements."
  },
  {
@@ -11306,7 +11306,7 @@
   "reference": "SketchUp",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Offset faces tool can be converted into BIM elements."
  },
  {
@@ -11371,7 +11371,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Zoom scale keeps 60 fps on a 100k-entity drawing."
  },
  {
@@ -11956,7 +11956,7 @@
   "reference": "SketchUp, Enscape",
   "phase": 5,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Shadows in viewport matches reference values within tolerance."
  },
  {
@@ -12476,7 +12476,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Save As/versions round-trips all data losslessly."
  },
  {
@@ -12567,7 +12567,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Exported DXF opens in LibreCAD with same entities."
  },
  {
@@ -13282,7 +13282,7 @@
   "reference": "Native (new)",
   "phase": 2,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Clipboard interoperability georeferences data correctly."
  },
  {
@@ -13295,7 +13295,7 @@
   "reference": "Native (new)",
   "phase": 2,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Drag and drop import georeferences data correctly."
  },
  {
@@ -13841,7 +13841,7 @@
   "reference": "IfcOpenShell/Bonsai",
   "phase": 6,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "IFC schema validation reports each issue with a zoom-to link."
  },
  {
@@ -14023,7 +14023,7 @@
   "reference": "Native (new)",
   "phase": 6,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "iCloud Drive sync works without data loss between two users."
  },
  {
@@ -14140,7 +14140,7 @@
   "reference": "AutoCAD",
   "phase": 6,
   "priority": "could",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Permissions and signatures works without data loss between two users."
  },
  {
@@ -14933,7 +14933,7 @@
   "reference": "Native (new)",
   "phase": 8,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Localization works on the stated platforms."
  },
  {
@@ -14959,7 +14959,7 @@
   "reference": "Native (new)",
   "phase": 8,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Accessibility VoiceOver works on the stated platforms."
  },
  {
@@ -14972,7 +14972,7 @@
   "reference": "Native (new)",
   "phase": 8,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Keyboard-only operation works on the stated platforms."
  },
  {
