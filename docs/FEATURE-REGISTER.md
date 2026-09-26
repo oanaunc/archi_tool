@@ -15,31 +15,31 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 ## Summary
 
-**1157 features** — done: 661, partial: 87, planned: 409. Priority: must 480, should 418, could 259.
+**1157 features** — done: 871, partial: 73, planned: 213. Priority: must 480, should 418, could 259.
 
 | Area | Prefix | Features | Done | Partial | P1 | P2 | P3 | P4 | P5 | P6 | P7 | P8 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| [Application Shell & UI](#app--application-shell--ui) | APP | 61 | 34 | 2 | 22 | 32 | 2 | · | · | · | · | 5 |
-| [Command Line & Input](#cmd--command-line--input) | CMD | 47 | 37 | 0 | 22 | 16 | 1 | 1 | · | · | · | 7 |
-| [2D Drafting](#drw--2d-drafting) | DRW | 89 | 79 | 0 | 18 | 66 | 1 | 3 | · | · | · | 1 |
-| [2D Modify & Edit](#mod--2d-modify--edit) | MOD | 66 | 60 | 0 | 25 | 36 | 4 | 1 | · | · | · | · |
-| [Selection & Grips](#sel--selection--grips) | SEL | 38 | 27 | 2 | 12 | 21 | 5 | · | · | · | · | · |
-| [Precision & Coordinates](#prc--precision--coordinates) | PRC | 41 | 9 | 2 | 16 | 17 | 4 | 4 | · | · | · | · |
-| [Layers & Properties](#lay--layers--properties) | LAY | 37 | 19 | 4 | 12 | 18 | 5 | · | · | 2 | · | · |
-| [Annotation](#ann--annotation) | ANN | 80 | 43 | 6 | 15 | 51 | 12 | · | · | 1 | · | 1 |
-| [Blocks & Content](#blk--blocks--content) | BLK | 42 | 27 | 4 | 7 | 26 | 5 | 1 | · | 3 | · | · |
-| [Sheets, Layouts & Plotting](#sht--sheets-layouts--plotting) | SHT | 40 | 17 | 5 | 11 | 13 | 15 | 1 | · | · | · | · |
-| [BIM Building Elements](#bim--bim-building-elements) | BIM | 131 | 79 | 13 | 34 | 3 | 84 | 3 | 1 | 2 | 4 | · |
-| [Parametric Families](#par--parametric-families) | PAR | 36 | 19 | 0 | · | · | 32 | 4 | · | · | · | · |
-| [Documentation & Views](#doc--documentation--views) | DOC | 55 | 21 | 1 | 7 | 2 | 44 | · | 1 | · | 1 | · |
-| [3D Modelling](#m3d--3d-modelling) | M3D | 107 | 51 | 1 | 5 | 1 | · | 97 | · | 1 | 3 | · |
-| [Visualization & Rendering](#vis--visualization--rendering) | VIS | 88 | 23 | 8 | 20 | 3 | 2 | · | 61 | · | 1 | 1 |
-| [Interoperability](#io--interoperability) | IO | 66 | 33 | 23 | 12 | 5 | · | · | 1 | 44 | 2 | 2 |
-| [Analysis](#anl--analysis) | ANL | 42 | 32 | 7 | 4 | 6 | 3 | 1 | · | 1 | 26 | 1 |
-| [Collaboration & Versioning](#col--collaboration--versioning) | COL | 22 | 17 | 0 | · | 1 | · | · | · | 20 | · | 1 |
-| [Scripting, Automation & AI](#scr--scripting-automation--ai) | SCR | 35 | 22 | 4 | 6 | 3 | · | · | · | · | · | 26 |
-| [System & Platform](#sys--system--platform) | SYS | 34 | 12 | 5 | 18 | 8 | 3 | · | 1 | · | · | 4 |
-| **Total** | | **1157** | **661** | **87** | **266** | **328** | **222** | **116** | **65** | **74** | **37** | **49** |
+| [Application Shell & UI](#app--application-shell--ui) | APP | 61 | 55 | 2 | 22 | 32 | 2 | · | · | · | · | 5 |
+| [Command Line & Input](#cmd--command-line--input) | CMD | 47 | 38 | 0 | 22 | 16 | 1 | 1 | · | · | · | 7 |
+| [2D Drafting](#drw--2d-drafting) | DRW | 89 | 87 | 0 | 18 | 66 | 1 | 3 | · | · | · | 1 |
+| [2D Modify & Edit](#mod--2d-modify--edit) | MOD | 66 | 64 | 0 | 25 | 36 | 4 | 1 | · | · | · | · |
+| [Selection & Grips](#sel--selection--grips) | SEL | 38 | 38 | 0 | 12 | 21 | 5 | · | · | · | · | · |
+| [Precision & Coordinates](#prc--precision--coordinates) | PRC | 41 | 29 | 1 | 16 | 17 | 4 | 4 | · | · | · | · |
+| [Layers & Properties](#lay--layers--properties) | LAY | 37 | 30 | 1 | 12 | 18 | 5 | · | · | 2 | · | · |
+| [Annotation](#ann--annotation) | ANN | 80 | 63 | 4 | 15 | 51 | 12 | · | · | 1 | · | 1 |
+| [Blocks & Content](#blk--blocks--content) | BLK | 42 | 29 | 4 | 7 | 26 | 5 | 1 | · | 3 | · | · |
+| [Sheets, Layouts & Plotting](#sht--sheets-layouts--plotting) | SHT | 40 | 35 | 2 | 11 | 13 | 15 | 1 | · | · | · | · |
+| [BIM Building Elements](#bim--bim-building-elements) | BIM | 131 | 104 | 3 | 34 | 3 | 84 | 3 | 1 | 2 | 4 | · |
+| [Parametric Families](#par--parametric-families) | PAR | 36 | 28 | 0 | · | · | 32 | 4 | · | · | · | · |
+| [Documentation & Views](#doc--documentation--views) | DOC | 55 | 39 | 1 | 7 | 2 | 44 | · | 1 | · | 1 | · |
+| [3D Modelling](#m3d--3d-modelling) | M3D | 107 | 57 | 3 | 5 | 1 | · | 97 | · | 1 | 3 | · |
+| [Visualization & Rendering](#vis--visualization--rendering) | VIS | 88 | 41 | 8 | 20 | 3 | 2 | · | 61 | · | 1 | 1 |
+| [Interoperability](#io--interoperability) | IO | 66 | 38 | 26 | 12 | 5 | · | · | 1 | 44 | 2 | 2 |
+| [Analysis](#anl--analysis) | ANL | 42 | 34 | 8 | 4 | 6 | 3 | 1 | · | 1 | 26 | 1 |
+| [Collaboration & Versioning](#col--collaboration--versioning) | COL | 22 | 18 | 2 | · | 1 | · | · | · | 20 | · | 1 |
+| [Scripting, Automation & AI](#scr--scripting-automation--ai) | SCR | 35 | 28 | 1 | 6 | 3 | · | · | · | · | · | 26 |
+| [System & Platform](#sys--system--platform) | SYS | 34 | 16 | 7 | 18 | 8 | 3 | · | 1 | · | · | 4 |
+| **Total** | | **1157** | **871** | **73** | **266** | **328** | **222** | **116** | **65** | **74** | **37** | **49** |
 
 ### Phases
 
@@ -63,49 +63,49 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| APP-001 | Main document window | — | 1 | must | planned |
+| APP-001 | Main document window | — | 1 | must | ✅ done |
 | APP-002 | Multiple open documents | — | 1 | must | planned |
-| APP-003 | Native window tabs | — | 2 | should | planned |
-| APP-004 | Full-screen and Split View | — | 2 | should | planned |
+| APP-003 | Native window tabs | — | 2 | should | ✅ done |
+| APP-004 | Full-screen and Split View | — | 2 | should | 🟡 partial |
 | APP-005 | Workspaces | WSCURRENT | 2 | should | ✅ done |
 | APP-006 | Save custom workspace | WSSAVE | 2 | could | ✅ done |
-| APP-007 | Canvas split views | VPORTS | 2 | should | planned |
+| APP-007 | Canvas split views | VPORTS | 2 | should | ✅ done |
 | APP-008 | Start screen | — | 2 | should | ✅ done |
 | APP-009 | Recent files list | — | 1 | must | ✅ done |
 | APP-010 | Document templates | NEW | 1 | must | ✅ done |
 | APP-011 | Clean screen mode | CLEANSCREENON | 2 | could | ✅ done |
-| APP-012 | File tabs bar | FILETAB | 2 | could | planned |
-| APP-013 | Model/Layout tabs | — | 1 | must | planned |
+| APP-012 | File tabs bar | FILETAB | 2 | could | ✅ done |
+| APP-013 | Model/Layout tabs | — | 1 | must | ✅ done |
 
 ### Ribbon & Toolbars
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | APP-014 | Ribbon with tabs | RIBBON | 1 | must | ✅ done |
-| APP-015 | Contextual ribbon tabs | — | 2 | should | planned |
+| APP-015 | Contextual ribbon tabs | — | 2 | should | ✅ done |
 | APP-016 | Customisable ribbon | CUI | 8 | could | 🟡 partial |
 | APP-017 | Quick access toolbar | — | 2 | should | ✅ done |
-| APP-018 | Tool tips with extended help | — | 2 | should | 🟡 partial |
+| APP-018 | Tool tips with extended help | — | 2 | should | ✅ done |
 | APP-019 | Menu bar parity | — | 1 | must | ✅ done |
-| APP-020 | Touch Bar and trackpad gestures | — | 2 | should | planned |
-| APP-021 | Toolbar icons SF Symbols style | — | 2 | should | planned |
+| APP-020 | Touch Bar and trackpad gestures | — | 2 | should | ✅ done |
+| APP-021 | Toolbar icons SF Symbols style | — | 2 | should | ✅ done |
 | APP-022 | Radial/marking menu | — | 8 | could | planned |
-| APP-023 | Shortcut menus | — | 1 | must | planned |
+| APP-023 | Shortcut menus | — | 1 | must | ✅ done |
 
 ### Palettes & Panels
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| APP-024 | Properties palette | PROPERTIES (PR) | 1 | must | planned |
-| APP-025 | Quick properties | QP | 2 | could | planned |
+| APP-024 | Properties palette | PROPERTIES (PR) | 1 | must | ✅ done |
+| APP-025 | Quick properties | QP | 2 | could | ✅ done |
 | APP-026 | Layer panel | LAYER (LA) | 1 | must | ✅ done |
 | APP-027 | Project browser | — | 1 | must | planned |
 | APP-028 | Levels panel | — | 1 | must | ✅ done |
 | APP-029 | Materials panel | — | 2 | should | ✅ done |
 | APP-030 | Tool palettes | TOOLPALETTES | 3 | should | ✅ done |
-| APP-031 | Design center / content browser | ADCENTER | 3 | should | planned |
+| APP-031 | Design center / content browser | ADCENTER | 3 | should | ✅ done |
 | APP-032 | Navigator / overview map | NAVIGATOR | 2 | could | ✅ done |
-| APP-033 | Object info inspector | LIST | 2 | should | planned |
+| APP-033 | Object info inspector | LIST | 2 | should | ✅ done |
 | APP-034 | Command history panel | — | 1 | must | ✅ done |
 | APP-035 | Undo history panel | — | 2 | should | ✅ done |
 | APP-036 | Panel layouts saved per workspace | — | 2 | could | ✅ done |
@@ -119,9 +119,9 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | APP-039 | Coordinate readout | — | 1 | must | ✅ done |
 | APP-040 | Drafting toggles | — | 1 | must | ✅ done |
 | APP-041 | Current level and units display | — | 1 | must | ✅ done |
-| APP-042 | Annotation scale selector | CANNOSCALE | 2 | must | planned |
+| APP-042 | Annotation scale selector | CANNOSCALE | 2 | must | ✅ done |
 | APP-043 | Isolate / hide objects button | — | 2 | should | ✅ done |
-| APP-044 | Progress indicator | — | 1 | must | planned |
+| APP-044 | Progress indicator | — | 1 | must | ✅ done |
 
 ### Preferences & Themes
 
@@ -134,7 +134,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | APP-049 | Units and precision settings | UNITS (UN) | 1 | must | planned |
 | APP-050 | File locations settings | — | 2 | should | ✅ done |
 | APP-051 | Accent colour customisation | — | 8 | could | ✅ done |
-| APP-052 | Import/export settings | — | 8 | could | planned |
+| APP-052 | Import/export settings | — | 8 | could | ✅ done |
 | APP-053 | Reset to defaults | — | 2 | should | ✅ done |
 
 ### Shortcuts & Help
@@ -142,11 +142,11 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | APP-054 | Keyboard shortcut editor | — | 2 | should | ✅ done |
-| APP-055 | Default AutoCAD-compatible shortcuts | — | 1 | must | planned |
+| APP-055 | Default AutoCAD-compatible shortcuts | — | 1 | must | ✅ done |
 | APP-056 | Command search (Spotlight style) | — | 2 | should | ✅ done |
-| APP-057 | Integrated help browser | HELP (F1) | 1 | must | planned |
-| APP-058 | Contextual help | — | 2 | should | planned |
-| APP-059 | Tutorials and sample projects | — | 2 | should | planned |
+| APP-057 | Integrated help browser | HELP (F1) | 1 | must | ✅ done |
+| APP-058 | Contextual help | — | 2 | should | ✅ done |
+| APP-059 | Tutorials and sample projects | — | 2 | should | ✅ done |
 | APP-060 | What's new dialog | WHATSNEW | 8 | could | ✅ done |
 | APP-061 | Command reference export | — | 2 | should | ✅ done |
 
@@ -159,7 +159,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| CMD-001 | Command line with prompts | — | 1 | must | planned |
+| CMD-001 | Command line with prompts | — | 1 | must | ✅ done |
 | CMD-002 | Command registry with categories | — | 1 | must | ✅ done |
 | CMD-003 | Command aliases | ALIASEDIT | 1 | must | ✅ done |
 | CMD-004 | Command autocomplete | INPUTSEARCHOPTIONS | 1 | must | ✅ done |
@@ -232,8 +232,8 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | DRW-001 | Line | LINE (L) | 1 | must | ✅ done |
-| DRW-002 | Construction line (xline) | XLINE (XL) | 1 | must | planned |
-| DRW-003 | Ray | RAY | 2 | should | planned |
+| DRW-002 | Construction line (xline) | XLINE (XL) | 1 | must | ✅ done |
+| DRW-003 | Ray | RAY | 2 | should | ✅ done |
 | DRW-004 | Line by angle | LINE Angle | 2 | should | ✅ done |
 | DRW-005 | Line at relative angle to entity | — | 2 | could | ✅ done |
 | DRW-006 | Horizontal/vertical line | — | 2 | could | ✅ done |
@@ -291,12 +291,12 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | DRW-048 | Ellipse inscribed in quadrilateral | ELLIPSEQUAD | 2 | could | ✅ done |
 | DRW-049 | Parabola | — | 4 | could | ✅ done |
 | DRW-050 | Hyperbola | — | 4 | could | ✅ done |
-| DRW-051 | Spline fit points | SPLINE (SPL) | 1 | must | planned |
+| DRW-051 | Spline fit points | SPLINE (SPL) | 1 | must | ✅ done |
 | DRW-052 | Spline control vertices | SPLINE CV | 2 | must | ✅ done |
 | DRW-053 | Spline edit | SPLINEDIT | 2 | should | ✅ done |
 | DRW-054 | Blend curve | BLEND | 2 | should | ✅ done |
 | DRW-055 | Helix | HELIX | 4 | should | ✅ done |
-| DRW-056 | Wipeout | WIPEOUT | 2 | should | planned |
+| DRW-056 | Wipeout | WIPEOUT | 2 | should | ✅ done |
 
 ### Polylines & Shapes
 
@@ -309,7 +309,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | DRW-061 | Append polyline segment | — | 2 | should | ✅ done |
 | DRW-062 | Change polyline segment type | — | 2 | should | ✅ done |
 | DRW-063 | Arcs to line segments | — | 2 | could | ✅ done |
-| DRW-064 | Polyline from segments | — | 2 | should | planned |
+| DRW-064 | Polyline from segments | — | 2 | should | ✅ done |
 | DRW-065 | Equidistant polylines | — | 2 | could | ✅ done |
 | DRW-066 | Rectangle | RECTANG (REC) | 1 | must | ✅ done |
 | DRW-067 | Rectangle by 3 points | — | 2 | should | ✅ done |
@@ -317,8 +317,8 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | DRW-069 | Polygon | POLYGON (POL) | 1 | must | ✅ done |
 | DRW-070 | Polygon by side-side | — | 2 | could | ✅ done |
 | DRW-071 | Star | — | 2 | could | ✅ done |
-| DRW-072 | Boundary | BOUNDARY (BO) | 2 | must | planned |
-| DRW-073 | Region | REGION | 2 | should | planned |
+| DRW-072 | Boundary | BOUNDARY (BO) | 2 | must | ✅ done |
+| DRW-073 | Region | REGION | 2 | should | ✅ done |
 | DRW-074 | Bounding box | — | 2 | could | ✅ done |
 | DRW-075 | Solid fill 2D | SOLID (SO) | 2 | could | ✅ done |
 | DRW-076 | Trace | TRACE | 8 | could | ✅ done |
@@ -327,7 +327,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| DRW-077 | Point | POINT (PO) | 1 | must | planned |
+| DRW-077 | Point | POINT (PO) | 1 | must | ✅ done |
 | DRW-078 | Point style | PTYPE | 2 | should | ✅ done |
 | DRW-079 | Divide | DIVIDE (DIV) | 2 | must | ✅ done |
 | DRW-080 | Measure | MEASURE (ME) | 2 | must | ✅ done |
@@ -406,12 +406,12 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | MOD-036 | Trim | TRIM (TR) | 1 | must | ✅ done |
-| MOD-037 | Extend | EXTEND (EX) | 1 | must | planned |
+| MOD-037 | Extend | EXTEND (EX) | 1 | must | ✅ done |
 | MOD-038 | Trim/extend by amount | — | 2 | should | ✅ done |
 | MOD-039 | Lengthen | LENGTHEN (LEN) | 2 | must | ✅ done |
 | MOD-040 | Offset | OFFSET (O) | 1 | must | ✅ done |
-| MOD-041 | Fillet | FILLET (F) | 1 | must | planned |
-| MOD-042 | Chamfer | CHAMFER (CHA) | 1 | must | planned |
+| MOD-041 | Fillet | FILLET (F) | 1 | must | ✅ done |
+| MOD-042 | Chamfer | CHAMFER (CHA) | 1 | must | ✅ done |
 | MOD-043 | Break | BREAK (BR) | 1 | must | ✅ done |
 | MOD-044 | Break at point | BREAKATPOINT | 1 | must | ✅ done |
 | MOD-045 | Break/divide at intersections | — | 2 | should | ✅ done |
@@ -438,7 +438,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | MOD-061 | Edit attributes | EATTEDIT | 2 | must | ✅ done |
 | MOD-062 | Reset block | RESETBLOCK | 3 | could | ✅ done |
 | MOD-063 | Double-click editing | DBLCLKEDIT | 1 | must | planned |
-| MOD-064 | Pen/attribute apply | — | 2 | should | planned |
+| MOD-064 | Pen/attribute apply | — | 2 | should | ✅ done |
 | MOD-065 | Sync entity to by-layer | SETBYLAYER | 2 | should | ✅ done |
 | MOD-066 | Revert direction of text reading | — | 2 | could | ✅ done |
 
@@ -451,13 +451,13 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| SEL-001 | Pick selection | — | 1 | must | 🟡 partial |
+| SEL-001 | Pick selection | — | 1 | must | ✅ done |
 | SEL-002 | Window selection | W | 1 | must | ✅ done |
 | SEL-003 | Crossing selection | C | 1 | must | ✅ done |
 | SEL-004 | Window polygon | WP | 2 | should | ✅ done |
 | SEL-005 | Crossing polygon | CP | 2 | should | ✅ done |
 | SEL-006 | Fence selection | F | 2 | should | ✅ done |
-| SEL-007 | Lasso selection | — | 2 | should | planned |
+| SEL-007 | Lasso selection | — | 2 | should | ✅ done |
 | SEL-008 | Select all | Cmd+A / ALL | 1 | must | ✅ done |
 | SEL-009 | Select last | L | 1 | must | ✅ done |
 | SEL-010 | Select previous | P | 1 | must | ✅ done |
@@ -469,10 +469,10 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | SEL-016 | Select intersected | — | 2 | could | ✅ done |
 | SEL-017 | Select by layer | — | 2 | should | ✅ done |
 | SEL-018 | Cycle overlapping objects | SELECTIONCYCLING | 2 | should | ✅ done |
-| SEL-019 | Selection preview highlight | SELECTIONPREVIEW | 1 | must | planned |
+| SEL-019 | Selection preview highlight | SELECTIONPREVIEW | 1 | must | ✅ done |
 | SEL-020 | Select similar | SELECTSIMILAR | 2 | must | ✅ done |
 | SEL-021 | Select all instances | — | 3 | must | ✅ done |
-| SEL-022 | Select linked/chained BIM elements | Tab | 3 | should | planned |
+| SEL-022 | Select linked/chained BIM elements | Tab | 3 | should | ✅ done |
 | SEL-023 | Selection sets (named) | — | 2 | should | ✅ done |
 
 ### Filters
@@ -492,13 +492,13 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| SEL-032 | Grip display | GRIPS | 1 | must | 🟡 partial |
-| SEL-033 | Grip stretch | — | 1 | must | planned |
-| SEL-034 | Grip modes cycle | Space | 2 | should | planned |
-| SEL-035 | Multi-functional grips | — | 2 | should | planned |
-| SEL-036 | Parametric grips on BIM elements | — | 3 | must | planned |
-| SEL-037 | Grips on dimensions and text | — | 2 | must | planned |
-| SEL-038 | Hot-grip typed values | — | 2 | should | planned |
+| SEL-032 | Grip display | GRIPS | 1 | must | ✅ done |
+| SEL-033 | Grip stretch | — | 1 | must | ✅ done |
+| SEL-034 | Grip modes cycle | Space | 2 | should | ✅ done |
+| SEL-035 | Multi-functional grips | — | 2 | should | ✅ done |
+| SEL-036 | Parametric grips on BIM elements | — | 3 | must | ✅ done |
+| SEL-037 | Grips on dimensions and text | — | 2 | must | ✅ done |
+| SEL-038 | Hot-grip typed values | — | 2 | should | ✅ done |
 
 ## PRC — Precision & Coordinates
 
@@ -509,26 +509,26 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| PRC-001 | Endpoint snap | END | 1 | must | planned |
-| PRC-002 | Midpoint snap | MID | 1 | must | planned |
-| PRC-003 | Centre snap | CEN | 1 | must | planned |
-| PRC-004 | Geometric centre snap | GCEN | 2 | should | planned |
-| PRC-005 | Node snap | NOD | 1 | must | planned |
-| PRC-006 | Quadrant snap | QUA | 1 | must | planned |
-| PRC-007 | Intersection snap | INT | 1 | must | planned |
+| PRC-001 | Endpoint snap | END | 1 | must | ✅ done |
+| PRC-002 | Midpoint snap | MID | 1 | must | ✅ done |
+| PRC-003 | Centre snap | CEN | 1 | must | ✅ done |
+| PRC-004 | Geometric centre snap | GCEN | 2 | should | ✅ done |
+| PRC-005 | Node snap | NOD | 1 | must | ✅ done |
+| PRC-006 | Quadrant snap | QUA | 1 | must | ✅ done |
+| PRC-007 | Intersection snap | INT | 1 | must | ✅ done |
 | PRC-008 | Apparent intersection snap | APPINT | 4 | could | planned |
-| PRC-009 | Extension snap | EXT | 2 | should | planned |
-| PRC-010 | Insertion snap | INS | 1 | must | planned |
-| PRC-011 | Perpendicular snap | PER | 1 | must | planned |
-| PRC-012 | Tangent snap | TAN | 1 | must | planned |
-| PRC-013 | Nearest snap | NEA | 1 | must | planned |
+| PRC-009 | Extension snap | EXT | 2 | should | ✅ done |
+| PRC-010 | Insertion snap | INS | 1 | must | ✅ done |
+| PRC-011 | Perpendicular snap | PER | 1 | must | ✅ done |
+| PRC-012 | Tangent snap | TAN | 1 | must | ✅ done |
+| PRC-013 | Nearest snap | NEA | 1 | must | ✅ done |
 | PRC-014 | Parallel snap | PAR | 2 | should | ✅ done |
-| PRC-015 | Grid snap | — | 1 | must | planned |
+| PRC-015 | Grid snap | — | 1 | must | ✅ done |
 | PRC-016 | Snap to BIM references | — | 3 | must | planned |
 | PRC-017 | Manual intersection snap | INTOF | 2 | could | ✅ done |
 | PRC-018 | Manual middle snap | M2P | 2 | could | ✅ done |
-| PRC-019 | Snap overrides | Shift+right-click | 1 | must | planned |
-| PRC-020 | Running snaps settings | OSNAP (OS) | 1 | must | planned |
+| PRC-019 | Snap overrides | Shift+right-click | 1 | must | ✅ done |
+| PRC-020 | Running snaps settings | OSNAP (OS) | 1 | must | ✅ done |
 | PRC-021 | Snap restriction (horizontal/vertical) | RH / RV | 2 | could | ✅ done |
 | PRC-022 | 3D object snaps | 3DOSNAP | 4 | should | planned |
 
@@ -536,15 +536,15 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| PRC-023 | Ortho mode | ORTHO (F8) | 1 | must | planned |
-| PRC-024 | Polar tracking | POLAR (F10) | 1 | must | planned |
+| PRC-023 | Ortho mode | ORTHO (F8) | 1 | must | ✅ done |
+| PRC-024 | Polar tracking | POLAR (F10) | 1 | must | ✅ done |
 | PRC-025 | Object snap tracking | OTRACK (F11) | 2 | must | ✅ done |
 | PRC-026 | Temporary track point | TT | 2 | should | ✅ done |
 | PRC-027 | Smart alignment guides | — | 2 | should | planned |
 | PRC-028 | Axis locking by arrow keys | — | 4 | should | planned |
 | PRC-029 | Relative zero | RELZERO | 2 | should | ✅ done |
-| PRC-030 | Snap spacing | SNAP (F9) | 2 | should | planned |
-| PRC-031 | Grid display | GRID (F7) | 1 | must | planned |
+| PRC-030 | Snap spacing | SNAP (F9) | 2 | should | ✅ done |
+| PRC-031 | Grid display | GRID (F7) | 1 | must | ✅ done |
 | PRC-032 | Isometric drafting | ISODRAFT | 2 | could | ✅ done |
 
 ### UCS & Workplanes
@@ -553,7 +553,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | --- | --- | --- | --- | --- | --- |
 | PRC-033 | User coordinate system | UCS | 2 | must | 🟡 partial |
 | PRC-034 | UCS icon | UCSICON | 2 | should | planned |
-| PRC-035 | Named UCS manager | UCSMAN | 2 | should | 🟡 partial |
+| PRC-035 | Named UCS manager | UCSMAN | 2 | should | ✅ done |
 | PRC-036 | Dynamic UCS | DUCS | 4 | should | planned |
 | PRC-037 | Plan view of UCS | PLAN | 2 | should | planned |
 | PRC-038 | Workplanes/reference planes | RP | 3 | must | planned |
@@ -571,7 +571,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | LAY-001 | Layer data model | — | 1 | must | ✅ done |
-| LAY-002 | Layer manager | LAYER (LA) | 1 | must | planned |
+| LAY-002 | Layer manager | LAYER (LA) | 1 | must | ✅ done |
 | LAY-003 | Layer on/off | LAYON/LAYOFF | 1 | must | ✅ done |
 | LAY-004 | Layer freeze/thaw | LAYFRZ/LAYTHW | 1 | must | ✅ done |
 | LAY-005 | Layer lock/unlock | LAYLCK/LAYULK | 1 | must | ✅ done |
@@ -586,22 +586,22 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | LAY-014 | Layer states | LAYERSTATE | 2 | must | ✅ done |
 | LAY-015 | Per-viewport layer overrides | VPLAYER | 2 | must | ✅ done |
 | LAY-016 | Layer translator/standards | LAYTRANS | 6 | should | ✅ done |
-| LAY-017 | Layer transparency | — | 2 | should | 🟡 partial |
+| LAY-017 | Layer transparency | — | 2 | should | ✅ done |
 | LAY-018 | Layer descriptions | LAYDESC | 2 | could | ✅ done |
-| LAY-019 | Layer tree/hierarchy | — | 2 | should | planned |
+| LAY-019 | Layer tree/hierarchy | — | 2 | should | ✅ done |
 | LAY-020 | New layer notification | LAYERNOTIFY | 6 | could | planned |
 
 ### Linetypes & Lineweights
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| LAY-021 | Linetype library | LINETYPE (LT) | 1 | must | 🟡 partial |
-| LAY-022 | Complex linetypes | — | 2 | should | planned |
-| LAY-023 | Global linetype scale | LTSCALE | 1 | must | planned |
-| LAY-024 | Object linetype scale | CELTSCALE | 2 | should | planned |
-| LAY-025 | Paper-space linetype scaling | PSLTSCALE | 2 | must | planned |
-| LAY-026 | Lineweights | LWEIGHT | 1 | must | planned |
-| LAY-027 | Lineweight display scaling | — | 2 | should | planned |
+| LAY-021 | Linetype library | LINETYPE (LT) | 1 | must | ✅ done |
+| LAY-022 | Complex linetypes | — | 2 | should | ✅ done |
+| LAY-023 | Global linetype scale | LTSCALE | 1 | must | ✅ done |
+| LAY-024 | Object linetype scale | CELTSCALE | 2 | should | ✅ done |
+| LAY-025 | Paper-space linetype scaling | PSLTSCALE | 2 | must | ✅ done |
+| LAY-026 | Lineweights | LWEIGHT | 1 | must | ✅ done |
+| LAY-027 | Lineweight display scaling | — | 2 | should | ✅ done |
 
 ### Colours & Transparency
 
@@ -611,7 +611,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | LAY-029 | True colour RGB | — | 1 | must | ✅ done |
 | LAY-030 | Colour books | COLORBOOK | 2 | could | ✅ done |
 | LAY-031 | ByLayer / ByBlock resolution | — | 1 | must | 🟡 partial |
-| LAY-032 | Object transparency | TRANSPARENCY | 2 | should | 🟡 partial |
+| LAY-032 | Object transparency | TRANSPARENCY | 2 | should | ✅ done |
 | LAY-033 | Object styles (BIM) | OBJECTSTYLES | 3 | must | planned |
 | LAY-034 | Line styles (BIM) | LINESTYLES | 3 | must | planned |
 | LAY-035 | Lineweight tables by scale | — | 3 | should | planned |
@@ -627,16 +627,16 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| ANN-001 | Single-line text | TEXT (DT) | 1 | must | planned |
-| ANN-002 | Multiline text | MTEXT (T) | 1 | must | planned |
+| ANN-001 | Single-line text | TEXT (DT) | 1 | must | ✅ done |
+| ANN-002 | Multiline text | MTEXT (T) | 1 | must | ✅ done |
 | ANN-003 | In-place text editor | — | 2 | must | planned |
 | ANN-004 | Text styles | STYLE (ST) | 1 | must | 🟡 partial |
-| ANN-005 | Bullets and numbering | TEXTLIST | 2 | should | 🟡 partial |
-| ANN-006 | Columns in mtext | MTEXTCOLUMNS | 2 | could | 🟡 partial |
+| ANN-005 | Bullets and numbering | TEXTLIST | 2 | should | ✅ done |
+| ANN-006 | Columns in mtext | MTEXTCOLUMNS | 2 | could | ✅ done |
 | ANN-007 | Stacked fractions | AUTOSTACK | 2 | should | 🟡 partial |
 | ANN-008 | Special symbols | %%d %%c %%p | 1 | must | ✅ done |
 | ANN-009 | Spell check | SPELL (SP) | 2 | should | ✅ done |
-| ANN-010 | Find and replace | FIND | 2 | must | planned |
+| ANN-010 | Find and replace | FIND | 2 | must | ✅ done |
 | ANN-011 | Text justify and align | JUSTIFYTEXT, TEXTALIGN | 2 | should | ✅ done |
 | ANN-012 | Scale text | SCALETEXT | 2 | could | ✅ done |
 | ANN-013 | Text background mask | — | 2 | should | ✅ done |
@@ -649,22 +649,22 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| ANN-018 | Linear dimension | DIMLINEAR (DLI) | 1 | must | planned |
-| ANN-019 | Aligned dimension | DIMALIGNED (DAL) | 1 | must | planned |
-| ANN-020 | Angular dimension | DIMANGULAR (DAN) | 2 | must | planned |
-| ANN-021 | Radius dimension | DIMRADIUS (DRA) | 1 | must | planned |
-| ANN-022 | Diameter dimension | DIMDIAMETER (DDI) | 1 | must | planned |
+| ANN-018 | Linear dimension | DIMLINEAR (DLI) | 1 | must | ✅ done |
+| ANN-019 | Aligned dimension | DIMALIGNED (DAL) | 1 | must | ✅ done |
+| ANN-020 | Angular dimension | DIMANGULAR (DAN) | 2 | must | ✅ done |
+| ANN-021 | Radius dimension | DIMRADIUS (DRA) | 1 | must | ✅ done |
+| ANN-022 | Diameter dimension | DIMDIAMETER (DDI) | 1 | must | ✅ done |
 | ANN-023 | Jogged radius | DIMJOGGED | 2 | could | ✅ done |
-| ANN-024 | Arc length dimension | DIMARC | 2 | should | planned |
-| ANN-025 | Ordinate dimension | DIMORDINATE (DOR) | 2 | should | planned |
+| ANN-024 | Arc length dimension | DIMARC | 2 | should | ✅ done |
+| ANN-025 | Ordinate dimension | DIMORDINATE (DOR) | 2 | should | ✅ done |
 | ANN-026 | Ordinate re-base | — | 2 | could | ✅ done |
-| ANN-027 | Baseline dimension | DIMBASELINE (DBA) | 2 | must | planned |
-| ANN-028 | Continued dimension | DIMCONTINUE (DCO) | 1 | must | planned |
+| ANN-027 | Baseline dimension | DIMBASELINE (DBA) | 2 | must | ✅ done |
+| ANN-028 | Continued dimension | DIMCONTINUE (DCO) | 1 | must | ✅ done |
 | ANN-029 | Quick dimension | QDIM | 2 | must | ✅ done |
-| ANN-030 | Smart dimension | DIM | 2 | should | planned |
+| ANN-030 | Smart dimension | DIM | 2 | should | ✅ done |
 | ANN-031 | Dimension styles | DIMSTYLE (D) | 1 | must | 🟡 partial |
 | ANN-032 | Dimension style overrides | — | 2 | should | ✅ done |
-| ANN-033 | Apply dimension style | — | 2 | should | planned |
+| ANN-033 | Apply dimension style | — | 2 | should | ✅ done |
 | ANN-034 | Dimension space and break | DIMSPACE, DIMBREAK | 2 | could | ✅ done |
 | ANN-035 | Dimension jog line | DIMJOGLINE | 2 | could | ✅ done |
 | ANN-036 | Inspection dimension | DIMINSPECT | 8 | could | ✅ done |
@@ -683,9 +683,9 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| ANN-047 | Multileader | MLEADER (MLD) | 2 | must | planned |
+| ANN-047 | Multileader | MLEADER (MLD) | 2 | must | ✅ done |
 | ANN-048 | Multileader styles | MLEADERSTYLE | 2 | should | ✅ done |
-| ANN-049 | Simple leader | LEADER | 1 | must | planned |
+| ANN-049 | Simple leader | LEADER | 1 | must | ✅ done |
 | ANN-050 | Align/collect multileaders | MLEADERALIGN, MLEADERCOLLECT | 2 | could | ✅ done |
 | ANN-051 | Revision cloud | REVCLOUD | 2 | must | planned |
 | ANN-052 | Revision schedule link | — | 3 | should | planned |
@@ -708,9 +708,9 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| ANN-062 | Hatch | HATCH (H) | 1 | must | planned |
+| ANN-062 | Hatch | HATCH (H) | 1 | must | ✅ done |
 | ANN-063 | Gradient fill | GRADIENT | 2 | should | ✅ done |
-| ANN-064 | Solid fill | — | 1 | must | planned |
+| ANN-064 | Solid fill | — | 1 | must | ✅ done |
 | ANN-065 | Pattern library (ISO/ANSI/AR) | HATCH | 1 | must | ✅ done |
 | ANN-066 | Custom .pat import | — | 2 | should | ✅ done |
 | ANN-067 | Associative hatch | — | 2 | must | ✅ done |
@@ -743,7 +743,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | BLK-001 | Block definition | BLOCK (B) | 1 | must | 🟡 partial |
-| BLK-002 | Insert block | INSERT (I) | 1 | must | planned |
+| BLK-002 | Insert block | INSERT (I) | 1 | must | ✅ done |
 | BLK-003 | Write block to file | WBLOCK (W) | 2 | should | planned |
 | BLK-004 | Block editor | BEDIT (BE) | 2 | must | planned |
 | BLK-005 | Refedit in place | REFEDIT | 2 | should | planned |
@@ -764,7 +764,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | BLK-017 | Attribute definition | ATTDEF (ATT) | 2 | must | ✅ done |
-| BLK-018 | Attribute edit | ATTEDIT | 2 | must | planned |
+| BLK-018 | Attribute edit | ATTEDIT | 2 | must | ✅ done |
 | BLK-019 | Block attribute manager | BATTMAN | 2 | should | ✅ done |
 | BLK-020 | Attribute sync | ATTSYNC | 2 | should | ✅ done |
 | BLK-021 | Attribute extraction | ATTEXT / DATAEXTRACTION | 2 | should | ✅ done |
@@ -814,19 +814,19 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| SHT-001 | Layouts (paper space) | LAYOUT | 1 | must | 🟡 partial |
-| SHT-002 | Paper sizes | — | 1 | must | 🟡 partial |
-| SHT-003 | Rectangular viewport | MVIEW (MV) | 1 | must | planned |
-| SHT-004 | Polygonal/object viewport | MVIEW Polygonal/Object | 2 | should | planned |
-| SHT-005 | Viewport scale | — | 1 | must | planned |
+| SHT-001 | Layouts (paper space) | LAYOUT | 1 | must | ✅ done |
+| SHT-002 | Paper sizes | — | 1 | must | ✅ done |
+| SHT-003 | Rectangular viewport | MVIEW (MV) | 1 | must | ✅ done |
+| SHT-004 | Polygonal/object viewport | MVIEW Polygonal/Object | 2 | should | ✅ done |
+| SHT-005 | Viewport scale | — | 1 | must | ✅ done |
 | SHT-006 | Lock viewport | — | 2 | must | ✅ done |
-| SHT-007 | Maximise viewport | VPMAX | 2 | should | planned |
-| SHT-008 | Viewport clip | VPCLIP | 2 | could | planned |
-| SHT-009 | Align views on sheet | MVSETUP | 3 | should | planned |
-| SHT-010 | Views on sheets (BIM) | — | 3 | must | planned |
-| SHT-011 | Guide grids on sheets | — | 3 | could | planned |
+| SHT-007 | Maximise viewport | VPMAX | 2 | should | ✅ done |
+| SHT-008 | Viewport clip | VPCLIP | 2 | could | ✅ done |
+| SHT-009 | Align views on sheet | MVSETUP | 3 | should | ✅ done |
+| SHT-010 | Views on sheets (BIM) | — | 3 | must | ✅ done |
+| SHT-011 | Guide grids on sheets | — | 3 | could | ✅ done |
 | SHT-012 | Viewport titles | — | 3 | must | ✅ done |
-| SHT-013 | Title blocks | — | 1 | must | 🟡 partial |
+| SHT-013 | Title blocks | — | 1 | must | ✅ done |
 | SHT-014 | Title block editor | — | 3 | should | 🟡 partial |
 | SHT-015 | Page setup manager | PAGESETUP | 2 | must | ✅ done |
 
@@ -838,8 +838,8 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | SHT-017 | Sheet numbering and renumbering | — | 3 | must | ✅ done |
 | SHT-018 | Sheet list/index | — | 3 | must | ✅ done |
 | SHT-019 | Revisions table | — | 3 | should | ✅ done |
-| SHT-020 | Placeholder sheets | — | 3 | could | planned |
-| SHT-021 | Sheet properties custom fields | — | 3 | should | planned |
+| SHT-020 | Placeholder sheets | — | 3 | could | ✅ done |
+| SHT-021 | Sheet properties custom fields | — | 3 | should | ✅ done |
 
 ### Plotting & Output
 
@@ -851,19 +851,19 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | SHT-025 | PDF with layers | — | 2 | should | planned |
 | SHT-026 | Multi-sheet PDF | — | 2 | must | ✅ done |
 | SHT-027 | Batch plot / publish | PUBLISH | 3 | must | ✅ done |
-| SHT-028 | Plot area options | — | 1 | must | planned |
-| SHT-029 | Plot scale and fit | — | 1 | must | planned |
+| SHT-028 | Plot area options | — | 1 | must | ✅ done |
+| SHT-029 | Plot scale and fit | — | 1 | must | ✅ done |
 | SHT-030 | Plot styles colour-dependent (CTB) | — | 2 | must | ✅ done |
-| SHT-031 | Plot styles named (STB) | — | 2 | should | planned |
+| SHT-031 | Plot styles named (STB) | — | 2 | should | ✅ done |
 | SHT-032 | Plot style editor | STYLESMANAGER | 2 | should | ✅ done |
 | SHT-033 | Monochrome/greyscale plotting | — | 1 | must | ✅ done |
 | SHT-034 | Plot stamp | PLOTSTAMP | 2 | could | ✅ done |
 | SHT-035 | Raster export (PNG/JPEG/TIFF) | PNGOUT | 2 | should | ✅ done |
-| SHT-036 | SVG export of layouts | — | 2 | should | planned |
+| SHT-036 | SVG export of layouts | — | 2 | should | ✅ done |
 | SHT-037 | Plot log | — | 3 | could | ✅ done |
 | SHT-038 | Print to large format/plotter | — | 3 | could | 🟡 partial |
 | SHT-039 | Hidden-line plotting of 3D viewports | SHADEPLOT | 4 | should | planned |
-| SHT-040 | Page setup import | PSETUPIN | 3 | could | planned |
+| SHT-040 | Page setup import | PSETUPIN | 3 | could | ✅ done |
 
 ## BIM — BIM Building Elements
 
@@ -875,11 +875,11 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | BIM-001 | Levels data model | — | 1 | must | ✅ done |
-| BIM-002 | Level command | LEVEL | 1 | must | planned |
+| BIM-002 | Level command | LEVEL | 1 | must | ✅ done |
 | BIM-003 | Story settings | — | 3 | should | planned |
-| BIM-004 | Level heads and extents | — | 3 | must | 🟡 partial |
-| BIM-005 | Structural grids | GRID | 1 | must | 🟡 partial |
-| BIM-006 | Radial grids | RADIALGRID | 3 | should | 🟡 partial |
+| BIM-004 | Level heads and extents | — | 3 | must | ✅ done |
+| BIM-005 | Structural grids | GRID | 1 | must | ✅ done |
+| BIM-006 | Radial grids | RADIALGRID | 3 | should | ✅ done |
 | BIM-007 | Grid system generator | GRIDSYSTEM | 3 | should | ✅ done |
 | BIM-008 | Scope boxes | — | 3 | could | planned |
 
@@ -889,23 +889,23 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | --- | --- | --- | --- | --- | --- |
 | BIM-009 | Wall data model | — | 1 | must | ✅ done |
 | BIM-010 | Wall tool | WALL | 1 | must | ✅ done |
-| BIM-011 | Walls from lines/polylines | WALL Object | 1 | must | planned |
+| BIM-011 | Walls from lines/polylines | WALL Object | 1 | must | ✅ done |
 | BIM-012 | Rectangle/polygon walls | — | 2 | should | planned |
-| BIM-013 | Arc/curved walls | — | 2 | must | 🟡 partial |
-| BIM-014 | Wall types (compound) | WALLTYPE | 1 | must | 🟡 partial |
-| BIM-015 | Wall type editor | — | 3 | must | planned |
-| BIM-016 | Wall joins | — | 1 | must | planned |
+| BIM-013 | Arc/curved walls | — | 2 | must | ✅ done |
+| BIM-014 | Wall types (compound) | WALLTYPE | 1 | must | ✅ done |
+| BIM-015 | Wall type editor | — | 3 | must | 🟡 partial |
+| BIM-016 | Wall joins | — | 1 | must | ✅ done |
 | BIM-017 | Edit wall joins | — | 3 | should | ✅ done |
 | BIM-018 | Wall top/base constraints | — | 3 | must | ✅ done |
 | BIM-019 | Attach wall to roof/slab | — | 3 | must | ✅ done |
-| BIM-020 | Wall profile editing | — | 3 | should | planned |
-| BIM-021 | Wall sweeps and reveals | — | 3 | should | 🟡 partial |
+| BIM-020 | Wall profile editing | — | 3 | should | ✅ done |
+| BIM-021 | Wall sweeps and reveals | — | 3 | should | ✅ done |
 | BIM-022 | Stacked walls | — | 3 | could | planned |
-| BIM-023 | Slanted/tapered walls | — | 3 | should | planned |
+| BIM-023 | Slanted/tapered walls | — | 3 | should | 🟡 partial |
 | BIM-024 | Split wall | SPLITWALL | 3 | must | ✅ done |
 | BIM-025 | Wall flip | WALLFLIP | 1 | must | ✅ done |
 | BIM-026 | Wall openings (plain) | WALLOPENING | 1 | must | ✅ done |
-| BIM-027 | Wall by face/mass | — | 4 | could | planned |
+| BIM-027 | Wall by face/mass | — | 4 | could | ✅ done |
 | BIM-028 | Curtain walls | CURTAINWALL | 1 | must | 🟡 partial |
 | BIM-029 | Curtain grid editing | — | 3 | must | ✅ done |
 | BIM-030 | Curtain panels and mullion types | — | 3 | must | ✅ done |
@@ -917,15 +917,15 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | BIM-033 | Opening data model | — | 1 | must | ✅ done |
-| BIM-034 | Door tool | DOOR | 1 | must | planned |
-| BIM-035 | Window tool | WINDOW | 1 | must | planned |
-| BIM-036 | Door styles | — | 1 | must | 🟡 partial |
-| BIM-037 | Window styles | — | 1 | must | 🟡 partial |
+| BIM-034 | Door tool | DOOR | 1 | must | ✅ done |
+| BIM-035 | Window tool | WINDOW | 1 | must | ✅ done |
+| BIM-036 | Door styles | — | 1 | must | ✅ done |
+| BIM-037 | Window styles | — | 1 | must | ✅ done |
 | BIM-038 | Door/window flip | OPENINGFLIP | 1 | must | ✅ done |
 | BIM-039 | Frames, casings, sills and lintels | — | 3 | should | ✅ done |
 | BIM-040 | Opening in roof/slab (skylights) | — | 3 | should | ✅ done |
 | BIM-041 | Corner windows | — | 3 | could | planned |
-| BIM-042 | Door/window schedules marks | — | 3 | must | planned |
+| BIM-042 | Door/window schedules marks | — | 3 | must | ✅ done |
 | BIM-043 | Opening wall cleanup | — | 3 | should | ✅ done |
 | BIM-044 | Shaft openings | — | 3 | should | ✅ done |
 | BIM-045 | Vertical/face openings | — | 3 | must | ✅ done |
@@ -936,7 +936,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | BIM-047 | Slab data model | — | 1 | must | ✅ done |
-| BIM-048 | Slab/floor tool | SLAB | 1 | must | planned |
+| BIM-048 | Slab/floor tool | SLAB | 1 | must | ✅ done |
 | BIM-049 | Floor types (layered) | — | 3 | must | ✅ done |
 | BIM-050 | Sloped slabs | — | 3 | should | ✅ done |
 | BIM-051 | Slab edges | — | 3 | could | planned |
@@ -970,7 +970,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | BIM-069 | Stair plan cut representation | — | 1 | must | ✅ done |
 | BIM-070 | Ramps | RAMP | 3 | must | ✅ done |
 | BIM-071 | Railing data model | — | 1 | must | ✅ done |
-| BIM-072 | Railings | RAILING | 1 | must | planned |
+| BIM-072 | Railings | RAILING | 1 | must | ✅ done |
 | BIM-073 | Railing types | — | 3 | should | ✅ done |
 | BIM-074 | Escalators/elevators | ESCALATOR | 3 | could | ✅ done |
 
@@ -979,10 +979,10 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | BIM-075 | Column data model | — | 1 | must | ✅ done |
-| BIM-076 | Architectural columns | COLUMN | 1 | must | planned |
+| BIM-076 | Architectural columns | COLUMN | 1 | must | ✅ done |
 | BIM-077 | Structural columns | — | 3 | must | planned |
 | BIM-078 | Beam data model | — | 1 | must | ✅ done |
-| BIM-079 | Beams | BEAM | 1 | must | planned |
+| BIM-079 | Beams | BEAM | 1 | must | ✅ done |
 | BIM-080 | Beam systems | — | 3 | should | ✅ done |
 | BIM-081 | Braces | — | 3 | could | ✅ done |
 | BIM-082 | Trusses | — | 3 | could | ✅ done |
@@ -998,10 +998,10 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | --- | --- | --- | --- | --- | --- |
 | BIM-088 | Space data model | — | 1 | must | ✅ done |
 | BIM-089 | Room tool | ROOM | 1 | must | ✅ done |
-| BIM-090 | Room separation lines | — | 3 | must | 🟡 partial |
-| BIM-091 | Room tags | — | 1 | must | 🟡 partial |
+| BIM-090 | Room separation lines | — | 3 | must | ✅ done |
+| BIM-091 | Room tags | — | 1 | must | ✅ done |
 | BIM-092 | Room finishes parameters | — | 3 | should | ✅ done |
-| BIM-093 | Area plans | AREA | 3 | should | 🟡 partial |
+| BIM-093 | Area plans | AREA | 3 | should | ✅ done |
 | BIM-094 | Area schemes | — | 3 | should | ✅ done |
 | BIM-095 | Zones | ZONE | 3 | should | ✅ done |
 | BIM-096 | Colour fill schemes | — | 3 | must | ✅ done |
@@ -1012,7 +1012,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | BIM-098 | Component placement | COMPONENT | 1 | must | ✅ done |
-| BIM-099 | Hosted components | — | 3 | must | planned |
+| BIM-099 | Hosted components | — | 3 | must | ✅ done |
 | BIM-100 | Casework/kitchen | — | 3 | should | ✅ done |
 | BIM-101 | Sanitary fixtures | — | 2 | must | ✅ done |
 | BIM-102 | Lighting fixtures | — | 5 | should | ✅ done |
@@ -1034,7 +1034,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | BIM-110 | Toposurface from points | TOPO | 3 | must | ✅ done |
-| BIM-111 | Toposurface from contours (DXF) | — | 3 | should | 🟡 partial |
+| BIM-111 | Toposurface from contours (DXF) | — | 3 | should | ✅ done |
 | BIM-112 | Building pad | — | 3 | should | ✅ done |
 | BIM-113 | Graded region / cut-fill | — | 7 | should | planned |
 | BIM-114 | Sub-regions (paths, lawns) | — | 3 | should | ✅ done |
@@ -1071,19 +1071,19 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | PAR-001 | Family editor | FAMILYEDIT | 3 | must | ✅ done |
-| PAR-002 | Family templates | — | 3 | must | planned |
+| PAR-002 | Family templates | — | 3 | must | ✅ done |
 | PAR-003 | Reference planes and lines | FAMILY Ref | 3 | must | ✅ done |
 | PAR-004 | Solid forms in families | — | 3 | must | ✅ done |
 | PAR-005 | Void forms | — | 3 | must | ✅ done |
 | PAR-006 | Nested families | — | 3 | should | ✅ done |
-| PAR-007 | Family symbolic lines | — | 3 | must | planned |
-| PAR-008 | Visibility by detail level/view | — | 3 | must | planned |
-| PAR-009 | Family materials parameters | — | 3 | must | planned |
+| PAR-007 | Family symbolic lines | — | 3 | must | ✅ done |
+| PAR-008 | Visibility by detail level/view | — | 3 | must | ✅ done |
+| PAR-009 | Family materials parameters | — | 3 | must | ✅ done |
 | PAR-010 | Family preview and flex test | — | 3 | should | ✅ done |
-| PAR-011 | Load/reload families into project | — | 3 | must | planned |
-| PAR-012 | Family file format (.archifam) | — | 3 | must | planned |
+| PAR-011 | Load/reload families into project | — | 3 | must | ✅ done |
+| PAR-012 | Family file format (.archifam) | — | 3 | must | ✅ done |
 | PAR-013 | Profile families | — | 3 | should | ✅ done |
-| PAR-014 | Annotation/tag families | — | 3 | must | planned |
+| PAR-014 | Annotation/tag families | — | 3 | must | ✅ done |
 | PAR-015 | Adaptive components | — | 4 | could | planned |
 | PAR-016 | GDL-like scripted objects | — | 4 | should | planned |
 | PAR-017 | Door/window family builder | — | 3 | should | ✅ done |
@@ -1096,8 +1096,8 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | PAR-019 | Type vs instance parameters | — | 3 | must | ✅ done |
 | PAR-020 | Parameter types | — | 3 | must | ✅ done |
 | PAR-021 | Formulas | — | 3 | must | ✅ done |
-| PAR-022 | Shared parameters | — | 3 | should | planned |
-| PAR-023 | Project parameters | — | 3 | must | planned |
+| PAR-022 | Shared parameters | — | 3 | should | ✅ done |
+| PAR-023 | Project parameters | — | 3 | must | ✅ done |
 | PAR-024 | Global parameters | GLOBALPARAM | 3 | should | ✅ done |
 | PAR-025 | Reporting parameters | — | 3 | could | planned |
 | PAR-026 | Parameter locking/constraints | — | 3 | must | planned |
@@ -1121,7 +1121,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| DOC-001 | Floor plan views | — | 1 | must | planned |
+| DOC-001 | Floor plan views | — | 1 | must | ✅ done |
 | DOC-002 | View range | VIEWRANGE | 3 | must | ✅ done |
 | DOC-003 | Reflected ceiling plans | — | 3 | must | ✅ done |
 | DOC-004 | Section views | SECTION | 1 | must | ✅ done |
@@ -1131,8 +1131,8 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | DOC-008 | Drafting views | — | 3 | must | ✅ done |
 | DOC-009 | 3D views and axonometrics | — | 1 | must | planned |
 | DOC-010 | Perspective camera views | CAMERA | 2 | should | planned |
-| DOC-011 | Detail sections through walls | — | 3 | should | planned |
-| DOC-012 | Plan regions | — | 3 | should | planned |
+| DOC-011 | Detail sections through walls | — | 3 | should | ✅ done |
+| DOC-012 | Plan regions | — | 3 | should | ✅ done |
 | DOC-013 | Dependent views | — | 3 | could | planned |
 | DOC-014 | Matchlines | — | 3 | could | planned |
 | DOC-015 | Duplicate view (with detailing) | — | 3 | must | planned |
@@ -1145,11 +1145,11 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| DOC-020 | Visibility/graphics overrides | VG | 3 | must | planned |
-| DOC-021 | View filters | — | 3 | must | planned |
+| DOC-020 | Visibility/graphics overrides | VG | 3 | must | ✅ done |
+| DOC-021 | View filters | — | 3 | must | ✅ done |
 | DOC-022 | View templates | — | 3 | must | ✅ done |
-| DOC-023 | Detail level (coarse/medium/fine) | — | 3 | must | planned |
-| DOC-024 | Cut patterns by material | — | 1 | must | planned |
+| DOC-023 | Detail level (coarse/medium/fine) | — | 3 | must | ✅ done |
+| DOC-024 | Cut patterns by material | — | 1 | must | ✅ done |
 | DOC-025 | Temporary hide/isolate (BIM) | HH/HI | 2 | must | ✅ done |
 | DOC-026 | Reveal hidden elements | RH | 3 | should | ✅ done |
 | DOC-027 | Linework override | LW | 3 | should | planned |
@@ -1163,7 +1163,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | DOC-030 | Tag by category | TAG | 3 | must | ✅ done |
 | DOC-031 | Tag all not tagged | — | 3 | must | ✅ done |
 | DOC-032 | Material tags | — | 3 | should | planned |
-| DOC-033 | Multi-category tags | — | 3 | should | planned |
+| DOC-033 | Multi-category tags | — | 3 | should | ✅ done |
 | DOC-034 | Keynotes | KEYNOTE | 3 | should | ✅ done |
 | DOC-035 | Legends | LEGEND | 3 | should | ✅ done |
 | DOC-036 | Door/window numbering tools | — | 3 | should | ✅ done |
@@ -1176,19 +1176,19 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| DOC-041 | Schedules | SCHEDULE | 3 | must | planned |
-| DOC-042 | Schedule editing round-trip | — | 3 | must | planned |
-| DOC-043 | Calculated fields | — | 3 | should | planned |
-| DOC-044 | Material takeoff schedules | — | 3 | must | planned |
-| DOC-045 | Key schedules | — | 3 | could | planned |
-| DOC-046 | Sheet and view lists | — | 3 | should | planned |
-| DOC-047 | Note block schedules | — | 3 | could | planned |
+| DOC-041 | Schedules | SCHEDULE | 3 | must | ✅ done |
+| DOC-042 | Schedule editing round-trip | — | 3 | must | ✅ done |
+| DOC-043 | Calculated fields | — | 3 | should | ✅ done |
+| DOC-044 | Material takeoff schedules | — | 3 | must | ✅ done |
+| DOC-045 | Key schedules | — | 3 | could | ✅ done |
+| DOC-046 | Sheet and view lists | — | 3 | should | ✅ done |
+| DOC-047 | Note block schedules | — | 3 | could | ✅ done |
 | DOC-048 | Schedule images | — | 3 | could | planned |
-| DOC-049 | Schedule export CSV/XLSX | — | 1 | must | 🟡 partial |
+| DOC-049 | Schedule export CSV/XLSX | — | 1 | must | ✅ done |
 | DOC-050 | Room data sheets | — | 7 | could | planned |
-| DOC-051 | Embedded schedules | — | 3 | could | planned |
-| DOC-052 | Conditional formatting | — | 3 | could | planned |
-| DOC-053 | Schedules on sheets | — | 3 | must | planned |
+| DOC-051 | Embedded schedules | — | 3 | could | ✅ done |
+| DOC-052 | Conditional formatting | — | 3 | could | 🟡 partial |
+| DOC-053 | Schedules on sheets | — | 3 | must | ✅ done |
 | DOC-054 | Door/window/room schedule presets | — | 3 | must | ✅ done |
 | DOC-055 | Wall/floor/roof build-up legends | — | 3 | could | ✅ done |
 
@@ -1202,10 +1202,10 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | M3D-001 | Solid data model | — | 1 | must | ✅ done |
-| M3D-002 | Box | BOX | 1 | must | planned |
-| M3D-003 | Cylinder | CYLINDER (CYL) | 1 | must | planned |
-| M3D-004 | Sphere | SPHERE | 1 | must | planned |
-| M3D-005 | Cone | CONE | 2 | should | planned |
+| M3D-002 | Box | BOX | 1 | must | ✅ done |
+| M3D-003 | Cylinder | CYLINDER (CYL) | 1 | must | 🟡 partial |
+| M3D-004 | Sphere | SPHERE | 1 | must | ✅ done |
+| M3D-005 | Cone | CONE | 2 | should | ✅ done |
 | M3D-006 | Wedge | WEDGE | 4 | should | ✅ done |
 | M3D-007 | Torus | TORUS | 4 | should | ✅ done |
 | M3D-008 | Pyramid | PYRAMID | 4 | should | ✅ done |
@@ -1219,7 +1219,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| M3D-014 | Extrude | EXTRUDE (EXT) | 1 | must | planned |
+| M3D-014 | Extrude | EXTRUDE (EXT) | 1 | must | 🟡 partial |
 | M3D-015 | Push/pull | PRESSPULL | 4 | must | ✅ done |
 | M3D-016 | Revolve | REVOLVE (REV) | 4 | must | planned |
 | M3D-017 | Loft | LOFT | 4 | must | ✅ done |
@@ -1331,9 +1331,9 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| M3D-096 | Conceptual masses | MASS | 4 | must | planned |
-| M3D-097 | Mass floors | — | 4 | should | planned |
-| M3D-098 | Elements from mass faces | — | 4 | should | planned |
+| M3D-096 | Conceptual masses | MASS | 4 | must | ✅ done |
+| M3D-097 | Mass floors | — | 4 | should | ✅ done |
+| M3D-098 | Elements from mass faces | — | 4 | should | ✅ done |
 | M3D-099 | Sandbox/terrain from contours | — | 4 | could | planned |
 | M3D-100 | Intersect faces (SketchUp) | — | 4 | should | planned |
 | M3D-101 | Soften/smooth edges | — | 4 | could | planned |
@@ -1353,27 +1353,27 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| VIS-001 | Zoom in/out | ZOOM (Z) | 1 | must | planned |
-| VIS-002 | Zoom extents | ZOOM E | 1 | must | planned |
-| VIS-003 | Zoom window | ZOOM W | 1 | must | planned |
-| VIS-004 | Zoom previous | ZOOM P | 1 | must | planned |
+| VIS-001 | Zoom in/out | ZOOM (Z) | 1 | must | ✅ done |
+| VIS-002 | Zoom extents | ZOOM E | 1 | must | ✅ done |
+| VIS-003 | Zoom window | ZOOM W | 1 | must | ✅ done |
+| VIS-004 | Zoom previous | ZOOM P | 1 | must | ✅ done |
 | VIS-005 | Zoom scale | ZOOM nX/nXP | 2 | should | planned |
-| VIS-006 | Zoom to selected object | ZOOM O | 1 | must | planned |
-| VIS-007 | Pan | PAN (P) | 1 | must | planned |
+| VIS-006 | Zoom to selected object | ZOOM O | 1 | must | ✅ done |
+| VIS-007 | Pan | PAN (P) | 1 | must | ✅ done |
 | VIS-008 | Named views | VIEW | 1 | should | 🟡 partial |
 | VIS-009 | Regenerate display | REGEN (RE) | 1 | must | planned |
 | VIS-010 | Redraw | REDRAW | 2 | should | planned |
-| VIS-011 | View rotation (2D) | DVIEW Twist | 2 | could | planned |
+| VIS-011 | View rotation (2D) | DVIEW Twist | 2 | could | ✅ done |
 
 ### 3D Navigation
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| VIS-012 | 3D viewport | — | 1 | must | planned |
-| VIS-013 | Orbit | 3DORBIT (3DO) | 1 | must | planned |
+| VIS-012 | 3D viewport | — | 1 | must | ✅ done |
+| VIS-013 | Orbit | 3DORBIT (3DO) | 1 | must | ✅ done |
 | VIS-014 | ViewCube | NAVVCUBE | 1 | must | ✅ done |
-| VIS-015 | Standard views | — | 1 | must | planned |
-| VIS-016 | Perspective/parallel toggle | PERSPECTIVE | 1 | must | planned |
+| VIS-015 | Standard views | — | 1 | must | ✅ done |
+| VIS-016 | Perspective/parallel toggle | PERSPECTIVE | 1 | must | ✅ done |
 | VIS-017 | Walk mode | 3DWALK | 5 | must | planned |
 | VIS-018 | Fly mode | 3DFLY | 5 | should | planned |
 | VIS-019 | Steering wheels | NAVSWHEEL | 5 | could | planned |
@@ -1387,16 +1387,16 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| VIS-025 | Wireframe style | — | 1 | must | planned |
-| VIS-026 | Hidden line style | — | 1 | must | planned |
-| VIS-027 | Shaded style | — | 1 | must | planned |
-| VIS-028 | Shaded with edges | — | 1 | must | planned |
+| VIS-025 | Wireframe style | — | 1 | must | ✅ done |
+| VIS-026 | Hidden line style | — | 1 | must | ✅ done |
+| VIS-027 | Shaded style | — | 1 | must | ✅ done |
+| VIS-028 | Shaded with edges | — | 1 | must | ✅ done |
 | VIS-029 | Realistic/textured | — | 5 | must | planned |
-| VIS-030 | Conceptual/consistent colours | — | 5 | should | planned |
-| VIS-031 | X-ray | — | 5 | should | planned |
+| VIS-030 | Conceptual/consistent colours | — | 5 | should | ✅ done |
+| VIS-031 | X-ray | — | 5 | should | ✅ done |
 | VIS-032 | Sketchy/hand-drawn style | — | 5 | could | planned |
 | VIS-033 | Ambient occlusion | — | 5 | should | 🟡 partial |
-| VIS-034 | Visual styles manager | VISUALSTYLES | 5 | could | planned |
+| VIS-034 | Visual styles manager | VISUALSTYLES | 5 | could | ✅ done |
 | VIS-035 | Section box 3D | — | 3 | must | 🟡 partial |
 | VIS-036 | Section planes with cap fill | — | 5 | should | ✅ done |
 | VIS-037 | Clip planes in 3D | — | 5 | should | ✅ done |
@@ -1486,13 +1486,13 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| IO-001 | .archi native format | SAVE (Cmd+S) | 1 | must | 🟡 partial |
-| IO-002 | Save As/versions | SAVEAS | 1 | must | planned |
+| IO-001 | .archi native format | SAVE (Cmd+S) | 1 | must | ✅ done |
+| IO-002 | Save As/versions | SAVEAS | 1 | must | 🟡 partial |
 | IO-003 | Compressed package format | — | 2 | should | ✅ done |
-| IO-004 | Schema migrations | — | 1 | must | planned |
-| IO-005 | Templates (.architemplate) | — | 1 | must | 🟡 partial |
+| IO-004 | Schema migrations | — | 1 | must | ✅ done |
+| IO-005 | Templates (.architemplate) | — | 1 | must | ✅ done |
 | IO-006 | Auto thumbnail/Quick Look | — | 2 | should | 🟡 partial |
-| IO-007 | Spotlight importer | — | 8 | could | planned |
+| IO-007 | Spotlight importer | — | 8 | could | 🟡 partial |
 
 ### CAD Exchange
 
@@ -1505,7 +1505,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | IO-012 | DWF/DWFx import | DWFIMPORT | 6 | could | 🟡 partial |
 | IO-013 | DGN import/export | DGNIMPORT | 6 | could | 🟡 partial |
 | IO-014 | PDF import (vector) | PDFIMPORT | 6 | should | ✅ done |
-| IO-015 | PDF underlay | PDFATTACH | 6 | must | planned |
+| IO-015 | PDF underlay | PDFATTACH | 6 | must | ✅ done |
 | IO-016 | SVG import | — | 6 | should | ✅ done |
 | IO-017 | SVG export | — | 1 | must | ✅ done |
 | IO-018 | HPGL/PLT export | — | 6 | could | ✅ done |
@@ -1542,7 +1542,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | IO-039 | FBX import/export | — | 6 | should | ✅ done |
 | IO-040 | STEP import/export | — | 6 | should | 🟡 partial |
 | IO-041 | IGES import/export | — | 6 | could | ✅ done |
-| IO-042 | BREP import/export | — | 6 | could | planned |
+| IO-042 | BREP import/export | — | 6 | could | ✅ done |
 | IO-043 | SketchUp SKP import | — | 6 | should | planned |
 | IO-044 | Rhino 3DM import/export | — | 6 | should | planned |
 | IO-045 | Collada DAE | — | 6 | could | ✅ done |
@@ -1553,7 +1553,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| IO-048 | E57 import | — | 6 | should | planned |
+| IO-048 | E57 import | — | 6 | should | 🟡 partial |
 | IO-049 | LAS/LAZ import | — | 6 | should | 🟡 partial |
 | IO-050 | PLY/PTS/XYZ point import | — | 6 | could | 🟡 partial |
 | IO-051 | Point cloud display and clipping | POINTCLOUDVIEW | 6 | should | 🟡 partial |
@@ -1574,8 +1574,8 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | IO-061 | CSV import/export | — | 1 | must | ✅ done |
 | IO-062 | XLSX export/import | — | 6 | should | ✅ done |
 | IO-063 | Image formats | — | 1 | must | ✅ done |
-| IO-064 | Clipboard interoperability | — | 2 | should | planned |
-| IO-065 | Drag and drop import | — | 2 | should | planned |
+| IO-064 | Clipboard interoperability | — | 2 | should | 🟡 partial |
+| IO-065 | Drag and drop import | — | 2 | should | 🟡 partial |
 | IO-066 | Batch conversion | — | 6 | could | ✅ done |
 
 ## ANL — Analysis
@@ -1597,7 +1597,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ANL-008 | Point inside contour | — | 2 | could | ✅ done |
 | ANL-009 | Mass properties | MASSPROP | 4 | should | ✅ done |
 | ANL-010 | Drawing status/statistics | STATUS | 2 | could | ✅ done |
-| ANL-011 | Time tracking | TIME | 8 | could | planned |
+| ANL-011 | Time tracking | TIME | 8 | could | ✅ done |
 
 ### Quantities & Cost
 
@@ -1618,13 +1618,13 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ANL-019 | Sun study (plan/3D) | — | 7 | must | 🟡 partial |
 | ANL-020 | Solar radiation on surfaces | — | 7 | should | ✅ done |
 | ANL-021 | Daylight factor | — | 7 | should | ✅ done |
-| ANL-022 | Climate-based daylight (sDA/ASE) | — | 7 | could | planned |
+| ANL-022 | Climate-based daylight (sDA/ASE) | — | 7 | could | 🟡 partial |
 | ANL-023 | Energy model generation | — | 7 | should | 🟡 partial |
 | ANL-024 | Energy simulation (EnergyPlus) | ENERGYPLUS | 7 | should | 🟡 partial |
 | ANL-025 | U-value calculation | — | 7 | must | ✅ done |
 | ANL-026 | Thermal bridges hint | THERMALBRIDGES | 7 | could | 🟡 partial |
 | ANL-027 | Embodied carbon (LCA) | — | 7 | should | ✅ done |
-| ANL-028 | Wind/CFD basics | — | 7 | could | planned |
+| ANL-028 | Wind/CFD basics | — | 7 | could | 🟡 partial |
 | ANL-029 | Acoustic basics | — | 7 | could | ✅ done |
 | ANL-030 | View analysis / isovist | — | 7 | could | ✅ done |
 
@@ -1642,7 +1642,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | ANL-035 | Clash detection | — | 7 | must | ✅ done |
-| ANL-036 | Clash groups and status | — | 7 | should | 🟡 partial |
+| ANL-036 | Clash groups and status | — | 7 | should | ✅ done |
 | ANL-037 | Model checker/audit | AUDIT | 2 | must | ✅ done |
 | ANL-038 | Duplicate/overlap warnings | — | 3 | must | ✅ done |
 | ANL-039 | Code checking rules | — | 7 | should | ✅ done |
@@ -1673,7 +1673,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | COL-007 | Markups | MARKUP | 6 | must | ✅ done |
 | COL-008 | Markup import from PDF | PDFMARKUPS | 6 | should | ✅ done |
 | COL-009 | BCF import/export | — | 6 | must | ✅ done |
-| COL-010 | BCF API server connect | — | 6 | could | planned |
+| COL-010 | BCF API server connect | — | 6 | could | ✅ done |
 | COL-011 | Issue tracking panel | — | 6 | should | ✅ done |
 | COL-012 | Trace/overlay review | TRACE | 6 | could | ✅ done |
 
@@ -1681,10 +1681,10 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| COL-013 | iCloud Drive sync | — | 6 | should | planned |
+| COL-013 | iCloud Drive sync | — | 6 | should | 🟡 partial |
 | COL-014 | Share read-only view links | SHAREVIEW | 6 | could | ✅ done |
 | COL-015 | Element borrowing/locking | — | 6 | could | ✅ done |
-| COL-016 | Real-time co-editing | — | 6 | could | planned |
+| COL-016 | Real-time co-editing | — | 6 | could | 🟡 partial |
 | COL-017 | Central/local model | CENTRAL | 6 | could | ✅ done |
 | COL-018 | Project standards templates sharing | — | 6 | should | ✅ done |
 | COL-019 | eTransmit / pack and go | ETRANSMIT | 6 | must | ✅ done |
@@ -1701,7 +1701,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| SCR-001 | JavaScript console | — | 1 | must | planned |
+| SCR-001 | JavaScript console | — | 1 | must | ✅ done |
 | SCR-002 | Script editor | — | 2 | should | ✅ done |
 | SCR-003 | Script library and startup scripts | — | 2 | should | ✅ done |
 | SCR-004 | Python bridge | — | 8 | should | ✅ done |
@@ -1709,7 +1709,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | SCR-006 | Custom commands from scripts | — | 2 | must | ✅ done |
 | SCR-007 | Event hooks | — | 8 | should | ✅ done |
 | SCR-008 | Script-defined UI panels | — | 8 | could | ✅ done |
-| SCR-009 | Scripting API reference docs | — | 1 | must | 🟡 partial |
+| SCR-009 | Scripting API reference docs | — | 1 | must | ✅ done |
 
 ### Visual Programming
 
@@ -1726,8 +1726,8 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
-| SCR-016 | Agent JSON-RPC server | — | 1 | must | 🟡 partial |
-| SCR-017 | Agent API methods | — | 1 | must | 🟡 partial |
+| SCR-016 | Agent JSON-RPC server | — | 1 | must | ✅ done |
+| SCR-017 | Agent API methods | — | 1 | must | ✅ done |
 | SCR-018 | MCP server | archi-cli --mcp | 1 | must | ✅ done |
 | SCR-019 | Headless CLI | archi-cli | 1 | must | ✅ done |
 | SCR-020 | Plugin SDK | — | 8 | should | ✅ done |
@@ -1746,10 +1746,10 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | SCR-028 | Plan generation from brief | PLANGEN | 8 | could | ✅ done |
 | SCR-029 | Auto-dimensioning | AUTODIMPLAN | 8 | should | ✅ done |
 | SCR-030 | Auto-tagging and room naming | AUTONAMEROOMS | 8 | could | ✅ done |
-| SCR-031 | Sketch/photo to model | — | 8 | could | planned |
+| SCR-031 | Sketch/photo to model | — | 8 | could | ✅ done |
 | SCR-032 | Render prompts / AI styling | — | 8 | could | planned |
 | SCR-033 | Model QA assistant | QAASSIST | 8 | could | ✅ done |
-| SCR-034 | Generative design | — | 8 | could | planned |
+| SCR-034 | Generative design | — | 8 | could | ✅ done |
 | SCR-035 | Local model support | — | 8 | could | planned |
 
 ## SYS — System & Platform
@@ -1798,16 +1798,16 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | --- | --- | --- | --- | --- | --- |
 | SYS-021 | Apple silicon and Intel universal | — | 1 | must | planned |
 | SYS-022 | Signed and notarized DMG | — | 1 | must | planned |
-| SYS-023 | GPL-3.0 licensing | — | 1 | must | planned |
-| SYS-024 | Auto-update | — | 2 | should | planned |
-| SYS-025 | Crash reporting (opt-in) | — | 2 | could | planned |
+| SYS-023 | GPL-3.0 licensing | — | 1 | must | ✅ done |
+| SYS-024 | Auto-update | — | 2 | should | 🟡 partial |
+| SYS-025 | Crash reporting (opt-in) | — | 2 | could | 🟡 partial |
 | SYS-026 | Localization | — | 8 | should | planned |
-| SYS-027 | Right-to-left/Unicode | — | 2 | should | planned |
+| SYS-027 | Right-to-left/Unicode | — | 2 | should | ✅ done |
 | SYS-028 | Accessibility VoiceOver | — | 8 | should | planned |
 | SYS-029 | Keyboard-only operation | — | 8 | should | planned |
 | SYS-030 | Colour-blind safe themes | — | 8 | could | planned |
 | SYS-031 | Documentation site | — | 1 | must | planned |
-| SYS-032 | Telemetry-free by default | — | 1 | must | planned |
+| SYS-032 | Telemetry-free by default | — | 1 | must | ✅ done |
 | SYS-033 | Automated test suite | — | 1 | must | 🟡 partial |
-| SYS-034 | Offline operation | — | 1 | must | planned |
+| SYS-034 | Offline operation | — | 1 | must | ✅ done |
 

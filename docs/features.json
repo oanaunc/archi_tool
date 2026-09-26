@@ -9,7 +9,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Main document window is visible, usable with keyboard and mouse, and its state persists across relaunch."
  },
  {
@@ -35,7 +35,7 @@
   "reference": "Native (new)",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Native window tabs is visible, usable with keyboard and mouse, and its state persists across relaunch."
  },
  {
@@ -48,7 +48,7 @@
   "reference": "Native (new)",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Full-screen and Split View is visible, usable with keyboard and mouse, and its state persists across relaunch."
  },
  {
@@ -87,7 +87,7 @@
   "reference": "AutoCAD, Revit",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Canvas split views is visible, usable with keyboard and mouse, and its state persists across relaunch."
  },
  {
@@ -152,7 +152,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "File tabs bar is visible, usable with keyboard and mouse, and its state persists across relaunch."
  },
  {
@@ -165,7 +165,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Model/Layout tabs is visible, usable with keyboard and mouse, and its state persists across relaunch."
  },
  {
@@ -191,7 +191,7 @@
   "reference": "AutoCAD, Revit",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Selecting a wall shows the Modify Wall contextual tab."
  },
  {
@@ -230,7 +230,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Tool tips with extended help exposes every listed command with icon and tooltip, and each button starts the same command as typing it."
  },
  {
@@ -256,7 +256,7 @@
   "reference": "Native (new)",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Pinch zooms the canvas around the cursor."
  },
  {
@@ -269,7 +269,7 @@
   "reference": "Native (new)",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Toolbar icons SF Symbols style exposes every listed command with icon and tooltip, and each button starts the same command as typing it."
  },
  {
@@ -295,7 +295,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Right-click with selection offers Move, Copy, Rotate, Erase, Properties."
  },
  {
@@ -308,7 +308,7 @@
   "reference": "AutoCAD, Revit",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Changing layer of 50 selected objects in the palette is one undo step."
  },
  {
@@ -321,7 +321,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Quick properties can be docked, floated, auto-hidden and restored."
  },
  {
@@ -399,7 +399,7 @@
   "reference": "AutoCAD",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Design center / content browser can be docked, floated, auto-hidden and restored."
  },
  {
@@ -425,7 +425,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Object info inspector can be docked, floated, auto-hidden and restored."
  },
  {
@@ -542,7 +542,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Annotation scale selector displays correct state and toggles immediately."
  },
  {
@@ -568,7 +568,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Progress indicator displays correct state and toggles immediately."
  },
  {
@@ -672,7 +672,7 @@
   "reference": "AutoCAD",
   "phase": 8,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Import/export settings is changed in Settings and applied without restart."
  },
  {
@@ -711,7 +711,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Default AutoCAD-compatible shortcuts is documented in the in-app help and works on a fresh install."
  },
  {
@@ -737,7 +737,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Integrated help browser is documented in the in-app help and works on a fresh install."
  },
  {
@@ -750,7 +750,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Contextual help is documented in the in-app help and works on a fresh install."
  },
  {
@@ -763,7 +763,7 @@
   "reference": "Revit, SketchUp",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Tutorials and sample projects is documented in the in-app help and works on a fresh install."
  },
  {
@@ -802,7 +802,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Command line with prompts works identically when typed interactively, in a script, or via the agent API."
  },
  {
@@ -1426,7 +1426,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Construction line (xline) creates correct geometry with preview, is one undo step, and works via typed input."
  },
  {
@@ -1439,7 +1439,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Ray creates correct geometry with preview, is one undo step, and works via typed input."
  },
  {
@@ -2063,7 +2063,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Spline fit points generates geometry that matches the analytic definition within 1e-9."
  },
  {
@@ -2128,7 +2128,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Wipeout hides lines behind it on screen and in PDF."
  },
  {
@@ -2232,7 +2232,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Polyline from segments produces closed/open geometry with correct vertex count and area."
  },
  {
@@ -2336,7 +2336,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Clicking inside a closed set of lines creates one closed polyline."
  },
  {
@@ -2349,7 +2349,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Region produces closed/open geometry with correct vertex count and area."
  },
  {
@@ -2401,7 +2401,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Point places the expected number of points/blocks at exact positions."
  },
  {
@@ -3038,7 +3038,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Extend handles lines, arcs, circles, ellipses, polylines and splines."
  },
  {
@@ -3090,7 +3090,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Fillet handles lines, arcs, circles, ellipses, polylines and splines."
  },
  {
@@ -3103,7 +3103,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Chamfer handles lines, arcs, circles, ellipses, polylines and splines."
  },
  {
@@ -3389,7 +3389,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Pen/attribute apply edits the targeted property only and preserves other data."
  },
  {
@@ -3428,7 +3428,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Pick selection selects exactly the expected objects on locked/unlocked, visible layers only."
  },
  {
@@ -3506,7 +3506,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Lasso selection selects exactly the expected objects on locked/unlocked, visible layers only."
  },
  {
@@ -3662,7 +3662,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Selection preview highlight selects exactly the expected objects on locked/unlocked, visible layers only."
  },
  {
@@ -3701,7 +3701,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Select linked/chained BIM elements selects exactly the expected objects on locked/unlocked, visible layers only."
  },
  {
@@ -3831,7 +3831,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Grip display modifies the object correctly and snaps while dragging."
  },
  {
@@ -3844,7 +3844,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Grip stretch modifies the object correctly and snaps while dragging."
  },
  {
@@ -3857,7 +3857,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Grip modes cycle modifies the object correctly and snaps while dragging."
  },
  {
@@ -3870,7 +3870,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Multi-functional grips modifies the object correctly and snaps while dragging."
  },
  {
@@ -3883,7 +3883,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Clicking the door flip arrow flips the swing."
  },
  {
@@ -3896,7 +3896,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Grips on dimensions and text modifies the object correctly and snaps while dragging."
  },
  {
@@ -3909,7 +3909,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Hot-grip typed values modifies the object correctly and snaps while dragging."
  },
  {
@@ -3922,7 +3922,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Endpoint snap snaps within the aperture and shows its marker glyph."
  },
  {
@@ -3935,7 +3935,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Midpoint snap snaps within the aperture and shows its marker glyph."
  },
  {
@@ -3948,7 +3948,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Centre snap snaps within the aperture and shows its marker glyph."
  },
  {
@@ -3961,7 +3961,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Geometric centre snap snaps within the aperture and shows its marker glyph."
  },
  {
@@ -3974,7 +3974,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Node snap snaps within the aperture and shows its marker glyph."
  },
  {
@@ -3987,7 +3987,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Quadrant snap snaps within the aperture and shows its marker glyph."
  },
  {
@@ -4000,7 +4000,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Intersection snap snaps within the aperture and shows its marker glyph."
  },
  {
@@ -4026,7 +4026,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Extension snap snaps within the aperture and shows its marker glyph."
  },
  {
@@ -4039,7 +4039,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Insertion snap snaps within the aperture and shows its marker glyph."
  },
  {
@@ -4052,7 +4052,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Perpendicular snap snaps within the aperture and shows its marker glyph."
  },
  {
@@ -4065,7 +4065,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Tangent snap snaps within the aperture and shows its marker glyph."
  },
  {
@@ -4078,7 +4078,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Nearest snap snaps within the aperture and shows its marker glyph."
  },
  {
@@ -4104,7 +4104,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Grid snap snaps within the aperture and shows its marker glyph."
  },
  {
@@ -4156,7 +4156,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Snap overrides snaps within the aperture and shows its marker glyph."
  },
  {
@@ -4169,7 +4169,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Running snaps settings snaps within the aperture and shows its marker glyph."
  },
  {
@@ -4208,7 +4208,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Ortho mode produces exactly aligned input and shows tracking vectors."
  },
  {
@@ -4221,7 +4221,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Polar tracking produces exactly aligned input and shows tracking vectors."
  },
  {
@@ -4299,7 +4299,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Snap spacing produces exactly aligned input and shows tracking vectors."
  },
  {
@@ -4312,7 +4312,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Grid display produces exactly aligned input and shows tracking vectors."
  },
  {
@@ -4364,7 +4364,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Named UCS manager changes coordinate input and display consistently."
  },
  {
@@ -4468,7 +4468,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Layer manager is reflected in display, plotting and file round-trip."
  },
  {
@@ -4663,7 +4663,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Layer transparency is reflected in display, plotting and file round-trip."
  },
  {
@@ -4689,7 +4689,7 @@
   "reference": "Vectorworks, Allplan",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Layer tree/hierarchy is reflected in display, plotting and file round-trip."
  },
  {
@@ -4715,7 +4715,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Linetype library renders at the right scale on screen and paper."
  },
  {
@@ -4728,7 +4728,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Complex linetypes renders at the right scale on screen and paper."
  },
  {
@@ -4741,7 +4741,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Global linetype scale renders at the right scale on screen and paper."
  },
  {
@@ -4754,7 +4754,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Object linetype scale renders at the right scale on screen and paper."
  },
  {
@@ -4767,7 +4767,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Paper-space linetype scaling renders at the right scale on screen and paper."
  },
  {
@@ -4780,7 +4780,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Lineweights renders at the right scale on screen and paper."
  },
  {
@@ -4793,7 +4793,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Lineweight display scaling renders at the right scale on screen and paper."
  },
  {
@@ -4858,7 +4858,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Object transparency resolves ByLayer/ByBlock correctly."
  },
  {
@@ -4936,7 +4936,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Single-line text renders identically on screen, PDF and DXF round-trip."
  },
  {
@@ -4949,7 +4949,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Multiline text renders identically on screen, PDF and DXF round-trip."
  },
  {
@@ -4988,7 +4988,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Bullets and numbering renders identically on screen, PDF and DXF round-trip."
  },
  {
@@ -5001,7 +5001,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "could",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Columns in mtext renders identically on screen, PDF and DXF round-trip."
  },
  {
@@ -5053,7 +5053,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Find and replace renders identically on screen, PDF and DXF round-trip."
  },
  {
@@ -5157,7 +5157,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Linear dimension measures the correct value, updates associatively and follows its style."
  },
  {
@@ -5170,7 +5170,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Aligned dimension measures the correct value, updates associatively and follows its style."
  },
  {
@@ -5183,7 +5183,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Angular dimension measures the correct value, updates associatively and follows its style."
  },
  {
@@ -5196,7 +5196,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Radius dimension measures the correct value, updates associatively and follows its style."
  },
  {
@@ -5209,7 +5209,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Diameter dimension measures the correct value, updates associatively and follows its style."
  },
  {
@@ -5235,7 +5235,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Arc length dimension measures the correct value, updates associatively and follows its style."
  },
  {
@@ -5248,7 +5248,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Ordinate dimension measures the correct value, updates associatively and follows its style."
  },
  {
@@ -5274,7 +5274,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Baseline dimension measures the correct value, updates associatively and follows its style."
  },
  {
@@ -5287,7 +5287,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Continued dimension measures the correct value, updates associatively and follows its style."
  },
  {
@@ -5313,7 +5313,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Smart dimension measures the correct value, updates associatively and follows its style."
  },
  {
@@ -5352,7 +5352,7 @@
   "reference": "LibreCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Apply dimension style measures the correct value, updates associatively and follows its style."
  },
  {
@@ -5534,7 +5534,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Multileader attaches to objects and moves with them."
  },
  {
@@ -5560,7 +5560,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Simple leader attaches to objects and moves with them."
  },
  {
@@ -5729,7 +5729,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Hatch fills the right area, updates with its boundary and prints correctly."
  },
  {
@@ -5755,7 +5755,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Solid fill fills the right area, updates with its boundary and prints correctly."
  },
  {
@@ -5989,7 +5989,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Insert block insertions render and explode correctly and round-trip via DXF."
  },
  {
@@ -6197,7 +6197,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Attribute edit values are editable and extractable."
  },
  {
@@ -6522,7 +6522,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Layouts (paper space) displays correctly in layout view and plots at the stated scale."
  },
  {
@@ -6535,7 +6535,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Paper sizes displays correctly in layout view and plots at the stated scale."
  },
  {
@@ -6548,7 +6548,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Rectangular viewport displays correctly in layout view and plots at the stated scale."
  },
  {
@@ -6561,7 +6561,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Polygonal/object viewport displays correctly in layout view and plots at the stated scale."
  },
  {
@@ -6574,7 +6574,7 @@
   "reference": "AutoCAD, Revit",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "A 1:100 viewport shows a 10 m wall as 100 mm on paper."
  },
  {
@@ -6600,7 +6600,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Maximise viewport displays correctly in layout view and plots at the stated scale."
  },
  {
@@ -6613,7 +6613,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Viewport clip displays correctly in layout view and plots at the stated scale."
  },
  {
@@ -6626,7 +6626,7 @@
   "reference": "AutoCAD, Revit",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Align views on sheet displays correctly in layout view and plots at the stated scale."
  },
  {
@@ -6639,7 +6639,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Dragging a floor plan onto a sheet creates a viewport at the view scale."
  },
  {
@@ -6652,7 +6652,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Guide grids on sheets displays correctly in layout view and plots at the stated scale."
  },
  {
@@ -6678,7 +6678,7 @@
   "reference": "AutoCAD, Revit",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Changing project name updates all title blocks."
  },
  {
@@ -6769,7 +6769,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Placeholder sheets keeps sheet data consistent across the project."
  },
  {
@@ -6782,7 +6782,7 @@
   "reference": "AutoCAD",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Sheet properties custom fields keeps sheet data consistent across the project."
  },
  {
@@ -6873,7 +6873,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Plot area options produces output matching the preview."
  },
  {
@@ -6886,7 +6886,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Plot scale and fit produces output matching the preview."
  },
  {
@@ -6912,7 +6912,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Plot styles named (STB) produces output matching the preview."
  },
  {
@@ -6977,7 +6977,7 @@
   "reference": "Native (new)",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "SVG export of layouts produces output matching the preview."
  },
  {
@@ -7029,7 +7029,7 @@
   "reference": "AutoCAD",
   "phase": 3,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Page setup import produces output matching the preview."
  },
  {
@@ -7055,7 +7055,7 @@
   "reference": "Revit",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Level command controls hosted elements and appears in all relevant views."
  },
  {
@@ -7081,7 +7081,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Level heads and extents controls hosted elements and appears in all relevant views."
  },
  {
@@ -7094,7 +7094,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "GRID along X creates 1, 2, 3 bubbles in order."
  },
  {
@@ -7107,7 +7107,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 3,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Radial grids controls hosted elements and appears in all relevant views."
  },
  {
@@ -7172,7 +7172,7 @@
   "reference": "AutoCAD Architecture, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Walls from lines/polylines generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -7198,7 +7198,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 2,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Arc/curved walls generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -7211,7 +7211,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Wall types (compound) generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -7224,7 +7224,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Wall type editor generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -7237,7 +7237,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Two walls meeting at a corner show no overlap in plan."
  },
  {
@@ -7289,7 +7289,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Wall profile editing generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -7302,7 +7302,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Wall sweeps and reveals generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -7328,7 +7328,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Slanted/tapered walls generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -7380,7 +7380,7 @@
   "reference": "Revit",
   "phase": 4,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Wall by face/mass generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -7471,7 +7471,7 @@
   "reference": "Revit, AutoCAD Architecture, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Placing a door cuts the wall in plan and 3D."
  },
  {
@@ -7484,7 +7484,7 @@
   "reference": "Revit, AutoCAD Architecture, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Window tool cuts the host wall and shows correct plan symbol and 3D."
  },
  {
@@ -7497,7 +7497,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Door styles cuts the host wall and shows correct plan symbol and 3D."
  },
  {
@@ -7510,7 +7510,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Window styles cuts the host wall and shows correct plan symbol and 3D."
  },
  {
@@ -7575,7 +7575,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Door/window schedules marks cuts the host wall and shows correct plan symbol and 3D."
  },
  {
@@ -7653,7 +7653,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "SLAB by picking 4 walls creates a slab matching their outline."
  },
  {
@@ -7965,7 +7965,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Railings validates rise/going rules and renders in plan with cut line."
  },
  {
@@ -8017,7 +8017,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Architectural columns places structural members with correct profiles and connections."
  },
  {
@@ -8056,7 +8056,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Beams places structural members with correct profiles and connections."
  },
  {
@@ -8199,7 +8199,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Room separation lines computes boundary and area correctly and updates on wall changes."
  },
  {
@@ -8212,7 +8212,7 @@
   "reference": "Revit",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Room tags computes boundary and area correctly and updates on wall changes."
  },
  {
@@ -8238,7 +8238,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Area plans computes boundary and area correctly and updates on wall changes."
  },
  {
@@ -8316,7 +8316,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Hosted components places, rotates and schedules correctly."
  },
  {
@@ -8472,7 +8472,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Toposurface from contours (DXF) produces correct terrain and site geometry."
  },
  {
@@ -8758,7 +8758,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Family templates works in the family editor and flexes correctly when parameters change."
  },
  {
@@ -8823,7 +8823,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Family symbolic lines works in the family editor and flexes correctly when parameters change."
  },
  {
@@ -8836,7 +8836,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Visibility by detail level/view works in the family editor and flexes correctly when parameters change."
  },
  {
@@ -8849,7 +8849,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Family materials parameters works in the family editor and flexes correctly when parameters change."
  },
  {
@@ -8875,7 +8875,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Load/reload families into project works in the family editor and flexes correctly when parameters change."
  },
  {
@@ -8888,7 +8888,7 @@
   "reference": "Native (new)",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Family file format (.archifam) works in the family editor and flexes correctly when parameters change."
  },
  {
@@ -8914,7 +8914,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Annotation/tag families works in the family editor and flexes correctly when parameters change."
  },
  {
@@ -9018,7 +9018,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Shared parameters evaluates correctly and propagates to geometry and schedules."
  },
  {
@@ -9031,7 +9031,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Project parameters evaluates correctly and propagates to geometry and schedules."
  },
  {
@@ -9213,7 +9213,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Adding a wall shows it in its level's plan immediately."
  },
  {
@@ -9343,7 +9343,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Detail sections through walls is generated from the model and updates live when the model changes."
  },
  {
@@ -9356,7 +9356,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Plan regions is generated from the model and updates live when the model changes."
  },
  {
@@ -9460,7 +9460,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Visibility/graphics overrides changes only the targeted view's graphics."
  },
  {
@@ -9473,7 +9473,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "View filters changes only the targeted view's graphics."
  },
  {
@@ -9499,7 +9499,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Detail level (coarse/medium/fine) changes only the targeted view's graphics."
  },
  {
@@ -9512,7 +9512,7 @@
   "reference": "Revit",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Cut patterns by material changes only the targeted view's graphics."
  },
  {
@@ -9629,7 +9629,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Multi-category tags reads values from elements and updates when they change."
  },
  {
@@ -9733,7 +9733,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Door schedule lists every door with correct width/height."
  },
  {
@@ -9746,7 +9746,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Schedule editing round-trip lists correct values and edits back to the model."
  },
  {
@@ -9759,7 +9759,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Calculated fields lists correct values and edits back to the model."
  },
  {
@@ -9772,7 +9772,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Material takeoff schedules lists correct values and edits back to the model."
  },
  {
@@ -9785,7 +9785,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Key schedules lists correct values and edits back to the model."
  },
  {
@@ -9798,7 +9798,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Sheet and view lists lists correct values and edits back to the model."
  },
  {
@@ -9811,7 +9811,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Note block schedules lists correct values and edits back to the model."
  },
  {
@@ -9837,7 +9837,7 @@
   "reference": "Revit",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Schedule export CSV/XLSX lists correct values and edits back to the model."
  },
  {
@@ -9863,7 +9863,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Embedded schedules lists correct values and edits back to the model."
  },
  {
@@ -9876,7 +9876,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Conditional formatting lists correct values and edits back to the model."
  },
  {
@@ -9889,7 +9889,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Schedules on sheets lists correct values and edits back to the model."
  },
  {
@@ -9941,7 +9941,7 @@
   "reference": "AutoCAD, FreeCAD, OpenSCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Box creates a closed, watertight solid with the specified dimensions."
  },
  {
@@ -9954,7 +9954,7 @@
   "reference": "AutoCAD, FreeCAD, OpenSCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Cylinder creates a closed, watertight solid with the specified dimensions."
  },
  {
@@ -9967,7 +9967,7 @@
   "reference": "AutoCAD, FreeCAD, OpenSCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Sphere creates a closed, watertight solid with the specified dimensions."
  },
  {
@@ -9980,7 +9980,7 @@
   "reference": "AutoCAD, FreeCAD, OpenSCAD",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Cone creates a closed, watertight solid with the specified dimensions."
  },
  {
@@ -10097,7 +10097,7 @@
   "reference": "AutoCAD, FreeCAD, SketchUp",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Extruding a 1000×1000 rectangle by 500 gives 0.5 m³."
  },
  {
@@ -11163,7 +11163,7 @@
   "reference": "Revit, SketchUp",
   "phase": 4,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Conceptual masses can be converted into BIM elements."
  },
  {
@@ -11176,7 +11176,7 @@
   "reference": "Revit",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Mass floors can be converted into BIM elements."
  },
  {
@@ -11189,7 +11189,7 @@
   "reference": "Revit",
   "phase": 4,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Elements from mass faces can be converted into BIM elements."
  },
  {
@@ -11319,7 +11319,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Zoom in/out keeps 60 fps on a 100k-entity drawing."
  },
  {
@@ -11332,7 +11332,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Zoom extents keeps 60 fps on a 100k-entity drawing."
  },
  {
@@ -11345,7 +11345,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Zoom window keeps 60 fps on a 100k-entity drawing."
  },
  {
@@ -11358,7 +11358,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Zoom previous keeps 60 fps on a 100k-entity drawing."
  },
  {
@@ -11384,7 +11384,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Zoom to selected object keeps 60 fps on a 100k-entity drawing."
  },
  {
@@ -11397,7 +11397,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Pan keeps 60 fps on a 100k-entity drawing."
  },
  {
@@ -11449,7 +11449,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "View rotation (2D) keeps 60 fps on a 100k-entity drawing."
  },
  {
@@ -11462,7 +11462,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "3D viewport is smooth and predictable on trackpad and mouse."
  },
  {
@@ -11475,7 +11475,7 @@
   "reference": "AutoCAD, SketchUp",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Orbit is smooth and predictable on trackpad and mouse."
  },
  {
@@ -11501,7 +11501,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Standard views is smooth and predictable on trackpad and mouse."
  },
  {
@@ -11514,7 +11514,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Perspective/parallel toggle is smooth and predictable on trackpad and mouse."
  },
  {
@@ -11631,7 +11631,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Wireframe style renders consistently in viewport and exports."
  },
  {
@@ -11644,7 +11644,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Hidden line style renders consistently in viewport and exports."
  },
  {
@@ -11657,7 +11657,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Shaded style renders consistently in viewport and exports."
  },
  {
@@ -11670,7 +11670,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Shaded with edges renders consistently in viewport and exports."
  },
  {
@@ -11696,7 +11696,7 @@
   "reference": "Revit",
   "phase": 5,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Conceptual/consistent colours renders consistently in viewport and exports."
  },
  {
@@ -11709,7 +11709,7 @@
   "reference": "AutoCAD, SketchUp",
   "phase": 5,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "X-ray renders consistently in viewport and exports."
  },
  {
@@ -11748,7 +11748,7 @@
   "reference": "AutoCAD",
   "phase": 5,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Visual styles manager renders consistently in viewport and exports."
  },
  {
@@ -12463,7 +12463,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Saving and reopening gives an identical document."
  },
  {
@@ -12476,7 +12476,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Save As/versions round-trips all data losslessly."
  },
  {
@@ -12502,7 +12502,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Schema migrations round-trips all data losslessly."
  },
  {
@@ -12515,7 +12515,7 @@
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Templates (.architemplate) round-trips all data losslessly."
  },
  {
@@ -12541,7 +12541,7 @@
   "reference": "Native (new)",
   "phase": 8,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Spotlight importer round-trips all data losslessly."
  },
  {
@@ -12645,7 +12645,7 @@
   "reference": "AutoCAD",
   "phase": 6,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "PDF underlay imports the sample file set with no missing entities."
  },
  {
@@ -12996,7 +12996,7 @@
   "reference": "FreeCAD",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "BREP import/export exports correct scale, units and materials."
  },
  {
@@ -13074,7 +13074,7 @@
   "reference": "Revit",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "E57 import displays up to 100M points smoothly."
  },
  {
@@ -13282,7 +13282,7 @@
   "reference": "Native (new)",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Clipboard interoperability georeferences data correctly."
  },
  {
@@ -13295,7 +13295,7 @@
   "reference": "Native (new)",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Drag and drop import georeferences data correctly."
  },
  {
@@ -13451,7 +13451,7 @@
   "reference": "AutoCAD",
   "phase": 8,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Time tracking reports values matching a hand calculation."
  },
  {
@@ -13594,7 +13594,7 @@
   "reference": "Native (new)",
   "phase": 7,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Climate-based daylight (sDA/ASE) produces results consistent with a validated reference tool."
  },
  {
@@ -13672,7 +13672,7 @@
   "reference": "Native (new)",
   "phase": 7,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Wind/CFD basics produces results consistent with a validated reference tool."
  },
  {
@@ -13776,7 +13776,7 @@
   "reference": "IfcOpenShell/Bonsai",
   "phase": 7,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Clash groups and status reports each issue with a zoom-to link."
  },
  {
@@ -13984,7 +13984,7 @@
   "reference": "IfcOpenShell/Bonsai",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "BCF API server connect links to the correct view and elements."
  },
  {
@@ -14023,7 +14023,7 @@
   "reference": "Native (new)",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "iCloud Drive sync works without data loss between two users."
  },
  {
@@ -14062,7 +14062,7 @@
   "reference": "Native (new)",
   "phase": 6,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Real-time co-editing works without data loss between two users."
  },
  {
@@ -14153,7 +14153,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "archi.run(\"LINE 0,0 100,0 \") adds a line from the console."
  },
  {
@@ -14257,7 +14257,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Scripting API reference docs runs sample scripts and the API is documented."
  },
  {
@@ -14348,7 +14348,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "run_command via HTTP adds geometry."
  },
  {
@@ -14361,7 +14361,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Agent API methods is covered by integration tests."
  },
  {
@@ -14543,7 +14543,7 @@
   "reference": "Native (new)",
   "phase": 8,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Sketch/photo to model produces valid, undoable edits and asks for confirmation for bulk changes."
  },
  {
@@ -14582,7 +14582,7 @@
   "reference": "Dynamo",
   "phase": 8,
   "priority": "could",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Generative design produces valid, undoable edits and asks for confirmation for bulk changes."
  },
  {
@@ -14894,7 +14894,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "GPL-3.0 licensing works on the stated platforms."
  },
  {
@@ -14907,7 +14907,7 @@
   "reference": "Native (new)",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Auto-update works on the stated platforms."
  },
  {
@@ -14920,7 +14920,7 @@
   "reference": "Native (new)",
   "phase": 2,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Crash reporting (opt-in) works on the stated platforms."
  },
  {
@@ -14946,7 +14946,7 @@
   "reference": "Native (new)",
   "phase": 2,
   "priority": "should",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Right-to-left/Unicode works on the stated platforms."
  },
  {
@@ -15011,7 +15011,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Telemetry-free by default works on the stated platforms."
  },
  {
@@ -15037,7 +15037,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Offline operation works on the stated platforms."
  }
 ]
