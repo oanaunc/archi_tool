@@ -28,6 +28,14 @@ project views with crops, dependent views and matchlines; mesh tools and an Open
 lights, fog and render passes; layered PDF and shade plots; shadow diagrams, Radiance and EnergyPlus exchange, ifcXML, STEP
 B-rep import, digital signatures and an AI assistant. The feature register now lists 987 of 1157 features as done and 71 as partial.
 
+Round 8 added PartDesign-style parametric features (pad, pocket, hole, groove, patterns, mirror, binders), network and
+patch surfaces, CSG trees and SketchUp-style tools; curtain systems, in-place models, MEP terminals, circuits and panel
+schedules, graded regions and room data sheets; line styles, pen sets, graphic filters, extended dimension styles,
+single-stroke fonts and parametric block constraints; a CPU path tracer with denoiser and light mix, procedural and
+photo-based materials, weather, scatter, water and object animation; Shortcuts/AppleScript automation and node packages;
+ISO 10211 thermal bridges, a 2D wind solver and per-property co-editing merges. The feature register now lists 1064 of
+1157 features as done and 56 as partial.
+
 ## Build and run
 
 Requires macOS 14 or later and Xcode 16 or later (Swift 5.10+).

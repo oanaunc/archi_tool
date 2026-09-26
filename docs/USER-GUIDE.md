@@ -317,6 +317,12 @@ pattern names and ISO 02–15 line patterns.
 `REPEATDETAIL` and `INSULATION` cover detailing. `DETAILMARK`, `ELEVATIONMARK`, `SECTIONSYMBOL` and `MATERIALTAG` place
 symbols and tags. Annotative text takes its height from the annotation scale.
 
+**Round 8 annotation.** Dimension styles support decimal, architectural, engineering, fractional and scientific units,
+rounding, zero suppression, tolerances, alternate units, fit options and a text style. Tables can link to an `.xlsx`
+sheet (`book.xlsx!Sheet`), update from it and write back to it. Single-stroke fonts (txt, simplex, `*.shx`, "Archi Stroke")
+are drawn as vectors with width factor and oblique, and look the same on screen, in PDF and SVG. `EQDIM` keeps three or
+more objects equally spaced.
+
 ## Layers and properties
 
 - The **Layers** panel and the `LAYER` command create layers and set them current, on/off, frozen/thawed,
@@ -339,6 +345,11 @@ symbols and tags. Annotative text takes its height from the annotation scale.
   type, mark and niche depth; rooms their tag position and area scheme.
 
 `LAYDESC` sets a layer description; `COLORBOOK` picks colours from open colour books.
+
+**Line styles, lineweight tables, pen sets and filters.** `LINESTYLES` defines named line styles for objects or layers,
+`LWTABLE` maps lineweights by view scale, `PENSETS` sets pen tables for plotting and `GFILTERS` applies graphic
+overrides to objects that match a filter. `GRAPHICSTYLES` opens a dialog for all four. They apply to drafting objects,
+not yet to BIM plan graphics.
 
 ## Blocks, attributes and groups
 
@@ -373,6 +384,9 @@ for dynamic blocks.
 `REFCLOSE` edit blocks and references in place. Blocks that would contain themselves are refused. Groups can contain building
 elements. `LIBRARYINSTALL` installs the bundled block and annotation symbol library. `LAYERNOTIFY` and `LAYRECONCILE` warn
 about new layers and mark them as reviewed.
+
+**Parametric blocks.** Constraints drawn in the block editor are saved with the block, and named length constraints
+become per-reference parameters that you set with `DYNPROP`.
 
 ## BIM: building elements and levels
 
@@ -461,6 +475,12 @@ them into their layers. `STAIRTYPE` and `RAILTYPEDEF` are type builders. `EXPRES
 Workplanes and reference planes (`RP`), `PROJECTBASEPOINT`, `SURVEYPOINT`, `TRUENORTH` and `PLANORIENT` set up coordinates;
 `PLAN` shows the plan of the current UCS and `UCSICON` controls the UCS icon. Files are now format version 6 (older files upgrade on open).
 
+**Round 8 BIM.** `CURTAINSYSTEM` places curtain systems on mass faces. `INPLACE` creates in-place (generic) models.
+Supply and return air terminals, radiators and data outlets connect to systems and are coloured by system in plan.
+`CIRCUIT` and `PANELSCHEDULE` build electrical circuits and panel schedules, and `GRADEDREGION` reports cut and fill
+volumes. `GRAPHICDISPLAY` sets sketchy lines, silhouettes and plan shadows per view, and `ROOMDATASHEET` exports room
+data sheets as CSV, HTML or text; importing an edited CSV writes the changes back to the rooms.
+
 ## Documentation: views, tags and schedules
 
 - **Sections and elevations:** `SECTION` places a section line in plan. Sheet viewports can show plans, ceiling plans,
@@ -548,6 +568,17 @@ when their source curves change.
 `MINKOWSKI`, `SPRING` (helical springs and threads), `TEXT3D` and `SURFCV` (NURBS surfaces from control vertices). `SCAD` runs an
 OpenSCAD-like CSG script (including 2D offset and projection) and `SCADFILE` imports `.scad` files.
 
+**Round 8 modelling (parametric features).** `CYLINDER` now takes centre, 3P, 2P or Elliptical bases and an axis
+endpoint; `EXTRUDE` supports Taper, Direction, Path and Both sides; `REVOLVE` is associative and regenerates when the
+profile changes. PartDesign-style features follow their sketches: `PAD`, `POCKET`, `HOLE` (simple, counterbore,
+countersink), `GROOVE`, `REVOLUTION`, `FOLLOWME`, `SWEEP3D`/`HELIXSWEEP`, `PATTERNFEATURE`, `MIRRORFEATURE` and
+`SHAPEBINDER`. `SPLITSOLID`, `GFUSE`, `SOLIDEDIT` (face extrude, move, offset, taper, copy; body offset, separate),
+`OFFSETSOLID`, `CSGTREE` (BRL-CAD style `u #1 - #2 + #3`) and `PROJECTGEOMETRY` complete the set. Surfaces: `SURFNETWORK`,
+`SURFPATCH`, `SURFOFFSET`, `SURFEXTEND`, `SURFTRIM` and `SURFSCULPT`. SketchUp-style tools: `INTERSECTFACES`, `SOFTEN`,
+`TAPEMEASURE` (measure, guides, protractor), `PAINT` and `SCALE3D` (non-uniform). `SCADOBJECT` keeps an OpenSCAD script
+with Customizer parameters, edited in `CUSTOMIZERPANEL`. `3DOSNAP` sets 3D object snaps, `APPINT` snaps to apparent
+intersections, and `DUCS` places points on the face under the cursor.
+
 ## 3D view and rendering
 
 - **Navigation:** orbit, pan and zoom with the trackpad or mouse. Use the **view cube** (`NAVVCUBE`) to click a face,
@@ -586,6 +617,13 @@ explodes levels, `FOV` sets the field of view or lens length and `VIEWIMAGE` sav
 whole view at up to 8K as beauty, alpha, depth, normal or material-ID passes. There is a sketchy (hand-drawn) visual style. `STEREOPANORAMA` writes stereo 360°
 panoramas, `PHASEANIMATION` animates the construction sequence and `WEBVIEWEREXPORT` writes a web viewer. The sun position uses
 the NOAA solar calculator.
+
+**Round 8 rendering.** `PATHTRACE` renders with a CPU path tracer (glass refraction, PBR textures, denoiser) and
+`LIGHTMIX` rebalances light groups after rendering. `PROCMATERIAL` generates procedural materials, `MATFROMIMAGE` turns a
+photo into a seamless PBR material and `MATASSET` edits identity, appearance and graphics assets. `WEATHER` and `SEASON`
+add rain, snow, fog and seasonal foliage; `SCATTER` places vegetation, `WATER` creates animated water surfaces, and
+`ANIMATE` animates objects (doors swing about their hinges). `ARQUICKLOOK` exports USDZ at real-world scale. `REGEN`
+rebuilds the display and `REDRAW` repaints from the cache. `SPACEMOUSE` configures a 3D mouse.
 
 ## Sheets, plotting and PDF
 
@@ -669,6 +707,11 @@ validation checks more rules. `COLORBLINDCHECK` checks layer colours for colour-
 shows the drawing's memory use. The 3D view builds meshes in the background and uses levels of detail. Radiance, EnergyPlus and
 structural results have not yet been checked against the reference tools by us.
 
+**Round 8 analysis.** `SUNPOSITION Validate` checks the solar calculator against the NREL SPA and Meeus reference
+examples. With `PSIMETHOD=ISO10211`, `THERMALBRIDGES` computes ψ values with a 2D heat-conduction solver (EN ISO 10211)
+from wall build-ups. `WINDRESULTS Solve` runs a built-in 2D flow solver (verified on a channel flow; it underestimates
+corner speed-ups on tall buildings).
+
 ## Import and export
 
 | Format | Import | Export | Notes |
@@ -738,6 +781,11 @@ LAZ decompressor used to open `.laz` point clouds. `SURVEYLINES` turns coded sur
 `SIGNKEY`, `SIGNFILE`, `VERIFYSIGNATURE` and `TRUSTSIGNER` create Ed25519 signing keys, sign files, verify signatures and manage
 trusted signers.
 
+**Round 8 exchange.** DXF exports are checked for structure and references (`DXFOUTVERSION` prints the result), 3DFACE
+imports keep their heights, ByBlock lineweight and linetype round-trip, and large point clouds (LAS, XYZ/PTS/TXT, PLY) are
+sampled without loading the whole file. Co-editing merges per property, so two people editing different properties of
+the same object both keep their edits.
+
 ## Scripting and AI agents
 
 - **Script files:** `SCRIPT` runs a `.scr` file of command lines, as in AutoCAD. A blank line or `;` is Enter.
@@ -785,6 +833,10 @@ visual styles manager.
 `RENDERPROMPT` styles renders from a text prompt, `GRAPHPLAYER` runs saved node graphs with their inputs, `RADIALMENU` opens a
 radial menu, `HYPERLINK` attaches links and `SYSWINDOWS` arranges open drawings side by side.
 
+**Automation and node packages.** Shortcuts and other apps can drive the app with `oanarina-archi://run?command=…`,
+`open?path=…` and `export?format=…&path=…` URLs, and AppleScript can send commands with `do script`. `NODEPACKAGE`
+saves node-editor groups as reusable packages (Packages menu in the node editor).
+
 ## Settings and customisation
 
 `OPTIONS` (⌘,) opens Settings, where you can change:
@@ -810,6 +862,10 @@ imported from JSON. **Reset to defaults** restores every setting. All changes ap
 
 New side-panel tabs: **Navigator** (mini-map), **Selection Info** and **Notifications** (click a warning to zoom to it).
 `WHATSNEW` shows what changed after an update.
+
+**Command line and ribbon.** `CMDLINEOPTIONS` sets the command line's text size, number of lines, opacity and whether it
+floats. The app accepts launch arguments: files to open, `-t`/`--template`, `-s`/`--script` and `-c`/`--command`. `CUI` customises the ribbon
+(reorder panels and buttons, export and import). Full-screen state survives relaunch and windows fit a Split View half.
 
 ## Keyboard and mouse
 
@@ -852,7 +908,7 @@ command inside the app. This table is generated from the command definitions in 
 (`python3 docs/gen_command_reference.py`).
 
 <!-- BEGIN COMMAND REFERENCE -->
-882 commands.
+941 commands.
 
 ### Draw
 
@@ -874,7 +930,7 @@ command inside the app. This table is generated from the command definitions in 
 | `CIRCLETTP` | `CTTP` | Draws a circle tangent to two objects through one point. |
 | `CIRCLETTT` | `CTTT` | Draws a circle tangent to three objects (lines, circles, arcs). |
 | `CONE` |  | Creates a 3D solid cone or frustum. |
-| `CYLINDER` | `CYL` | Creates a 3D solid cylinder. |
+| `CYLINDER` | `CYL` | Creates a 3D solid cylinder: centre, 3P, 2P or Elliptical base; height, 2Point or Axis endpoint. |
 | `DLINE` | `DL`, `DOUBLELINE` | Draws double lines (two parallel polylines with end caps). |
 | `DONUT` | `DO`, `DOUGHNUT` | Draws filled rings or solid dots. |
 | `ELLIPSE` | `EL` | Draws an ellipse or elliptical arc. |
@@ -882,7 +938,7 @@ command inside the app. This table is generated from the command definitions in 
 | `ELLIPSEC3P` | `ELC3P` | Draws an ellipse from its centre and three points on the curve. |
 | `ELLIPSEFOCI` | `ELFOCI` | Draws an ellipse from its two foci and a point on the curve. |
 | `ELLIPSEQUAD` | `ELQ`, `ELLIPSEPARALLELOGRAM`, `ISOCIRCLE`, `ELLIPSE4` | Draws the largest ellipse inscribed in a quadrilateral (tangent to its four sides): four corners, a 4-sided closed polyline, or four lines. |
-| `EXTRUDE` | `EXT` | Extrudes closed 2D objects into 3D solids. |
+| `EXTRUDE` | `EXT` | Extrudes closed 2D objects into 3D solids: height, Direction (oblique), Path, Taper angle, Both sides (symmetric). |
 | `GRADIENT` | `GD` | Fills an enclosed area or selected objects with a gradient fill (linear, cylinder, spherical, curved; one or two colours). |
 | `HATCH` | `H`, `BHATCH`, `BH` | Fills an enclosed area or selected objects with a hatch pattern or solid fill. |
 | `HELIX` |  | Draws a 2D/3D helix or spiral: base and top radius, turns, height and twist direction. |
@@ -913,7 +969,7 @@ command inside the app. This table is generated from the command definitions in 
 | `RECTANG` | `REC`, `RECTANGLE` | Draws a rectangular polyline (optionally filleted or chamfered). |
 | `REGION` | `REG` | Converts closed chains of lines/arcs into closed polylines (regions). |
 | `REVCLOUD` |  | Draws a revision cloud: polygonal, rectangular, freehand, from an object or enclosing objects (attached: it moves with them); tagged with the current revision. |
-| `REVOLVE` | `REV` | Revolves closed 2D objects about an axis into 3D solids. |
+| `REVOLVE` | `REV` | Revolves closed 2D objects about an axis into 3D solids (associative: the solid regenerates when the profile is edited; DELOBJ 1 deletes profiles). |
 | `SKETCH` |  | Freehand sketch: records the points of a drag (record increment, Type polyline/line/spline) until Enter. |
 | `SNAKE` | `SNAKELINE` | Draws a polyline from relative moves: R500 L200 U300 D100 (right/left/up/down), @dx,dy or @d<angle; Close/Undo. |
 | `SOLID` | `SO` | Creates solid-filled triangles and quadrilaterals (AutoCAD point order 1-2-3-4). |
@@ -1076,7 +1132,7 @@ command inside the app. This table is generated from the command definitions in 
 | `AUTODIMWALLS` | `AUTODIMENSION`, `WALLDIMS`, `DIMWALLS` | Automatic dimension strings along wall faces through wall ends and openings, with an overall dimension. |
 | `AUTOSTACK` | `TEXTSTACK`, `STACK` | Stacks typed fractions in text (1/2, 3#4, 1^2) or unstacks them. |
 | `BREAKLINE` | `BREAKLINESYMBOL` | Draws a break line with a zig-zag symbol (size, extension). |
-| `DATALINKUPDATE` | `DLU` | Updates linked tables from their CSV files (Update) or writes table cells back to the files (Write). |
+| `DATALINKUPDATE` | `DLU` | Updates linked tables from their CSV/XLSX files (Update) or writes table cells back to the files (Write). |
 | `DETAILCOMPONENT` | `DETAILCOMP`, `DC`, `COMPONENT2D` | Places a 2D detail component (lumber, studs, brick, CMU, plywood, gypsum, steel sections) in the current view. |
 | `DETAILMARK` | `DETMARK`, `DETAILSYMBOL` | Places a 2D detail bubble (number / sheet attributes) with an optional leader to the detail. |
 | `DIM` |  | Smart dimension: picks an object (line → linear/aligned, arc → radius, circle → diameter) or two points. |
@@ -1105,6 +1161,7 @@ command inside the app. This table is generated from the command definitions in 
 | `DIMTEDIT` | `DIMTED` | Moves the text / dimension line of a dimension to a new location. |
 | `DIMTOLERANCE` | `DIMTOLS`, `DTOL` | Adds tolerances to dimensions: Symmetrical ±t, Deviation +u/−l, Limits (upper/lower values), Basic (boxed) or None. |
 | `ELEVATIONMARK` | `ELEVMARK`, `ELEVATIONSYMBOL` | Places a 2D elevation marker (bubble with a pointer in the view direction; 4 for an interior elevation set). |
+| `EQDIM` | `EQUALITYDIM`, `EQCONSTRAINT` | Equality dimensions: a chain of EQ dimensions that keeps three or more objects equally spaced (Create/Toggle EQ-value/Remove). |
 | `FIELD` |  | Inserts text containing a field (area, length, property, variable, count, date) that updates automatically. |
 | `FILLEDREGION` | `FR`, `REGIONFILL` | View-specific filled region on the current level: solid colour or a drafting / model pattern, with optional boundary lines; associative to its boundary. |
 | `FIND` |  | Finds (and optionally replaces) text in texts, leaders, dimensions, tables and attributes. |
@@ -1141,7 +1198,7 @@ command inside the app. This table is generated from the command definitions in 
 | `SPOTSLOPE` | `SLOPELABEL` | Places live spot slopes (arrow pointing downhill with % and 1:n) on sloped slabs, ramps, roofs and toposurfaces. |
 | `TABLEEDIT` | `TABEDIT`, `TABLEDIT` | Edits a table: cell text or =formula (SUM, AVERAGE…), insert/delete rows and columns, column widths. |
 | `TABLEEXPORT` | `TABLEEXP` | Exports a table to a CSV file. |
-| `TABLELINK` | `DATALINK`, `TABLEFROMCSV` | Inserts a table linked to a CSV file (update with DATALINKUPDATE when the file changes). |
+| `TABLELINK` | `DATALINK`, `TABLEFROMCSV` | Inserts a table linked to a CSV or Excel (.xlsx) file (update with DATALINKUPDATE when the file changes). |
 | `TABLESTYLE` | `TS` | Table styles: New / Edit title, header and data cells (height, alignment, colour, fill), Current, Apply to tables, List, Delete. |
 | `TAG` | `TAGBYCATEGORY`, `ELEMENTTAG` | Tags a door, window, room or element with a live label (mark, type, name, area, keynote…). |
 | `TAGALL` | `TAGALLNOTTAGGED` | Tags every untagged door, window and/or room on the current level. |
@@ -1210,13 +1267,19 @@ command inside the app. This table is generated from the command definitions in 
 
 | Command | Aliases | Description |
 | --- | --- | --- |
+| `3DOSNAP` | `-3DOSNAP`, `3DOSMODE` | Sets 3D object snap modes on solids: ZVertex, ZMidpoint, ZCenter (face), ZKnot, ZPerpendicular, ZNearest, ALL, NONE. |
 | `AUDIT` |  | Checks the drawing for errors (duplicate IDs, dangling openings, missing layers/blocks) and fixes them. |
 | `AXISLOCK` | `LOCKAXIS` | Locks point input to the UCS X or Y axis, an angle, or turns the lock Off (arrow keys while drawing). |
+| `CMDLINEOPTIONS` | `CLISETTINGS`, `COMMANDLINEOPTIONS`, `CLIFLOAT` | Command line appearance: text Size, history Lines shown, background Opacity; Float it over the canvas or Dock it at the bottom. *(app)* |
 | `COLOR` | `COL`, `COLOUR` | Sets the color for new objects (CECOLOR). |
+| `CUI` | `CUSTOMIZE`, `RIBBONCUSTOMIZE`, `-CUI` | Customizes the ribbon: Dialog, Add a panel of commands to a tab, Remove, Hide/Show a built-in panel, List, Export/Import a customisation file, Reset. *(app)* |
 | `CURSORSIZE` |  | Sets the crosshair size as a percentage of the view (1–100). *(app)* |
 | `DBLCLKEDIT` |  | Turns double-click editing of objects on or off; with an object, runs its double-click editor. |
 | `DSETTINGS` | `DS`, `SE`, `DDRMODES` | Opens the drafting settings (snap, grid, polar, object snap). |
+| `DUCS` | `UCSDETECT`, `DYNUCS` | Turns the dynamic UCS on or off: points picked over a 3D solid land on the face under the cursor. |
 | `EXPORTSETTINGS` | `SETTINGSOUT` | Exports all preferences (theme, shortcuts, toolbar, workspaces, snippets…) to a .plist file for another Mac. *(app)* |
+| `GFILTERS` | `GRAPHICFILTERS`, `DRAFTFILTERS` | Rule-based graphic overrides for drafting objects: Add/Remove/Enable/Disable/List (field layer/type/color/linetype/lineweight/property). |
+| `GRAPHICSTYLES` | `STYLESMANAGER`, `GSTYLES` | Graphic styles manager: line styles and their layers, lineweights by view scale, pen sets and graphic override filters in one dialog. *(app)* |
 | `GRIDDISPLAY` | `DGRID`, `F7` | Shows/hides the drawing grid or sets its spacing. |
 | `IMPORTSETTINGS` | `SETTINGSIN` | Imports preferences exported by EXPORTSETTINGS (restart to apply everything). *(app)* |
 | `ISODRAFT` |  | Isometric drafting: Orthographic (off), isoLeft, isoTop, isoRight — ortho and grid snap follow the isometric axes. |
@@ -1240,13 +1303,16 @@ command inside the app. This table is generated from the command definitions in 
 | `LAYUNISO` |  | Restores the layers hidden or locked by LAYISO. |
 | `LAYWALK` |  | Walks through layers showing only the chosen ones (name, pattern, Next/Previous, Filter), then restores them. |
 | `LIMITS` |  | Sets the drawing limits (LIMMIN/LIMMAX). |
+| `LINESTYLES` | `LSTYLES`, `-LINESTYLES` | Named line styles (weight, colour, pattern): New/Edit/Delete/List, Apply to objects, set a Layer's line style. |
 | `LINETYPE` | `LT`, `-LINETYPE`, `LTYPE` | Lists, loads, creates and sets the current linetype. |
 | `LTSCALE` | `LTS` | Sets the global linetype scale factor. |
 | `LWDISPLAYSCALE` | `LWSCALE` | Screen display scale of lineweights (0.1–5, default 1); plotted widths are never changed. *(app)* |
 | `LWEIGHT` | `LW`, `LINEWEIGHT` | Sets the current lineweight and lineweight display. |
+| `LWTABLE` | `LWSCALETABLE` | Lineweight table by view scale: lineweights are multiplied by the factor of the current annotation scale (Set/Clear/List). |
 | `OPTIONS` | `OP`, `PREFERENCES`, `SETTINGS`, `CONFIG` | Opens Settings: units, grid and snaps, autosave, colors, shortcuts, toolbar, agents. *(app)* |
 | `ORTHO` |  | Constrains cursor movement to horizontal/vertical (F8). |
-| `OSNAP` | `OS`, `-OSNAP`, `DDOSNAP` | Sets running object snap modes (END,MID,CEN,NOD,QUA,INT,EXT,INS,PER,TAN,NEA,PAR, ON/OFF). |
+| `OSNAP` | `OS`, `-OSNAP`, `DDOSNAP` | Sets running object snap modes (END,MID,CEN,NOD,QUA,INT,EXT,INS,PER,TAN,NEA,PAR,APP,GCEN, ON/OFF). |
+| `PENSETS` | `PENSET`, `PENTABLE` | Pen sets mapping pen numbers (colour indexes) to plotted weights and colours: New/Pen/Current/Display/Delete/List. |
 | `PROJECTBASEPOINT` | `PBP`, `SHAREDCOORDINATES` | Project base point: its location, shared coordinates (easting/northing) and elevation; List or Reset. |
 | `PURGE` | `PU`, `-PURGE` | Removes unused blocks, layers, linetypes, text styles and dimension styles. |
 | `RENAME` | `REN`, `-RENAME` | Renames blocks, layers, linetypes, text styles, dimension styles, levels, views and wall types. |
@@ -1302,6 +1368,7 @@ command inside the app. This table is generated from the command definitions in 
 | `COLUMN` | `COLUMNS` | Places structural columns (rectangular or round); Grids places one at every grid intersection, hosted so it follows the grids. |
 | `COMPONENT` | `FURNITURE`, `COMP`, `FURN` | Places parametric furniture, fixtures, casework, cars and plants from the library (or a custom box); size flexes the family. |
 | `COPYTOLEVEL` | `PASTEALIGNED`, `COPYLEVELS`, `CTL` | Copies selected building elements to other levels, aligned in plan (hosted doors and windows follow their walls). |
+| `CURTAINSYSTEM` | `CURTAINBYFACE`, `CWBYFACE` | Curtain system by face: curtain walls on every vertical face of mass solids (grid spacing and mullion size). |
 | `CURTAINWALL` | `CW`, `CURTAIN` | Draws glazed curtain walls with mullion grids. |
 | `CWGRID` | `CURTAINGRID` | Edits a curtain wall grid: add/remove grid lines, panels (glass, solid, spandrel, louvre, empty, door, double door), mullion types, uniform spacing. |
 | `DOOR` | `DOORS` | Places doors in walls (default 900×2100). |
@@ -1314,6 +1381,7 @@ command inside the app. This table is generated from the command definitions in 
 | `GENDESIGN` | `GENERATIVEDESIGN`, `OPTIMIZELAYOUT`, `LAYOUTOPT` | Generative design: optimises floor layouts for a room programme and gross area with a genetic algorithm (daylight, proportions, adjacencies, orientation, compactness); lists the Pareto-optimal designs and builds the chosen one after confirmation. |
 | `GRID` | `GRIDLINE`, `GR` | Places structural grid lines (straight, Arc through 3 points or Multi-segment), auto-labelled 1,2,3 (vertical) and A,B,C (horizontal). |
 | `GRIDSYSTEM` | `GRIDGEN`, `RECTGRID`, `GRIDARRAY` | Creates a rectangular grid system from spacing lists (e.g. 3*6000 4500): numbered grids along X, lettered along Y. |
+| `INPLACE` | `INPLACEMODEL`, `GENERICMODEL`, `MODELINPLACE` | In-place generic model: turns solids modelled in context into a schedulable component (Create), or back into solids to edit (Edit). |
 | `LEVEL` | `LEVELS`, `LV` | Lists, creates, sets, renames and deletes levels; sets elevation and height. |
 | `MODELGROUP` | `BIMGROUP`, `FURNITUREGROUP`, `GROUPBIM` | Model groups: create a named group of elements, place instances, update all instances from an edited one, list, or ungroup. |
 | `NICHE` | `RECESS` | Cuts a recess of a given depth into one face of a wall. |
@@ -1343,6 +1411,7 @@ command inside the app. This table is generated from the command definitions in 
 | `ROOMSEPARATOR` | `ROOMSEP`, `RSL` | Draws room separation lines (virtual room boundaries used by ROOM, SLAB Walls, ROOMUPDATE). |
 | `ROOMUPDATE` | `UPDATEROOMS`, `RU` | Recomputes the boundaries and areas of rooms placed by picking, after walls or separation lines changed. |
 | `SCANTOBIM` | `PCFITWALLS`, `PLANEFIT`, `SCANFIT` | Detects planes in the point cloud (RANSAC) and creates walls from vertical planes and floor slabs from horizontal planes. |
+| `SCATTER` | `SCATTERPLANTS`, `VEGETATION`, `GRASSSCATTER` | Scatters Grass, Flowers, Shrubs or Trees over closed boundaries with Poisson-disk spacing at a density per m² (reproducible seed); shown in the viewport and renders. *(app)* |
 | `SCHEDULE` | `SCH` | Creates a schedule table (walls, doors, windows, rooms, slabs…) or prints it; Define/Edit/Export/Import/Place manage stored schedules (fields, filters, sorting, grouping, totals, round-trip editing, CSV/XLSX, sheets). |
 | `SCHEDULEDEF` | `SCHEDULES`, `SCHEDDEF`, `NEWSCHEDULE` | Defines schedules: New (category), Fields (incl. calculated Cost=Area*350 and percentage Share%Area), Filter, Sort, Group, Totals, Itemize, Highlight, Key (key schedules), Embed, Show, List, Delete. |
 | `SCHEDULEEDIT` | `EDITSCHEDULE`, `SCHEDEDIT` | Edits a schedule cell (row number from SCHEDULEDEF Show, field, value); the change goes to the element. |
@@ -1377,6 +1446,7 @@ command inside the app. This table is generated from the command definitions in 
 | `WALLSWEEP` | `SWEEPWALL`, `CORNICE`, `SKIRTING` | Adds cornices, skirting boards or string courses along wall faces, Reveals (grooves cut into the faces), or removes them. |
 | `WALLTOP` | `WALLCONSTRAINT`, `TOPCONSTRAINT`, `WT` | Sets the top constraint of walls (a level with offset, the next level, or an unconnected height) and their shape: elevation Profile or Gable, Slant, Taper, Reset. |
 | `WALLWRAP` | `LAYERWRAP`, `WRAPINSERTS` | Wraps the finish layers of compound walls into door/window openings (all walls or selected walls). |
+| `WATER` | `WATERSURFACE`, `POND`, `POOLWATER` | Water surface with animated waves (viewport and renders) inside a closed polyline or picked points, at a surface elevation and depth. *(app)* |
 | `WINDOW` | `WIN` | Places windows in walls (default 1200×1200, sill 900). |
 | `ZONE` | `ZONES`, `ROOMZONE` | Zones: Assign rooms to a named fire/HVAC/department/security zone, Remove, List zone areas, or draw zone Outlines (rooms merged across the walls). |
 
@@ -1400,9 +1470,10 @@ command inside the app. This table is generated from the command definitions in 
 
 | Command | Aliases | Description |
 | --- | --- | --- |
-| `BUILDINGPAD` | `PAD`, `SITEPAD` | Levels a toposurface inside a boundary to a pad elevation (cut and fill). |
+| `BUILDINGPAD` | `SITEPAD` | Levels a toposurface inside a boundary to a pad elevation (cut and fill). |
 | `CONTOURS` | `CONTOUR` | Sets the contour interval and major-line spacing of toposurfaces (0 = hide contours). |
 | `DEMIMPORT` | `ASCIIGRID`, `GRIDTERRAIN`, `ELEVATIONIMPORT`, `ASCIMPORT` | Creates a toposurface from an ESRI ASCII elevation grid (.asc, metres), subsampled to a point budget. |
+| `GRADEDREGION` | `GRADE`, `GRADING`, `CUTFILL` | Graded region: copies a toposurface, levels a pad to an elevation with daylighting side slopes, and reports cut and fill volumes (the existing surface is kept on a hidden layer). |
 | `PARKINGLOT` | `PARKINGROW`, `CARPARK` | Lays out a row (or double row with aisle) of parking bays at 90°, 60° or 45° with paving. |
 | `PROPERTYLINE` | `PROPLINE`, `BOUNDARYLINE` | Draws property lines by points or bearings and distances; labels bearings, distances and the enclosed area. |
 | `RETAININGWALL` | `RETWALL` | Draws a cantilever retaining wall (battered stem on a footing) along points; retained side on the right of travel. |
@@ -1419,12 +1490,18 @@ command inside the app. This table is generated from the command definitions in 
 | `CHAMFEREDGE` | `CHAMFER3D`, `CHE` | Bevels the edges of boxes and extruded solids (all, vertical, top or bottom edges). |
 | `CONVTOMESH` | `TOMESH`, `SOLIDTOMESH` | Converts parametric solids (box, cylinder, extrusion, revolve…) into editable triangle meshes. |
 | `CONVTOSOLID` | `TOSOLID`, `MESHTOSOLID` | Converts closed meshes into solids (cleaned and oriented); open meshes are refused (MESHREPAIR can close them). |
+| `CSGTREE` | `COMB`, `REGION3D`, `CSGCOMB` | BRL-CAD style combination: 'u #1 - #2 + #3 u #4' (u union, - subtract, + intersect); the result regenerates when a member changes. List / Edit existing trees. |
+| `CUSTOMIZERPANEL` | `PARAMPANEL`, `SCADPANEL` | Customizer panel: sliders, check boxes and choices for the parameters of the selected scripted object (OpenSCAD customizer comments), regenerating it on change. *(app)* |
 | `EDGESURF` | `EDGESURFACE`, `COONS` | Coons patch mesh bounded by four edge curves that touch end to end (SURFTAB1 × SURFTAB2). |
 | `FILLETEDGE` | `FILLET3D`, `FE` | Rounds the edges of boxes and extruded solids (all, vertical, top or bottom edges). |
+| `FOLLOWME` | `FOLLOW` | SketchUp-style follow me: sweeps a profile along a path keeping its position relative to the path start (x = offset left of the path, y = height); associative. |
+| `GFUSE` | `GENERALFUSE`, `FRAGMENT` | General fuse: cuts overlapping solids into non-overlapping pieces (overlaps become their own solids). |
 | `GIZMO3D` | `GIZMO`, `3DGIZMO` | Shows a move (X/Y/Z arrows), rotate (ring) or uniform scale gizmo on the selection in the 3D view; drag it to transform (one undo step). *(app)* |
+| `HOLE` | `HOLEFEATURE`, `DRILL` | Hole features at sketch points or circles: diameter, depth or Through, Simple / Counterbore / Countersink, optional thread designation; follow their sketch. |
 | `HULL` | `CONVEXHULL`, `HULL3D` | Convex hull solid of the selected solids (and points/curves at their elevation), like OpenSCAD hull(). |
 | `INTERFERE` | `INF`, `CLASH` | Finds overlapping volumes between two sets of solids and can create them as new solids. |
 | `INTERSECT` | `INTERSECTSOLIDS` | Keeps only the common volume of the selected solids. |
+| `INTERSECTFACES` | `INTERSECTWITHMODEL`, `INTERSECTEDGES` | SketchUp intersect faces: draws 3D edges (polylines) where the selected solids cut each other, or cut the rest of the Model. |
 | `LINEAREXTRUDE` | `TWISTEXTRUDE`, `LEXTRUDE` | OpenSCAD-style linear extrude of closed profiles: height, twist angle and top scale (slices follow the twist). |
 | `LOFT` |  | Creates a solid through closed cross-sections at given heights (in selection order). |
 | `MESH` | `MESHPRIMITIVE`, `MESHBOX` | Faceted mesh primitives with divisions (MESHDIVISIONS): Box, Cylinder, Cone, Sphere, Torus, Wedge, Pyramid. |
@@ -1435,33 +1512,54 @@ command inside the app. This table is generated from the command definitions in 
 | `MESHSMOOTH` | `SMOOTHMESH`, `SUBDIVIDE`, `MESHREFINE` | Smooths solids and meshes by Loop subdivision (1–4 levels). |
 | `MINKOWSKI` | `MINKOWSKISUM` | Minkowski sum of two solids (e.g. a box and a sphere for rounded edges); exact for convex solids. |
 | `MIRROR3D` | `3DMIRROR` | Mirrors solids about the XY, YZ or ZX plane through a point, or a vertical plane through two points. |
+| `MIRRORFEATURE` | `FEATUREMIRROR`, `MIRRORED` | Mirrors a feature (or the whole body) about a vertical plane through two points or the XY plane at a height; stays parametric. |
 | `MOVEZ` | `ZMOVE`, `MOVEUP` | Moves objects up or down: element base/top offsets and door/window sills change, solids move (one undo step). *(app)* |
+| `OFFSETSOLID` | `SOLIDOFFSET`, `OFFSETBODY` | Offsets solids: every face moves outwards (or inwards, negative) by the distance. |
+| `PAD` | `BOSS`, `PADFEATURE` | PartDesign pad: extrudes a sketch profile (optionally tapered) and adds it to a solid, or creates a new body; regenerates when the sketch changes. |
+| `PAINT` | `PAINTBUCKET`, `APPLYMATERIAL` | Paint bucket: applies a material to objects and building elements by clicking them; Sample picks up an object's material; List shows the materials. |
+| `PATTERNFEATURE` | `LINEARPATTERN`, `POLARPATTERN`, `FEATUREPATTERN` | Repeats a feature (or the whole body) in a Linear (columns × rows) or Polar pattern; instances follow the feature's sketch. |
 | `PIPE` | `TUBE` | Creates a round pipe (optionally hollow) along a path. |
 | `PLANESURF` | `PLANARSURFACE`, `PSURF` | Planar surface from a closed boundary (Object, with inner loops as holes) or from two corners of a rectangle. |
+| `POCKET` | `POCKETFEATURE`, `CUTEXTRUDE` | PartDesign pocket: cuts a sketch profile into a solid by a depth (downwards from the sketch) or Through all; regenerates when the sketch changes. |
 | `POLYHEDRON` | `POLYHEDRA` | Solid from points (x,y,z) and faces (point numbers from 1, e.g. 1,2,3,4) like OpenSCAD polyhedron(). |
 | `POLYSOLID` | `PSOLID` | Draws a wall-like solid along points or converts a line/polyline/arc (Object); Height, Width, Justify. |
 | `PRESSPULL` | `PP`, `PUSHPULL` | Extrudes the area around a picked point (with islands as holes), a closed object, or changes an extrusion's height. |
 | `PRESSPULLFACE` | `PPFACE`, `PUSHPULLFACE`, `FACEPULL` | Pushes or pulls a planar face (top, bottom or side) of any 3D solid along its normal. |
 | `PRISM` | `REGULARPRISM`, `HOLLOWPRISM` | Regular prism (N sides) or tube (inner radius > 0): centre, circumradius, height. |
+| `PROJECTGEOMETRY` | `PROJECTEDGES`, `EXTERNALGEOMETRY`, `FLATOUTLINE` | Projects the outline of solids onto the sketch plane as closed polylines that follow the solids when they change (use them as sketch profiles). |
 | `PYRAMID` | `PYR` | Creates a pyramid or frustum with N sides: base centre, base radius, height (Top radius for a frustum). |
 | `REVSURF` | `REVOLVEDSURFACE` | Revolved mesh surface: rotates a path curve about an axis line (start angle, included angle; SURFTAB1 segments). |
 | `ROTATE3D` | `3DROTATE` | Rotates solids about an axis parallel to X, Y or Z through a point. |
 | `RULESURF` | `RULEDSURFACE` | Ruled mesh surface between two curves (SURFTAB1 rulings). |
 | `SCAD` | `OPENSCAD`, `CSGSCRIPT` | Evaluates an OpenSCAD-language script (cube, sphere, cylinder, polyhedron, extrudes, transforms, union/difference/intersection/hull/minkowski, modules, loops) into a solid. |
 | `SCADFILE` | `SCADIN`, `IMPORTSCAD` | Imports an OpenSCAD .scad file (with include / use of neighbouring files) as a solid. |
+| `SCADOBJECT` | `SCRIPTOBJECT`, `CUSTOMIZER`, `GDLOBJECT` | Scripted parametric objects (OpenSCAD language, GDL-like): New from a script or File, list Params (Customizer ranges and choices), Set a parameter to regenerate. |
+| `SCALE3D` | `SCALENU`, `SCALEXYZ` | Non-uniform scale of solids about a base point: separate X, Y and Z factors (negative factors mirror). |
 | `SECTIONOBJECT` | `SECTIONPLANEOBJ`, `SPOBJECT`, `SECTIONPLANES` | Section plane objects: Add a named vertical plane (its plan trace can be moved), make it Live (clips the 3D view with caps), Flip, Generate/update its 2D section block, Slice solids into closed halves, List, Off, Delete. |
 | `SECTIONSOLIDS` | `GENERATESECTION`, `SECTIONBLOCK`, `SOLIDSECTION` | Cuts 3D solids with a vertical section plane (two points) and places the 2D section (cut poché + projection) as a block; Plan cuts them horizontally. |
 | `SEPARATE` | `SOLIDSEPARATE`, `SOLIDCLEAN` | Separates solids into their disjoint bodies and cleans them (duplicate/degenerate faces, consistent outward orientation). |
+| `SHAPEBINDER` | `BINDER`, `SUBSHAPEBINDER` | Sub-shape binder: an associative copy of another body (Solid) or of one of its faces (Face, as a surface), optionally displaced; it follows the source when that changes. |
 | `SHELL` | `SOLIDSHELL`, `HOLLOW` | Hollows boxes and extrusions to a wall thickness, optionally removing the top face (SOLIDEDIT Shell). |
 | `SLICE` | `SL3D` | Cuts solids with a vertical plane through two points or a horizontal plane (XY) at a height. |
+| `SOFTEN` | `SOFTENEDGES`, `SMOOTHEDGES` | Softens and smooths the edges of solids/meshes whose faces meet at less than an angle (0 = sharp again); display only. |
 | `SOLIDCHECK` | `CHECKSOLID`, `VALIDATESOLID`, `CHECKGEOMETRY` | Validates solids: open or non-manifold edges, inconsistent orientation, degenerate faces, volume and bodies. |
+| `SOLIDEDIT` | `SOLED` | Edits solid faces: Extrude, Move, Offset, Taper or Copy a face (picked Top/Bottom/Side in plan); Body Offset or Separate. |
 | `SOLIDHIST` | `RECORDHISTORY` | Turns recording of the CSG feature history of solids on or off (booleans on solids with a history always record). |
 | `SOLIDHISTORY` | `FEATURES`, `FEATURETREE`, `SHISTORY` | Feature list of a solid: list, suppress/unsuppress, delete or move a boolean feature (the solid regenerates), or flatten the history. |
+| `SPLITSOLID` | `SPLITBODY`, `BOOLEANFRAGMENTS` | Splits solids by other solids into the parts inside and outside the tools (separate bodies). |
 | `SPRING` | `COILSPRING`, `HELIXSOLID` | Creates a helical coil spring solid (coil radius, wire radius, pitch, turns). |
 | `SUBTRACT` | `SU` | Subtracts solids from other solids. |
 | `SURFCV` | `NURBSSURF`, `CVSURFACE`, `SURFCVEDIT` | B-spline (NURBS) surface from a grid of control vertices: New over a rectangle, Edit moves a CV (row, column, height), Display the CV grid. |
+| `SURFEXTEND` | `EXTENDSURFACE` | Extends the outer edges of surfaces tangentially by a distance. |
+| `SURFNETWORK` | `NETWORKSURFACE`, `GORDON` | Network surface through curves in the U and V directions (Gordon surface: passes through every curve). |
+| `SURFOFFSET` | `OFFSETSURFACE` | Offset copy of surfaces along their normals. |
+| `SURFPATCH` | `PATCHSURFACE`, `FILLSURFACE` | Patch surface filling a closed boundary (one closed curve or curves meeting end to end; 3D polylines with vertexZ or elevations): planar boundaries exactly, others as a Coons patch. |
+| `SURFSCULPT` | `SCULPT`, `SURFTOSOLID` | Joins surfaces that enclose a watertight volume into a solid (the surfaces are replaced). |
+| `SURFTRIM` | `TRIMSURFACE` | Trims surfaces with a closed plan curve (projected vertically), keeping the part Inside or Outside. |
 | `SWEEP` |  | Sweeps closed profiles along a path (profile X to the left of travel, Y up). |
+| `SWEEP3D` | `HELIXSWEEP`, `SWEEPHELIX` | Sweeps a closed profile (centred on the path) along a 3D path such as a helix (or a new Helix); associative with profile and path. |
 | `TABSURF` | `TABULATEDSURFACE` | Tabulated mesh surface: sweeps a path curve along a direction vector (a line) or straight up by a height. |
+| `TAPEMEASURE` | `TAPE`, `GUIDE`, `PROTRACTOR` | Tape measure: Measure between two points, create a Guide parallel to an edge at a distance or through a point, or a Protractor guide at an angle. |
 | `TEXT3D` | `3DTEXT`, `EXTRUDETEXT` | Creates extruded 3D text (single-line font strokes as solid bars). |
 | `THICKEN` | `THICK` | Turns surfaces into solids by offsetting them along their normals (negative = other side). |
 | `TORUS` | `TOR` | Creates a torus: centre, radius of the torus, radius of the tube. |
@@ -1474,6 +1572,8 @@ command inside the app. This table is generated from the command definitions in 
 
 | Command | Aliases | Description |
 | --- | --- | --- |
+| `ANIMATE` | `OBJANIMATE`, `OBJECTANIMATION`, `DOORANIMATE` | Object animation saved in the drawing: Door swings, Rotate about a pivot, Move by a vector (start time, duration, there and back); Play/Stop in 3D, List, Delete, Clear, Render a frame. *(app)* |
+| `ARQUICKLOOK` | `ARVIEW`, `USDZPREVIEW`, `ARPREVIEW` | AR Quick Look: exports the model as a real-scale USDZ and Previews it or Shares it to an iPhone/iPad (AirDrop) to place it in AR. *(app)* |
 | `AXONVIEW` | `AXONVIEWSAVE`, `SAVE3DVIEW`, `AXONOMETRIC` | Saves a 3D axonometric view (SW / SE / NE / NW isometric, Top, or Custom azimuth/elevation) that refits to the model after every change. |
 | `BACKVIEW` | `BACK` | Sets the 3D view to back. |
 | `BILLBOARD` | `CUTOUT`, `IMAGECUTOUT`, `ENTOURAGE` | Places a 2D cutout that always faces the camera in 3D and renders: Person, Tree, Shrub or an image file (PNG with transparency). *(app)* |
@@ -1496,6 +1596,7 @@ command inside the app. This table is generated from the command definitions in 
 | `FOV` | `FIELDOFVIEW`, `LENS` | Sets the 3D camera field of view in degrees (15–120), or a Lens length in mm (35 mm equivalent). *(app)* |
 | `FRONTVIEW` | `FRONT` | Sets the 3D view to front. |
 | `FULLSCREEN` | `FS` | Enters or leaves full screen for this drawing window (⌃⌘F). *(app)* |
+| `GRAPHICDISPLAY` | `GDO`, `DISPLAYOPTIONS` | Graphic display options of the current view: Sketchy lines (0–10), Silhouettes (line weight, 0 = off) and cast Shadows in plan; saved with the view. |
 | `HISTORYPANEL` | `UNDOHISTORY`, `HISTORY` | Shows the undo history and command history panel. *(app)* |
 | `INTERIORELEV` | `INTERIORELEVATION`, `IELEV`, `ROOMELEVATIONS` | Places a 4-way interior elevation marker in a room and draws its four interior elevations (A–D). |
 | `ISOVIEW` | `ISO`, `SWISO` | Sets the 3D view to swiso. |
@@ -1505,13 +1606,17 @@ command inside the app. This table is generated from the command definitions in 
 | `LEGEND` | `LEGENDS`, `LEGENDVIEW`, `BUILDUPLEGEND` | Places a legend view: wall types, door/window types, floor/roof build-ups, components or materials (VIEWUPDATE refreshes it). |
 | `LEVELVIEW3D` | `ISOLATELEVEL3D`, `EXPLODELEVELS` | 3D view by level: show All levels, Isolate one level, or Explode levels apart by a gap. *(app)* |
 | `LIGHT` | `LIGHTS`, `POINTLIGHT`, `SPOTLIGHT`, `ARTIFICIALLIGHT` | Places point, spot, area, line or IES lights (lumens, colour temperature, beam) that light the 3D view and renders; List, On/Off. *(app)* |
+| `LIGHTMIX` | `LIGHTGROUPS`, `RENDERLIGHTMIX` | Light mix of path-traced renders: weights of the Sun, Sky and Artificial light groups, changeable after rendering (saved in the drawing). *(app)* |
 | `LINEWORK` | `LINEWORKOVERRIDE`, `LWO` | Overrides the line style of individual element edges in the current project view (Invisible, Hidden, Thin, Wide, Medium, Color, or Reset). |
 | `LOOKAROUND` | `LOOK`, `LOOKAROUNDTOOL` | Looks around from the current eye point (drag or arrow keys turn the head; the camera does not move). *(app)* |
+| `MATASSET` | `MATERIALASSETS`, `MATIDENTITY`, `MATPHYSICAL` | Material assets kept apart from the render appearance: Identity (description, manufacturer, mark, cost), Graphics (shading colour, surface pattern) and Physical/thermal (density, conductivity, specific heat); List. *(app)* |
 | `MATBROWSER` | `MATLIB`, `MATERIALLIBRARY` | Material library browser with rendered thumbnails: add to the drawing or assign to the selection. *(app)* |
 | `MATCHLINE` | `MATCHLINES` | Matchlines between dependent views: On / Off / List. |
 | `MATEMISSIVE` | `EMISSIVE`, `SELFILLUM`, `MATEMIT` | Makes a material self-illuminated (luminance factor 0–20; 0 turns it off): screens, lamps, signs glow in 3D and renders. *(app)* |
 | `MATERIALS` | `MAT`, `RMAT`, `MATEDITOR`, `MATBROWSEROPEN` | Opens the material editor panel (color, roughness, metalness, transparency, texture). *(app)* |
+| `MATFROMIMAGE` | `MATPHOTO`, `PHOTOMATERIAL`, `IMAGETOMATERIAL` | Creates a seamless PBR material from a photo: de-lit albedo, normal, roughness and AO maps derived from the image, at a real-world tile size. *(app)* |
 | `MATMAPPING` | `TEXTUREMAPPING`, `UVMAPPING`, `MATERIALMAPPING`, `POSITIONTEXTURE` | Texture mapping of a material: Box, Planar, Cylindrical, Spherical or UV, and texture positioning (offset, rotation, scale) on its faces; Reset. *(app)* |
+| `MATMAPS` | `PBRMAPS`, `MATERIALMAPS` | PBR texture maps of a material: Normal, Roughness, Metallic, AO and Displacement images, normal strength and displacement height; List/Clear. *(app)* |
 | `MVIEW` | `MV`, `VIEWPORT` | Places a viewport on the current sheet (corners in paper mm, scale 1:n, view kind, level). |
 | `MVIEWPOLY` | `MVPOLY`, `POLYVIEWPORT` | Creates a polygonal sheet viewport from paper points (x,y in mm) showing the current level. *(app)* |
 | `MVSETUP` |  | Aligns sheet viewports: pans one viewport so a model point lines up horizontally or vertically with a point in another. *(app)* |
@@ -1523,15 +1628,18 @@ command inside the app. This table is generated from the command definitions in 
 | `ORBITSELECTION` | `ORBITSEL`, `3DORBITSEL`, `ZOOMSELECTED3D` | Orbits around (and zooms to) the selected elements in 3D. *(app)* |
 | `PAN` | `P`, `-PAN` | Moves the view by a displacement. |
 | `PANORAMA` | `360`, `PANO`, `RENDER360` | Renders a 360° equirectangular panorama (PNG/JPEG) from the 3D camera position or a picked plan point. *(app)* |
+| `PATHTRACE` | `PTRENDER`, `RENDERPT`, `PATHTRACER`, `RAYTRACE` | Progressive path-traced render of the 3D view (GGX materials, glass refraction, PBR maps, sun, sky, lights): Window, or File with size, samples and denoising. *(app)* |
 | `PERSPECTIVE` | `PROJECTION` | 3D projection: 1 = perspective, 0 = parallel (orthographic). *(app)* |
 | `PHASEANIMATION` | `PHASEVIDEO`, `4DVIDEO`, `4DANIMATION` | Construction sequence (4D) video from the phases (new elements appear bottom-up, demolished ones disappear) or from the work schedule (day by day), captioned (MP4). *(app)* |
 | `PLAN` |  | Shows the plan view of the current UCS, a named UCS or the world (rotates the 2D display so the UCS X axis is horizontal). |
 | `PLANORIENT` | `ORIENTATION` | Orients the plan to Project north (up) or True north (display rotation only). |
 | `POSITIONCAMERA` | `POSCAM`, `EYEPOINT` | Places the camera at a plan point at eye height looking towards a second point, then looks around (SketchUp style). *(app)* |
+| `PROCMATERIAL` | `PROCEDURALMATERIAL`, `PROCTEXTURE`, `MATPROCEDURAL` | Procedural seamless material (Wood, Brick, Tile, Marble, Stone, Concrete, Terrazzo) with albedo, normal and roughness maps from colours, courses, joint width and a seed. *(app)* |
 | `PROJECTVIEW` | `PVIEW`, `VIEWS`, `VIEWBROWSER` | Project views: New (plan / ceiling / 3D), Open, Close, Duplicate (plain, with detailing, as dependent), Split into dependent views, Rename, Delete, List. |
 | `QUICKPROPS` | `QP`, `QUICKPROPERTIES` | Quick Properties: a compact editor of the selection's key properties over the drawing. *(app)* |
 | `RADIALMENU` | `MARKINGMENU`, `PIEMENU` | Right-drag marking menu with the 8 most used commands for the context (On/Off/List). *(app)* |
 | `RCP` | `REFLECTEDCEILING`, `CEILINGPLAN` | Reflected ceiling plan on/off (ceilings with grids and heights, ceiling fixtures), and ceiling grid settings. |
+| `REDRAW` | `REDRAWALL`, `RA` | Refreshes the screen from the display cache (fast; REGEN rebuilds the cache). *(app)* |
 | `REGEN` | `RE`, `REGENALL`, `REA`, `REDRAW`, `R` | Regenerates the display. |
 | `RENDER` | `RR` | Renders the 3D model. |
 | `RENDERPROMPT` | `AIRENDER`, `RENDERSTYLE`, `PROMPTRENDER` | Styles the render from a description (e.g. “golden hour, soft shadows, warm, 4K”): saves it as the “Prompt” render preset and opens the render window. *(app)* |
@@ -1541,12 +1649,14 @@ command inside the app. This table is generated from the command definitions in 
 | `RIGHTVIEW` | `RIGHT`, `SIDE` | Sets the 3D view to right. |
 | `SAVECAMERA` | `CAMSAVE`, `NEWCAMERA` | Saves the current 3D camera by name (restored with CAMERA). *(app)* |
 | `SCOPEBOX` | `SCOPEBOXES` | Scope boxes: New (two corners, rotation), Grids (assign grids — they are trimmed to the box), View (crop a project view by the box), Delete, List. |
+| `SEASON` | `SEASONS` | Season of the vegetation in the 3D view and renders: Spring, Summer, Autumn or Winter colours for grass, trees and plants. *(app)* |
 | `SECTION` | `SECTIONLINE`, `SECTIONMARK` | Places a section line (A–A…) in plan; section views and sheets use the current section. |
 | `SECTIONBOX` | `SBOX`, `3DSECTIONBOX` | Section box in 3D: On/Off/Selection/Level/Reset; the box is saved with the drawing. *(app)* |
 | `SECTIONPLANE` | `SPLANE`, `CUTPLANE`, `LIVESECTION` | Live section plane in 3D with cap faces: Horizontal at a height, Vertical through two plan points, Flip, Off. *(app)* |
 | `SEISO` |  | Sets the 3D view to seiso. |
 | `SHOW2D` | `2D` | Shows the 2D plan view. |
 | `SHOW3D` | `3D`, `3DVIEW`, `MODEL3D` | Shows the 3D model view. |
+| `SPACEMOUSE` | `3DMOUSE`, `NDOF`, `3DCONNEXION` | 3Dconnexion SpaceMouse: On/Off, Object (orbit) or Fly mode, Sensitivity, Status. Axes move the 3D camera; button 1 fits the view. *(app)* |
 | `SPLIT` | `SPLITVIEW`, `VPORTS` | Shows the plan and 3D views side by side. |
 | `STEREOPANORAMA` | `STEREO360`, `ODSPANORAMA`, `VRPANORAMA` | Stereo 360° panorama for VR viewers: left and right eye equirectangular images over-under (omni-directional stereo), from the 3D camera or a plan point. *(app)* |
 | `SUNSTUDY` | `SUN`, `SUNPROPERTIES` | Sun study panel in the 3D view: date and time sliders with a day animation. *(app)* |
@@ -1576,6 +1686,7 @@ command inside the app. This table is generated from the command definitions in 
 | `VSCURRENT` | `VS`, `SHADEMODE` | Sets the visual style of the 3D view. |
 | `WALK` | `3DWALK`, `WALKTHROUGH`, `3DFLY` | Starts a first-person walkthrough of the 3D model. |
 | `WALKTHROUGHVIDEO` | `WALKVIDEO`, `ANIPATH`, `CAMERAPATH` | Exports an MP4 walkthrough along a smooth path through the saved cameras (in order). *(app)* |
+| `WEATHER` | `RAIN`, `SNOW`, `WEATHERFX` | Weather in the 3D view and renders: Clear, Rain, Snow or Fog with an intensity, snow cover on up-facing faces and wet surfaces. *(app)* |
 | `WINDOWTABS` | `DOCTABS` | Native window tabs: Merge all drawing windows into tabs, or open new drawings in Tabs / Windows. *(app)* |
 | `WSCURRENT` | `WS`, `WORKSPACE` | Switches workspace (panels, views and ribbon tab), e.g. WSCURRENT 3D Modeling. *(app)* |
 | `WSSAVE` |  | Saves the current window arrangement as a named workspace. *(app)* |
@@ -1732,7 +1843,7 @@ command inside the app. This table is generated from the command definitions in 
 | `TAKEOFFPHASE` | `QTOPHASE`, `PHASEQUANTITIES`, `TAKEOFFLEVEL` | Quantity takeoff split by construction phase (new work and demolition) and level; optional CSV. |
 | `UNITPRICE` | `COSTRATE`, `RATE` | Stores a unit rate in the drawing (COST:<category>[:<type>]:<measure>) used by COSTESTIMATE. |
 | `UVALUE` | `UVAL`, `THERMAL`, `LAMBDA` | U-value (EN ISO 6946) of selected walls, slabs, roofs and openings from their layers; Lambda sets a material's conductivity, Set a type's U-value. |
-| `WINDRESULTS` | `CFDRESULTS`, `WINDIMPORT` | Imports an OpenFOAM pedestrian-level velocity sample (raw x y z Ux Uy Uz) as wind arrows coloured by speed with Lawson comfort classes (the case's wind direction is taken from WINDDIRECTION). |
+| `WINDRESULTS` | `CFDRESULTS`, `WINDIMPORT` | Imports an OpenFOAM pedestrian-level velocity sample (raw x y z Ux Uy Uz) as wind arrows coloured by speed with Lawson comfort classes (the case's wind direction is taken from WINDDIRECTION); the Solve option runs the built-in 2D lattice Boltzmann solver instead (no external CFD needed). |
 
 ### Scripting
 
@@ -1764,6 +1875,7 @@ command inside the app. This table is generated from the command definitions in 
 | `MACRO` | `RUNMACRO` | Runs a menu macro: spaces or ; = Enter, \ = pause for your input, ^C^C = cancel first (e.g. ^C^CLINE \ @1000,0 ;). |
 | `MACROBUTTON` | `MBUTTON`, `-CUI`, `CUIBUTTON` | Creates, edits, lists, runs and deletes custom macro buttons (saved in the drawing or in your profile). |
 | `MEMORYREPORT` | `MEMUSAGE`, `MEMSTATS`, `MEMINFO` | Memory estimate of the drawing by kind, the app's memory footprint and the budget (MEMORYBUDGET MB) with advice; POINTLIMIT follows the budget. |
+| `NODEPACKAGE` | `NODEPACKAGES`, `NODEPKG` | Custom node packages (.archinodes): Create one from the drawing's node graph (a snippet per group), Install a file, Insert a snippet into the graph, List, Remove. *(app)* |
 | `RELZERO` | `RELATIVEZERO`, `SETRELZERO` | Sets the relative zero (the point @ input is measured from), or locks / unlocks it. |
 | `RESUME` |  | Continues a script that was interrupted with Escape. |
 | `SCRIPTRECORD` | `RECSCRIPT` | Records typed commands and picks as a script (Start/Stop); saved to a .scr file. |
@@ -1843,6 +1955,7 @@ command inside the app. This table is generated from the command definitions in 
 | Command | Aliases | Description |
 | --- | --- | --- |
 | `CABLETRAY` | `TRAYRUN` | Draws cable trays (open U-channel with rungs in plan) along points. |
+| `CIRCUIT` | `CIRCUITS`, `ELCIRCUIT` | Electrical circuits: Create (devices on a panel circuit with description and breaker), Remove devices, Show wiring home runs, List circuits. |
 | `CONDUIT` | `CONDUITRUN` | Draws electrical conduit along points with elbows. |
 | `DUCT` | `DUCTRUN`, `DUCTWORK` | Draws rectangular ducts along points with flanged bends. |
 | `LIGHTDATA` | `PHOTOMETRY`, `LUMINAIRE`, `LIGHTFIXTURE` | Sets photometric data of light fixtures (lumens, watts, colour temperature, beam angle) used by schedules and rendering. |
@@ -1850,6 +1963,7 @@ command inside the app. This table is generated from the command definitions in 
 | `MEPCONNECTORS` | `CONNECTORS`, `FIXTURECONNECTORS` | Lists plumbing/electrical connection points of fixtures and shows or hides them in plan. |
 | `MEPPIPE` | `PIPERUN`, `PIPING` | Draws pipes along points with elbow fittings at bends; can start at a plumbing fixture connector, slope and rise. |
 | `MEPSYSTEM` | `SYSTEMS`, `MEPSYSTEMS`, `SYSTEMBROWSER` | Connector-based systems: list connected networks, assign a system to a whole network, show only some systems, or check open ends. |
+| `PANELSCHEDULE` | `PANELSCHED` | Panel schedule of an electrical panel (circuits, loads, breakers, phase balance): List, Place as a table or Export CSV. |
 
 ### Manage
 
@@ -1869,6 +1983,12 @@ command inside the app. This table is generated from the command definitions in 
 | `TRANSFERSTANDARDS` | `TRANSFERPROJECTSTANDARDS`, `COPYSTANDARDS`, `TPS` | Copies types, styles and settings (wall/slab/opening/stair/railing types, materials, layers, linetypes, text and dimension styles, view templates, families, parameters, schedules, keynotes) from another .archi file. |
 | `TYPEIMAGE` | `SCHEDULEIMAGE`, `TYPEPICTURE` | Assigns an image file to a type (wall/opening/family type); schedules with an Image field show it in placed tables. |
 | `WORKSET` | `WORKSETS` | Worksets (named element sets): list, new, current, assign selection, hide/show, select members. |
+
+### Documentation
+
+| Command | Aliases | Description |
+| --- | --- | --- |
+| `ROOMDATASHEET` | `ROOMDATA`, `RDS` | Room data sheets: Show per-room reports, Export (CSV/HTML/text), Import an edited CSV back into the rooms, or Set one field. |
 
 ### Properties
 
