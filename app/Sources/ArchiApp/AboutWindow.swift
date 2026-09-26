@@ -101,7 +101,7 @@ struct AboutView: View {
             .background(RoundedRectangle(cornerRadius: 7).fill(Theme.field))
             HStack(spacing: 4) {
                 Text("© Oanarina ·").font(Theme.fontSmall).foregroundStyle(Theme.textDim)
-                Link("oanarina.com", destination: URL(string: "https://oanarina.com")!).font(Theme.fontSmall)
+                Link("www.oanarinaldi.com", destination: URL(string: "https://www.oanarinaldi.com")!).font(Theme.fontSmall)
             }
             .padding(.bottom, 14)
         }

@@ -466,7 +466,7 @@ extension AppSelfTests {
         let hm = AppModel()
         hm.editor.transaction("t") { d in _ = d.add(.line(LineGeom(.zero, Vec2(100, 0)))) }
         let hid = hm.doc.entities[0].id
-        run(hm, "HYPERLINK #\(hid)  https://oanarina.com ")
-        check(hm.doc.entities[0].props["hyperlink"] == "https://oanarina.com", "HYPERLINK attaches a URL")
+        run(hm, "HYPERLINK #\(hid)  https://www.oanarinaldi.com ")
+        check(hm.doc.entities[0].props["hyperlink"] == "https://www.oanarinaldi.com", "HYPERLINK attaches a URL")
     }
 }
