@@ -30,7 +30,8 @@ This guide describes what the app does today. The full backlog, with the status 
 19. [Scripting and AI agents](#scripting-and-ai-agents)
 20. [Settings and customisation](#settings-and-customisation)
 21. [Keyboard and mouse](#keyboard-and-mouse)
-22. [Command reference](#command-reference)
+22. [Tutorial videos](#tutorial-videos)
+23. [Command reference](#command-reference)
 
 ## Getting started
 
@@ -646,6 +647,37 @@ converts to BIM with `BUILDING Mass`.
   `SUNSTUDYVIDEO` a shadow study over a day, and `PANORAMA` a 360° equirectangular image. The render sky is a
   physically based model; glass reflects the environment (no refraction yet), and textures can drive bump.
 
+**Photographic lighting presets.** `RENDERPRESET` (aliases `LIGHTINGPRESET`, `PHOTOLOOK`) gives the Realistic view and
+renders one of four looks, and switches the 3D view to Realistic:
+
+| Preset | Look |
+| --- | --- |
+| `Daylight` | High sun, blue sky with clouds, crisp soft shadows |
+| `Goldenhour` | Low warm sun, long shadows, warm sky |
+| `Overcast` | Diffuse light from a cloudy sky, very soft shadows |
+| `Night` | Dark sky with stars and a moon; windows glow from inside |
+
+Each preset sets its own sun position, a sky generated at run time, soft shadows, exposure, bloom and ambient occlusion;
+glass is tinted and reflects the sky, and the ground becomes a large meadow that fades into haze at the horizon.
+`RENDERPRESET Off` returns to the default Realistic look. The preset is stored in the drawing. The Render window has the
+same choice under **Look**, and a **Supersampling** picker (off, 2× or 3×): the image is rendered larger and filtered down for
+smoother edges and foliage.
+
+**Rendering to a file without the window.** `RENDERSAVE <preset> <camera> <width> <height> <path>` (aliases `RENDERPNG`,
+`RSAVE`) renders offscreen and writes a PNG, for example
+
+```
+RENDERSAVE Goldenhour Front 2560 1440 ~/Desktop/cedar-front.png
+```
+
+The camera is a saved camera (`SAVECAMERA`) or `Current` for the current 3D view. The size can be 16 × 16 up to the
+renderer's maximum; images up to 1920 × 1080 are supersampled 3×, larger ones 2×, on top of 4× multisampling. Eye-level
+cameras keep vertical lines vertical (two-point perspective); aerial cameras keep their natural perspective. A relative
+path is saved next to the drawing (or in your home folder for an unsaved drawing); `.png` is added when missing. White balance is applied to the finished image.
+
+The Cedar House sample on the start screen has three saved cameras, Front, Corner and Aerial, and textured materials
+with bump and roughness maps, so it is a good place to try the presets.
+
 **More 3D view tools.** `MEASURE3D` measures in the 3D view, `GIZMO3D` moves and rotates objects in plan directions,
 `CLIPPLANES` manages clipping planes, and materials can be dropped onto elements. A camera path editor with keys, timeline,
 playback and MP4 export saves paths in the drawing; the render queue writes PNGs and keeps a render history.
@@ -974,6 +1006,47 @@ automatically. The menu bar titles and common menu items now follow `LANGUAGE`.
 | ⌃0 | Clean screen |
 | ⌘, | Settings |
 | ⇧⌘/ | Command reference |
+
+## Tutorial videos
+
+The app can record its own tutorial videos. The tutorial series (twelve scripts, from a first look at the interface to
+scripting and AI agents) builds the Cedar House from an empty drawing:
+
+| # | Tutorial |
+| --- | --- |
+| 01 | Getting started: start screen, interface tour, 2D/3D/Split/Sheet |
+| 02 | The command line: commands, aliases, coordinates, options, repeat and undo |
+| 03 | Drawing basics: rectangles, circles, polylines, snaps, fillet, trim, offset |
+| 04 | Levels and walls |
+| 05 | Doors and windows |
+| 06 | Floors, roofs and stairs |
+| 07 | Rooms and annotation |
+| 08 | 3D view and materials |
+| 09 | Rendering |
+| 10 | Sheets and PDF |
+| 11 | Import and export |
+| 12 | Scripting and AI agents |
+
+**Tools ▸ Tutorial Videos** (`TUTORIALRECORD`, aliases `TUTORIALVIDEOS`, `TUTREC`) has three options:
+
+- **List** prints each bundled tutorial with its number of steps and estimated length.
+- **Check** plays every step against the real editor without recording and reports failed commands or buttons that
+  could not be found (a dry run).
+- **Record** asks which tutorials to record (numbers or names separated by spaces; Enter records all) and an output
+  folder, then opens a new window at 1440 × 900 and plays each script there: it types into the command line, presses
+  ribbon and panel buttons, clicks on the plan and orbits the 3D view, and records the window as an H.264 MP4 at 30 fps
+  with an animated cursor, click ripples, captions and keystroke pills. A `.log` file next to each video lists what was
+  typed and what the app answered. The Finder shows the folder when it has finished.
+
+Leave the recording window alone until the recorder closes it: real mouse and keyboard input still reaches it, and
+closing it stops the recording. Recording takes about as long as the videos. The window is captured with the app's own
+drawing, so it needs no screen-recording permission and works while the screen is locked. Videos follow the display's
+resolution (2880 × 1800 on a Retina display).
+
+The scripts are plain text files (`.tut`, one step per line: `type`, `click`, `pick`, `orbit`, `camera`, `note`,
+`wait` and others); the format is described in `tutorials/README.md` in the source repository. From the Terminal,
+`scripts/make-tutorials.sh record [numbers…]` records them, and the app accepts `--record-tutorials DIR` to record and
+quit.
 
 ## Command reference
 

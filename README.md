@@ -49,6 +49,11 @@ material patterns and object styles; clean joins for slanted and tapered walls, 
 crash reports, translated menus, a WebXR headset viewer and spatial-index picking tested on 100,000 objects. The feature
 register now lists 1114 of 1157 features as done and 39 as partial.
 
+Since then: photographic lighting presets (Daylight, Golden hour, Overcast, Night with glowing windows) for the Realistic
+view and renders, with generated skies, tinted reflective glass, a horizon meadow and supersampled final renders;
+`RENDERSAVE` writes a PNG without opening the render window. The app also records its own tutorial videos
+(`TUTORIALRECORD`, twelve scripts in `tutorials/` that build the Cedar House sample).
+
 ## Build and run
 
 Requires macOS 14 or later and Xcode 16 or later (Swift 5.10+).
@@ -57,13 +62,15 @@ Requires macOS 14 or later and Xcode 16 or later (Swift 5.10+).
 ./scripts/build.sh          # builds build/Oanarina Archi Tool.app
 ./scripts/test.sh           # runs the core test suite
 ./scripts/package.sh        # universal signed DMG in dist/
+./scripts/make-tutorials.sh record   # tutorial videos → build/tutorials/*.mp4
 ```
 
 ## Project layout
 
 - `app/` — Swift package. `ArchiCore` holds the platform-independent drawing and building model, geometry, commands and file formats. `ArchiApp` is the macOS interface (SwiftUI/AppKit, SceneKit 3D).
 - `docs/` — feature register, user guide, scripting and agent API.
-- `scripts/` — build, test, package and the Mac bridge used by development agents.
+- `scripts/` — build, test, package, tutorial recording and the Mac bridge used by development agents.
+- `tutorials/` — scripts of the tutorial video series (see `tutorials/README.md`).
 - `other_projects/` — local reference checkouts (FreeCAD, LibreCAD, IfcOpenShell, SolveSpace, OpenSCAD, BRL-CAD, Sverchok, CAD Sketcher). Not part of this repository.
 
 ## License
