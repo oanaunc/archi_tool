@@ -275,6 +275,28 @@ public enum Snap {
     }
 
     /// Snap geometry of a BIM element in plan: characteristic points and outline pieces.
+    /// Offsets from the centreline (positive = left of the wall direction) of the structural core faces of a layered wall
+    /// (plies with function "Structure"/"Core", listed from the left face). Empty for single-ply or unknown types.
+    public static func coreFaceOffsets(_ w: WallGeom, doc: ArchiDocument) -> [Double] {
+        guard let tn = w.wallType, let t = doc.wallTypes.first(where: { $0.name.caseInsensitiveCompare(tn) == .orderedSame }), t.plies.count > 1 else { return [] }
+        let total = t.thickness
+        guard total > 1e-9 else { return [] }
+        let k = w.thickness / total
+        var acc = 0.0
+        var out: [Double] = []
+        for p in t.plies {
+            let a = acc, b = acc + p.thickness
+            acc = b
+            let f = p.function.lowercased()
+            guard f.hasPrefix("struct") || f == "core" else { continue }
+            for x in [a, b] where x > 1e-9 && x < total - 1e-9 {
+                let o = w.thickness / 2 - x * k
+                if !out.contains(where: { abs($0 - o) < 1e-9 }) { out.append(o) }
+            }
+        }
+        return out
+    }
+
     static func elementSnaps(_ el: BIMElement, doc: ArchiDocument) -> (ends: [Vec2], mids: [Vec2], centers: [Vec2], inserts: [Vec2], pieces: [CurvePiece]) {
         var ends: [Vec2] = [], mids: [Vec2] = [], centers: [Vec2] = [], inserts: [Vec2] = [], pieces: [CurvePiece] = []
         func loop(_ pts: [Vec2], closed: Bool) {
@@ -307,6 +329,13 @@ public enum Snap {
                 pieces += [CurvePiece(seg: l0, l1), CurvePiece(seg: r0, r1), CurvePiece(seg: l0, r0), CurvePiece(seg: l1, r1)]
                 ends += [l0, l1, r0, r1]
                 mids += [(l0 + l1) / 2, (r0 + r1) / 2, (c0 + c1) / 2]
+                // BIM references (PRC-016): the location line (centreline) and the faces of the structural core.
+                pieces.append(CurvePiece(seg: c0, c1))
+                for off in coreFaceOffsets(w, doc: doc) {
+                    let m = (c1 - c0).normalized.perp * off
+                    pieces.append(CurvePiece(seg: c0 + m, c1 + m))
+                    ends += [c0 + m, c1 + m]
+                }
             }
         case .column(let c):
             centers.append(c.position)
@@ -504,6 +533,7 @@ public enum Snap {
         let g = settings.gridSpacing
         let grid = settings.gridSnap && g > 0
         func roundG(_ v: Double) -> Double { (v / g).rounded() * g }
+        if let a = settings.axisLock { return axisLocked(base: base, cursor: cursor, angle: a, grid: grid ? g : nil) }
         if settings.isometric { return constrainIso(base: base, cursor: cursor, settings: settings) }
         if d.length < 1e-12 { return grid ? Vec2(roundG(cursor.x), roundG(cursor.y)) : cursor }
         if settings.ortho {
@@ -561,5 +591,13 @@ public enum Snap {
             return base + dir * dist
         }
         return grid ? isoGridPoint(cursor, spacing: g) : cursor
+    }
+
+    /// Projection of `cursor` on the locked axis through `base` (PRC-028); with `grid` the distance is rounded to it.
+    public static func axisLocked(base: Vec2, cursor: Vec2, angle: Double, grid: Double? = nil) -> Vec2 {
+        let dir = Vec2.polar(1, angle)
+        var dist = (cursor - base).dot(dir)
+        if let g = grid, g > 0 { dist = (dist / g).rounded() * g }
+        return base + dir * dist
     }
 }

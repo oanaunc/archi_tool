@@ -10,7 +10,7 @@ enum DraftingToolCommands {
     static var precision: [CommandDef] { [
         CommandDef("UCS", category: "Settings", summary: "Sets the user coordinate system: World, Origin, Z rotation, 3point, Object, Previous, Named save/restore.") { ed in
             let cur = UCSFrame.current(ed.doc)
-            let a = try await ed.getPoint("Specify origin of UCS", keywords: ["World", "Origin", "Z", "3point", "Object", "View", "Previous", "Named"])
+            let a = try await ed.getPoint("Specify origin of UCS", keywords: ["World", "Origin", "Z", "3point", "Object", "Face", "View", "Previous", "PLane", "Named"])
             switch a {
             case .point(let o):
                 let x = try await ed.getPoint("Specify point on X-axis or <accept>", base: o) { c in [.line(LineGeom(o, c))] }
@@ -35,6 +35,14 @@ enum DraftingToolCommands {
             case .keyword("Object"):
                 guard case .pick(let pk) = try await ed.pickObject("Select object to align UCS", filter: { ed.doc.entity($0) != nil }), let e = ed.doc.entity(pk.id) else { return }
                 guard let f = ucsFromObject(e.geometry, pick: pk.point) else { throw CommandError.invalid("Cannot align the UCS to that object.") }
+                f.apply(to: &ed.doc)
+            case .keyword("Face"):
+                // Aligns the UCS with the face (edge in plan) of a wall, slab, roof, room, column or closed shape nearest the pick.
+                guard case .pick(let pk) = try await ed.pickObject("Select face of object") else { return }
+                guard let f = ucsFromFace(pk.id, pick: pk.point, doc: ed.doc) else { throw CommandError.invalid("That object has no face to align to.") }
+                f.apply(to: &ed.doc)
+            case .keyword("PLane"):
+                guard let n = try await ed.getString("Enter reference plane name"), let f = ReferencePlanes.frame(n, in: ed.doc) else { throw CommandError.invalid("Reference plane not found.") }
                 f.apply(to: &ed.doc)
             case .keyword("Previous"):
                 var prev = (ed.doc.variable("UCSPREV") ?? "").split(separator: ";").map(String.init)
@@ -101,6 +109,35 @@ enum DraftingToolCommands {
         ed.print("Current UCS: " + (cur.isWorld ? "World" : cur.text))
         if names.isEmpty { ed.print("No named UCS.") }
         for n in names { ed.print("  \(n.dropFirst(4)): \(ed.doc.variables[n] ?? "")") }
+    }
+
+    /// UCS on the face nearest `pick` (PRC-033 Face): origin at the face edge's start, X along it, Y into the object.
+    static func ucsFromFace(_ id: EntityID, pick: Vec2, doc: ArchiDocument) -> UCSFrame? {
+        var loops: [[Vec2]] = []
+        if let el = doc.element(id) {
+            let f = CommandHelpers.footprint(el, doc: doc)
+            if f.count >= 2 { loops.append(f) }
+        } else if let e = doc.entity(id) {
+            for pl in GeometryOps.tessellate(e.geometry, doc: doc) where pl.count >= 2 { loops.append(pl) }
+        }
+        var best: (d: Double, a: Vec2, b: Vec2, inside: Vec2)?
+        for l in loops {
+            let closed = l.count >= 3
+            let n = closed ? l.count : l.count - 1
+            let c = l.reduce(Vec2.zero, +) / Double(l.count)
+            for i in 0..<n {
+                let a = l[i], b = l[(i + 1) % l.count]
+                guard a.distance(to: b) > 1e-9 else { continue }
+                let t = max(0, min(1, (pick - a).dot(b - a) / (b - a).dot(b - a)))
+                let d = pick.distance(to: a + (b - a) * t)
+                if best == nil || d < best!.d { best = (d, a, b, c) }
+            }
+        }
+        guard let bst = best else { return nil }
+        var (a, b) = (bst.a, bst.b)
+        // Y points into the object: flip the edge so the object lies on its left.
+        if (b - a).cross(bst.inside - a) < 0 { swap(&a, &b) }
+        return UCSFrame(origin: a, angle: (b - a).angle)
     }
 
     static func ucsFromObject(_ g: Geometry, pick: Vec2) -> UCSFrame? {

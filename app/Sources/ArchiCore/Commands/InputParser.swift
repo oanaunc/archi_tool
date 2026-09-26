@@ -213,10 +213,38 @@ public enum InputParser {
         return parseNumber(t)
     }
 
-    /// Parses absolute, relative (@) and polar (<) coordinates. A third component (z) is ignored in 2D.
+    /// Parses absolute, relative (@) and polar (<) coordinates. A third component (z) is ignored in 2D (see `parsePoint3`).
     /// Coordinates typed without "*" are in the current UCS (InputParser.context.ucs); "*x,y" and "@*dx,dy" are world coordinates.
+    /// "S:e,n" is a point in shared (survey) coordinates (PRC-040). "d<TAB>a" (dynamic input length Tab angle, CMD-033)
+    /// is relative polar input from the last point.
     public static func parsePoint(_ s: String, last: Vec2?) -> Vec2? {
+        guard let p3 = parsePoint3(s, last: last.map { Vec3($0.x, $0.y, lastZ) }) else { return nil }
+        lastZ = p3.z; lastParsedZ = p3.z
+        return Vec2(p3.x, p3.y)
+    }
+    /// Z of the last typed point (relative 3D input adds to it).
+    public static var lastZ = 0.0
+    /// Z of the last point parsed since it was cleared (nil when the point was picked, not typed).
+    public static var lastParsedZ: Double?
+
+    /// 3D coordinate entry (CMD-026): x,y,z (absolute or @relative), cylindrical d<a,z and spherical d<a<b (b = angle up
+    /// from the XY plane). Two-component forms get z = 0 (absolute) or the last point's z (relative). Angles are in degrees.
+    public static func parsePoint3(_ s: String, last: Vec3?) -> Vec3? {
         var t = s
+        // Dynamic input: length Tab angle = relative polar.
+        if t.contains("\t") {
+            let f = t.split(separator: "\t", omittingEmptySubsequences: false).map { String($0).trimmingCharacters(in: .whitespaces) }
+            guard f.count == 2, !f[0].hasPrefix("@") else { return nil }
+            t = "@" + f[0] + "<" + f[1]
+        }
+        if t.count > 2, t.prefix(2).uppercased() == "S:" {
+            let parts = t.dropFirst(2).split(separator: ",").map(String.init)
+            guard parts.count == 2 || parts.count == 3, let e = parseNumber(parts[0]), let n = parseNumber(parts[1]) else { return nil }
+            let z = parts.count == 3 ? parseNumber(parts[2]) : 0
+            guard let z else { return nil }
+            let p = context.shared.fromShared(Vec2(e, n))
+            return Vec3(p.x, p.y, z - context.shared.elevation)
+        }
         var relative = false
         if t.hasPrefix("@") { relative = true; t.removeFirst(); if t.isEmpty { return last } }
         var ucs = context.ucs
@@ -224,15 +252,34 @@ public enum InputParser {
         if t.hasPrefix("#") { t.removeFirst() } // explicit absolute
         guard !t.isEmpty else { return nil }
         let local: Vec2
+        var z: Double? = nil
         if let lt = t.firstIndex(of: "<") {
-            guard let d = parseNumber(String(t[..<lt])), let a = parseAngleDegrees(String(t[t.index(after: lt)...])) else { return nil }
-            local = Vec2.polar(d, rad(a))
+            guard let d = parseNumber(String(t[..<lt])) else { return nil }
+            let rest = String(t[t.index(after: lt)...])
+            if let lt2 = rest.firstIndex(of: "<") {
+                // Spherical: distance < angle in XY < angle from XY.
+                guard let a = parseAngleDegrees(String(rest[..<lt2])), let b = parseAngleDegrees(String(rest[rest.index(after: lt2)...])) else { return nil }
+                local = Vec2.polar(d * cos(rad(b)), rad(a)); z = d * sin(rad(b))
+            } else if let c = rest.firstIndex(of: ",") {
+                // Cylindrical: distance < angle , z.
+                guard let a = parseAngleDegrees(String(rest[..<c])), let zz = parseNumber(String(rest[rest.index(after: c)...])) else { return nil }
+                local = Vec2.polar(d, rad(a)); z = zz
+            } else {
+                guard let a = parseAngleDegrees(rest) else { return nil }
+                local = Vec2.polar(d, rad(a))
+            }
         } else {
             let parts = t.split(separator: ",", omittingEmptySubsequences: false).map(String.init)
             guard parts.count == 2 || parts.count == 3, let x = parseNumber(parts[0]), let y = parseNumber(parts[1]) else { return nil }
+            if parts.count == 3 { guard let zz = parseNumber(parts[2]) else { return nil }; z = zz }
             local = Vec2(x, y)
         }
-        if relative { return (last ?? .zero) + ucs.vectorToWorld(local) }
-        return ucs.toWorld(local)
+        if relative {
+            let b = last ?? Vec3(0, 0, 0)
+            let w = Vec2(b.x, b.y) + ucs.vectorToWorld(local)
+            return Vec3(w.x, w.y, b.z + (z ?? 0))
+        }
+        let w = ucs.toWorld(local)
+        return Vec3(w.x, w.y, z ?? 0)
     }
 }

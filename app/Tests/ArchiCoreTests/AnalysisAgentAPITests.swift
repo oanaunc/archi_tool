@@ -181,7 +181,7 @@ final class AnalysisAgentAPITests: XCTestCase {
 
     func testNoTelemetryAndOfflineByDefault() throws {
         // Network APIs are only used by features the user starts explicitly.
-        let allowed: Set<String> = ["BCFServer.swift", "Automation.swift", "AgentServer.swift", "AppSelfTestsNav.swift"]
+        let allowed: Set<String> = ["BCFServer.swift", "Automation.swift", "AgentServer.swift", "AppSelfTestsNav.swift", "Assistant.swift"]
         let patterns = ["URLSession", "NSURLConnection", "import Network", "CFSocketCreate", "CFStreamCreatePairWithSocket"]
         var offenders: [String] = []
         let e = FileManager.default.enumerator(at: Self.appRoot.appendingPathComponent("Sources"), includingPropertiesForKeys: nil)

@@ -293,12 +293,38 @@ private struct SheetFrame<Content: View>: View {
 struct UnitsSheet: View {
     @ObservedObject var model: AppModel
     @State private var units: Units = .millimeters
+    @State private var lin: UnitFormat.Linear = .decimal
+    @State private var lprec = 2
+    @State private var ang: UnitFormat.Angular = .degrees
+    @State private var aprec = 0
     var body: some View {
         SheetFrame(title: "Drawing Units", onCancel: { model.sheet = nil }, onOK: {
-            if units != model.doc.units { model.editor.transaction("Units") { $0.units = units } }
+            let d = model.doc
+            if units != d.units || lin != UnitFormat.linearType(d) || lprec != UnitFormat.linearPrecision(d) || ang != UnitFormat.angularType(d) || aprec != UnitFormat.angularPrecision(d) {
+                model.editor.transaction("Units") { doc in
+                    doc.units = units
+                    doc.setVariable("LUNITS", "\(lin.rawValue)"); doc.setVariable("LUPREC", "\(lprec)")
+                    doc.setVariable("AUNITS", "\(ang.rawValue)"); doc.setVariable("AUPREC", "\(aprec)")
+                }
+            }
             model.sheet = nil
         }) {
             VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .top, spacing: 18) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Length").font(Theme.fontBold)
+                        Picker("Type", selection: $lin) { ForEach(UnitFormat.Linear.allCases, id: \.self) { Text($0.title).tag($0) } }
+                        Stepper("Precision: \(lin == .architectural || lin == .fractional ? "1/\(1 << lprec)\"" : "\(lprec) decimals")", value: $lprec, in: 0...8)
+                    }
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Angle").font(Theme.fontBold)
+                        Picker("Type", selection: $ang) { ForEach(UnitFormat.Angular.allCases, id: \.self) { Text($0.title).tag($0) } }
+                        Stepper("Precision: \(aprec)", value: $aprec, in: 0...8)
+                    }
+                }
+                Text("Sample: \(UnitFormat.linear(42.5 / UnitFormat.inchesPerUnit(units), units: units, type: lin, precision: lprec))  ·  \(UnitFormat.angle(0.7854, type: ang, precision: aprec))")
+                    .font(Theme.mono).foregroundStyle(Theme.accent)
+                Divider()
                 Picker("Insertion units", selection: $units) {
                     ForEach(Units.allCases, id: \.self) { u in Text("\(u.rawValue.capitalized) (\(u.abbreviation))").tag(u) }
                 }
@@ -308,7 +334,10 @@ struct UnitsSheet: View {
             }
             .frame(width: 360, alignment: .leading)
         }
-        .onAppear { units = model.doc.units }
+        .onAppear {
+            let d = model.doc
+            units = d.units; lin = UnitFormat.linearType(d); lprec = UnitFormat.linearPrecision(d); ang = UnitFormat.angularType(d); aprec = UnitFormat.angularPrecision(d)
+        }
     }
 }
 

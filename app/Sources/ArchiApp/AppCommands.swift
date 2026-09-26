@@ -19,6 +19,7 @@ enum AppCommands {
         r.register(AppCommandsReview.all)
         r.register(AppCommandsStudio.all)
         r.register(AppCommandsNav.all)
+        r.register(AppCommandsRound9.all)
         r.register(AppSelfTests.command)
         AppCommandsExtra.installSpellChecker()
     }
@@ -198,6 +199,7 @@ enum AppCommands {
             },
             CommandDef("PUBLISH", aliases: ["BATCHPLOT", "EXPORTSHEETS", "PUBLISHPDF"], category: "Output", summary: "Publishes all sheets to one multi-page PDF (PUBLISH path.pdf, or Enter for a dialog).", modifies: false) { ed in
                 let m = try ui(ed)
+                if LayerNotify.isOn(ed.doc), !LayerNotify.unreconciled(ed.doc).isEmpty { ed.print("⚠ Plotting with unreconciled layers: \(LayerNotify.unreconciled(ed.doc).joined(separator: ", ")).") }
                 let p = try await ed.getString("Enter PDF file path or Enter to choose", defaultValue: "")
                 Plotter.publish(model: m, path: p?.trimmingCharacters(in: CharacterSet(charactersIn: "\" ")))
             },

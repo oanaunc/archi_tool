@@ -35,7 +35,8 @@ enum BlockCommands {
             let ents = ids.compactMap { ed.doc.entity($0) }
             guard !ents.isEmpty else { throw CommandError.invalid("No objects selected; block not created.") }
             // Prevent a block from containing itself.
-            if ents.contains(where: { if case .insert(let i) = $0.geometry { return i.block == name }; return false }) { throw CommandError.invalid("A block cannot reference itself.") }
+            // Prevent a block from containing itself, directly or through nested blocks (BLK-006).
+            if BlockEditing.references(ents, block: name, doc: ed.doc) { throw CommandError.invalid("A block cannot reference itself.") }
             let mode = try await ed.getKeyword("Objects after creating the block", ["Retain", "Convert", "Delete"], defaultValue: "Convert") ?? "Convert"
             let order = ed.doc.entities.filter { Set(ids).contains($0.id) }
             ed.doc.blocks[name] = Block(name: name, basePoint: base, entities: order)

@@ -11,6 +11,8 @@ public enum Schedules {
         public var elementID: EntityID?
         public var cells: [String]
         public var highlight: RGBA?
+        /// Cell-only highlights (column index → colour).
+        public var cellHighlights: [Int: RGBA] = [:]
     }
     public struct Table: Hashable {
         public var name: String
@@ -21,7 +23,7 @@ public enum Schedules {
     }
 
     public static let categories = ["walls", "doors", "windows", "openings", "rooms", "areas", "slabs", "columns", "beams", "roofs", "stairs", "railings",
-                                    "curtainWalls", "components", "elements", "materials", "sheets", "views", "annotations", "keys"]
+                                    "curtainWalls", "components", "elements", "materials", "sheets", "views", "annotations", "keys", "parts", "assemblies"]
 
     /// Category name from user input (singular/plural, any case); nil when unknown.
     public static func category(_ s: String) -> String? {
@@ -45,6 +47,8 @@ public enum Schedules {
         case "views": return f(["Name", "Kind", "Sheet", "Scale"])
         case "annotations": return f(["Block", "Layer", "Count"])
         case "keys": return f(["Key"])
+        case "parts": return f(["ID", "partOf", "Level", "Material", "thickness", "Area", "Volume"])
+        case "assemblies": return f(["Name", "Type", "Members", "Categories", "Count"])
         default: return f(["ID", "Category", "Level", "Name", "Count"])
         }
     }
@@ -59,6 +63,8 @@ public enum Schedules {
     }
 
     static func matches(_ el: BIMElement, _ category: String) -> Bool {
+        if category == "parts" { return el.props["partOf"] != nil }
+        if category == "walls", el.props["partOf"] != nil { return false }
         switch (category, el.geometry) {
         case ("walls", .wall), ("slabs", .slab), ("columns", .column), ("beams", .beam), ("roofs", .roof), ("stairs", .stair),
              ("railings", .railing), ("curtainWalls", .curtainWall), ("components", .component): return true
@@ -96,6 +102,14 @@ public enum Schedules {
                 var v: [String: String] = ["block": ins.block, "layer": e.layer, "count": "1"]
                 for (k, a) in ins.attributes { v[k.lowercased()] = a }
                 return Obj(id: e.id, element: nil, values: v)
+            }
+        case "assemblies":
+            // One row per assembly (BIM-124): member count, categories and total volume.
+            let els = ModelSets.scheduleModel(doc).elements.filter { $0.props["assembly"] != nil }
+            return Dictionary(grouping: els, by: { $0.props["assembly"]! }).sorted { $0.key.localizedStandardCompare($1.key) == .orderedAscending }.map { name, ms in
+                let cats = Set(ms.map { VisibilityGraphics.category($0) }).sorted().joined(separator: ", ")
+                return Obj(id: nil, element: nil, values: ["name": name, "assembly": name, "members": "\(ms.count)", "categories": cats, "count": "1",
+                                                           "type": doc.variable("ASSEMBLYTYPE." + name) ?? ""])
             }
         case "keys":
             return def.keys.keys.sorted().map { k in
@@ -206,6 +220,10 @@ public enum Schedules {
             case .railing(let r): return fmt(CommandHelpers.polylineLength(r.path))
             default: return ""
             }
+        case "image", "typeimage":
+            // Type images (DOC-048): shown as pictures in placed schedules.
+            let t = value("type", o, doc: doc)
+            return doc.variable("TYPEIMAGE." + t).map { "img:" + $0 } ?? ""
         case "perimeter":
             switch el.geometry {
             case .space(let s): return fmt(CommandHelpers.polylineLength(s.boundary + [s.boundary.first ?? .zero]))
@@ -243,6 +261,11 @@ public enum Schedules {
             if case .space(var s) = doc.elements[i].geometry { s.number = v; doc.elements[i].geometry = .space(s); return true }
         case "mark":
             if case .opening(var o) = doc.elements[i].geometry { o.mark = v.isEmpty ? nil : v; doc.elements[i].geometry = .opening(o); return true }
+        case "image", "typeimage":
+            let t = Schedules.value("type", Obj(id: id, element: doc.elements[i]), doc: doc)
+            let path = v.hasPrefix("img:") ? String(v.dropFirst(4)) : v
+            if path.isEmpty { doc.variables["TYPEIMAGE." + t.uppercased()] = nil } else { doc.setVariable("TYPEIMAGE." + t, path) }
+            return true
         default: break
         }
         if let p = PropertyAccess.properties(of: id, in: doc).first(where: { name($0.name) == field }) {
@@ -342,12 +365,20 @@ public enum Schedules {
             return out
         }
         func highlight(_ r: (obj: Obj, cells: [String])) -> RGBA? {
-            def.highlights.first { h in compare(cell(r, h.field), h.op, h.value) }?.color
+            def.highlights.first { h in h.cellOnly != true && compare(cell(r, h.field), h.op, h.value) }?.color
+        }
+        // Cell-only conditional formatting (DOC-052): the tested field's cell.
+        func cellHL(_ r: (obj: Obj, cells: [String])) -> [Int: RGBA] {
+            var out: [Int: RGBA] = [:]
+            for h in def.highlights where h.cellOnly == true && compare(cell(r, h.field), h.op, h.value) {
+                if let k = fields.firstIndex(where: { name($0.name) == name(h.field) }), out[k] == nil { out[k] = h.color }
+            }
+            return out
         }
         var out: [Row] = []
         func emitItems(_ rs: [(obj: Obj, cells: [String])]) {
             for r in rs {
-                out.append(Row(kind: .item, elementID: r.obj.id, cells: r.cells, highlight: highlight(r)))
+                out.append(Row(kind: .item, elementID: r.obj.id, cells: r.cells, highlight: highlight(r), cellHighlights: cellHL(r)))
                 if let emb = def.embedded, let el = r.obj.element { out += embeddedRows(emb, host: el, doc: doc, width: fields.count) }
             }
         }
@@ -510,8 +541,18 @@ public enum Schedules {
         var widths = Array(repeating: th * 4, count: cols)
         for r in [t.headings] + t.rows.map(\.cells) { for (i, c) in r.enumerated() where i < cols { widths[i] = max(widths[i], Double(c.count) * th * 0.75 + th * 1.5) } }
         let total = widths.reduce(0, +), gap = th * 4
+        let n = max(maxRows, 1)
         return segs.enumerated().map { k, cells in
-            TableGeom(origin: origin + Vec2(Double(k) * (total + gap), 0), columnWidths: widths, rowHeight: th * 2, cells: cells, textHeight: th)
+            var g = TableGeom(origin: origin + Vec2(Double(k) * (total + gap), 0), columnWidths: widths, rowHeight: th * 2, cells: cells, textHeight: th)
+            // Conditional formatting: highlighted rows and cells as cell fills (title and heading rows come first).
+            var fills: [String: RGBA] = [:]
+            for j in 0..<max(cells.count - 2, 0) where k * n + j < t.rows.count {
+                let row = t.rows[k * n + j]
+                if let c = row.highlight { for col in 0..<cols { fills["\(j + 2),\(col)"] = c } }
+                for (col, c) in row.cellHighlights { fills["\(j + 2),\(col)"] = c }
+            }
+            if !fills.isEmpty { g.fills = fills }
+            return g
         }
     }
 

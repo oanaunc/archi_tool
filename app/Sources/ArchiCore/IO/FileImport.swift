@@ -3,10 +3,10 @@ import Foundation
 
 /// Headless import/export by file extension, used by the IO commands, the CLI and agents.
 public enum FileImport {
-    public static let importFormats = ["archi", "dxf", "dwg", "ifc", "ifczip", "svg", "obj", "usda", "usdz", "usd", "stl", "3mf", "gltf", "glb", "ply", "off", "amf", "dae", "stp", "step",
+    public static let importFormats = ["archi", "dxf", "dwg", "ifc", "ifczip", "ifcxml", "svg", "obj", "usda", "usdz", "usd", "stl", "3mf", "gltf", "glb", "ply", "off", "amf", "dae", "stp", "step",
                                        "geojson", "cityjson", "shp", "osm", "asc", "xlsx", "csv", "tsv", "txt", "xyz", "pts", "las", "igs", "iges", "fbx", "pdf", "dwfx", "dwf", "dgn",
                                        "png", "jpg", "jpeg", "gif", "bmp", "tif", "tiff", "webp", "heic", "heif", "avif",
-                                       "e57", "brep", "brp", "architemplate"]
+                                       "e57", "brep", "brp", "architemplate", "laz"]
     public static let exportFormats = ["3mf", "usda", "usdz", "geojson", "dxf12", "points", "stp", "step", "ply", "plt", "hpgl", "xlsx", "ifczip", "dwg", "analytical", "opensees", "tcl", "laser", "igs", "iges", "fbx", "html", "dgn", "gbxml", "cobie", "dae",
                                        "kml", "kmz", "bcfzip", "bcf", "boq", "svglayers", "brep", "e57", "architemplate", "openfoam"]
 
@@ -36,6 +36,12 @@ public enum FileImport {
                 if String(decoding: head, as: UTF8.self).replacingOccurrences(of: " ", with: "").contains("\"type\":\"CityJSON\"") { return "cityjson" }
             }
             return "geojson"
+        case "xml":
+            if override == nil, let h = try? FileHandle(forReadingFrom: url), let head = try? h.read(upToCount: 4096) {
+                try? h.close()
+                if IFCXML.sniff(head) { return "ifcxml" }
+            }
+            return f
         case "cityjson", "jsonl": return "cityjson"
         case "tsv", "txt", "csv", "points": return "csv"
         case "pts": return "pointcloud"
@@ -76,6 +82,9 @@ public enum FileImport {
         case "ifczip":
             let r = try IFCImporter.importFile(try IFCZip.read(try Data(contentsOf: url)))
             return (r.doc, r.summary)
+        case "ifcxml":
+            let r = try IFCImporter.importFile(try IFCXML.toSTEP(try Data(contentsOf: url)))
+            return (r.doc, r.summary)
         case "dwg":
             let d = try DWGConverter.read(url, converter: reference.variable("DWGCONVERTER"))
             return (d, "\(d.entities.count) entities, \(d.blocks.count) blocks (converted from DWG)")
@@ -88,7 +97,7 @@ public enum FileImport {
             if let mesh = PointCloud.mesh(fromPLY: ply, scale: 1000 / reference.units.mm) {
                 return (entityDoc([mesh], native: true), "PLY mesh (\(ply.faces.count) faces)")
             }
-            let ents = PointCloud.entities(ply.points, options: PointCloudOptions(scale: 1000 / reference.units.mm))
+            let ents = PointCloud.entities(ply.points, options: PointCloudOptions(scale: 1000 / reference.units.mm, maxPoints: MemoryBudget.pointLimit(reference)))
             return (entityDoc(ents, native: true), "\(ents.count) of \(ply.points.count) PLY points")
         case "dgn":
             let r = try DGN.read(try Data(contentsOf: url))
@@ -116,7 +125,7 @@ public enum FileImport {
             let ents = try IGES.read(try readText(url))
             return (entityDoc(ents), "\(ents.count) IGES curves")
         case "e57":
-            let r = try E57.entities(try Data(contentsOf: url), options: PointCloudOptions(scale: 1000 / reference.units.mm))
+            let r = try E57.entities(try Data(contentsOf: url), options: PointCloudOptions(scale: 1000 / reference.units.mm, maxPoints: MemoryBudget.pointLimit(reference)))
             return (entityDoc(r.entities, native: true), "\(r.entities.count) of \(r.total) E57 points")
         case "brep":
             let ents = try BREPImporter.entities(try readText(url), unitMM: reference.units.mm)
@@ -124,12 +133,14 @@ public enum FileImport {
         case "architemplate":
             return (try ArchiTemplate.decode(Data(contentsOf: url)).document, "template")
         case "las":
-            let r = try LASReader.entities(try Data(contentsOf: url), options: PointCloudOptions(scale: 1000 / reference.units.mm))
+            let r = try LASReader.entities(try Data(contentsOf: url), options: PointCloudOptions(scale: 1000 / reference.units.mm, maxPoints: MemoryBudget.pointLimit(reference)))
             return (entityDoc(r.entities, native: true), "\(r.entities.count) of \(r.total) LAS points")
         case "laz":
-            throw PointCloud.CloudError.invalid("LAZ is compressed: decompress it to LAS first (laszip -i file.laz -o file.las).")
+            let las = try LAZConverter.decompress(url, converter: reference.variable("LAZCONVERTER"))
+            let r = try LASReader.entities(las, options: PointCloudOptions(scale: 1000 / reference.units.mm, maxPoints: MemoryBudget.pointLimit(reference)))
+            return (entityDoc(r.entities, native: true), "\(r.entities.count) of \(r.total) LAZ points")
         case "pointcloud":
-            let r = try PointCloud.load(try Data(contentsOf: url), ext: url.pathExtension, options: PointCloudOptions(scale: 1000 / reference.units.mm))
+            let r = try PointCloud.load(try Data(contentsOf: url), ext: url.pathExtension, options: PointCloudOptions(scale: 1000 / reference.units.mm, maxPoints: MemoryBudget.pointLimit(reference)))
             return (entityDoc(r.entities, native: true), "\(r.entities.count) of \(r.total) points")
         case "off":
             let e = try PointCloud.off(try readText(url))
@@ -226,6 +237,9 @@ public enum FileImport {
                                           textureRoot: doc.variable("TEXTUREROOT").map { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath) } ?? url.deletingLastPathComponent()).write(to: url, options: .atomic)
         case "geojson": try GeoJSON.export(doc).write(to: url, atomically: true, encoding: .utf8)
         case "dxf12", "r12": try DXFWriter.write(doc, version: .r12).write(to: url, atomically: true, encoding: .utf8)
+        case "dxf2004", "dxf2007", "dxf2010", "dxf2013", "dxf2018":
+            guard let v = DXFVersion.parse(format) else { return false }
+            try DXFWriter.write(doc, version: v).write(to: url, atomically: true, encoding: .utf8)
         case "points": try PointTable.exportPoints(doc).write(to: url, atomically: true, encoding: .utf8)
         case "stp", "step": try STEPExporter.export(MeshBuilder.build(doc: doc).map { scaled($0, unitMM) }, materials: doc.materials, name: doc.info.name, author: doc.info.author).write(to: url, atomically: true, encoding: .utf8)
         case "ply": try PointCloud.exportPLY(MeshBuilder.build(doc: doc).map { scaled($0, unitMM) }, materials: doc.materials).write(to: url, atomically: true, encoding: .utf8)
@@ -238,6 +252,14 @@ public enum FileImport {
             let roll = Double(doc.variable("PLOTROLL") ?? "").flatMap { $0 > 0 ? HPGLExporter.RollMedia(width: $0, margin: Double(doc.variable("PLOTMARGIN") ?? "") ?? 10) : nil }
             try HPGLExporter.export(entries, bounds: b, scale: scale, unitMM: unitMM, roll: roll).write(to: url, atomically: true, encoding: .ascii)
         case "xlsx": try XLSX.schedules(doc).write(to: url, options: .atomic)
+        case "saf":
+            let o = AnalyticalOptions.from(doc)
+            try StructuralExchange.saf(StructuralAnalysis.model(doc, options: o), name: doc.info.name, options: o).write(to: url, options: .atomic)
+        case "ifcstructural":
+            let o = AnalyticalOptions.from(doc)
+            try StructuralExchange.ifc(StructuralAnalysis.model(doc, options: o), name: doc.info.name, options: o, author: doc.info.author).write(to: url, atomically: true, encoding: .utf8)
+        case "ifcxml":
+            try IFCXML.fromSTEP(IFCExporter.export(doc: doc, meshes: MeshBuilder.build(doc: doc))).write(to: url, atomically: true, encoding: .utf8)
         case "ifczip":
             let ifc = IFCExporter.export(doc: doc, meshes: MeshBuilder.build(doc: doc))
             try IFCZip.write(ifc, name: url.deletingPathExtension().lastPathComponent + ".ifc").write(to: url, options: .atomic)

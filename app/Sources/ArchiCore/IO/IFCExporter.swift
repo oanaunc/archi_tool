@@ -391,7 +391,9 @@ final class IFCBuilder {
         let site = add("IFCSITE(\(g("site")),#\(oh),'Site',$,$,#\(sitePl),$,$,.ELEMENT.,\(dms(doc.info.latitude)),\(dms(doc.info.longitude)),0.,$,\(address))")
         let bldPl = placement(relTo: sitePl, .zero)
         let building = add("IFCBUILDING(\(g("building")),#\(oh),\(s(doc.info.name)),$,$,#\(bldPl),$,$,.ELEMENT.,$,$,$)")
-        add("IFCRELAGGREGATES(\(g("rel:project-site")),#\(oh),$,$,#\(project),(#\(site)))")
+        // IFC 4.3 alignments are aggregated into the project with the site (one decomposition per object).
+        let aligned = options.schema == .ifc4x3 ? alignments(sitePlacement: sitePl) : []
+        add("IFCRELAGGREGATES(\(g("rel:project-site")),#\(oh),$,$,#\(project),\(refs([site] + aligned)))")
         add("IFCRELAGGREGATES(\(g("rel:site-building")),#\(oh),$,$,#\(site),(#\(building)))")
 
         var levels = doc.levels.sorted { $0.elevation < $1.elevation }
@@ -976,7 +978,7 @@ final class IFCBuilder {
             commonProps(el, e, pset: "Pset_CurtainWallCommon", [("IsExternal", bool(isExternal(el, default: true)))])
         case .component(let c):
             e = add("IFCFURNISHINGELEMENT(\(gid),#\(oh),\(nm),$,\(s(c.category)),#\(pl),\(rep),\(tag))")
-            commonProps(el, e, pset: "Pset_FurnitureTypeCommon", [])
+            commonProps(el, e, pset: "Archi_ComponentCommon", [])   // Pset_FurnitureTypeCommon applies to IfcFurniture only
         default:
             e = add("IFCBUILDINGELEMENTPROXY(\(gid),#\(oh),\(nm),$,$,#\(pl),\(rep),\(tag),.NOTDEFINED.)")
         }

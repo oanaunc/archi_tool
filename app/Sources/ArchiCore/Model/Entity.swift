@@ -201,6 +201,8 @@ public struct ImageGeom: Codable, Hashable {
 }
 public struct TableGeom: Codable, Hashable {
     public var origin: Vec2; public var columnWidths: [Double]; public var rowHeight: Double; public var cells: [[String]]; public var textHeight: Double
+    /// Cell background colours keyed "row,column" (conditional formatting of placed schedules).
+    public var fills: [String: RGBA]?
     public init(origin: Vec2, columnWidths: [Double], rowHeight: Double, cells: [[String]], textHeight: Double = 2.5) {
         self.origin = origin; self.columnWidths = columnWidths; self.rowHeight = rowHeight; self.cells = cells; self.textHeight = textHeight
     }

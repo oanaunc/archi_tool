@@ -226,7 +226,16 @@ enum AnnotationToolCommands {
             ed.print("\(n) field object(s) found and updated.")
         },
         CommandDef("ANNOTATIVE", aliases: ["ANNO"], category: "Annotate", summary: "Makes text, leaders and tables annotative (height follows CANNOSCALE) or turns it off.") { ed in
-            let k = try await ed.getKeyword("Annotative", ["Yes", "No"], defaultValue: "Yes") ?? "Yes"
+            let k = try await ed.getKeyword("Annotative", ["Yes", "No", "Style"], defaultValue: "Yes") ?? "Yes"
+            if k == "Style" {
+                // Annotative text styles (ANN-017): new text in the style takes its height on paper.
+                guard let n = try await ed.getWord("Enter text style name", defaultValue: ed.doc.variable("TEXTSTYLE") ?? "Standard"),
+                      let st = ed.doc.textStyles.first(where: { $0.name.caseInsensitiveCompare(n) == .orderedSame }) else { throw CommandError.invalid("Text style not found.") }
+                let on = try await ed.getYesNo("Make \(st.name) annotative?", defaultValue: !AnnotativeText.isAnnotative(style: st.name, ed.doc))
+                AnnotativeText.set(style: st.name, on, &ed.doc)
+                ed.print("Text style \(st.name) is \(on ? "annotative" : "not annotative").")
+                return
+            }
             let ids = try await ed.getEntitySelection("Select annotation objects")
             var n = 0
             for id in ids {

@@ -157,6 +157,8 @@ public enum PlanRepresentation {
             var out = ([g.boundary] + g.holes).filter { $0.count >= 2 }.map { stroke($0, closed: true, color, lwHidden, dash) }
             if g.isSloped && g.boundary.count >= 3 { out += slopeArrow(g, el: el, doc: doc, color: color, options: options) }
             if let tile = el.props["finishTile"], g.boundary.count >= 3 { out += tileGrid(tile, boundary: g.boundary, holes: g.holes, doc: doc, color: color) }
+            // Slab edges (BIM-051): upstands drawn solid (they rise above the slab), fascias dashed.
+            for p in Round7Shapes.slabEdgePlan(g) { out.append(stroke(p, closed: true, color, lwProj)) }
             return out
         case .column(let g):
             if let sec = StructuralProfiles.section(g.profile) {

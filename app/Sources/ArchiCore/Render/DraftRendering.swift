@@ -52,8 +52,8 @@ public enum DraftRendering {
     public static func handles(_ e: Entity) -> Bool {
         if e.props[annoScalesProp] != nil { return true }
         switch e.geometry {
-        case .hatch: return e.props[gradientProp] != nil || e.props[hatchOriginProp] != nil
-        case .table: return !(e.props[tableMergeProp] ?? "").isEmpty
+        case .hatch: return e.props[gradientProp] != nil || e.props[hatchOriginProp] != nil || e.props[HatchPatterns.patternTypeProp] != nil
+        case .table: return !(e.props[tableMergeProp] ?? "").isEmpty || e.props[TableStyle.prop] != nil
         case .text(let t): return e.props[textMaskProp] != nil || e.props[textFrameProp] == "1" || e.props[textColumnsProp] != nil || TextStacks.hasStack(t.content)
         case .leader: return e.props["mleaderstyle"] != nil
         case .point: return true
@@ -71,8 +71,12 @@ public enum DraftRendering {
         if !annotationVisible(e, doc: doc) { return [] }
         let solid = StrokeStyle(color: color, lineweight: lineweight)
         switch e.geometry {
-        case .hatch(let h): return hatchItems(h, props: e.props, color: color, lineweight: lineweight, options: options)
-        case .table(let t): return tableItems(t, merges: merges(e.props[tableMergeProp]), doc: doc, style: solid)
+        case .hatch(let h): return hatchItems(h, props: e.props, color: color, lineweight: lineweight, options: options, doc: doc)
+        case .table(let t):
+            let ts = TableStyle.of(e, doc)
+            var m = merges(e.props[tableMergeProp])
+            if let tm = ts?.titleMerge(columns: t.columnWidths.count), !m.contains(where: { $0.row == 0 }) { m.append(tm) }
+            return tableItems(t, merges: m, doc: doc, style: solid, tableStyle: ts)
         case .text(let t): return textItems(t, props: e.props, doc: doc, options: options, color: color, lineweight: lineweight)
         case .point(let p):
             let mode = doc.variable("PDMODE").flatMap(Int.init) ?? 0
@@ -223,7 +227,7 @@ public enum DraftRendering {
         return p.count == 2 ? Vec2(p[0], p[1]) : nil
     }
 
-    public static func hatchItems(_ h: HatchGeom, props: [String: String], color: RGBA, lineweight: Double, options: DrawOptions) -> [DrawItem] {
+    public static func hatchItems(_ h: HatchGeom, props: [String: String], color: RGBA, lineweight: Double, options: DrawOptions, doc: ArchiDocument? = nil) -> [DrawItem] {
         let loops = h.loops.map { RG.dedupe(GeometryOps.polylinePoints($0, closed: true), closed: true) }.filter { $0.count >= 3 }
         guard !loops.isEmpty else { return [] }
         if let type = props[gradientProp] {
@@ -236,7 +240,7 @@ public enum DraftRendering {
         }
         var out: [DrawItem] = []
         if let bg = h.fill { out.append(.fill(loops: loops, color: rgba(bg.text, fallback: color))) }
-        let lines = HatchPatterns.lines(loops: loops, pattern: h.pattern, scale: h.scale, angle: h.angle, origin: origin(props) ?? .zero)
+        let lines = HatchPatterns.lines(loops: loops, pattern: h.pattern, scale: HatchPatterns.effectiveScale(h.scale, props: props, doc: doc), angle: h.angle, origin: origin(props) ?? .zero)
         out += lines.map { .stroke(points: $0, closed: false, style: StrokeStyle(color: color, lineweight: min(lineweight, 0.18))) }
         return out
     }
@@ -278,13 +282,23 @@ public enum DraftRendering {
     /// The merge containing a cell, if any.
     public static func merge(at r: Int, _ c: Int, in m: [Merge]) -> Merge? { m.first { $0.contains(r, c) } }
 
-    public static func tableItems(_ tb: TableGeom, merges m: [Merge], doc: ArchiDocument, style: StrokeStyle) -> [DrawItem] {
+    public static func tableItems(_ tb: TableGeom, merges m: [Merge], doc: ArchiDocument, style: StrokeStyle, tableStyle ts: TableStyle? = nil) -> [DrawItem] {
         let rows = tb.cells.count, cols = tb.columnWidths.count
         let w = tb.columnWidths.reduce(0, +)
         guard w > 0, rows > 0, cols > 0, tb.rowHeight > 0 else { return [] }
         let o = tb.origin, rh = tb.rowHeight, h = rh * Double(rows)
         var xs = [0.0]; for cw in tb.columnWidths { xs.append(xs[xs.count - 1] + cw) }
-        var out: [DrawItem] = [.stroke(points: [o, o + Vec2(w, 0), o + Vec2(w, -h), o + Vec2(0, -h)], closed: true, style: style)]
+        var out: [DrawItem] = []
+        // Cell fills of a table style (title / header / data), drawn below the grid.
+        if let ts {
+            for r in 0..<rows {
+                guard let f = ts.cell(ts.role(row: r)).fill else { continue }
+                let c = rgba(f, fallback: style.color)
+                let y0 = -rh * Double(r), y1 = y0 - rh
+                out.append(.fill(loops: [[o + Vec2(0, y0), o + Vec2(w, y0), o + Vec2(w, y1), o + Vec2(0, y1)]], color: c))
+            }
+        }
+        out.append(.stroke(points: [o, o + Vec2(w, 0), o + Vec2(w, -h), o + Vec2(0, -h)], closed: true, style: style))
         // Horizontal lines between rows r-1 and r, broken where a merge spans across them.
         for r in 1..<max(rows, 1) {
             let y = -rh * Double(r)
@@ -316,6 +330,17 @@ public enum DraftRendering {
                 let x0 = xs[ci], x1 = xs[min(ci + cs, cols)]
                 let yMid = -rh * (Double(ri) + Double(rs) / 2)
                 var t: TextGeom
+                if let ts {
+                    // Styled cell: role height factor, alignment and text colour.
+                    let cell = ts.cell(ts.role(row: ri))
+                    let th = tb.textHeight * cell.height
+                    let pad = min(tb.textHeight * 0.5, (x1 - x0) * 0.1)
+                    let x = cell.align == .left ? x0 + pad : cell.align == .right ? x1 - pad : (x0 + x1) / 2
+                    t = TextGeom(position: o + Vec2(x, yMid), height: th, content: row[ci], halign: cell.align, valign: .middle)
+                    t.style = "Standard"
+                    out += DrawListBuilder.textItems(t, doc: doc, color: cell.color.map { rgba($0, fallback: style.color) } ?? style.color)
+                    continue
+                }
                 if cs > 1 {
                     t = TextGeom(position: o + Vec2((x0 + x1) / 2, yMid), height: tb.textHeight, content: row[ci], halign: .center, valign: .middle)
                 } else {
@@ -644,7 +669,26 @@ extension DraftRendering {
     /// Single-line text with \S stacks: plain runs as text, stacks as two small texts with a bar (a/b), a diagonal (a#b)
     /// or none (a^b, tolerance style).
     static func stackedTextItems(_ t0: TextGeom, doc: ArchiDocument, color: RGBA, lineweight: Double) -> [DrawItem]? {
-        guard TextStacks.hasStack(t0.content), !t0.content.contains("\\P"), !t0.content.contains("\n") else { return nil }
+        guard TextStacks.hasStack(t0.content) else { return nil }
+        if t0.content.contains("\\P") || t0.content.contains("\n") {
+            // Multiline text (no wrap width): each line is laid out on its own, lines 1.667 × height apart (ANN-007).
+            guard t0.width <= 0 else { return nil }
+            let lines = t0.content.replacingOccurrences(of: "\\P", with: "\n").components(separatedBy: "\n")
+            var h = t0.height
+            if h <= 0 { let st = DrawListBuilder.textFont(t0.style, doc: doc); h = st.height > 0 ? st.height : 2.5 }
+            let ls = h * 5 / 3, n = Double(lines.count - 1)
+            let shift: Double
+            switch t0.valign { case .middle: shift = n * ls / 2; case .bottom, .baseline: shift = n * ls; case .top: shift = 0 }
+            var out: [DrawItem] = []
+            for (i, l) in lines.enumerated() where !l.isEmpty {
+                var t = t0
+                t.content = l
+                t.position = t0.position + Vec2(0, shift - Double(i) * ls).rotated(by: t0.rotation)
+                if TextStacks.hasStack(l), let it = stackedTextItems(t, doc: doc, color: color, lineweight: lineweight) { out += it }
+                else { out += DrawListBuilder.textItems(t, doc: doc, color: color) }
+            }
+            return out
+        }
         var t = t0
         let st = DrawListBuilder.textFont(t.style, doc: doc)
         if t.height <= 0 { t.height = st.height > 0 ? st.height : 2.5 }

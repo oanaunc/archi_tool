@@ -316,8 +316,19 @@ public enum IFCZip {
     public static func write(_ ifc: String, name: String = "model.ifc") -> Data {
         ZipArchive.write([ZipArchive.Entry(name: name.lowercased().hasSuffix(".ifc") ? name : name + ".ifc", data: Data(ifc.utf8))], compress: true)
     }
+    /// The IFC STEP text of the archive's .ifc file, or of its .ifcXML file converted to STEP.
     public static func read(_ data: Data) throws -> String {
-        guard let e = try ZipArchive.read(data).first(where: { $0.name.lowercased().hasSuffix(".ifc") }) else { throw IFCZipError.noIFC }
-        return String(data: e.data, encoding: .utf8) ?? String(decoding: e.data, as: UTF8.self)
+        let entries = try ZipArchive.read(data)
+        if let e = entries.first(where: { $0.name.lowercased().hasSuffix(".ifc") }) {
+            return String(data: e.data, encoding: .utf8) ?? String(decoding: e.data, as: UTF8.self)
+        }
+        if let x = entries.first(where: { $0.name.lowercased().hasSuffix(".ifcxml") || ($0.name.lowercased().hasSuffix(".xml") && IFCXML.sniff($0.data)) }) {
+            return try IFCXML.toSTEP(x.data)
+        }
+        throw IFCZipError.noIFC
+    }
+    /// IfcZIP holding an ifcXML file.
+    public static func writeXML(_ xml: String, name: String = "model.ifcXML") -> Data {
+        ZipArchive.write([ZipArchive.Entry(name: name.lowercased().hasSuffix(".ifcxml") ? name : name + ".ifcXML", data: Data(xml.utf8))], compress: true)
     }
 }

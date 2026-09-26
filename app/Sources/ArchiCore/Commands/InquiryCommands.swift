@@ -123,13 +123,20 @@ enum InquiryCommands {
     }
     static var id: CommandDef {
         CommandDef("ID", category: "Inquiry", summary: "Displays the coordinates of a location.", modifies: false) { ed in
-            let p = try await ed.requirePoint("Specify point")
-            let z = ed.doc.level(ed.doc.currentLevel)?.elevation ?? 0
+            let lz = ed.doc.level(ed.doc.currentLevel)?.elevation ?? 0
+            let p3 = try await ed.requirePoint3("Specify point", defaultZ: lz)
+            let p = Vec2(p3.x, p3.y), z = p3.z
             let ucs = UCSFrame.current(ed.doc)
             if ucs.isWorld { ed.print("X = \(fmt(p.x, 4))     Y = \(fmt(p.y, 4))     Z = \(fmt(z, 4))") }
             else {
                 let q = ucs.fromWorld(p)
                 ed.print("X = \(fmt(q.x, 4))     Y = \(fmt(q.y, 4))     Z = \(fmt(z, 4))  (UCS)   World: \(fmt(p.x, 4)),\(fmt(p.y, 4))")
+            }
+            // Shared (survey) coordinates when a project base point / survey offset / true north is set (PRC-040).
+            let sc = SharedCoordinates.current(ed.doc)
+            if !sc.isIdentity {
+                let s = sc.toShared(p)
+                ed.print("E = \(fmt(s.x, 4))     N = \(fmt(s.y, 4))     Elev = \(fmt(z + sc.elevation, 4))  (shared)")
             }
         }
     }

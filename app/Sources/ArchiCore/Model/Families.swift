@@ -51,6 +51,11 @@ public struct FamilyParameter: Codable, Hashable {
     /// Validation range (PAR-031): values are clamped into [min, max].
     public var min: Double?
     public var max: Double?
+    /// Reporting parameter (PAR-025): the value is measured from the model — "host.thickness", "host.height",
+    /// "host.length", "level.elevation", "level.height", "self.rotation"… (read-only for the user).
+    public var reporting: String?
+    /// Spreadsheet binding (PAR-029): "TableName!B3" or "#12!B3" — the value is read from that table cell.
+    public var cell: String?
     public init(_ name: String, _ kind: FamilyParameterKind = .length, value: String, formula: String? = nil, instance: Bool = true, min: Double? = nil, max: Double? = nil) {
         self.name = name; self.kind = kind; self.value = value; self.formula = formula; self.instance = instance; self.min = min; self.max = max
     }
@@ -60,6 +65,8 @@ public struct FamilyParameter: Codable, Hashable {
                   value: try c.decodeIfPresent(String.self, forKey: .value) ?? "0", formula: try c.decodeIfPresent(String.self, forKey: .formula),
                   instance: try c.decodeIfPresent(Bool.self, forKey: .instance) ?? true,
                   min: try c.decodeIfPresent(Double.self, forKey: .min), max: try c.decodeIfPresent(Double.self, forKey: .max))
+        reporting = try c.decodeIfPresent(String.self, forKey: .reporting)
+        cell = try c.decodeIfPresent(String.self, forKey: .cell)
     }
 }
 

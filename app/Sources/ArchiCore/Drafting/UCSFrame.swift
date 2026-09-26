@@ -52,7 +52,9 @@ public struct UCSFrame: Hashable {
 public struct ParseContext {
     public var units: Units
     public var ucs: UCSFrame
-    public init(units: Units = .millimeters, ucs: UCSFrame = .world) { self.units = units; self.ucs = ucs }
+    /// Shared (survey) coordinates for "S:e,n" point entry (PRC-040).
+    public var shared: SharedCoordinates
+    public init(units: Units = .millimeters, ucs: UCSFrame = .world, shared: SharedCoordinates = SharedCoordinates()) { self.units = units; self.ucs = ucs; self.shared = shared }
 }
 
 /// CAL expressions with geometric functions: dist(p1;p2), ang(p1;p2), plus arithmetic and unit suffixes.

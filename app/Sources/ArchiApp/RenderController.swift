@@ -8,31 +8,30 @@ import ArchiCore
 
 // MARK: - Solar position
 
-/// Sun altitude/azimuth from the NOAA general solar position equations (accuracy ≈ 0.5°).
+/// Sun altitude/azimuth for the viewport, sun studies and renders (VIS-049): the full NOAA solar calculator
+/// (`ArchiCore.SolarCalculator`, Meeus; ±0.01° for 1800–2100) with atmospheric refraction.
 enum SunPosition {
+    /// UTC instant of a local solar-study time: day of year and local clock hour in a fixed UTC offset.
+    static func utcDate(year: Int, dayOfYear n: Int, localHour h: Double, utcOffsetHours tz: Double) -> Date {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(secondsFromGMT: 0)!
+        let jan1 = cal.date(from: DateComponents(year: year, month: 1, day: 1)) ?? Date(timeIntervalSince1970: 0)
+        return jan1.addingTimeInterval(Double(n - 1) * 86400 + (h - tz) * 3600)
+    }
+
     /// - Returns: altitude above the horizon and azimuth clockwise from true north, both in radians.
-    static func compute(dayOfYear n: Int, localHour h: Double, latitude: Double, longitude: Double, utcOffsetHours tz: Double) -> (altitude: Double, azimuth: Double) {
-        let g = 2 * Double.pi / 365 * (Double(n - 1) + (h - 12) / 24)
-        let eqTime = 229.18 * (0.000075 + 0.001868 * cos(g) - 0.032077 * sin(g) - 0.014615 * cos(2 * g) - 0.040849 * sin(2 * g))
-        let decl = 0.006918 - 0.399912 * cos(g) + 0.070257 * sin(g) - 0.006758 * cos(2 * g) + 0.000907 * sin(2 * g)
-            - 0.002697 * cos(3 * g) + 0.00148 * sin(3 * g)
-        let timeOffset = eqTime + 4 * longitude - 60 * tz
-        let tst = h * 60 + timeOffset
-        let ha = (tst / 4 - 180) * .pi / 180
-        let lat = latitude * .pi / 180
-        let cosZen = max(-1, min(1, sin(lat) * sin(decl) + cos(lat) * cos(decl) * cos(ha)))
-        let zenith = acos(cosZen)
-        var az = atan2(sin(ha), cos(ha) * sin(lat) - tan(decl) * cos(lat)) + .pi
-        az = az.truncatingRemainder(dividingBy: 2 * .pi)
-        return (.pi / 2 - zenith, az)
+    static func compute(dayOfYear n: Int, localHour h: Double, latitude: Double, longitude: Double, utcOffsetHours tz: Double,
+                        year: Int = Calendar(identifier: .gregorian).component(.year, from: Date())) -> (altitude: Double, azimuth: Double) {
+        let p = SolarCalculator.position(date: utcDate(year: year, dayOfYear: n, localHour: h, utcOffsetHours: tz), latitude: latitude, longitude: longitude)
+        return (p.altitude * .pi / 180, p.azimuth * .pi / 180)
     }
 
     static func compute(date: Date, latitude: Double, longitude: Double) -> (altitude: Double, azimuth: Double) {
         let cal = Calendar.current
         let n = cal.ordinality(of: .day, in: .year, for: date) ?? 172
-        let c = cal.dateComponents([.hour, .minute], from: date)
-        let h = Double(c.hour ?? 12) + Double(c.minute ?? 0) / 60
-        return compute(dayOfYear: n, localHour: h, latitude: latitude, longitude: longitude, utcOffsetHours: (longitude / 15).rounded())
+        let c = cal.dateComponents([.year, .hour, .minute, .second], from: date)
+        let h = Double(c.hour ?? 12) + Double(c.minute ?? 0) / 60 + Double(c.second ?? 0) / 3600
+        return compute(dayOfYear: n, localHour: h, latitude: latitude, longitude: longitude, utcOffsetHours: (longitude / 15).rounded(), year: c.year ?? 2026)
     }
 
     /// Unit vector towards the sun in model coordinates (X east, Y project north, Z up).
@@ -304,6 +303,8 @@ struct RenderPreset: Codable, Hashable, Identifiable {
     var fStop: Double?
     var whiteBalance: Double?
     var clay: Bool?
+    /// Local hour of the sun (render prompts); nil keeps the render date.
+    var hour: Double?
 
     static let builtIn: [RenderPreset] = [
         RenderPreset(name: "Draft (720p, fast)", width: 1280, height: 720, antialias: false, exposure: 0, background: "Sky"),
@@ -341,6 +342,10 @@ struct RenderPreset: Codable, Hashable, Identifiable {
         s.fStop = fStop ?? d.fStop
         s.whiteBalance = whiteBalance ?? d.whiteBalance
         s.clay = clay ?? false
+        if let h = hour {
+            var c = Calendar.current.dateComponents([.year, .month, .day], from: s.date); c.hour = Int(h); c.minute = Int(((h - h.rounded(.down)) * 60).rounded())
+            if let d = Calendar.current.date(from: c) { s.date = d }
+        }
     }
     static func from(_ s: RenderSettings, name: String) -> RenderPreset {
         RenderPreset(name: name, width: s.width, height: s.height, antialias: s.antialias, exposure: s.exposure, background: s.background.rawValue,
@@ -387,7 +392,13 @@ private struct RenderPanel: View {
     @State private var sunTo = 19.0
     @State private var presetName = UserDefaults.standard.string(forKey: "render.lastPreset") ?? "Standard (1080p)"
     @State private var presets = RenderPreset.all
-    private let resolutions = ["1280×720", "1920×1080", "2560×1440", "3840×2160", "1080×1080"]
+    private let resolutions = ["1280×720", "1920×1080", "2560×1440", "3840×2160", "5120×2880", "7680×4320", "1080×1080", "Custom"]
+    @State private var customW = 3000
+    @State private var customH = 2000
+    @State private var pass: RenderPass = .beauty
+    @State private var npr: NPRStyle = .photo
+    @State private var useRegion = false
+    @State private var region = CGRect(x: 0.25, y: 0.25, width: 0.5, height: 0.5)
 
     var sunText: String {
         let s = SunPosition.compute(date: settings.date, latitude: model.doc.info.latitude, longitude: model.doc.info.longitude)
@@ -400,6 +411,16 @@ private struct RenderPanel: View {
                 Color(white: 0.12)
                 if let image {
                     Image(nsImage: image).resizable().aspectRatio(contentMode: .fit).padding(12)
+                        .overlay(GeometryReader { g in
+                            if useRegion {
+                                let fit = min((g.size.width - 24) / max(image.size.width, 1), (g.size.height - 24) / max(image.size.height, 1))
+                                let w = image.size.width * fit, h = image.size.height * fit
+                                let ox = (g.size.width - w) / 2, oy = (g.size.height - h) / 2
+                                Rectangle().stroke(Theme.accent, style: StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
+                                    .frame(width: region.width * w, height: region.height * h)
+                                    .position(x: ox + region.midX * w, y: oy + region.midY * h)
+                            }
+                        })
                 } else {
                     Text(busy ? "Rendering…" : "Press Render").foregroundStyle(.secondary)
                 }
@@ -424,7 +445,27 @@ private struct RenderPanel: View {
                     }
                 }
                 Section("Output") {
-                    Picker("Resolution", selection: $resolution) { ForEach(resolutions, id: \.self) { Text($0) } }
+                    Picker("Resolution", selection: $resolution) {
+                        ForEach(resolutions, id: \.self) { Text($0) }
+                        if !resolutions.contains(resolution) { Text(resolution).tag(resolution) }
+                    }
+                    if resolution == "Custom" {
+                        HStack {
+                            TextField("Width", value: $customW, format: .number).frame(width: 70)
+                            Text("×")
+                            TextField("Height", value: $customH, format: .number).frame(width: 70)
+                            Text("px (max 7680×4320)").font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    Picker("Pass", selection: $pass) { ForEach(RenderPass.allCases, id: \.self) { Text($0.rawValue) } }
+                    if pass == .beauty { Picker("Style", selection: $npr) { ForEach(NPRStyle.allCases, id: \.self) { Text($0.rawValue) } } }
+                    Toggle("Render region only", isOn: $useRegion)
+                    if useRegion {
+                        Slider(value: Binding(get: { Double(region.minX) }, set: { region.origin.x = CGFloat(min($0, 0.95)); region.size.width = min(region.width, 1 - region.minX) }), in: 0...0.95) { Text("Left \(Int(region.minX * 100))%") }
+                        Slider(value: Binding(get: { Double(region.minY) }, set: { region.origin.y = CGFloat(min($0, 0.95)); region.size.height = min(region.height, 1 - region.minY) }), in: 0...0.95) { Text("Top \(Int(region.minY * 100))%") }
+                        Slider(value: Binding(get: { Double(region.width) }, set: { region.size.width = CGFloat(max(0.05, min($0, 1 - Double(region.minX)))) }), in: 0.05...1) { Text("Width \(Int(region.width * 100))%") }
+                        Slider(value: Binding(get: { Double(region.height) }, set: { region.size.height = CGFloat(max(0.05, min($0, 1 - Double(region.minY)))) }), in: 0.05...1) { Text("Height \(Int(region.height * 100))%") }
+                    }
                     Picker("Background", selection: $settings.background) { ForEach(RenderSettings.Background.allCases, id: \.self) { Text($0.rawValue) } }
                     Toggle("Antialiasing (4× MSAA + jitter)", isOn: $settings.antialias)
                 }
@@ -508,6 +549,7 @@ private struct RenderPanel: View {
         guard let p = presets.first(where: { $0.name == name }) else { return }
         p.apply(to: &settings)
         resolution = "\(p.width)×\(p.height)"
+        if !resolutions.contains(resolution) { customW = p.width; customH = p.height; resolution = "Custom" }
         UserDefaults.standard.set(name, forKey: "render.lastPreset")
     }
 
@@ -550,6 +592,10 @@ private struct RenderPanel: View {
     }
 
     private func applyResolution() {
+        if resolution == "Custom" {
+            settings.width = min(max(customW, 16), Int(RenderEngine.maxSize.width)); settings.height = min(max(customH, 16), Int(RenderEngine.maxSize.height))
+            return
+        }
         let parts = resolution.split(separator: "×").compactMap { Int($0) }
         if parts.count == 2 { settings.width = parts[0]; settings.height = parts[1] }
     }
@@ -561,9 +607,25 @@ private struct RenderPanel: View {
         Task { @MainActor in
             await Task.yield()
             let t0 = Date()
-            image = RenderEngine.render(doc: doc, settings: s)
+            let big = s.width > RenderEngine.tileSize || s.height > RenderEngine.tileSize
+            if pass == .beauty, npr != .photo {
+                image = RenderEngine.renderNPR(doc: doc, settings: s, style: npr)
+            } else if useRegion, pass == .beauty, let prev = image, Int(prev.size.width) == s.width, Int(prev.size.height) == s.height,
+               let part = RenderEngine.renderAdvanced(doc: doc, settings: s, pass: pass, region: region) {
+                // Re-render only the region over the previous frame.
+                let out = NSImage(size: prev.size)
+                out.lockFocus()
+                prev.draw(in: NSRect(origin: .zero, size: prev.size))
+                part.draw(in: NSRect(x: region.minX * prev.size.width, y: (1 - region.maxY) * prev.size.height, width: part.size.width, height: part.size.height))
+                out.unlockFocus()
+                image = out
+            } else if pass != .beauty || big || useRegion {
+                image = RenderEngine.renderAdvanced(doc: doc, settings: s, pass: pass, region: useRegion ? region : nil)
+            } else {
+                image = RenderEngine.render(doc: doc, settings: s)
+            }
             busy = false
-            status = image == nil ? "Rendering failed (Metal unavailable)." : "Rendered \(s.width)×\(s.height) in \(fmt(Date().timeIntervalSince(t0), 1)) s"
+            status = image == nil ? "Rendering failed (Metal unavailable)." : "Rendered \(pass.rawValue) \(s.width)×\(s.height)\(useRegion ? " (region)" : "")\(big ? " in tiles" : "") in \(fmt(Date().timeIntervalSince(t0), 1)) s"
         }
     }
 

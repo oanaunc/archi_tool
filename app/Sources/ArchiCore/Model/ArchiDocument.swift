@@ -90,6 +90,8 @@ public struct Level: Codable, Hashable, Identifiable {
     public var extentEnd: Vec2?
     /// Level heads shown on the datum: "end" (right, default), "start", "both" or "none".
     public var heads: String?
+    /// Computation height above the level (BIM-003): rooms are bounded by the walls that reach it (nil = cut plane).
+    public var computationHeight: Double?
     public init(id: Int, name: String, elevation: Double, height: Double = 3000, extentStart: Vec2? = nil, extentEnd: Vec2? = nil, heads: String? = nil) {
         self.id = id; self.name = name; self.elevation = elevation; self.height = height
         self.extentStart = extentStart; self.extentEnd = extentEnd; self.heads = heads
@@ -295,7 +297,8 @@ public struct ArchiDocument: Codable, Hashable {
     /// 4: document families (parametric family definitions), layered floor/roof types, view templates, solid feature
     /// history and associative sweeps, railing types, roof edges, shafts and wall join overrides (all optional keys).
     /// 5: schedule definitions, level extents/heads, multi-segment grids, opening variants and wall reveals (optional keys).
-    public static let currentFormatVersion = 5
+    /// 6: project views (crop regions, dependent views, linework overrides), scope boxes, stair and railing types (optional keys).
+    public static let currentFormatVersion = 6
     public var formatVersion: Int = ArchiDocument.currentFormatVersion
     public var info = ProjectInfo()
     public var units: Units = .millimeters
@@ -339,6 +342,13 @@ public struct ArchiDocument: Codable, Hashable {
     public var schedules: [ScheduleDefinition] = []
     /// Project and shared parameters bound to element categories.
     public var projectParameters: [ProjectParameter] = []
+    /// Saved project views (plan / ceiling / 3D) with crop regions, dependent views and linework overrides.
+    public var views: [ProjectView] = []
+    /// Scope boxes controlling grid extents and view crops.
+    public var scopeBoxes: [ScopeBox] = []
+    /// Stair and railing types (system family type builders).
+    public var stairTypes: [StairType] = StairType.library
+    public var railingTypes: [RailingTypeDef] = []
 
     public init() {
         layers = [
@@ -358,6 +368,7 @@ public struct ArchiDocument: Codable, Hashable {
         case formatVersion, info, units, layers, currentLayer, linetypes, textStyles, dimStyles, currentDimStyle, blocks, entities, elements
         case levels, currentLevel, materials, wallTypes, layouts, namedViews, variables, nextID, openingTypes, phases, keynotes
         case families, slabTypes, viewTemplates, modelGroups, globalParameters, psetTemplates, schedules, projectParameters
+        case views, scopeBoxes, stairTypes, railingTypes
     }
 
     /// Tolerant decoding: every collection falls back to its default when absent, so older files keep opening.
@@ -373,6 +384,7 @@ public struct ArchiDocument: Codable, Hashable {
         try opt(.openingTypes, &openingTypes); try opt(.phases, &phases); try opt(.keynotes, &keynotes)
         try opt(.families, &families); try opt(.slabTypes, &slabTypes); try opt(.viewTemplates, &viewTemplates); try opt(.modelGroups, &modelGroups)
         try opt(.globalParameters, &globalParameters); try opt(.psetTemplates, &psetTemplates); try opt(.schedules, &schedules); try opt(.projectParameters, &projectParameters)
+        try opt(.views, &views); try opt(.scopeBoxes, &scopeBoxes); try opt(.stairTypes, &stairTypes); try opt(.railingTypes, &railingTypes)
         let maxID = max(entities.map(\.id).max() ?? 0, elements.map(\.id).max() ?? 0)
         if nextID <= maxID { nextID = maxID + 1 }
     }

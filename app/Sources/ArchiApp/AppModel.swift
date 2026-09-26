@@ -174,7 +174,7 @@ final class AppModel: ObservableObject {
         editor = Editor(document: document)
         files = FileController(model: self)
         editor.host = files
-        editor.onChange = { [weak self] in self?.revision &+= 1 }
+        editor.onChange = { [weak self] in self?.revision &+= 1; self?.checkLayerNotify() }
         editor.onSelectionChange = { [weak self] in self?.revision &+= 1 }
         editor.onPromptChange = { [weak self] in
             guard let self else { return }
@@ -192,6 +192,25 @@ final class AppModel: ObservableObject {
     }
 
     var doc: ArchiDocument { editor.doc }
+
+    // MARK: New layer notification (LAY-020)
+    /// Layer names and reconciled list at the last check; a new unreconciled layer prints a notice and shows in Alerts.
+    private var layerNotifyBaseline: (names: [String], reconciled: String?)?
+    @Published var layerNotice: String?
+    func checkLayerNotify() {
+        let d = editor.doc
+        let names = d.layers.map(\.name), rec = d.variable(LayerNotify.listVar)
+        defer { layerNotifyBaseline = (names, rec) }
+        guard LayerNotify.isOn(d), let base = layerNotifyBaseline, base.names != names || base.reconciled != rec else { return }
+        var before = ArchiDocument()
+        before.layers = base.names.map { Layer(name: $0) }
+        before.variables = d.variables
+        if let r = base.reconciled { before.setVariable(LayerNotify.listVar, r) } else { before.variables[LayerNotify.listVar] = nil }
+        if let msg = LayerNotify.message(before: before, after: d) {
+            layerNotice = msg
+            editor.print("⚠ " + msg)
+        } else if LayerNotify.unreconciled(d).isEmpty { layerNotice = nil }
+    }
 
     // MARK: Naming / title
     var displayName: String {

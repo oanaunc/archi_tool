@@ -883,6 +883,12 @@ enum ModifyCommands {
         if cols > 1 { dx = try await ed.getDistance("Specify the distance between columns", defaultValue: max(b.width * 1.5, 1)).value ?? max(b.width * 1.5, 1) }
         var prm = ArrayParams(kind: .rect)
         prm.rows = rows; prm.columns = cols; prm.rowSpacing = dy; prm.columnSpacing = dx
+        // Arrays containing BIM elements stay editable as a grouped BIM array (MOD-035).
+        if !ed.forceClassicArray, ids.contains(where: { ed.doc.element($0) != nil }),
+           let n = ed.createBIMArray(ids, rows: rows, columns: cols, rowSpacing: dy, columnSpacing: dx) {
+            ed.print("BIM array \(n): \(rows * cols) items (\(rows) row(s) × \(cols) column(s)); ARRAYEDIT changes it.")
+            return
+        }
         if associativeArray(ed, ids, prm) { ed.print("Associative rectangular array: \(rows * cols) items (\(rows) row(s) × \(cols) column(s))."); return }
         var n = 0
         for r in 0..<rows { for c in 0..<cols where r > 0 || c > 0 {

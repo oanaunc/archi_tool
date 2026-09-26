@@ -31,6 +31,11 @@ public enum DrawListBuilder {
                 guard layerShown(el.layer, doc, options) else { return false }
                 if let l = options.level, el.level != l, !BIMConstraints.shown(el, onLevel: l, doc: doc, hosts: walls) { return false }
                 if case .gridLine = el.geometry, !options.showAnnotations { return false }
+                // Divided walls are drawn as their parts; stacked walls show the segment at the cut plane.
+                if el.props["hasParts"] == "1" && doc.variable("PARTSVISIBILITY") != "original" { return false }
+                if el.props["partOf"] != nil && doc.variable("PARTSVISIBILITY") == "original" { return false }
+                if options.level != nil, !StackedWalls.shownInPlan(el, doc: doc) { return false }
+                if !Assemblies.shown(el, doc: doc) { return false }
                 return true
             }.sorted { a, b in
                 let pa = priority(a.element), pb = priority(b.element)
@@ -90,8 +95,10 @@ public enum DrawListBuilder {
         }
         let phasedEntities = doc.entities.contains { $0.props["phaseCreated"] != nil || $0.props["phaseDemolished"] != nil }
         let pf = Phasing.filter(doc)
+        let viewsOn = ProjectViews.hasContent(doc)
         for e in doc.entities where layerShown(e.layer, doc, options) {
             if !options.showAnnotations && isAnnotation(e.geometry) { continue }
+            if viewsOn, e.props[ProjectViews.ownerProp] != nil, !ProjectViews.shows(e, doc: doc) { continue }
             if let l = options.level, let el = e.props["level"].flatMap(Int.init), el != l { continue }
             var items = self.items(for: SiteAnnotations.live(e, doc: doc), doc: doc, options: options)
             items += SiteAnnotations.extraItems(e, doc: doc, options: options)
@@ -105,6 +112,8 @@ public enum DrawListBuilder {
         }
         out += ConstraintGlyphs.entries(doc: doc, options: options)
         out += ViewRange.revealEntries(doc, options: options)
+        // Project view: linework overrides, crop region / annotation crop, matchlines, scope boxes (DOC-013…016/027, BIM-008).
+        if viewsOn, options.level != nil { out = ProjectViews.apply(out, doc: doc, options: options) }
         return out
     }
 
@@ -306,6 +315,11 @@ public enum DrawListBuilder {
         if e.props["tagOf"] != nil, case .text(let t) = e.geometry { return Annotations.tagItems(e, t, doc: doc, color: col) }
         if e.props["sectionMark"] != nil { return Annotations.sectionItems(e, doc: doc, color: col, lineweight: lineweight(e, layer: layer, inherit: inherit)) }
         let lw = lineweight(e, layer: layer, inherit: inherit)
+        // Batt insulation symbol along a line (DOC-039).
+        if let w = e.props["insulation"].flatMap(Double.init), case .line(let l) = e.geometry {
+            let pts = DetailComponents.insulation(a: l.a, b: l.b, width: w)
+            return pts.count >= 2 ? [.stroke(points: pts, closed: false, style: StrokeStyle(color: col, lineweight: lw))] : []
+        }
         if let custom = DraftRendering.items(e, doc: doc, options: options, color: col, lineweight: lw) { return custom }
         let style = StrokeStyle(color: col, lineweight: lw, dash: dash(e, layer: layer, doc: doc, options: options, inherit: inherit))
         let solidStyle = StrokeStyle(color: col, lineweight: lw)
@@ -382,12 +396,28 @@ public enum DrawListBuilder {
             let rows = tb.cells.count
             guard w > 0, rows > 0, tb.rowHeight > 0 else { return [] }
             let o = tb.origin, h = tb.rowHeight * Double(rows)
-            var out: [DrawItem] = [.stroke(points: [o, o + Vec2(w, 0), o + Vec2(w, -h), o + Vec2(0, -h)], closed: true, style: solidStyle)]
+            var out: [DrawItem] = []
+            // Conditional-format cell fills (DOC-052) under the grid.
+            for (key, c) in (tb.fills ?? [:]).sorted(by: { $0.key < $1.key }) {
+                let rc = key.split(separator: ",").compactMap { Int($0) }
+                guard rc.count == 2, rc[0] < rows, rc[1] < tb.columnWidths.count else { continue }
+                let x0 = tb.columnWidths[..<rc[1]].reduce(0, +), x1 = x0 + tb.columnWidths[rc[1]]
+                let y0 = -tb.rowHeight * Double(rc[0]), y1 = y0 - tb.rowHeight
+                out.append(.fill(loops: [[o + Vec2(x0, y0), o + Vec2(x1, y0), o + Vec2(x1, y1), o + Vec2(x0, y1)]], color: RGBA(c.r, c.g, c.b, 0.45)))
+            }
+            out.append(.stroke(points: [o, o + Vec2(w, 0), o + Vec2(w, -h), o + Vec2(0, -h)], closed: true, style: solidStyle))
             for r in 1..<max(rows, 1) { let y = -tb.rowHeight * Double(r); out.append(.stroke(points: [o + Vec2(0, y), o + Vec2(w, y)], closed: false, style: solidStyle)) }
             var x = 0.0
             for (ci, cw) in tb.columnWidths.enumerated() {
                 if ci > 0 { out.append(.stroke(points: [o + Vec2(x, 0), o + Vec2(x, -h)], closed: false, style: solidStyle)) }
                 for (ri, row) in tb.cells.enumerated() where ci < row.count && !row[ci].isEmpty {
+                    if row[ci].hasPrefix("img:") {
+                        // Schedule images (DOC-048): the picture fitted into the cell.
+                        let m = min(tb.textHeight * 0.3, tb.rowHeight * 0.1)
+                        let h = tb.rowHeight - 2 * m, w = min(cw - 2 * m, h * 1.5)
+                        out.append(.image(ImageGeom(path: String(row[ci].dropFirst(4)), origin: o + Vec2(x + m, -tb.rowHeight * Double(ri + 1) + m), size: Vec2(w, h))))
+                        continue
+                    }
                     let pos = o + Vec2(x + min(tb.textHeight * 0.5, cw * 0.1), -tb.rowHeight * (Double(ri) + 0.5))
                     out += textItems(TextGeom(position: pos, height: tb.textHeight, content: row[ci], valign: .middle), doc: doc, color: col)
                 }

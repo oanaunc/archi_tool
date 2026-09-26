@@ -33,7 +33,7 @@ final class AnalysisEnergyPlusTests: XCTestCase {
         XCTAssertEqual(m.zones[0].volume, 5 * 4 * 2.7, accuracy: 1e-9)
         XCTAssertEqual(m.surfaces.count, 12)
         XCTAssertEqual(m.surfaces.filter { $0.type == "Wall" && $0.boundary == "Outdoors" }.count, 6)
-        XCTAssertEqual(m.surfaces.filter { $0.type == "Wall" && $0.boundary == "Adiabatic" }.count, 2)
+        XCTAssertEqual(m.surfaces.filter { $0.type == "Wall" && $0.boundary == "Surface" }.count, 2, "the shared wall is an interzone pair")
         XCTAssertEqual(m.surfaces.filter { $0.boundary == "Ground" }.count, 2)
         XCTAssertEqual(m.surfaces.filter { $0.type == "Roof" }.count, 2)
         // Outward normals (Newell of the vertex order, counter-clockwise seen from outside).

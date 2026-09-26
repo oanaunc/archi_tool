@@ -11,20 +11,35 @@ enum BlockToolCommands {
     static var group: CommandDef {
         CommandDef("GROUP", aliases: ["G", "-GROUP"], category: "Blocks", summary: "Creates and manages named groups (Create/Add/Remove/Explode/REName/List); picking a member selects the group (PICKSTYLE).") { ed in
             let pre = ed.selection
-            let k = try await ed.getWord("Enter group name or [List/Add/Remove/Explode/REName]", keywords: ["List", "Add", "Remove", "Explode", "REName"]) ?? ""
+            let k = try await ed.getWord("Enter group name or [List/Add/Remove/Explode/REName/Selectable/Description]", keywords: ["List", "Add", "Remove", "Explode", "REName", "Selectable", "Description"]) ?? ""
             switch k {
             case "List":
                 let g = BlockTools.groups(ed.doc)
                 if g.isEmpty { ed.print("No groups.") }
-                for (n, ids) in g.sorted(by: { $0.key < $1.key }) { ed.print("  \(n): \(ids.count) object(s)") }
+                for (n, ids) in g.sorted(by: { $0.key < $1.key }) {
+                    ed.print("  \(n): \(ids.count) object(s)\(BlockTools.isSelectable(n, ed.doc) ? "" : " (unselectable)")\(BlockTools.description(n, ed.doc).map { " — " + $0 } ?? "")")
+                }
+            case "Selectable", "Description":
+                guard let n = try await ed.getWord("Enter group name"), let name = BlockTools.groups(ed.doc).keys.first(where: { $0.caseInsensitiveCompare(n) == .orderedSame }) else { throw CommandError.invalid("Group not found.") }
+                if k == "Selectable" {
+                    let on = !BlockTools.isSelectable(name, ed.doc)
+                    BlockTools.setSelectable(name, on, &ed.doc)
+                    ed.print("Group \(name) is \(on ? "selectable" : "unselectable").")
+                } else {
+                    let d = try await ed.getString("Enter group description", defaultValue: BlockTools.description(name, ed.doc)) ?? ""
+                    if d.isEmpty { ed.doc.variables["GROUPDESC:" + name.uppercased()] = nil } else { ed.doc.setVariable("GROUPDESC:" + name, d) }
+                }
             case "Add", "Remove":
                 guard let n = try await ed.getWord("Enter group name"), let name = BlockTools.groups(ed.doc).keys.first(where: { $0.caseInsensitiveCompare(n) == .orderedSame }) else { throw CommandError.invalid("Group not found.") }
                 ed.selection = []
                 let saved = ed.doc.variable("PICKSTYLE")
                 ed.doc.setVariable("PICKSTYLE", "0")
-                let ids = try await ed.getEntitySelection(k == "Add" ? "Select objects to add" : "Select objects to remove")
+                let ids = try await ed.getSelection(k == "Add" ? "Select objects to add" : "Select objects to remove")
                 if let s = saved { ed.doc.setVariable("PICKSTYLE", s) } else { ed.doc.variables.removeValue(forKey: "PICKSTYLE") }
-                for id in ids { if let i = ed.doc.entityIndex(id) { ed.doc.entities[i].props["group"] = k == "Add" ? name : (ed.doc.entities[i].props["group"] == name ? nil : ed.doc.entities[i].props["group"]) } }
+                for id in ids {
+                    let cur = BlockTools.group(of: id, ed.doc)
+                    BlockTools.setGroup(id, k == "Add" ? name : (cur == name ? nil : cur), &ed.doc)
+                }
             case "Explode":
                 guard let n = try await ed.getWord("Enter group name") else { return }
                 let c = BlockTools.dissolve(&ed.doc, groups: [n])
@@ -34,6 +49,7 @@ enum BlockToolCommands {
                 guard let o = try await ed.getWord("Enter old group name"), let n = try await ed.getWord("Enter new group name"), BlockCommands.validName(n) else { return }
                 var c = 0
                 for i in ed.doc.entities.indices where ed.doc.entities[i].props["group"]?.caseInsensitiveCompare(o) == .orderedSame { ed.doc.entities[i].props["group"] = n; c += 1 }
+                for i in ed.doc.elements.indices where ed.doc.elements[i].props["group"]?.caseInsensitiveCompare(o) == .orderedSame { ed.doc.elements[i].props["group"] = n; c += 1 }
                 if c == 0 { throw CommandError.invalid("Group not found.") }
             default:
                 var name = k
@@ -41,9 +57,9 @@ enum BlockToolCommands {
                 guard name.hasPrefix("*") || BlockCommands.validName(name) else { throw CommandError.invalid("Invalid group name.") }
                 guard BlockTools.groups(ed.doc)[name] == nil else { throw CommandError.invalid("Group \(name) already exists.") }
                 ed.selection = pre
-                let ids = try await ed.getEntitySelection("Select objects")
+                let ids = try await ed.getSelection("Select objects")
                 guard !ids.isEmpty else { return }
-                for id in ids { if let i = ed.doc.entityIndex(id) { ed.doc.entities[i].props["group"] = name } }
+                for id in ids { BlockTools.setGroup(id, name, &ed.doc) }
                 ed.print("Group \(name) created with \(ids.count) object(s).")
             }
             ed.selection = []
@@ -51,8 +67,8 @@ enum BlockToolCommands {
     }
     static var ungroup: CommandDef {
         CommandDef("UNGROUP", aliases: ["UNG"], category: "Blocks", summary: "Dissolves the groups of the selected objects.") { ed in
-            let ids = try await ed.getEntitySelection("Select group")
-            let names = Set(ids.compactMap { ed.doc.entity($0)?.props["group"] })
+            let ids = try await ed.getSelection("Select group")
+            let names = Set(ids.compactMap { BlockTools.group(of: $0, ed.doc) })
             guard !names.isEmpty else { throw CommandError.invalid("No groups selected.") }
             BlockTools.dissolve(&ed.doc, groups: names)
             ed.selection = []
@@ -160,6 +176,24 @@ enum BlockToolCommands {
         }
     }
 
+    @MainActor static func outputExtraction(_ ed: Editor, _ rows: [[String]]) async throws {
+        let out = try await ed.getKeyword("Output", ["Table", "File"], defaultValue: "Table") ?? "Table"
+        if out == "File" {
+            guard let p = try await ed.getWord("Enter CSV file path") else { return }
+            var path = (p as NSString).expandingTildeInPath
+            if (path as NSString).pathExtension.isEmpty { path += ".csv" }
+            let csv = rows.map { $0.map(BlockTools.csvField).joined(separator: ",") }.joined(separator: "\n") + "\n"
+            do { try csv.write(toFile: path, atomically: true, encoding: .utf8) } catch { throw CommandError.invalid("Cannot write \(path).") }
+            ed.print("\(rows.count - 1) record(s) written to \(path)."); return
+        }
+        let th = ed.settings.textHeight
+        let cols = rows.map(\.count).max() ?? 1
+        let widths = (0..<cols).map { c in max(th * 4, Double(rows.map { c < $0.count ? $0[c].count : 0 }.max() ?? 0) * th * 0.7 + th) }
+        let p = try await ed.requirePoint("Specify insertion point") { c in [.table(TableGeom(origin: c, columnWidths: widths, rowHeight: th * 2, cells: rows, textHeight: th))] }
+        ed.addEntity(.table(TableGeom(origin: p, columnWidths: widths, rowHeight: th * 2, cells: rows.map { $0 + Array(repeating: "", count: cols - $0.count) }, textHeight: th)))
+        ed.print("Extraction table with \(rows.count - 1) row(s) inserted.")
+    }
+
     @MainActor static func extractionTargets(_ ed: Editor) async throws -> [Entity] {
         let ids = ed.selection.isEmpty ? try await ed.getEntitySelection("Select block references (Enter = all)") : Array(ed.selection)
         let pool = ids.isEmpty ? ed.doc.entities : ed.doc.entities.filter { Set(ids).contains($0.id) }
@@ -183,30 +217,24 @@ enum BlockToolCommands {
     }
     static var dataExtraction: CommandDef {
         CommandDef("DATAEXTRACTION", aliases: ["DX", "EATTEXT"], category: "Blocks", summary: "Extracts block counts or attributes into a table in the drawing (or a CSV file).") { ed in
-            let k = try await ed.getKeyword("Extract", ["Attributes", "Counts"], defaultValue: "Attributes") ?? "Attributes"
+            let k = try await ed.getKeyword("Extract", ["Attributes", "Counts", "Properties"], defaultValue: "Attributes") ?? "Attributes"
+            var rows: [[String]]
+            if k == "Properties" {
+                // Object properties of drawing objects and building elements (ANN-061).
+                let ids = ed.selection.isEmpty ? try await ed.getSelection("Select objects (Enter = all)") : Array(ed.selection)
+                ed.selection = []
+                rows = BlockTools.propertyRows(ids.isEmpty ? ed.doc.entities.map(\.id) + ed.doc.elements.map(\.id) : ids, doc: ed.doc)
+                guard rows.count > 1 else { throw CommandError.invalid("Nothing to extract.") }
+                return try await outputExtraction(ed, rows)
+            }
             let ents = try await extractionTargets(ed)
             guard !ents.isEmpty else { throw CommandError.invalid("No block references found.") }
-            var rows: [[String]]
             if k == "Counts" {
                 rows = [["Block", "Count"]] + BlockTools.count(ents, doc: ed.doc).sorted { $0.key < $1.key }.map { [$0.key, "\($0.value)"] }
             } else {
                 rows = BlockTools.extractionRows(ents, doc: ed.doc)
             }
-            let out = try await ed.getKeyword("Output", ["Table", "File"], defaultValue: "Table") ?? "Table"
-            if out == "File" {
-                guard let p = try await ed.getWord("Enter CSV file path") else { return }
-                var path = (p as NSString).expandingTildeInPath
-                if (path as NSString).pathExtension.isEmpty { path += ".csv" }
-                let csv = rows.map { $0.map(BlockTools.csvField).joined(separator: ",") }.joined(separator: "\n") + "\n"
-                do { try csv.write(toFile: path, atomically: true, encoding: .utf8) } catch { throw CommandError.invalid("Cannot write \(path).") }
-                ed.print("\(rows.count - 1) record(s) written to \(path)."); return
-            }
-            let th = ed.settings.textHeight
-            let cols = rows.map(\.count).max() ?? 1
-            let widths = (0..<cols).map { c in max(th * 4, Double(rows.map { c < $0.count ? $0[c].count : 0 }.max() ?? 0) * th * 0.7 + th) }
-            let p = try await ed.requirePoint("Specify insertion point") { c in [.table(TableGeom(origin: c, columnWidths: widths, rowHeight: th * 2, cells: rows, textHeight: th))] }
-            ed.addEntity(.table(TableGeom(origin: p, columnWidths: widths, rowHeight: th * 2, cells: rows.map { $0 + Array(repeating: "", count: cols - $0.count) }, textHeight: th)))
-            ed.print("Extraction table with \(rows.count - 1) row(s) inserted.")
+            try await outputExtraction(ed, rows)
         }
     }
 
@@ -227,16 +255,66 @@ enum BlockToolCommands {
 
 /// Block and group helpers (pure functions, used by commands and tests).
 public enum BlockTools {
+    /// Groups (BLK-015): drafting entities and BIM elements sharing the prop "group" = name.
+    /// Property table for data extraction (ANN-061): one row per object with id, type, layer, colour, length, area,
+    /// level and name, followed by every custom property key found (sorted).
+    public static func propertyRows(_ ids: [EntityID], doc: ArchiDocument) -> [[String]] {
+        var keys = Set<String>()
+        for id in ids {
+            let props = doc.entity(id)?.props ?? doc.element(id)?.props ?? [:]
+            for k in props.keys where !k.hasPrefix("_") && !k.hasPrefix("xdata:") && k != "group" { keys.insert(k) }
+        }
+        let extra = keys.sorted().prefix(40)
+        var rows: [[String]] = [["Id", "Type", "Layer", "Color", "Length", "Area", "Level", "Name"] + extra]
+        for id in ids.sorted() {
+            if let e = doc.entity(id) {
+                let len = GeometryOps.length(e.geometry, doc: doc)
+                let area = GeometryOps.area(e.geometry, doc: doc)
+                rows.append(["\(id)", e.typeName, e.layer, e.color.text, len > 0 ? fmt(len, 2) : "", area.map { fmt($0, 2) } ?? "", "", ""] + extra.map { e.props[$0] ?? "" })
+            } else if let el = doc.element(id) {
+                let f = CommandHelpers.footprint(el, doc: doc)
+                let area = f.count >= 3 ? abs(GeometryOps.signedArea(f)) : 0
+                var len = 0.0
+                switch el.geometry {
+                case .wall(let w): len = w.length
+                case .beam(let b): len = b.start.distance(to: b.end)
+                case .gridLine(let g): len = g.start.distance(to: g.end)
+                case .curtainWall(let c): len = c.start.distance(to: c.end)
+                default: break
+                }
+                rows.append(["\(id)", el.typeName, el.layer, "", len > 0 ? fmt(len, 2) : "", area > 0 ? fmt(area, 2) : "",
+                             doc.level(el.level)?.name ?? "\(el.level)", el.name] + extra.map { el.props[$0] ?? "" })
+            }
+        }
+        return rows
+    }
+
     public static func groups(_ doc: ArchiDocument) -> [String: [EntityID]] {
         var out: [String: [EntityID]] = [:]
         for e in doc.entities { if let g = e.props["group"] { out[g, default: []].append(e.id) } }
+        for el in doc.elements { if let g = el.props["group"] { out[g, default: []].append(el.id) } }
         return out
     }
+    /// Group of an entity or element.
+    public static func group(of id: EntityID, _ doc: ArchiDocument) -> String? { doc.entity(id)?.props["group"] ?? doc.element(id)?.props["group"] }
+    /// Sets (or clears with nil) the group of an entity or element.
+    public static func setGroup(_ id: EntityID, _ name: String?, _ doc: inout ArchiDocument) {
+        if let i = doc.entityIndex(id) { doc.entities[i].props["group"] = name }
+        else if let i = doc.elementIndex(id) { doc.elements[i].props["group"] = name }
+    }
+    /// Unselectable groups (GROUP Selectable off): picking a member selects only that member.
+    public static func isSelectable(_ group: String, _ doc: ArchiDocument) -> Bool { doc.variable("GROUPUNSEL:" + group) == nil }
+    public static func setSelectable(_ group: String, _ on: Bool, _ doc: inout ArchiDocument) {
+        if on { doc.variables["GROUPUNSEL:" + group.uppercased()] = nil } else { doc.setVariable("GROUPUNSEL:" + group, "1") }
+    }
+    public static func description(_ group: String, _ doc: ArchiDocument) -> String? { doc.variable("GROUPDESC:" + group) }
     @discardableResult
     public static func dissolve(_ doc: inout ArchiDocument, groups names: Set<String>) -> Int {
         let lower = Set(names.map { $0.lowercased() })
         var c = 0
         for i in doc.entities.indices where doc.entities[i].props["group"].map({ lower.contains($0.lowercased()) }) == true { doc.entities[i].props["group"] = nil; c += 1 }
+        for i in doc.elements.indices where doc.elements[i].props["group"].map({ lower.contains($0.lowercased()) }) == true { doc.elements[i].props["group"] = nil; c += 1 }
+        for n in names { doc.variables["GROUPUNSEL:" + n.uppercased()] = nil; doc.variables["GROUPDESC:" + n.uppercased()] = nil }
         return c
     }
 

@@ -658,7 +658,7 @@ enum DrawCommands {
             while true {
                 let kws = pts.count >= 3 ? ["Close", "Tangency", "Undo"] : ["Tangency", "Undo"]
                 let cur = pts, st = startTan
-                let a = try await ed.getPoint("Enter next point or [end Tangency]", base: pts.last, keywords: kws) { c in
+                let a = try await ed.getPoint("Enter next point", base: pts.last, keywords: kws) { c in
                     [.spline(st.flatMap { SplineFit.interpolate(cur + [c], startTangent: $0) } ?? SplineGeom(controlPoints: [], fitPoints: cur + [c]))] }
                 switch a {
                 case .point(let p): if !p.isClose(pts.last!, tol: 1e-9) { pts.append(p) }
@@ -690,19 +690,55 @@ enum DrawCommands {
             func donut(_ c: Vec2) -> Geometry { .polyline(PolylineGeom([PolyVertex(c - Vec2(r, 0), bulge: 1), PolyVertex(c + Vec2(r, 0), bulge: 1)], closed: true, width: w)) }
             while let c = try await ed.getPoint("Specify center of donut", preview: { [donut($0)] }).point { ed.addEntity(donut(c)) }
         },
-        CommandDef("REVCLOUD", category: "Draw", summary: "Draws a revision cloud (polygonal, rectangular or from an object).") { ed in
+        CommandDef("REVCLOUD", category: "Draw", summary: "Draws a revision cloud: polygonal, rectangular, freehand, from an object or enclosing objects (attached: it moves with them); tagged with the current revision.") { ed in
             var arcLen = ed.variableDouble("REVCLOUDARC", 500)
+            var rev = ed.doc.variable("REVCLOUDREV") ?? ed.doc.variable("REVNUMBER")
+            @MainActor func finish(_ id: EntityID, hosts: [EntityID] = []) {
+                guard let i = ed.doc.entityIndex(id) else { return }
+                ed.doc.entities[i].props["revcloud"] = "1"
+                if let r = rev { ed.doc.entities[i].props[RevisionClouds.revisionProp] = r }
+                if !hosts.isEmpty { RevisionClouds.attach(&ed.doc.entities[i], to: hosts, doc: ed.doc) }
+                let added = RevisionClouds.syncTable(&ed.doc)
+                if !added.isEmpty { ed.print("Revision table: added revision \(added.joined(separator: ", ")).") }
+            }
             while true {
-                let a = try await ed.getPoint("Specify first point", keywords: ["Arclength", "Object", "Rectangular"])
+                let a = try await ed.getPoint("Specify first point",
+                                              keywords: ["Arclength", "Object", "Rectangular", "Polygonal", "Freehand", "Enclose", "reVision"])
                 switch a {
                 case .keyword("Arclength"):
                     arcLen = try await ed.getPositive("Specify arc length", defaultValue: arcLen); ed.doc.setVariable("REVCLOUDARC", fmt(arcLen)); continue
+                case .keyword("reVision"):
+                    guard let r = try await ed.getWord("Enter revision for new clouds", defaultValue: rev ?? "1") else { continue }
+                    rev = r; ed.doc.setVariable("REVCLOUDREV", r); continue
+                case .keyword("Polygonal"): continue
                 case .keyword("Rectangular"):
                     let p1 = try await ed.requirePoint("Specify first corner point")
                     let al = arcLen
                     let p2 = try await ed.requirePoint("Specify opposite corner", base: p1) { c in [.polyline(cloud(BBox2(points: [p1, c]).corners, closed: true, arcLength: al))] }
                     let b = BBox2(points: [p1, p2]); guard b.width > 1e-9, b.height > 1e-9 else { return }
-                    ed.addEntity(.polyline(cloud(b.corners, closed: true, arcLength: arcLen))); return
+                    finish(ed.addEntity(.polyline(cloud(b.corners, closed: true, arcLength: arcLen)))); return
+                case .keyword("Freehand"):
+                    // Freehand: the cursor path (points picked or streamed while dragging), resampled at the arc length.
+                    let p0 = try await ed.requirePoint("Specify start point")
+                    var path = [p0]
+                    let al = arcLen
+                    while let q = try await ed.getPoint("Guide crosshairs along cloud path (Enter to finish)", base: path.last, preview: { c in
+                        let r = RevisionClouds.freehand(path + [c], arcLength: al)
+                        return r.points.count >= 2 ? [.polyline(cloud(r.points, closed: r.closed, arcLength: al))] : []
+                    }).point {
+                        path.append(q)
+                    }
+                    let r = RevisionClouds.freehand(path, arcLength: arcLen)
+                    guard r.points.count >= (r.closed ? 3 : 2) else { throw CommandError.invalid("The path is too short for this arc length.") }
+                    finish(ed.addEntity(.polyline(cloud(r.points, closed: r.closed, arcLength: arcLen))))
+                    ed.print(r.closed ? "Revision cloud finished." : "Revision cloud finished (open)."); return
+                case .keyword("Enclose"):
+                    let ids = try await ed.getSelection("Select objects to enclose")
+                    ed.selection = []
+                    let margin = try await ed.getPositive("Specify offset from the objects", defaultValue: arcLen * 0.5, allowZero: true)
+                    guard let box = RevisionClouds.enclosure(ids, doc: ed.doc, margin: margin) else { throw CommandError.invalid("Nothing selected.") }
+                    finish(ed.addEntity(.polyline(cloud(box, closed: true, arcLength: arcLen))), hosts: ids)
+                    ed.print("Revision cloud attached to \(ids.count) object(s)."); return
                 case .keyword("Object"):
                     guard case .pick(let pk) = try await ed.pickObject("Select object"), let e = ed.doc.entity(pk.id) else { return }
                     let closed = CommandHelpers.closedLoop(e.geometry) != nil
@@ -715,6 +751,7 @@ enum DrawCommands {
                     if !closed, let l = pts.last, simp.last != l { simp.append(l) }
                     guard let i = ed.doc.entityIndex(pk.id) else { return }
                     ed.doc.entities[i].geometry = .polyline(cloud(simp.count >= 2 ? simp : pts, closed: closed, arcLength: arcLen))
+                    finish(pk.id)
                     ed.print("Revision cloud finished."); return
                 case .point(let p):
                     var pts = [p]
@@ -724,7 +761,7 @@ enum DrawCommands {
                         pts.append(q)
                     }
                     guard pts.count >= 3 else { throw CommandError.invalid("A revision cloud needs at least three points.") }
-                    ed.addEntity(.polyline(cloud(pts, closed: true, arcLength: arcLen))); return
+                    finish(ed.addEntity(.polyline(cloud(pts, closed: true, arcLength: arcLen)))); return
                 default: return
                 }
             }
@@ -749,6 +786,10 @@ enum DrawCommands {
                 // HPORIGIN: pattern origin for new hatches (0,0 = default).
                 if let o = DraftProps.point(ed.doc.variable("HPORIGIN")), o != .zero, let i = ed.doc.entityIndex(id) {
                     ed.doc.entities[i].props[DraftRendering.hatchOriginProp] = DraftProps.text(o)
+                }
+                // HPTYPE: model (real size) or drafting (paper size) patterns for new hatches (ANN-071).
+                if let t = ed.doc.variable("HPTYPE"), pattern.uppercased() != "SOLID", let i = ed.doc.entityIndex(id) {
+                    ed.doc.entities[i].props[HatchPatterns.patternTypeProp] = t
                 }
             }
             while true {
@@ -860,7 +901,11 @@ enum DrawCommands {
             let title = try await ed.getString("Enter table title", defaultValue: "")
             var cells = Array(repeating: Array(repeating: "", count: cols), count: rows + 1)
             if let t = title, !t.isEmpty { cells[0][0] = t }
-            ed.addEntity(.table(TableGeom(origin: o, columnWidths: Array(repeating: cw, count: cols), rowHeight: rh, cells: cells, textHeight: th)))
+            let tid = ed.addEntity(.table(TableGeom(origin: o, columnWidths: Array(repeating: cw, count: cols), rowHeight: rh, cells: cells, textHeight: th)))
+            // New tables follow the current table style (ANN-058).
+            if let st = ed.doc.variable("CTABLESTYLE"), st.caseInsensitiveCompare("Standard") != .orderedSame, TableStyle.named(st, ed.doc) != nil, let i = ed.doc.entityIndex(tid) {
+                ed.doc.entities[i].props[TableStyle.prop] = st
+            }
         },
     ] }
 

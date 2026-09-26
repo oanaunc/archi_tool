@@ -571,7 +571,8 @@ enum VisualStyleNames {
         case "shadedwithedges", "shadededges", "flatwithedges", "gouraudwithedges", "edges": return "Shaded with Edges"
         case "realistic", "textured", "materials": return "Realistic"
         case "xray", "transparent": return "X-Ray"
-        case "conceptual", "consistentcolors", "consistentcolours", "consistent", "sketchy": return "Conceptual"
+        case "conceptual", "consistentcolors", "consistentcolours", "consistent": return "Conceptual"
+        case "sketchy", "sketch", "handdrawn", "hand": return "Sketchy"
         default: return Scene3DBuilder.visualStyles.first { $0.caseInsensitiveCompare(s) == .orderedSame }
         }
     }

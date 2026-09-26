@@ -14,9 +14,17 @@ public enum RoomBounding {
 
     /// Elements that bound rooms on a level (own level plus elements spanning it).
     public static func boundingElements(doc: ArchiDocument, level: Int) -> [BIMElement] {
-        doc.elements.filter { el in
+        let ch = doc.level(level)?.computationHeight
+        let z = (doc.level(level)?.elevation ?? 0) + (ch ?? 0)
+        return doc.elements.filter { el in
             guard isBounding(el) else { return false }
-            return el.level == level || BIMConstraints.extraLevels(el, doc: doc).contains(level)
+            guard el.level == level || BIMConstraints.extraLevels(el, doc: doc).contains(level) else { return false }
+            // Computation height (BIM-003): only walls reaching it bound rooms (low parapets and high bulkheads do not).
+            if ch != nil, case .wall = el.geometry {
+                let r = BIMConstraints.wallRange(el, doc: doc)
+                return r.z0 <= z + 1e-6 && z <= r.z1 + 1e-6
+            }
+            return true
         }
     }
 

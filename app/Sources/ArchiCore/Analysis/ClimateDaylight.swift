@@ -198,25 +198,7 @@ public enum ClimateDaylight {
             let poly = sp.boundary.map { $0 * mm }
             let ceiling = lev + sp.height * mm
             let z0 = lev + o.workPlane
-            // Grid points (cell centres) inside the room, away from the walls.
-            var b = BBox2.empty; for q in poly { b.add(q) }
-            var spacing = o.gridSpacing
-            var pts: [Vec2] = []
-            repeat {
-                pts = []
-                var y = b.min.y + spacing / 2
-                while y < b.max.y {
-                    var x = b.min.x + spacing / 2
-                    while x < b.max.x {
-                        let q = Vec2(x, y)
-                        if GeometryOps.pointInPolygon(q, poly), distanceToBoundary(q, poly) >= min(o.edgeOffset, spacing / 2) { pts.append(q) }
-                        x += spacing
-                    }
-                    y += spacing
-                }
-                if pts.count > o.maxPointsPerRoom { spacing *= 1.25 }
-            } while pts.count > o.maxPointsPerRoom
-            if pts.isEmpty { pts = [poly.reduce(Vec2.zero) { $0 + $1 } / Double(poly.count)] }
+            let pts = sensorGrid(poly, o)
             // Internally reflected component (BRE split-flux), as a fraction of the diffuse horizontal illuminance.
             var irc = 0.0
             if o.interReflection {
@@ -252,6 +234,30 @@ public enum ClimateDaylight {
                                   meanAutonomy: 100 * results.reduce(0) { $0 + $1.autonomy } / n, points: results))
         }
         return out
+    }
+
+    /// Work-plane grid points (cell centres, mm) inside a room outline (mm), away from the walls; the spacing grows until
+    /// the room has at most `maxPointsPerRoom` points.
+    public static func sensorGrid(_ poly: [Vec2], _ o: Options) -> [Vec2] {
+        var b = BBox2.empty; for q in poly { b.add(q) }
+        var spacing = o.gridSpacing
+        var pts: [Vec2] = []
+        repeat {
+            pts = []
+            var y = b.min.y + spacing / 2
+            while y < b.max.y {
+                var x = b.min.x + spacing / 2
+                while x < b.max.x {
+                    let q = Vec2(x, y)
+                    if GeometryOps.pointInPolygon(q, poly), distanceToBoundary(q, poly) >= min(o.edgeOffset, spacing / 2) { pts.append(q) }
+                    x += spacing
+                }
+                y += spacing
+            }
+            if pts.count > o.maxPointsPerRoom { spacing *= 1.25 }
+        } while pts.count > o.maxPointsPerRoom
+        if pts.isEmpty { pts = [poly.reduce(Vec2.zero) { $0 + $1 } / Double(max(poly.count, 1))] }
+        return pts
     }
 
     static func distanceToBoundary(_ p: Vec2, _ poly: [Vec2]) -> Double {

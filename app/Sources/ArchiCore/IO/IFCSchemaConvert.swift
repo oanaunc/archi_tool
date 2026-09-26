@@ -49,6 +49,15 @@ enum IFCSchemaConvert {
         out.reserveCapacity(lines.count + 64)
         var next = nextId
         var styleAssign: [String: String] = [:]
+        // Property names by instance (to keep standard IFC2x3 property sets to their defined properties).
+        var propName: [String: String] = [:]
+        for line in lines where line.contains("=IFCPROPERTY") {
+            if let (id, type, a) = parse(line), type.hasPrefix("IFCPROPERTY"), type != "IFCPROPERTYSET", let n = a.first, n.hasPrefix("'") {
+                propName[id] = String(n.dropFirst().dropLast()).replacingOccurrences(of: "''", with: "'")
+            }
+        }
+        let psets = IFCPsetTable.ifc2x3
+        func unquote(_ s: String) -> String { s.hasPrefix("'") && s.hasSuffix("'") && s.count >= 2 ? String(s.dropFirst().dropLast()) : s }
         for line in lines {
             guard let (id, type, a) = parse(line) else { out.append(line); continue }
             var t = type, args = a
@@ -64,6 +73,21 @@ enum IFCSchemaConvert {
             case "IFCTRANSPORTELEMENT": keep(8); args += ["$", "$", "$"]     // OperationType, CapacityByWeight, CapacityByNumber
             case "IFCSPACE": if args.count >= 11 { args[9] = ".INTERNAL." }     // InteriorOrExteriorSpace
             case "IFCQUANTITYLENGTH", "IFCQUANTITYAREA", "IFCQUANTITYVOLUME", "IFCQUANTITYCOUNT", "IFCQUANTITYWEIGHT", "IFCQUANTITYTIME": keep(4)
+            case "IFCELEMENTQUANTITY":
+                // IFC2x3 has no Qto_ templates: Coordination View 2.0 names base quantities "BaseQuantities".
+                if args.count >= 6, unquote(args[2]).hasPrefix("Qto_") { args[2] = "'BaseQuantities'" }
+            case "IFCPROPERTYSET":
+                // Pset_ names are reserved for the standard sets: sets IFC2x3 does not define get a custom name, and standard
+                // sets keep only the properties IFC2x3 defines for them.
+                if args.count >= 5, case let name = unquote(args[2]), name.hasPrefix("Pset_") {
+                    if let tpl = psets.sets[name] {
+                        let ids = args[4].trimmingCharacters(in: CharacterSet(charactersIn: "()")).split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+                        let kept = ids.filter { propName[$0].map { tpl.props[$0] != nil } ?? true }
+                        if kept.isEmpty { args[2] = "'Archi_\(name.dropFirst(5))'" } else { args[4] = "(" + kept.joined(separator: ",") + ")" }
+                    } else {
+                        args[2] = "'Archi_\(name.dropFirst(5))'"
+                    }
+                }
             case "IFCMATERIAL": keep(1)
             case "IFCMATERIALLAYER": keep(3)
             case "IFCMATERIALLAYERSET": keep(2)

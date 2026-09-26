@@ -25,7 +25,8 @@ struct StatusBarView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            CoordinateReadout(live: model.live, units: model.doc.units, ucs: UCSFrame.current(model.doc))
+            CoordinateReadout(live: model.live, units: model.doc.units, ucs: UCSFrame.current(model.doc),
+                              format: (UnitFormat.linearType(model.doc), UnitFormat.linearPrecision(model.doc)))
                 .frame(width: 210, alignment: .leading)
                 .padding(.leading, 8)
             ucsIndicator
@@ -133,10 +134,12 @@ private struct CoordinateReadout: View {
     @ObservedObject var live: LiveState
     let units: Units
     var ucs: UCSFrame = .world
+    /// LUNITS / LUPREC of the drawing (APP-049).
+    var format: (UnitFormat.Linear, Int) = (.decimal, 2)
     var body: some View {
         let p = ucs.isWorld ? live.cursorWorld : ucs.fromWorld(live.cursorWorld)
         HStack(spacing: 6) {
-            Text(String(format: "%.2f, %.2f", p.x, p.y))
+            Text(UnitFormat.linear(p.x, units: units, type: format.0, precision: format.1) + ", " + UnitFormat.linear(p.y, units: units, type: format.0, precision: format.1))
                 .font(.system(size: 10.5, design: .monospaced))
                 .foregroundStyle(Theme.text)
             Text(units.abbreviation).font(Theme.fontSmall).foregroundStyle(Theme.textFaint)

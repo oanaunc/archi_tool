@@ -140,6 +140,9 @@ public struct DraftSettings: Codable, Hashable {
     public var isoPlane = 0
     /// Geometric centre snap (GCEN): centroids of closed polylines, shown with the centre marker.
     public var geometricCenterSnap = false
+    /// Axis lock (PRC-028, arrow keys while drawing): points are projected on the line through the base point at this
+    /// angle (radians). Session state, not saved.
+    public var axisLock: Double? = nil
     public init() {}
 
     private enum Keys: String, CodingKey {
@@ -371,6 +374,11 @@ public final class Editor {
                 self.layerPrevious.append((before.layers, before.currentLayer))
                 if self.layerPrevious.count > 50 { self.layerPrevious.removeFirst() }
             }
+            if self.doc.layers != before.layers, let m = LayerNotify.message(before: before, after: self.doc) { self.print(m) }
+            if def.modifies && AnnotativeText.anyStyle(self.doc) && self.doc.entities.count > before.entities.count {
+                var d = self.doc
+                if AnnotativeText.applyToNew(&d, old: Set(before.entities.map(\.id))) > 0 { self.doc = d }
+            }
             if def.modifies && self.doc.variable("DIMASSOC") != "0" && self.doc.entities.count > before.entities.count {
                 // New dimensions attach to the objects they were snapped to (DIMASSOC 2).
                 let old = Set(before.entities.map(\.id))
@@ -487,7 +495,7 @@ public final class Editor {
 
     /// Parses a token against a request with the document's units and UCS.
     func parse(_ token: String, _ req: InputRequest) -> Result<CommandInput, InputParser.ParseFailure> {
-        InputParser.context = ParseContext(units: doc.units, ucs: UCSFrame.current(doc))
+        InputParser.context = ParseContext(units: doc.units, ucs: UCSFrame.current(doc), shared: SharedCoordinates.current(doc))
         return InputParser.parse(token, request: req, lastPoint: lastPoint, cursor: cursor, ortho: settings.ortho)
     }
 
@@ -750,12 +758,15 @@ public final class Editor {
     /// Adds the other members of groups (entity prop "group") when PICKSTYLE is on (default).
     public func expandGroups(_ ids: [EntityID]) -> [EntityID] {
         guard doc.variable("PICKSTYLE") != "0" else { return ids }
-        let groups = Set(ids.compactMap { doc.entity($0)?.props["group"] })
+        let groups = Set(ids.compactMap { doc.entity($0)?.props["group"] ?? doc.element($0)?.props["group"] }.filter { BlockTools.isSelectable($0, doc) })
         guard !groups.isEmpty else { return ids }
         var out = ids
         let have = Set(ids)
         for e in doc.entities where !have.contains(e.id) {
             if let g = e.props["group"], groups.contains(g), isSelectable(e.id) { out.append(e.id) }
+        }
+        for el in doc.elements where !have.contains(el.id) {
+            if let g = el.props["group"], groups.contains(g), isSelectable(el.id) { out.append(el.id) }
         }
         return out
     }

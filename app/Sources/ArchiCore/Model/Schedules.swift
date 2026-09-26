@@ -40,6 +40,8 @@ public struct ScheduleSort: Codable, Hashable {
 /// Conditional formatting (DOC-052): rows whose field matches the rule are highlighted in `color`.
 public struct ScheduleHighlight: Codable, Hashable {
     public var field: String; public var op: String; public var value: String; public var color: RGBA
+    /// Highlight only the tested field's cell instead of the whole row.
+    public var cellOnly: Bool?
     public init(field: String, op: String, value: String, color: RGBA) { self.field = field; self.op = op; self.value = value; self.color = color }
 }
 

@@ -10,7 +10,7 @@ import ArchiCore
 /// the model root node scales by 0.001 and rotates −90° about X so SceneKit sees metres, Y up.
 @MainActor
 final class Scene3DBuilder {
-    static let visualStyles = ["Wireframe", "Hidden Line", "Shaded", "Shaded with Edges", "Conceptual", "Realistic", "X-Ray"]
+    static let visualStyles = ["Wireframe", "Hidden Line", "Shaded", "Shaded with Edges", "Conceptual", "Realistic", "X-Ray", "Sketchy"]
     static let accent = NSColor(srgbRed: 0.961, green: 0.773, blue: 0.094, alpha: 1)
 
     let scene = SCNScene()
@@ -26,12 +26,19 @@ final class Scene3DBuilder {
     private var highlighted: Set<EntityID> = []
     private var materialCache: [String: SCNMaterial] = [:]
     private var edgeMaterial = SCNMaterial()
+    /// Lights, billboards (SceneExtras) and a hash of their inputs.
+    let extrasRoot = SCNNode()
+    var extrasHash = 0
+    /// Model meshes of the last update and their bounds (walk-mode collisions, in model millimetres).
+    private(set) var collisionGroups: [(bounds: BBox3, mesh: Mesh)] = []
 
     init() {
         modelRoot.name = "modelRoot"
         modelRoot.eulerAngles = SCNVector3(-CGFloat.pi / 2, 0, 0)
         modelRoot.scale = SCNVector3(0.001, 0.001, 0.001)
         scene.rootNode.addChildNode(modelRoot)
+        extrasRoot.name = "extras"
+        scene.rootNode.addChildNode(extrasRoot)
 
         let sun = SCNLight()
         sun.type = .directional
@@ -106,6 +113,7 @@ final class Scene3DBuilder {
             configureEnvironment()
         }
         let groups = MeshBuilder.build(doc: doc)
+        collisionGroups = groups.filter { !$0.mesh.positions.isEmpty }.map { ($0.mesh.bounds, $0.mesh) }
         var byKey: [String: [MeshGroup]] = [:]
         var order: [String] = []
         var anon = 0
@@ -122,7 +130,7 @@ final class Scene3DBuilder {
             let gs = byKey[key]!
             var h = Hasher()
             h.combine(gs)
-            for g in gs { h.combine(doc.material(g.material)) }
+            for g in gs { h.combine(doc.material(g.material)); h.combine(doc.variable(TextureMapping.key(g.material))); h.combine(doc.variable(Emissive.key(g.material))) }
             let hash = h.finalize()
             for g in gs { for p in g.mesh.positions { newBounds.add(p) }; for e in g.edges { for p in e { newBounds.add(p) } } }
             seen.insert(key)
@@ -142,6 +150,7 @@ final class Scene3DBuilder {
         let h = highlighted
         highlighted = []
         applySelection(h)
+        syncExtras(doc: doc)
     }
 
     private func forgetMaterials(_ n: SCNNode) {
@@ -152,7 +161,7 @@ final class Scene3DBuilder {
         let parent = SCNNode()
         parent.name = key
         for g in groups {
-            if style != "Wireframe", let geo = Scene3DBuilder.geometry(g.mesh) {
+            if style != "Wireframe", let geo = Scene3DBuilder.geometry(TextureMapping.apply(g.mesh, material: g.material, doc: doc)) {
                 geo.materials = [material(for: g.material, doc: doc)]
                 let n = SCNNode(geometry: geo)
                 n.name = key
@@ -161,7 +170,7 @@ final class Scene3DBuilder {
                 if style == "X-Ray" { n.renderingOrder = 10 }
                 parent.addChildNode(n)
             }
-            if showsEdges, let eg = Scene3DBuilder.edgeGeometry(g) {
+            if showsEdges, let eg = style == "Sketchy" ? SketchyStyle.edgeGeometry(g) : Scene3DBuilder.edgeGeometry(g) {
                 eg.materials = [edgeMaterial]
                 let n = SCNNode(geometry: eg)
                 n.name = key
@@ -173,7 +182,7 @@ final class Scene3DBuilder {
         return parent
     }
 
-    var showsEdges: Bool { custom?.edges ?? ["Wireframe", "Hidden Line", "Shaded with Edges", "Conceptual", "X-Ray"].contains(style) }
+    var showsEdges: Bool { custom?.edges ?? ["Wireframe", "Hidden Line", "Shaded with Edges", "Conceptual", "X-Ray", "Sketchy"].contains(style) }
 
     static func geometry(_ mesh: Mesh) -> SCNGeometry? {
         guard !mesh.isEmpty, !mesh.positions.isEmpty else { return nil }
@@ -208,8 +217,10 @@ final class Scene3DBuilder {
     }
 
     func material(for name: String, doc: ArchiDocument) -> SCNMaterial {
-        if let m = materialCache[name] { return m }
         let src = doc.material(name) ?? Material(name: name, color: RGBA(0.8, 0.8, 0.8))
+        // Cached per material state (edits, glow and bump settings make a new material).
+        let cacheKey = name + "|\(src.hashValue)|" + (doc.variable(Emissive.key(name)) ?? "") + "|" + (doc.variable("MATBUMP:" + name) ?? "")
+        if let m = materialCache[cacheKey] { return m }
         let m = SCNMaterial()
         m.name = name
         let color = NSColor(srgbRed: src.color.r, green: src.color.g, blue: src.color.b, alpha: 1)
@@ -218,6 +229,11 @@ final class Scene3DBuilder {
         case "Hidden Line":
             m.lightingModel = .constant
             m.diffuse.contents = t > 0.3 ? NSColor(white: 0.93, alpha: 1) : NSColor.white
+        case "Sketchy":
+            // Hand-drawn look (VIS-032): paper-white faces with a faint wash of the material colour, unlit.
+            m.lightingModel = .constant
+            m.diffuse.contents = SketchyStyle.paper.blended(withFraction: 0.16, of: color) ?? SketchyStyle.paper
+            if t > 0.3 { m.transparency = 0.5; m.isDoubleSided = true; m.writesToDepthBuffer = false }
         case "Conceptual":
             // Consistent colours (VIS-030): unlit material colour, softened, with edges; no shadows or textures.
             m.lightingModel = .constant
@@ -254,7 +270,7 @@ final class Scene3DBuilder {
             }
         }
         if src.transparency > 0 { m.isDoubleSided = true }
-        if style != "Hidden Line", style != "X-Ray", style != "Conceptual", let img = MaterialTextures.image(src.texture) {
+        if style != "Hidden Line", style != "X-Ray", style != "Conceptual", style != "Sketchy", let img = MaterialTextures.image(src.texture) {
             m.diffuse.contents = img
             m.diffuse.wrapS = .repeat; m.diffuse.wrapT = .repeat
             m.diffuse.mipFilter = .linear
@@ -280,13 +296,14 @@ final class Scene3DBuilder {
             m.fresnelExponent = 3
             m.transparencyMode = .dualLayer
         }
+        if style != "Hidden Line" && style != "Wireframe" { Emissive.apply(m, name: name, color: src.color, doc: doc) }
         if let o = custom?.faceOpacity, o < 1 {
             m.transparency = CGFloat(max(0.05, min(o, 1)) * Double(m.transparency))
             m.isDoubleSided = true
             m.writesToDepthBuffer = false
             m.blendMode = .alpha
         }
-        materialCache[name] = m
+        materialCache[cacheKey] = m
         return m
     }
 
@@ -296,6 +313,7 @@ final class Scene3DBuilder {
         switch style {
         case "Wireframe": em.diffuse.contents = NSColor(white: 0.85, alpha: 1)
         case "Hidden Line": em.diffuse.contents = NSColor(white: 0.08, alpha: 1)
+        case "Sketchy": em.diffuse.contents = SketchyStyle.ink
         case "X-Ray": em.diffuse.contents = NSColor(white: 0.9, alpha: 0.9)
         default: em.diffuse.contents = NSColor(white: 0.12, alpha: 1)
         }
@@ -304,7 +322,7 @@ final class Scene3DBuilder {
         edgeMaterial = em
 
         let realistic = style == "Realistic"
-        let light = style == "Hidden Line"
+        let light = style == "Hidden Line" || style == "Sketchy"
         let sky = Scene3DBuilder.gradient(top: light ? NSColor(white: 0.98, alpha: 1) : (realistic ? NSColor(srgbRed: 0.42, green: 0.58, blue: 0.78, alpha: 1) : NSColor(srgbRed: 0.20, green: 0.215, blue: 0.24, alpha: 1)),
                                           bottom: light ? NSColor(white: 0.9, alpha: 1) : (realistic ? NSColor(srgbRed: 0.86, green: 0.88, blue: 0.9, alpha: 1) : NSColor(srgbRed: 0.09, green: 0.095, blue: 0.105, alpha: 1)))
         scene.background.contents = sky
@@ -312,6 +330,7 @@ final class Scene3DBuilder {
         scene.lightingEnvironment.intensity = realistic ? 1.3 : 0
         let shadows = custom?.shadows ?? ["Shaded", "Shaded with Edges", "Realistic"].contains(style)
         sunNode.light?.castsShadow = shadows
+        if style == "Sketchy" { scene.background.contents = SketchyStyle.paper }
         if let bg = custom?.background { scene.background.contents = NSColor(hex: bg) }
         sunNode.light?.intensity = realistic ? 1600 : (light ? 0 : 900)
         ambientNode.light?.intensity = realistic ? 220 : (light ? 1000 : 420)
@@ -321,7 +340,7 @@ final class Scene3DBuilder {
         let size = bounds.isEmpty ? 100_000.0 : max(100_000, max(bounds.size.x, bounds.size.y) * 6)
         let plane = SCNPlane(width: size, height: size)
         let m = SCNMaterial()
-        let realistic = style == "Realistic", light = style == "Hidden Line"
+        let realistic = style == "Realistic", light = style == "Hidden Line" || style == "Sketchy"
         let base: NSColor = realistic ? NSColor(srgbRed: 0.56, green: 0.58, blue: 0.53, alpha: 1)
             : (light ? NSColor.white : NSColor(srgbRed: 0.17, green: 0.18, blue: 0.19, alpha: 1))
         let line: NSColor = realistic ? NSColor(white: 0.48, alpha: 1) : (light ? NSColor(white: 0.86, alpha: 1) : NSColor(white: 0.30, alpha: 1))
@@ -423,7 +442,7 @@ final class Viewport3DController: NSObject, ObservableObject {
     private var positioned = false
     private var walkTimer: Timer?
     private var yaw: CGFloat = 0, pitch: CGFloat = 0
-    private var lastTick = Date()
+    var lastTick = Date()
     /// Section box currently applied to the scene materials.
     var sectionBoxApplied: SectionBox?
     /// Section plane currently applied, and the key of its cap faces.
@@ -433,6 +452,17 @@ final class Viewport3DController: NSObject, ObservableObject {
     private var cubeTimer: Timer?
     /// Whether isolate/explode levels was applied at the last sync (so turning it off restores the nodes).
     var levelViewApplied = false
+    /// First-person navigation: walk (collision + gravity), fly (free flight) or look around (fixed eye).
+    @Published var navMode: NavMode = .walk
+    /// Vertical speed while falling in walk mode (m/s).
+    var fallSpeed: CGFloat = 0
+    /// Steering wheel (NAVSWHEEL) overlay, its pivot and the camera history used by Rewind.
+    @Published var showWheel = false
+    var wheelPivot: SCNVector3?
+    var cameraHistory: [Camera] = []
+    /// Two-point perspective (TWOPOINT): vertical lens shift in normalized device units, nil when off.
+    @Published var twoPointShift: CGFloat?
+    var twoPointSize: CGSize = .zero
 
     override init() {
         super.init()
@@ -503,7 +533,7 @@ final class Viewport3DController: NSObject, ObservableObject {
         // Camera requests from the ribbon, menus and command line.
         if let action = model.pendingHostAction {
             switch action {
-            case .setView(let v) where v != "zoomPrevious":
+            case .setView(let v) where v != "zoomPrevious" && !v.hasPrefix("named:"):
                 model.pendingHostAction = nil
                 if isWalking { toggleWalk() }
                 if v.lowercased() == "ortho" || v.lowercased() == "perspective" {
@@ -511,13 +541,18 @@ final class Viewport3DController: NSObject, ObservableObject {
                 } else { setView(v) }
             case .zoomExtents:
                 model.pendingHostAction = nil; zoomExtents()
+            case .setView(let v) where v.hasPrefix("named:"):
+                model.pendingHostAction = nil
+                _ = applyNamedCamera(String(v.dropFirst(6)), doc: model.doc)
             case .walkthrough:
                 model.pendingHostAction = nil
+                navMode = .walk
                 if !isWalking { toggleWalk() }
             default: break
             }
         }
         if !model.walkMode && isWalking && model.pendingHostAction == nil { }
+        refreshTwoPoint()
         refreshGizmo()
     }
 
@@ -603,6 +638,20 @@ final class Viewport3DController: NSObject, ObservableObject {
         if isWalking {
             if isOrtho { toggleProjection() }
             v.allowsCameraControl = false
+            fallSpeed = 0
+            if navMode != .walk {
+                // Fly and look around keep the eye where it is.
+                let f = cameraNode.worldFront
+                yaw = atan2(-f.x, -f.z); pitch = asin(max(-1, min(1, f.y)))
+                applyLook()
+                lastTick = Date()
+                v.window?.makeFirstResponder(v)
+                walkTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
+                    MainActor.assumeIsolated { self?.walkStep() }
+                }
+                v.rendersContinuously = true
+                return
+            }
             let levelZ = (model.flatMap { m in m.doc.level(m.doc.currentLevel)?.elevation } ?? 0) * 0.001
             var p = cameraNode.presentation.worldPosition
             let s = builder.worldSphere
@@ -644,13 +693,19 @@ final class Viewport3DController: NSObject, ObservableObject {
         applyLook()
     }
 
-    private func walkStep() {
+    func walkStep() {
         guard let v = view else { return }
         let now = Date(); let dt = CGFloat(min(0.1, now.timeIntervalSince(lastTick))); lastTick = now
         let keys = v.pressedKeys
+        if navMode == .walk && keys.isEmpty {
+            // Gravity keeps working while standing still (e.g. after stepping off a slab).
+            cameraNode.position = WalkPhysics.step(eye: cameraNode.position, move: SCNVector3(0, 0, 0), fallSpeed: &fallSpeed, dt: dt, ray: collisionRay)
+            return
+        }
         guard !keys.isEmpty else { return }
-        let speed: CGFloat = (v.shiftDown ? 4.5 : 1.5) * dt
-        let fwd = SCNVector3(-sin(yaw), 0, -cos(yaw)), right = SCNVector3(cos(yaw), 0, -sin(yaw))
+        let speed: CGFloat = (v.shiftDown ? 4.5 : 1.5) * dt * (navMode == .fly ? 2.5 : 1)
+        let fwd = navMode == .fly ? SCNVector3(-sin(yaw) * cos(pitch), sin(pitch), -cos(yaw) * cos(pitch)) : SCNVector3(-sin(yaw), 0, -cos(yaw))
+        let right = SCNVector3(cos(yaw), 0, -sin(yaw))
         var m = SCNVector3(0, 0, 0)
         if keys.contains("w") || keys.contains(Character(UnicodeScalar(NSUpArrowFunctionKey)!)) { m = Viewport3DController.add(m, fwd) }
         if keys.contains("s") || keys.contains(Character(UnicodeScalar(NSDownArrowFunctionKey)!)) { m = Viewport3DController.sub(m, fwd) }
@@ -658,9 +713,14 @@ final class Viewport3DController: NSObject, ObservableObject {
         if keys.contains("a") { m = Viewport3DController.sub(m, right) }
         if keys.contains(Character(UnicodeScalar(NSLeftArrowFunctionKey)!)) { yaw += 1.8 * dt; applyLook() }
         if keys.contains(Character(UnicodeScalar(NSRightArrowFunctionKey)!)) { yaw -= 1.8 * dt; applyLook() }
+        if navMode == .look { return }
         if keys.contains("e") { m.y += 1 }
         if keys.contains("q") { m.y -= 1 }
         let p = cameraNode.position
+        if navMode == .walk && m.y == 0 {
+            cameraNode.position = WalkPhysics.step(eye: p, move: SCNVector3(m.x * speed, 0, m.z * speed), fallSpeed: &fallSpeed, dt: dt, ray: collisionRay)
+            return
+        }
         cameraNode.position = SCNVector3(p.x + m.x * speed, p.y + m.y * speed, p.z + m.z * speed)
     }
 
@@ -701,6 +761,8 @@ final class ArchiSCNView: SCNView {
     private var downPoint: CGPoint?
     /// Gizmo drag in progress: handle, start point, current amount.
     private var gizmoDrag: (axis: Int, start: CGPoint, amount: Double)?
+    /// Section box face drag (VIS-035): face, start point, box at the start and current amount (mm).
+    private var boxDrag: (face: SectionBox.Face, start: CGPoint, base: SectionBox, amount: Double)?
 
     // Materials, blocks and components dragged from the libraries onto the model.
     func registerDrops() { registerForDraggedTypes([.string]) }
@@ -722,10 +784,23 @@ final class ArchiSCNView: SCNView {
         window?.makeFirstResponder(self)
         if controller?.isWalking == true { return }
         if let d = downPoint, let a = MainActor.assumeIsolated({ controller?.gizmoAxis(at: d) }) { gizmoDrag = (a, d, 0); return }
+        if let d = downPoint, let (f, base) = MainActor.assumeIsolated({ () -> (SectionBox.Face, SectionBox)? in
+            guard let c = controller, let b = c.sectionBoxApplied, b.on, let f = c.sectionBoxFace(at: d) else { return nil }
+            return (f, b)
+        }) { boxDrag = (f, d, base, 0); return }
         super.mouseDown(with: event)
     }
     override func mouseDragged(with event: NSEvent) {
         if controller?.isWalking == true { MainActor.assumeIsolated { controller?.look(dx: event.deltaX, dy: event.deltaY) }; return }
+        if var bd = boxDrag {
+            let p = convert(event.locationInWindow, from: nil)
+            MainActor.assumeIsolated {
+                bd.amount = controller?.sectionBoxDragAmount(bd.base, bd.face, from: bd.start, to: p) ?? 0
+                controller?.sectionBoxDragPreview(bd.base, bd.face, amount: bd.amount)
+            }
+            boxDrag = bd
+            return
+        }
         if var g = gizmoDrag {
             let p = convert(event.locationInWindow, from: nil)
             MainActor.assumeIsolated {
@@ -739,6 +814,11 @@ final class ArchiSCNView: SCNView {
     }
     override func mouseUp(with event: NSEvent) {
         let p = convert(event.locationInWindow, from: nil)
+        if let bd = boxDrag {
+            boxDrag = nil; downPoint = nil
+            MainActor.assumeIsolated { controller?.sectionBoxDragCommit(bd.base, bd.face, amount: bd.amount) }
+            return
+        }
         if let g = gizmoDrag {
             gizmoDrag = nil; downPoint = nil
             MainActor.assumeIsolated { controller?.gizmoCommit(axis: g.axis, amount: g.amount) }
@@ -794,6 +874,7 @@ struct Viewport3DView: View {
                 if model.showSectionBoxPanel { SectionBoxPanel(model: model, controller: controller) }
                 if model.showSunStudy { SunStudyPanel(model: model, controller: controller) }
                 if clip.visible { ClipPlanePanel(model: model, controller: controller) }
+                if controller.showWheel { SteeringWheelView(controller: controller) }
             }
             .padding(10)
             VStack {
@@ -804,7 +885,7 @@ struct Viewport3DView: View {
             if controller.isWalking {
                 VStack {
                     Spacer()
-                    Text("Walk: W A S D to move · drag to look · Q/E down/up · Shift to run · Esc to exit")
+                    Text(controller.navMode.hint)
                         .font(.caption).padding(.horizontal, 12).padding(.vertical, 6)
                         .foregroundStyle(Theme.text)
                         .background(Capsule().fill(Theme.panel))

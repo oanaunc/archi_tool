@@ -121,6 +121,25 @@ public enum UpdateCheck {
         }
         return false
     }
+
+    /// Sparkle EdDSA check: `sparkle:edSignature` (base64 Ed25519 signature of the archive bytes) against the app's
+    /// SUPublicEDKey (base64 32-byte public key).
+    public static func verifyEdSignature(_ file: Data, signature: String, publicKey: String) -> Bool {
+        guard let sig = Data(base64Encoded: signature.trimmingCharacters(in: .whitespacesAndNewlines)),
+              let pk = Data(base64Encoded: publicKey.trimmingCharacters(in: .whitespacesAndNewlines)) else { return false }
+        return Ed25519.verify([UInt8](file), signature: [UInt8](sig), publicKey: [UInt8](pk))
+    }
+
+    /// Checks a downloaded update: the length announced in the appcast, then the EdDSA signature when the item and the
+    /// app have one (else the SHA256SUMS.txt entry). Returns nil when the file may be installed, else the reason.
+    public static func check(download: Data, item: Item, publicKey: String?, sums: String? = nil, name: String? = nil) -> String? {
+        if item.length > 0 && download.count != item.length { return "the download has \(download.count) bytes, the appcast announces \(item.length)" }
+        if let sig = item.edSignature, let key = publicKey {
+            return verifyEdSignature(download, signature: sig, publicKey: key) ? nil : "the EdDSA signature does not match the app's update key"
+        }
+        if let sums, let name { return verify(download, name: name, sums: sums) ? nil : "the SHA-256 checksum does not match SHA256SUMS.txt" }
+        return "the update is not signed"
+    }
 }
 
 public enum CrashReport {

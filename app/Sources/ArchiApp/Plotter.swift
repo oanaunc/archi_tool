@@ -232,6 +232,8 @@ enum SheetComposer {
 
     /// Model-space draw entries shown by a viewport, in that view's 2D coordinates.
     static func viewportEntries(doc: ArchiDocument, vp: Viewport) -> [DrawEntry] {
+        // 3D viewports: shade plot of the model seen from the viewport's camera (always drawn on the main thread).
+        if vp.view == .axonometric || vp.view == .perspective { return MainActor.assumeIsolated { ShadePlot.entries(doc: doc, vp: vp) } }
         switch vp.view {
         case .plan, .ceiling, .axonometric, .perspective:
             var o = DrawOptions(level: vp.level)
@@ -303,6 +305,14 @@ enum SheetComposer {
         let scales = Array(Set(layout.viewports.map { ratioText($0.scale, units: doc.units) })).sorted()
         let scaleText = tbv["scale"] ?? (scales.isEmpty ? "—" : (scales.count == 1 ? scales[0] : "As indicated"))
         let sheetNo = tbv["sheetNumber"] ?? String(format: "A-%03d", layoutIndex + 101)
+        // Custom title block (SHT-014): a block with {field} placeholders replaces the built-in one.
+        var values: [String: String] = ["project": tbv["project"] ?? info.name, "sheetName": tbv["sheetName"] ?? layout.name, "sheetNumber": sheetNo,
+                                        "scale": scaleText, "date": tbv["date"] ?? dateText(), "revision": tbv["revision"] ?? "—", "client": tbv["client"] ?? info.client,
+                                        "author": tbv["author"] ?? info.author, "number": tbv["number"] ?? info.number, "paper": layout.paper.name, "address": info.address]
+        for (k, v) in SheetTools.fields(doc, layout: layout) { values[k] = v }
+        if let custom = MainActor.assumeIsolated({ CustomTitleBlock.entries(doc: doc, layout: layout, anchor: Vec2(x1, y0), values: values) }) {
+            out += custom
+        } else {
         var items: [DrawItem] = [rect(Vec2(x0, y0), Vec2(x1, y1), 0.5)]
         // Rows: header band 14 mm, then 3 rows of 9.33 mm.
         let colA = x0 + 70, colB = x0 + 125
@@ -349,6 +359,7 @@ enum SheetComposer {
                 rows.append(text(Vec2(colA, ya + 1.4), 2.2, f.1, .left, .baseline))
             }
             out.append(DrawEntry(id: nil, items: rows))
+        }
         }
 
         // North arrow (left of the title block).

@@ -109,7 +109,7 @@ public enum BuildingAnalysisCommands {
 
     static var analyticalModel: CommandDef {
         CommandDef("ANALYTICALMODEL", aliases: ["STRUCTMODEL", "ANALYTICAL", "ANALYTICALOUT"], category: "Structure",
-                   summary: "Builds the structural analytical model (nodes, members, wall/slab panels, supports, loads) from columns, beams, walls and slabs and writes it as JSON.", modifies: false) { ed in
+                   summary: "Builds the structural analytical model (nodes, members, wall/slab panels, supports, loads) from columns, beams, walls and slabs and writes it as JSON, OpenSees Tcl, SAF (.xlsx) or an IFC4 structural analysis view (.ifc).", modifies: false) { ed in
             var o = AnalyticalOptions.from(ed.doc)
             o.deadLoad = try await ed.getReal("Superimposed dead load kN/m²", defaultValue: o.deadLoad).value ?? o.deadLoad
             o.liveLoad = try await ed.getReal("Live load kN/m²", defaultValue: o.liveLoad).value ?? o.liveLoad
@@ -117,9 +117,19 @@ public enum BuildingAnalysisCommands {
             let m = StructuralAnalysis.model(ed.doc, options: o)
             ed.print("Analytical model: \(m.nodes.count) nodes (\(m.nodes.filter(\.isSupported).count) supported), \(m.members.count) members, \(m.panels.count) panels, \(m.nodeLoads.count) nodal loads.")
             for w in m.warnings { ed.print("Warning: " + w) }
-            guard let p = try await ed.getWord("Enter file name to save (.json analytical model, .tcl OpenSees) <none>"), !p.isEmpty else { return }
+            guard let p = try await ed.getWord("Enter file name to save (.json analytical model, .tcl OpenSees, .xlsx SAF, .ifc structural analysis view) <none>"), !p.isEmpty else { return }
             var url = IOCommands.resolve(ed, p)
             if url.pathExtension.isEmpty { url.appendPathExtension("json") }
+            switch url.pathExtension.lowercased() {
+            case "xlsx":
+                try IOCommands.write(ed, url, "SAF model", { try StructuralExchange.saf(m, name: ed.doc.info.name, options: o).write(to: url, options: .atomic) })
+                return
+            case "ifc":
+                let t = StructuralExchange.ifc(m, name: ed.doc.info.name, options: o, author: ed.doc.info.author)
+                try IOCommands.write(ed, url, "IFC structural analysis model", { try t.write(to: url, atomically: true, encoding: .utf8) })
+                return
+            default: break
+            }
             if url.pathExtension.lowercased() == "tcl" {
                 let tcl = StructuralLoads.openSeesTcl(m, name: ed.doc.info.name)
                 try IOCommands.write(ed, url, "OpenSees model", { try tcl.write(to: url, atomically: true, encoding: .utf8) })
@@ -243,12 +253,25 @@ public enum BuildingAnalysisCommands {
                    summary: "Validates an IFC file (or the model's own IFC export): syntax, schema header, references, GlobalIds, attribute counts, project/units, spatial containment.", modifies: false) { ed in
             let p = try await ed.getWord("Enter IFC file name <current model>")
             let text: String
+            let own = p?.isEmpty ?? true
             if let p, !p.isEmpty { text = try FileImport.readText(IOCommands.resolve(ed, p)) }
             else { text = IFCExporter.export(doc: ed.doc, meshes: MeshBuilder.build(doc: ed.doc)) }
             let issues = IFCValidator.validate(text)
             guard !issues.isEmpty else { ed.print("IFC is valid: no issues found."); return }
-            for (i, it) in issues.enumerated() { ed.print("\(i + 1). \(it.description)") }
-            ed.print("\(issues.count) issue(s).")
+            // Issues of the model's own export (or a file exported from it) link to the drawing's elements.
+            let f = try? STEPParser.parse(text)
+            var zoom: [(ids: [EntityID], box: BBox2)] = []
+            for (i, it) in issues.enumerated() {
+                let els = f.map { IFCValidator.elements(for: it, in: $0, doc: ed.doc) } ?? []
+                var box = BBox2.empty
+                for id in els { if let el = ed.doc.element(id) { box.add(PlanRepresentation.bounds(el, doc: ed.doc)) } }
+                zoom.append((els, box))
+                ed.print("\(i + 1). \(it.description)" + (els.isEmpty ? "" : " → elements " + els.prefix(8).map { "#\($0)" }.joined(separator: ", ") + (els.count > 8 ? ", …" : "")))
+            }
+            ed.print("\(issues.count) issue(s)." + (own ? "" : " Elements are matched by GlobalId."))
+            let all = Set(zoom.flatMap(\.ids))
+            if !all.isEmpty { ed.selection = all }
+            try await AnalysisCommands.zoomLoop(ed, zoom)
         }
     }
 

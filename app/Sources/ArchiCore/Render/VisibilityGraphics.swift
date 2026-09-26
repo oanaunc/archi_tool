@@ -40,6 +40,7 @@ public enum VisibilityGraphics {
     /// Category name of an element as used by VG and filters (wall, door, window, opening, slab, ceiling, column, beam,
     /// roof, stair, railing, room, area, curtainWall, component, grid).
     public static func category(_ el: BIMElement) -> String {
+        if el.props["partOf"] != nil { return "part" }
         switch el.geometry {
         case .space: return el.props["areaScheme"] != nil ? "area" : "room"
         case .slab: return el.props["kind"] == "ceiling" ? "ceiling" : "slab"

@@ -70,6 +70,31 @@ struct PrintOptions: Codable, Equatable {
     var percent = 100.0
     var copies = 1
     var showSystemDialog = false
+    /// Large format (SHT-038): nil/"printer" = the printer's paper; "drawing" = a custom page the size of the sheet;
+    /// "roll" = roll paper of `rollWidth` mm, cut to the drawing's length. Optional so saved options still decode.
+    var sizeMode: String?
+    var rollWidth: Double?
+
+    enum SizeMode: String, CaseIterable { case printer = "Printer paper", drawing = "Match drawing (custom size)", roll = "Roll paper" }
+    var size: SizeMode { SizeMode.allCases.first { $0.rawValue == sizeMode || "\($0)" == sizeMode } ?? .printer }
+
+    /// Page for a PDF page of `pdf` points: custom sizes and rolls (width across the roll, length along it) and the
+    /// scale that fits (1 = true size). Nil keeps the printer's paper.
+    static func page(for pdf: CGSize, mode: SizeMode, rollWidthMM: Double) -> (size: CGSize, scale: CGFloat, rotated: Bool)? {
+        let pt = 72 / 25.4
+        switch mode {
+        case .printer: return nil
+        case .drawing: return (pdf, 1, false)
+        case .roll:
+            let roll = CGFloat(max(100, rollWidthMM) * pt)
+            let long = max(pdf.width, pdf.height), short = min(pdf.width, pdf.height)
+            // Least paper: the long side across the roll when it fits, else the short side, else scaled down.
+            if long <= roll + 0.5 { return (CGSize(width: roll, height: short), 1, pdf.height > pdf.width) }
+            if short <= roll + 0.5 { return (CGSize(width: roll, height: long), 1, pdf.width > pdf.height) }
+            let k = roll / short
+            return (CGSize(width: roll, height: long * k), k, pdf.width > pdf.height)
+        }
+    }
 
     static let key = "print.options"
     static func load() -> PrintOptions {
@@ -108,7 +133,15 @@ enum PrintSetupWindow {
             if !o.printer.isEmpty, let p = NSPrinter(name: o.printer) { info.printer = p }
             if !o.paper.isEmpty { info.paperName = NSPrinter.PaperName(o.paper) }
             if let page = pdf.page(at: 0) { let r = page.bounds(for: .mediaBox); info.orientation = r.width > r.height ? .landscape : .portrait }
-            let s = o.scale
+            var s = o.scale
+            // Large format: a custom page (CUPS Custom.WxH) the size of the sheet, or roll paper cut to length.
+            if let page = pdf.page(at: 0), let lf = PrintOptions.page(for: page.bounds(for: .mediaBox).size, mode: o.size, rollWidthMM: o.rollWidth ?? 914) {
+                info.orientation = .portrait
+                info.paperSize = NSSize(width: lf.rotated ? lf.size.height : lf.size.width, height: lf.rotated ? lf.size.width : lf.size.height)
+                if lf.rotated { info.orientation = .landscape }
+                info.topMargin = 0; info.bottomMargin = 0; info.leftMargin = 0; info.rightMargin = 0
+                s = (lf.scale, lf.scale < 1 ? .pageScaleToFit : .pageScaleNone)
+            }
             info.scalingFactor = s.factor
             info.isHorizontallyCentered = true; info.isVerticallyCentered = true
             info.dictionary()[NSPrintInfo.AttributeKey.copies.rawValue] = max(1, o.copies)
@@ -151,8 +184,20 @@ struct PrintSetupView: View {
             if !media.isEmpty {
                 Picker("Media", selection: $o.mediaType) { Text("Printer default").tag(""); ForEach(media, id: \.self) { Text($0.label).tag($0.key) } }
             }
-            Picker("Scale", selection: $o.scaling) { ForEach(PrintOptions.Scaling.allCases, id: \.self) { Text($0.rawValue) } }
-            if o.scaling == .custom {
+            Picker("Paper size", selection: Binding(get: { o.size }, set: { o.sizeMode = $0.rawValue })) { ForEach(PrintOptions.SizeMode.allCases, id: \.self) { Text($0.rawValue).tag($0) } }
+            if o.size == .roll {
+                HStack {
+                    Text("Roll width")
+                    TextField("mm", value: Binding(get: { o.rollWidth ?? 914 }, set: { o.rollWidth = max(100, $0) }), format: .number).frame(width: 70)
+                    Text("mm").foregroundStyle(Theme.textDim)
+                    Spacer()
+                    Menu("Common") { ForEach([610.0, 841, 914, 1067, 1118, 1524], id: \.self) { w in Button("\(fmt(w, 0)) mm") { o.rollWidth = w } } }.fixedSize()
+                }
+            }
+            if o.size == .printer {
+                Picker("Scale", selection: $o.scaling) { ForEach(PrintOptions.Scaling.allCases, id: \.self) { Text($0.rawValue) } }
+            }
+            if o.scaling == .custom && o.size == .printer {
                 HStack { Slider(value: $o.percent, in: 10...400, step: 5); Text("\(fmt(o.percent, 0)) %").font(Theme.mono).frame(width: 56) }
             }
             Stepper("Copies: \(o.copies)", value: $o.copies, in: 1...99)

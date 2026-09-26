@@ -2,7 +2,7 @@
 import Foundation
 
 enum ArchitectureCommands {
-    static var all: [CommandDef] { walls + openings + horizontals + structure + spaces + management + extendedBIM + documentation + multiStorey + sheetViews + ModelingCommands.all + BIMExtCommands.all + BIMDetailCommands.all + BIMSystemCommands.all + BIMMoreCommands.all }
+    static var all: [CommandDef] { walls + openings + horizontals + structure + spaces + management + extendedBIM + documentation + multiStorey + sheetViews + ModelingCommands.all + BIMExtCommands.all + BIMDetailCommands.all + BIMSystemCommands.all + BIMMoreCommands.all + Round7ViewCommands.all + Round7Commands.all + Round7ModelingCommands.all + Round7FormCommands.all }
 
     static func wallPreview(_ w: WallGeom) -> Geometry { .polyline(PolylineGeom(points: CommandHelpers.wallRect(w), closed: true)) }
     static func footprintPreview(_ pts: [Vec2]) -> Geometry { .polyline(PolylineGeom(points: pts, closed: true)) }
@@ -2016,6 +2016,24 @@ extension ArchitectureCommands {
         let parts = spec.split(separator: ":").map(String.init)
         if parts.first == "legend", parts.count >= 2 { return Legends.makeBlock(&doc, kind: parts[1]) }
         if parts.first == "drafting", parts.count >= 2 { let n = DraftingViews.blockName(parts[1]); return doc.blocks[n] != nil ? n : nil }
+        if parts.first == "camera", parts.count >= 2 {
+            let vname = parts[1...].joined(separator: ":")
+            var d = doc
+            ProjectViews.updateAll(&d)
+            guard let v = d.view(named: vname), let cam = v.camera else { return nil }
+            // The drawing uses the 3D view's own settings (section box, isolation…).
+            if d.variable(ProjectViews.currentKey)?.caseInsensitiveCompare(v.name) != .orderedSame {
+                for k in ProjectViews.settingKeys { d.variables[k] = nil }
+                for (k, x) in ProjectViews.owner(v, doc: d).settings { d.setVariable(k, x) }
+            }
+            let entries = ElevationBuilder.entries(doc: d, camera: cam)
+            guard !entries.isEmpty else { return nil }
+            var box = BBox2.empty
+            for e in entries { box.add(e.bounds) }
+            let name = "VIEW-3D-" + vname.uppercased().replacingOccurrences(of: " ", with: "-")
+            doc.blocks[name] = Block(name: name, basePoint: box.min, entities: entities(from: entries), description: "view:" + spec)
+            return name
+        }
         if parts.first == "solidsection", parts.count >= 6, let x0 = Double(parts[1]), let y0 = Double(parts[2]), let x1 = Double(parts[3]), let y1 = Double(parts[4]) {
             let existing = doc.blocks.first { $0.value.description == "view:" + spec }?.key
             return SolidSections.makeBlock(&doc, a: Vec2(x0, y0), b: Vec2(x1, y1), name: existing, includeModel: parts[5] == "1")
@@ -2084,8 +2102,15 @@ extension ArchitectureCommands {
 
     static var viewDrawCommand: CommandDef {
         CommandDef("VIEWDRAW", aliases: ["DRAWINGVIEW", "SECTIONVIEW", "ELEVATIONVIEW"], category: "View", summary: "Places an elevation or section of the model as a 2D drawing (with level heads and grid bubbles) in model space.") { ed in
-            let k = try await ed.getKeyword("View", ["North", "South", "East", "West", "Section", "Detail"], defaultValue: "South") ?? "South"
+            let k = try await ed.getKeyword("View", ["North", "South", "East", "West", "Section", "Detail", "Camera"], defaultValue: "South") ?? "South"
             var spec = k.lowercased()
+            if k == "Camera" {
+                // Axonometric or perspective drawing of a 3D project view (DOC-009 / DOC-010).
+                let cams = ed.doc.views.filter { $0.kind == "3d" && $0.camera != nil }.map(\.name)
+                guard !cams.isEmpty else { throw CommandError.invalid("No 3D views with a camera (AXONVIEW or CAMERAVIEW create them).") }
+                guard let n = try await ed.getWord("3D view [\(cams.joined(separator: "/"))]", defaultValue: cams[0]), let v = ed.doc.view(named: n) else { throw CommandError.invalid("View not found.") }
+                spec = "camera:" + v.name
+            }
             if k == "Detail" {
                 let a = try await ed.requirePoint("Specify first corner of the detail area")
                 let b = try await ed.requirePoint("Specify opposite corner", base: a) { c in [.polyline(PolylineGeom(points: BBox2(points: [a, c]).corners, closed: true))] }

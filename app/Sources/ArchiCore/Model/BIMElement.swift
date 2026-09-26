@@ -54,6 +54,8 @@ public struct SlabGeom: Codable, Hashable {
     public var slopeDirection: Double
     /// Point where the sloped top is at `topOffset` (nil = first boundary vertex).
     public var slopeOrigin: Vec2?
+    /// Slab edges (BIM-051).
+    public var edges: [SlabEdge]?
     public init(boundary: [Vec2], holes: [[Vec2]] = [], thickness: Double = 200, topOffset: Double = 0,
                 slope: Double = 0, slopeDirection: Double = 0, slopeOrigin: Vec2? = nil) {
         self.boundary = boundary; self.holes = holes; self.thickness = thickness; self.topOffset = topOffset
@@ -183,8 +185,44 @@ public struct RoofGeom: Codable, Hashable {
     public var eaveEdge: Int
     /// Special roof forms (mansard, gambrel, dome, barrel vault); nil = the plain `kind`.
     public var profile: RoofProfile?
+    /// Roof by extrusion (BIM-057): a sketched profile extruded along a plan direction (replaces the kind's faces).
+    public var extrusion: RoofExtrusion?
+    /// Shape editing of flat roofs (BIM-063): plan points with heights above the flat top (drainage falls); the top
+    /// becomes a triangulated surface through them and the footprint corners.
+    public var shapePoints: [Vec3]?
     public init(boundary: [Vec2], kind: RoofKind = .gable, pitch: Double = 30, thickness: Double = 250, overhang: Double = 500, baseOffset: Double = 3000, eaveEdge: Int = 0) {
         self.boundary = boundary; self.kind = kind; self.pitch = pitch; self.thickness = thickness; self.overhang = overhang; self.baseOffset = baseOffset; self.eaveEdge = eaveEdge
+    }
+}
+
+/// Roof by extrusion: profile points (x along `direction` from `origin`, z above the eave height) extruded `depth` to
+/// the left of the direction.
+public struct RoofExtrusion: Codable, Hashable {
+    public var origin: Vec2
+    public var direction: Double
+    public var profile: [Vec2]
+    public var depth: Double
+    public init(origin: Vec2, direction: Double, profile: [Vec2], depth: Double) { self.origin = origin; self.direction = direction; self.profile = profile; self.depth = depth }
+    /// Plan rectangle covered by the roof (counter-clockwise).
+    public var footprint: [Vec2] {
+        let xs = profile.map(\.x)
+        guard let x0 = xs.min(), let x1 = xs.max(), x1 - x0 > 1e-9, depth > 0 else { return [] }
+        let u = Vec2.polar(1, direction), n = u.perp
+        return [origin + u * x0, origin + u * x1, origin + u * x1 + n * depth, origin + u * x0 + n * depth]
+    }
+}
+
+/// A slab edge (BIM-051): a profile along boundary edges — Upstand (curb, balcony upstand on top of the slab, inside the
+/// edge) or Fascia (slab edge band outside the edge, hanging down from the top).
+public struct SlabEdge: Codable, Hashable {
+    /// Boundary edge index (from vertex i to i + 1); -1 = every edge.
+    public var edge: Int
+    public var kind: String
+    public var width: Double
+    public var height: Double
+    public var material: String?
+    public init(edge: Int, kind: String = "upstand", width: Double = 150, height: Double = 300, material: String? = nil) {
+        self.edge = edge; self.kind = kind; self.width = width; self.height = height; self.material = material
     }
 }
 
@@ -205,6 +243,8 @@ public struct StairGeom: Codable, Hashable {
     public var clockwise: Bool?
     /// Spiral stairs: radius of the central column / inner edge of the treads (nil = automatic).
     public var innerRadius: Double?
+    /// Stair by sketch (BIM-066): riser lines bottom to top (each two plan points); treads span consecutive risers.
+    public var sketchRisers: [[Vec2]]?
     public init(start: Vec2, direction: Double = 0, width: Double = 1000, totalRise: Double = 3000, riserCount: Int = 17, treadDepth: Double = 280, kind: StairKind = .straight,
                 landingDepth: Double? = nil, landingAt: Int? = nil, topLevel: Int? = nil, winders: Int? = nil, clockwise: Bool? = nil, innerRadius: Double? = nil) {
         self.start = start; self.direction = direction; self.width = width; self.totalRise = totalRise; self.riserCount = riserCount; self.treadDepth = treadDepth; self.kind = kind
@@ -548,18 +588,20 @@ extension WallGeom {
 }
 
 extension SlabGeom {
-    private enum Keys: String, CodingKey { case boundary, holes, thickness, topOffset, slope, slopeDirection, slopeOrigin }
+    private enum Keys: String, CodingKey { case boundary, holes, thickness, topOffset, slope, slopeDirection, slopeOrigin, edges }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: Keys.self)
         self.init(boundary: try c.decode([Vec2].self, forKey: .boundary), holes: try c.decodeIfPresent([[Vec2]].self, forKey: .holes) ?? [],
                   thickness: try c.decodeIfPresent(Double.self, forKey: .thickness) ?? 200, topOffset: try c.decodeIfPresent(Double.self, forKey: .topOffset) ?? 0,
                   slope: try c.decodeIfPresent(Double.self, forKey: .slope) ?? 0, slopeDirection: try c.decodeIfPresent(Double.self, forKey: .slopeDirection) ?? 0,
                   slopeOrigin: try c.decodeIfPresent(Vec2.self, forKey: .slopeOrigin))
+        edges = try c.decodeIfPresent([SlabEdge].self, forKey: .edges)
     }
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: Keys.self)
         try c.encode(boundary, forKey: .boundary); try c.encode(holes, forKey: .holes); try c.encode(thickness, forKey: .thickness); try c.encode(topOffset, forKey: .topOffset)
         if isSloped { try c.encode(slope, forKey: .slope); try c.encode(slopeDirection, forKey: .slopeDirection); try c.encodeIfPresent(slopeOrigin, forKey: .slopeOrigin) }
+        if let e = edges, !e.isEmpty { try c.encode(e, forKey: .edges) }
     }
 }
 

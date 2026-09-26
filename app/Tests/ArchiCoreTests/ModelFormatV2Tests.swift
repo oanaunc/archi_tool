@@ -4,7 +4,7 @@ import XCTest
 
 final class ModelFormatV2Tests: XCTestCase {
     func testVersion1FileMigratesToCurrentVersion() throws {
-        XCTAssertEqual(ArchiDocument.currentFormatVersion, 5)
+        XCTAssertEqual(ArchiDocument.currentFormatVersion, 6)
         XCTAssertNotNil(ArchiFile.migrations[1], "1 → 2 migration hook")
         let json = """
         {"app":"Oanarina Archi Tool","formatVersion":1,"document":{"formatVersion":1,"nextID":3,"elements":[

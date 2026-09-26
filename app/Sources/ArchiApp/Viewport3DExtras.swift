@@ -189,6 +189,7 @@ extension Viewport3DController {
         node.name = name
         node.renderingOrder = 100
         node.castsShadow = false
+        addBoxGrips(b, to: node)
         builder.scene.rootNode.addChildNode(node)
     }
 

@@ -143,7 +143,7 @@ enum FileViewCommands {
                 }
             },
             CommandDef("SHOW3D", aliases: ["3D", "3DVIEW", "MODEL3D"], category: "View", summary: "Shows the 3D model view.", modifies: false) { ed in host(ed, .show3D) },
-            CommandDef("SHOW2D", aliases: ["2D", "PLAN"], category: "View", summary: "Shows the 2D plan view.", modifies: false) { ed in host(ed, .show2D) },
+            CommandDef("SHOW2D", aliases: ["2D"], category: "View", summary: "Shows the 2D plan view.", modifies: false) { ed in host(ed, .show2D) },
             CommandDef("SPLIT", aliases: ["SPLITVIEW", "VPORTS"], category: "View", summary: "Shows the plan and 3D views side by side.", modifies: false) { ed in host(ed, .showSplit) },
             CommandDef("VSCURRENT", aliases: ["VS", "SHADEMODE"], category: "View", summary: "Sets the visual style of the 3D view.", modifies: false) { ed in
                 let styles = ["2dwireframe", "Wireframe", "Hidden", "Realistic", "Conceptual", "Shaded", "shadedwithEdges", "Xray", "Sketchy"]

@@ -4,7 +4,7 @@ import Foundation
 
 public enum IOCommands {
     public static var all: [CommandDef] { [importFile, ifcImport, svgImport, meshImport, geoJSONImport, geoJSONExport, pointsImport, pointsExport,
-                                           export3MF, usdExport, dxfR12Out] + ExchangeCommands.all + MoreIOCommands.all + CollabCommands.all + LifecycleCommands.all }
+                                           export3MF, usdExport, dxfR12Out, dxfOutVersion, ifcXMLOut, lazConverter, Presentation.command, DocSite.command, SurveyCodes.command] + ExchangeCommands.all + MoreIOCommands.all + CollabCommands.all + LifecycleCommands.all + FileSignature.commands }
 
     /// Resolves a path typed on the command line (~, relative to the drawing's folder, else the working directory).
     @MainActor static func resolve(_ ed: Editor, _ path: String) -> URL {
@@ -193,6 +193,45 @@ public enum IOCommands {
             if url.pathExtension.isEmpty { url.appendPathExtension("usdz") }
             let f = url.pathExtension.lowercased() == "usdz" ? "usdz" : "usda"
             try write(ed, url, f.uppercased(), { try FileImport.export(ed.doc, to: url, format: f) })
+        }
+    }
+
+    static var dxfOutVersion: CommandDef {
+        CommandDef("DXFOUTVERSION", aliases: ["DXFSAVEAS", "DXFVERSIONOUT", "DXF2018OUT"], category: "File",
+                   summary: "Writes an ASCII DXF of a chosen version: R12, R2000, R2004, R2007, R2010, R2013 or R2018 (AC1032, UTF-8 text).", modifies: false) { ed in
+            let names = DXFVersion.allCases.map { $0.rawValue }
+            let v = try await ed.getKeyword("DXF version [" + names.joined(separator: "/") + "]", names, defaultValue: "R2018") ?? "R2018"
+            guard let ver = DXFVersion.parse(v) else { throw CommandError.invalid("Unknown DXF version \(v).") }
+            var url = try await path(ed, "Enter DXF file name")
+            if url.pathExtension.isEmpty { url.appendPathExtension("dxf") }
+            try write(ed, url, "DXF \(ver.rawValue)", { try DXFWriter.write(ed.doc, version: ver).write(to: url, atomically: true, encoding: .utf8) })
+        }
+    }
+
+    static var ifcXMLOut: CommandDef {
+        CommandDef("IFCXMLOUT", aliases: ["IFCXMLEXPORT", "EXPORTIFCXML"], category: "File",
+                   summary: "Exports the building model as ifcXML (IFC4, ISO 10303-28 XML encoding); a .zip or .ifczip name writes an IfcZIP holding the ifcXML.", modifies: false) { ed in
+            var url = try await path(ed, "Enter ifcXML file name")
+            if url.pathExtension.isEmpty { url.appendPathExtension("ifcXML") }
+            let zip = ["zip", "ifczip"].contains(url.pathExtension.lowercased())
+            try write(ed, url, "ifcXML", {
+                let xml = try IFCXML.fromSTEP(IFCExporter.export(doc: ed.doc, meshes: MeshBuilder.build(doc: ed.doc)))
+                if zip { try IFCZip.writeXML(xml, name: url.deletingPathExtension().lastPathComponent).write(to: url, options: .atomic) }
+                else { try xml.write(to: url, atomically: true, encoding: .utf8) }
+            })
+        }
+    }
+
+    static var lazConverter: CommandDef {
+        CommandDef("LAZCONVERTER", aliases: ["LAZSETUP", "LASZIP"], category: "File",
+                   summary: "Shows or sets the LAZ decompressor used to import .laz point clouds (laszip, pdal or las2las; stored in the drawing).") { ed in
+            if let t = LAZConverter.find(override: ed.doc.variable("LAZCONVERTER")) { ed.print("LAZ decompressor: \(t.path) (\(t.kind.rawValue)).") }
+            else { ed.print("No LAZ decompressor found. " + LAZConverter.guidance) }
+            guard let p = try await ed.getWord("Enter decompressor path <keep>"), !p.isEmpty else { return }
+            let path = (p as NSString).expandingTildeInPath
+            guard let t = LAZConverter.tool(at: path) else { throw CommandError.invalid("\(path) is not an executable file.") }
+            ed.doc.setVariable("LAZCONVERTER", path)
+            ed.print("LAZ decompressor set to \(t.path).")
         }
     }
 

@@ -1779,7 +1779,38 @@ final class PlanCanvasView: NSView {
         }
         if !model.editor.isIdle || !model.commandInput.isEmpty { model.enterPressed(); return }
         if let hg = hoverGrip, let menu = gripMenu(hg) { NSMenu.popUpContextMenu(menu, with: e, for: self); return }
+        // Marking menu (APP-022): wait for a drag; a plain right-click still shows the shortcut menu on release.
+        if RadialMenu.enabled { radialOrigin = convert(e.locationInWindow, from: nil); radialEvent = e; return }
         NSMenu.popUpContextMenu(contextMenu(), with: e, for: self)
+    }
+    private var radialOrigin: NSPoint?
+    private var radialEvent: NSEvent?
+    private var radialView: RadialMenuView?
+    override func rightMouseDragged(with e: NSEvent) {
+        guard let o = radialOrigin, let model else { return }
+        let p = convert(e.locationInWindow, from: nil)
+        let sector = RadialMenu.sector(dx: p.x - o.x, dy: p.y - o.y)
+        if radialView == nil, sector != nil {
+            let r = RadialMenu.radius + 34
+            let v = RadialMenuView(frame: NSRect(x: o.x - r, y: o.y - r, width: 2 * r, height: 2 * r))
+            v.items = RadialMenu.items(RadialMenu.context(model.doc, selection: model.editor.selection))
+            addSubview(v); radialView = v
+        }
+        radialView?.highlighted = sector
+        if let s = sector, let v = radialView, v.items.indices.contains(s) { model.live.snapHint = RadialMenu.tooltip(v.items[s]) }
+    }
+    override func rightMouseUp(with e: NSEvent) {
+        defer { radialOrigin = nil; radialEvent = nil }
+        guard let o = radialOrigin, let model else { return }
+        if let v = radialView {
+            let chosen = v.highlighted.flatMap { v.items.indices.contains($0) ? v.items[$0] : nil }
+            v.removeFromSuperview(); radialView = nil
+            model.live.snapHint = nil
+            if let c = chosen { model.runCommand(c.command) }
+            return
+        }
+        _ = o
+        NSMenu.popUpContextMenu(contextMenu(), with: radialEvent ?? e, for: self)
     }
 
     override func otherMouseDown(with e: NSEvent) {

@@ -131,7 +131,7 @@ public enum MeshBuilder {
             if st == .demolished { return pf == .demolition }
             return Phasing.visible(st, pf)
         }
-        for el in doc.elements where doc.isVisible(layer: el.layer) && shown(el.props) { out += groups(el, ctx: ctx) }
+        for el in doc.elements where doc.isVisible(layer: el.layer) && shown(el.props) && el.props["hasParts"] != "1" && Assemblies.shown(el, doc: doc) { out += groups(el, ctx: ctx) }
         for e in doc.entities where doc.isVisible(layer: e.layer) && shown(e.props) { out += groups(for: e, doc: doc) }
         if doc.variable("DATUMS3D") == "1" { out += datumGroups(doc: doc) }
         return out
@@ -387,14 +387,15 @@ public enum MeshBuilder {
                 + OpeningTrim.meshGroups(el, o, f: f, zb: zb, zt: zt, unit: u)
 
         case .slab(let g):
+            let edges = Round7Shapes.slabEdgeGroups(el, g, elev: elev)
             if el.props["slabType"] != nil || doc.entities.contains(where: { Shafts.isShaft($0) }) {
-                return SlabDetails.groups(el, g, elev: elev, doc: doc)
+                return SlabDetails.groups(el, g, elev: elev, doc: doc) + edges
             }
             var acc = MeshAcc()
             let top = elev + g.topOffset
             if g.isSloped { slopedSlab(g, elev: elev, into: &acc) }
             else { acc.prism(g.boundary, holes: g.holes, z0: top - g.thickness, z1: top) }
-            return [acc.group(el.id, kind, el.material ?? "Concrete")].compactMap { $0 }
+            return [acc.group(el.id, kind, el.material ?? "Concrete")].compactMap { $0 } + edges
 
         case .column(let g):
             var acc = MeshAcc()

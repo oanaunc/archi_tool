@@ -125,7 +125,16 @@ final class BIMContext {
             let o = OpeningGeom(kind: .opening, hostWall: hid, offset: (lo + hi) / 2, width: hi - lo, height: cw.height, sill: sill)
             openings[hid, default: []].append(BIMElement(id: el.id, level: host.level, name: el.name, layer: el.layer, geometry: .opening(o), props: ["embeddedCurtainWall": "1"]))
         }
-        for (_, walls) in byLevel { computeJoins(walls) }
+        // Parts of a divided wall (BIM-127) are cut by the host's openings (as plain openings; the host draws the doors).
+        for el in doc.elements {
+            guard let hs = el.props["partOf"], let hid = Int(hs), frames[el.id] != nil, let hostOpenings = openings[hid] else { continue }
+            for o in hostOpenings {
+                guard case .opening(var og) = o.geometry else { continue }
+                og.kind = .opening; og.depth = 0; og.hostWall = el.id
+                openings[el.id, default: []].append(BIMElement(id: o.id, level: el.level, name: o.name, layer: o.layer, geometry: .opening(og), props: ["partCut": "1"]))
+            }
+        }
+        for (_, walls) in byLevel { computeJoins(walls.filter { doc.element($0.id)?.props["hasParts"] != "1" }) }
     }
 
     func levelElevation(_ l: Int) -> Double { doc.level(l)?.elevation ?? 0 }
@@ -356,6 +365,7 @@ struct StairLayout {
 enum StairShapes {
     /// `start` is the midpoint of the first (bottom) riser; `direction` is the walking direction.
     static func layout(_ g: StairGeom) -> StairLayout {
+        if let sk = g.sketchRisers, let l = Round7Shapes.sketchLayout(sk) { return l }
         let n = max(g.riserCount - 1, 1)
         let td = max(g.treadDepth, 1e-3), w = max(g.width, 1e-3)
         let d = Vec2.polar(1, g.direction), p = g.turnsRight ? -d.perp : d.perp
@@ -522,6 +532,7 @@ struct RoofFace { var poly: [Vec2]; var grad: Vec2; var c: Double
 enum RoofShapes {
     /// Eave-line footprint (CCW), overhang footprint and roof faces as planar height functions.
     static func faces(_ g: RoofGeom) -> (boundary: [Vec2], footprint: [Vec2], faces: [RoofFace]) {
+        if let ex = g.extrusion, let r = Round7Shapes.extrusionFaces(ex) { return r }
         var b = RG.dedupe(g.boundary, closed: true)
         guard b.count >= 3, abs(GeometryOps.signedArea(b)) > 1e-9 else { return (b, b, []) }
         if GeometryOps.signedArea(b) < 0 { b.reverse() }
@@ -554,7 +565,12 @@ enum RoofShapes {
             fns = special
         } else {
         switch g.kind {
-        case .flat: return (b, fp, [RoofFace(poly: fp, grad: .zero, c: 0)])
+        case .flat:
+            if let sp = g.shapePoints, !sp.isEmpty {
+                let tin = Round7Shapes.tinFaces(fp, points: sp)
+                if !tin.isEmpty { return (b, fp, tin) }
+            }
+            return (b, fp, [RoofFace(poly: fp, grad: .zero, c: 0)])
         case .shed: fns = [edgeFn(eave)]
         case .gable:
             let e = edgeFn(eave)

@@ -68,9 +68,10 @@ public enum PlaneClipper {
             if let c = count[[ia, ib]], c > 0 { count[[ia, ib]] = c - 1; continue }
             count[[ib, ia], default: 0] += 1
         }
-        for (k, c) in count where c > 0 { for _ in 0..<c { directed[k[0], default: []].append(k[1]) } }
+        // Sorted so the cap (loop starts, triangulation) is the same on every run.
+        for (k, c) in count.sorted(by: { $0.key.lexicographicallyPrecedes($1.key) }) where c > 0 { for _ in 0..<c { directed[k[0], default: []].append(k[1]) } }
         var loops: [[Int]] = []
-        while let start = directed.first(where: { !$0.value.isEmpty })?.key {
+        while let start = directed.filter({ !$0.value.isEmpty }).keys.min() {
             var loop = [start], cur = start
             var guardN = 0
             while guardN < 1_000_000 {

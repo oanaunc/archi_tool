@@ -3,15 +3,62 @@
 // MTEXT, HATCH or true colour, so those are written as POLYLINE/VERTEX, multi-line TEXT and SOLID fills.
 import Foundation
 
-public enum DXFVersion: String, CaseIterable { case r12 = "R12", r2000 = "R2000" }
+public enum DXFVersion: String, CaseIterable {
+    case r12 = "R12", r2000 = "R2000", r2004 = "R2004", r2007 = "R2007", r2010 = "R2010", r2013 = "R2013", r2018 = "R2018"
+
+    /// $ACADVER code of the version.
+    public var acadVer: String {
+        switch self {
+        case .r12: return "AC1009"; case .r2000: return "AC1015"; case .r2004: return "AC1018"; case .r2007: return "AC1021"
+        case .r2010: return "AC1024"; case .r2013: return "AC1027"; case .r2018: return "AC1032"
+        }
+    }
+    /// From 2007 on, DXF text is UTF-8 instead of the drawing code page with \U+ escapes.
+    public var isUTF8: Bool { [.r2007, .r2010, .r2013, .r2018].contains(self) }
+    /// "R2018", "2018", "AC1032", "dxf2018" … → version.
+    public static func parse(_ s: String) -> DXFVersion? {
+        let t = s.uppercased().replacingOccurrences(of: "DXF", with: "").trimmingCharacters(in: .whitespaces)
+        return allCases.first { $0.rawValue == t || $0.rawValue == "R" + t || $0.acadVer == t || ($0 == .r12 && (t == "12" || t == "R12")) }
+    }
+}
 
 extension DXFWriter {
-    /// Writes the document in the requested DXF version (BIM elements of `levels` as 2D plan geometry).
+    /// Writes the document in the requested DXF version (BIM elements of `levels` as 2D plan geometry). R2004 and later
+    /// use the R2000 object layout (which every later release reads) with the version's $ACADVER; R2007 and later
+    /// store text as UTF-8.
     public static func write(_ doc: ArchiDocument, version: DXFVersion, levels: Set<Int>? = nil) -> String {
         switch version {
         case .r2000: return write(doc, levels: levels ?? [doc.currentLevel])
         case .r12: return DXFR12Writer.write(doc, levels: levels ?? [doc.currentLevel])
+        default:
+            var s = write(doc, levels: levels ?? [doc.currentLevel])
+            if let r = s.range(of: "$ACADVER\n  1\nAC1015") { s.replaceSubrange(r, with: "$ACADVER\n  1\n" + version.acadVer) }
+            if version.isUTF8 {
+                s = decodeUnicodeEscapes(s)
+            }
+            return s
         }
+    }
+
+    /// Replaces \U+XXXX escapes (with UTF-16 surrogate pairs) by the characters themselves.
+    static func decodeUnicodeEscapes(_ s: String) -> String {
+        guard s.contains("\\U+") else { return s }
+        var out = String.UnicodeScalarView()
+        let u = Array(s.unicodeScalars)
+        var i = 0
+        func hex(_ at: Int) -> UInt32? {
+            guard at + 7 <= u.count, u[at] == "\\", u[at + 1] == "U", u[at + 2] == "+" else { return nil }
+            return UInt32(String(String.UnicodeScalarView(u[(at + 3)..<(at + 7)])), radix: 16)
+        }
+        while i < u.count {
+            if let v = hex(i) {
+                if (0xD800...0xDBFF).contains(v), let lo = hex(i + 7), (0xDC00...0xDFFF).contains(lo),
+                   let sc = Unicode.Scalar(0x10000 + ((v - 0xD800) << 10) + (lo - 0xDC00)) { out.append(sc); i += 14; continue }
+                if let sc = Unicode.Scalar(v) { out.append(sc); i += 7; continue }
+            }
+            out.append(u[i]); i += 1
+        }
+        return String(out)
     }
 }
 

@@ -252,6 +252,20 @@ public enum HatchPatterns {
                                          "HOUND", "MUDST", "NET3", "PLAST", "PLASTI", "SACNCR", "STARS", "STEEL", "SWAMP", "TRANS", "TRIANG"]
                                          + (2...15).map { String(format: "ACAD_ISO%02dW100", $0) }
 
+    /// Entity prop choosing how a hatch pattern scales (ANN-071): "model" = real size in millimetres, scales with the
+    /// model; "drafting" = size on paper, multiplied by the annotation scale (CANNOSCALE). Absent = the plain scale.
+    public static let patternTypeProp = "patternType"
+    /// Pattern scale actually used for a hatch with the given props.
+    public static func effectiveScale(_ scale: Double, props: [String: String], doc: ArchiDocument?) -> Double {
+        let s = scale > 1e-12 ? scale : 1
+        guard let t = props[patternTypeProp]?.lowercased(), let doc else { return s }
+        switch t {
+        case "model": return s / doc.units.mm
+        case "drafting": return s * Annotative.currentScale(doc) / doc.units.mm
+        default: return s
+        }
+    }
+
     /// Whether the pattern is defined at real-world size (AR-*, WOOD, GRAVEL, INSUL) rather than drafting size.
     public static func isRealWorld(_ pattern: String) -> Bool {
         let p = pattern.uppercased()

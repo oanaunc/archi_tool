@@ -9,6 +9,7 @@ public enum BIMUpdaters {
     @discardableResult
     public static func run(_ doc: inout ArchiDocument) -> Bool {
         var changed = false
+        if Round7Updaters.updateAll(&doc) { changed = true }
         if GlobalParameters.updateAll(&doc) { changed = true }
         if AreaSchemes.updateAll(&doc) { changed = true }
         if AutoDimensions.updateAll(&doc) { changed = true }
@@ -20,6 +21,8 @@ public enum BIMUpdaters {
         if HostedComponents.updateAll(&doc) { changed = true }
         if RoomUpdates.updateAll(&doc) { changed = true }
         if Schedules.updateAll(&doc) { changed = true }
+        if ProjectViews.updateAll(&doc) { changed = true }
+        if Round7Updaters.updateAll(&doc) { changed = true }
         return changed
     }
 
@@ -37,6 +40,8 @@ public enum BIMUpdaters {
             || HostedComponents.hasHosted(doc)
             || RoomUpdates.hasAuto(doc)
             || !doc.schedules.isEmpty
+            || ProjectViews.hasContent(doc)
+            || Round7Updaters.hasContent(doc)
     }
 
     private static let lock = NSLock()

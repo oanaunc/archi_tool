@@ -9,7 +9,7 @@ import ArchiCore
 extension RenderEngine {
     /// Writes `frames` rendered frames as an H.264 MP4. `setup(i, builder, camera)` positions the scene for frame i.
     static func writeVideo(doc: ArchiDocument, settings: RenderSettings, frames: Int, fps: Int, to url: URL,
-                           setup: (Int, Scene3DBuilder, SCNNode) -> Void, progress: @escaping (Double) -> Void) async throws {
+                           setup: (Int, Scene3DBuilder, SCNNode) -> Void, caption: ((Int) -> String?)? = nil, progress: @escaping (Double) -> Void) async throws {
         try? FileManager.default.removeItem(at: url)
         let w = max(2, settings.width - settings.width % 2), h = max(2, settings.height - settings.height % 2)
         let writer = try AVAssetWriter(outputURL: url, fileType: .mp4)
@@ -44,6 +44,7 @@ extension RenderEngine {
                                    bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue) {
                 ctx.setFillColor(.white); ctx.fill(CGRect(x: 0, y: 0, width: w, height: h))
                 ctx.draw(cg, in: CGRect(x: 0, y: 0, width: w, height: h))
+                if let text = caption?(i), !text.isEmpty { VideoCaption.draw(text, in: ctx, width: w, height: h) }
             }
             CVPixelBufferUnlockBaseAddress(buf, [])
             adaptor.append(buf, withPresentationTime: CMTime(value: CMTimeValue(i), timescale: CMTimeScale(fps)))

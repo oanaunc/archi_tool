@@ -699,6 +699,7 @@ struct ProjectBrowserPanel: View {
     @State private var openFamilies = true
     @State private var openGroups = true
     @State private var openLinks = true
+    @State private var openProjectViews = true
 
     var body: some View {
         let doc = model.doc
@@ -721,14 +722,17 @@ struct ProjectBrowserPanel: View {
                             model.files.handle(.setView(v))
                         }
                     }
-                    ForEach(doc.namedViews, id: \.name) { v in
-                        item(v.name, "eye", active: false) {
-                            if v.camera != nil { model.mode = .model; model.files.handle(.setView(v.name)) }
-                            else {
-                                model.mode = .plan
-                                let h = v.height, w = h * 1.6
-                                DispatchQueue.main.async { model.canvas?.zoom(toRect: CGRect(x: v.center.x - w / 2, y: v.center.y - h / 2, width: w, height: h)) }
+                    ForEach(doc.namedViews.filter { nv in doc.view(named: nv.name) == nil }, id: \.name) { v in
+                        item(v.name, v.camera != nil ? "camera" : "eye", active: false) { ProjectBrowser.openNamedView(v, model: model) }
+                    }
+                }
+                if !doc.views.isEmpty {
+                    section("Project Views", "rectangle.stack.badge.play", $openProjectViews) {
+                        ForEach(doc.views, id: \.name) { v in
+                            item(v.parent.map { "\(v.name) (dependent on \($0))" } ?? v.name, ProjectBrowser.symbol(v), active: doc.variable(ProjectViews.currentKey) == v.name) {
+                                ProjectBrowser.openView(v.name, model: model)
                             }
+                            .help("Click or double-click to open the view (\(v.kind == "3d" ? "3D camera" : v.kind))")
                         }
                     }
                 }
@@ -745,10 +749,7 @@ struct ProjectBrowserPanel: View {
                 }
                 section("Sheets", "doc.richtext", $openSheets) {
                     ForEach(Array(doc.layouts.enumerated()), id: \.offset) { i, l in
-                        item(l.name, "doc", active: model.mode == .sheet && model.activeLayout == i) {
-                            model.activeLayout = i
-                            model.mode = .sheet
-                        }
+                        item(l.name, "doc", active: model.mode == .sheet && model.activeLayout == i) { ProjectBrowser.openSheet(i, model: model) }
                     }
                 }
                 section("Schedules", "tablecells", $openSchedules) {

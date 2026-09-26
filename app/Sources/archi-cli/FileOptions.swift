@@ -1,5 +1,5 @@
 // Oanarina Archi Tool command-line runner — GPL-3.0-or-later
-// File life-cycle options: --upgrade, --verify, --metadata, --api-reference, --run-samples, --license.
+// File life-cycle options: --upgrade, --verify, --metadata, --api-reference, --docs, --run-samples, --license.
 import Foundation
 import ArchiCore
 
@@ -53,6 +53,30 @@ configure, the local agent server on 127.0.0.1 when you enable it).
             do { try md.write(to: u, atomically: true, encoding: .utf8); print("Wrote \(u.path)") } catch { eprint("Cannot write \(u.path)"); return 1 }
         } else { print(md) }
         return 0
+    }
+    if let i = args.firstIndex(of: "--docs") {
+        guard i + 1 < args.count, !args[i + 1].hasPrefix("--") else { eprint("--docs OUTDIR [--source DOCSDIR]"); return 2 }
+        let out = expand(args[i + 1])
+        let src = args.firstIndex(of: "--source").flatMap { $0 + 1 < args.count ? expand(args[$0 + 1]) : nil } ?? DocSite.defaultSource()
+        guard let src else { eprint("Documentation sources not found: pass --source DOCSDIR (the repository's docs folder)."); return 2 }
+        CommandRegistry.shared.ensureBuiltins()
+        let tools = MCPServer(editor: Editor(), path: nil).tools
+        do {
+            let files = try DocSite.build(source: src, into: out, apiReference: APIReference.markdown(tools: tools, version: cliVersion))
+            print("Wrote \(files.count) files to \(out.path)")
+            return 0
+        } catch { eprint((error as? LocalizedError)?.errorDescription ?? "\(error)"); return 1 }
+    }
+    if let i = args.firstIndex(of: "--verify-download") {
+        // Sparkle EdDSA verification of a downloaded update: --verify-download FILE --ed-signature SIG --public-key KEY
+        func opt(_ n: String) -> String? { args.firstIndex(of: n).flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } }
+        guard i + 1 < args.count, let sig = opt("--ed-signature"), let key = opt("--public-key") else {
+            eprint("--verify-download FILE --ed-signature BASE64 --public-key BASE64"); return 2
+        }
+        guard let data = try? Data(contentsOf: expand(args[i + 1])) else { eprint("Cannot read \(args[i + 1])"); return 1 }
+        let ok = UpdateCheck.verifyEdSignature(data, signature: sig, publicKey: key)
+        print(ok ? "Signature valid (\(data.count) bytes)." : "INVALID signature.")
+        return ok ? 0 : 1
     }
     if let i = args.firstIndex(of: "--check-update") {
         // Explicit, user-requested network access only.

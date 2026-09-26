@@ -14,8 +14,31 @@ public enum DraftFeatureCommands {
 
     static var arrayEdit: CommandDef {
         CommandDef("ARRAYEDIT", aliases: ["ARRAYED"], category: "Modify", summary: "Edits an associative array: rows, columns, spacing, items, fill angle, rotation, alignment.") { ed in
-            guard case .pick(let pk) = try await ed.pickObject("Select array", filter: { AssocArray.isArray(ed.doc.entity($0)) }),
-                  let e = ed.doc.entity(pk.id), var p = AssocArray.params(e) else { return }
+            guard case .pick(let pk) = try await ed.pickObject("Select array", filter: { AssocArray.isArray(ed.doc.entity($0)) || ed.bimArrayName(of: $0) != nil }) else { return }
+            if let bn = ed.bimArrayName(of: pk.id), var bp = ed.bimArrayParams(bn) {
+                // BIM element array (MOD-035): rows, columns and spacing; copies are regenerated.
+                ed.selection = []
+                while true {
+                    guard let k = try await ed.getKeyword("Enter an option", ["Rows", "Columns", "Spacing", "Explode", "eXit"], defaultValue: "eXit"), k != "eXit" else { break }
+                    switch k {
+                    case "Rows":
+                        guard let n = try await ed.getInteger("Enter the number of rows", defaultValue: bp.rows), n >= 1 else { ed.print("Requires a positive integer."); continue }
+                        bp.rows = n
+                    case "Columns":
+                        guard let n = try await ed.getInteger("Enter the number of columns", defaultValue: bp.columns), n >= 1 else { ed.print("Requires a positive integer."); continue }
+                        bp.columns = n
+                    case "Spacing":
+                        bp.rowSpacing = try await ed.getDistance("Specify the distance between rows", defaultValue: bp.rowSpacing).value ?? bp.rowSpacing
+                        bp.columnSpacing = try await ed.getDistance("Specify the distance between columns", defaultValue: bp.columnSpacing).value ?? bp.columnSpacing
+                    case "Explode": ed.explodeBIMArray(bn); ed.print("BIM array exploded."); return
+                    default: break
+                    }
+                    let n = ed.updateBIMArray(bn, rows: bp.rows, columns: bp.columns, rowSpacing: bp.rowSpacing, columnSpacing: bp.columnSpacing)
+                    ed.print("BIM array \(bn): \(bp.rows) × \(bp.columns), \(n) object(s).")
+                }
+                return
+            }
+            guard let e = ed.doc.entity(pk.id), var p = AssocArray.params(e) else { return }
             ed.selection = []
             while true {
                 let kws: [String]

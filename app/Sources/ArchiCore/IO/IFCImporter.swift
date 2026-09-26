@@ -1005,8 +1005,8 @@ final class IFCReader {
             doc.setVariable("GEOCRS", crs.description)
         }
 
-        let products = f.entities.values.filter { isProduct($0) }.sorted { $0.id < $1.id }
-        var handled = Set<Int>()
+        var handled = readAlignments()
+        let products = f.entities.values.filter { isProduct($0) && !handled.contains($0.id) }.sorted { $0.id < $1.id }
         func typeIs(_ p: StepEntity, _ prefixes: [String]) -> Bool { prefixes.contains { p.type == $0 || p.type == $0 + "STANDARDCASE" || p.type == $0 + "ELEMENTEDCASE" } }
 
         // Walls first (openings need their hosts).

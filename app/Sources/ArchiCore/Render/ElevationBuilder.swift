@@ -10,6 +10,9 @@ public enum ElevationBuilder {
         var depthf: (Vec3) -> Double
         /// Vertical drawing axis (default: Z).
         var yf: ((Vec3) -> Double)? = nil
+        /// Perspective views: faces are culled towards the eye and everything is clipped at the near plane (depth 0).
+        var eye: Vec3? = nil
+        var clipNear = false
         func xy(_ p: Vec3) -> Vec2 { Vec2(xf(p), yf?(p) ?? p.z) }
         func depth(_ p: Vec3) -> Double { depthf(p) }
     }
@@ -50,12 +53,37 @@ public enum ElevationBuilder {
         return entries(groups: groups, doc: doc, proj: proj, cut: view == .section)
     }
 
+    /// Axonometric (orthographic camera) or perspective drawing of the model seen from a camera (DOC-009 / DOC-010):
+    /// hidden-line faces and edges in drawing coordinates (model units at the target distance).
+    public static func entries(doc: ArchiDocument, camera c: Camera) -> [DrawEntry] {
+        var groups = MeshBuilder.build(doc: doc)
+        if let box = SectionBoxes.active(doc) { groups = SectionBoxes.clip(groups, box: box) }
+        guard let proj = projection(camera: c) else { return [] }
+        return entries(groups: groups, doc: doc, proj: proj, cut: false, annotate: false)
+    }
+
+    static func projection(camera c: Camera) -> Projection? {
+        let fwd = (c.target - c.eye).normalized
+        guard fwd.length > 0.5 else { return nil }
+        var right = fwd.cross(Vec3.unitZ).normalized
+        if right.length < 0.5 { right = Vec3(1, 0, 0) }
+        let up = right.cross(fwd).normalized
+        let eye = c.eye
+        if c.orthographic {
+            return Projection(viewDir: fwd, xf: { $0.dot(right) }, depthf: { ($0 - eye).dot(fwd) }, yf: { $0.dot(up) })
+        }
+        let D = max(c.eye.distance(to: c.target), 1e-6), near = D * 0.02
+        func depth(_ p: Vec3) -> Double { max((p - eye).dot(fwd), near * 0.5) }
+        return Projection(viewDir: fwd, xf: { p in (p - eye).dot(right) * D / depth(p) }, depthf: { p in (p - eye).dot(fwd) - near },
+                          yf: { p in (p - eye).dot(up) * D / depth(p) }, eye: eye, clipNear: true)
+    }
+
     static func union(_ a: BBox3, _ b: BBox3) -> BBox3 {
         if b.isEmpty { return a }
         var r = a; r.add(b.min); r.add(b.max); return r
     }
 
-    static func entries(groups: [MeshGroup], doc: ArchiDocument, proj: Proj, cut: Bool) -> [DrawEntry] {
+    static func entries(groups: [MeshGroup], doc: ArchiDocument, proj: Proj, cut: Bool, annotate: Bool = true) -> [DrawEntry] {
         var box = BBox2.empty
         var dmin = Double.infinity, dmax = -Double.infinity
         for g in groups { for p in g.mesh.positions { box.add(proj.xy(p)); let d = proj.depth(p); dmin = min(dmin, d); dmax = max(dmax, d) } }
@@ -79,9 +107,10 @@ public enum ElevationBuilder {
                 let n = (b - a).cross(c - a)
                 guard n.length > 1e-12 else { continue }
                 let nn = n.normalized
-                if nn.dot(proj.viewDir) >= -1e-6 { continue } // back-facing or edge-on
+                let vd = proj.eye.map { ((a + b + c) / 3 - $0).normalized } ?? proj.viewDir
+                if nn.dot(vd) >= -1e-6 { continue } // back-facing or edge-on
                 var poly = [a, b, c]
-                if cut { poly = clip(poly, proj) ; if poly.count < 3 { continue } }
+                if cut || proj.clipNear { poly = clip(poly, proj) ; if poly.count < 3 { continue } }
                 let pts = poly.map(proj.xy)
                 guard abs(GeometryOps.signedArea(pts)) > 1e-12 else { continue }
                 let key = poly.map(proj.depth).reduce(0, +) / Double(poly.count)
@@ -92,7 +121,7 @@ public enum ElevationBuilder {
             for e in g.edges where e.count >= 2 {
                 for k in 0..<(e.count - 1) {
                     var p = e[k], q = e[k + 1]
-                    if cut {
+                    if cut || proj.clipNear {
                         let dp = proj.depth(p), dq = proj.depth(q)
                         if dp < 0 && dq < 0 { continue }
                         if dp < 0 { p = p + (q - p) * (dp / (dp - dq)) } else if dq < 0 { q = p + (q - p) * (dp / (dp - dq)) }
@@ -161,6 +190,7 @@ public enum ElevationBuilder {
             if !hidden.isEmpty { out.append(DrawEntry(id: nil, items: hidden)) }
         }
         out += poche
+        guard annotate else { return out }
         // Ground line.
         let gz = doc.levels.map(\.elevation).min() ?? 0
         let ext = box.width * 0.05
@@ -217,7 +247,7 @@ public enum ElevationBuilder {
                 guard abs(pa - pb) > 1e-6 else { continue }   // extents seen end-on: the level is not shown in this view
                 xa = min(pa, pb); xb = max(pa, pb); startIsLeft = pa <= pb
             }
-            let meters = l.elevation * doc.units.mm / 1000
+            let meters = StoreySettings.displayElevation(l, doc: doc) * doc.units.mm / 1000
             let label = (meters >= 0 ? "+" : "") + String(format: "%.3f", meters)
             var items: [DrawItem] = [.stroke(points: [Vec2(xa, y), Vec2(xb, y)], closed: false, style: st)]
             let ends = l.headEnds

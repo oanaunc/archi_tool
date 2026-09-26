@@ -694,7 +694,7 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
                    Extra REPL lines: :save [path], :export <path>, :quit
   --script FILE    Runs the command lines in FILE (AutoCAD .scr style; ';' starts a comment).
   --out FILE       Writes the result: .archi, .dxf, .svg, .ifc, .ifczip, .obj, .stl, .glb, .csv, .3mf, .usda, .usdz, .geojson,
-                   .step, .ply, .plt, .xlsx, .dae, .dwg (with a converter)
+                   .step, .ply, .plt, .xlsx, .dae, .ifcxml, .dwg (with a converter)
                    (input may also be .dwg, .ifc, .ifczip, .svg, .obj, .stl, .3mf, .gltf/.glb, .ply, .off, .amf, .dae, .step,
                    .geojson, .cityjson, .shp, .osm, .asc, .xlsx, .csv points or .xyz/.pts point clouds)
   --mcp            Model Context Protocol server on stdin/stdout (for Claude and other agents).
@@ -715,16 +715,20 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
   --verify FILE    Checks that the drawing saves and reopens identically (exit 1 if not).
   --metadata FILE  Prints the Spotlight metadata of a drawing as JSON.
   --api-reference [FILE]  Writes the generated Markdown API reference (commands, agent tools, formats, samples).
+  --docs DIR [--source DOCSDIR]  Writes the documentation as an offline HTML site with search (user guide, scripting,
+                   agent API, architecture, command reference); sources default to the app bundle or ./docs.
   --run-samples    Runs the reference's sample scripts and reports each result (exit 1 if one fails).
   --license        Prints the licence and privacy notice (GPL-3.0-or-later; no telemetry, works offline).
   --check-update APPCAST [--current V]  Checks a Sparkle appcast for a newer version (explicit network access).
+  --verify-download FILE --ed-signature SIG --public-key KEY  Verifies a downloaded update's Sparkle EdDSA signature.
   --version        Prints the version.
 """
 
 /// Converts files one by one; failures are reported and do not stop the batch.
 @MainActor func batchConvert(_ files: [URL], format: String, outDir: URL?) -> Int32 {
     var failed = 0
-    let ext = ["dxf12": "dxf", "points": "csv", "analytical": "json", "hpgl": "plt", "stp": "step", "gbxml": "xml", "cobie": "xlsx"][format] ?? format
+    let ext = ["dxf12": "dxf", "dxf2004": "dxf", "dxf2007": "dxf", "dxf2010": "dxf", "dxf2013": "dxf", "dxf2018": "dxf", "points": "csv", "analytical": "json",
+               "hpgl": "plt", "stp": "step", "gbxml": "xml", "cobie": "xlsx", "saf": "xlsx", "ifcstructural": "ifc", "ifcxml": "ifcXML"][format] ?? format
     for f in files {
         let dest = (outDir ?? f.deletingLastPathComponent()).appendingPathComponent(f.deletingPathExtension().lastPathComponent + (format == "analytical" ? ".analytical" : "")).appendingPathExtension(ext)
         do {

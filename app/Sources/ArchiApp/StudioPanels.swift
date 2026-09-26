@@ -107,6 +107,16 @@ enum ModelNotifications {
                 out.append(Item(severity: .info, code: "LAYER-MISSING", message: "Layer \(e.layer) is not in the layer table", ids: [e.id], bounds: GeometryOps.bounds(e.geometry, doc: doc), level: nil))
             }
         }
+        // New layer notification (LAY-020): unreconciled layers while LAYERNOTIFY is on.
+        if LayerNotify.isOn(doc) {
+            let u = LayerNotify.unreconciled(doc)
+            if !u.isEmpty {
+                let ids = doc.entities.filter { e in u.contains { $0.caseInsensitiveCompare(e.layer) == .orderedSame } }.map(\.id)
+                var b = BBox2.empty
+                for id in ids.prefix(200) { if let e = doc.entity(id) { b = b.union(GeometryOps.bounds(e.geometry, doc: doc)) } }
+                out.append(Item(severity: .warning, code: "LAYER-UNRECONCILED", message: "Unreconciled new layer\(u.count == 1 ? "" : "s"): \(u.joined(separator: ", ")) (LAYRECONCILE)", ids: Array(ids.prefix(50)), bounds: b, level: nil))
+            }
+        }
         return out.sorted { ($0.severity, $0.code) < ($1.severity, $1.code) }
     }
 }

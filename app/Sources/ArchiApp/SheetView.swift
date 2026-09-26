@@ -344,7 +344,7 @@ final class SheetCanvasNSView: NSView {
         SheetComposer.draw(doc: doc, layoutIndex: layoutIndex, in: ctx, paperToDevice: paperToDevice, devicePerMM: zoom,
                            showViewportBorders: true, selectedViewport: selectedViewport,
                            entriesFor: { [unowned self] vp in
-                               let key = "\(vp.view.rawValue)|\(vp.level ?? -999)|\(vp.scale)"
+                               let key = "\(vp.view.rawValue)|\(vp.level ?? -999)|\(vp.scale)|\(ShadePlot.cacheKey(doc, vp))"
                                if let c = self.cache[key] { return c }
                                let e = SheetComposer.viewportEntries(doc: doc, vp: vp)
                                self.cache[key] = e

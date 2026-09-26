@@ -66,7 +66,7 @@ enum AppCommandsNav {
                 m.showPanels = true; m.panelTab = .inspector
                 for id in ed.selection.sorted().prefix(3) { ed.print(ObjectInspector.text(id, doc: ed.doc).split(separator: "\n").prefix(8).joined(separator: " · ")) }
             },
-            CommandDef("ADCENTER", aliases: ["DC", "DESIGNCENTER"], category: "Insert", summary: "Design Center: browses another drawing's blocks, layers, linetypes, styles and materials and adds them here.", modifies: false) { ed in
+            CommandDef("ADCENTER", aliases: ["DESIGNCENTER", "ADC"], category: "Insert", summary: "Design Center: browses another drawing's blocks, layers, linetypes, styles and materials and adds them here.", modifies: false) { ed in
                 let m = try ui(ed); m.showPanels = true; m.panelTab = .content
             },
             CommandDef("HELPWINDOW", aliases: ["DOCS", "HELPBROWSER", "MANUAL"], category: "Help", summary: "Opens the offline help browser (command pages, tutorials, shortcuts); F1 opens the running command's page.", modifies: false) { ed in
