@@ -113,6 +113,10 @@ public struct FamilyForm: Codable, Hashable {
     public var arrayDX: String?, arrayDY: String?, arrayDZ: String?
     /// Nested family name (kind .nested).
     public var family: String?
+    /// Detail levels the form shows at (PAR-008): comma list of coarse, medium, fine; nil = all.
+    public var detail: String?
+    /// Views the form shows in (PAR-008): comma list of plan, model (3D, elevations, sections); nil = all.
+    public var views: String?
     public init(_ kind: FamilyFormKind, name: String = "", x: String = "0", y: String = "0", z: String = "0", rotation: String = "0",
                 dims: [String: String] = [:], profile: String? = nil, path: [[String]] = [], material: String? = nil, visible: String? = nil,
                 void: Bool = false, arrayCount: String? = nil, arrayDX: String? = nil, arrayDY: String? = nil, arrayDZ: String? = nil, family: String? = nil,
@@ -133,6 +137,48 @@ public struct FamilyForm: Codable, Hashable {
                   arrayCount: try c.decodeIfPresent(String.self, forKey: .arrayCount), arrayDX: try c.decodeIfPresent(String.self, forKey: .arrayDX),
                   arrayDY: try c.decodeIfPresent(String.self, forKey: .arrayDY), arrayDZ: try c.decodeIfPresent(String.self, forKey: .arrayDZ),
                   family: try c.decodeIfPresent(String.self, forKey: .family), profile2: try c.decodeIfPresent(String.self, forKey: .profile2))
+        detail = try c.decodeIfPresent(String.self, forKey: .detail)
+        views = try c.decodeIfPresent(String.self, forKey: .views)
+    }
+    /// Whether the form shows at a detail level ("coarse", "medium", "fine").
+    public func shows(detail level: String) -> Bool { FamilyVisibility.includes(detail, level) }
+    /// Whether the form shows in plan / in the model views.
+    public var inPlan: Bool { FamilyVisibility.includes(views, "plan") }
+    public var inModel: Bool { FamilyVisibility.includes(views, "model") || FamilyVisibility.includes(views, "3d") }
+}
+
+public enum FamilyVisibility {
+    public static let detailLevels = ["coarse", "medium", "fine"]
+    /// Comma-list membership (nil or empty list = everything).
+    public static func includes(_ list: String?, _ item: String) -> Bool {
+        guard let l = list?.lowercased(), !l.trimmingCharacters(in: .whitespaces).isEmpty else { return true }
+        return l.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.contains(item.lowercased())
+    }
+    /// The view's detail level (DETAILLEVEL, part of view templates): coarse, medium (default) or fine.
+    public static func level(_ doc: ArchiDocument) -> String {
+        let v = (doc.variable("DETAILLEVEL") ?? "medium").lowercased()
+        return detailLevels.contains(v) ? v : "medium"
+    }
+}
+
+/// Symbolic (2D) linework of a family (PAR-007): shown in plan (or as the tag graphic of annotation families) instead of
+/// / in addition to the cut of the forms, at the given detail levels. Points are (x, y) expressions over the parameters.
+public struct FamilySymbolic: Codable, Hashable {
+    public var points: [[String]]
+    public var closed: Bool
+    /// Detail levels (comma list; nil = all).
+    public var detail: String?
+    /// Visibility expression (non-zero = shown); nil = always.
+    public var visible: String?
+    public var dashed: Bool
+    public init(points: [[String]], closed: Bool = false, detail: String? = nil, visible: String? = nil, dashed: Bool = false) {
+        self.points = points; self.closed = closed; self.detail = detail; self.visible = visible; self.dashed = dashed
+    }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(points: try c.decodeIfPresent([[String]].self, forKey: .points) ?? [], closed: try c.decodeIfPresent(Bool.self, forKey: .closed) ?? false,
+                  detail: try c.decodeIfPresent(String.self, forKey: .detail), visible: try c.decodeIfPresent(String.self, forKey: .visible),
+                  dashed: try c.decodeIfPresent(Bool.self, forKey: .dashed) ?? false)
     }
 }
 
@@ -159,6 +205,12 @@ public struct FamilyDefinition: Codable, Hashable {
     public var description: String
     /// Named reference planes (evaluated in order after the parameters).
     public var referencePlanes: [FamilyReferencePlane]
+    /// Symbolic plan linework (PAR-007).
+    public var symbolic: [FamilySymbolic] = []
+    /// Tag families (PAR-014, category "Tag"): label template with {Parameter} fields read from the tagged element.
+    public var label: String?
+    /// File the family was loaded from (.archifam), for reloading (PAR-011).
+    public var source: String?
     public init(name: String, category: String = "Generic Model", parameters: [FamilyParameter] = [], profiles: [FamilyProfile] = [],
                 forms: [FamilyForm] = [], types: [String: [String: String]] = [:], description: String = "", referencePlanes: [FamilyReferencePlane] = []) {
         self.name = name; self.category = category; self.parameters = parameters; self.profiles = profiles; self.forms = forms
@@ -173,6 +225,9 @@ public struct FamilyDefinition: Codable, Hashable {
                   types: try c.decodeIfPresent([String: [String: String]].self, forKey: .types) ?? [:],
                   description: try c.decodeIfPresent(String.self, forKey: .description) ?? "",
                   referencePlanes: try c.decodeIfPresent([FamilyReferencePlane].self, forKey: .referencePlanes) ?? [])
+        symbolic = try c.decodeIfPresent([FamilySymbolic].self, forKey: .symbolic) ?? []
+        label = try c.decodeIfPresent(String.self, forKey: .label)
+        source = try c.decodeIfPresent(String.self, forKey: .source)
     }
     public func parameter(_ n: String) -> FamilyParameter? { parameters.first { $0.name.caseInsensitiveCompare(n) == .orderedSame } }
     public func profile(_ n: String) -> FamilyProfile? { profiles.first { $0.name.caseInsensitiveCompare(n) == .orderedSame } }

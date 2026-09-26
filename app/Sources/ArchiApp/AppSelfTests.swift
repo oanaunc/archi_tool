@@ -109,6 +109,7 @@ enum AppSelfTests {
         extraChecks(check)
         reviewChecks(check)
         studioChecks(check)
+        navChecks(check)
         check(CommandSearch.rank("prspl", registry: .shared).first?.name == "PRESSPULL", "fuzzy search finds PRESSPULL")
         check(CommandSearch.rank("tag all", registry: .shared).contains { $0.name == "TAGALL" }, "ribbon title search finds TAGALL")
         return r

@@ -23,6 +23,8 @@ public enum FamilyEngine {
         var parts: [String: MeshAcc] = [:]
         /// Plan outlines (world XY).
         public var outlines: [[Vec2]] = []
+        /// Symbolic plan lines (world XY): points, closed, dashed.
+        public var symbols: [(points: [Vec2], closed: Bool, dashed: Bool)] = []
         public var errors: [String] = []
         /// Reference plane positions (family coordinates of the top-level family): name → (axis, offset).
         public var planes: [String: (axis: String, offset: Double)] = [:]
@@ -85,8 +87,20 @@ public enum FamilyEngine {
         func e(_ s: String?, _ d: Double) -> Double { guard let s = s, !s.isEmpty else { return d }; return FamilyExpr.evaluate(s, v) ?? d }
         var solids: [String: MeshAcc] = [:]
         var voids = MeshAcc()
+        let detail = FamilyVisibility.level(doc)
+        // Symbolic linework (PAR-007) at this detail level.
+        for sy in def.symbolic where FamilyVisibility.includes(sy.detail, detail) {
+            if let vis = sy.visible, !vis.isEmpty, e(vis, 1) == 0 { continue }
+            let pts = sy.points.compactMap { q -> Vec2? in
+                guard q.count >= 2, let x = FamilyExpr.evaluate(q[0], v), let y = FamilyExpr.evaluate(q[1], v) else { return nil }
+                return placement.apply(Vec3(x, y, 0)).xy
+            }
+            if pts.count >= 2 { r.symbols.append((pts, sy.closed, sy.dashed)) }
+        }
         for f in def.forms {
             if let vis = f.visible, !vis.isEmpty, e(vis, 1) == 0 { continue }
+            // Visibility by detail level and view (PAR-008).
+            if !f.shows(detail: detail) { continue }
             let count = max(1, min(500, Int(e(f.arrayCount, 1).rounded())))
             let step = Vec3(e(f.arrayDX, 0), e(f.arrayDY, 0), e(f.arrayDZ, 0))
             var mat = f.material ?? "Wood"
@@ -110,7 +124,7 @@ public enum FamilyEngine {
                     var sr = Result()
                     build(sub, doc: doc, overrides: ov, type: ftype, placement: pl, depth: depth + 1, into: &sr)
                     for (m, a) in sr.parts { var t = solids[m] ?? MeshAcc(); append(&t, a); solids[m] = t }
-                    r.outlines += sr.outlines; r.errors += sr.errors
+                    r.outlines += sr.outlines; r.symbols += sr.symbols; r.errors += sr.errors
                     continue
                 }
                 var acc = MeshAcc()
@@ -204,8 +218,8 @@ public enum FamilyEngine {
                     for (m, a) in solids where !a.mesh.isEmpty { solids[m] = fromTriangles(CSG.apply(.subtract, MeshTools.triangles(a.mesh), vt)) }
                     append(&voids, placed)
                 } else {
-                    var t = solids[mat] ?? MeshAcc(); append(&t, placed); solids[mat] = t
-                    if outline.count >= 3 { r.outlines.append(outline.map { pl.apply(Vec3($0.x, $0.y, 0)).xy }) }
+                    if f.inModel { var t = solids[mat] ?? MeshAcc(); append(&t, placed); solids[mat] = t }
+                    if f.inPlan, outline.count >= 3 { r.outlines.append(outline.map { pl.apply(Vec3($0.x, $0.y, 0)).xy }) }
                 }
             }
         }

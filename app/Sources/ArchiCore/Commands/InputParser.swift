@@ -12,6 +12,24 @@ public enum InputParser {
     /// INTOF: intersection of two picked objects (PRC-017); RH / RV: the next point restricted horizontally / vertically
     /// from the last point (PRC-021).
     public static let pointModifiers = ["FROM", "FRO", "M2P", "MTP", "TT", ".X", ".Y", ".XY", ".XZ", ".YZ", ".Z", "INTOF", "RH", "RV"]
+    /// One-shot object snap overrides typed at a point prompt (PRC-019): END, MID, CEN, GCEN, NOD, QUA, INT, EXT, INS, PER,
+    /// TAN, NEA, PAR, NON (none). Returns the canonical override name.
+    public static let snapOverrides: [String: String] = [
+        "END": "END", "ENDP": "END", "ENDPOINT": "END", "MID": "MID", "MIDPOINT": "MID", "CEN": "CEN", "CENTER": "CEN", "CENTRE": "CEN",
+        "GCE": "GCEN", "GCEN": "GCEN", "NOD": "NOD", "NODE": "NOD", "QUA": "QUA", "QUAD": "QUA", "QUADRANT": "QUA",
+        "INT": "INT", "INTERSECTION": "INT", "EXT": "EXT", "EXTENSION": "EXT", "INS": "INS", "INSERT": "INS", "PER": "PER", "PERP": "PER",
+        "PERPENDICULAR": "PER", "TAN": "TAN", "TANGENT": "TAN", "NEA": "NEA", "NEAR": "NEA", "NEAREST": "NEA", "PAR": "PAR", "PARALLEL": "PAR",
+        "NON": "NON", "NONE": "NON",
+    ]
+    public static func snapOverride(_ token: String, keywords: [String] = []) -> String? {
+        let t = token.uppercased().trimmingCharacters(in: CharacterSet(charactersIn: "_'"))
+        guard let o = snapOverrides[t], matchKeyword(token, keywords) == nil else { return nil }
+        return o
+    }
+    public static func snapKind(override o: String) -> SnapKind? {
+        ["END": .endpoint, "MID": .midpoint, "CEN": .center, "NOD": .node, "QUA": .quadrant, "INT": .intersection, "EXT": .extension,
+         "INS": .insertion, "PER": .perpendicular, "TAN": .tangent, "NEA": .nearest, "PAR": .parallel][o]
+    }
     public static func pointModifier(_ token: String) -> String? {
         let t = token.uppercased().trimmingCharacters(in: CharacterSet(charactersIn: "_'"))
         guard pointModifiers.contains(t) else { return nil }

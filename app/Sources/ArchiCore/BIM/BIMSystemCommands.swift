@@ -162,7 +162,8 @@ enum BIMSystemCommands {
 
     static var family: CommandDef {
         CommandDef("FAMILY", aliases: ["FAMILYEDIT", "FAMILIES", "FAM"], category: "Architecture", summary: "Family editor: new family, parameters and formulas, forms (box, cylinder, extrusion, sweep, revolve, void, nested, arrays), types, place instances, set instance values, flex, door/window builder, assign to openings.") { ed in
-            let k = try await ed.getKeyword("Family option", ["New", "Param", "Form", "Profile", "Type", "Place", "Set", "Flex", "Builder", "Assign", "List", "Delete", "Ref", "Purge"], defaultValue: "List") ?? "List"
+            let k = try await ed.getKeyword("Family option", ["New", "Param", "Form", "Profile", "Type", "Place", "Set", "Flex", "Builder", "Assign", "List", "Delete", "Ref", "Purge",
+                                                               "Symbol", "Visibility", "Label", "Save", "Load", "Reload"], defaultValue: "List") ?? "List"
             @MainActor func pickFamily(_ msg: String) async throws -> Int {
                 let names = ed.doc.families.map(\.name)
                 guard !names.isEmpty else { throw CommandError.invalid("No families in this document (FAMILY New or Builder).") }
@@ -174,11 +175,67 @@ enum BIMSystemCommands {
             case "New":
                 guard let n = try await ed.getWord("Family name"), !n.isEmpty else { return }
                 guard ed.doc.family(named: n) == nil else { throw CommandError.invalid("\(n) already exists.") }
-                let cat = try await ed.getKeyword("Category", ["Generic", "Furniture", "Casework", "Lighting", "Door", "Window", "Profile"], defaultValue: "Generic") ?? "Generic"
-                ed.doc.families.append(FamilyDefinition(name: n, category: cat == "Generic" ? "Generic Model" : cat,
-                                                        parameters: [FamilyParameter("Width", value: "600"), FamilyParameter("Depth", value: "600"), FamilyParameter("Height", value: "750")]))
+                let cat = try await ed.getKeyword("Category template", FamilyTemplates.categories, defaultValue: "Generic") ?? "Generic"
+                // Category templates (PAR-002): parameters, forms and symbolic lines that already flex.
+                let def = FamilyTemplates.template(name: n, category: cat)
+                ed.doc.families.append(def)
                 ed.doc.setVariable("CURRENTFAMILY", n)
-                ed.print("Family \(n) created with Width, Depth, Height parameters.")
+                ed.print("Family \(n) (\(def.category)) created from the template: " + def.parameters.map(\.name).joined(separator: ", ") + ".")
+            case "Symbol":
+                // Symbolic plan lines (PAR-007), optionally for some detail levels only.
+                let i = try await pickFamily("Family")
+                var pts: [[String]] = []
+                while true {
+                    guard let pt = try await ed.getString("Point \(pts.count + 1) as x;y expressions (Enter when done)"), !pt.isEmpty else { break }
+                    let c = pt.split(separator: ";").map { $0.trimmingCharacters(in: .whitespaces) }
+                    if c.count >= 2 { pts.append(Array(c.prefix(2))) }
+                }
+                guard pts.count >= 2 else { throw CommandError.invalid("A symbolic line needs at least two points.") }
+                let closed = try await ed.getYesNo("Closed?", defaultValue: pts.count >= 3)
+                let det = try await ed.getWord("Detail levels (coarse,medium,fine; Enter = all)", defaultValue: "") ?? ""
+                let dashed = try await ed.getYesNo("Dashed?", defaultValue: false)
+                ed.doc.families[i].symbolic.append(FamilySymbolic(points: pts, closed: closed, detail: det.isEmpty ? nil : det.lowercased(), dashed: dashed))
+                ed.print("Symbolic line added to \(ed.doc.families[i].name) (\(ed.doc.families[i].symbolic.count) in total).")
+            case "Visibility":
+                // Form visibility by detail level and view (PAR-008).
+                let i = try await pickFamily("Family")
+                let forms = ed.doc.families[i].forms.map(\.name)
+                guard let fn = try await ed.getWord("Form [\(forms.joined(separator: "/"))]"), let j = ed.doc.families[i].forms.firstIndex(where: { $0.name.caseInsensitiveCompare(fn) == .orderedSame }) else { throw CommandError.invalid("Unknown form.") }
+                let det = try await ed.getWord("Detail levels (coarse,medium,fine; All)", defaultValue: ed.doc.families[i].forms[j].detail ?? "All") ?? "All"
+                let vw = try await ed.getWord("Views (plan,model; All)", defaultValue: ed.doc.families[i].forms[j].views ?? "All") ?? "All"
+                ed.doc.families[i].forms[j].detail = det.lowercased() == "all" ? nil : det.lowercased()
+                ed.doc.families[i].forms[j].views = vw.lowercased() == "all" ? nil : vw.lowercased()
+                ed.print("\(fn): detail \(ed.doc.families[i].forms[j].detail ?? "all"), views \(ed.doc.families[i].forms[j].views ?? "all").")
+            case "Label":
+                // Tag/annotation families (PAR-014): label template with {Parameter} fields read from the tagged element.
+                let i = try await pickFamily("Family")
+                guard let l = try await ed.getWord("Label (e.g. \"{Mark} {Width}x{Height}\")", defaultValue: ed.doc.families[i].label ?? "{Mark}") else { return }
+                ed.doc.families[i].label = l
+                ed.print("\(ed.doc.families[i].name) label: \(l)")
+            case "Save":
+                let i = try await pickFamily("Family")
+                var url = try await IOCommands.path(ed, "Enter family file name (.\(FamilyFiles.fileExtension))")
+                if url.pathExtension.isEmpty { url.appendPathExtension(FamilyFiles.fileExtension) }
+                let data = try FamilyFiles.encode(ed.doc.families[i], doc: ed.doc)
+                try IOCommands.write(ed, url, "family", { try data.write(to: url, options: .atomic) })
+                ed.doc.families[i].source = url.path
+            case "Load", "Reload":
+                var url: URL
+                if k == "Reload" {
+                    let i = try await pickFamily("Family to reload")
+                    guard let src = ed.doc.families[i].source else { throw CommandError.invalid("\(ed.doc.families[i].name) was not loaded from a file.") }
+                    url = URL(fileURLWithPath: src)
+                } else { url = try await IOCommands.path(ed, "Enter family file name (.\(FamilyFiles.fileExtension))") }
+                guard let data = try? Data(contentsOf: url) else { throw CommandError.invalid("Cannot read \(url.path).") }
+                let name = (try? FamilyFiles.decode(data))?.family.name ?? ""
+                var overwrite = true
+                if ed.doc.family(named: name) != nil {
+                    overwrite = try await ed.getYesNo("\(name) exists. Overwrite its parameter values too?", defaultValue: false)
+                }
+                let r = try FamilyFiles.load(data, source: url.path, into: &ed.doc, overwriteValues: overwrite)
+                var d = ed.doc; FamilyInstances.updateAll(&d); ed.doc = d
+                ed.doc.setVariable("CURRENTFAMILY", r.name)
+                ed.print("Family \(r.name) " + (r.result == .added ? "loaded." : "reloaded (\(FamilyInstances.count(r.name, doc: ed.doc)) instance(s) updated)."))
             case "Param":
                 let i = try await pickFamily("Family")
                 guard let pn = try await ed.getWord("Parameter name"), !pn.isEmpty, pn.first!.isLetter else { throw CommandError.invalid("Names start with a letter.") }
@@ -503,7 +560,62 @@ enum BIMSystemCommands {
     }
 
     static var viewGraphics: CommandDef {
-        CommandDef("VIEWGRAPHICS", aliases: ["SECTIONGRAPHICS", "ELEVGRAPHICS", "DEPTHCUE", "HIDDENLINES"], category: "View", summary: "Section/elevation graphics: line weights by depth, dashed hidden lines, depth cueing, far clip and dimensions in elevations.") { ed in
+        CommandDef("VIEWGRAPHICS", aliases: ["SECTIONGRAPHICS", "ELEVGRAPHICS", "DEPTHCUE", "HIDDENLINES", "VG", "VISGRAPHICS"], category: "View", summary: "View graphics: Categories (visibility/graphics overrides per category), Filters (rule-based view filters), Detail level, and Section/elevation graphics (line weights by depth, hidden lines, depth cueing, far clip, dimensions).") { ed in
+            let mode = try await ed.getKeyword("View graphics", ["Sections", "Categories", "Filters", "Detail"], defaultValue: "Sections") ?? "Sections"
+            switch mode {
+            case "Detail":
+                // Detail level of the view (DOC-023): coarse, medium or fine.
+                let cur = FamilyVisibility.level(ed.doc)
+                let v = try await ed.getKeyword("Detail level", ["Coarse", "Medium", "Fine"], defaultValue: cur.capitalized) ?? "Medium"
+                ed.doc.setVariable("DETAILLEVEL", v.lowercased())
+                ed.print("Detail level: \(v.lowercased()).")
+                return
+            case "Categories":
+                // Visibility/graphics overrides by category (DOC-020).
+                var all = VisibilityGraphics.categoryOverrides(ed.doc)
+                guard let c = try await ed.getWord("Category (wall, door, window, slab, column, room, …; List; Reset)", defaultValue: "List") else { return }
+                if c.lowercased() == "list" {
+                    if all.isEmpty { ed.print("No category overrides.") }
+                    for (k, o) in all.sorted(by: { $0.key < $1.key }) { ed.print("\(k): " + [o.hidden == true ? "hidden" : nil, o.color.map { "color \(fmt($0.r, 2)),\(fmt($0.g, 2)),\(fmt($0.b, 2))" }, o.lineweight.map { "lw \(fmt($0))" }, o.halftone == true ? "halftone" : nil].compactMap { $0 }.joined(separator: ", ")) }
+                    return
+                }
+                if c.lowercased() == "reset" { VisibilityGraphics.setCategoryOverrides([:], doc: &ed.doc); ed.print("Category overrides cleared."); return }
+                guard let spec = try await ed.getWord("Override (hide; show; color:red or r,g,b; lw:0.5; halftone — joined by ';'; Reset)") else { return }
+                let key = VisibilityGraphics.norm(c)
+                if spec.lowercased() == "reset" { all[key] = nil }
+                else {
+                    guard let o = VisibilityGraphics.parseOverride(spec) else { throw CommandError.invalid("Use hide, show, color:r,g,b, lw:0.5 or halftone.") }
+                    all[key] = (all[key] ?? GraphicOverride()).merged(o)
+                    if o.hidden == false { all[key]?.hidden = nil }
+                }
+                VisibilityGraphics.setCategoryOverrides(all, doc: &ed.doc)
+                ed.print("\(key): override set for this view.")
+                return
+            case "Filters":
+                // Rule-based view filters (DOC-021).
+                var fs = VisibilityGraphics.filters(ed.doc)
+                let op = try await ed.getKeyword("Filter option", ["List", "New", "Delete", "Enable", "Disable"], defaultValue: "List") ?? "List"
+                switch op {
+                case "New":
+                    guard let n = try await ed.getWord("Filter name"), !n.isEmpty else { return }
+                    let cats = try await ed.getWord("Categories (comma-separated; All)", defaultValue: "All") ?? "All"
+                    guard let rule = try await ed.getWord("Rule \"field op value\" (e.g. \"FireRating = EI60\")"), let r = ScheduleCommands.parseRule(rule) else { throw CommandError.invalid("Use field op value.") }
+                    guard let spec = try await ed.getWord("Override (hide; color:red; lw:0.5; halftone)", defaultValue: "color:red"), let o = VisibilityGraphics.parseOverride(spec) else { throw CommandError.invalid("Use hide, color:r,g,b, lw:0.5 or halftone.") }
+                    fs.removeAll { $0.name.caseInsensitiveCompare(n) == .orderedSame }
+                    fs.append(ViewFilterRule(name: n, categories: cats.lowercased() == "all" ? [] : cats.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }, field: r.0, op: r.1, value: r.2, override: o))
+                case "Delete", "Enable", "Disable":
+                    guard let n = try await ed.getWord("Filter name [" + fs.map(\.name).joined(separator: "/") + "]"), let i = fs.firstIndex(where: { $0.name.caseInsensitiveCompare(n) == .orderedSame }) else { throw CommandError.invalid("Unknown filter.") }
+                    if op == "Delete" { fs.remove(at: i) } else { fs[i].enabled = op == "Enable" }
+                default:
+                    if fs.isEmpty { ed.print("No view filters.") }
+                    for f in fs { ed.print("\(f.name)\(f.enabled ? "" : " (off)"): \(f.categories.isEmpty ? "all" : f.categories.joined(separator: ",")) where \(f.field) \(f.op) \(f.value)") }
+                    return
+                }
+                VisibilityGraphics.setFilters(fs, doc: &ed.doc)
+                ed.print("\(fs.count) view filter(s) in this view.")
+                return
+            default: break
+            }
             @MainActor func onOff(_ key: String, _ label: String, _ def: Bool) async throws {
                 let cur = ed.doc.variable(key).map { $0 == "1" } ?? def
                 let v = try await ed.getYesNo(label, defaultValue: cur)

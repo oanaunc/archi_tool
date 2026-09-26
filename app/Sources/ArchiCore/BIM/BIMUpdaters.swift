@@ -15,6 +15,11 @@ public enum BIMUpdaters {
         if AssociativeSolids.updateAll(&doc) { changed = true }
         if FamilyInstances.updateAll(&doc) { changed = true }
         if SectionPlaneObjects.updateAll(&doc) { changed = true }
+        if GridHosting.updateAll(&doc) { changed = true }
+        if StairRailings.updateAll(&doc) { changed = true }
+        if HostedComponents.updateAll(&doc) { changed = true }
+        if RoomUpdates.updateAll(&doc) { changed = true }
+        if Schedules.updateAll(&doc) { changed = true }
         return changed
     }
 
@@ -27,6 +32,11 @@ public enum BIMUpdaters {
             }
             || !doc.families.isEmpty
             || GlobalParameters.hasBindings(doc)
+            || GridHosting.hasHosted(doc)
+            || StairRailings.hasHosted(doc)
+            || HostedComponents.hasHosted(doc)
+            || RoomUpdates.hasAuto(doc)
+            || !doc.schedules.isEmpty
     }
 
     private static let lock = NSLock()

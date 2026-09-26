@@ -114,6 +114,17 @@ final class BIMContext {
             }
             if case .opening(let o) = el.geometry { openings[o.hostWall, default: []].append(el) }
         }
+        // Curtain walls embedded in a host wall (props hostWall, BIM-028) cut it like a full-size opening.
+        for el in doc.elements {
+            guard case .curtainWall(let cw) = el.geometry, let hs = el.props["hostWall"], let hid = Int(hs), let f = frames[hid],
+                  let host = doc.element(hid), cw.length > 1e-9 else { continue }
+            let a = f.project(cw.start).s, b = f.project(cw.end).s
+            let lo = max(min(a, b), 0), hi = min(max(a, b), f.L)
+            guard hi - lo > 1e-6 else { continue }
+            let sill = (doc.level(el.level)?.elevation ?? 0) + cw.baseOffset - BIMConstraints.wallNominalBase(host, doc: doc)
+            let o = OpeningGeom(kind: .opening, hostWall: hid, offset: (lo + hi) / 2, width: hi - lo, height: cw.height, sill: sill)
+            openings[hid, default: []].append(BIMElement(id: el.id, level: host.level, name: el.name, layer: el.layer, geometry: .opening(o), props: ["embeddedCurtainWall": "1"]))
+        }
         for (_, walls) in byLevel { computeJoins(walls) }
     }
 

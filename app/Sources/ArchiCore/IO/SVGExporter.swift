@@ -130,9 +130,11 @@ public enum SVGExporter {
         case .middle: first = hgt - blockH / 2
         case .bottom: first = -(0.2 * hgt + pitch * (count - 1))
         }
-        let anchor: String = t.halign == .left ? "start" : (t.halign == .center ? "middle" : "end")
+        // Right-to-left paragraphs: SVG direction="rtl" (the anchor stays geometric: left-aligned text starts at x).
+        let rtl = TextDirection.base(of: lines.joined(separator: " ")) == .rightToLeft
+        let anchor: String = t.halign == .left ? (rtl ? "end" : "start") : (t.halign == .center ? "middle" : (rtl ? "start" : "end"))
         let fontSize = hgt / 0.717
-        var s = "<text transform=\"translate(\(fmt(x, 3)) \(fmt(y, 3)))\(t.rotation != 0 ? " rotate(\(fmt(-deg(t.rotation), 4)))" : "")\" font-family=\"\(xml(font)), Helvetica, Arial, sans-serif\" font-size=\"\(fmt(fontSize, 3))\" fill=\"\(color.hex)\"\(color.a < 1 ? " fill-opacity=\"\(fmt(color.a, 3))\"" : "") stroke=\"none\" text-anchor=\"\(anchor)\" xml:space=\"preserve\">"
+        var s = "<text transform=\"translate(\(fmt(x, 3)) \(fmt(y, 3)))\(t.rotation != 0 ? " rotate(\(fmt(-deg(t.rotation), 4)))" : "")\" font-family=\"\(xml(font)), Helvetica, Arial, sans-serif\" font-size=\"\(fmt(fontSize, 3))\" fill=\"\(color.hex)\"\(color.a < 1 ? " fill-opacity=\"\(fmt(color.a, 3))\"" : "") stroke=\"none\" text-anchor=\"\(anchor)\"\(rtl ? " direction=\"rtl\" unicode-bidi=\"embed\"" : "") xml:space=\"preserve\">"
         for (i, l) in lines.enumerated() {
             s += "<tspan x=\"0\" y=\"\(fmt(first + pitch * Double(i), 3))\">\(xml(l))</tspan>"
         }

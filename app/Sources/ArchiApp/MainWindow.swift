@@ -16,16 +16,42 @@ struct MainWindow: View {
         VStack(spacing: 0) {
             if !model.cleanScreen {
                 RibbonView(model: model)
+                ContextualRibbonStrip(model: model)
+                HSeparator()
+            }
+            if FileTabs.visible {
+                FileTabsBar(model: model)
                 HSeparator()
             }
             HStack(spacing: 0) {
                 workspace
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .overlay(alignment: .topLeading) { ViewportBadge(model: model).padding(8) }
+                    .overlay(alignment: .topTrailing) {
+                        // Quick Properties (QP): shown while objects are selected, hidden otherwise (APP-025).
+                        if model.showQuickProperties && !model.editor.selection.isEmpty && model.mode != .sheet {
+                            QuickPropertiesView(model: model, compact: true)
+                                .background(RoundedRectangle(cornerRadius: 6).fill(Theme.panel.opacity(0.96)))
+                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Theme.separator, lineWidth: 1))
+                                .padding(10)
+                        }
+                    }
+                    .overlay(alignment: .bottom) {
+                        if let mv = model.maximizedViewport {
+                            Button { model.runCommand("VPMIN") } label: {
+                                Label("Viewport \(mv.viewport + 1) of \(model.doc.layouts.indices.contains(mv.layout) ? model.doc.layouts[mv.layout].name : "sheet") maximised — click or VPMIN to return", systemImage: "arrow.down.right.and.arrow.up.left")
+                                    .font(Theme.fontSmall).padding(.horizontal, 10).padding(.vertical, 4)
+                                    .background(Capsule().fill(Theme.accent)).foregroundStyle(Theme.accentText)
+                            }.buttonStyle(.plain).padding(8)
+                        }
+                    }
                 if model.showPanels && !model.cleanScreen {
                     PanelResizeHandle(width: $panelWidth)
                     PanelsView(model: model).frame(width: CGFloat(panelWidth))
                 }
+            }
+            if model.showLayoutTabs && !model.cleanScreen {
+                LayoutTabsBar(model: model)
             }
             if model.showScriptConsole {
                 HSeparator()
@@ -55,7 +81,7 @@ struct MainWindow: View {
         .background(WindowAccessor { w in attach(w) })
         .focusedSceneObject(model)
         .preferredColorScheme(Theme.colorScheme)
-        .frame(minWidth: 960, minHeight: 620)
+        .frame(minWidth: 720, minHeight: 560)
         .onAppear(perform: setup)
         .onChange(of: model.revision) { _ in updateWindowState() }
     }
@@ -67,10 +93,7 @@ struct MainWindow: View {
         case .model:
             Viewport3DView(model: model)
         case .split:
-            HSplitView {
-                PlanCanvas(model: model).frame(minWidth: 240, maxWidth: .infinity, maxHeight: .infinity)
-                Viewport3DView(model: model).frame(minWidth: 240, maxWidth: .infinity, maxHeight: .infinity)
-            }
+            TiledViews(model: model)
         case .sheet:
             SheetView(model: model)
         }
@@ -104,7 +127,7 @@ struct MainWindow: View {
             w.isOpaque = true
             w.titlebarAppearsTransparent = false
             WindowRepaint.install(on: w)
-            w.tabbingIdentifier = "OanarinaArchiDocument"
+            WindowTabs.configure(w)
             updateWindowState()
             if AppModel.all.count == 1 { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { FloatingPanels.restore(for: model) } }
         }
@@ -123,6 +146,7 @@ struct MainWindow: View {
         WindowRouter.openWindow = { r in openWindow(value: r) }
         guard !didSetup else { return }
         didSetup = true
+        WindowStateMemory.restore(model)
         AppCommands.registerAll()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { ScriptLibrary.runStartup(for: model) }
         if AppModel.all.count <= 1 { DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { WhatsNew.checkOnLaunch(model: model) } }

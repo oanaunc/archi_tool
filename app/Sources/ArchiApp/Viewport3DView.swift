@@ -10,7 +10,7 @@ import ArchiCore
 /// the model root node scales by 0.001 and rotates −90° about X so SceneKit sees metres, Y up.
 @MainActor
 final class Scene3DBuilder {
-    static let visualStyles = ["Wireframe", "Hidden Line", "Shaded", "Shaded with Edges", "Realistic", "X-Ray"]
+    static let visualStyles = ["Wireframe", "Hidden Line", "Shaded", "Shaded with Edges", "Conceptual", "Realistic", "X-Ray"]
     static let accent = NSColor(srgbRed: 0.961, green: 0.773, blue: 0.094, alpha: 1)
 
     let scene = SCNScene()
@@ -88,10 +88,17 @@ final class Scene3DBuilder {
 
     // MARK: Build / update
 
-    func update(doc: ArchiDocument, style newStyle: String) {
-        let styleChanged = newStyle != style
+    /// Overrides of a custom visual style (VISUALSTYLES) on top of `style`, its base.
+    private(set) var custom: VisualStyleDef?
+
+    func update(doc: ArchiDocument, style requested: String) {
+        // Custom styles resolve to a built-in base plus overrides (VIS-034).
+        let def = VisualStyleDef.named(requested, in: doc)
+        let newStyle = def.map { VisualStyleNames.canonical($0.base) } ?? requested
+        let styleChanged = newStyle != style || def != custom
         if styleChanged {
             style = newStyle
+            custom = def
             materialCache.removeAll()
             for (_, v) in nodes { v.node.removeFromParentNode() }
             nodes.removeAll()
@@ -166,7 +173,7 @@ final class Scene3DBuilder {
         return parent
     }
 
-    var showsEdges: Bool { ["Wireframe", "Hidden Line", "Shaded with Edges", "X-Ray"].contains(style) }
+    var showsEdges: Bool { custom?.edges ?? ["Wireframe", "Hidden Line", "Shaded with Edges", "Conceptual", "X-Ray"].contains(style) }
 
     static func geometry(_ mesh: Mesh) -> SCNGeometry? {
         guard !mesh.isEmpty, !mesh.positions.isEmpty else { return nil }
@@ -211,6 +218,11 @@ final class Scene3DBuilder {
         case "Hidden Line":
             m.lightingModel = .constant
             m.diffuse.contents = t > 0.3 ? NSColor(white: 0.93, alpha: 1) : NSColor.white
+        case "Conceptual":
+            // Consistent colours (VIS-030): unlit material colour, softened, with edges; no shadows or textures.
+            m.lightingModel = .constant
+            m.diffuse.contents = color.blended(withFraction: 0.18, of: .white) ?? color
+            if t > 0.3 { m.transparency = 0.55; m.isDoubleSided = true; m.writesToDepthBuffer = false }
         case "X-Ray":
             m.lightingModel = .lambert
             m.diffuse.contents = color
@@ -242,7 +254,7 @@ final class Scene3DBuilder {
             }
         }
         if src.transparency > 0 { m.isDoubleSided = true }
-        if style != "Hidden Line", style != "X-Ray", let img = MaterialTextures.image(src.texture) {
+        if style != "Hidden Line", style != "X-Ray", style != "Conceptual", let img = MaterialTextures.image(src.texture) {
             m.diffuse.contents = img
             m.diffuse.wrapS = .repeat; m.diffuse.wrapT = .repeat
             m.diffuse.mipFilter = .linear
@@ -268,6 +280,12 @@ final class Scene3DBuilder {
             m.fresnelExponent = 3
             m.transparencyMode = .dualLayer
         }
+        if let o = custom?.faceOpacity, o < 1 {
+            m.transparency = CGFloat(max(0.05, min(o, 1)) * Double(m.transparency))
+            m.isDoubleSided = true
+            m.writesToDepthBuffer = false
+            m.blendMode = .alpha
+        }
         materialCache[name] = m
         return m
     }
@@ -282,6 +300,7 @@ final class Scene3DBuilder {
         default: em.diffuse.contents = NSColor(white: 0.12, alpha: 1)
         }
         em.readsFromDepthBuffer = style != "X-Ray"
+        if let c = custom?.edgeColor { em.diffuse.contents = NSColor(hex: c) }
         edgeMaterial = em
 
         let realistic = style == "Realistic"
@@ -291,8 +310,9 @@ final class Scene3DBuilder {
         scene.background.contents = sky
         scene.lightingEnvironment.contents = realistic ? sky : nil
         scene.lightingEnvironment.intensity = realistic ? 1.3 : 0
-        let shadows = ["Shaded", "Shaded with Edges", "Realistic"].contains(style)
+        let shadows = custom?.shadows ?? ["Shaded", "Shaded with Edges", "Realistic"].contains(style)
         sunNode.light?.castsShadow = shadows
+        if let bg = custom?.background { scene.background.contents = NSColor(hex: bg) }
         sunNode.light?.intensity = realistic ? 1600 : (light ? 0 : 900)
         ambientNode.light?.intensity = realistic ? 220 : (light ? 1000 : 420)
     }
@@ -392,6 +412,7 @@ final class Viewport3DController: NSObject, ObservableObject {
     static weak var active: Viewport3DController?
 
     @Published var isOrtho = false
+    private var lastWantOrtho = false
     @Published var isWalking = false
     let builder = Scene3DBuilder()
     let cameraNode = SCNNode()
@@ -459,7 +480,10 @@ final class Viewport3DController: NSObject, ObservableObject {
     func sync(model: AppModel) {
         self.model = model
         if model.viewport3D !== self { model.viewport3D = self }
-        let style = Scene3DBuilder.visualStyles.contains(model.viewStyle) ? model.viewStyle : "Shaded with Edges"
+        let style = VisualStyleDef.named(model.viewStyle, in: model.doc) != nil ? model.viewStyle : VisualStyleNames.canonical(model.viewStyle)
+        // PERSPECTIVE = 0 keeps the 3D view parallel (VIS-016); it is stored in the drawing.
+        let wantOrtho = model.doc.variable("PERSPECTIVE") == "0"
+        if wantOrtho != lastWantOrtho { lastWantOrtho = wantOrtho; if wantOrtho != isOrtho { toggleProjection() } }
         if model.editor.changeCount != lastChange || style != lastStyle {
             lastChange = model.editor.changeCount
             lastStyle = style
@@ -799,7 +823,11 @@ struct Viewport3DView: View {
             pill("Iso", "cube") { controller.setView("Iso") }
             Divider().frame(height: 16).padding(.horizontal, 3)
             pill(controller.isOrtho ? "Orthographic (click for perspective)" : "Perspective (click for orthographic)",
-                 controller.isOrtho ? "square.stack.3d.up" : "perspective") { controller.toggleProjection() }
+                 controller.isOrtho ? "square.stack.3d.up" : "perspective") {
+                controller.toggleProjection()
+                let v = controller.isOrtho ? "0" : "1"
+                model.editor.transaction("Projection") { $0.setVariable("PERSPECTIVE", v) }
+            }
             pill("Zoom extents", "arrow.up.left.and.arrow.down.right") { controller.zoomExtents() }
             pill(controller.isWalking ? "Exit walk mode" : "Walk mode (WASD)", "figure.walk", active: controller.isWalking) { controller.toggleWalk() }
             pill("Orbit around the selection (zooms to it)", "scope", active: false) {

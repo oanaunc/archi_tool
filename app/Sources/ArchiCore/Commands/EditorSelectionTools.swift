@@ -7,11 +7,12 @@ extension Editor {
     public func pickCandidates(at p: Vec2, tolerance: Double? = nil) -> [EntityID] {
         let tol = tolerance ?? pickTolerance
         var c: [(EntityID, Double)] = []
-        for e in doc.entities where doc.isEditable(layer: e.layer) {
+        let f = PickFilter(doc)
+        for e in doc.entities where f.pickable(e) {
             let d = GeometryOps.distance(from: p, to: e.geometry, doc: doc)
             if d <= tol { c.append((e.id, d)) }
         }
-        for el in doc.elements where doc.isEditable(layer: el.layer) && el.level == doc.currentLevel {
+        for el in doc.elements where f.pickable(el) {
             let d = PlanRepresentation.distance(from: p, to: el, doc: doc)
             if d <= tol { c.append((el.id, d)) }
         }
@@ -52,4 +53,15 @@ extension Editor {
     public func nudgeStep(pixels: Double = 1) -> Double {
         settings.gridSnap && settings.gridSpacing > 0 ? settings.gridSpacing : pickTolerance / 6 * pixels
     }
+
+    /// Freehand lasso selection (SEL-007): the dragged loop selects by window (clockwise) or crossing (counter-clockwise)
+    /// unless `crossing` forces a mode. Returns the selected ids (not applied to the selection set).
+    public func select(lasso loop: [Vec2], crossing: Bool? = nil) -> [EntityID] {
+        var pts: [Vec2] = []
+        for p in loop where pts.last.map({ !$0.isClose(p, tol: 1e-9) }) ?? true { pts.append(p) }
+        guard let inferred = SelectionGeometry.lassoMode(pts) else { return [] }
+        let mode: SelectionGeometry.Mode = crossing.map { $0 ? .crossingPolygon : .windowPolygon } ?? inferred
+        return SelectionGeometry.select(doc: doc, polygon: pts, mode: mode, level: doc.currentLevel)
+    }
 }
+

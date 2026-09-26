@@ -76,7 +76,7 @@ public enum GlobalParameters {
     }
 
     static func hasBindings(_ doc: ArchiDocument) -> Bool {
-        !doc.globalParameters.isEmpty && doc.elements.contains { $0.props.keys.contains { $0.hasPrefix("gp.") } }
+        (!doc.globalParameters.isEmpty || !doc.projectParameters.isEmpty) && doc.elements.contains { $0.props.keys.contains { $0.hasPrefix("gp.") } }
     }
 
     /// Applies every binding. Returns true when an element changed.
@@ -87,8 +87,11 @@ public enum GlobalParameters {
         var changed = false
         for i in doc.elements.indices {
             let el = doc.elements[i]
+            // Project parameters of the element (PAR-023) join the global values.
+            var ev = vals
+            if !doc.projectParameters.isEmpty { for (k, x) in ProjectParameters.numericValues(el, doc: doc) { ev[k] = x } }
             for (k, expr) in el.props where k.hasPrefix("gp.") {
-                guard let f = field(String(k.dropFirst(3)), for: el.geometry), let x = FamilyExpr.evaluate(expr, vals), x.isFinite else { continue }
+                guard let f = field(String(k.dropFirst(3)), for: el.geometry), let x = FamilyExpr.evaluate(expr, ev), x.isFinite else { continue }
                 if let cur = get(doc.elements[i].geometry, f), abs(cur - x) > 1e-9 {
                     doc.elements[i].geometry = set(doc.elements[i].geometry, f, x); changed = true
                 }

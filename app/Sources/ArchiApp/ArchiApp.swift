@@ -12,6 +12,7 @@ struct ArchiToolApp: App {
     init() {
         guard CommandLine.arguments.contains("--selftest") else { return }
         let failed: Bool = MainActor.assumeIsolated {
+            AppSelfTests.headless = true
             let r = AppSelfTests.run()
             if let cov = AppSelfTests.lastCoverage {
                 print("Command coverage: \(cov.total) commands, \(cov.intentional.count) system variables in palettes, \(cov.missing.count) without UI entry\(cov.missing.isEmpty ? "" : ": " + cov.missing.joined(separator: ", "))")
@@ -91,6 +92,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let win = e.window ?? NSApp.keyWindow
         // ⌃0 toggles clean screen; ⌘K opens command search.
         let flags = e.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        // F1: help for the running (or typed) command (APP-057/058); F2: command history panel.
+        if flags.isDisjoint(with: [.command, .control, .option]), e.keyCode == 122 || e.keyCode == 120 {
+            let m = AppModel.all.first(where: { $0.window === win }) ?? AppModel.all.first
+            if e.keyCode == 122 { HelpBrowser.show(HelpPages.contextRoute(m)) } else if let m { m.showPanels = true; m.panelTab = .history }
+            return true
+        }
         if flags == .control, e.keyCode == 29, let m = AppModel.all.first(where: { $0.window === win }) { m.cleanScreen.toggle(); return true }
         guard let (kp, name) = map[e.keyCode], flags.isDisjoint(with: [.command, .control, .option]) else { return false }
         guard let m = AppModel.all.first(where: { $0.window === win }) else { return false }
@@ -377,7 +384,7 @@ struct ArchiCommands: Commands {
             Button("Zoom Out") { model?.canvas?.zoomBy(1 / 1.5) }.keyboardShortcut("-")
             Button("Zoom Window") { model?.zoomWindowPending = true; model?.canvas?.focus() }
             Menu("Visual Style") {
-                ForEach(["Wireframe", "Hidden", "Shaded", "Shaded with Edges", "Realistic", "X-Ray"], id: \.self) { s in
+                ForEach(Scene3DBuilder.visualStyles, id: \.self) { s in
                     Button(s) { model?.files.handle(.setViewStyle(s)) }
                 }
             }
@@ -457,6 +464,10 @@ struct ArchiCommands: Commands {
             }
         }
         CommandGroup(replacing: .help) {
+            Button("Oanarina Archi Tool Help (F1)") { HelpBrowser.show(HelpPages.contextRoute(model)) }
+            Button("Tutorials") { HelpBrowser.show("tutorials") }
+            Button("Open Sample House") { WindowRouter.open(DocumentRequest(kind: .sample)) }
+            Divider()
             Button("Search Commands…") { model?.showCommandSearch = true }
                 .keyboardShortcut("k")
                 .disabled(model == nil)
@@ -542,7 +553,7 @@ struct ShortcutsView: View {
         ("Esc", "Cancel the command · clear the selection"),
         ("Right-click", "Enter while a command runs · context menu when idle"),
         ("Tab", "Accept autocomplete"), ("↑ / ↓", "Command history / suggestions"),
-        ("F3", "Object snap on/off"), ("F7", "Grid display"), ("F8", "Ortho mode"), ("F9", "Grid snap"), ("F10", "Polar tracking"), ("F11", "Object snap tracking"), ("F12", "Dynamic input"),
+        ("F1", "Help for the running command"), ("F2", "Command history panel"), ("F3", "Object snap on/off"), ("F7", "Grid display"), ("F8", "Ortho mode"), ("F9", "Grid snap"), ("F10", "Polar tracking"), ("F11", "Object snap tracking"), ("F12", "Dynamic input"),
         ("Scroll wheel / pinch", "Zoom about the cursor"), ("Two-finger scroll", "Pan"), ("Middle-drag · Space+drag", "Pan"),
         ("Double middle-click", "Zoom extents"), ("⌘0", "Zoom extents"), ("⌘= / ⌘-", "Zoom in / out"),
         ("Drag left → right", "Window selection (fully inside)"), ("Drag right → left", "Crossing selection (touching)"),

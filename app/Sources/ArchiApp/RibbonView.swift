@@ -590,7 +590,7 @@ struct RibbonView: View {
             RibbonGroup(title: "Visual Style") {
                 VStack(alignment: .leading, spacing: 4) {
                     Menu {
-                        ForEach(["Wireframe", "Hidden", "Shaded", "Shaded with Edges", "Realistic", "X-Ray"], id: \.self) { s in
+                        ForEach(VisualStyleDef.menuNames(model.doc), id: \.self) { s in
                             Button { model.files.handle(.setViewStyle(s)) } label: {
                                 if s == model.viewStyle { Label(s, systemImage: "checkmark") } else { Text(s) }
                             }

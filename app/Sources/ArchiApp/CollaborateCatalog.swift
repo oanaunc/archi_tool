@@ -51,7 +51,7 @@ extension CommandCatalog {
         c("Elevator", "arrow.up.arrow.down.square", "ELEVATOR"), c("Family Editor", "cube.box", "FAMILY"), c("Floor Finish", "square.grid.4x3.fill", "FLOORFINISH"),
         c("Model Group", "square.on.square.squareshape.controlhandles", "MODELGROUP"), c("Opening Trim", "door.left.hand.closed", "OPENINGTRIM"), c("Profiles", "waveform.path", "PROFILE"),
         c("Railing Type", "line.3.horizontal", "RAILINGTYPE"), c("Roof Edge", "house", "ROOFEDGE"), c("Shaft", "square.stack.3d.down.forward", "SHAFT"),
-        c("Skylight", "skylight", "SKYLIGHT"), c("Slab Opening", "square.dashed", "SLABOPENING"), c("Slab / Roof Type", "square.3.layers.3d", "SLABTYPE"),
+        c("Skylight", "sun.max", "SKYLIGHT"), c("Slab Opening", "square.dashed", "SLABOPENING"), c("Slab / Roof Type", "square.3.layers.3d", "SLABTYPE"),
         c("Wall Join", "arrow.triangle.merge", "WALLJOINEDIT"), c("Wall Wrap", "rectangle.inset.filled", "WALLWRAP"),
         c("Light Data", "lightbulb.max", "LIGHTDATA"), c("MEP Systems", "point.3.filled.connected.trianglepath.dotted", "MEPSYSTEM"),
     ]

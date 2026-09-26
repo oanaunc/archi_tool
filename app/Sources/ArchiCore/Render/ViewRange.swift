@@ -137,3 +137,39 @@ public enum ViewRange {
         return HiddenObjects.hide(Set(ids), in: &doc)
     }
 }
+
+/// Plan regions (DOC-012): closed boundaries on layer A-PLAN-REGION (props planRegion = "top,cut,bottom,depth", level)
+/// with their own view range; elements whose plan centre lies inside use it instead of the view's range.
+public enum PlanRegions {
+    public static let layer = "A-PLAN-REGION"
+
+    @discardableResult
+    public static func add(_ boundary: [Vec2], range r: ViewRange.Range, level: Int, doc: inout ArchiDocument) -> EntityID {
+        if doc.layer(named: layer) == nil { doc.layers.append(Layer(name: layer, color: RGBA(0.6, 0.6, 0.9), linetype: "Dashed", lineweight: 0.13, plot: false, description: "Plan regions")) }
+        let id = doc.add(.polyline(PolylineGeom(points: boundary, closed: true)), layer: layer)
+        if let i = doc.entityIndex(id) {
+            doc.entities[i].props["planRegion"] = [r.top, r.cut, r.bottom, r.depth].map { fmt($0, 6) }.joined(separator: ",")
+            doc.entities[i].props["level"] = "\(level)"
+        }
+        return id
+    }
+
+    /// Regions of a level: boundary and range.
+    public static func regions(_ doc: ArchiDocument, level: Int) -> [(boundary: [Vec2], range: ViewRange.Range)] {
+        doc.entities.compactMap { e in
+            guard let s = e.props["planRegion"], e.props["level"].flatMap(Int.init).map({ $0 == level }) ?? true,
+                  case .polyline(let pl) = e.geometry, pl.vertices.count >= 3 else { return nil }
+            let v = s.split(separator: ",").compactMap { Double($0) }
+            guard v.count == 4 else { return nil }
+            return (pl.vertices.map(\.p), ViewRange.Range(top: v[0], cut: v[1], bottom: v[2], depth: v[3]))
+        }
+    }
+
+    /// The range of the region containing an element's plan centre.
+    static func range(for el: BIMElement, regions: [(boundary: [Vec2], range: ViewRange.Range)], doc: ArchiDocument) -> ViewRange.Range? {
+        guard !regions.isEmpty else { return nil }
+        let b = PlanRepresentation.bounds(el, doc: doc)
+        guard !b.isEmpty else { return nil }
+        return regions.first { GeometryOps.pointInPolygon(b.center, $0.boundary) }?.range
+    }
+}

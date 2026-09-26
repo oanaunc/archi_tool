@@ -472,3 +472,53 @@ in `DIR/.archi-automation.json`; `--once` handles the pending files and exits (s
 Plotting: `PLOTROLL` (roll width mm) and `PLOTMARGIN` make HP-GL/2 output (`plt`) size the page (`PS`) and rotate to fit the
 roll. Performance: `SpatialIndex` (STR R-tree: window/point queries, k-nearest) for culling and picking; current-format
 `.archi` files decode in one pass.
+
+## 10. File life cycle, collaboration and analysis (round 6)
+
+### Command-line options
+
+| Option | What it does |
+| --- | --- |
+| `--template FILE` | new untitled drawing from a template (`.architemplate` or `.archi`; everything kept except the project name) — combine with `--script`/`--out` |
+| `--upgrade FILES…` | upgrades older `.archi`/`.architemplate` files to the current format; originals kept as `<name>.v<N>.archi.bak` |
+| `--verify FILE` | save/reopen round-trip check (exit 1 and the changed sections when not lossless) |
+| `--metadata FILE` | Spotlight metadata as JSON (`kMDItemTitle`, authors, layers as keywords, text content, levels, rooms) |
+| `--api-reference [FILE]` | generated Markdown reference: every command, every MCP tool with its parameters, file formats, sample scripts |
+| `--run-samples` | runs the reference's sample scripts (exit 1 if one fails) |
+| `--license` | licence (GPL-3.0-or-later) and privacy notice |
+| `--check-update APPCAST [--current V]` | newest compatible version in a Sparkle appcast (`UpdateCheck`; the only network access, on request); downloads can be checked with `UpdateCheck.verify` against `SHA256SUMS.txt` |
+
+### MCP tools added
+
+| Tool | Result |
+| --- | --- |
+| `daylight_annual` `{epwPath?, gridSpacing?, format?}` | per room sDA300/50% and ASE1000,250h (IES LM-83), mean autonomy, pass/fail |
+| `generative_design` `{program, adjacent?, facing?, area?, seed?, generations?, limit?}` | Pareto-optimal layouts (rooms with rectangles, objective values); build one with `GENDESIGN` |
+| `wind_case` `{path, speed?, direction?, roughness?}` | writes an OpenFOAM case folder |
+| `file_check` | `{lossless, changedSections, formatVersion}` |
+
+### Commands
+
+| Command | What it does |
+| --- | --- |
+| `SAVECOPY` | Save a Copy in any format (the open drawing keeps its name and dirty state) |
+| `SAVECHECK` | verifies that saving and reopening gives an identical document |
+| `UPGRADEFILE` | upgrades a file or every `.archi` in a folder (`ArchiFile.upgradeFile`, `ArchiFile.inspect`) |
+| `TEMPLATEOUT`, `TEMPLATEIN` | write a `.architemplate` (name, description) / start a new drawing from one (undoable); `ArchiTemplate` |
+| `FILEMETADATA` | Spotlight attributes of the drawing or a file (`SpotlightMetadata`) |
+| `PDFATTACH`, `PDFUNDERLAYS List/Reload/Detach/Fade` | PDF page underlays by reference: faded locked layer `PDF-UNDERLAY`, object snaps on the page geometry, reload after the PDF changed (`PDFUnderlay`) |
+| `DROPIMPORT` | files imported as if dropped: images/PDFs attached, exchange formats merged side by side (`ExternalContent.drop`); `ExternalContent.insert(data, type:)` handles pasted SVG, PDF, DXF, `.archi`, images and text |
+| `BREPOUT`, `BREPIN` | OpenCASCADE BREP (FreeCAD `.brep/.brp`): export as shells of planar faces; import with locations, stored triangulations, line/circle/ellipse edges |
+| `E57OUT`, `E57IN` | ASTM E57 point clouds (paged container with CRC-32C, CompressedVector bit-pack: Float/ScaledInteger/Integer, spherical or Cartesian, colour, intensity, scan poses) |
+| `COEDIT Join/Sync/Status/Leave` | co-editing through a shared folder (iCloud Drive, network share): every object is a last-writer-wins register with a Lamport stamp, ops in `<site>.ops.jsonl`, ids from a per-user range; replicas converge, concurrent edits of one object are reported (`CoEditSession`) |
+| `BCFSERVER Connect/Projects/Pull/Push` | BCF API 2.1/3.0 (OpenCDE) client with bearer token: topics, comments, viewpoints and selections ↔ markups (`BCFAPIClient`) |
+| `RESOLVECONFLICTS` | merges sync-conflict copies (`House 2.archi`, `(conflicted copy)`, OneDrive `-HOST`) three-way; copies moved to `<name>.archi-conflicts/` (`ConflictCopies`) |
+| `DAYLIGHTANNUAL` | climate-based daylight from an EPW (or clear-sky year): sDA/ASE per room, optional coloured work-plane grid (`ClimateDaylight`, `HourlyClimate`) |
+| `CFDEXPORT`, `WINDRESULTS` | OpenFOAM wind case (ABL inlet, snappyHexMesh, pedestrian-level sample); results as arrows with Lawson comfort classes (`WindStudy`) |
+| `GENDESIGN` | generative layout design (seeded GA: daylight, proportions, adjacencies, orientation, compactness), builds the chosen design after confirmation |
+| `SKETCHTOWALLS` | scanned/photographed plan (PNG, BMP, PGM/PPM) → walls (Otsu threshold, stroke bands, corner snapping), after confirmation (`SketchToModel`, `RasterImage`) |
+| `CLASHMANAGE Run/List/Group/Status/Assign/Zoom/Csv` | clash results kept between runs with status (new/active/reviewed/approved/resolved), assignee, groups (type/level/proximity) and zoom links (`ClashManager`) |
+| `TIME Display/ON/OFF/Reset` | creation/update dates, editing time without idle gaps (`EditTime.touch`), user timer (`TDINDWG`, `TDUSRTIMER`) |
+
+Text: DXF writes characters outside the Basic Multilingual Plane as `\U+D83D\U+DE00` surrogate pairs (read back as one
+character, also in layer names); SVG marks right-to-left paragraphs with `direction="rtl"` (`TextDirection`).

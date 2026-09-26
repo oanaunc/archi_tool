@@ -11,6 +11,7 @@ enum WorkspaceMode: String, CaseIterable, Identifiable { case plan = "2D", model
 enum PanelTab: String, CaseIterable, Identifiable {
     case properties = "Properties", layers = "Layers", levels = "Levels", browser = "Browser", materials = "Materials", tools = "Tools", sheets = "Sheets", history = "History"
     case selection = "Selection", navigator = "Navigator", alerts = "Alerts"
+    case quick = "Quick Props", inspector = "Inspector", content = "Content"
     var id: String { rawValue }
     var symbol: String {
         switch self {
@@ -25,6 +26,9 @@ enum PanelTab: String, CaseIterable, Identifiable {
         case .selection: return "info.square"
         case .navigator: return "map"
         case .alerts: return "bell.badge"
+        case .quick: return "slider.horizontal.below.rectangle"
+        case .inspector: return "list.bullet.rectangle"
+        case .content: return "books.vertical.circle"
         }
     }
 }
@@ -86,8 +90,8 @@ final class AppModel: ObservableObject {
 
     // Additions
     @Published var showStart = false
-    @Published var showPanels = true
-    @Published var panelTab: PanelTab = .properties
+    @Published var showPanels = true { didSet { if showPanels != oldValue { WindowStateMemory.save(self) } } }
+    @Published var panelTab: PanelTab = .properties { didSet { if panelTab != oldValue { WindowStateMemory.save(self) } } }
     @Published var viewDirection: String = "Iso"
     @Published var walkMode = false
     @Published var sheet: ModalSheet?
@@ -129,6 +133,21 @@ final class AppModel: ObservableObject {
     }
 
     let live = LiveState()
+    /// Set by the 2D canvas: consumes a typed line while a grip is hot; cancels canvas-local modes (grips, windows, placement).
+    var gripInput: ((String) -> Bool)?
+    var cancelLocalModes: (() -> Bool)?
+    /// Quick Properties palette (QP, APP-025).
+    @Published var showQuickProperties = UserDefaults.standard.bool(forKey: "quickProperties") {
+        didSet { UserDefaults.standard.set(showQuickProperties, forKey: "quickProperties") }
+    }
+    /// Model / layout tab strip under the canvas (APP-013) and the file tab bar (FILETAB, APP-012).
+    @Published var showLayoutTabs = UserDefaults.standard.object(forKey: "layoutTabs") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(showLayoutTabs, forKey: "layoutTabs") }
+    }
+    /// Viewport maximised with VPMAX (sheet index, viewport index), restored by VPMIN (SHT-007).
+    var maximizedViewport: (layout: Int, viewport: Int)?
+    /// Viewport selected in the sheet view (VPMAX, VPCLIP, MVSETUP default).
+    var selectedSheetViewport: Int?
     var cursorWorld: Vec2 {
         get { live.cursorWorld }
         set { live.cursorWorld = newValue }
@@ -216,6 +235,7 @@ final class AppModel: ObservableObject {
     }
 
     func cancelCommand() {
+        if cancelLocalModes?() == true { commandInput = ""; return }
         if !editor.isIdle { editor.cancel() } else if !editor.selection.isEmpty { editor.selection = [] }
         commandInput = ""
     }
@@ -226,6 +246,8 @@ final class AppModel: ObservableObject {
     func enterPressed() {
         let t = commandInput
         commandInput = ""
+        // A hot grip takes typed distances, points and grip-mode keywords (SEL-034/038).
+        if editor.isIdle, let h = gripInput, h(t) { return }
         submitLine(t)
     }
 

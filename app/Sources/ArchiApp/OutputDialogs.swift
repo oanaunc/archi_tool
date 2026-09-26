@@ -14,9 +14,9 @@ extension Plotter {
     }
 
     /// Multi-page PDF of the chosen sheets; with bookmarks, the PDF outline lists every sheet (batch publish).
-    @MainActor static func publishPDF(doc: ArchiDocument, layouts: [Int], to url: URL, bookmarks: Bool) throws {
-        let list = layouts.filter { doc.layouts.indices.contains($0) }
-        try writeSheetsPDF(doc: doc, to: url, layouts: list)
+    @MainActor static func publishPDF(doc: ArchiDocument, layouts: [Int], to url: URL, bookmarks: Bool, progress: ((Int, Int) -> Bool)? = nil) throws {
+        let list = layouts.filter { doc.layouts.indices.contains($0) && !SheetTools.isPlaceholder(doc.layouts[$0]) }
+        try writeSheetsPDF(doc: doc, to: url, layouts: list, progress: progress)
         PlotLog.record(drawing: doc.info.name, output: bookmarks ? "Publish (bookmarks)" : "Publish", sheets: list.map { SheetSet.number(doc, $0) }.joined(separator: " "),
                        style: Set(list.map { PageSetup.load(doc, layoutIndex: $0).plotStyleTable ?? PageSetup.load(doc, layoutIndex: $0).colorMode.rawValue }).sorted().joined(separator: " "),
                        file: url.path)

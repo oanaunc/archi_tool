@@ -243,6 +243,9 @@ final class AgentServer {
         ("list_commands", "command names, aliases, summaries"),
         ("eval_js", "{code} — run JavaScript with the archi API"),
         ("undo", ""), ("redo", ""), ("list_methods", ""),
+        ("list_resources", "document resources (summary, .archi JSON, takeoff, schedules, markups, plan SVG)"), ("read_resource", "{uri}"),
+        ("list_prompts", "prompt templates"), ("get_prompt", "{name, arguments?}"),
+        ("list_tools", "analysis and editing tools with input schemas (same as archi-cli --mcp)"), ("call_tool", "{name, arguments?} — editing tools are one undo step"),
     ]
 
     @MainActor private func call(_ method: String, _ p: [String: Any]) async throws -> Any {
@@ -321,6 +324,28 @@ final class AgentServer {
             engine = eng
             let r = await eng.evaluate(code)
             return ["output": r.output, "value": r.value.map { $0 as Any } ?? NSNull(), "error": r.error.map { $0 as Any } ?? NSNull()]
+        // Resources, prompts and tools shared with archi-cli --mcp.
+        case "list_resources": return AgentResources.list(ed.doc)
+        case "read_resource":
+            let c = try AgentResources.read(try need("uri", String.self), doc: ed.doc)
+            return ["uri": c.uri, "mimeType": c.mimeType, "text": c.text]
+        case "list_prompts": return AgentPrompts.definitions
+        case "get_prompt":
+            var args: [String: String] = [:]
+            for (k, v) in (p["arguments"] as? [String: Any]) ?? [:] { args[k] = "\(v)" }
+            return try AgentPrompts.get(try need("name", String.self), arguments: args, doc: ed.doc)
+        case "list_tools": return AgentTools.definitions + AgentExtraTools.mutatingDefinitions
+        case "call_tool":
+            let name = try need("name", String.self)
+            let a = p["arguments"] as? [String: Any] ?? [:]
+            let expand: (String) -> URL = { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath) }
+            if AgentExtraTools.mutatingNames.contains(name) {
+                var result: Any = NSNull()
+                try ed.transaction("Agent \(name)") { d in result = try AgentExtraTools.mutate(name, a, doc: &d, resolve: expand) }
+                return result
+            }
+            guard AgentTools.names.contains(name) else { throw RPCError(code: -32602, message: "unknown tool \(name)") }
+            return try AgentTools.call(name, a, doc: ed.doc, resolve: expand)
         case "undo": ed.undo(); return ["ok": true]
         case "redo": ed.redo(); return ["ok": true]
         default:

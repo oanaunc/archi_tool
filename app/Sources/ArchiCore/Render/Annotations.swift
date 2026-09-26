@@ -8,6 +8,12 @@ public enum Annotations {
 
     /// Text shown by a tag of `el` for a field ("mark", "type", "name", "number", "area", "keynote", "height", …).
     public static func tagText(_ el: BIMElement, field: String, doc: ArchiDocument) -> String {
+        // Tag families (PAR-014): the family's label template with {Parameter} fields read from the element.
+        if field.lowercased().hasPrefix("family:") {
+            let name = String(field.dropFirst(7))
+            guard let def = doc.family(named: name) else { return "?" }
+            return fillLabel(def.label ?? "{Mark}", el: el, doc: doc)
+        }
         switch field.lowercased() {
         case "mark":
             if case .opening(let o) = el.geometry { return o.mark ?? el.props["mark"] ?? "\(el.id)" }
@@ -39,8 +45,21 @@ public enum Annotations {
             if case .opening(let o) = el.geometry { return "\(fmt(o.width))×\(fmt(o.height))" }
             return ""
         default:
-            return el.props[field] ?? PropertyAccess.getProperty(el, field) ?? ""
+            return el.props[field] ?? PropertyAccess.getProperty(el, field) ?? ProjectParameters.value(field, of: el, doc: doc) ?? ""
         }
+    }
+
+    /// Replaces {Field} placeholders by the element's values (any tag field or parameter name).
+    public static func fillLabel(_ template: String, el: BIMElement, doc: ArchiDocument) -> String {
+        var out = "", key = ""
+        var inKey = false
+        for ch in template {
+            if ch == "{" && !inKey { inKey = true; key = ""; continue }
+            if ch == "}" && inKey { out += key.hasPrefix("family:") ? "" : tagText(el, field: key.trimmingCharacters(in: .whitespaces), doc: doc); inKey = false; continue }
+            if inKey { key.append(ch) } else { out.append(ch) }
+        }
+        if inKey { out += "{" + key }
+        return out.replacingOccurrences(of: "\\n", with: "\n")
     }
 
     static func tagKind(_ el: BIMElement, field: String) -> TagKind {
@@ -82,6 +101,26 @@ public enum Annotations {
         let st = StrokeStyle(color: color, lineweight: 0.18)
         var out: [DrawItem] = []
         var outline: [Vec2]
+        // Tag family graphics: the family's symbolic lines around the label, flexing with the label size (Width, Height).
+        if field.lowercased().hasPrefix("family:"), let def = doc.family(named: String(field.dropFirst(7))), !def.symbolic.isEmpty {
+            let r = FamilyEngine.evaluate(def, doc: doc, extra: ["width": w + h, "height": bh + h * 0.8, "textheight": h], origin: Vec3(c.x, c.y, 0))
+            var box = BBox2.empty
+            for sy in r.symbols {
+                out.append(.stroke(points: sy.points, closed: sy.closed, style: sy.dashed ? StrokeStyle(color: color, lineweight: 0.18, dash: [h * 0.4, -h * 0.3]) : st))
+                sy.points.forEach { box.add($0) }
+            }
+            outline = box.isEmpty ? [c] : box.corners
+            if lines.count > 1 {
+                let top = c + Vec2(0, bh / 2 - h / 2)
+                for (i, l) in lines.enumerated() { var lt = t; lt.content = l; lt.position = top - Vec2(0, 1.5 * h * Double(i)); out.append(.text(lt, font: "Helvetica", color: color)) }
+            } else { out.append(.text(t, font: "Helvetica", color: color)) }
+            let a = anchor(el, doc: doc)
+            if outline.count >= 3, !GeometryOps.pointInPolygon(a, outline), e.props["leader"] != "0", a.distance(to: c) > max(w, bh) * 1.2 {
+                let best = outline.min { $0.distance(to: a) < $1.distance(to: a) }!
+                out.append(.stroke(points: [best, a], closed: false, style: st))
+            }
+            return out
+        }
         switch tagKind(el, field: field) {
         case .door:
             outline = RG.circle(c, max(w, bh) * 0.5 + h * 0.45, segments: 32)

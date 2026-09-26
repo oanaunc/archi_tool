@@ -341,6 +341,7 @@ enum AnnotateCommands {
         CommandDef("DIMANGULAR", aliases: ["DAN", "DIMANG"], category: "Annotate", summary: "Dimensions the angle between lines, of an arc, or of three points.") { ed in
             let style = ed.doc.currentDimStyle
             var v: Vec2, a: Vec2, b: Vec2
+            var lastLinePick: EntityID?
             let pick = try await ed.pickObject("Select arc, circle, line, or <specify vertex>", filter: { ed.doc.entity($0) != nil })
             switch pick {
             case .pick(let pk):
@@ -352,6 +353,7 @@ enum AnnotateCommands {
                 case .line(let l1):
                     guard case .pick(let pk2) = try await ed.pickObject("Select second line", filter: { if case .line? = ed.doc.entity($0)?.geometry { return true }; return false }),
                           case .line(let l2)? = ed.doc.entity(pk2.id)?.geometry else { return }
+                    lastLinePick = pk2.id
                     guard let x = GeometryOps.lineIntersection(l1.a, l1.b, l2.a, l2.b) else { throw CommandError.invalid("Lines are parallel.") }
                     v = x
                     func leg(_ l: LineGeom, _ p: Vec2) -> Vec2 { p.distance(to: x) > 1e-6 ? p : (l.a.distance(to: x) > l.b.distance(to: x) ? l.a : l.b) }
@@ -366,7 +368,13 @@ enum AnnotateCommands {
             }
             let (va, vb, vv) = (a, b, v)
             let loc = try await ed.requirePoint("Specify dimension arc line location", base: v) { c in [.dimension(DimensionGeom(kind: .angular, points: [vv, va, vb, c], style: style))] }
-            ed.addDimension(DimensionGeom(kind: .angular, points: [v, a, b, loc], style: style))
+            let did = ed.addDimension(DimensionGeom(kind: .angular, points: [v, a, b, loc], style: style))
+            // Between two lines: the legs stay on the lines and the vertex at their intersection when they change.
+            if case .pick(let pk) = pick, case .line(let l1)? = ed.doc.entity(pk.id)?.geometry, ed.doc.variable("DIMASSOC") != "0",
+               let l2id = lastLinePick, case .line(let l2)? = ed.doc.entity(l2id)?.geometry, let i = ed.doc.entityIndex(did),
+               let k1 = DimAssociation.fractionKey(.line(l1), near: a), let k2 = DimAssociation.fractionKey(.line(l2), near: b) {
+                ed.doc.entities[i].props[DimAssociation.prop] = "0=\(pk.id):i\(l2id);1=\(pk.id):\(k1);2=\(l2id):\(k2)"
+            }
         },
         CommandDef("DIMORDINATE", aliases: ["DOR", "DIMORD"], category: "Annotate", summary: "Creates X or Y ordinate dimensions from the origin (0,0).") { ed in
             let style = ed.doc.currentDimStyle

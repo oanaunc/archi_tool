@@ -22,7 +22,9 @@ final class AnalysisAgentToolsTests: XCTestCase {
         for def in AgentTools.definitions {
             let name = def["name"] as! String
             var args: [String: Any] = [:]
-            if name == "ids_check" || name == "compare" || name == "bill_of_quantities" { continue } // need input files/rates (covered elsewhere)
+            if name == "ids_check" || name == "compare" || name == "bill_of_quantities" || name == "wind_case" { continue } // need input files/rates (covered elsewhere)
+            if name == "generative_design" { args["program"] = "Living 25, Kitchen 12, Bath 6"; args["generations"] = 5 }
+            if name == "daylight_annual" { args["gridSpacing"] = 2000 }
             if name == "validate_exchange" { args["format"] = "gbxml" }
             if name == "schedule" { args["kind"] = "walls" }
             if name == "sun_path" { args["date"] = "2025-06-21" }

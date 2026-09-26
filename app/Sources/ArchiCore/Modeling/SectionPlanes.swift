@@ -44,7 +44,7 @@ public enum PlaneClipper {
             for i in 0..<poly.count where poly[i].1 && poly[(i + 1) % poly.count].1 { capEdges.append((poly[i].0, poly[(i + 1) % poly.count].0)) }
         }
         guard cap, !capEdges.isEmpty else { return out }
-        return out + capFaces(capEdges, normal: n, tolerance: eps * 10 + 1e-9)
+        return out + capFaces(capEdges, normal: n, tolerance: eps * 1e-3 + 1e-12)
     }
 
     /// Cap triangles (facing `normal`) for boundary edges lying in the plane (given in the kept surface's winding).
@@ -105,9 +105,12 @@ public enum PlaneClipper {
             for l in [o] + holesOf[i] { for k in l { lookup[Vec2(pts[k].dot(u), pts[k].dot(v))] = pts[k] } }
             for t in r.triangles {
                 guard let a = lookup[r.points[t.0]], let b = lookup[r.points[t.1]], let c = lookup[r.points[t.2]] else { continue }
+                // Orientation from the flattened triangle; sliver triangles over collinear boundary points (edge/plane
+                // hits on triangle diagonals) are kept, since dropping them would open the cap along those edges.
                 let fn = (b - a).cross(c - a)
-                guard fn.length > 1e-14 else { continue }
-                out.append(fn.dot(n) >= 0 ? (a, b, c) : (a, c, b))
+                let a2 = (r.points[t.1] - r.points[t.0]).cross(r.points[t.2] - r.points[t.0])
+                let facing = fn.length > 1e-14 ? fn.dot(n) >= 0 : a2 >= 0
+                out.append(facing ? (a, b, c) : (a, c, b))
             }
         }
         return out

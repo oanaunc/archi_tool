@@ -15,6 +15,7 @@ public enum DocumentUpdaters {
         if AssociativeMarks.updateAll(&doc) { changed = true }
         if AssociativeHatch.updateAll(&doc) { changed = true }
         if DimAssociation.updateAll(&doc) { changed = true }
+        if LeaderAssociation.updateAll(&doc) { changed = true }
         if DimOverrides.updateAll(&doc) { changed = true }
         if DimBreaks.updateAll(&doc) { changed = true }
         if AssocArray.updateAll(&doc) { changed = true }

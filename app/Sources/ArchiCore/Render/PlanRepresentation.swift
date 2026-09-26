@@ -178,7 +178,36 @@ public enum PlanRepresentation {
         case .railing(let g):
             guard g.path.count >= 2 else { return [] }
             let d = 25 * u
-            return [stroke(offsetPolyline(g.path, d), color, lwProj), stroke(offsetPolyline(g.path, -d), color, lwProj)]
+            guard g.isSloped, let zs = g.pathZ, zs.count == g.path.count else {
+                return [stroke(offsetPolyline(g.path, d), color, lwProj), stroke(offsetPolyline(g.path, -d), color, lwProj)]
+            }
+            // Railings on stairs/ramps: drawn up to the plan cut plane, dashed beyond it (with a cut mark), like the stair.
+            let cut = BIMConstraints.cutHeight(doc)
+            var below: [Vec2] = [g.path[0]], above: [Vec2] = []
+            var cutPoint: Vec2? = nil
+            for i in 0..<(g.path.count - 1) {
+                let a = g.path[i], b = g.path[i + 1], za = zs[i], zb = zs[i + 1]
+                if above.isEmpty {
+                    if zb <= cut || abs(zb - za) < 1e-12 { below.append(b); continue }
+                    let t = za >= cut ? 0 : (cut - za) / (zb - za)
+                    let c = a.lerp(b, t)
+                    below.append(c); cutPoint = c; above = [c, b]
+                } else { above.append(b) }
+            }
+            var out: [DrawItem] = []
+            if below.count >= 2 && RG.dedupe(below, closed: false).count >= 2 {
+                out += [stroke(offsetPolyline(below, d), color, lwProj), stroke(offsetPolyline(below, -d), color, lwProj)]
+            }
+            if above.count >= 2 && RG.dedupe(above, closed: false).count >= 2 {
+                let dash = hiddenDash(doc, options)
+                out += [stroke(offsetPolyline(above, d), color, lwHidden, dash), stroke(offsetPolyline(above, -d), color, lwHidden, dash)]
+            }
+            if let c = cutPoint, let k = g.path.indices.dropLast().first(where: { i in
+                let a = g.path[i], b = g.path[i + 1]; return GeometryOps.distance(from: c, toPolyline: [a, b]) < 1e-6 }) {
+                let dir = (g.path[k + 1] - g.path[k]).normalized, n = dir.perp
+                out.append(stroke([c - n * (3 * d) - dir * d, c + n * (3 * d) + dir * d], color, lwProj))
+            }
+            return out
         case .roof(let g):
             let r = RoofShapes.faces(g)
             guard r.footprint.count >= 3 else { return [] }
@@ -244,8 +273,11 @@ public enum PlanRepresentation {
                 return DrawListBuilder.items(for: ins, doc: doc, options: options)
             }
             if g.path == nil, let def = doc.family(named: g.family) {
-                let outs = FamilyEngine.planOutlines(def, el: el, g: g, doc: doc)
-                if !outs.isEmpty { return outs.map { stroke($0, closed: true, color, lwProj) } }
+                let r = FamilyEngine.evaluate(def, doc: doc, props: el.props, origin: Vec3(g.position.x, g.position.y, 0), rotation: g.rotation)
+                let dash = hiddenDash(doc, options)
+                let items = r.outlines.map { stroke($0, closed: true, color, lwProj) }
+                    + r.symbols.map { stroke($0.points, closed: $0.closed, color, lwFine, $0.dashed ? dash : []) }
+                if !items.isEmpty { return items }
             }
             if let rf = ComponentLibrary.runFamily(g.family) {
                 let dash = hiddenDash(doc, options)
@@ -282,11 +314,16 @@ public enum PlanRepresentation {
             let len = g.start.distance(to: g.end)
             guard len > 1e-9 else { return [] }
             let pts = g.points
-            let d = (pts[1] - pts[0]).normalized
             let r = 400 * u
-            let c = g.start - d * r
-            var out: [DrawItem] = [stroke(pts, color, lwFine, centerDash(doc, options)), stroke(RG.circle(c, r, segments: 48), closed: true, color, lwAnno)]
-            if options.showAnnotations { out.append(.text(TextGeom(position: c, height: 350 * u, content: g.label, halign: .center, valign: .middle), font: font(doc), color: color)) }
+            var out: [DrawItem] = [stroke(pts, color, lwFine, centerDash(doc, options))]
+            let ends = g.headEnds
+            var heads: [Vec2] = []
+            if ends.start { heads.append(g.start - (pts[1] - pts[0]).normalized * r) }
+            if ends.end, pts.count >= 2 { let n = pts.count; heads.append(g.end + (pts[n - 1] - pts[n - 2]).normalized * r) }
+            for c in heads {
+                out.append(stroke(RG.circle(c, r, segments: 48), closed: true, color, lwAnno))
+                if options.showAnnotations { out.append(.text(TextGeom(position: c, height: 350 * u, content: g.label, halign: .center, valign: .middle), font: font(doc), color: color)) }
+            }
             return out
         }
     }
@@ -449,13 +486,17 @@ public enum PlanRepresentation {
         let j = ctx.join(f)
         // Ply build-up (left face → right face).
         var plies: [(material: String?, thi: Double, tlo: Double)] = []
-        if let tn = f.g.wallType, let wt = doc.wallTypes.first(where: { $0.name == tn }), wt.thickness > 0, !wt.plies.isEmpty {
+        // Detail level (DOC-023): coarse views show walls as a solid poché without layers or patterns.
+        let coarse = FamilyVisibility.level(doc) == "coarse"
+        if coarse {
+            plies = [(el.material, f.h, -f.h)]
+        } else if let tn = f.g.wallType, let wt = doc.wallTypes.first(where: { $0.name == tn }), wt.thickness > 0, !wt.plies.isEmpty {
             let k = 2 * f.h / wt.thickness
             var t = f.h
             for p in wt.plies { let nt = t - p.thickness * k; plies.append((p.material, t, nt)); t = nt }
         } else { plies = [(el.material, f.h, -f.h)] }
         let firstMat = doc.material(plies.first?.material ?? el.material)
-        let fill = blend(cutFill, firstMat?.color ?? cutFill, plies.count > 1 ? 0.15 : 0.25)
+        let fill = coarse ? blend(color, cutFill, 0.35) : blend(cutFill, firstMat?.color ?? cutFill, plies.count > 1 ? 0.15 : 0.25)
         var fills: [DrawItem] = [], patterns: [DrawItem] = [], lines: [DrawItem] = []
         let patColor = blend(color, fill, 0.35)
         // Seen from another level (a wall rising through it), only openings crossing that level's cut plane break the wall.
@@ -468,7 +509,7 @@ public enum PlanRepresentation {
         let wrap = layerWrap(el, plies: plies, doc: doc, h: f.h)
         for pc in ctx.pieces(f, only: only) {
             fills.append(.fill(loops: [pc.poly], color: fill))
-            if options.cutHatches {
+            if options.cutHatches && !coarse {
                 for ply in plies {
                     let pat = doc.material(ply.material)?.cutPattern ?? "SOLID"
                     guard pat.uppercased() != "SOLID", HatchPatterns.names.contains(pat.uppercased()) else { continue }
@@ -516,7 +557,23 @@ public enum PlanRepresentation {
             if pc.startEdgeVisible { lines.append(stroke([pc.faceL[0], pc.faceR[0]], color, lwCut)) }
             if pc.endEdgeVisible { lines.append(stroke([pc.faceR[pc.faceR.count - 1], pc.faceL[pc.faceL.count - 1]], color, lwCut)) }
         }
-        return fills + patterns + lines
+        var all = fills + patterns + lines
+        // Slanted/tapered walls (BIM-023) are drawn where the plan cut plane passes through them.
+        if f.g.isSlantedOrTapered {
+            let range = BIMConstraints.wallRange(el, doc: doc)
+            let zc = (doc.level(options.level ?? el.level)?.elevation ?? 0) + BIMConstraints.cutHeight(doc)
+            if let m = WallShapes.mapper(f.g, f: f, zBase: range.z0, height: range.z1 - range.z0) {
+                let z = min(max(zc, range.z0), range.z1)
+                all = all.map { it in
+                    switch it {
+                    case .stroke(let p, let c, let st): return .stroke(points: p.map { m($0, z) }, closed: c, style: st)
+                    case .fill(let l, let c): return .fill(loops: l.map { $0.map { m($0, z) } }, color: c)
+                    default: return it
+                    }
+                }
+            }
+        }
+        return all
     }
 
     /// Floor finish tile grid ("600x600") clipped to the finish outline, starting from the boundary's lower-left corner.
@@ -572,10 +629,11 @@ public enum PlanRepresentation {
         switch o.kind {
         case .door:
             let side: Double = o.flipFacing ? -1 : 1
-            if fw > 0 { out.append(stroke(rect(s0, a, -h, h), closed: true, color, lwProj)); out.append(stroke(rect(b, s1, -h, h), closed: true, color, lwProj)) }
+            let coarse = FamilyVisibility.level(doc) == "coarse"
+            if fw > 0 && !coarse { out.append(stroke(rect(s0, a, -h, h), closed: true, color, lwProj)); out.append(stroke(rect(b, s1, -h, h), closed: true, color, lwProj)) }
             else { out.append(stroke([P(s0, -h), P(s0, h)], color, lwProj)); out.append(stroke([P(s1, -h), P(s1, h)], color, lwProj)) }
             let lf = b - a
-            if o.threshold { out.append(stroke(rect(a, b, -h, h), closed: true, color, lwFine)) }
+            if o.threshold && !coarse { out.append(stroke(rect(a, b, -h, h), closed: true, color, lwFine)) }
             func leaf(_ hs: Double, _ sg: Double, _ len: Double) {
                 guard len > 1e-9 else { return }
                 let lt = min(40 * u, len * 0.08)
@@ -586,6 +644,33 @@ public enum PlanRepresentation {
                     return P(hs + sg * len * sin(phi), side * (h + len * cos(phi)))
                 }
                 out.append(stroke(arc, color, lwHidden))
+            }
+            if o.variant == .pocket {
+                // Pocket door: the leaf slides into a cavity inside the wall beside the opening (dashed pocket).
+                let dash = hiddenDash(doc, options)
+                let pt = min(40 * u, h * 0.6)
+                let (p0, p1) = o.flipHand ? (s1, s1 + lf) : (s0 - lf, s0)
+                out.append(stroke(rect(p0, p1, -pt / 2 - 5 * u, pt / 2 + 5 * u), closed: true, color, lwHidden, dash))
+                out.append(stroke(rect(a, b, -pt / 2, pt / 2), closed: true, color, lwProj))
+                let ay = side * (h + 150 * u)
+                let from = o.flipHand ? a + lf * 0.2 : b - lf * 0.2, to = o.flipHand ? b + lf * 0.2 : a - lf * 0.2
+                out.append(stroke([P(from, ay), P(to, ay)], color, lwFine))
+                out.append(.fill(loops: [RG.triangleArrow(tip: P(to, ay), dir: (P(to, ay) - P(from, ay)).normalized, size: 120 * u)], color: color))
+                return out
+            }
+            if o.variant == .biFold {
+                // Bi-fold: panels folded open in a zig-zag, stacking towards the hinge jamb(s).
+                let n = max(2, min(8, Int((lf / (450 * u)).rounded())))
+                let panels = n % 2 == 0 ? n : n + 1
+                let q = lf / Double(panels), th = Double.pi / 3
+                var zig: [Vec2] = []
+                for k in 0...panels {
+                    let x = a + lf * Double(k) / Double(panels)
+                    zig.append(P(x, side * (h + (k % 2 == 1 ? q * sin(th) : 0))))
+                }
+                out.append(stroke(zig, color, lwProj))
+                out.append(stroke([P(a, side * h), P(b, side * h)], color, lwHidden, hiddenDash(doc, options)))
+                return out
             }
             switch o.doorStyle {
             case .single:
@@ -620,6 +705,11 @@ public enum PlanRepresentation {
         case .window:
             out.append(stroke([P(s0, h), P(s1, h)], color, lwProj))
             out.append(stroke([P(s0, -h), P(s1, -h)], color, lwProj))
+            if FamilyVisibility.level(doc) == "coarse" {
+                // Coarse: the wall faces and one glazing line.
+                out.append(stroke([P(s0, 0), P(s1, 0)], color, lwHidden))
+                return out
+            }
             let fd = min(h, 35 * u)
             if fw > 0 { out.append(stroke(rect(s0, a, -fd, fd), closed: true, color, lwProj)); out.append(stroke(rect(b, s1, -fd, fd), closed: true, color, lwProj)) }
             let g = min(h * 0.3, 8 * u)
@@ -629,6 +719,26 @@ public enum PlanRepresentation {
                     let x = a + (b - a) * Double(k + 1) / Double(o.mullions + 1)
                     out.append(stroke(rect(x - bw, x + bw, -fd * 0.8, fd * 0.8), closed: true, color, lwProj))
                 }
+            }
+            if o.variant == .pivot {
+                // Centre-pivot sash: the sash drawn turned about its middle, with dashed arcs of the swing.
+                let c = P((a + b) / 2, 0), half = (b - a) / 2, ang = Double.pi / 6
+                let t0 = f.tangent(o.offset), n0 = t0.perp
+                let d = t0 * cos(ang) + n0 * sin(ang)
+                out.append(stroke([c - d * half, c + d * half], color, lwProj))
+                for sgn in [1.0, -1.0] {
+                    let arc = (0...12).map { i -> Vec2 in let phi = ang * Double(i) / 12; return c + (t0 * cos(phi) + n0 * sin(phi)) * (sgn * half) }
+                    out.append(stroke(arc, color, lwHidden))
+                }
+            } else if o.variant == .tiltTurn {
+                // Tilt-turn: casement swing towards the room plus a tilt mark (dashed chevron) on the sash.
+                let room: Double = o.flipFacing ? -1 : 1
+                let (hs, sg): (Double, Double) = o.flipHand ? (b, -1) : (a, 1)
+                let len = b - a
+                let arc = (0...24).map { i -> Vec2 in let phi = Double.pi / 2 * Double(i) / 24; return P(hs + sg * len * sin(phi), room * (h + len * cos(phi))) }
+                out.append(stroke([P(hs, room * h), P(hs, room * (h + len))], color, lwProj))
+                out.append(stroke(arc, color, lwHidden))
+                out.append(stroke([P(a, room * g), P((a + b) / 2, room * (g + min(h, 60 * u))), P(b, room * g)], color, lwHidden, hiddenDash(doc, options)))
             }
             switch o.windowStyle {
             case .sliding:

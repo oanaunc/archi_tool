@@ -4,7 +4,7 @@ import XCTest
 
 final class ModelFormatV2Tests: XCTestCase {
     func testVersion1FileMigratesToCurrentVersion() throws {
-        XCTAssertEqual(ArchiDocument.currentFormatVersion, 4)
+        XCTAssertEqual(ArchiDocument.currentFormatVersion, 5)
         XCTAssertNotNil(ArchiFile.migrations[1], "1 → 2 migration hook")
         let json = """
         {"app":"Oanarina Archi Tool","formatVersion":1,"document":{"formatVersion":1,"nextID":3,"elements":[
@@ -14,14 +14,14 @@ final class ModelFormatV2Tests: XCTestCase {
         ]}}
         """
         let doc = try ArchiFile.decode(Data(json.utf8))
-        XCTAssertEqual(doc.formatVersion, 4)
+        XCTAssertEqual(doc.formatVersion, ArchiDocument.currentFormatVersion)
         guard case .wall(let w) = doc.elements[0].geometry, case .stair(let s) = doc.elements[1].geometry, case .component(let c) = doc.elements[2].geometry else { return XCTFail() }
         XCTAssertNil(w.topLevel); XCTAssertEqual(w.topOffset, 0)
         XCTAssertNil(s.landingAt); XCTAssertNil(s.landingDepth); XCTAssertNil(s.topLevel)
         XCTAssertNil(c.family)
         // Saved again as the current version.
         let text = String(decoding: try ArchiFile.encode(doc), as: UTF8.self)
-        XCTAssertTrue(text.contains("\"formatVersion\" : 4"))
+        XCTAssertTrue(text.contains("\"formatVersion\" : \(ArchiDocument.currentFormatVersion)"))
     }
 
     func testMultiStoreyFieldsRoundTrip() throws {

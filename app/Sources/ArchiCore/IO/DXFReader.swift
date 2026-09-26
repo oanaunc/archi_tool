@@ -117,7 +117,33 @@ public enum DXFReader {
     }
 
     /// Removes MTEXT inline formatting codes, converting paragraph breaks to newlines.
-    public static func stripMText(_ s: String) -> String {
+    /// Joins UTF-16 surrogate pairs written as two escapes (\U+D83D\U+DE00 → 😀).
+    static func combineSurrogates(_ s: String) -> String {
+        guard s.contains("\\U+D") || s.contains("\\u+D") else { return s }
+        let c = Array(s)
+        var out = "", i = 0
+        func hex(_ at: Int) -> UInt32? {
+            guard at + 7 <= c.count, c[at] == "\\", c[at + 1] == "U" || c[at + 1] == "u", c[at + 2] == "+" else { return nil }
+            return UInt32(String(c[(at + 3)..<(at + 7)]), radix: 16)
+        }
+        while i < c.count {
+            if let hi = hex(i), (0xD800...0xDBFF).contains(hi), let lo = hex(i + 7), (0xDC00...0xDFFF).contains(lo),
+               let u = Unicode.Scalar(0x10000 + ((hi - 0xD800) << 10) + (lo - 0xDC00)) {
+                out.unicodeScalars.append(u); i += 14; continue
+            }
+            out.append(c[i]); i += 1
+        }
+        return out
+    }
+
+    /// Archi text content of an MTEXT entity: like `stripMText`, but stacked fractions stay as \S codes and list
+    /// paragraphs keep their markers (shared codec in `MTextCodes`).
+    public static func mtextContent(_ raw: String) -> String {
+        decodeSpecial(MTextCodes.decode(combineSurrogates(raw)))
+    }
+
+    public static func stripMText(_ s0: String) -> String {
+        let s = combineSurrogates(s0)
         let chars = Array(s)
         var out = ""
         var i = 0
@@ -156,7 +182,8 @@ public enum DXFReader {
     }
 
     /// Decodes %%c / %%d / %%p / %%nnn and \U+XXXX escapes in TEXT values.
-    public static func decodeSpecial(_ s: String) -> String {
+    public static func decodeSpecial(_ s0: String) -> String {
+        let s = combineSurrogates(s0)
         guard s.contains("%%") || s.contains("\\U+") else { return s }
         var out = ""
         let chars = Array(s)
@@ -435,7 +462,7 @@ public enum DXFReader {
                 case "BLOCK_RECORD":
                     if let h = r.s(5)?.trimmingCharacters(in: .whitespaces), let n = r.s(2)?.trimmingCharacters(in: .whitespaces) { blockRecordNames[h.uppercased()] = n }
                 case "LAYER":
-                    guard let name = r.s(2)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { continue }
+                    guard let name = r.s(2).map({ DXFReader.decodeSpecial($0.trimmingCharacters(in: .whitespaces)) }), !name.isEmpty else { continue }
                     let aci = r.i(62) ?? 7
                     var color = DXFColors.rgba(aci: abs(aci) == 0 ? 7 : abs(aci))
                     if let tc = r.i(420) { color = DXFReader.rgb(fromTrueColor: tc) }
@@ -558,6 +585,9 @@ public enum DXFReader {
             if r.type == "MTEXT" {
                 // Background mask (ANN-013): group codes 90/63/421/45/441.
                 for (k, v) in TextMaskExchange.props(fromMTextGroups: r.pairs.map { (code: $0.code, value: $0.value) }) where props[k] == nil { props[k] = v }
+                // Columns (ANN-006): R2018 group codes or the ACAD XDATA block written by AutoCAD R2007–R2013.
+                if props[DraftRendering.textColumnsProp] == nil, let c = MTextCodes.columns(fromGroups: r.pairs.map { (code: $0.code, value: $0.value) }),
+                   let sp = MTextCodes.spec(c) { props[DraftRendering.textColumnsProp] = sp.prop }
                 var raw = ""
                 for p in r.pairs where p.code == 3 { raw += p.value }
                 for p in r.pairs where p.code == 1 { raw += p.value }
@@ -571,7 +601,7 @@ public enum DXFReader {
                 }
                 if let c = f.color, color == .byLayer { color = c }
             }
-            let layer = (r.s(8)?.trimmingCharacters(in: .whitespaces)).flatMap { $0.isEmpty ? nil : $0 } ?? "0"
+            let layer = (r.s(8)?.trimmingCharacters(in: .whitespaces)).flatMap { $0.isEmpty ? nil : DXFReader.decodeSpecial($0) } ?? "0"
             return Entity(id: 0, layer: layer, color: color, linetype: lt, lineweight: lw, geometry: geometry, props: props)
         }
 
@@ -732,7 +762,7 @@ public enum DXFReader {
                 var raw = ""
                 for p in r.pairs where p.code == 3 { raw += p.value }
                 for p in r.pairs where p.code == 1 { raw += p.value }
-                let content = DXFReader.stripMText(raw)
+                let content = DXFReader.mtextContent(raw)
                 guard !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return [] }
                 let pos = r.v2(10) ?? .zero
                 var rot = rad(r.d(50) ?? 0)

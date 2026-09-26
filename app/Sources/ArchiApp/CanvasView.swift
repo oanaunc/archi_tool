@@ -56,8 +56,14 @@ final class RenderScene {
         var texts: [TextRun] = []
         var images: [ImageGeom] = []
         var dots: [(point: CGPoint, color: CGColor)] = []
+        /// Objects in the chunk (adaptive degradation for very large views).
+        var count = 0
     }
 
+    /// Visible object count above which strokes are drawn as sub-pixel hairlines.
+    static var degradeCount = 30_000
+    /// Stroke paths of the whole scene per style (drawing everything, e.g. at extents).
+    private var merged: [Int: CGPath]?
     private(set) var styles: [ArchiCore.StrokeStyle] = []
     private(set) var entries: [Prepared] = []
     private(set) var chunks: [Chunk] = []
@@ -132,6 +138,7 @@ final class RenderScene {
         guard !entries.isEmpty else { return }
         func put(_ e: Prepared, into c: inout Chunk) {
             c.bounds = c.bounds.union(e.bounds)
+            c.count += 1
             c.fills += e.fills
             for s in e.strokes {
                 if let m = c.strokes[s.style] { m.addPath(s.path) } else { let m = CGMutablePath(); m.addPath(s.path); c.strokes[s.style] = m }
@@ -171,15 +178,31 @@ final class RenderScene {
                 ctx.addPath(f.path); ctx.setFillColor(f.color); ctx.fillPath(using: .evenOdd)
             }
         }
-        // 2. Strokes batched per style.
+        // 2. Strokes batched per style. Views showing more than 30 000 objects draw sub-pixel strokes, which Core
+        // Graphics rasterises on its fast path (AutoCAD-style adaptive degradation, VIS-001…010).
         ctx.setLineJoin(.round)
+        let fast = vis.reduce(0) { $0 + chunks[$1].count } > RenderScene.degradeCount
+        let devPerUnit = max(hypot(ctx.userSpaceToDeviceSpaceTransform.a, ctx.userSpaceToDeviceSpaceTransform.b), 1e-12)
+        let whole = vis.count == chunks.count
+        if whole && merged == nil {
+            var m: [Int: CGPath] = [:]
+            for si in styles.indices {
+                let p = CGMutablePath()
+                for c in chunks { if let q = c.strokes[si] { p.addPath(q) } }
+                if !p.isEmpty { m[si] = p }
+            }
+            merged = m
+        }
         for si in styles.indices {
             var any = false
-            for ci in vis { if let path = chunks[ci].strokes[si] { ctx.addPath(path); any = true } }
+            if whole { if let p = merged?[si] { ctx.addPath(p); any = true } }
+            else { for ci in vis { if let path = chunks[ci].strokes[si] { ctx.addPath(path); any = true } } }
             guard any else { continue }
             applyStroke(styles[si], ctx: ctx, scale: scale, params: params, color: nil)
+            if fast { ctx.setLineWidth(min(max(params.width(styles[si].lineweight), 0) / scale, 0.8 / devPerUnit)); ctx.setLineJoin(.miter) }
             ctx.strokePath()
         }
+        ctx.setLineJoin(.round)
         ctx.setLineDash(phase: 0, lengths: [])
         // 3. Points.
         let r = 1.6 / scale
@@ -212,7 +235,8 @@ final class RenderScene {
                 return
             }
         }
-        ctx.setLineCap(.round)
+        // Round caps cost Core Graphics ~15× more than butt caps; below 2 pt they look the same.
+        ctx.setLineCap(wPts <= 2 ? .butt : .round)
         ctx.setLineDash(phase: 0, lengths: [])
     }
 
@@ -460,9 +484,10 @@ enum GripEditor {
         case .column(let c): return [c.position]
         case .component(let c): return [c.position]
         case .stair(let s): return [s.start]
-        case .slab(let s): return s.boundary
-        case .roof(let r): return r.boundary
-        case .space(let s): return s.boundary
+        // Vertices, then edge midpoints (drag an edge), then for roofs the slope grip (SEL-036).
+        case .slab(let s): return s.boundary + BIMGrips.edgeMidpoints(s.boundary)
+        case .roof(let r): return r.boundary + BIMGrips.edgeMidpoints(r.boundary) + (BIMGrips.slopeGrip(r, unit: 1000 / doc.units.mm).map { [$0] } ?? [])
+        case .space(let s): return s.boundary + BIMGrips.edgeMidpoints(s.boundary)
         case .railing(let r): return r.path
         case .opening(let o):
             guard let host = doc.element(o.hostWall), case .wall(let w) = host.geometry else { return [] }
@@ -470,51 +495,15 @@ enum GripEditor {
         }
     }
 
-    static func grips(_ e: Entity) -> [Vec2] { GeometryOps.grips(e.geometry) }
+    /// Entity grips come from the core grip model (SEL-032/037): vertices, midpoints, centres, quadrants, text width,
+    /// dimension text and extension-line origins. Index = position in the list.
+    static func grips(_ e: Entity) -> [Vec2] { Grips.grips(e.geometry).map(\.point) }
+    static func grip(_ g: Geometry, _ i: Int) -> Grip? { let gs = Grips.grips(g); return gs.indices.contains(i) ? gs[i] : nil }
 
+    /// Stretch of grip `i` to `p` (SEL-033), through the core grip editor.
     static func moved(_ g: Geometry, grip i: Int, from o: Vec2, to p: Vec2) -> Geometry {
-        let d = p - o
-        switch g {
-        case .point: return .point(p)
-        case .line(var l):
-            if i == 0 { l.a = p } else if i == 2 { l.b = p } else { l.a += d; l.b += d }
-            return .line(l)
-        case .circle(var c):
-            if i == 0 { c.center = p } else { c.radius = max(c.center.distance(to: p), 1e-9) }
-            return .circle(c)
-        case .arc(var a):
-            switch i {
-            case 3: a.center = p
-            case 0: a.start = (p - a.center).angle; a.radius = max(a.center.distance(to: p), 1e-9)
-            case 2: a.end = (p - a.center).angle; a.radius = max(a.center.distance(to: p), 1e-9)
-            default: a.radius = max(a.center.distance(to: p), 1e-9)
-            }
-            return .arc(a)
-        case .ellipse(var e):
-            switch i {
-            case 0: e.center = p
-            case 1: if (p - e.center).length > 1e-9 { let r = e.ratio * e.majorAxis.length; e.majorAxis = p - e.center; e.ratio = r / e.majorAxis.length }
-            case 2: if (e.center - p).length > 1e-9 { let r = e.ratio * e.majorAxis.length; e.majorAxis = e.center - p; e.ratio = r / e.majorAxis.length }
-            default: e.ratio = max(1e-6, e.center.distance(to: p) / max(e.majorAxis.length, 1e-9))
-            }
-            return .ellipse(e)
-        case .polyline(var pl):
-            if pl.vertices.indices.contains(i) { pl.vertices[i].p = p }
-            return .polyline(pl)
-        case .spline(var s):
-            if !s.fitPoints.isEmpty { if s.fitPoints.indices.contains(i) { s.fitPoints[i] = p } }
-            else if s.controlPoints.indices.contains(i) { s.controlPoints[i] = p }
-            return .spline(s)
-        case .dimension(var dm):
-            if dm.points.indices.contains(i) { dm.points[i] = p }
-            return .dimension(dm)
-        case .leader(var l):
-            if l.points.indices.contains(i) { l.points[i] = p }
-            return .leader(l)
-        case .hatch: return g
-        default:
-            return GeometryOps.transform(g, .translation(d))
-        }
+        guard let gr = grip(g, i) else { return GeometryOps.transform(g, .translation(p - o)) }
+        return Grips.stretched(g, grip: gr, to: p)
     }
 
     static func translated(_ g: BIMGeometry, by d: Vec2) -> BIMGeometry {
@@ -551,9 +540,11 @@ enum GripEditor {
         case .column(var c): c.position = p; return .column(c)
         case .component(var c): c.position = p; return .component(c)
         case .stair(var s): s.start = p; return .stair(s)
-        case .slab(var s): if s.boundary.indices.contains(i) { s.boundary[i] = p }; return .slab(s)
-        case .roof(var r): if r.boundary.indices.contains(i) { r.boundary[i] = p }; return .roof(r)
-        case .space(var s): if s.boundary.indices.contains(i) { s.boundary[i] = p }; return .space(s)
+        case .slab(var s): s.boundary = BIMGrips.moved(s.boundary, grip: i, from: o, to: p); return .slab(s)
+        case .roof(var r):
+            if i == 2 * r.boundary.count { r.pitch = BIMGrips.pitch(r, dragTo: p, unit: 1000 / doc.units.mm) } else { r.boundary = BIMGrips.moved(r.boundary, grip: i, from: o, to: p) }
+            return .roof(r)
+        case .space(var s): s.boundary = BIMGrips.moved(s.boundary, grip: i, from: o, to: p); return .space(s)
         case .railing(var r): if r.path.indices.contains(i) { r.path[i] = p }; return .railing(r)
         case .opening(var op):
             guard let host = doc.element(op.hostWall), case .wall(let w) = host.geometry else { return el.geometry }
@@ -610,11 +601,12 @@ struct PlanCanvas: NSViewRepresentable {
     @ObservedObject var model: AppModel
     func makeNSView(context: Context) -> PlanCanvasView {
         let v = PlanCanvasView(model: model)
-        model.canvas = v
+        if model.canvas?.window == nil { model.canvas = v }
         return v
     }
     func updateNSView(_ v: PlanCanvasView, context: Context) {
-        if model.canvas !== v { model.canvas = v }
+        // With several plan tiles, the one last clicked stays the active canvas (commands zoom and pan it).
+        if model.canvas == nil || model.canvas?.window == nil { model.canvas = v }
         v.syncFromModel()
     }
 }
@@ -643,6 +635,8 @@ final class PlanCanvasView: NSView {
     private(set) var scale: CGFloat = 0.04
     /// World point at the view center.
     private(set) var center = CGPoint(x: 12000, y: 7000)
+    /// Display rotation of the plan in radians (DVIEW TWist / VIEWTWIST, VIS-011): model coordinates never change.
+    private(set) var twist: CGFloat = 0
     /// World point at the centre of the view.
     var viewCenterWorld: Vec2 { Vec2(Double(center.x), Double(center.y)) }
     private var scene: RenderScene?
@@ -662,12 +656,21 @@ final class PlanCanvasView: NSView {
     private struct WindowSel {
         enum Purpose { case select, request, zoom }
         var start: CGPoint; var current: CGPoint; var moved = false; var purpose: Purpose
+        /// Freehand lasso points (⌥-drag, SEL-007); nil for a rectangular window.
+        var lasso: [CGPoint]? = nil
     }
     private var windowSel: WindowSel?
     /// A grip being edited. `solve` = live constraint drag (Editor.dragSolve keeps every constraint satisfied while moving).
     private struct HotGrip { var id: EntityID; var index: Int; var origin: Vec2; var startView: CGPoint; var moved = false; var dragging = true; var solve = false
         /// Quarter turns added with Space while dragging (MOD-029).
-        var turns = 0 }
+        var turns = 0
+        /// Grip mode cycled with Space / keywords while the grip is hot (SEL-034) and Copy.
+        var mode: GripMode = .stretch
+        var copy = false
+        /// Multi-functional grip option chosen from the grip menu (SEL-035).
+        var action: GripAction? = nil
+        /// Drag distance that scales by 1 in Scale mode (half the selection size).
+        var reference: Double = 1 }
     private var hotGrip: HotGrip?
     private var hoverGrip: (id: EntityID, index: Int, point: Vec2)?
     private var currentGrips: [(id: EntityID, index: Int, point: Vec2)] = []
@@ -697,8 +700,11 @@ final class PlanCanvasView: NSView {
             // Keep the user's zoom when the canvas is recreated (mode switch); otherwise re-fit to the new size on the first layout.
             needsInitialZoom = !model.planUserZoomed
         }
+        twist = CGFloat(rad(ViewTwist.degrees(model.doc)))
         model.$revision.receive(on: DispatchQueue.main).sink { [weak self] _ in self?.modelChanged() }.store(in: &cancellables)
         registerForDraggedTypes([.string])
+        model.gripInput = { [weak self] line in self?.handleGripInput(line) ?? false }
+        model.cancelLocalModes = { [weak self] in self?.cancelLocalModes() ?? false }
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
@@ -776,6 +782,8 @@ final class PlanCanvasView: NSView {
 
     private func modelChanged() {
         guard let model else { return }
+        let tw = CGFloat(rad(ViewTwist.degrees(model.doc)))
+        if abs(tw - twist) > 1e-12 { twist = tw; viewChanged() }
         if handledZoomRequest != model.zoomExtentsRequest { zoomExtents() }
         if let mv = mouseView { updateCursorPoint(mv) }
         content.needsDisplay = true
@@ -785,13 +793,28 @@ final class PlanCanvasView: NSView {
     // MARK: Transform
 
     var worldTransform: CGAffineTransform {
-        CGAffineTransform(translationX: bounds.midX, y: bounds.midY).scaledBy(x: scale, y: scale).translatedBy(x: -center.x, y: -center.y)
+        CGAffineTransform(translationX: bounds.midX, y: bounds.midY).rotated(by: twist).scaledBy(x: scale, y: scale).translatedBy(x: -center.x, y: -center.y)
+    }
+    /// Screen offset (points) of a world offset, and back, including the view twist.
+    private func screenOffset(_ dx: CGFloat, _ dy: CGFloat) -> CGPoint {
+        twist == 0 ? CGPoint(x: dx, y: dy) : CGPoint(x: dx * cos(twist) - dy * sin(twist), y: dx * sin(twist) + dy * cos(twist))
+    }
+    private func worldOffset(_ dx: CGFloat, _ dy: CGFloat) -> CGPoint {
+        twist == 0 ? CGPoint(x: dx, y: dy) : CGPoint(x: dx * cos(twist) + dy * sin(twist), y: -dx * sin(twist) + dy * cos(twist))
     }
     func toView(_ w: Vec2) -> CGPoint {
-        CGPoint(x: (CGFloat(w.x) - center.x) * scale + bounds.midX, y: (CGFloat(w.y) - center.y) * scale + bounds.midY)
+        let o = screenOffset((CGFloat(w.x) - center.x) * scale, (CGFloat(w.y) - center.y) * scale)
+        return CGPoint(x: o.x + bounds.midX, y: o.y + bounds.midY)
     }
     func toWorld(_ v: CGPoint) -> Vec2 {
-        Vec2(Double((v.x - bounds.midX) / scale + center.x), Double((v.y - bounds.midY) / scale + center.y))
+        let o = worldOffset(v.x - bounds.midX, v.y - bounds.midY)
+        return Vec2(Double(o.x / scale + center.x), Double(o.y / scale + center.y))
+    }
+    /// Sets the plan display rotation (radians), keeping the view centre.
+    func setTwist(_ a: CGFloat) {
+        guard abs(a - twist) > 1e-12 else { return }
+        twist = a
+        viewChanged()
     }
     private func visibleWorld(_ r: CGRect) -> CGRect { r.applying(worldTransform.inverted()) }
 
@@ -834,7 +857,9 @@ final class PlanCanvasView: NSView {
         guard bounds.width > 1, bounds.height > 1 else { return }
         if recordHistory { zoomHistory.append((center, scale)); if zoomHistory.count > 50 { zoomHistory.removeFirst() } }
         model?.planUserZoomed = true
-        let w = max(b.width, 1e-6), h = max(b.height, 1e-6)
+        // A twisted view fits the rotated rectangle's screen bounds.
+        let c = abs(cos(twist)), sn = abs(sin(twist))
+        let w = max(b.width * c + b.height * sn, 1e-6), h = max(b.width * sn + b.height * c, 1e-6)
         scale = min(bounds.width * (1 - 2 * margin) / w, bounds.height * (1 - 2 * margin) / h)
         center = CGPoint(x: b.midX, y: b.midY)
         viewChanged()
@@ -849,11 +874,13 @@ final class PlanCanvasView: NSView {
         let newScale = min(max(scale * f, 1e-7), 1e5)
         scale = newScale
         model?.planUserZoomed = true
-        center = CGPoint(x: CGFloat(w.x) - (p.x - bounds.midX) / scale, y: CGFloat(w.y) - (p.y - bounds.midY) / scale)
+        let o = worldOffset(p.x - bounds.midX, p.y - bounds.midY)
+        center = CGPoint(x: CGFloat(w.x) - o.x / scale, y: CGFloat(w.y) - o.y / scale)
         viewChanged()
     }
     /// World rectangle currently visible (navigator).
-    var visibleWorldBox: BBox2 { BBox2(points: [toWorld(CGPoint(x: bounds.minX, y: bounds.minY)), toWorld(CGPoint(x: bounds.maxX, y: bounds.maxY))]) }
+    var visibleWorldBox: BBox2 { BBox2(points: [toWorld(CGPoint(x: bounds.minX, y: bounds.minY)), toWorld(CGPoint(x: bounds.maxX, y: bounds.maxY)),
+                                                toWorld(CGPoint(x: bounds.minX, y: bounds.maxY)), toWorld(CGPoint(x: bounds.maxX, y: bounds.minY))]) }
     /// Pans so that `w` is at the centre of the view, keeping the zoom (navigator).
     func centre(on w: Vec2) {
         center = CGPoint(x: w.x, y: w.y)
@@ -861,8 +888,9 @@ final class PlanCanvasView: NSView {
         viewChanged()
     }
     func panView(dx: CGFloat, dy: CGFloat) {
-        center.x -= dx / scale
-        center.y -= dy / scale
+        let o = worldOffset(dx, dy)
+        center.x -= o.x / scale
+        center.y -= o.y / scale
         model?.planUserZoomed = true
         viewChanged()
     }
@@ -888,14 +916,18 @@ final class PlanCanvasView: NSView {
     }
     func invalidateCache() { sceneKey = []; content.needsDisplay = true; overlay.needsDisplay = true }
 
-    private var params: RenderParams {
+    var params: RenderParams {
         var p = RenderParams()
         p.lineweights = model?.editor.settings.lineweightDisplay ?? true
+        p.lwScale *= CGFloat(LineweightDisplay.scale)
         p.minWidth = 1 / (window?.backingScaleFactor ?? 2)
         return p
     }
 
     // MARK: Drawing (content layer)
+
+    /// Draws the content layer into a context (self-tests measure frame times with it).
+    func drawContentForTesting(_ ctx: CGContext) { drawContent(ctx, bounds) }
 
     private func drawContent(_ ctx: CGContext, _ dirty: NSRect) {
         ctx.setFillColor(Theme.nsCanvas.cgColor)
@@ -905,8 +937,10 @@ final class PlanCanvasView: NSView {
         if model.editor.settings.showGrid { drawGrid(ctx, dirty) } else { drawAxes(ctx) }
         ctx.saveGState()
         ctx.concatenate(worldTransform)
-        let vis = visibleWorld(dirty)
-        s.draw(in: ctx, visible: vis, scale: scale, params: params)
+        s.draw(in: ctx, visible: visibleWorld(dirty), scale: scale, params: params)
+        ctx.restoreGState()
+        ctx.saveGState()
+        ctx.concatenate(worldTransform)
         let sel = model.editor.selection
         if !sel.isEmpty {
             let idx = sel.flatMap { s.index[$0] ?? [] }
@@ -923,6 +957,16 @@ final class PlanCanvasView: NSView {
     private func drawAxes(_ ctx: CGContext) {
         let o = toView(.zero)
         ctx.setLineWidth(1)
+        if twist != 0 {
+            // Axes through the origin along the twisted directions, clipped by the view.
+            let far = max(bounds.width, bounds.height) * 2
+            let ux = screenOffset(1, 0), uy = screenOffset(0, 1)
+            ctx.setStrokeColor(CGColor(srgbRed: 0.85, green: 0.3, blue: 0.3, alpha: 0.28))
+            ctx.strokeLineSegments(between: [CGPoint(x: o.x - ux.x * far, y: o.y - ux.y * far), CGPoint(x: o.x + ux.x * far, y: o.y + ux.y * far)])
+            ctx.setStrokeColor(CGColor(srgbRed: 0.3, green: 0.8, blue: 0.4, alpha: 0.28))
+            ctx.strokeLineSegments(between: [CGPoint(x: o.x - uy.x * far, y: o.y - uy.y * far), CGPoint(x: o.x + uy.x * far, y: o.y + uy.y * far)])
+            return
+        }
         if o.y >= 0 && o.y <= bounds.height {
             ctx.setStrokeColor(CGColor(srgbRed: 0.85, green: 0.3, blue: 0.3, alpha: 0.28))
             ctx.strokeLineSegments(between: [CGPoint(x: 0, y: o.y), CGPoint(x: bounds.width, y: o.y)])
@@ -947,6 +991,26 @@ final class PlanCanvasView: NSView {
         let y0 = Int((vis.minY / minor).rounded(.down)), y1 = Int((vis.maxY / minor).rounded(.up))
         guard x1 - x0 < 2000, y1 - y0 < 2000 else { return }
         var minorSeg: [CGPoint] = [], majorSeg: [CGPoint] = []
+        if twist != 0 {
+            // Twisted view: grid lines are world lines, drawn through the view transform.
+            for i in x0...x1 {
+                let wx = CGFloat(i) * minor
+                let isMajor = abs((wx / major) - (wx / major).rounded()) < 1e-6
+                let seg = [toView(Vec2(Double(wx), Double(vis.minY))), toView(Vec2(Double(wx), Double(vis.maxY)))]
+                if isMajor { majorSeg += seg } else { minorSeg += seg }
+            }
+            for j in y0...y1 {
+                let wy = CGFloat(j) * minor
+                let isMajor = abs((wy / major) - (wy / major).rounded()) < 1e-6
+                let seg = [toView(Vec2(Double(vis.minX), Double(wy))), toView(Vec2(Double(vis.maxX), Double(wy)))]
+                if isMajor { majorSeg += seg } else { minorSeg += seg }
+            }
+            ctx.setLineWidth(1)
+            ctx.setStrokeColor(CGColor(gray: 1, alpha: 0.035)); ctx.strokeLineSegments(between: minorSeg)
+            ctx.setStrokeColor(CGColor(gray: 1, alpha: 0.075)); ctx.strokeLineSegments(between: majorSeg)
+            drawAxes(ctx)
+            return
+        }
         for i in x0...x1 {
             let wx = CGFloat(i) * minor
             let x = ((wx - center.x) * scale + bounds.midX).rounded() + 0.5
@@ -976,7 +1040,7 @@ final class PlanCanvasView: NSView {
         var o = corner
         let atOrigin = toView(ucs.origin)
         if !ucs.isWorld, bounds.insetBy(dx: 40, dy: 40).contains(atOrigin) { o = atOrigin }
-        let a = CGFloat(ucs.angle)
+        let a = CGFloat(ucs.angle) + twist
         let ux = CGPoint(x: cos(a), y: sin(a)), uy = CGPoint(x: -sin(a), y: cos(a))
         func pt(_ d: CGPoint, _ k: CGFloat) -> CGPoint { CGPoint(x: o.x + d.x * k, y: o.y + d.y * k) }
         func arrow(_ d: CGPoint, _ color: CGColor) {
@@ -999,11 +1063,22 @@ final class PlanCanvasView: NSView {
         if ucs.isWorld { ("W" as NSString).draw(at: CGPoint(x: o.x + 6, y: o.y + 4), withAttributes: attrs) }
     }
 
+    /// Flip arrows of selected doors and windows (SEL-036).
+    private var currentFlips: [FlipControls.Control] = []
+
     private func computeGrips() {
         currentGrips = []
+        currentFlips = []
+        if let model, model.editor.isIdle, model.editor.selection.count <= 20 {
+            for el in model.doc.elements where model.editor.selection.contains(el.id) && model.editor.isSelectable(el.id) {
+                currentFlips += FlipControls.controls(el, doc: model.doc, gap: Double(16 / scale))
+                if let w = FlipControls.wallControl(el, gap: Double(16 / scale)) { currentFlips.append(w) }
+            }
+        }
         guard let model, model.editor.isIdle else { return }
         let sel = model.editor.selection
-        guard !sel.isEmpty, sel.count <= 300 else { return }
+        // GRIPS = 0 hides grips (SEL-032).
+        guard !sel.isEmpty, sel.count <= 300, (model.doc.variable("GRIPS").flatMap(Int.init) ?? 1) != 0 else { return }
         let doc = model.doc
         for e in doc.entities where sel.contains(e.id) {
             for (i, p) in GripEditor.grips(e).enumerated() { currentGrips.append((e.id, i, p)) }
@@ -1014,6 +1089,19 @@ final class PlanCanvasView: NSView {
     }
 
     private func drawGrips(_ ctx: CGContext) {
+        // Flip arrows: a double arrow across the swing side (facing) and along the wall (hand).
+        for f in currentFlips {
+            let v = toView(f.point)
+            let d0 = screenOffset(CGFloat(f.direction.x), CGFloat(f.direction.y))
+            let len = max(hypot(d0.x, d0.y), 1e-9)
+            let d = CGPoint(x: d0.x / len, y: d0.y / len), n = CGPoint(x: -d.y, y: d.x)
+            ctx.setFillColor(Theme.nsAccent.cgColor)
+            for sgn: CGFloat in [1, -1] {
+                let tip = CGPoint(x: v.x + d.x * 7 * sgn, y: v.y + d.y * 7 * sgn), base = CGPoint(x: v.x + d.x * 1.5 * sgn, y: v.y + d.y * 1.5 * sgn)
+                ctx.move(to: tip); ctx.addLine(to: CGPoint(x: base.x + n.x * 4.5, y: base.y + n.y * 4.5)); ctx.addLine(to: CGPoint(x: base.x - n.x * 4.5, y: base.y - n.y * 4.5)); ctx.closePath()
+                ctx.fillPath()
+            }
+        }
         guard !currentGrips.isEmpty else { return }
         let sz: CGFloat = 7
         ctx.setLineWidth(1)
@@ -1027,6 +1115,13 @@ final class PlanCanvasView: NSView {
             ctx.stroke(r)
         }
     }
+
+    /// Flip arrow under a view point (8 px).
+    func flipHit(_ v: CGPoint) -> FlipControls.Control? {
+        currentFlips.first { let p = toView($0.point); return hypot(p.x - v.x, p.y - v.y) <= 8 }
+    }
+    /// Recomputes grips and flip arrows for the current selection (self-tests; drawing does it every frame).
+    func refreshGrips() { computeGrips() }
 
     private func gripHit(_ v: CGPoint) -> (id: EntityID, index: Int, point: Vec2)? {
         var best: ((id: EntityID, index: Int, point: Vec2), CGFloat)?
@@ -1103,10 +1198,23 @@ final class PlanCanvasView: NSView {
             }
         }
         // Grip drag preview (a constraint drag edits the drawing itself, live).
-        if let g = hotGrip, !g.solve {
+        if let g = hotGrip, !g.solve, g.mode != .stretch {
+            // Grip modes preview the whole selection about the hot grip (SEL-034).
+            let doc = ed.doc
+            if let t = Grips.modeTransform(g.mode, base: g.origin, to: cursorPoint, reference: g.reference) {
+                let ids = ed.selection.union([g.id])
+                var geos: [Geometry] = []
+                for e in doc.entities where ids.contains(e.id) { geos.append(GeometryOps.transform(e.geometry, t)) }
+                var items = DrawListBuilder.previewItems(geos, doc: doc, color: previewColor)
+                if items.isEmpty { items = fallbackItems(geos, doc: doc, color: previewColor) }
+                for var el in doc.elements where ids.contains(el.id) { el.geometry = CommandHelpers.transform(el.geometry, t); items += elementPreview(el, doc: doc, color: previewColor) }
+                RenderScene.drawItems(items, ctx: ctx, scale: scale, params: prm, colorOverride: Theme.nsAccent.cgColor)
+            }
+        } else if let g = hotGrip, !g.solve {
             let doc = ed.doc
             if let e = doc.entity(g.id) {
-                let geo = GripEditor.moved(e.geometry, grip: g.index, from: g.origin, to: cursorPoint, turns: g.turns)
+                let geo = g.action.flatMap { a in GripEditor.grip(e.geometry, g.index).flatMap { Grips.apply(a, e.geometry, grip: $0, to: cursorPoint) } }
+                    ?? GripEditor.moved(e.geometry, grip: g.index, from: g.origin, to: cursorPoint, turns: g.turns)
                 var items = DrawListBuilder.previewItems([geo], doc: doc, color: previewColor)
                 if items.isEmpty { items = fallbackItems([geo], doc: doc, color: previewColor) }
                 RenderScene.drawItems(items, ctx: ctx, scale: scale, params: prm, colorOverride: Theme.nsAccent.cgColor)
@@ -1141,8 +1249,17 @@ final class PlanCanvasView: NSView {
                 _ = mv
             }
         }
-        // Selection / zoom window.
-        if let w = windowSel {
+        // Lasso (SEL-007): counter-clockwise = crossing (green, dashed), clockwise = window (blue).
+        if let w = windowSel, let pts = w.lasso, pts.count >= 2 {
+            let world = pts.map(toWorld)
+            let crossing = world.count >= 3 ? SelectionGeometry.lassoMode(world) == .crossingPolygon : false
+            let c: NSColor = crossing ? NSColor(srgbRed: 0.25, green: 0.8, blue: 0.4, alpha: 1) : NSColor(srgbRed: 0.3, green: 0.5, blue: 1, alpha: 1)
+            let path = CGMutablePath(); path.addLines(between: pts); path.closeSubpath()
+            ctx.addPath(path); ctx.setFillColor(c.withAlphaComponent(0.13).cgColor); ctx.fillPath()
+            ctx.addPath(path); ctx.setStrokeColor(c.cgColor); ctx.setLineWidth(1)
+            if crossing { ctx.setLineDash(phase: 0, lengths: [5, 3]) }
+            ctx.strokePath(); ctx.setLineDash(phase: 0, lengths: [])
+        } else if let w = windowSel {
             let r = CGRect(x: min(w.start.x, w.current.x), y: min(w.start.y, w.current.y), width: abs(w.current.x - w.start.x), height: abs(w.current.y - w.start.y))
             let crossing = w.current.x < w.start.x
             let c: NSColor = w.purpose == .zoom ? NSColor(white: 0.8, alpha: 1) : (crossing ? NSColor(srgbRed: 0.25, green: 0.8, blue: 0.4, alpha: 1) : NSColor(srgbRed: 0.3, green: 0.5, blue: 1, alpha: 1))
@@ -1324,7 +1441,9 @@ final class PlanCanvasView: NSView {
         } else if let g = hotGrip {
             let d = cursorPoint - g.origin
             var a = deg(d.angle); if a < 0 { a += 360 }
-            lines.append(g.turns % 4 == 0 ? "Stretch point  (Space rotates 90°)" : "Stretch point, rotated \((g.turns % 4 + 4) % 4 * 90)°  (Space: +90°, Shift+Space: −90°)")
+            if let a = g.action { lines.append("\(a.title)  (Esc cancels)") }
+            else if g.mode != .stretch || !g.dragging { lines.append("** \(g.mode.rawValue.uppercased())\(g.copy ? " (multiple)" : "") **  Space: next mode · type a value · C copy · MO RO SC MI ST") }
+            else { lines.append(g.turns % 4 == 0 ? "Stretch point  (Space rotates 90°)" : "Stretch point, rotated \((g.turns % 4 + 4) % 4 * 90)°  (Space: +90°, Shift+Space: −90°)") }
             lines.append("L \(fmt(d.length, 2))   ∠ \(fmt(a, 1))°")
         }
         if !model.commandInput.isEmpty { lines.append("› " + model.commandInput) }
@@ -1373,7 +1492,11 @@ final class PlanCanvasView: NSView {
         snap = nil
         let req = ed.request
         let wantsPoint = (req.map { $0.kinds.contains(.point) } ?? false) || hotGrip != nil
-        if wantsPoint {
+        if let g = hotGrip, !g.solve, g.mode == .stretch, g.action == nil, let e = ed.doc.entity(g.id), let gr = GripEditor.grip(e.geometry, g.index) {
+            // Grip stretch: the core resolves snaps (never to the dragged grip itself) and ortho/polar from the grip (SEL-033).
+            p = ed.gripDragPoint(g.id, grip: gr, cursor: rawWorld, tolerance: Double(10 / scale))
+            if ed.settings.objectSnap, let r = Snap.find(cursor: rawWorld, doc: ed.doc, settings: ed.settings, tolerance: Double(10 / scale), base: gr.point), r.point.isClose(p, tol: 1e-9) { snap = r }
+        } else if wantsPoint {
             let base = hotGrip?.origin ?? req?.base
             if ed.settings.objectSnap, let r = Snap.find(cursor: rawWorld, doc: ed.doc, settings: ed.settings, tolerance: Double(10 / scale), base: base) {
                 snap = r
@@ -1393,7 +1516,10 @@ final class PlanCanvasView: NSView {
         if model.live.snapHint != hint { model.live.snapHint = hint }
         let wantsPick = hotGrip == nil && windowSel == nil && panLast == nil &&
             (ed.isIdle || (req.map { !$0.kinds.isDisjoint(with: [.selection, .entity]) && !$0.kinds.contains(.point) } ?? false))
-        hoverID = wantsPick ? pick(at: rawWorld) : nil
+        // SELECTIONPREVIEW: 1 = highlight when idle, 2 = during selection prompts, 3 = both (SEL-019).
+        let sp = model.doc.variable("SELECTIONPREVIEW").flatMap(Int.init) ?? 3
+        let preview = ed.isIdle ? sp & 1 != 0 : sp & 2 != 0
+        hoverID = wantsPick && preview ? pick(at: rawWorld) : nil
         if ed.isIdle && hotGrip == nil, let g = gripHit(v) { hoverGrip = g } else { hoverGrip = nil }
     }
 
@@ -1468,8 +1594,17 @@ final class PlanCanvasView: NSView {
 
     // MARK: Mouse
 
+    /// Makes this canvas the one commands, zooms and typed grip input go to (tiled views, APP-007).
+    func activate() {
+        guard let model else { return }
+        if model.canvas !== self { model.canvas = self }
+        model.gripInput = { [weak self] line in self?.handleGripInput(line) ?? false }
+        model.cancelLocalModes = { [weak self] in self?.cancelLocalModes() ?? false }
+    }
+
     override func mouseDown(with e: NSEvent) {
         focus()
+        activate()
         guard let model else { return }
         let v = convert(e.locationInWindow, from: nil)
         mouseView = v
@@ -1485,7 +1620,7 @@ final class PlanCanvasView: NSView {
             if !req.kinds.isDisjoint(with: [.selection, .entity]) {
                 // Selection prompts pick whole groups (PICKSTYLE); single-entity prompts pick the member itself.
                 if let id = pick(at: rawWorld) { ed.feed(.selection(req.kinds.contains(.selection) ? ed.expandGroups([id]) : [id])) }
-                else if req.kinds.contains(.selection) { windowSel = WindowSel(start: v, current: v, purpose: .request) }
+                else if req.kinds.contains(.selection) { windowSel = WindowSel(start: v, current: v, purpose: .request, lasso: e.modifierFlags.contains(.option) ? [v] : nil) }
             }
             return
         }
@@ -1496,8 +1631,13 @@ final class PlanCanvasView: NSView {
             return
         }
         if e.clickCount == 2, let id = pick(at: rawWorld) { editObject(id); return }
+        if let f = flipHit(v) {
+            ed.transaction(f.kind == .facing ? "Flip Facing" : f.kind == .hand ? "Flip Hand" : "Flip Wall") { FlipControls.apply(f, doc: &$0) }
+            return
+        }
         if let g = gripHit(v) {
-            hotGrip = HotGrip(id: g.id, index: g.index, origin: g.point, startView: v, solve: beginConstraintDrag(g.id, at: g.point))
+            hotGrip = HotGrip(id: g.id, index: g.index, origin: g.point, startView: v, solve: beginConstraintDrag(g.id, at: g.point),
+                              reference: GripModeEdit.reference(Array(ed.selection.union([g.id])), doc: ed.doc))
             hoverGrip = nil
             updateCursorPoint(v)
             return
@@ -1514,7 +1654,7 @@ final class PlanCanvasView: NSView {
             }
             return
         }
-        windowSel = WindowSel(start: v, current: v, purpose: .select)
+        windowSel = WindowSel(start: v, current: v, purpose: .select, lasso: e.modifierFlags.contains(.option) ? [v] : nil)
     }
 
     override func mouseDragged(with e: NSEvent) {
@@ -1524,6 +1664,7 @@ final class PlanCanvasView: NSView {
         if var w = windowSel {
             w.current = v
             if hypot(v.x - w.start.x, v.y - w.start.y) > 4 { w.moved = true }
+            if let last = w.lasso?.last, hypot(v.x - last.x, v.y - last.y) > 3 { w.lasso?.append(v) }
             windowSel = w
         }
         if var g = hotGrip {
@@ -1566,6 +1707,11 @@ final class PlanCanvasView: NSView {
     private func finishWindow(shift: Bool) {
         guard let w = windowSel, let model else { return }
         windowSel = nil
+        if let pts = w.lasso {
+            guard w.purpose != .zoom else { return }
+            lassoSelect(pts, shift: shift, request: w.purpose == .request)
+            return
+        }
         let a = toWorld(w.start), b = toWorld(w.current)
         guard abs(w.current.x - w.start.x) > 2 || abs(w.current.y - w.start.y) > 2 else {
             if w.purpose == .zoom { model.zoomWindowPending = false }
@@ -1588,6 +1734,22 @@ final class PlanCanvasView: NSView {
     private func commitGrip() {
         guard let g = hotGrip, let model else { return }
         hotGrip = nil
+        let ed = model.editor
+        if !g.solve && g.mode != .stretch {
+            // Grip modes act on the whole selection; with Copy the grip stays hot for more copies (SEL-034).
+            guard let t = Grips.modeTransform(g.mode, base: g.origin, to: cursorPoint, reference: g.reference) else { return }
+            GripModeEdit.apply(ed, ids: Array(ed.selection.union([g.id])), t, copy: g.copy, label: "Grip \(g.mode.rawValue.capitalized)\(g.copy ? " Copy" : "")")
+            if g.copy { var h = g; h.dragging = false; h.moved = false; hotGrip = h }
+            return
+        }
+        if !g.solve, let e = ed.doc.entity(g.id), let gr = GripEditor.grip(e.geometry, g.index) {
+            if let a = g.action { ed.gripAction(g.id, grip: gr, action: a, to: cursorPoint, snap: false); return }
+            if g.copy {
+                ed.gripEdit(g.id, grip: gr, to: cursorPoint, mode: .stretch, copy: true, snap: false)
+                var h = g; h.dragging = false; h.moved = false; hotGrip = h
+                return
+            }
+        }
         if g.solve {
             _ = model.editor.dragSolve(point: cursorPoint)
             model.editor.endDragSolve(commit: cursorPoint.distance(to: g.origin) > 1e-12)
@@ -1611,7 +1773,12 @@ final class PlanCanvasView: NSView {
     override func rightMouseDown(with e: NSEvent) {
         guard let model else { return }
         if cancelLocalModes() { return }
+        // Shift+right-click at a point prompt: one-shot object snap override menu (PRC-019).
+        if e.modifierFlags.contains(.shift), model.editor.request?.kinds.contains(.point) == true {
+            NSMenu.popUpContextMenu(snapOverrideMenu(), with: e, for: self); return
+        }
         if !model.editor.isIdle || !model.commandInput.isEmpty { model.enterPressed(); return }
+        if let hg = hoverGrip, let menu = gripMenu(hg) { NSMenu.popUpContextMenu(menu, with: e, for: self); return }
         NSMenu.popUpContextMenu(contextMenu(), with: e, for: self)
     }
 
@@ -1667,6 +1834,14 @@ final class PlanCanvasView: NSView {
                 overlay.needsDisplay = true
                 return
             }
+            if var g = hotGrip, !g.solve, !g.dragging, g.action == nil {
+                // Space with a hot grip cycles Stretch → Move → Rotate → Scale → Mirror (SEL-034).
+                g.mode = g.mode.next
+                hotGrip = g
+                model.live.snapHint = "Grip mode: \(g.mode.rawValue.capitalized)"
+                overlay.needsDisplay = true
+                return
+            }
             if var g = hotGrip, !g.solve {
                 // Space while dragging a grip rotates the object 90° about the grip (Shift = clockwise).
                 g.turns += flags.contains(.shift) ? -1 : 1
@@ -1698,8 +1873,12 @@ final class PlanCanvasView: NSView {
             model.live.snapHint = n > 0 ? "Nudged \(n) object(s) by \(fmt(d.length, 4))" : "Nothing to nudge (locked layer?)"
         case 126, 125: // arrows up/down → command history
             model.focusCommandLine()
-        case 48: // Tab
-            break
+        case 48: // Tab: select the chain of joined walls under the cursor (SEL-022)
+            if ed.isIdle, let h = hoverID, let el = model.doc.element(h), case .wall = el.geometry {
+                let chain = WallChain.ids(from: h, doc: model.doc, tolerance: max(Double(2 / scale), 1)).filter { ed.isSelectable($0) }
+                ed.selection.formUnion(chain)
+                model.live.snapHint = "Selected \(chain.count) joined wall(s)"
+            }
         default:
             if let chars = e.characters, !chars.isEmpty,
                chars.unicodeScalars.allSatisfy({ $0.value >= 32 && $0.value != 127 && !($0.value >= 0xF700 && $0.value <= 0xF8FF) }) {
@@ -1725,37 +1904,173 @@ final class PlanCanvasView: NSView {
 
     // MARK: Context menu
 
+    /// Right-click menu (APP-023): Repeat, Recent Input, selection edits (Move, Copy, Rotate, Scale, Mirror, Erase), undo/redo, properties.
     private func contextMenu() -> NSMenu {
         let m = NSMenu()
-        func item(_ title: String, _ sel: Selector, enabled: Bool = true) {
-            let i = NSMenuItem(title: title, action: enabled ? sel : nil, keyEquivalent: "")
-            i.target = self
-            i.isEnabled = enabled
-            m.addItem(i)
-        }
-        let ed = model?.editor
-        item(ed?.lastCommand.map { "Repeat \($0)" } ?? "Repeat", #selector(ctxRepeat), enabled: ed?.lastCommand != nil)
-        m.addItem(.separator())
-        item(ed?.history.undoLabel.map { "Undo \($0)" } ?? "Undo", #selector(ctxUndo), enabled: ed?.history.canUndo ?? false)
-        item(ed?.history.redoLabel.map { "Redo \($0)" } ?? "Redo", #selector(ctxRedo), enabled: ed?.history.canRedo ?? false)
-        m.addItem(.separator())
-        let hasSel = !(ed?.selection.isEmpty ?? true)
-        item("Delete", #selector(ctxDelete), enabled: hasSel)
-        item("Deselect All", #selector(ctxDeselect), enabled: hasSel)
-        item("Select All", #selector(ctxSelectAll))
-        m.addItem(.separator())
-        item("Zoom Extents", #selector(ctxZoomExtents))
-        item("Properties", #selector(ctxProperties))
+        guard let model else { return m }
+        let ed = model.editor
+        let items = ShortcutMenu.items(hasSelection: !ed.selection.isEmpty, lastCommand: ed.lastCommand, recentInput: model.inputHistory,
+                                       canUndo: ed.history.canUndo, canRedo: ed.history.canRedo, undoLabel: ed.history.undoLabel, redoLabel: ed.history.redoLabel)
+        for it in items { add(it, to: m) }
         return m
     }
-    @objc private func ctxRepeat() { if let l = model?.editor.lastCommand { model?.runCommand(l) } }
-    @objc private func ctxUndo() { model?.editor.undo() }
-    @objc private func ctxRedo() { model?.editor.redo() }
-    @objc private func ctxDelete() { guard let model else { return }; if model.has("ERASE") { model.runCommand("ERASE") } else { model.deleteSelection() } }
-    @objc private func ctxDeselect() { model?.editor.selection = [] }
-    @objc private func ctxSelectAll() { model?.selectAll() }
-    @objc private func ctxZoomExtents() { zoomExtents() }
-    @objc private func ctxProperties() { model?.showPanels = true; model?.panelTab = .properties }
+    private func add(_ it: ShortcutMenu.Item, to m: NSMenu) {
+        switch it.action {
+        case .separator: m.addItem(.separator())
+        case .submenu(let title, let sub):
+            let i = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+            let sm = NSMenu(title: title)
+            for x in sub { add(x, to: sm) }
+            i.submenu = sm
+            i.isEnabled = it.enabled
+            m.addItem(i)
+        default:
+            let i = NSMenuItem(title: it.title, action: it.enabled ? #selector(ctxItem(_:)) : nil, keyEquivalent: "")
+            i.target = self
+            i.isEnabled = it.enabled
+            i.representedObject = MenuAction(it.action)
+            m.addItem(i)
+        }
+    }
+    private final class MenuAction: NSObject { let a: ShortcutMenu.Action; init(_ a: ShortcutMenu.Action) { self.a = a } }
+    /// Snap override menu entries (title, token typed at the point prompt); nil title = separator.
+    static let snapOverrideItems: [(String?, String)] = [
+        ("Temporary Track Point", "TT"), ("From", "FROM"), (nil, ""),
+        ("Endpoint", "END"), ("Midpoint", "MID"), ("Intersection", "INT"), ("Extension", "EXT"), (nil, ""),
+        ("Center", "CEN"), ("Geometric Center", "GCEN"), ("Quadrant", "QUA"), ("Tangent", "TAN"), (nil, ""),
+        ("Perpendicular", "PER"), ("Parallel", "PAR"), ("Node", "NOD"), ("Insert", "INS"), ("Nearest", "NEA"), (nil, ""),
+        ("None", "NON"), ("Osnap Settings…", "'OSNAP"),
+    ]
+    private func snapOverrideMenu() -> NSMenu {
+        let m = NSMenu(title: "Snap Overrides")
+        for (title, token) in Self.snapOverrideItems {
+            guard let title else { m.addItem(.separator()); continue }
+            let i = NSMenuItem(title: title, action: #selector(snapOverrideItem(_:)), keyEquivalent: "")
+            i.representedObject = token; i.target = self
+            m.addItem(i)
+        }
+        return m
+    }
+    @objc private func snapOverrideItem(_ sender: NSMenuItem) {
+        guard let model, let token = sender.representedObject as? String else { return }
+        model.submitLine(token)
+    }
+
+    @objc private func ctxItem(_ sender: NSMenuItem) {
+        guard let model, let a = (sender.representedObject as? MenuAction)?.a else { return }
+        switch a {
+        case .run(let line): model.runCommand(line)
+        case .repeatLast: if let l = model.editor.lastCommand { model.runCommand(l) }
+        case .undo: model.editor.undo()
+        case .redo: model.editor.redo()
+        case .deselect: model.editor.selection = []
+        case .selectAll: model.selectAll()
+        case .zoomExtents: zoomExtents()
+        case .properties: model.showPanels = true; model.panelTab = .properties
+        case .quickProperties: model.showQuickProperties = true
+        case .separator, .submenu: break
+        }
+    }
+
+    /// Multi-functional grip menu (SEL-035): options of the hovered grip; the chosen one follows the cursor until the next click.
+    private func gripMenu(_ hg: (id: EntityID, index: Int, point: Vec2)) -> NSMenu? {
+        guard let model, let e = model.doc.entity(hg.id), let gr = GripEditor.grip(e.geometry, hg.index) else { return nil }
+        let acts = Grips.actions(e.geometry, grip: gr)
+        guard acts.count > 1 else { return nil }
+        let m = NSMenu()
+        for a in acts {
+            let i = NSMenuItem(title: a.title, action: #selector(gripMenuItem(_:)), keyEquivalent: "")
+            i.target = self
+            i.representedObject = GripChoice(hg.id, hg.index, hg.point, a)
+            m.addItem(i)
+        }
+        return m
+    }
+    private final class GripChoice: NSObject {
+        let id: EntityID, index: Int, point: Vec2, action: GripAction
+        init(_ id: EntityID, _ index: Int, _ point: Vec2, _ action: GripAction) { self.id = id; self.index = index; self.point = point; self.action = action }
+    }
+    @objc private func gripMenuItem(_ sender: NSMenuItem) {
+        guard let model, let c = sender.representedObject as? GripChoice else { return }
+        let ed = model.editor
+        if c.action == .removeVertex || c.action == .convertToLine {
+            if let e = ed.doc.entity(c.id), let gr = GripEditor.grip(e.geometry, c.index) { ed.gripAction(c.id, grip: gr, action: c.action, to: gr.point, snap: false) }
+            return
+        }
+        ed.selection.insert(c.id)
+        hotGrip = HotGrip(id: c.id, index: c.index, origin: c.point, startView: toView(c.point), dragging: false, action: c.action == .stretch ? nil : c.action)
+        model.live.snapHint = "\(c.action.title): click the new location · Esc cancels"
+        overlay.needsDisplay = true
+    }
+
+    /// Lasso selection from view points: window when drawn clockwise, crossing when counter-clockwise (core SEL-007).
+    /// Returns the ids found.
+    @discardableResult
+    func lassoSelect(_ pts: [CGPoint], shift: Bool = false, request: Bool = false) -> Set<EntityID> {
+        guard let model, pts.count >= 3 else { return [] }
+        let ids = Set(model.editor.expandGroups(model.editor.select(lasso: pts.map(toWorld))))
+        if request { model.editor.feed(.selection(Array(ids).sorted())) }
+        else if shift { model.editor.selection.subtract(ids) } else { model.editor.selection.formUnion(ids) }
+        overlay.needsDisplay = true
+        return ids
+    }
+
+    /// Makes grip `index` of an object hot, as a click on it does (scripts and self-tests). False when it has no such grip.
+    @discardableResult
+    func makeGripHot(_ id: EntityID, index: Int) -> Bool {
+        guard let model else { return false }
+        let doc = model.doc
+        let pts: [Vec2]
+        if let e = doc.entity(id) { pts = GripEditor.grips(e) } else if let el = doc.element(id) { pts = GripEditor.grips(el, doc: doc) } else { return false }
+        guard pts.indices.contains(index) else { return false }
+        model.editor.selection.insert(id)
+        hotGrip = HotGrip(id: id, index: index, origin: pts[index], startView: toView(pts[index]), dragging: false,
+                          reference: GripModeEdit.reference(Array(model.editor.selection), doc: doc))
+        cursorPoint = pts[index]
+        return true
+    }
+    /// Current hot grip mode and copy flag (nil when no grip is hot).
+    var hotGripState: (mode: GripMode, copy: Bool)? { hotGrip.map { ($0.mode, $0.copy) } }
+    /// Moves the (snapped) cursor point without a mouse event (scripts and self-tests).
+    func setCursorPoint(_ p: Vec2) { cursorPoint = p }
+
+    // MARK: Hot-grip typed input (SEL-034 keywords, SEL-038 values)
+
+    /// Handles a line typed while a grip is hot. Returns false when no grip is hot (the line goes to the command line).
+    func handleGripInput(_ line: String) -> Bool {
+        guard let model, var g = hotGrip, !g.solve else { return false }
+        let ed = model.editor
+        let t = line.trimmingCharacters(in: .whitespaces).uppercased()
+        defer { overlay.needsDisplay = true }
+        if t.isEmpty { g.mode = g.mode.next; hotGrip = g; model.live.snapHint = "Grip mode: \(g.mode.rawValue.capitalized)"; return true }
+        if t == "C" || t == "COPY" { g.copy.toggle(); hotGrip = g; model.live.snapHint = g.copy ? "Copy on: each click places a copy" : "Copy off"; return true }
+        if t == "X" || t == "EXIT" { hotGrip = nil; return true }
+        if let m = GripModeEdit.keywords[t] { g.mode = m; hotGrip = g; model.live.snapHint = "Grip mode: \(m.rawValue.capitalized)"; return true }
+        // A typed point: x,y (absolute) or @dx,dy (relative to the grip).
+        let parts = t.replacingOccurrences(of: "@", with: "").split(separator: ",").compactMap { InputParser.parseNumber(String($0)) }
+        if parts.count == 2 {
+            let q = t.hasPrefix("@") ? g.origin + Vec2(parts[0], parts[1]) : Vec2(parts[0], parts[1])
+            cursorPoint = q
+            commitGrip()
+            return true
+        }
+        guard let v = InputParser.parseNumber(t) else { model.live.snapHint = "Enter a distance, a point, or MO/RO/SC/MI/ST/C/X"; return true }
+        let dirPoint = cursorPoint
+        if g.mode == .stretch {
+            if let e = ed.doc.entity(g.id), let gr = GripEditor.grip(e.geometry, g.index), g.action == nil, g.turns % 4 == 0 {
+                ed.gripTyped(g.id, grip: gr, distance: v, toward: dirPoint)
+            } else {
+                let d = (dirPoint - g.origin).normalized
+                cursorPoint = g.origin + (d == .zero ? Vec2(1, 0) : d) * v
+                commitGrip(); return true
+            }
+            hotGrip = nil
+        } else if let tr = GripModeEdit.typedTransform(g.mode, base: g.origin, cursor: dirPoint, value: v) {
+            GripModeEdit.apply(ed, ids: Array(ed.selection.union([g.id])), tr, copy: g.copy, label: "Grip \(g.mode.rawValue.capitalized)")
+            if !g.copy { hotGrip = nil }
+        }
+        return true
+    }
 
     // MARK: Double-click editing
 

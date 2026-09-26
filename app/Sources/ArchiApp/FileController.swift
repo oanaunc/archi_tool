@@ -153,7 +153,7 @@ final class FileController: EditorHost {
             if let p { importFile(URL(fileURLWithPath: p)) } else { importPanel() }
         case .showPanel(let name): showPanel(name)
         case .setViewStyle(let s):
-            model.viewStyle = s
+            model.viewStyle = VisualStyleDef.named(s, in: model.doc)?.name ?? VisualStyleNames.canonical(s)
             model.pendingHostAction = action
             model.revision &+= 1
         case .setView("zoomPrevious"):
@@ -176,7 +176,7 @@ final class FileController: EditorHost {
 
     func showPanel(_ name: String) {
         guard let model else { return }
-        switch name.lowercased() {
+        switch name.lowercased().replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: "") {
         case "layers", "layer": model.showPanels = true; model.panelTab = .layers
         case "properties", "props", "property": model.showPanels = true; model.panelTab = .properties
         case "levels", "level": model.showPanels = true; model.panelTab = .levels
@@ -185,7 +185,7 @@ final class FileController: EditorHost {
         case "console", "script", "js", "javascript": model.showScriptConsole = true
         case "commands", "help": model.sheet = .commandReference
         case "units": model.sheet = .units
-        case "drafting", "dsettings", "settings": model.sheet = .drafting
+        case "drafting", "dsettings", "settings", "draftingsettings": model.sheet = .drafting
         case "schedule", "schedules": model.sheet = .schedule("all")
         case "viewcube", "navvcube", "cube":
             model.showViewCube.toggle()
@@ -200,6 +200,14 @@ final class FileController: EditorHost {
         case "sectionbox": model.showSectionBoxPanel = true
         case "sunstudy", "sun": model.showSunStudy = true
         case "commandsearch", "search": model.showCommandSearch = true
+        case "inspector", "list", "objectinfo": model.showPanels = true; model.panelTab = .inspector
+        case "content", "designcenter", "adcenter": model.showPanels = true; model.panelTab = .content
+        case "quickproperties", "qp", "quickprops": model.showQuickProperties = true
+        case "sheets", "sheetset": model.showPanels = true; model.panelTab = .sheets
+        case "selection", "selectioninfo": model.showPanels = true; model.panelTab = .selection
+        case "navigator": model.showPanels = true; model.panelTab = .navigator
+        case "alerts", "notifications": model.showPanels = true; model.panelTab = .alerts
+        case "helpbrowser", "docs", "tutorials": HelpBrowser.show(name.lowercased() == "tutorials" ? "tutorials" : "index")
         default: model.showPanels = true
         }
     }
@@ -288,6 +296,8 @@ final class FileController: EditorHost {
             model.editor.replaceDocument(d, url: url)
             model.showStart = false
             model.mode = .plan
+            // Re-open the Model / layout tab that was current when the drawing was saved (CTAB, APP-013).
+            LayoutTabs.restore(model)
             RecentFiles.add(url)
             model.editor.print("Opened \(url.lastPathComponent) — \(d.entities.count) objects, \(d.elements.count) building elements.")
             model.revision &+= 1

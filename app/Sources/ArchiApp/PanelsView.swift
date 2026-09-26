@@ -273,10 +273,8 @@ struct PropertiesPanel: View {
 
     private func set(_ name: String, _ value: String) {
         let ids = model.selectedIDs
-        var failed = 0
-        model.editor.transaction("Properties") { d in
-            for id in ids where !PropertyAccess.set(name, value, of: id, in: &d) { failed += 1 }
-        }
+        // One undo step for the whole selection (APP-024).
+        let failed = PropertiesPalette.apply(model.editor, name, value, ids: ids)
         if failed > 0 { model.editor.print("Invalid value \"\(value)\" for \(humanize(name)) (\(failed) object(s) unchanged).") }
     }
 
@@ -347,6 +345,8 @@ struct LayersPanel: View {
     @State private var selected: String?
     @State private var filter = LayerFilter()
     @State private var savedFilterName: String?
+    @AppStorage("layerTreeView") private var treeView = false
+    @State private var closedGroups: Set<String> = []
 
     var body: some View {
         let doc = model.doc
@@ -360,6 +360,8 @@ struct LayersPanel: View {
                 Button { if let s = selected { model.setCurrentLayer(s) } } label: { Label("Current", systemImage: "checkmark.circle") }
                     .buttonStyle(FlatButtonStyle(compact: true)).disabled(selected == nil).help("Make the selected layer current")
                 Spacer()
+                Button { treeView.toggle() } label: { Image(systemName: treeView ? "list.bullet.indent" : "list.bullet") }
+                    .buttonStyle(FlatButtonStyle(compact: true)).help(treeView ? "Flat layer list" : "Layer tree grouped by name prefix (A-, S-, xref|)")
                 Button { model.sheet = .layerStates } label: { Image(systemName: "rectangle.stack") }
                     .buttonStyle(FlatButtonStyle(compact: true)).help("Layer States Manager (LAYERSTATE)")
             }
@@ -402,6 +404,8 @@ struct LayersPanel: View {
                 Text("Name").frame(maxWidth: .infinity, alignment: .leading)
                 Text("Linetype").frame(width: 62, alignment: .leading)
                 Text("LW").frame(width: 36, alignment: .leading)
+                Text("T%").frame(width: 24, alignment: .leading)
+                Image(systemName: "printer").frame(width: 16)
             }
             .font(.system(size: 9.5))
             .foregroundStyle(Theme.textDim)
@@ -409,10 +413,27 @@ struct LayersPanel: View {
             HSeparator()
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    ForEach(layers, id: \.name) { l in
-                        LayerRow(model: model, layer: l, isCurrent: l.name.caseInsensitiveCompare(doc.currentLayer) == .orderedSame,
-                                 isSelected: selected == l.name, count: usage[l.name.uppercased()] ?? 0)
-                            .onTapGesture { selected = l.name }
+                    if treeView {
+                        // Layer tree (LAY-019): groups by name prefix with bulk toggles.
+                        ForEach(LayerTree.groups(layers.map(\.name)), id: \.name) { g in
+                            LayerGroupRow(model: model, group: g, open: !closedGroups.contains(g.name)) {
+                                if closedGroups.contains(g.name) { closedGroups.remove(g.name) } else { closedGroups.insert(g.name) }
+                            }
+                            if !closedGroups.contains(g.name) {
+                                ForEach(layers.filter { g.layers.contains($0.name) }, id: \.name) { l in
+                                    LayerRow(model: model, layer: l, isCurrent: l.name.caseInsensitiveCompare(doc.currentLayer) == .orderedSame,
+                                             isSelected: selected == l.name, count: usage[l.name.uppercased()] ?? 0)
+                                        .padding(.leading, 10)
+                                        .onTapGesture { selected = l.name }
+                                }
+                            }
+                        }
+                    } else {
+                        ForEach(layers, id: \.name) { l in
+                            LayerRow(model: model, layer: l, isCurrent: l.name.caseInsensitiveCompare(doc.currentLayer) == .orderedSame,
+                                     isSelected: selected == l.name, count: usage[l.name.uppercased()] ?? 0)
+                                .onTapGesture { selected = l.name }
+                        }
                     }
                 }
             }
@@ -504,6 +525,19 @@ private struct LayerRow: View {
                 ForEach(standardLineweights, id: \.self) { w in Button(String(format: "%.2f mm", w)) { update { $0.lineweight = w } } }
             } label: { Text(String(format: "%.2f", layer.lineweight)).font(.system(size: 10)) }
             .menuStyle(.borderlessButton).menuIndicator(.hidden).frame(width: 36, alignment: .leading)
+            // Transparency (0–90 %), plot on/off and description columns (LAY-002, LAY-017).
+            Menu {
+                ForEach([0, 10, 25, 50, 75, 90], id: \.self) { t in Button("\(t) %") { update { $0.transparency = Double(t) / 100 } } }
+            } label: { Text("\(Int((Transparency.fraction(layer: layer) * 100).rounded()))").font(.system(size: 10)) }
+            .menuStyle(.borderlessButton).menuIndicator(.hidden).frame(width: 24, alignment: .leading).help("Layer transparency %")
+            toggle(layer.plot ? "printer" : "printer.dotmatrix", on: layer.plot, help: layer.plot ? "Plots — click to not plot" : "Does not plot — click to plot") { $0.plot.toggle() }
+        }
+        .contextMenu {
+            Button("Description…") {
+                let a = NSAlert(); a.messageText = "Layer \(layer.name) — description"; a.addButton(withTitle: "OK"); a.addButton(withTitle: "Cancel")
+                let tf = NSTextField(frame: NSRect(x: 0, y: 0, width: 280, height: 24)); tf.stringValue = layer.description; a.accessoryView = tf
+                if a.runModal() == .alertFirstButtonReturn { let v = tf.stringValue; update { $0.description = v } }
+            }
         }
         .font(Theme.font)
         .foregroundStyle(Theme.text)
@@ -511,7 +545,7 @@ private struct LayerRow: View {
         .frame(height: 24)
         .background(isSelected ? Theme.accent.opacity(0.14) : Color.clear)
         .contentShape(Rectangle())
-        .help("\(layer.name) — \(count) object(s)")
+        .help("\(layer.name) — \(count) object(s)\(layer.description.isEmpty ? "" : " — " + layer.description)")
     }
 
     private func toggle(_ symbol: String, on: Bool, help: String, _ change: @escaping (inout Layer) -> Void) -> some View {
@@ -661,6 +695,10 @@ struct ProjectBrowserPanel: View {
     @State private var openViews = true
     @State private var openSheets = true
     @State private var openSchedules = true
+    @State private var openElevations = true
+    @State private var openFamilies = true
+    @State private var openGroups = true
+    @State private var openLinks = true
 
     var body: some View {
         let doc = model.doc
@@ -672,6 +710,8 @@ struct ProjectBrowserPanel: View {
                             model.setCurrentLevel(l.id)
                             if model.mode == .sheet || model.mode == .model { model.mode = .plan }
                         }
+                        .onDrag { NSItemProvider(object: ViewDrop.string(.plan, level: l.id) as NSString) }
+                        .help("Click to open · drag onto a sheet to place it at the view scale")
                     }
                 }
                 section("3D Views", "cube", $openViews) {
@@ -692,6 +732,17 @@ struct ProjectBrowserPanel: View {
                         }
                     }
                 }
+                section("Elevations & Sections", "building.columns", $openElevations) {
+                    ForEach([(ViewKind.elevationNorth, "North Elevation", "back"), (.elevationSouth, "South Elevation", "front"), (.elevationEast, "East Elevation", "right"),
+                             (.elevationWest, "West Elevation", "left"), (.section, "Section A-A", "front")], id: \.1) { k, title, dir in
+                        item(title, k == .section ? "square.split.diagonal" : "building", active: false) {
+                            if model.mode == .plan || model.mode == .sheet { model.mode = .model }
+                            model.files.handle(.setView(dir))
+                        }
+                        .onDrag { NSItemProvider(object: ViewDrop.string(k, level: nil) as NSString) }
+                        .help("Click to look at it in 3D · drag onto a sheet to place it")
+                    }
+                }
                 section("Sheets", "doc.richtext", $openSheets) {
                     ForEach(Array(doc.layouts.enumerated()), id: \.offset) { i, l in
                         item(l.name, "doc", active: model.mode == .sheet && model.activeLayout == i) {
@@ -703,6 +754,27 @@ struct ProjectBrowserPanel: View {
                 section("Schedules", "tablecells", $openSchedules) {
                     ForEach(ScheduleExporter.kinds, id: \.self) { k in
                         item("\(k.capitalized) Schedule", "list.bullet.rectangle", active: false) { model.sheet = .schedule(k) }
+                    }
+                }
+                if !doc.families.isEmpty {
+                    section("Families", "puzzlepiece.extension", $openFamilies) {
+                        ForEach(doc.families, id: \.name) { f in
+                            item("\(f.name) (\(f.category))", "puzzlepiece", active: false) { FamilyEditorWindow.show(model: model, family: f.name) }
+                        }
+                    }
+                }
+                if !doc.modelGroups.isEmpty {
+                    section("Groups", "square.on.square.dashed", $openGroups) {
+                        ForEach(doc.modelGroups, id: \.name) { g in
+                            item("\(g.name) — \(g.elements.count) element(s)", "square.on.square", active: false) { model.runCommand("MODELGROUP") }
+                        }
+                    }
+                }
+                if !Xrefs.all(doc).isEmpty {
+                    section("Links", "link", $openLinks) {
+                        ForEach(Xrefs.all(doc), id: \.name) { x in
+                            item("\(x.name)\(x.overlay ? " (overlay)" : "")", "link", active: false) { model.runCommand("XREF") }.help(x.path)
+                        }
                     }
                 }
             }

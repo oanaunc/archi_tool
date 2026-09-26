@@ -120,6 +120,8 @@ public enum Modify {
                 e.start = normAngle(comp.u(s))
             }
             return .ellipse(e)
+        case .spline(let s):
+            return extendSpline(s, at: pick, boundaries: bpaths)
         default:
             return nil
         }
@@ -329,7 +331,7 @@ public enum Modify {
                 return [PolyVertex(v + da * td, bulge: tan((.pi - theta) * turn / 4)), PolyVertex(v + db * td)]
             }
         }
-        guard let ca = carrier(a), let cb = carrier(b) else { return nil }
+        guard let ca = carrier(a), let cb = carrier(b) else { return filletCurves(a, pickA: pickA, b, pickB: pickB, radius: r) }
         if r < geomEpsilon {
             let xs = CurveMath.intersect(ca, cb, extA: true, extB: true)
             guard let x = xs.min(by: { $0.p.distance(to: pickA) + $0.p.distance(to: pickB) < $1.p.distance(to: pickA) + $1.p.distance(to: pickB) }),
@@ -367,8 +369,8 @@ public enum Modify {
                 return [PolyVertex(v + (pa - v).normalized * da), PolyVertex(v + (pb - v).normalized * db)]
             }
         }
-        guard case .line(let la) = a, case .line(let lb) = b,
-              let x = CurveMath.lineLine(la.a, la.b, lb.a, lb.b),
+        guard case .line(let la) = a, case .line(let lb) = b else { return chamferSegments(a, pickA: pickA, b, pickB: pickB, d1: d1, d2: d2) }
+        guard let x = CurveMath.lineLine(la.a, la.b, lb.a, lb.b),
               let (na, ca) = chamferSide(la, pickA, x, d1), let (nb, cb) = chamferSide(lb, pickB, x, d2) else { return nil }
         let line: Geometry? = ca.isClose(cb, tol: 1e-9) ? nil : .line(LineGeom(ca, cb))
         return FilletResult(first: .line(na), second: .line(nb), arc: line)

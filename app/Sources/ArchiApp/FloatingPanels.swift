@@ -20,6 +20,9 @@ struct PanelContent: View {
         case .selection: SelectionInfoPanel(model: model)
         case .navigator: NavigatorPanel(model: model)
         case .alerts: NotificationsPanel(model: model)
+        case .quick: ScrollView { QuickPropertiesView(model: model) }
+        case .inspector: InspectorPanel(model: model)
+        case .content: DesignCenterPanel(model: model)
         }
     }
 }

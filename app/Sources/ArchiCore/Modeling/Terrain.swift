@@ -199,3 +199,57 @@ public enum Terrain {
         return best
     }
 }
+
+/// Contour input for toposurfaces (BIM-111).
+public enum TopoContours {
+    /// Case-insensitive wildcard match (* and ?).
+    public static func wildcard(_ pattern: String, _ s: String) -> Bool {
+        let p = Array(pattern.uppercased()), t = Array(s.uppercased())
+        var dp = Array(repeating: Array(repeating: false, count: t.count + 1), count: p.count + 1)
+        dp[0][0] = true
+        for i in 0..<p.count where p[i] == "*" { dp[i + 1][0] = dp[i][0] }
+        if p.isEmpty { return t.isEmpty }
+        for i in 1...p.count {
+            for j in stride(from: 1, through: t.count, by: 1) {
+                switch p[i - 1] {
+                case "*": dp[i][j] = dp[i - 1][j] || dp[i][j - 1]
+                case "?": dp[i][j] = dp[i - 1][j - 1]
+                default: dp[i][j] = dp[i - 1][j - 1] && p[i - 1] == t[j - 1]
+                }
+            }
+        }
+        return dp[p.count][t.count]
+    }
+
+    /// 3D points along a contour entity: vertices at the contour's elevation (or per-vertex z of 3D polylines,
+    /// props vertexZ), with long segments resampled every `step` so the triangulation follows the contour.
+    public static func points(_ e: Entity, doc: ArchiDocument, elevation z0: Double, step: Double) -> [Vec3] {
+        var out: [Vec3] = []
+        let vz = e.props["vertexZ"]?.split(separator: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) }
+        if let vz = vz, case .polyline(let pl) = e.geometry, vz.count == pl.vertices.count {
+            let n = pl.vertices.count
+            for i in 0..<n {
+                let a = pl.vertices[i].p, za = vz[i]
+                out.append(Vec3(a.x, a.y, za))
+                guard i + 1 < n || pl.closed else { continue }
+                let j = (i + 1) % n, b = pl.vertices[j].p, zb = vz[j]
+                let len = a.distance(to: b)
+                if step > 0, len > step {
+                    let m = Int(len / step)
+                    for k in 1...m { let t = Double(k) / Double(m + 1); let q = a.lerp(b, t); out.append(Vec3(q.x, q.y, za + (zb - za) * t)) }
+                }
+            }
+            return out
+        }
+        for l in GeometryOps.tessellate(e.geometry, doc: doc) where l.count >= 2 {
+            for i in 0..<l.count {
+                out.append(Vec3(l[i].x, l[i].y, z0))
+                if i + 1 < l.count {
+                    let len = l[i].distance(to: l[i + 1])
+                    if step > 0, len > step { let m = Int(len / step); for j in 1...m { let q = l[i].lerp(l[i + 1], Double(j) / Double(m + 1)); out.append(Vec3(q.x, q.y, z0)) } }
+                }
+            }
+        }
+        return out
+    }
+}

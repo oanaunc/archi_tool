@@ -19,6 +19,13 @@ public struct WallGeom: Codable, Hashable {
     public var topLevel: Int?
     /// Offset of the wall top above `topLevel` (ignored when unconnected).
     public var topOffset: Double
+    /// Elevation profile (BIM-020): a closed polygon of (distance along the wall from its start, height above the wall
+    /// base) the wall is trimmed to — gables, steps, cut-outs. nil = rectangular.
+    public var profile: [Vec2]?
+    /// Slanted wall (BIM-023): lean from vertical in degrees, positive towards the left side (as drawn). nil = vertical.
+    public var slant: Double?
+    /// Tapered wall (BIM-023): thickness at the top (the base keeps `thickness`), symmetric about the centreline.
+    public var topThickness: Double?
     public init(start: Vec2, end: Vec2, thickness: Double = 200, height: Double = 3000, baseOffset: Double = 0,
                 justification: WallJustification = .center, bulge: Double = 0, wallType: String? = nil, sweeps: [WallSweep] = [],
                 topLevel: Int? = nil, topOffset: Double = 0) {
@@ -90,6 +97,24 @@ public struct BeamGeom: Codable, Hashable {
 }
 
 public enum OpeningKind: String, Codable, CaseIterable { case door, window, opening }
+/// Operation variants refining the base door/window style (BIM-036/037): pocket (sliding into the wall) and bi-fold doors,
+/// pivot and tilt-turn windows. The base style stays the IFC/exchange fallback (pocket → sliding, bi-fold → folding,
+/// pivot and tilt-turn → casement).
+public enum OpeningVariant: String, Codable, CaseIterable {
+    case pocket, biFold, pivot, tiltTurn
+    public var isDoor: Bool { self == .pocket || self == .biFold }
+    public var baseDoorStyle: DoorStyle { self == .pocket ? .sliding : .folding }
+    /// Parses a style name ("pocket", "bifold", "bi-fold", "pivot", "tilt-turn", "tiltturn").
+    public init?(name: String) {
+        switch name.lowercased().replacingOccurrences(of: "-", with: "").replacingOccurrences(of: "_", with: "").replacingOccurrences(of: " ", with: "") {
+        case "pocket": self = .pocket
+        case "bifold": self = .biFold
+        case "pivot": self = .pivot
+        case "tiltturn", "tilt": self = .tiltTurn
+        default: return nil
+        }
+    }
+}
 public enum DoorStyle: String, Codable, CaseIterable { case single, double, sliding, folding, revolving, garage }
 public enum WindowStyle: String, Codable, CaseIterable { case fixed, casement, doubleCasement, sliding, awning, hung }
 
@@ -117,6 +142,8 @@ public struct OpeningGeom: Codable, Hashable {
     public var transoms: Int
     /// Doors: a threshold plate across the opening at floor level.
     public var threshold: Bool
+    /// Operation variant refining the style (pocket, bi-fold, pivot, tilt-turn); nil = the plain style.
+    public var variant: OpeningVariant?
     public init(kind: OpeningKind, hostWall: EntityID, offset: Double, width: Double, height: Double, sill: Double = 0,
                 flipHand: Bool = false, flipFacing: Bool = false, doorStyle: DoorStyle = .single, windowStyle: WindowStyle = .casement, frameWidth: Double = 50,
                 depth: Double = 0, typeName: String? = nil, mark: String? = nil, mullions: Int = 0, transoms: Int = 0, threshold: Bool = false) {
@@ -209,7 +236,24 @@ public struct RailingGeom: Codable, Hashable {
     public var postSpacing: Double?
     public var bottomRail: Bool?
     public var extensionLength: Double?
-    public init(path: [Vec2], height: Double = 1000, baseOffset: Double = 0) { self.path = path; self.height = height; self.baseOffset = baseOffset }
+    /// Heights of the path vertices above `baseOffset` (railings on stairs and ramps, BIM-072); nil = level.
+    public var pathZ: [Double]?
+    public init(path: [Vec2], height: Double = 1000, baseOffset: Double = 0, pathZ: [Double]? = nil) { self.path = path; self.height = height; self.baseOffset = baseOffset; self.pathZ = pathZ }
+    /// Height above `baseOffset` of path vertex i.
+    public func z(_ i: Int) -> Double { guard let z = pathZ, i >= 0, i < z.count else { return 0 }; return z[i] }
+    /// Height above `baseOffset` at a plan point on the path (interpolated along the nearest segment).
+    public func z(at p: Vec2) -> Double {
+        guard let zs = pathZ, zs.count == path.count, path.count >= 2 else { return 0 }
+        var best = (d: Double.infinity, z: 0.0)
+        for i in 0..<(path.count - 1) {
+            let a = path[i], b = path[i + 1], e = b - a, l2 = e.dot(e)
+            let t = l2 > 1e-18 ? min(max((p - a).dot(e) / l2, 0), 1) : 0
+            let d = p.distance(to: a + e * t)
+            if d < best.d { best = (d, zs[i] + (zs[i + 1] - zs[i]) * t) }
+        }
+        return best.z
+    }
+    public var isSloped: Bool { (pathZ ?? []).contains { abs($0) > 1e-9 } }
     /// Whether any railing-type parameter is set.
     public var isTyped: Bool { railProfile != nil || infill != nil || balusterSpacing != nil || postSpacing != nil || extensionLength != nil || bottomRail != nil }
 }
@@ -275,9 +319,12 @@ public struct WallSweep: Codable, Hashable {
     /// +1 = left face (as drawn start→end), −1 = right face.
     public var side: Double
     public var material: String?
-    public init(profile: String = "rect", depth: Double = 50, height: Double = 150, elevation: Double = 0, side: Double = 1, material: String? = nil) {
-        self.profile = profile; self.depth = depth; self.height = height; self.elevation = elevation; self.side = side; self.material = material
+    /// Reveal (BIM-021): the profile is cut into the wall face (a groove) instead of projecting from it; nil/false = sweep.
+    public var reveal: Bool?
+    public init(profile: String = "rect", depth: Double = 50, height: Double = 150, elevation: Double = 0, side: Double = 1, material: String? = nil, reveal: Bool? = nil) {
+        self.profile = profile; self.depth = depth; self.height = height; self.elevation = elevation; self.side = side; self.material = material; self.reveal = reveal
     }
+    public var isReveal: Bool { reveal ?? false }
     /// Closed profile in (outward offset, height) coordinates relative to the face at the sweep's elevation.
     public var outline: [(x: Double, z: Double)] {
         let d = max(depth, 1e-6), h = max(height, 1e-6)
@@ -327,24 +374,55 @@ public struct GridLineGeom: Codable, Hashable {
     public var start: Vec2; public var end: Vec2; public var label: String
     /// Arc grid (radial grid systems): bulge like a polyline segment (0 = straight).
     public var bulge: Double
-    public init(start: Vec2, end: Vec2, label: String, bulge: Double = 0) { self.start = start; self.end = end; self.label = label; self.bulge = bulge }
-    enum CodingKeys: String, CodingKey { case start, end, label, bulge }
+    /// Multi-segment grids (BIM-005): intermediate vertices in the chord frame — x along start→end and y to its left,
+    /// both as fractions of the chord length — so MOVE/ROTATE/SCALE of the end points carry the whole polyline along.
+    public var bends: [Vec2]
+    /// Head bubbles: "start" (default), "end", "both" or "none".
+    public var heads: String?
+    public init(start: Vec2, end: Vec2, label: String, bulge: Double = 0, bends: [Vec2] = [], heads: String? = nil) {
+        self.start = start; self.end = end; self.label = label; self.bulge = bulge; self.bends = bends; self.heads = heads
+    }
+    /// Multi-segment grid through world points (first and last are the grid ends).
+    public init?(through pts: [Vec2], label: String) {
+        guard pts.count >= 2, let a = pts.first, let b = pts.last, a.distance(to: b) > 1e-9 else { return nil }
+        let L = a.distance(to: b), d = (b - a) / L, n = d.perp
+        self.init(start: a, end: b, label: label, bends: pts.dropFirst().dropLast().map { Vec2(($0 - a).dot(d) / L, ($0 - a).dot(n) / L) })
+    }
+    enum CodingKeys: String, CodingKey { case start, end, label, bulge, bends, heads }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         self.init(start: try c.decode(Vec2.self, forKey: .start), end: try c.decode(Vec2.self, forKey: .end),
-                  label: try c.decodeIfPresent(String.self, forKey: .label) ?? "", bulge: try c.decodeIfPresent(Double.self, forKey: .bulge) ?? 0)
+                  label: try c.decodeIfPresent(String.self, forKey: .label) ?? "", bulge: try c.decodeIfPresent(Double.self, forKey: .bulge) ?? 0,
+                  bends: try c.decodeIfPresent([Vec2].self, forKey: .bends) ?? [], heads: try c.decodeIfPresent(String.self, forKey: .heads))
     }
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(start, forKey: .start); try c.encode(end, forKey: .end); try c.encode(label, forKey: .label)
         if bulge != 0 { try c.encode(bulge, forKey: .bulge) }
+        if !bends.isEmpty { try c.encode(bends, forKey: .bends) }
+        try c.encodeIfPresent(heads, forKey: .heads)
+    }
+    /// World vertices of a multi-segment grid (start, bends…, end).
+    public var vertices: [Vec2] {
+        guard !bends.isEmpty else { return [start, end] }
+        let L = start.distance(to: end)
+        guard L > 1e-9 else { return [start, end] }
+        let d = (end - start) / L, n = d.perp
+        return [start] + bends.map { start + d * ($0.x * L) + n * ($0.y * L) } + [end]
     }
     /// Points along the grid line (tessellated for arc grids).
     public var points: [Vec2] {
+        guard bends.isEmpty else { return vertices }
         guard abs(bulge) > 1e-12, start.distance(to: end) > 1e-9 else { return [start, end] }
         let a = GeometryOps.bulgeArc(start, end, bulge)
         let n = max(8, Int(abs(a.sweep) / (Double.pi / 48)))
         return (0...n).map { k in a.center + Vec2.polar(a.radius, a.start + a.sweep * Double(k) / Double(n)) }
+    }
+    /// Straight single-segment grid.
+    public var isStraight: Bool { bends.isEmpty && abs(bulge) < 1e-12 }
+    /// Head bubbles: (at start, at end).
+    public var headEnds: (start: Bool, end: Bool) {
+        switch (heads ?? "start").lowercased() { case "end": return (false, true); case "both": return (true, true); case "none": return (false, false); default: return (true, false) }
     }
 }
 
@@ -440,7 +518,7 @@ public struct BIMElement: Codable, Hashable, Identifiable {
 // MARK: - Tolerant decoding (fields added after format 1 are optional in files)
 
 extension WallGeom {
-    private enum Keys: String, CodingKey { case start, end, thickness, height, baseOffset, justification, bulge, wallType, sweeps, topLevel, topOffset }
+    private enum Keys: String, CodingKey { case start, end, thickness, height, baseOffset, justification, bulge, wallType, sweeps, topLevel, topOffset, profile, slant, topThickness }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: Keys.self)
         self.init(start: try c.decode(Vec2.self, forKey: .start), end: try c.decode(Vec2.self, forKey: .end),
@@ -452,6 +530,9 @@ extension WallGeom {
                   wallType: try c.decodeIfPresent(String.self, forKey: .wallType),
                   sweeps: try c.decodeIfPresent([WallSweep].self, forKey: .sweeps) ?? [],
                   topLevel: try c.decodeIfPresent(Int.self, forKey: .topLevel), topOffset: try c.decodeIfPresent(Double.self, forKey: .topOffset) ?? 0)
+        profile = try c.decodeIfPresent([Vec2].self, forKey: .profile)
+        slant = try c.decodeIfPresent(Double.self, forKey: .slant)
+        topThickness = try c.decodeIfPresent(Double.self, forKey: .topThickness)
     }
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: Keys.self)
@@ -460,7 +541,10 @@ extension WallGeom {
         try c.encode(bulge, forKey: .bulge); try c.encodeIfPresent(wallType, forKey: .wallType)
         if !sweeps.isEmpty { try c.encode(sweeps, forKey: .sweeps) }
         if let t = topLevel { try c.encode(t, forKey: .topLevel); try c.encode(topOffset, forKey: .topOffset) }
+        try c.encodeIfPresent(profile, forKey: .profile); try c.encodeIfPresent(slant, forKey: .slant); try c.encodeIfPresent(topThickness, forKey: .topThickness)
     }
+    /// Whether the wall leans or tapers.
+    public var isSlantedOrTapered: Bool { abs(slant ?? 0) > 1e-9 || (topThickness.map { abs($0 - thickness) > 1e-9 } ?? false) }
 }
 
 extension SlabGeom {
@@ -480,7 +564,7 @@ extension SlabGeom {
 }
 
 extension OpeningGeom {
-    private enum Keys: String, CodingKey { case kind, hostWall, offset, width, height, sill, flipHand, flipFacing, doorStyle, windowStyle, frameWidth, depth, typeName, mark, mullions, transoms, threshold }
+    private enum Keys: String, CodingKey { case kind, hostWall, offset, width, height, sill, flipHand, flipFacing, doorStyle, windowStyle, frameWidth, depth, typeName, mark, mullions, transoms, threshold, variant }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: Keys.self)
         var kind = try c.decodeIfPresent(OpeningKind.self, forKey: .kind)
@@ -494,6 +578,7 @@ extension OpeningGeom {
                   typeName: try c.decodeIfPresent(String.self, forKey: .typeName), mark: try c.decodeIfPresent(String.self, forKey: .mark),
                   mullions: try c.decodeIfPresent(Int.self, forKey: .mullions) ?? 0, transoms: try c.decodeIfPresent(Int.self, forKey: .transoms) ?? 0,
                   threshold: try c.decodeIfPresent(Bool.self, forKey: .threshold) ?? false)
+        variant = try c.decodeIfPresent(OpeningVariant.self, forKey: .variant)
     }
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: Keys.self)
@@ -506,6 +591,7 @@ extension OpeningGeom {
         if mullions > 0 { try c.encode(mullions, forKey: .mullions) }
         if transoms > 0 { try c.encode(transoms, forKey: .transoms) }
         if threshold { try c.encode(threshold, forKey: .threshold) }
+        try c.encodeIfPresent(variant, forKey: .variant)
     }
 }
 

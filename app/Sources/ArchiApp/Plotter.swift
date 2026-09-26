@@ -30,11 +30,21 @@ struct PlotRenderer {
         colorMode = setup.colorMode
         lineweightScale = CGFloat(setup.lineweightScale)
         penTable = PlotStyleTable.named(setup.plotStyleTable, in: doc)
+        // Named plot styles (STB, SHT-031) replace the colour-dependent table: pens come from each object's style.
+        if let stb = setup.namedStyleTable, let table = NamedPlotStyles.table(stb, in: doc) {
+            penTable = nil
+            let map = NamedPlotStyles.styleMap(doc)
+            entryPen = { id in map[id].flatMap { table[$0] } }
+        }
     }
+    /// Pen of an object from its named plot style (nil = plot as is).
+    var entryPen: ((EntityID) -> PlotStyleTable.Pen?)?
+    /// Pen of the entry being drawn (set per entry from `entryPen`).
+    var activePen: PlotStyleTable.Pen?
 
     /// Plotted line width in device units for a stroke style (the plot style table may override the lineweight).
     func width(_ style: ArchiCore.StrokeStyle) -> CGFloat {
-        let lw = penTable?.resolve(color: style.color, lineweight: style.lineweight).1 ?? style.lineweight
+        let lw = activePen?.lineweight ?? penTable?.resolve(color: style.color, lineweight: style.lineweight).1 ?? style.lineweight
         return max(minLineWidth, CGFloat(lw) * devicePerMM * lineweightScale)
     }
 
@@ -45,7 +55,8 @@ struct PlotRenderer {
 
     func color(_ c0: RGBA) -> CGColor {
         if let o = overrideColor { return o }
-        let c = penTable?.resolve(color: c0, lineweight: 0).0 ?? c0
+        var c = penTable?.resolve(color: c0, lineweight: 0).0 ?? c0
+        if let p = activePen { c = NamedPlotStyles.apply(p, to: c) }
         switch colorMode {
         case .monochrome: return CGColor(srgbRed: 0, green: 0, blue: 0, alpha: c.a)
         case .grayscale:
@@ -72,7 +83,12 @@ struct PlotRenderer {
                 let r = CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(b.x - a.x), height: abs(b.y - a.y)).insetBy(dx: -2, dy: -2)
                 if !r.intersects(v) { continue }
             }
-            for item in e.items { draw(item, in: ctx) }
+            if let ep = entryPen, let id = e.id, let pen = ep(id) {
+                var r = self; r.activePen = pen
+                for item in e.items { r.draw(item, in: ctx) }
+            } else {
+                for item in e.items { draw(item, in: ctx) }
+            }
         }
     }
 
@@ -220,7 +236,7 @@ enum SheetComposer {
         case .plan, .ceiling, .axonometric, .perspective:
             var o = DrawOptions(level: vp.level)
             o.forPaper = true
-            o.linetypeScale = max(1, vp.scale * 0.25)
+            o.linetypeScale = paperLinetypeScale(doc, vp)
             if vp.view == .ceiling { o.reflectedCeiling = true }
             return DrawListBuilder.entries(doc: doc, options: o)
         case .section:
@@ -228,6 +244,12 @@ enum SheetComposer {
         case .elevationNorth, .elevationSouth, .elevationEast, .elevationWest:
             return ElevationBuilder.entries(doc: doc, view: vp.view, sectionLine: nil)
         }
+    }
+
+    /// Linetype scale inside a viewport (LAY-025): with PSLTSCALE = 1 (default) dashes have the same length on paper in
+    /// every viewport whatever its scale; with 0 they keep their model-space length (and shrink at smaller scales).
+    static func paperLinetypeScale(_ doc: ArchiDocument, _ vp: Viewport) -> Double {
+        doc.variable("PSLTSCALE") == "0" ? 1 : max(vp.scale, 1e-9) * 0.25
     }
 
     static func ratioText(_ scale: Double, units: Units) -> String {
@@ -290,7 +312,14 @@ enum SheetComposer {
         let rowH = (tb.y - 14) / 3
         for i in 1..<3 { let y = y0 + Double(i) * rowH
             items.append(.stroke(points: [Vec2(x0, y), Vec2(x1, y)], closed: false, style: s(0.18))) }
-        items.append(text(Vec2(x0 + 3, y1 - 7), 4.5, tbv["project"] ?? info.name, .left, .middle))
+        // Office logo (TITLEBLOCKLOGO, an image path) at the left of the header band; the project name moves right of it.
+        var nameX = x0 + 3
+        if let logo = doc.variable("TITLEBLOCKLOGO"), !logo.isEmpty {
+            let lw = 26.0, lh = 11.0
+            items.append(.image(ImageGeom(path: logo, origin: Vec2(x0 + 2, y1 - 12.5), size: Vec2(lw, lh))))
+            nameX += lw + 2
+        }
+        items.append(text(Vec2(nameX, y1 - 7), 4.5, tbv["project"] ?? info.name, .left, .middle))
         items.append(text(Vec2(x1 - 3, y1 - 4.5), 2.2, "OANARINA ARCHI TOOL", .right, .middle))
         items.append(text(Vec2(x1 - 3, y1 - 10), 2, info.address, .right, .middle))
         func field(_ x: Double, _ row: Int, _ label: String, _ value: String, big: Bool = false) {
@@ -308,6 +337,19 @@ enum SheetComposer {
         field(colB, 1, "Paper", layout.paper.name)
         field(colB, 2, "Revision", tbv["revision"] ?? "—")
         out.append(DrawEntry(id: nil, items: items))
+
+        // Custom project / sheet fields (SHT-021): one 5 mm row each, stacked on top of the title block.
+        let custom = SheetTools.fields(doc, layout: layout)
+        if !custom.isEmpty {
+            var rows: [DrawItem] = []
+            for (k, f) in custom.enumerated() {
+                let ya = y1 + Double(k) * 5, yb = ya + 5
+                rows.append(rect(Vec2(x0, ya), Vec2(x1, yb), 0.18))
+                rows.append(text(Vec2(x0 + 2, ya + 1.6), 1.6, f.0.uppercased(), .left, .baseline))
+                rows.append(text(Vec2(colA, ya + 1.4), 2.2, f.1, .left, .baseline))
+            }
+            out.append(DrawEntry(id: nil, items: rows))
+        }
 
         // North arrow (left of the title block).
         let nc = Vec2(x0 - 16, margin + 20)
@@ -417,8 +459,12 @@ enum SheetComposer {
             let a = CGPoint(x: vp.origin.x, y: vp.origin.y).applying(paperToDevice)
             let b = CGPoint(x: vp.origin.x + vp.size.x, y: vp.origin.y + vp.size.y).applying(paperToDevice)
             let rect = CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(b.x - a.x), height: abs(b.y - a.y))
+            // Polygonal / clipped viewports (SHT-004, SHT-008) clip to their boundary instead of the frame.
+            let clipPath: CGPath? = SheetTools.clip(doc, layout: layout.name, viewport: i).map { pts in
+                let pth = CGMutablePath(); pth.addLines(between: pts.map { CGPoint(x: $0.x, y: $0.y).applying(paperToDevice) }); pth.closeSubpath(); return pth
+            }
             ctx.saveGState()
-            ctx.clip(to: rect)
+            if let cp = clipPath { ctx.addPath(cp); ctx.clip() } else { ctx.clip(to: rect) }
             r.draw(entries, in: ctx, visible: visible.map { $0.intersection(rect) } ?? rect)
             ctx.restoreGState()
             if showViewportBorders {
@@ -427,7 +473,7 @@ enum SheetComposer {
                 ctx.setStrokeColor(sel ? CGColor(srgbRed: 0.961, green: 0.773, blue: 0.094, alpha: 1) : CGColor(srgbRed: 0.3, green: 0.55, blue: 0.9, alpha: 0.8))
                 ctx.setLineWidth(sel ? 2 : 1)
                 if !sel { ctx.setLineDash(phase: 0, lengths: [4, 3]) }
-                ctx.stroke(rect)
+                if let cp = clipPath { ctx.addPath(cp); ctx.strokePath() } else { ctx.stroke(rect) }
                 ctx.restoreGState()
             }
         }
@@ -473,6 +519,31 @@ enum Plotter {
         }
     }
 
+    /// What a model-space plot shows (SHT-028) and at which ratio 1:n (SHT-029): the plot area's box, then the fixed
+    /// scale, the exact fit, or the largest standard scale that fits the printable area (paper mm).
+    static func modelFrame(doc: ArchiDocument, setup: PageSetup, extents: BBox2, area: BBox2) -> (box: BBox2, ratio: Double) {
+        var b = extents.isEmpty ? GeometryOps.bounds(of: doc) : extents
+        switch setup.plotArea {
+        case .extents: break
+        case .display, .window: if let w = setup.windowBox { b = w }
+        case .limits:
+            func pt(_ k: String) -> Vec2? {
+                guard let s = doc.variable(k) else { return nil }
+                let c = s.split(separator: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) }
+                return c.count >= 2 ? Vec2(c[0], c[1]) : nil
+            }
+            let lb = BBox2(points: [pt("LIMMIN") ?? .zero, pt("LIMMAX") ?? Vec2(420, 297)])
+            if lb.width > 0 && lb.height > 0 { b = lb }
+        }
+        var ratio = 100.0
+        if let fixed = setup.modelScale, fixed > 0 { ratio = fixed }
+        else if !b.isEmpty && b.width + b.height > 0 {
+            let needed = max(b.width / area.width, b.height / area.height) * doc.units.mm
+            ratio = setup.exactFit ? max(needed, 1e-9) : (standardRatios.first { $0 >= needed } ?? (ceil(needed / 1000) * 1000))
+        }
+        return (b, ratio)
+    }
+
     /// Model space of one level, plotted at the largest standard scale that fits A3 landscape.
     @MainActor static func writeModelPDF(doc: ArchiDocument, to url: URL, level: Int?) throws {
         let setup = PageSetup.load(doc, layoutIndex: nil)
@@ -483,15 +554,8 @@ enum Plotter {
         var opts = DrawOptions(level: level)
         opts.forPaper = true
         var entries = DrawListBuilder.entries(doc: doc, options: opts)
-        var b = entries.unionBounds
-        if b.isEmpty { b = GeometryOps.bounds(of: doc) }
         let area = BBox2(min: Vec2(margin + 3, margin + strip + 3), max: Vec2(paperW - margin - 3, paperH - margin - 3))
-        var ratio = 100.0
-        if let fixed = setup.modelScale, fixed > 0 { ratio = fixed }
-        else if !b.isEmpty && b.width + b.height > 0 {
-            let needed = max(b.width / area.width, b.height / area.height) * doc.units.mm
-            ratio = standardRatios.first { $0 >= needed } ?? (ceil(needed / 1000) * 1000)
-        }
+        let (b, ratio) = modelFrame(doc: doc, setup: setup, extents: entries.unionBounds, area: area)
         let scale = ratio / doc.units.mm  // model units per paper mm
         if opts.linetypeScale != max(1, scale * 0.25) {
             opts.linetypeScale = max(1, scale * 0.25)

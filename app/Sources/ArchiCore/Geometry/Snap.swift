@@ -29,7 +29,15 @@ public final class SnapTracker {
         directions.append(d)
         if directions.count > 3 { directions.removeFirst() }
     }
-    public func clear() { points = []; directions = []; lines = [] }
+    /// Straight or circular pieces whose extension was acquired by hovering one of their endpoints (EXT, PRC-009).
+    var extensions: [CurvePiece] = []
+    public var extensionCount: Int { extensions.count }
+    func acquireExtension(_ p: CurvePiece) {
+        extensions.removeAll { $0.p0.isClose(p.p0, tol: 1e-9) && $0.p1.isClose(p.p1, tol: 1e-9) }
+        extensions.append(p)
+        if extensions.count > 5 { extensions.removeFirst() }
+    }
+    public func clear() { points = []; directions = []; lines = []; extensions = [] }
 }
 
 /// Object snaps (OSNAP) and ortho/polar/grid constraints.
@@ -83,6 +91,13 @@ public enum Snap {
         return (f, q.kind, [(q.origin, f)])
     }
 
+    /// Geometric centre (area centroid) of a closed polyline, arcs included (GCEN, PRC-004).
+    public static func geometricCenter(_ pl: PolylineGeom) -> Vec2? {
+        let pts = GeometryOps.polylinePoints(pl)
+        guard pts.count >= 3, abs(GeometryOps.signedArea(pts)) > 1e-12 else { return nil }
+        return GeometryOps.centroid(pts)
+    }
+
     /// Lower tier wins; within a tier the closest point wins.
     static func tier(_ k: SnapKind) -> Int {
         switch k {
@@ -103,13 +118,23 @@ public enum Snap {
         var best: (tier: Int, dist: Double, res: SnapResult)?
         var local: [(id: EntityID, piece: CurvePiece)] = []
 
-        mutating func offer(_ p: Vec2, _ k: SnapKind, _ id: EntityID?) {
-            guard modes.contains(k) else { return }
+        /// Geometric centre (GCEN) of closed polylines, offered with the centre marker.
+        var geometricCenter = false
+        mutating func offer(_ p: Vec2, _ k: SnapKind, _ id: EntityID?, force: Bool = false) {
+            guard force || modes.contains(k) else { return }
             let d = p.distance(to: cursor)
             guard d <= tol else { return }
             let t = Snap.tier(k)
             if let b = best, t > b.tier || (t == b.tier && d >= b.dist) { return }
             best = (t, d, SnapResult(point: p, kind: k, entity: id))
+        }
+        /// Snaps that apply while the cursor is over the object rather than near the snap point (centre of a hovered circle
+        /// or arc, perpendicular / tangent foot anywhere along the hovered object): used only when nothing else is in range.
+        var fallback: (dist: Double, res: SnapResult)?
+        mutating func offerFallback(_ p: Vec2, _ k: SnapKind, _ id: EntityID?, dist: Double) {
+            guard modes.contains(k), dist <= tol else { return }
+            if let f = fallback, dist >= f.dist { return }
+            fallback = (dist, SnapResult(point: p, kind: k, entity: id))
         }
         mutating func offer(_ ps: [Vec2], _ k: SnapKind, _ id: EntityID?) {
             guard modes.contains(k) else { return }
@@ -179,11 +204,21 @@ public enum Snap {
         case .point(let p): c.offer(p, .node, id)
         case .line, .polyline:
             if let path = CurvePath.make(g) { c.addPath(path, id, vertices: true, mids: true) }
+            if c.geometricCenter, case .polyline(let pl) = g, pl.closed, pl.vertices.count >= 3, let gc = Snap.geometricCenter(pl) {
+                c.offer(gc, .center, id, force: true)
+            }
         case .arc(let a):
             c.offer([a.startPoint, a.endPoint], .endpoint, id)
             c.offer(a.midPoint, .midpoint, id)
             c.offer(a.center, .center, id)
             let pc = CurvePiece(arc: a.center, a.radius, a.start, a.sweep)
+            if c.modes.contains(.extension) {
+                // Along the arc's circle beyond its ends (extension of arcs).
+                let t = pc.param(c.cursor)
+                if (t < 0 || t > 1), abs(c.cursor.distance(to: a.center) - a.radius) <= c.tol, c.cursor.distance(to: a.center) > 1e-12 {
+                    c.offer(a.center + (c.cursor - a.center).normalized * a.radius, .extension, id)
+                }
+            }
             if c.modes.contains(.quadrant) {
                 for k in 0..<4 where normAngle(Double(k) * .pi / 2 - a.start) <= a.sweep { c.offer(a.center + Vec2.polar(a.radius, Double(k) * .pi / 2), .quadrant, id) }
             }
@@ -289,7 +324,14 @@ public enum Snap {
         case .space(let s): loop(s.boundary, closed: true)
         case .railing(let r): loop(r.path, closed: false)
         case .curtainWall(let cw): loop([cw.start, cw.end], closed: false)
-        case .gridLine(let g): loop([g.start, g.end], closed: false)
+        case .gridLine(let g):
+            // Radial grid arcs are true arcs (BIM-006): endpoints, arc midpoint, centre and an exact arc piece.
+            let pc = CurvePiece.bulge(g.start, g.end, g.bulge)
+            if pc.isDegenerate { break }
+            ends += [g.start, g.end]
+            mids.append(pc.point(0.5))
+            if pc.isArc { centers.append(pc.center) }
+            pieces.append(pc)
         case .component(let c):
             inserts.append(c.position)
             loop(rect(c.position, c.size.x, c.size.y, c.rotation), closed: true)
@@ -317,18 +359,20 @@ public enum Snap {
         let tol = Swift.max(tolerance, 1e-12)
         let modes: Set<SnapKind> = settings.objectSnap ? settings.snapModes : []
         var c = Collector(cursor: cursor, tol: tol, box: BBox2(min: cursor - Vec2(tol, tol), max: cursor + Vec2(tol, tol)), modes: modes)
-        if !modes.isEmpty {
+        c.geometricCenter = settings.objectSnap && settings.geometricCenterSnap
+        if !modes.isEmpty || c.geometricCenter {
+            let shown = PickFilter(doc)
             var hidden = Set<String>()
             for l in doc.layers where !l.visible || l.frozen { hidden.insert(l.name); hidden.insert(l.name.lowercased()) }
             func isHidden(_ n: String) -> Bool { !hidden.isEmpty && (hidden.contains(n) || hidden.contains(n.lowercased())) }
             var blockCache: [String: BBox2] = [:]
             for e in doc.entities {
-                if isHidden(e.layer) { continue }
+                if isHidden(e.layer) || !shown.displayed(e) { continue }
                 let bb = quickBounds(e.geometry, doc: doc, blockCache: &blockCache)
                 guard !bb.isEmpty, bb.expanded(by: tol).contains(cursor) else { continue }
                 collect(e.geometry, id: e.id, doc: doc, depth: 0, into: &c, blockCache: &blockCache)
             }
-            for el in doc.elements where el.level == doc.currentLevel && !isHidden(el.layer) {
+            for el in doc.elements where el.level == doc.currentLevel && !isHidden(el.layer) && (!ModelSets.active(doc) || ModelSets.isShown(el.props, doc: doc)) {
                 let s = elementSnaps(el, doc: doc)
                 var bb = BBox2(points: s.ends + s.mids + s.centers + s.inserts)
                 for p in s.pieces { bb.add(p.bounds) }
@@ -342,6 +386,32 @@ public enum Snap {
             let local = c.local
             for (id, pc) in local {
                 if modes.contains(.nearest) { c.offer(pc.closestPoint(cursor), .nearest, id) }
+                let over = pc.closestPoint(cursor).distance(to: cursor)
+                if pc.isArc && !pc.approx && over <= tol { c.offerFallback(pc.center, .center, id, dist: over) }
+                if let b = base, over <= tol {
+                    if modes.contains(.perpendicular) {
+                        if pc.isArc {
+                            let d = b - pc.center
+                            if d.length > 1e-12 {
+                                let p = pc.center + d.normalized * (pc.radius * ((cursor - pc.center).dot(d) >= 0 ? 1 : -1))
+                                let t = pc.param(p)
+                                if t >= -1e-9 && t <= 1 + 1e-9 { c.offerFallback(p, .perpendicular, id, dist: over) }
+                            }
+                        } else {
+                            let t = pc.param(b)
+                            if t >= -1e-9 && t <= 1 + 1e-9 { c.offerFallback(pc.point(t), .perpendicular, id, dist: over) }
+                        }
+                    }
+                    if modes.contains(.tangent), pc.isArc, !pc.approx {
+                        let d = b - pc.center, dl = d.length
+                        if dl > pc.radius + 1e-9 {
+                            let al = acos(pc.radius / dl)
+                            // The tangent point on the side of the cursor.
+                            let cands = [1.0, -1.0].map { pc.center + Vec2.polar(pc.radius, d.angle + $0 * al) }.filter { let t = pc.param($0); return t >= -1e-9 && t <= 1 + 1e-9 }
+                            if let q = cands.min(by: { $0.distance(to: cursor) < $1.distance(to: cursor) }) { c.offerFallback(q, .tangent, id, dist: over) }
+                        }
+                    }
+                }
                 if let b = base {
                     if modes.contains(.perpendicular) {
                         if pc.isArc {
@@ -380,12 +450,26 @@ public enum Snap {
                 }
             }
             if modes.contains(.extension) {
-                for (id, pc) in local where !pc.isArc && !pc.approx {
+                for (id, pc) in local where !pc.approx {
+                    // Hovering an endpoint acquires the piece's extension path; the extension of any acquired piece
+                    // snaps anywhere along it, not just near the object (PRC-009).
+                    if pc.p0.distance(to: cursor) <= tol || pc.p1.distance(to: cursor) <= tol { tracker.acquireExtension(pc) }
+                    if !pc.isArc {
+                        let t = pc.param(cursor)
+                        if t < 0 || t > 1 { c.offer(pc.point(t), .extension, id) }
+                    }
+                }
+                for pc in tracker.extensions {
                     let t = pc.param(cursor)
-                    if t < 0 || t > 1 { c.offer(pc.point(t), .extension, id) }
+                    guard t < -pc.paramEps || t > 1 + pc.paramEps else { continue }
+                    if pc.isArc {
+                        let r = cursor - pc.center
+                        if r.length > 1e-12 { c.offer(pc.center + r.normalized * pc.radius, .extension, nil) }
+                    } else { c.offer(pc.point(t), .extension, nil) }
                 }
             }
         }
+        if c.best == nil, let f = c.fallback { c.best = (5, f.dist, f.res) }
         if settings.objectSnapTracking && tracker.active {
             if let b = c.best, b.res.kind != .nearest, b.res.kind != .grid, b.res.kind != .extension {
                 tracker.acquire(b.res.point)

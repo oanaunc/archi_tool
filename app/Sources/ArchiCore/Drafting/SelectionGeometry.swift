@@ -34,16 +34,29 @@ public enum SelectionGeometry {
 
     public static func select(doc: ArchiDocument, polygon: [Vec2], mode: Mode, level: Int) -> [EntityID] {
         var out: [EntityID] = []
-        for e in doc.entities where doc.isEditable(layer: e.layer) {
+        let f = PickFilter(doc)
+        for e in doc.entities where f.pickable(e) {
             var pls = GeometryOps.tessellate(e.geometry, doc: doc)
             if pls.allSatisfy({ $0.count < 2 }), let p = pls.first?.first { pls = [[p, p]] }
             if hits(pls, polygon: polygon, mode: mode) { out.append(e.id) }
         }
-        for el in doc.elements where doc.isEditable(layer: el.layer) && el.level == level {
+        for el in doc.elements where f.pickable(el) && el.level == level {
             let f = CommandHelpers.footprint(el, doc: doc)
             guard f.count >= 2 else { continue }
             if hits([f + [f[0]]], polygon: polygon, mode: mode) { out.append(el.id) }
         }
         return out
     }
+
+    // MARK: Lasso (SEL-007)
+
+    /// Lasso drag direction: a counter-clockwise loop selects by crossing, a clockwise loop by window (as a window drawn
+    /// left-to-right vs right-to-left). Nil for degenerate loops.
+    public static func lassoMode(_ loop: [Vec2]) -> Mode? {
+        guard loop.count >= 3 else { return nil }
+        let a = GeometryOps.signedArea(loop)
+        guard abs(a) > 1e-12 else { return nil }
+        return a > 0 ? .crossingPolygon : .windowPolygon
+    }
 }
+

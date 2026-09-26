@@ -95,7 +95,60 @@ enum BIMMoreCommands {
 
     static var globalParam: CommandDef {
         CommandDef("GLOBALPARAM", aliases: ["GLOBALPARAMS", "GLOBALPARAMETERS", "PROJECTPARAM"], category: "Manage", summary: "Global parameters: New/Set a value or =formula, Bind element dimensions (wall height, thickness, opening width…) to an expression, Unbind, List, Delete; bound elements and family formulas update when a value changes.") { ed in
-            let k = try await ed.getKeyword("Global parameter option", ["New", "Set", "Bind", "Unbind", "List", "Delete"], defaultValue: "List") ?? "List"
+            let k = try await ed.getKeyword("Global parameter option", ["New", "Set", "Bind", "Unbind", "List", "Delete", "Project", "Shared"], defaultValue: "List") ?? "List"
+            if k == "Project" {
+                // Project parameters bound to categories (PAR-023).
+                let op = try await ed.getKeyword("Project parameter option", ["New", "Value", "Delete", "List"], defaultValue: "List") ?? "List"
+                switch op {
+                case "New":
+                    guard let n = try await ed.getWord("Parameter name"), !n.isEmpty, n.first!.isLetter else { throw CommandError.invalid("Names start with a letter.") }
+                    let kw = try await ed.getKeyword("Type", ["Text", "Length", "Number", "Integer", "Area", "YesNo", "Material"], defaultValue: "Text") ?? "Text"
+                    let kind: FamilyParameterKind = kw == "YesNo" ? .yesNo : (FamilyParameterKind(rawValue: kw.lowercased()) ?? .text)
+                    let cats = try await ed.getWord("Categories (comma-separated; All)", defaultValue: "All") ?? "All"
+                    let v = try await ed.getWord("Default value or =formula", defaultValue: "") ?? ""
+                    var p = ProjectParameter(name: n, kind: kind, categories: cats.lowercased() == "all" ? [] : cats.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) })
+                    if v.hasPrefix("=") { p.formula = String(v.dropFirst()) } else { p.value = v }
+                    ed.doc.projectParameters.removeAll { $0.name.caseInsensitiveCompare(n) == .orderedSame }
+                    ed.doc.projectParameters.append(p)
+                    ed.print("Project parameter \(n) added to " + (p.categories.isEmpty ? "all categories" : p.categories.joined(separator: ", ")) + ".")
+                case "Value":
+                    guard let n = try await ed.getWord("Parameter name"), let p = ProjectParameters.parameter(n, doc: ed.doc) else { throw CommandError.invalid("Unknown project parameter.") }
+                    let ids = try await ed.getSelection("Select elements")
+                    let v = try await ed.getWord("Value (empty = default)", defaultValue: "") ?? ""
+                    var c = 0
+                    for id in ids { if let i = ed.doc.elementIndex(id), ProjectParameters.applies(p, to: ed.doc.elements[i]) { ed.doc.elements[i].props[p.name] = v.isEmpty ? nil : v; c += 1 } }
+                    ed.print("\(p.name) set on \(c) element(s).")
+                case "Delete":
+                    guard let n = try await ed.getWord("Parameter name"), let i = ed.doc.projectParameters.firstIndex(where: { $0.name.caseInsensitiveCompare(n) == .orderedSame }) else { throw CommandError.invalid("Unknown project parameter.") }
+                    ed.doc.projectParameters.remove(at: i); ed.print("\(n) removed.")
+                default:
+                    if ed.doc.projectParameters.isEmpty { ed.print("No project parameters.") }
+                    for p in ed.doc.projectParameters { ed.print("  \(p.name) [\(p.kind.rawValue)] " + (p.categories.isEmpty ? "all" : p.categories.joined(separator: ",")) + (p.formula.map { " = \($0)" } ?? (p.value.isEmpty ? "" : " default \(p.value)")) + (p.guid.map { " (shared \($0.prefix(8)))" } ?? "")) }
+                }
+                var d = ed.doc; BIMUpdaters.run(&d); ed.doc = d
+                return
+            }
+            if k == "Shared" {
+                // Shared parameter files (PAR-022): export definitions, or import and bind them to categories.
+                let op = try await ed.getKeyword("Shared parameters", ["Export", "Import"], defaultValue: "Import") ?? "Import"
+                let url = try await IOCommands.path(ed, "Shared parameter file (.txt)")
+                if op == "Export" {
+                    var ps = ed.doc.projectParameters
+                    for i in ps.indices where ps[i].guid == nil { ps[i].guid = UUID().uuidString }
+                    ed.doc.projectParameters = ps
+                    try IOCommands.write(ed, url, "shared parameters", { try ProjectParameters.sharedFile(ps).write(to: url, atomically: true, encoding: .utf8) })
+                } else {
+                    guard let text = try? String(contentsOf: url, encoding: .utf8) else { throw CommandError.invalid("Cannot read \(url.path).") }
+                    let defs = ProjectParameters.parseShared(text)
+                    guard !defs.isEmpty else { throw CommandError.invalid("No parameter definitions in \(url.lastPathComponent).") }
+                    let names = try await ed.getWord("Parameters to add (comma-separated; All)", defaultValue: "All") ?? "All"
+                    let pick = names.lowercased() == "all" ? defs : defs.filter { d in names.split(separator: ",").contains { $0.trimmingCharacters(in: .whitespaces).caseInsensitiveCompare(d.name) == .orderedSame } }
+                    let cats = try await ed.getWord("Categories (comma-separated; All)", defaultValue: "All") ?? "All"
+                    let n = ProjectParameters.bind(pick, categories: cats.lowercased() == "all" ? [] : cats.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }, doc: &ed.doc)
+                    ed.print("\(pick.count) shared parameter(s) bound (\(n) new).")
+                }
+                return
+            }
             @MainActor func show() { let v = GlobalParameters.values(ed.doc); for p in ed.doc.globalParameters { ed.print("  \(p.name) = \(v[p.name.lowercased()].map { fmt($0) } ?? p.value)" + (p.formula.map { "  (= \($0))" } ?? "") + "  used by \(GlobalParameters.dependents(p.name, doc: ed.doc).count)") } }
             switch k {
             case "New", "Set":
@@ -116,7 +169,8 @@ enum BIMMoreCommands {
                 let ids = try await ed.getSelection("Select walls, slabs, openings or columns")
                 guard let f = try await ed.getWord("Field [height/thickness/baseOffset/topOffset/width/depth/sill]"), !f.isEmpty else { return }
                 guard let expr = try await ed.getString("Expression over global parameters"), !expr.isEmpty else { return }
-                let vals = GlobalParameters.values(ed.doc)
+                var vals = GlobalParameters.values(ed.doc)
+                for p in ed.doc.projectParameters where p.kind.isNumeric { vals[p.name.lowercased()] = Double(p.value) ?? 1 }
                 guard FamilyExpr.evaluate(expr, vals) != nil else { throw CommandError.invalid("\"\(expr)\" does not evaluate (unknown parameter?).") }
                 var n = 0
                 for id in ids {
@@ -279,7 +333,20 @@ enum BIMMoreCommands {
         CommandDef("VIEWRANGE", aliases: ["VR", "PLANRANGE"], category: "View", summary: "Plan view range relative to the level: Top, Cut plane, Bottom and View depth; elements above the top are left out and those below the bottom (down to the view depth, also from lower levels) are drawn as beyond. Off restores the default.") { ed in
             let u = 1 / ed.doc.units.mm
             let cur = ViewRange.range(ed.doc) ?? ViewRange.Range(top: 2300 * u, cut: 1200 * u, bottom: 0, depth: 0)
-            let r = try await ed.getDistance("Top of the view range", defaultValue: cur.top, keywords: ["Off"])
+            let r = try await ed.getDistance("Top of the view range", defaultValue: cur.top, keywords: ["Off", "Region"])
+            if case .keyword("Region") = r {
+                // Plan regions (DOC-012): a local view range inside a boundary of the current level's plan.
+                let f = try await ed.requirePoint("Specify first point of the plan region")
+                guard let poly = try await ArchitectureCommands.polygonInput(ed, first: f) else { throw CommandError.invalid("A plan region needs at least three points.") }
+                let top = try await ed.getDistance("Top of the region's view range", defaultValue: cur.top).value ?? cur.top
+                let cut = try await ed.getDistance("Cut plane", defaultValue: min(cur.cut, top)).value ?? cur.cut
+                let bottom = try await ed.getDistance("Bottom", defaultValue: cur.bottom).value ?? cur.bottom
+                let depth = try await ed.getDistance("View depth", defaultValue: min(cur.depth, bottom)).value ?? bottom
+                guard top >= cut, cut >= bottom, bottom >= depth else { throw CommandError.invalid("Use top ≥ cut ≥ bottom ≥ view depth.") }
+                let id = PlanRegions.add(poly, range: ViewRange.Range(top: top, cut: cut, bottom: bottom, depth: depth), level: ed.doc.currentLevel, doc: &ed.doc)
+                ed.print("Plan region #\(id) created (cut \(fmt(cut)), bottom \(fmt(bottom))).")
+                return
+            }
             if case .keyword = r { ViewRange.store(nil, in: &ed.doc); ed.print("View range off."); return }
             guard let top = r.value else { return }
             let cut = try await ed.getDistance("Cut plane", defaultValue: min(cur.cut, top)).value ?? cur.cut

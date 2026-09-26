@@ -29,6 +29,7 @@ public enum SysVarCatalog {
     CDATE|r|||1|Current date and time (YYYYMMDD.HHMMSS)
     CECOLOR|s|ByLayer||0|Color of new objects
     CELTSCALE|r|1|>0|0|Linetype scale of new objects
+    CETRANSPARENCY|s|ByLayer||0|Transparency of new objects: ByLayer, ByBlock or 0-90
     CELTYPE|s|ByLayer||0|Linetype of new objects
     CELWEIGHT|s|ByLayer||0|Lineweight of new objects
     CENTEREXE|r|0|>=0|0|Centre line extension
@@ -114,6 +115,7 @@ public enum SysVarCatalog {
     HPSCALE|r|1|>0|0|Hatch pattern scale
     HPSEPARATE|b|0||0|Separate hatch per boundary
     HPTRANSPARENCY|s|use current||0|Hatch transparency
+    PLOTTRANSPARENCY|b|1||0|Plots show object and layer transparency
     INSBASE|p|0,0||0|Insertion base point of the drawing
     INSNAME|s|||0|Default block name for INSERT
     INSUNITS|i|4|0..24|0|Drawing units for inserted content
@@ -200,6 +202,7 @@ public enum SysVarCatalog {
     TILEMODE|b|1||0|Model (1) or layout (0) tab
     TOOLTIPS|b|1||0|Tooltips
     TRACEWID|r|1|>=0|0|Default TRACE width
+    TRANSPARENCYDISPLAY|b|1||0|Display object and layer transparency
     TRIMMODE|b|1||0|Trim edges when filleting/chamfering
     UCSFOLLOW|b|0||0|Plan view when the UCS changes
     UCSICON|i|3|0..3|0|UCS icon display

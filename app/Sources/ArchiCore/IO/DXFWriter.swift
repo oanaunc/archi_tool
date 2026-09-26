@@ -43,7 +43,11 @@ public enum DXFWriter {
             if u.value == 10 || u.value == 13 { out += " "; continue }
             if u.value < 128 { out.unicodeScalars.append(u) }
             else if u.value <= 0xFFFF { out += String(format: "\\U+%04X", u.value) }
-            else { out += "?" }
+            else {
+                // Outside the Basic Multilingual Plane: UTF-16 surrogate pair (as AutoCAD writes it).
+                let v = u.value - 0x10000
+                out += String(format: "\\U+%04X\\U+%04X", 0xD800 + (v >> 10), 0xDC00 + (v & 0x3FF))
+            }
         }
         return out
     }
@@ -711,14 +715,19 @@ public enum DXFWriter {
             let style = DXFWriter.enc(DXFWriter.safeName(t.style.isEmpty ? "Standard" : t.style))
             if t.content.contains("\n") || t.width > 0 || entityProps["mtext"] != nil || entityProps[DraftRendering.textMaskProp] != nil {
                 head("MTEXT", s, owner: owner, sub: "AcDbMText")
+                // Columns (ANN-006) travel as the R2007+ ACAD XDATA block, which R2000 readers ignore safely.
+                if let spec = entityProps[DraftRendering.textColumnsProp], let c = MTextCodes.columns(spec: spec, text: t) {
+                    pendingXData += MTextCodes.columnXData(c).map { ($0.code, DXFWriter.enc($0.value)) }
+                }
                 pt(10, t.position); g(40, t.height)
                 if t.width > 0 { g(41, t.width) }
                 let col: Int = t.halign == .left ? 1 : (t.halign == .center ? 2 : 3)
                 let row: Int = (t.valign == .top) ? 0 : (t.valign == .middle ? 1 : 2)
                 g(71, row * 3 + col); g(72, 1)
-                var content = DXFWriter.enc(Writer.mtextEscape(t.content).replacingOccurrences(of: "\\U+", with: "\u{1}"))
+                // Stacks (\S…;), list paragraphs and escapes go through the shared MTEXT codec (ANN-005/006).
+                var content = DXFWriter.enc(MTextCodes.encode(t.content).replacingOccurrences(of: "\\U+", with: "\u{1}"))
                 content = content.replacingOccurrences(of: "\u{1}", with: "\\U+")
-                if let raw = entityProps["mtext"], DXFReader.stripMText(raw) == t.content { content = DXFWriter.enc(raw) }
+                if let raw = entityProps["mtext"], DXFReader.mtextContent(raw) == t.content { content = DXFWriter.enc(raw) }
                 var chunks: [String] = []
                 var cur = ""
                 for ch in content { cur.append(ch); if cur.count >= 240 && ch != "\\" { chunks.append(cur); cur = "" } }

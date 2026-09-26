@@ -200,18 +200,28 @@ public enum MeshBuilder {
             let z0 = range.z0, z1 = range.z1
             let zb = BIMConstraints.wallNominalBase(el, doc: doc)
             guard z1 - z0 > 1e-9 else { return [] }
-            for pc in ctx.pieces(f) { acc.prism(pc.poly, z0: z0, z1: z1, smooth: f.isCurved) }
+            // Compound wall types (BIM-014): each ply is its own solid with its own material, so 3D views, sections
+            // (cut patterns per ply) and exports show the build-up.
+            let plies = WallPlies.bands(g, doc: doc, halfThickness: f.h)
+            var plyAcc = [MeshAcc](repeating: MeshAcc(), count: plies.count)
+            func emit(_ poly: [Vec2], _ za: Double, _ zb2: Double) {
+                guard plies.count > 1 else { acc.prism(poly, z0: za, z1: zb2, smooth: f.isCurved); return }
+                for (k, band) in plies.enumerated() {
+                    for part in WallPlies.clip(poly, f: f, tlo: band.tlo, thi: band.thi) { plyAcc[k].prism(part, z0: za, z1: zb2, smooth: f.isCurved) }
+                }
+            }
+            for pc in ctx.pieces(f) { emit(pc.poly, z0, z1) }
             for c in ctx.cuts(f) {
                 for part in wallCutBands(c, f: f, z0: z0, z1: z1, openingBase: zb) {
                     let poly = f.face(-f.h, part.s0, part.s1) + f.face(f.h, part.s0, part.s1).reversed()
                     for b in part.bands {
                         switch b.kind {
-                        case .solid: acc.prism(poly, z0: b.z0, z1: b.z1, smooth: f.isCurved)
+                        case .solid: emit(poly, b.z0, b.z1)
                         case .niche(let depth, let fromLeft):
                             guard depth < 2 * f.h - 1e-9 else { continue }
                             let t0 = fromLeft ? -f.h : -f.h + depth, t1 = fromLeft ? f.h - depth : f.h
                             let back = f.face(t0, part.s0, part.s1) + f.face(t1, part.s0, part.s1).reversed()
-                            acc.prism(back, z0: b.z0, z1: b.z1, smooth: f.isCurved)
+                            emit(back, b.z0, b.z1)
                         case .open: continue
                         }
                     }
@@ -221,12 +231,33 @@ public enum MeshBuilder {
             roofInfill(f, wall: el, z1: z1, ctx: ctx, into: &acc)
             var mat = el.material ?? "Plaster"
             if let tn = g.wallType, let wt = doc.wallTypes.first(where: { $0.name == tn }), let p = wt.plies.first { mat = p.material }
+            // Elevation profile (BIM-020), then slant/taper (BIM-023).
+            if let cutter = WallShapes.profileSolid(g, f: f, zBase: zb) {
+                let pe = WallShapes.profileEdges(g, f: f, zBase: zb)
+                acc = WallShapes.trim(acc, to: cutter); acc.edges = pe
+                for k in plyAcc.indices { plyAcc[k] = WallShapes.trim(plyAcc[k], to: cutter); plyAcc[k].edges = pe }
+            }
+            if g.isSlantedOrTapered {
+                WallShapes.shape(&acc, g, f: f, zBase: z0, height: z1 - z0)
+                for k in plyAcc.indices { WallShapes.shape(&plyAcc[k], g, f: f, zBase: z0, height: z1 - z0) }
+            }
+            // Reveals (BIM-021) are grooves cut into the faces.
+            let reveals = g.sweeps.filter(\.isReveal)
+            if !reveals.isEmpty {
+                var cutter = MeshAcc()
+                var grooves: [[Vec3]] = []
+                for sw in reveals { WallPlies.revealCutter(sw, f, z0: z0, ctx: ctx, into: &cutter, edges: &grooves) }
+                acc = WallPlies.subtract(acc, cutter, extraEdges: plies.count > 1 ? [] : grooves)
+                for k in plyAcc.indices { plyAcc[k] = WallPlies.subtract(plyAcc[k], cutter, extraEdges: k == 0 || k == plyAcc.count - 1 ? grooves : []) }
+            }
             var out = [acc.group(el.id, kind, mat)].compactMap { $0 }
-            for (i, sw) in g.sweeps.enumerated() {
+            for (k, band) in plies.enumerated() where plies.count > 1 {
+                if let grp = plyAcc[k].group(el.id, kind, band.material ?? mat) { out.append(grp) }
+            }
+            for sw in g.sweeps where !sw.isReveal {
                 var sa = MeshAcc()
                 wallSweep(sw, f, z0: z0, ctx: ctx, into: &sa)
                 if let grp = sa.group(el.id, "wallSweep", sw.material ?? mat) { out.append(grp) }
-                _ = i
             }
             return out
 
@@ -266,6 +297,21 @@ public enum MeshBuilder {
                 if o.threshold {
                     box(&metal, s0, s1, -h - 10 * u, h + 10 * u, zb, zb + 15 * u)
                 }
+                if o.variant == .pocket {
+                    // Pocket door: the leaf stands half open in the wall plane, its other half inside the pocket.
+                    let lw2 = min(20 * u, h * 0.4), lf = b - a
+                    let (p0, p1) = o.flipHand ? (a + lf * 0.5, b + lf * 0.5) : (a - lf * 0.5, b - lf * 0.5)
+                    box(&frame, p0, p1, -lw2, lw2, zb, ztop)
+                } else if o.variant == .biFold {
+                    // Bi-fold: panels folded to the jambs as thin plates at the zig-zag angle (approximated by slabs).
+                    let n = max(2, min(8, Int(((b - a) / (450 * u)).rounded())))
+                    let panels = n % 2 == 0 ? n : n + 1
+                    let q = (b - a) / Double(panels)
+                    for k in 0..<panels {
+                        let x0 = a + q * Double(k), off = (k % 2 == 0 ? 1.0 : -1.0) * 15 * u
+                        box(&frame, x0 + 2 * u, x0 + q - 2 * u, side * off - 12 * u, side * off + 12 * u, zb, ztop)
+                    }
+                } else {
                 switch o.doorStyle {
                 case .double:
                     let mid = (a + b) / 2
@@ -277,6 +323,7 @@ public enum MeshBuilder {
                     box(&frame, a, b, -20 * u, 20 * u, zb, ztop)
                 default:
                     box(&frame, a, b, min(t0, t1), max(t0, t1), zb, ztop)
+                }
                 }
                 // Handle on the latch side, both faces.
                 if o.doorStyle != .garage && o.doorStyle != .revolving {
@@ -447,11 +494,21 @@ public enum MeshBuilder {
                 let len = a.distance(to: b)
                 let n = max(1, Int((len / (1200 * u)).rounded(.up)))
                 for k in 0..<n { posts.append(a.lerp(b, Double(k) / Double(n))) }
-                let d = (b - a).normalized.perp * rw
-                acc.prism([a - d, b - d, b + d, a + d], z0: zt - rd, z1: zt)
+                if !g.isSloped {
+                    let d = (b - a).normalized.perp * rw
+                    acc.prism([a - d, b - d, b + d, a + d], z0: zt - rd, z1: zt)
+                }
+            }
+            if g.isSloped {
+                // Railing on a stair or ramp: the top rail follows the path heights.
+                let rail = path.map { Vec3($0.x, $0.y, zt - rd / 2 + g.z(at: $0)) }
+                SweepMesh.sweep([Vec2(-rw, -rd / 2), Vec2(rw, -rd / 2), Vec2(rw, rd / 2), Vec2(-rw, rd / 2)], along: rail, into: &acc)
             }
             posts.append(path[path.count - 1])
-            for p in posts { acc.prism([p + Vec2(-ps, -ps), p + Vec2(ps, -ps), p + Vec2(ps, ps), p + Vec2(-ps, ps)], z0: zb, z1: zt - rd) }
+            for p in posts {
+                let dz = g.z(at: p)
+                acc.prism([p + Vec2(-ps, -ps), p + Vec2(ps, -ps), p + Vec2(ps, ps), p + Vec2(-ps, ps)], z0: zb + dz, z1: zt - rd + dz)
+            }
             return [acc.group(el.id, kind, el.material ?? "Steel")].compactMap { $0 }
 
         case .space:

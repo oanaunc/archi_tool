@@ -42,13 +42,16 @@ struct SheetView: View {
                     .onAppear { sheetName = layout?.name ?? "" }
                     .onChange(of: layoutIndex) { _ in sheetName = layout?.name ?? "" }
                 Picker("Paper", selection: Binding(get: { layout?.paper.name ?? "A3" }, set: setPaper)) {
-                    ForEach(PaperSize.standard, id: \.name) { p in Text("\(p.name) (\(fmt(p.width, 0))×\(fmt(p.height, 0)))").tag(p.name) }
+                    ForEach(PaperCatalog.all(model.doc) + (layout.map { l in PaperCatalog.all(model.doc).contains { $0.name == l.paper.name } ? [] : [l.paper] } ?? []), id: \.name) { p in Text("\(p.name) (\(fmt(p.width, 0))×\(fmt(p.height, 0)))").tag(p.name) }
                 }.frame(maxWidth: 190)
             }
             Menu("New Sheet") {
-                ForEach(PaperSize.standard, id: \.name) { p in
-                    Button("\(p.name) landscape") { newSheet(p) }
+                ForEach([("ISO", PaperCatalog.iso), ("ANSI", PaperCatalog.ansi), ("ARCH", PaperCatalog.arch), ("Custom", PaperCatalog.custom(model.doc))], id: \.0) { group, sizes in
+                    if !sizes.isEmpty {
+                        Menu(group) { ForEach(sizes, id: \.name) { p in Button("\(p.name) landscape (\(fmt(p.width, 0))×\(fmt(p.height, 0)))") { newSheet(p) } } }
+                    }
                 }
+                Button("Custom Size…") { customPaper() }
                 Divider()
                 ForEach(PaperSize.standard.prefix(5), id: \.name) { p in
                     Button("\(p.name) portrait") { newSheet(PaperSize(name: p.name + " portrait", width: p.height, height: p.width)) }
@@ -81,6 +84,10 @@ struct SheetView: View {
                             Button(locked ? "Unlock Viewport" : "Lock Viewport") {
                                 let li = layoutIndex
                                 model.editor.transaction(locked ? "Unlock Viewport" : "Lock Viewport") { ViewportLock.set(&$0, layoutIndex: li, viewport: i, locked: !locked) }
+                            }
+                            Button("Maximise (VPMAX)") { model.selectedSheetViewport = i; model.runCommand("VPMAX \(i + 1)") }.disabled(vp.view != .plan && vp.view != .ceiling)
+                            if SheetTools.clip(model.doc, layout: l.name, viewport: i) != nil {
+                                Button("Remove Clip") { let li = layoutIndex; model.editor.transaction("Remove Clip") { SheetTools.setClip(&$0, layoutIndex: li, viewport: i, nil) } }.disabled(locked)
                             }
                             Button("Remove", role: .destructive) { removeViewport(i) }.disabled(locked)
                         }
@@ -122,6 +129,20 @@ struct SheetView: View {
         sheetName = layout?.name ?? ""
     }
 
+    /// Asks for a custom paper size, stores it in the drawing and starts a sheet on it.
+    private func customPaper() {
+        let a = NSAlert(); a.messageText = "Custom Paper Size"; a.informativeText = "Width and height in millimetres (50–5000)."
+        a.addButton(withTitle: "Create Sheet"); a.addButton(withTitle: "Cancel")
+        let v = NSStackView(frame: NSRect(x: 0, y: 0, width: 260, height: 82)); v.orientation = .vertical; v.alignment = .leading
+        let n = NSTextField(string: "Custom 1"), w = NSTextField(string: "700"), h = NSTextField(string: "500")
+        for f in [n, w, h] { f.frame.size.width = 240; v.addArrangedSubview(f) }
+        a.accessoryView = v
+        guard a.runModal() == .alertFirstButtonReturn, let wv = Double(w.stringValue), let hv = Double(h.stringValue) else { return }
+        var made: PaperSize?
+        model.editor.transaction("Custom Paper") { made = PaperCatalog.addCustom(&$0, name: n.stringValue, width: wv, height: hv) }
+        if let p = made { newSheet(p) } else { model.editor.print("Invalid paper size (name must be new, sides 50–5000 mm).") }
+    }
+
     private func renameSheet() {
         let i = layoutIndex, name = sheetName.trimmingCharacters(in: .whitespaces)
         guard i >= 0, !name.isEmpty, name != model.doc.layouts[i].name else { return }
@@ -130,7 +151,7 @@ struct SheetView: View {
 
     private func setPaper(_ name: String) {
         let i = layoutIndex
-        guard i >= 0, let p = PaperSize.standard.first(where: { $0.name == name }) else { return }
+        guard i >= 0, let p = PaperCatalog.find(name, doc: model.doc) else { return }
         model.editor.transaction("Paper Size") { $0.layouts[i].paper = p }
     }
 
@@ -146,7 +167,7 @@ struct SheetView: View {
         guard i >= 0 else { return }
         guard !ViewportLock.isLocked(model.doc, layoutIndex: i, viewport: v) else { model.editor.print("The viewport is locked (VPLOCK Off to unlock)."); return }
         model.editor.transaction("Remove Viewport") { d in
-            if d.layouts[i].viewports.indices.contains(v) { d.layouts[i].viewports.remove(at: v); ViewportLock.removed(&d, layoutIndex: i, viewport: v) }
+            if d.layouts[i].viewports.indices.contains(v) { d.layouts[i].viewports.remove(at: v); ViewportLock.removed(&d, layoutIndex: i, viewport: v); SheetTools.viewportRemoved(&d, layoutIndex: i, viewport: v) }
         }
     }
 
@@ -237,7 +258,7 @@ final class SheetCanvasNSView: NSView {
     /// Device position of the paper's lower-left corner.
     var pan = CGPoint.zero
     var needsFit = true
-    var selectedViewport: Int?
+    var selectedViewport: Int? { didSet { model?.selectedSheetViewport = selectedViewport } }
     private var cache: [String: [DrawEntry]] = [:]
     private var cacheStamp = -1
     private var dragStart: CGPoint?
@@ -248,6 +269,20 @@ final class SheetCanvasNSView: NSView {
 
     override var isFlipped: Bool { false }
     override var acceptsFirstResponder: Bool { true }
+
+    // Views dragged from the project browser become viewports at the view scale (SHT-010).
+    override func viewDidMoveToWindow() { super.viewDidMoveToWindow(); registerForDraggedTypes([.string]) }
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        (sender.draggingPasteboard.string(forType: .string).flatMap(ViewDrop.parse) != nil) ? .copy : []
+    }
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        guard let model, let s = sender.draggingPasteboard.string(forType: .string), ViewDrop.parse(s) != nil else { return false }
+        let q = toPaper(convert(sender.draggingLocation, from: nil)), li = layoutIndex
+        var made: Int?
+        model.editor.transaction("Place View") { made = ViewDrop.place(s, at: q, layoutIndex: li, doc: &$0) }
+        if let made { selectedViewport = made; needsDisplay = true }
+        return made != nil
+    }
 
     private var layout: ArchiCore.Layout? {
         guard let m = model, m.doc.layouts.indices.contains(layoutIndex) else { return nil }
@@ -291,6 +326,19 @@ final class SheetCanvasNSView: NSView {
         ctx.setFillColor(.white)
         ctx.fill(paperRect)
         ctx.restoreGState()
+        // Guide grid (SHEETGRID, SHT-011): screen only, never plotted.
+        let gs = SheetTools.gridSpacing(doc, layout: l.name)
+        if gs > 0, gs * zoom >= 4 {
+            ctx.saveGState()
+            ctx.setStrokeColor(CGColor(srgbRed: 0.35, green: 0.6, blue: 1, alpha: 0.22)); ctx.setLineWidth(0.5)
+            var segs: [CGPoint] = []
+            var x = 0.0
+            while x <= l.paper.width + 1e-9 { segs += [CGPoint(x: x, y: 0).applying(paperToDevice), CGPoint(x: x, y: l.paper.height).applying(paperToDevice)]; x += gs }
+            var y = 0.0
+            while y <= l.paper.height + 1e-9 { segs += [CGPoint(x: 0, y: y).applying(paperToDevice), CGPoint(x: l.paper.width, y: y).applying(paperToDevice)]; y += gs }
+            ctx.strokeLineSegments(between: segs)
+            ctx.restoreGState()
+        }
         ctx.saveGState()
         ctx.clip(to: paperRect)
         SheetComposer.draw(doc: doc, layoutIndex: layoutIndex, in: ctx, paperToDevice: paperToDevice, devicePerMM: zoom,
@@ -357,7 +405,8 @@ final class SheetCanvasNSView: NSView {
                   model.doc.layouts[layoutIndex].viewports.indices.contains(i) else { return }
             // Live move without recording undo; the final move is committed on mouse up.
             let d = Vec2((p.x - s.x) / zoom, (p.y - s.y) / zoom)
-            movePreview = Vec2(dragOffset.width, dragOffset.height) + d
+            // Snap the viewport corner to the sheet's guide grid when one is set (SHT-011).
+            movePreview = SheetTools.snap(Vec2(dragOffset.width, dragOffset.height) + d, spacing: SheetTools.gridSpacing(model.doc, layout: model.doc.layouts[layoutIndex].name))
             needsDisplay = true
         case .none: break
         }
@@ -381,7 +430,7 @@ final class SheetCanvasNSView: NSView {
             let li = layoutIndex
             if ViewportLock.isLocked(model.doc, layoutIndex: li, viewport: i) { NSSound.beep(); model.editor.print("The viewport is locked."); return }
             model.editor.transaction("Remove Viewport") { d in
-                if d.layouts[li].viewports.indices.contains(i) { d.layouts[li].viewports.remove(at: i); ViewportLock.removed(&d, layoutIndex: li, viewport: i) }
+                if d.layouts[li].viewports.indices.contains(i) { d.layouts[li].viewports.remove(at: i); ViewportLock.removed(&d, layoutIndex: li, viewport: i); SheetTools.viewportRemoved(&d, layoutIndex: li, viewport: i) }
             }
             selectedViewport = nil
             return

@@ -24,6 +24,8 @@ public enum DimAssociation {
         }
     }
     public static func point(_ g: Geometry, key: String) -> Vec2? {
+        // "f<fraction>": a point at that fraction of the curve length (points picked along an object).
+        if key.hasPrefix("f"), let f = Double(key.dropFirst()) { return Modify.point(on: g, atFraction: f, doc: nil) }
         if key.hasPrefix("r"), let a = Double(key.dropFirst()) {
             switch g {
             case .circle(let c): return c.center + Vec2.polar(c.radius, a)
@@ -91,8 +93,18 @@ public enum DimAssociation {
         return m.count
     }
 
+    /// Fraction key of the point of `g` nearest `p` ("f<fraction of length>").
+    public static func fractionKey(_ g: Geometry, near p: Vec2) -> String? {
+        guard let path = Modify.curvePath(g, doc: nil), path.length > 1e-12 else { return nil }
+        return "f" + fmt(path.length(at: path.closest(p).s) / path.length, 12)
+    }
+
     static func resolve(_ ref: (EntityID, String), doc: ArchiDocument) -> Vec2? {
         guard let g = doc.entity(ref.0)?.geometry else { return nil }
+        // "i<id>": intersection of this line's carrier with another line's (vertex of an angular dimension between lines).
+        if ref.1.hasPrefix("i"), let other = Int(ref.1.dropFirst()), case .line(let a) = g, case .line(let b)? = doc.entity(other)?.geometry {
+            return GeometryOps.lineIntersection(a.a, a.b, b.a, b.b)
+        }
         if ref.1 == "c" {
             switch g { case .circle(let c): return c.center; case .arc(let a): return a.center; default: return nil }
         }
@@ -131,6 +143,58 @@ public enum DimAssociation {
         var changed = false
         for i in doc.entities.indices where doc.entities[i].props[prop] != nil {
             if let (g, t) = recompute(doc.entities[i], doc: doc) { doc.entities[i].geometry = g; doc.entities[i].props[prop] = t; changed = true }
+        }
+        return changed
+    }
+}
+
+// MARK: - Associative leaders (ANN-047, ANN-049)
+
+/// Leaders and multileaders whose arrowhead touches an object stay attached to it: prop "leaderAssoc" = "id:key" (a
+/// characteristic point, see `DimAssociation.keyPoints`) or "id:f<fraction>" (a point at that fraction of the curve
+/// length). When the object changes, the whole leader (arrowhead, landing, text) moves with the arrowhead's new location.
+public enum LeaderAssociation {
+    public static let prop = "leaderAssoc"
+
+    /// Attaches a leader's arrowhead to the object under it (within `tol`). Returns true when attached.
+    @discardableResult
+    public static func associate(_ e: inout Entity, doc: ArchiDocument, tol: Double) -> Bool {
+        guard case .leader(let l) = e.geometry, let head = l.points.first else { return false }
+        if let r = DimAssociation.findRef(head, doc: doc, tol: tol, exclude: [e.id]) {
+            e.props[prop] = "\(r.0):\(r.1)"; return true
+        }
+        var best: (Entity, Double)?
+        for o in doc.entities where o.id != e.id {
+            switch o.geometry { case .dimension, .leader, .text, .hatch, .table, .image: continue; default: break }
+            let d = GeometryOps.distance(from: head, to: o.geometry, doc: doc)
+            if d <= tol, d < (best?.1 ?? .infinity) { best = (o, d) }
+        }
+        guard let (o, _) = best, let path = Modify.curvePath(o.geometry, doc: doc), path.length > 1e-12 else { return false }
+        let s = path.closest(head).s
+        e.props[prop] = "\(o.id):f\(fmt(path.length(at: s) / path.length, 12))"
+        return true
+    }
+
+    static func resolve(_ v: String, doc: ArchiDocument) -> Vec2?? {
+        let parts = v.split(separator: ":", maxSplits: 1).map(String.init)
+        guard parts.count == 2, let id = Int(parts[0]) else { return .some(nil) }
+        guard let g = doc.entity(id)?.geometry else { return .some(nil) }
+        if parts[1].hasPrefix("f"), let f = Double(parts[1].dropFirst()) { return .some(Modify.point(on: g, atFraction: f, doc: doc)) }
+        return .some(DimAssociation.point(g, key: parts[1]))
+    }
+
+    /// Moves attached leaders with their objects; drops attachments to erased objects. Returns true if anything changed.
+    @discardableResult
+    public static func updateAll(_ doc: inout ArchiDocument) -> Bool {
+        var changed = false
+        for i in doc.entities.indices {
+            guard let v = doc.entities[i].props[prop], case .leader(var l) = doc.entities[i].geometry, let head = l.points.first else { continue }
+            guard let r = resolve(v, doc: doc), let p = r else { doc.entities[i].props[prop] = nil; changed = true; continue }
+            let d = p - head
+            guard d.length > 1e-9 else { continue }
+            l.points = l.points.map { $0 + d }
+            doc.entities[i].geometry = .leader(l)
+            changed = true
         }
         return changed
     }

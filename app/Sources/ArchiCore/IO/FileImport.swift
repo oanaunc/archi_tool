@@ -5,9 +5,10 @@ import Foundation
 public enum FileImport {
     public static let importFormats = ["archi", "dxf", "dwg", "ifc", "ifczip", "svg", "obj", "usda", "usdz", "usd", "stl", "3mf", "gltf", "glb", "ply", "off", "amf", "dae", "stp", "step",
                                        "geojson", "cityjson", "shp", "osm", "asc", "xlsx", "csv", "tsv", "txt", "xyz", "pts", "las", "igs", "iges", "fbx", "pdf", "dwfx", "dwf", "dgn",
-                                       "png", "jpg", "jpeg", "gif", "bmp", "tif", "tiff", "webp", "heic", "heif", "avif"]
+                                       "png", "jpg", "jpeg", "gif", "bmp", "tif", "tiff", "webp", "heic", "heif", "avif",
+                                       "e57", "brep", "brp", "architemplate"]
     public static let exportFormats = ["3mf", "usda", "usdz", "geojson", "dxf12", "points", "stp", "step", "ply", "plt", "hpgl", "xlsx", "ifczip", "dwg", "analytical", "opensees", "tcl", "laser", "igs", "iges", "fbx", "html", "dgn", "gbxml", "cobie", "dae",
-                                       "kml", "kmz", "bcfzip", "bcf", "boq", "svglayers"]
+                                       "kml", "kmz", "bcfzip", "bcf", "boq", "svglayers", "brep", "e57", "architemplate", "openfoam"]
 
     public enum ImportError: Error, LocalizedError {
         case unsupported(String), unreadable(String)
@@ -47,6 +48,7 @@ public enum FileImport {
             }
             return "csv"
         case "step", "stp", "p21": return "step"
+        case "brp": return "brep"
         case "glb": return "gltf"
         case "tif", "tiff", "png", "jpg", "jpeg", "gif", "bmp", "webp", "heic", "heif", "avif": return "image"
         case "dem": return f
@@ -113,6 +115,14 @@ public enum FileImport {
         case "igs", "iges":
             let ents = try IGES.read(try readText(url))
             return (entityDoc(ents), "\(ents.count) IGES curves")
+        case "e57":
+            let r = try E57.entities(try Data(contentsOf: url), options: PointCloudOptions(scale: 1000 / reference.units.mm))
+            return (entityDoc(r.entities, native: true), "\(r.entities.count) of \(r.total) E57 points")
+        case "brep":
+            let ents = try BREPImporter.entities(try readText(url), unitMM: reference.units.mm)
+            return (entityDoc(ents, native: true), "\(ents.count) BREP shapes (\(ents.reduce(0) { if case .solid(let s) = $1.geometry { return $0 + s.meshTriangles.count / 3 }; return $0 }) triangles)")
+        case "architemplate":
+            return (try ArchiTemplate.decode(Data(contentsOf: url)).document, "template")
         case "las":
             let r = try LASReader.entities(try Data(contentsOf: url), options: PointCloudOptions(scale: 1000 / reference.units.mm))
             return (entityDoc(r.entities, native: true), "\(r.entities.count) of \(r.total) LAS points")
@@ -248,6 +258,13 @@ public enum FileImport {
             try SVGExporter.exportLayered(doc: doc, entries: entries, bounds: b.expanded(by: max(b.width, b.height) * 0.02), background: nil).write(to: url, atomically: true, encoding: .utf8)
         case "html", "htm", "viewer": try ViewerExport.html(doc).write(to: url, atomically: true, encoding: .utf8)
         case "dgn": try DGN.write(doc).write(to: url, options: .atomic)
+        case "brep", "brp": try BREPExporter.export(MeshBuilder.build(doc: doc), unitMM: unitMM).write(to: url, atomically: true, encoding: .utf8)
+        case "e57":
+            let pts = E57.points(from: doc)
+            guard !pts.isEmpty else { throw ImportError.unsupported("e57 (the drawing has no points)") }
+            try E57.write([E57.Scan(name: doc.info.name, points: pts)]).write(to: url, options: .atomic)
+        case "architemplate": try ArchiTemplate.save(doc, to: url)
+        case "openfoam": _ = try WindStudy.writeCase(doc, to: url, options: WindStudy.Options.from(doc))
         case "fbx": try FBX.export(MeshBuilder.build(doc: doc), materials: doc.materials, unitMM: unitMM, name: doc.info.name).write(to: url, options: .atomic)
         case "igs", "iges": try IGES.export(doc).write(to: url, atomically: true, encoding: .ascii)
         case "laser", "lasersvg", "cnc":

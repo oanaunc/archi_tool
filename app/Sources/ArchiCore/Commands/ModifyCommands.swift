@@ -8,9 +8,24 @@ extension Editor {
         guard let i = doc.entityIndex(id) else { return [] }
         if gs.isEmpty { doc.remove(ids: [id]); return [] }
         let proto = doc.entities[i]
-        doc.entities[i].geometry = gs[0]
+        // Pieces of construction lines become rays or lines when they lose a far end (DRW-002/003).
+        let far = ConstructionLines.farEnds(proto)
+        func shaped(_ g: Geometry) -> (Geometry, String?) {
+            guard !far.isEmpty else { return (g, proto.props[ConstructionLines.prop]) }
+            let r = ConstructionLines.reclassify(g, farEnds: far)
+            return (r.geometry, r.kind?.rawValue)
+        }
+        let first = shaped(gs[0])
+        doc.entities[i].geometry = first.0
+        if !far.isEmpty { doc.entities[i].props[ConstructionLines.prop] = first.1 }
         var out = [id]
-        for g in gs.dropFirst() { var e = proto; e.geometry = g; out.append(doc.add(e)) }
+        for g in gs.dropFirst() {
+            var e = proto
+            let sh = shaped(g)
+            e.geometry = sh.0
+            if !far.isEmpty { e.props[ConstructionLines.prop] = sh.1 }
+            out.append(doc.add(e))
+        }
         return out
     }
 
@@ -964,31 +979,58 @@ enum ModifyCommands {
         default: break
         }
     }
-    static func matchEntity(_ src: Entity, _ dst: inout Entity) {
-        dst.layer = src.layer; dst.color = src.color; dst.linetype = src.linetype; dst.lineweight = src.lineweight
-        if let s = src.props["ltscale"] { dst.props["ltscale"] = s }
+    /// Properties MATCHPROP transfers (MOD-064 pen/attribute pick-apply): all by default, a subset chosen with Settings
+    /// (document variable MATCHPROPSET, comma-separated).
+    static let matchKinds = ["Color", "Layer", "Ltype", "Ltscale", "Lineweight", "Transparency", "Material", "Text", "Dim", "Hatch", "Polyline"]
+    static func matchSet(_ doc: ArchiDocument) -> Set<String> {
+        guard let v = doc.variable("MATCHPROPSET") else { return Set(matchKinds) }
+        return Set(v.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.compactMap { k in matchKinds.first { $0.caseInsensitiveCompare(k) == .orderedSame } })
+    }
+    static func matchEntity(_ src: Entity, _ dst: inout Entity, only set: Set<String>? = nil) {
+        let on = set ?? Set(matchKinds)
+        if on.contains("Layer") { dst.layer = src.layer }
+        if on.contains("Color") { dst.color = src.color }
+        if on.contains("Ltype") { dst.linetype = src.linetype }
+        if on.contains("Lineweight") { dst.lineweight = src.lineweight }
+        if on.contains("Ltscale"), let s = src.props["ltscale"] { dst.props["ltscale"] = s }
+        if on.contains("Transparency") { dst.props["transparency"] = src.props["transparency"] }
         switch (src.geometry, dst.geometry) {
-        case (.text(let s), .text(var d)): d.height = s.height; d.style = s.style; dst.geometry = .text(d)
-        case (.dimension(let s), .dimension(var d)): d.style = s.style; dst.geometry = .dimension(d)
-        case (.hatch(let s), .hatch(var d)): d.pattern = s.pattern; d.scale = s.scale; d.angle = s.angle; d.fill = s.fill; dst.geometry = .hatch(d)
-        case (.polyline(let s), .polyline(var d)): d.width = s.width; dst.geometry = .polyline(d)
-        case (.leader(let s), .leader(var d)): d.textHeight = s.textHeight; dst.geometry = .leader(d)
+        case (.text(let s), .text(var d)) where on.contains("Text"): d.height = s.height; d.style = s.style; dst.geometry = .text(d)
+        case (.dimension(let s), .dimension(var d)) where on.contains("Dim"): d.style = s.style; dst.geometry = .dimension(d)
+        case (.hatch(let s), .hatch(var d)) where on.contains("Hatch"): d.pattern = s.pattern; d.scale = s.scale; d.angle = s.angle; d.fill = s.fill; dst.geometry = .hatch(d)
+        case (.polyline(let s), .polyline(var d)) where on.contains("Polyline"): d.width = s.width; dst.geometry = .polyline(d)
+        case (.leader(let s), .leader(var d)) where on.contains("Text"): d.textHeight = s.textHeight; dst.geometry = .leader(d)
         default: break
         }
     }
 
     static var properties: [CommandDef] { [
         CommandDef("MATCHPROP", aliases: ["MA", "PAINTER"], category: "Modify", summary: "Applies the properties of a source object to other objects.") { ed in
-            guard case .pick(let pk) = try await ed.pickObject("Select source object") else { return }
+            var source: Editor.PickAnswer
+            while true {
+                source = try await ed.pickObject("Select source object or [Settings]", keywords: ["Settings"])
+                guard case .keyword("Settings") = source else { break }
+                // Settings: the properties to transfer, e.g. "Color,Layer" (All / None).
+                let cur = matchSet(ed.doc)
+                guard let v = try await ed.getWord("Enter properties to match [All/None] (\(matchKinds.joined(separator: ",")))",
+                                                   defaultValue: matchKinds.filter(cur.contains).joined(separator: ",")) else { continue }
+                if v.caseInsensitiveCompare("All") == .orderedSame { ed.doc.variables["MATCHPROPSET"] = nil; continue }
+                let chosen = v.caseInsensitiveCompare("None") == .orderedSame ? [] : v.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+                let bad = chosen.filter { k in !matchKinds.contains { $0.caseInsensitiveCompare(k) == .orderedSame } }
+                guard bad.isEmpty else { throw CommandError.invalid("Unknown property \(bad[0]).") }
+                ed.doc.setVariable("MATCHPROPSET", chosen.joined(separator: ","))
+            }
+            guard case .pick(let pk) = source else { return }
             ed.selection = []
-            ed.print("Current active settings: Color Layer Ltype Lineweight Material Text Dim Hatch Polyline")
+            let on = matchSet(ed.doc)
+            ed.print("Current active settings: " + matchKinds.filter(on.contains).joined(separator: " "))
             let dsts = try await ed.getSelection("Select destination object(s)").filter { $0 != pk.id }
             var n = 0
             for id in dsts {
-                if let se = ed.doc.entity(pk.id), let i = ed.doc.entityIndex(id) { var d = ed.doc.entities[i]; matchEntity(se, &d); ed.doc.entities[i] = d; n += 1 }
+                if let se = ed.doc.entity(pk.id), let i = ed.doc.entityIndex(id) { var d = ed.doc.entities[i]; matchEntity(se, &d, only: on); ed.doc.entities[i] = d; n += 1 }
                 else if let se = ed.doc.element(pk.id), let i = ed.doc.elementIndex(id) { var d = ed.doc.elements[i]; matchElement(se, &d); ed.doc.elements[i] = d; n += 1 }
-                else if let se = ed.doc.entity(pk.id), let i = ed.doc.elementIndex(id) { ed.doc.elements[i].layer = se.layer; n += 1 }
-                else if let se = ed.doc.element(pk.id), let i = ed.doc.entityIndex(id) { ed.doc.entities[i].layer = se.layer; n += 1 }
+                else if let se = ed.doc.entity(pk.id), let i = ed.doc.elementIndex(id), on.contains("Layer") { ed.doc.elements[i].layer = se.layer; n += 1 }
+                else if let se = ed.doc.element(pk.id), let i = ed.doc.entityIndex(id), on.contains("Layer") { ed.doc.entities[i].layer = se.layer; n += 1 }
             }
             ed.selection = []
             ed.print("Properties matched on \(n) object(s).")
@@ -997,9 +1039,13 @@ enum ModifyCommands {
             let ids = try await ed.getSelection()
             guard !ids.isEmpty else { return }
             while true {
-                let k = try await ed.getKeyword("Enter property to change", ["Color", "LAyer", "LType", "ltScale", "LWeight", "Material"]) 
+                let k = try await ed.getKeyword("Enter property to change", ["Color", "LAyer", "LType", "ltScale", "LWeight", "TRansparency", "Material"]) 
                 guard let key = k else { break }
                 switch key {
+                case "TRansparency":
+                    // Object transparency (LAY-032): ByLayer, ByBlock or 0-90.
+                    guard let v = try await ed.getWord("Enter new transparency value [ByLayer/ByBlock] or 0-90", defaultValue: "ByLayer"), let t = Transparency.parse(v) else { ed.print("Enter ByLayer, ByBlock or a value from 0 to 90."); continue }
+                    for id in ids { if let i = ed.doc.entityIndex(id) { ed.doc.entities[i].props[Transparency.prop] = t == "ByLayer" ? nil : t } }
                 case "Color":
                     guard let v = try await ed.getWord("Enter new color (ByLayer, ByBlock, 1-255, #RRGGBB, r,g,b)", defaultValue: "ByLayer"), let c = ColorRef.parse(v) else { ed.print("Invalid color."); continue }
                     for id in ids { if let i = ed.doc.entityIndex(id) { ed.doc.entities[i].color = c } }

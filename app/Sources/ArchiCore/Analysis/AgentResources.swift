@@ -208,6 +208,19 @@ public enum AgentExtraTools {
         ["name": "validate_exchange", "title": "Validate gbXML/COBie",
          "description": "Checks the model's gbXML or COBie export (or a file `path`) against the schema's required elements, enumerations and references.",
          "inputSchema": schema(["format": ["type": "string", "enum": ["gbxml", "cobie"]], "path": ["type": "string"]], required: ["format"])],
+        ["name": "daylight_annual", "title": "Climate-based daylight (sDA/ASE)",
+         "description": "Spatial daylight autonomy sDA300/50% and annual sunlight exposure ASE1000,250h (IES LM-83) of every room from an EPW weather file (`epwPath`) or a clear-sky year at the project location.",
+         "inputSchema": schema(["epwPath": ["type": "string"], "gridSpacing": ["type": "number", "description": "mm, default 600"], "format": formatProp])],
+        ["name": "generative_design", "title": "Generative layout design",
+         "description": "Optimises floor layouts for a room programme (`program`: \"Living 25, Kitchen 12, …\" in m²) and gross area with a genetic algorithm: daylight, proportions, required adjacencies (`adjacent`: \"Kitchen-Living, …\"), orientation (`facing`: \"Living:S\"), compactness. Returns the Pareto-optimal designs (rooms with rectangles); build one with the GENDESIGN command.",
+         "inputSchema": schema(["program": ["type": "string"], "adjacent": ["type": "string"], "facing": ["type": "string"], "area": ["type": "number", "description": "m²"],
+                                "seed": ["type": "integer"], "generations": ["type": "integer"], "limit": ["type": "integer"]], required: ["program"])],
+        ["name": "wind_case", "title": "Wind study case (OpenFOAM)",
+         "description": "Writes an OpenFOAM simpleFoam wind-study case for the model into the folder `path` (wind `speed` m/s at 10 m, `direction` it comes from in degrees, terrain `roughness` z0 m).",
+         "inputSchema": schema(["path": ["type": "string"], "speed": ["type": "number"], "direction": ["type": "number"], "roughness": ["type": "number"]], required: ["path"])],
+        ["name": "file_check", "title": "Save round-trip check",
+         "description": "Whether saving and reopening the document gives an identical model; lists any section that would change, plus the file-format version.",
+         "inputSchema": schema([:])],
     ]
 
     /// Tools that change the document (run inside an undoable transaction by the server).
@@ -296,6 +309,44 @@ public enum AgentExtraTools {
             return ["added": d.count(.added), "removed": d.count(.removed), "modified": d.count(.modified), "unchanged": d.count(.unchanged),
                     "layersAdded": d.layersAdded, "layersRemoved": d.layersRemoved, "levelsAdded": d.levelsAdded, "levelsRemoved": d.levelsRemoved,
                     "changes": d.differences.prefix(2000).map { ["change": $0.kind.rawValue, "object": $0.object, "type": $0.type, "id": $0.id, "oldId": $0.oldID as Any? ?? NSNull(), "fields": $0.fields, "layer": $0.layer] }]
+        case "daylight_annual":
+            let climate: HourlyClimate
+            if let p = a["epwPath"] as? String { climate = try HourlyClimate.parseEPW(FileImport.readText(resolve(p))) }
+            else { climate = HourlyClimate.clearSky(latitude: doc.info.latitude, longitude: doc.info.longitude, timeZone: Double(doc.variable("UTCOFFSET") ?? "") ?? (doc.info.longitude / 15).rounded()) }
+            var o = ClimateDaylight.Options()
+            if let g = num(a["gridSpacing"]), g > 50 { o.gridSpacing = g }
+            let rows = ClimateDaylight.json(ClimateDaylight.analyse(doc, climate: climate, options: o))
+            if csv { return CSVText.make([["id", "room", "level", "sDA300_50", "ASE1000_250", "meanAutonomy", "points", "passesLM83"]] + rows.map { r in ["id", "room", "level", "sDA300_50", "ASE1000_250", "meanAutonomy", "points", "passesLM83"].map { "\(r[$0] ?? "")" } }) }
+            return ["climate": climate.city, "latitude": climate.latitude, "longitude": climate.longitude, "rooms": rows]
+        case "generative_design":
+            guard let prog = a["program"] as? String else { throw AgentTools.ToolError(message: "missing 'program'") }
+            let rooms = PlanGenerator.parseBrief(prog)
+            guard !rooms.isEmpty else { throw AgentTools.ToolError(message: "no rooms in 'program'") }
+            var o = GenerativeDesign.Options()
+            o.northAngle = doc.info.northAngle
+            if let sd = int(a["seed"]), sd > 0 { o.seed = UInt64(sd) }
+            if let g = int(a["generations"]), g > 0 { o.generations = min(g, 500) }
+            let u = doc.units.mm
+            let area = (num(a["area"]) ?? rooms.reduce(0) { $0 + $1.area }) * 1_000_000 / (u * u)
+            let ds = GenerativeDesign.run(GenerativeDesign.Brief(rooms: rooms, adjacent: GenerativeDesign.parseAdjacency(a["adjacent"] as? String ?? ""),
+                                                                 facing: GenerativeDesign.parseFacing(a["facing"] as? String ?? "")), area: area, unitMM: u, options: o)
+            return ["designs": ds.prefix(int(a["limit"]) ?? 5).map { d in
+                ["score": r(d.score, 4), "width_m": r(d.width * u / 1000, 3), "depth_m": r(d.depth * u / 1000, 3),
+                 "objectives": ["noDaylight": d.objectives.daylight, "proportion": r(d.objectives.proportion, 3), "adjacencyMisses": d.objectives.adjacency,
+                                "orientationMisses": d.objectives.orientation, "compactness": r(d.objectives.compactness, 4)],
+                 "rooms": d.option.rooms.map { ["name": $0.name, "min": pt($0.rect.min), "max": pt($0.rect.max), "area_m2": r($0.area * u * u / 1_000_000, 2)] }] as [String: Any]
+            }]
+        case "wind_case":
+            guard let p = a["path"] as? String else { throw AgentTools.ToolError(message: "missing 'path'") }
+            var o = WindStudy.Options.from(doc)
+            if let v = num(a["speed"]) { o.speed = v }
+            if let v = num(a["direction"]) { o.direction = v }
+            if let v = num(a["roughness"]) { o.roughness = v }
+            let files = try WindStudy.writeCase(doc, to: resolve(p), options: o)
+            return ["folder": resolve(p).path, "files": files]
+        case "file_check":
+            let diffs = try ArchiFile.roundTripDifferences(doc)
+            return ["lossless": diffs.isEmpty, "changedSections": diffs, "formatVersion": ArchiDocument.currentFormatVersion]
         case "markups":
             let st = (a["status"] as? String) ?? "all"
             return ["markups": Markups.list(doc).filter { st == "all" || $0.status == st }.map(markupJSON)]

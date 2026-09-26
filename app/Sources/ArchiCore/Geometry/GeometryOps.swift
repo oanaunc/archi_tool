@@ -192,7 +192,7 @@ public enum GeometryOps {
 
     public static func bounds(of doc: ArchiDocument, includeElements: Bool = true) -> BBox2 {
         var b = BBox2.empty
-        for e in doc.entities where doc.isVisible(layer: e.layer) { b.add(bounds(e.geometry, doc: doc)) }
+        for e in doc.entities where doc.isVisible(layer: e.layer) { b.add(ConstructionLines.extentsBounds(e, doc: doc)) }
         if includeElements { for el in doc.elements where doc.isVisible(layer: el.layer) { b.add(PlanRepresentation.bounds(el, doc: doc)) } }
         return b
     }

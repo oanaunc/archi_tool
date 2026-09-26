@@ -710,6 +710,14 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
   --watch DIR --rules FILE [--once]  Automation: runs the rules' batch jobs for every new or changed file in DIR that
                    matches a rule's pattern (then POSTs to the rule's webhook); --once processes pending files and exits.
   --python-module [DIR]  Writes archi.py (the Python bridge module) to DIR (default: the current folder).
+  --template FILE  Starts a new untitled drawing from a template (.architemplate or .archi) instead of an input file.
+  --upgrade FILES… Upgrades older .archi/.architemplate files to the current format (originals kept as .vN.archi.bak).
+  --verify FILE    Checks that the drawing saves and reopens identically (exit 1 if not).
+  --metadata FILE  Prints the Spotlight metadata of a drawing as JSON.
+  --api-reference [FILE]  Writes the generated Markdown API reference (commands, agent tools, formats, samples).
+  --run-samples    Runs the reference's sample scripts and reports each result (exit 1 if one fails).
+  --license        Prints the licence and privacy notice (GPL-3.0-or-later; no telemetry, works offline).
+  --check-update APPCAST [--current V]  Checks a Sparkle appcast for a newer version (explicit network access).
   --version        Prints the version.
 """
 
@@ -734,8 +742,9 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
 }
 
 @MainActor func runCLI() async -> Int32 {
-    var input: String?, script: String?, out: String?, mcp = false, pluginDir: URL?, jsFiles: [URL] = []
+    var input: String?, script: String?, out: String?, mcp = false, pluginDir: URL?, jsFiles: [URL] = [], templatePath: String?
     var args = Array(CommandLine.arguments.dropFirst())
+    if let r = await fileLifecycleOptions(&args) { return r }
     if let bi = args.firstIndex(of: "--batch") {
         guard bi + 1 < args.count else { eprint(usage); return 2 }
         let u = expand(args[bi + 1])
@@ -797,6 +806,7 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
         case "--script", "-s": guard !args.isEmpty else { eprint(usage); return 2 }; script = args.removeFirst()
         case "--out", "-o": guard !args.isEmpty else { eprint(usage); return 2 }; out = args.removeFirst()
         case "--mcp": mcp = true
+        case "--template": guard !args.isEmpty else { eprint(usage); return 2 }; templatePath = args.removeFirst()
         case "--plugins": guard !args.isEmpty else { eprint(usage); return 2 }; pluginDir = expand(args.removeFirst())
         case "--js": guard !args.isEmpty else { eprint(usage); return 2 }; jsFiles.append(expand(args.removeFirst()))
         case "--help", "-h": print(usage); return 0
@@ -813,6 +823,10 @@ Usage: archi-cli [file.archi|file.dxf] [--script file.scr] [--out file] [--mcp]
     let ed = Editor()
     ed.host = host
     var fileURL: URL?
+    if let t = templatePath {
+        do { ed.replaceDocument(ArchiTemplate.newDocument(from: try ArchiTemplate.decode(Data(contentsOf: expand(t))).document), url: nil) }
+        catch { eprint("Cannot open template \(t): \((error as? LocalizedError)?.errorDescription ?? "\(error)")"); return 1 }
+    }
     if let input {
         let url = expand(input)
         fileURL = url

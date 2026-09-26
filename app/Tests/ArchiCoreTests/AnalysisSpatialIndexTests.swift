@@ -52,4 +52,29 @@ final class AnalysisSpatialIndexTests: XCTestCase {
         XCTAssertEqual(SpatialIndex(doc: d, level: 1).count, 2, "elements of other levels are left out")
         XCTAssertTrue(SpatialIndex(items: []).query(BBox2(min: .zero, max: Vec2(1, 1))).isEmpty)
     }
+
+    /// SYS-015 benchmark: 100 000 objects index in well under a second and a pick (point query) or a viewport window
+    /// query costs microseconds, so picking and snapping stay interactive (limits are for unoptimised debug builds).
+    func testHundredThousandObjectsBenchmark() {
+        let items = randomBoxes(100_000, seed: 11).map { var i = $0; i.box = BBox2(min: i.box.min * 10, max: i.box.min * 10 + (i.box.max - i.box.min)); return i }
+        var t = Date()
+        let idx = SpatialIndex(items: items)
+        let build = Date().timeIntervalSince(t)
+        XCTAssertLessThan(build, 5, "build \(build) s")
+        t = Date()
+        var hits = 0
+        for q in 0..<10_000 {
+            let p = Vec2(Double(q * 7919 % 100_000), Double(q * 104_729 % 100_000))
+            hits += idx.query(point: p, tolerance: 50).count
+        }
+        let picks = Date().timeIntervalSince(t)
+        XCTAssertLessThan(picks / 10_000, 0.0005, "per pick \(picks / 10_000) s")
+        t = Date()
+        for q in 0..<1000 {
+            let c = Vec2(Double(q * 97 % 100_000), Double(q * 61 % 100_000))
+            hits += idx.query(BBox2(min: c, max: c + Vec2(5000, 3000))).count
+        }
+        XCTAssertLessThan(Date().timeIntervalSince(t) / 1000, 0.002)
+        XCTAssertGreaterThan(hits, 0)
+    }
 }

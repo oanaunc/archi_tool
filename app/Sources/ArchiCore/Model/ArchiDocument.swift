@@ -85,7 +85,21 @@ public struct Block: Codable, Hashable {
 
 public struct Level: Codable, Hashable, Identifiable {
     public var id: Int; public var name: String; public var elevation: Double; public var height: Double
-    public init(id: Int, name: String, elevation: Double, height: Double = 3000) { self.id = id; self.name = name; self.elevation = elevation; self.height = height }
+    /// 3D extents (BIM-004): plan segment the level datum spans in elevations and sections (nil = automatic, around the model).
+    public var extentStart: Vec2?
+    public var extentEnd: Vec2?
+    /// Level heads shown on the datum: "end" (right, default), "start", "both" or "none".
+    public var heads: String?
+    public init(id: Int, name: String, elevation: Double, height: Double = 3000, extentStart: Vec2? = nil, extentEnd: Vec2? = nil, heads: String? = nil) {
+        self.id = id; self.name = name; self.elevation = elevation; self.height = height
+        self.extentStart = extentStart; self.extentEnd = extentEnd; self.heads = heads
+    }
+    /// Whether the level has explicit 3D extents.
+    public var hasExtents: Bool { if let a = extentStart, let b = extentEnd { return a.distance(to: b) > 1e-9 }; return false }
+    /// Head placement: (start head, end head).
+    public var headEnds: (start: Bool, end: Bool) {
+        switch (heads ?? "end").lowercased() { case "start": return (true, false); case "both": return (true, true); case "none": return (false, false); default: return (false, true) }
+    }
 }
 
 public struct Material: Codable, Hashable {
@@ -145,6 +159,8 @@ public struct OpeningType: Codable, Hashable {
     /// Formula-driven parameters: name → expression over the other parameters (e.g. "height": "width * 1.5",
     /// "sill": "2100 - height", "Cost": "width * height / 1e6 * 350"). Built-ins: width, height, sill, frameWidth, mullions, transoms.
     public var formulas: [String: String]
+    /// Operation variant (pocket, bi-fold, pivot, tilt-turn) refining the style; nil = plain style.
+    public var variant: OpeningVariant?
     public init(name: String, kind: OpeningKind, width: Double, height: Double, sill: Double = 0, doorStyle: DoorStyle = .single,
                 windowStyle: WindowStyle = .casement, frameWidth: Double = 50, material: String? = nil, params: [String: String] = [:],
                 mullions: Int = 0, transoms: Int = 0, threshold: Bool = false, formulas: [String: String] = [:]) {
@@ -161,12 +177,14 @@ public struct OpeningType: Codable, Hashable {
                   material: try c.decodeIfPresent(String.self, forKey: .material), params: try c.decodeIfPresent([String: String].self, forKey: .params) ?? [:],
                   mullions: try c.decodeIfPresent(Int.self, forKey: .mullions) ?? 0, transoms: try c.decodeIfPresent(Int.self, forKey: .transoms) ?? 0,
                   threshold: try c.decodeIfPresent(Bool.self, forKey: .threshold) ?? false, formulas: try c.decodeIfPresent([String: String].self, forKey: .formulas) ?? [:])
+        variant = try c.decodeIfPresent(OpeningVariant.self, forKey: .variant)
     }
     /// Applies the type's parameters (formulas evaluated) to an instance.
     public func apply(to o: inout OpeningGeom) {
         let t = resolved().type
         o.kind = t.kind; o.width = t.width; o.height = t.height; o.sill = t.sill; o.doorStyle = t.doorStyle; o.windowStyle = t.windowStyle
         o.frameWidth = t.frameWidth; o.typeName = name; o.mullions = t.mullions; o.transoms = t.transoms; o.threshold = t.threshold
+        o.variant = t.variant
     }
     /// The type with every formula evaluated (in dependency order), plus formula errors (unknown names, cycles).
     public func resolved() -> (type: OpeningType, errors: [String]) { TypeFormulas.resolve(self) }
@@ -181,7 +199,12 @@ public struct OpeningType: Codable, Hashable {
         OpeningType(name: "Fixed 600x1800", kind: .window, width: 600, height: 1800, sill: 300, windowStyle: .fixed),
         OpeningType(name: "Sliding 2400x2200", kind: .window, width: 2400, height: 2200, sill: 0, windowStyle: .sliding),
         OpeningType(name: "Opening 1000x2100", kind: .opening, width: 1000, height: 2100),
+        OpeningType.variant(OpeningType(name: "Pocket Door 900x2100", kind: .door, width: 900, height: 2100, doorStyle: .sliding), .pocket),
+        OpeningType.variant(OpeningType(name: "Bi-fold Door 1600x2100", kind: .door, width: 1600, height: 2100, doorStyle: .folding), .biFold),
+        OpeningType.variant(OpeningType(name: "Tilt-Turn 1000x1400", kind: .window, width: 1000, height: 1400, sill: 850, windowStyle: .casement), .tiltTurn),
+        OpeningType.variant(OpeningType(name: "Pivot 1200x1200", kind: .window, width: 1200, height: 1200, sill: 900, windowStyle: .casement), .pivot),
     ]
+    static func variant(_ t: OpeningType, _ v: OpeningVariant) -> OpeningType { var t = t; t.variant = v; return t }
 }
 
 public struct PaperSize: Codable, Hashable {
@@ -271,7 +294,8 @@ public struct ArchiDocument: Codable, Hashable {
     /// opening sub-parts and type formulas, run paths (pipes, ducts, trays, retaining walls). No data change from 2.
     /// 4: document families (parametric family definitions), layered floor/roof types, view templates, solid feature
     /// history and associative sweeps, railing types, roof edges, shafts and wall join overrides (all optional keys).
-    public static let currentFormatVersion = 4
+    /// 5: schedule definitions, level extents/heads, multi-segment grids, opening variants and wall reveals (optional keys).
+    public static let currentFormatVersion = 5
     public var formatVersion: Int = ArchiDocument.currentFormatVersion
     public var info = ProjectInfo()
     public var units: Units = .millimeters
@@ -311,6 +335,10 @@ public struct ArchiDocument: Codable, Hashable {
     public var globalParameters: [FamilyParameter] = []
     /// Custom property set templates (IFC-style Psets) in addition to the built-in standard ones.
     public var psetTemplates: [PsetTemplate] = []
+    /// Schedule definitions (fields, filters, sorting, grouping, totals, key schedules).
+    public var schedules: [ScheduleDefinition] = []
+    /// Project and shared parameters bound to element categories.
+    public var projectParameters: [ProjectParameter] = []
 
     public init() {
         layers = [
@@ -329,7 +357,7 @@ public struct ArchiDocument: Codable, Hashable {
     enum CodingKeys: String, CodingKey {
         case formatVersion, info, units, layers, currentLayer, linetypes, textStyles, dimStyles, currentDimStyle, blocks, entities, elements
         case levels, currentLevel, materials, wallTypes, layouts, namedViews, variables, nextID, openingTypes, phases, keynotes
-        case families, slabTypes, viewTemplates, modelGroups, globalParameters, psetTemplates
+        case families, slabTypes, viewTemplates, modelGroups, globalParameters, psetTemplates, schedules, projectParameters
     }
 
     /// Tolerant decoding: every collection falls back to its default when absent, so older files keep opening.
@@ -344,7 +372,7 @@ public struct ArchiDocument: Codable, Hashable {
         try opt(.layouts, &layouts); try opt(.namedViews, &namedViews); try opt(.variables, &variables); try opt(.nextID, &nextID)
         try opt(.openingTypes, &openingTypes); try opt(.phases, &phases); try opt(.keynotes, &keynotes)
         try opt(.families, &families); try opt(.slabTypes, &slabTypes); try opt(.viewTemplates, &viewTemplates); try opt(.modelGroups, &modelGroups)
-        try opt(.globalParameters, &globalParameters); try opt(.psetTemplates, &psetTemplates)
+        try opt(.globalParameters, &globalParameters); try opt(.psetTemplates, &psetTemplates); try opt(.schedules, &schedules); try opt(.projectParameters, &projectParameters)
         let maxID = max(entities.map(\.id).max() ?? 0, elements.map(\.id).max() ?? 0)
         if nextID <= maxID { nextID = maxID + 1 }
     }

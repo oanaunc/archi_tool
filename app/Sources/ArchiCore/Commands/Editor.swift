@@ -138,12 +138,14 @@ public struct DraftSettings: Codable, Hashable {
     public var isometric = false
     /// Current isometric plane (ISOPLANE / SNAPISOPAIR): 0 left, 1 top, 2 right.
     public var isoPlane = 0
+    /// Geometric centre snap (GCEN): centroids of closed polylines, shown with the centre marker.
+    public var geometricCenterSnap = false
     public init() {}
 
     private enum Keys: String, CodingKey {
         case ortho, gridSnap, gridSpacing, showGrid, objectSnap, snapModes, polarTracking, polarIncrement, dynamicInput, lineweightDisplay
         case textHeight, wallThickness, wallHeight, wallJustification, offsetDistance, filletRadius, chamferDistance, objectSnapTracking
-        case isometric, isoPlane
+        case isometric, isoPlane, geometricCenterSnap
     }
     /// Tolerant decoding: settings saved by older builds (missing keys) keep the defaults for the new fields.
     public init(from decoder: Decoder) throws {
@@ -169,6 +171,7 @@ public struct DraftSettings: Codable, Hashable {
         objectSnapTracking = try c.decodeIfPresent(Bool.self, forKey: .objectSnapTracking) ?? d.objectSnapTracking
         isometric = try c.decodeIfPresent(Bool.self, forKey: .isometric) ?? d.isometric
         isoPlane = try c.decodeIfPresent(Int.self, forKey: .isoPlane) ?? d.isoPlane
+        geometricCenterSnap = try c.decodeIfPresent(Bool.self, forKey: .geometricCenterSnap) ?? d.geometricCenterSnap
     }
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: Keys.self)
@@ -179,6 +182,7 @@ public struct DraftSettings: Codable, Hashable {
         try c.encode(wallHeight, forKey: .wallHeight); try c.encode(wallJustification, forKey: .wallJustification); try c.encode(offsetDistance, forKey: .offsetDistance)
         try c.encode(filletRadius, forKey: .filletRadius); try c.encode(chamferDistance, forKey: .chamferDistance); try c.encode(objectSnapTracking, forKey: .objectSnapTracking)
         try c.encode(isometric, forKey: .isometric); try c.encode(isoPlane, forKey: .isoPlane)
+        if geometricCenterSnap { try c.encode(geometricCenterSnap, forKey: .geometricCenterSnap) }
     }
 }
 
@@ -374,12 +378,16 @@ public final class Editor {
                 var d = self.doc
                 for i in d.entities.indices where !old.contains(d.entities[i].id) && d.entities[i].props[DimAssociation.prop] == nil {
                     if case .dimension = d.entities[i].geometry { DimAssociation.associate(&d.entities[i], doc: d, tol: tol) }
+                    if case .leader = d.entities[i].geometry, d.entities[i].props[LeaderAssociation.prop] == nil { LeaderAssociation.associate(&d.entities[i], doc: d, tol: tol) }
                 }
                 if d != self.doc { self.doc = d }
             }
             if def.modifies && self.doc != before {
                 var d = self.doc
                 if DocumentUpdaters.run(&d) { self.doc = d }
+                // Editing-time statistics (TIME, ANL-011): record activity after every modifying command.
+                EditTime.touch(&d)
+                self.doc = d
                 if !self.undoGroupActive { self.history.record(def.name, before: before) }
                 self.isDirty = true
             }
@@ -439,6 +447,9 @@ public final class Editor {
         if req.kinds.contains(.point), let m = InputParser.pointModifier(token), !req.keywords.contains(where: { $0.caseInsensitiveCompare(token) == .orderedSame }) {
             feed(.keyword(Editor.modifierPrefix + m)); return
         }
+        if req.kinds.contains(.point), let o = InputParser.snapOverride(token, keywords: req.keywords) {
+            feed(.keyword(Editor.modifierPrefix + "SNAP:" + o)); return
+        }
         switch parse(token, req) {
         case .success(let input): feed(input)
         case .failure(let msg):
@@ -494,7 +505,9 @@ public final class Editor {
             request = nil
             return r
         }
-        if !queuedInputs.isEmpty {
+        var consumed = false
+        while !queuedInputs.isEmpty && queuedInputs.first != MacroPause.mark {
+            consumed = true
             var t = queuedInputs.removeFirst()
             let wasQuoted = t.hasPrefix(Editor.quoteMark)
             t = Editor.unmark(t)
@@ -511,14 +524,18 @@ public final class Editor {
             if req.kinds.contains(.point), let m = InputParser.pointModifier(t), !req.keywords.contains(where: { $0.caseInsensitiveCompare(t) == .orderedSame }) {
                 return .keyword(Editor.modifierPrefix + m)
             }
+            if req.kinds.contains(.point), let o = InputParser.snapOverride(t, keywords: req.keywords) {
+                return .keyword(Editor.modifierPrefix + "SNAP:" + o)
+            }
             if let r = try? parse(t, req).get() {
                 if case .point(let p) = r { lastPoint = p }
                 return r
             }
+            // Invalid scripted input: report it and answer the same prompt with the next token, as when typed.
             print("Invalid input \"\(t)\".")
-        } else {
-            print(req.promptText)
+            if queuedInputs.isEmpty { print(req.promptText) }
         }
+        if !consumed { print(req.promptText) }
         let r = await withCheckedContinuation { (c: CheckedContinuation<CommandInput, Never>) in self.continuation = c }
         request = nil
         return r
@@ -531,6 +548,7 @@ public final class Editor {
             if case .point(let p) = r { return p }
             return nil
         }
+        if m.hasPrefix("SNAP:") { return await resolveSnapOverride(String(m.dropFirst(5)), req) }
         switch m {
         case "FROM":
             guard let b = await pt("Base point") else { return .cancel }
@@ -807,6 +825,8 @@ public final class Editor {
     public var layerPrevious: [(layers: [Layer], current: String)] = []
     /// Selection cycling state (SELECTIONCYCLING): last pick point and index into the overlapping candidates.
     public var pickCycle: (point: Vec2, index: Int)?
+    /// Modes of a one-shot snap override while its "of" prompt is active (see EditorSnapOverride.swift).
+    var activeSnapOverride: Set<SnapKind>?
     private var inSubmit = false
     /// Set by UNDO BEgin: commands inside the group are recorded as one undo step at UNDO End.
     public var undoGroupActive = false
@@ -879,14 +899,16 @@ public final class Editor {
         return false
     }
 
-    /// Topmost selectable object near a point.
+    /// Topmost selectable object near a point: nearest wins; at equal distance the one drawn on top (later in draw order).
+    /// Only objects that are displayed in the current view and lie on unlocked, visible, thawed layers are considered.
     public func pick(at p: Vec2, tolerance: Double) -> EntityID? {
         var best: (EntityID, Double)?
-        for e in doc.entities where doc.isEditable(layer: e.layer) {
+        let f = PickFilter(doc)
+        for e in doc.entities where f.pickable(e) {
             let d = GeometryOps.distance(from: p, to: e.geometry, doc: doc)
-            if d <= tolerance, d < (best?.1 ?? .infinity) { best = (e.id, d) }
+            if d <= tolerance, d <= (best?.1 ?? .infinity) + 1e-12 * max(1, tolerance) { best = (e.id, min(d, best?.1 ?? d)) }
         }
-        for el in doc.elements where doc.isEditable(layer: el.layer) && el.level == doc.currentLevel {
+        for el in doc.elements where f.pickable(el) {
             let d = PlanRepresentation.distance(from: p, to: el, doc: doc)
             if d <= tolerance, d < (best?.1 ?? .infinity) { best = (el.id, d) }
         }
@@ -896,12 +918,13 @@ public final class Editor {
     /// Objects inside a window (fully) or crossing it.
     public func select(in box: BBox2, crossing: Bool) -> [EntityID] {
         var out: [EntityID] = []
-        for e in doc.entities where doc.isEditable(layer: e.layer) {
+        let f = PickFilter(doc)
+        for e in doc.entities where f.pickable(e) {
             let b = GeometryOps.bounds(e.geometry, doc: doc)
             if b.isEmpty { continue }
             if box.contains(b) || (crossing && box.intersects(b) && GeometryOps.crosses(e.geometry, box: box, doc: doc)) { out.append(e.id) }
         }
-        for el in doc.elements where doc.isEditable(layer: el.layer) && el.level == doc.currentLevel {
+        for el in doc.elements where f.pickable(el) {
             let b = PlanRepresentation.bounds(el, doc: doc)
             if b.isEmpty { continue }
             if box.contains(b) || (crossing && box.intersects(b)) { out.append(el.id) }

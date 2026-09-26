@@ -111,7 +111,7 @@ public enum ElevationBuilder {
                 let loops = sectionLoops(m, proj)
                 if !loops.closed.isEmpty || !loops.open.isEmpty {
                     var items: [DrawItem] = []
-                    if !loops.closed.isEmpty { items.append(.fill(loops: loops.closed, color: pocheColor)) }
+                    if !loops.closed.isEmpty { items += cutFill(loops.closed, material: mat, doc: doc) }
                     for l in loops.closed { items.append(.stroke(points: l, closed: true, style: StrokeStyle(color: edgeColor, lineweight: 0.5))) }
                     for l in loops.open { items.append(.stroke(points: l, closed: false, style: StrokeStyle(color: edgeColor, lineweight: 0.5))) }
                     poche.append(DrawEntry(id: g.id, items: items))
@@ -165,16 +165,39 @@ public enum ElevationBuilder {
         let gz = doc.levels.map(\.elevation).min() ?? 0
         let ext = box.width * 0.05
         out.append(DrawEntry(id: nil, items: [.stroke(points: [Vec2(box.min.x - ext, gz), Vec2(box.max.x + ext, gz)], closed: false, style: StrokeStyle(color: edgeColor, lineweight: 0.5))]))
-        if doc.variable("VIEWANNOTATIONS") != "0" { out += annotations(doc: doc, proj: proj, box: box) }
+        if doc.variable("VIEWANNOTATIONS") != "0" { out += annotations(doc: doc, proj: proj, box: box, cut: cut) }
         if gfx.dimensions { out += ViewGraphics.elevationDimensions(doc: doc, box: box) }
         return out
     }
 
     static let annoColor = RGBA(0.15, 0.35, 0.75)
 
+    /// Cut surface of a sectioned element (DOC-024): the material's cut pattern (wall plies each carry their own
+    /// material) over a light fill; solid or unpatterned materials, and SECTIONPOCHE = solid, give the dark poché.
+    static func cutFill(_ loops: [[Vec2]], material: Material?, doc: ArchiDocument) -> [DrawItem] {
+        let pat = (material?.cutPattern ?? "SOLID").uppercased()
+        guard doc.variable("SECTIONPOCHE")?.lowercased() != "solid", FamilyVisibility.level(doc) != "coarse", pat != "SOLID", HatchPatterns.names.contains(pat) else {
+            return [.fill(loops: loops, color: pocheColor)]
+        }
+        let base = material?.color ?? RGBA(0.8, 0.8, 0.8)
+        let light = RGBA(0.86 + base.r * 0.12, 0.86 + base.g * 0.12, 0.86 + base.b * 0.12)
+        var out: [DrawItem] = [.fill(loops: loops, color: light)]
+        var sc = PlanRepresentation.patternScale(pat, doc)
+        if pat == "INSUL" {
+            // Batt insulation symbol sized to the layer thickness (the narrower extent of the cut region).
+            var b = BBox2.empty
+            for l in loops { for p in l { b.add(p) } }
+            sc = max(min(b.width, b.height), 1e-6) / 100
+        }
+        for seg in HatchPatterns.lines(loops: loops, pattern: pat, scale: sc, angle: 0) where seg.count >= 2 {
+            out.append(.stroke(points: seg, closed: false, style: StrokeStyle(color: edgeColor, lineweight: 0.13)))
+        }
+        return out
+    }
+
     /// Level lines with level heads (name and elevation) at the right, and grid lines with bubbles at the top,
     /// for grids that cross the view (perpendicular to it).
-    static func annotations(doc: ArchiDocument, proj: Proj, box: BBox2) -> [DrawEntry] {
+    static func annotations(doc: ArchiDocument, proj: Proj, box: BBox2, cut: Bool = false) -> [DrawEntry] {
         let u = 1 / doc.units.mm
         let th = 250 * u
         let ext = max(box.width * 0.04, 800 * u)
@@ -186,33 +209,63 @@ public enum ElevationBuilder {
             let y = l.elevation
             let st = StrokeStyle(color: annoColor, lineweight: 0.18, dash: dash)
             let r = th * 0.6
-            let head = [Vec2(x1, y), Vec2(x1 + r, y + r), Vec2(x1 + 2 * r, y), Vec2(x1 + r, y - r)]
+            // Level extents (BIM-004): explicit 3D extents project into the view; otherwise the datum spans the model.
+            var xa = x0, xb = x1
+            var startIsLeft = true
+            if l.hasExtents, let es = l.extentStart, let ee = l.extentEnd {
+                let pa = proj.xf(Vec3(es.x, es.y, y)), pb = proj.xf(Vec3(ee.x, ee.y, y))
+                guard abs(pa - pb) > 1e-6 else { continue }   // extents seen end-on: the level is not shown in this view
+                xa = min(pa, pb); xb = max(pa, pb); startIsLeft = pa <= pb
+            }
             let meters = l.elevation * doc.units.mm / 1000
             let label = (meters >= 0 ? "+" : "") + String(format: "%.3f", meters)
-            out.append(DrawEntry(id: nil, items: [
-                .stroke(points: [Vec2(x0, y), Vec2(x1, y)], closed: false, style: st),
-                .fill(loops: [[head[0], head[1], head[2]]], color: annoColor),
-                .stroke(points: head, closed: true, style: StrokeStyle(color: annoColor, lineweight: 0.18)),
-                .text(TextGeom(position: Vec2(x1 + 2.6 * r, y + th * 0.15), height: th, content: l.name, valign: .bottom), font: "Helvetica", color: annoColor),
-                .text(TextGeom(position: Vec2(x1 + 2.6 * r, y - th * 0.15), height: th * 0.8, content: label, valign: .top), font: "Helvetica", color: annoColor),
-            ]))
+            var items: [DrawItem] = [.stroke(points: [Vec2(xa, y), Vec2(xb, y)], closed: false, style: st)]
+            let ends = l.headEnds
+            var headSides: [Double] = []
+            if ends.end { headSides.append(startIsLeft ? 1 : -1) }
+            if ends.start { headSides.append(startIsLeft ? -1 : 1) }
+            for sd in headSides {
+                let x = sd > 0 ? xb : xa
+                let head = [Vec2(x, y), Vec2(x + sd * r, y + r), Vec2(x + sd * 2 * r, y), Vec2(x + sd * r, y - r)]
+                let tx = x + sd * 2.6 * r
+                items += [
+                    .fill(loops: [[head[0], head[1], head[2]]], color: annoColor),
+                    .stroke(points: head, closed: true, style: StrokeStyle(color: annoColor, lineweight: 0.18)),
+                    .text(TextGeom(position: Vec2(tx, y + th * 0.15), height: th, content: l.name, halign: sd > 0 ? .left : .right, valign: .bottom), font: "Helvetica", color: annoColor),
+                    .text(TextGeom(position: Vec2(tx, y - th * 0.15), height: th * 0.8, content: label, halign: sd > 0 ? .left : .right, valign: .top), font: "Helvetica", color: annoColor),
+                ]
+            }
+            out.append(DrawEntry(id: nil, items: items))
             gridTop = max(gridTop, y + 600 * u)
         }
         let r = 400 * u
         for el in doc.elements {
-            guard case .gridLine(let g) = el.geometry, g.start.distance(to: g.end) > 1e-9, abs(g.bulge) < 1e-12 else { continue }
+            guard case .gridLine(let g) = el.geometry, g.start.distance(to: g.end) > 1e-9 else { continue }
+            var xs: [Double] = []
             let a = Vec3(g.start.x, g.start.y, 0), b = Vec3(g.end.x, g.end.y, 0)
             let xa = proj.xf(a), xb = proj.xf(b)
-            guard abs(xa - xb) < g.start.distance(to: g.end) * 0.02 else { continue }
-            let x = (xa + xb) / 2
-            guard x >= x0 - 1e-6, x <= x1 + 1e-6 else { continue }
-            let yb = box.min.y - 300 * u, yt = gridTop
-            let c = Vec2(x, yt + r)
-            out.append(DrawEntry(id: nil, items: [
-                .stroke(points: [Vec2(x, yb), Vec2(x, yt)], closed: false, style: StrokeStyle(color: annoColor, lineweight: 0.13, dash: dash)),
-                .stroke(points: RG.circle(c, r, segments: 40), closed: true, style: StrokeStyle(color: annoColor, lineweight: 0.18)),
-                .text(TextGeom(position: c, height: 350 * u, content: g.label, halign: .center, valign: .middle), font: "Helvetica", color: annoColor),
-            ]))
+            if g.isStraight && abs(xa - xb) < g.start.distance(to: g.end) * 0.02 {
+                xs = [(xa + xb) / 2]
+            } else if cut {
+                // Sections: arc, multi-segment and oblique grids show where they cross the cut plane (BIM-005/006).
+                let pts = g.points.map { Vec3($0.x, $0.y, 0) }
+                for k in 0..<(pts.count - 1) {
+                    let d0 = proj.depth(pts[k]), d1 = proj.depth(pts[k + 1])
+                    if d0 == 0 { xs.append(proj.xf(pts[k])); continue }
+                    if (d0 < 0) != (d1 < 0), d1 != 0 { xs.append(proj.xf(pts[k] + (pts[k + 1] - pts[k]) * (d0 / (d0 - d1)))) }
+                }
+                if let l = pts.last, proj.depth(l) == 0 { xs.append(proj.xf(l)) }
+            }
+            for x in xs {
+                guard x >= x0 - 1e-6, x <= x1 + 1e-6 else { continue }
+                let yb = box.min.y - 300 * u, yt = gridTop
+                let c = Vec2(x, yt + r)
+                out.append(DrawEntry(id: nil, items: [
+                    .stroke(points: [Vec2(x, yb), Vec2(x, yt)], closed: false, style: StrokeStyle(color: annoColor, lineweight: 0.13, dash: dash)),
+                    .stroke(points: RG.circle(c, r, segments: 40), closed: true, style: StrokeStyle(color: annoColor, lineweight: 0.18)),
+                    .text(TextGeom(position: c, height: 350 * u, content: g.label, halign: .center, valign: .middle), font: "Helvetica", color: annoColor),
+                ]))
+            }
         }
         return out
     }

@@ -57,7 +57,9 @@ public enum RailingTypes {
         let rprof = ProfileLibrary.outline(g.railProfile ?? "rect", width: rs, height: rs * (g.railProfile == "oval" ? 0.8 : 1), doc: doc) ?? ProfileLibrary.builtin("rect", width: rs, height: rs)!
         let rc = GeometryOps.centroid(rprof)
         let railTop = zt - (rprof.map(\.y).max()! - rc.y)
-        SweepMesh.sweep(rprof.map { $0 - rc }, along: rpath.map { Vec3($0.x, $0.y, railTop) }, into: &rail)
+        // Sloped railings (stairs, ramps): every height follows the path heights (extensions stay level with the ends).
+        func dz(_ p: Vec2) -> Double { g.z(at: p) }
+        SweepMesh.sweep(rprof.map { $0 - rc }, along: rpath.map { Vec3($0.x, $0.y, railTop + dz($0)) }, into: &rail)
         let railBottom = railTop - (rc.y - rprof.map(\.y).min()!)
         // Posts at the ends, the vertices and every postSpacing.
         let ps = max((g.postSpacing ?? 1200) * u, 100 * u)
@@ -68,13 +70,18 @@ public enum RailingTypes {
             for k in 1..<n { postPts.append(a.lerp(b, Double(k) / Double(n))) }
         }
         let pw = max(rs * 0.8, 30 * u) / 2
-        for p in postPts { posts.prism([p + Vec2(-pw, -pw), p + Vec2(pw, -pw), p + Vec2(pw, pw), p + Vec2(-pw, pw)], z0: zb, z1: railBottom) }
+        for p in postPts { posts.prism([p + Vec2(-pw, -pw), p + Vec2(pw, -pw), p + Vec2(pw, pw), p + Vec2(-pw, pw)], z0: zb + dz(p), z1: railBottom + dz(p)) }
         let bottomZ = zb + 100 * u
         if g.bottomRail ?? false {
-            for i in 0..<(path.count - 1) {
-                let a = path[i], b = path[i + 1]
-                let d = (b - a).normalized.perp * (pw * 0.8)
-                posts.prism([a - d, b - d, b + d, a + d], z0: bottomZ - 40 * u, z1: bottomZ)
+            if g.isSloped {
+                let w = pw * 0.8
+                SweepMesh.sweep([Vec2(-w, -20 * u), Vec2(w, -20 * u), Vec2(w, 20 * u), Vec2(-w, 20 * u)], along: path.map { Vec3($0.x, $0.y, bottomZ - 20 * u + dz($0)) }, into: &posts)
+            } else {
+                for i in 0..<(path.count - 1) {
+                    let a = path[i], b = path[i + 1]
+                    let d = (b - a).normalized.perp * (pw * 0.8)
+                    posts.prism([a - d, b - d, b + d, a + d], z0: bottomZ - 40 * u, z1: bottomZ)
+                }
             }
         }
         let infillBottom = (g.bottomRail ?? false) ? bottomZ : zb + 50 * u
@@ -85,14 +92,20 @@ public enum RailingTypes {
                 guard len > 2 * pw + 20 * u else { continue }
                 let d = (b - a) / len, n = d.perp * (6 * u)
                 let a2 = a + d * (pw + 10 * u), b2 = b - d * (pw + 10 * u)
-                glass.prism([a2 - n, b2 - n, b2 + n, a2 + n], z0: infillBottom, z1: railBottom - 30 * u)
+                if g.isSloped {
+                    let l2 = a2.distance(to: b2), za = dz(a2), zc = dz(b2)
+                    glass.verticalPlate([(0, infillBottom + za), (l2, infillBottom + zc), (l2, railBottom - 30 * u + zc), (0, railBottom - 30 * u + za)],
+                                        origin: a2, ax: d, ay: d.perp, y0: -6 * u, y1: 6 * u)
+                } else {
+                    glass.prism([a2 - n, b2 - n, b2 + n, a2 + n], z0: infillBottom, z1: railBottom - 30 * u)
+                }
             }
         case "cables":
             let gap = max((g.balusterSpacing ?? 100) * u, 40 * u)
             var z = infillBottom
             let r = max((g.balusterSize ?? 6) * u / 2, 1 * u)
             while z < railBottom - gap * 0.5 {
-                SweepMesh.sweep(RG.circle(.zero, r, segments: 8), along: path.map { Vec3($0.x, $0.y, z) }, into: &infill)
+                SweepMesh.sweep(RG.circle(.zero, r, segments: 8), along: path.map { Vec3($0.x, $0.y, z + dz($0)) }, into: &infill)
                 z += gap
             }
         case "none": break
@@ -104,7 +117,7 @@ public enum RailingTypes {
             let bc = GeometryOps.centroid(bprof)
             for (p, d) in samples(path, step: sp) where !postPts.contains(where: { $0.distance(to: p) < pw + bs }) {
                 let t = Transform2D.translation(p) * Transform2D.rotation(d.angle)
-                infill.prism(bprof.map { t.apply($0 - bc) }, z0: infillBottom, z1: railBottom, smooth: g.balusterProfile == "round")
+                infill.prism(bprof.map { t.apply($0 - bc) }, z0: infillBottom + dz(p), z1: railBottom + dz(p), smooth: g.balusterProfile == "round")
             }
         }
         let mat = el.material ?? "Steel"

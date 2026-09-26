@@ -143,6 +143,11 @@ enum DrawCommands {
     }
 
     @MainActor static func elevation(_ ed: Editor) -> Double { ed.doc.level(ed.doc.currentLevel)?.elevation ?? 0 }
+    /// A tangent direction for SPLINE tangency: an angle, or a point giving the direction from the last point.
+    @MainActor static func tangentInput(_ ed: Editor, _ msg: String) async throws -> Vec2? {
+        guard let a = try await ed.getAngle(msg, base: ed.lastPoint).value else { return nil }
+        return Vec2.polar(1, a)
+    }
 
     static var all: [CommandDef] { basic + curves + fills + solids }
 
@@ -171,10 +176,15 @@ enum DrawCommands {
                 }
             }
         },
-        CommandDef("XLINE", aliases: ["XL"], category: "Draw", summary: "Draws construction lines of (practically) infinite length.") { ed in
-            let big = 1e6
+        CommandDef("XLINE", aliases: ["XL"], category: "Draw", summary: "Draws infinite construction lines: through two points, Horizontal, Vertical, at an Angle (or relative to a Reference line), Bisecting an angle, or Offset from a line.") { ed in
+            let big = ConstructionLines.reach
+            @MainActor @discardableResult func add(_ base: Vec2, _ dir: Vec2) -> EntityID? {
+                guard let c = ConstructionLines.make(.xline, base: base, direction: dir) else { return nil }
+                let id = ed.addEntity(c.geometry)
+                if let i = ed.doc.entityIndex(id) { ed.doc.entities[i].props.merge(c.props) { $1 } }
+                return id
+            }
             var fixedDir: Vec2? = nil
-            var offsetMode = false
             let a = try await ed.getPoint("Specify a point", keywords: ["Hor", "Ver", "Ang", "Bisect", "Offset"])
             var origin: Vec2
             switch a {
@@ -182,45 +192,57 @@ enum DrawCommands {
             case .keyword("Hor"): fixedDir = Vec2(1, 0); origin = try await ed.requirePoint("Specify through point")
             case .keyword("Ver"): fixedDir = Vec2(0, 1); origin = try await ed.requirePoint("Specify through point")
             case .keyword("Ang"):
-                let ang = try await ed.getAngle("Enter angle of xline", defaultValue: 0).value ?? 0
+                let r = try await ed.getAngle("Enter angle of xline or [Reference]", defaultValue: 0, keywords: ["Reference"])
+                var ang = r.value ?? 0
+                if case .keyword("Reference") = r {
+                    guard case .pick(let pk) = try await ed.pickObject("Select a line object"), case .line(let l)? = ed.doc.entity(pk.id)?.geometry else { throw CommandError.invalid("Requires a line.") }
+                    ang = (l.b - l.a).angle + (try await ed.getAngle("Enter angle of xline", defaultValue: 0).value ?? 0)
+                }
                 fixedDir = Vec2.polar(1, ang); origin = try await ed.requirePoint("Specify through point")
             case .keyword("Bisect"):
                 let v = try await ed.requirePoint("Specify angle vertex point")
                 let s = try await ed.requirePoint("Specify angle start point", base: v)
-                let e = try await ed.requirePoint("Specify angle end point", base: v)
-                let d = ((s - v).normalized + (e - v).normalized).normalized
-                let dir = d == .zero ? (s - v).normalized.perp : d
-                ed.addEntity(.line(LineGeom(v - dir * big, v + dir * big))); return
-            case .keyword("Offset"): offsetMode = true; origin = .zero
-            default: return
-            }
-            if offsetMode {
-                let dist = try await ed.getPositive("Specify offset distance", defaultValue: ed.settings.offsetDistance)
-                while case .pick(let pk) = try await ed.pickObject("Select a line object"), let e = ed.doc.entity(pk.id), case .line(let l) = e.geometry {
-                    let side = try await ed.requirePoint("Specify side to offset")
-                    let d = (l.b - l.a).normalized
-                    let n = d.perp * ((side - l.a).cross(d) < 0 ? dist : -dist)
-                    ed.addEntity(.line(LineGeom(l.a + n - d * big, l.a + n + d * big)))
+                while let e = try await ed.getPoint("Specify angle end point", base: v).point {
+                    let d = ((s - v).normalized + (e - v).normalized).normalized
+                    add(v, d == .zero ? (s - v).normalized.perp : d)
                 }
                 return
+            case .keyword("Offset"):
+                let r = try await ed.getDistance("Specify offset distance or [Through]", defaultValue: ed.settings.offsetDistance, keywords: ["Through"])
+                let through = r == .keyword("Through")
+                let dist = r.value ?? ed.settings.offsetDistance
+                if !through { ed.settings.offsetDistance = dist }
+                while case .pick(let pk) = try await ed.pickObject("Select a line object"), let e = ed.doc.entity(pk.id), case .line(let l) = e.geometry {
+                    let d = (l.b - l.a).normalized
+                    guard d != .zero else { continue }
+                    let q = try await ed.requirePoint(through ? "Specify through point" : "Specify side to offset")
+                    let base: Vec2
+                    if through { base = q } else {
+                        let n = d.perp * ((q - l.a).cross(d) < 0 ? dist : -dist)
+                        base = l.a + n
+                    }
+                    add(base + d * ((l.a - base).dot(d) + (l.b - l.a).length / 2), d)
+                }
+                return
+            default: return
             }
-            if let d = fixedDir { ed.addEntity(.line(LineGeom(origin - d * big, origin + d * big))) }
+            if let d = fixedDir { add(origin, d) }
             while true {
                 let o = origin
                 let fd = fixedDir
                 guard let p = try await ed.getPoint("Specify through point", base: origin, preview: { c in
                     let d = fd ?? (c - o).normalized; return d == .zero ? [] : [.line(LineGeom(o - d * big, o + d * big))] }).point else { return }
-                if fixedDir != nil { origin = p; ed.addEntity(.line(LineGeom(p - fixedDir! * big, p + fixedDir! * big))); continue }
-                let d = (p - origin).normalized
-                guard d != .zero else { continue }
-                ed.addEntity(.line(LineGeom(origin - d * big, origin + d * big)))
+                if let fd = fixedDir { origin = p; add(p, fd); continue }
+                add(origin, p - origin)
             }
         },
-        CommandDef("RAY", category: "Draw", summary: "Draws a semi-infinite construction line.") { ed in
+        CommandDef("RAY", category: "Draw", summary: "Draws semi-infinite construction lines from a start point through each given point.") { ed in
             let s = try await ed.requirePoint("Specify start point")
-            while let p = try await ed.getPoint("Specify through point", base: s, preview: { c in [.line(LineGeom(s, s + (c - s).normalized * 1e6))] }).point {
-                let d = (p - s).normalized
-                if d != .zero { ed.addEntity(.line(LineGeom(s, s + d * 1e6))) }
+            let big = ConstructionLines.reach
+            while let p = try await ed.getPoint("Specify through point", base: s, preview: { c in [.line(LineGeom(s, s + (c - s).normalized * big))] }).point {
+                guard let c = ConstructionLines.make(.ray, base: s, direction: p - s) else { continue }
+                let id = ed.addEntity(c.geometry)
+                if let i = ed.doc.entityIndex(id) { ed.doc.entities[i].props.merge(c.props) { $1 } }
             }
         },
         CommandDef("PLINE", aliases: ["PL"], category: "Draw", summary: "Draws a 2D polyline of line and arc segments.") { ed in
@@ -584,11 +606,15 @@ enum DrawCommands {
             var method = ed.doc.variable("SPLMETHOD") == "1" ? "CV" : "Fit"
             var degree = Int(ed.variableDouble("SPLDEGREE", 3))
             var first: Vec2? = nil
+            var startTan: Vec2? = nil, endTan: Vec2? = nil
             while first == nil {
-                let a = try await ed.getPoint(method == "CV" ? "Specify first control vertex or [Method/Degree]" : "Specify first point or [Method]",
-                                              keywords: method == "CV" ? ["Method", "Degree"] : ["Method"])
+                let a = try await ed.getPoint(method == "CV" ? "Specify first control vertex or [Method/Degree]" : "Specify first point or [Method/Tangency]",
+                                              keywords: method == "CV" ? ["Method", "Degree"] : ["Method", "Tangency"])
                 switch a {
                 case .point(let p): first = p
+                case .keyword("Tangency"):
+                    // Start tangency: given as a direction (angle or a vector from the origin to a picked point).
+                    startTan = try await tangentInput(ed, "Specify start tangent direction")
                 case .keyword("Method"):
                     method = try await ed.getKeyword("Enter spline creation method", ["Fit", "CV"], defaultValue: method) ?? method
                     ed.doc.setVariable("SPLMETHOD", method == "CV" ? "1" : "0")
@@ -630,19 +656,27 @@ enum DrawCommands {
             var pts = [first!]
             var closed = false
             while true {
-                let kws = pts.count >= 3 ? ["Close", "Undo"] : ["Undo"]
-                let cur = pts
-                let a = try await ed.getPoint("Enter next point", base: pts.last, keywords: kws) { c in [.spline(SplineGeom(controlPoints: [], fitPoints: cur + [c]))] }
+                let kws = pts.count >= 3 ? ["Close", "Tangency", "Undo"] : ["Tangency", "Undo"]
+                let cur = pts, st = startTan
+                let a = try await ed.getPoint("Enter next point or [end Tangency]", base: pts.last, keywords: kws) { c in
+                    [.spline(st.flatMap { SplineFit.interpolate(cur + [c], startTangent: $0) } ?? SplineGeom(controlPoints: [], fitPoints: cur + [c]))] }
                 switch a {
                 case .point(let p): if !p.isClose(pts.last!, tol: 1e-9) { pts.append(p) }
                 case .keyword("Close"): closed = true
+                case .keyword("Tangency"):
+                    endTan = try await tangentInput(ed, "Specify end tangent direction"); if pts.count >= 2 { break }; continue
                 case .keyword("Undo"): if pts.count > 1 { pts.removeLast() }; continue
                 default: break
                 }
-                if closed || a == .none { break }
+                if closed || a == .none || endTan != nil { break }
             }
             guard pts.count >= 2 else { throw CommandError.invalid("A spline needs at least two points.") }
-            ed.addEntity(.spline(SplineGeom(degree: 3, controlPoints: [], fitPoints: pts, closed: closed)))
+            if !closed && (startTan != nil || endTan != nil), let s = SplineFit.interpolate(pts, startTangent: startTan, endTangent: endTan) {
+                // Tangency control: an interpolating clamped cubic (fit points kept for editing).
+                ed.addEntity(.spline(s))
+            } else {
+                ed.addEntity(.spline(SplineGeom(degree: 3, controlPoints: [], fitPoints: pts, closed: closed)))
+            }
         },
         CommandDef("POINT", aliases: ["PO"], category: "Draw", summary: "Creates point objects (style: PDMODE/PDSIZE).") { ed in
             while let p = try await ed.getPoint("Specify a point").point { ed.addEntity(.point(p)) }

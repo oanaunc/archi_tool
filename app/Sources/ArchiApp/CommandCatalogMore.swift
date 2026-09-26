@@ -53,6 +53,6 @@ extension CommandCatalog {
 
     /// Sections added after `coverageMenus2` (names unique across `coverageMenus`).
     static var coverageMenus3: [(String, [CmdItem])] {
-        [("3D Primitives & Solid Tools", primitivesMore), ("Annotation & Data", annotationMore), ("BIM Grids, Zones & Data", bimMore2), ("Arrays, Macros & Monitor", toolsMore), ("Temporary Visibility", visibilityMore), ("Import, Export & Collaboration", interopMore), ("Analysis & Design Assist", analysisAssist)]
+        [("3D Primitives & Solid Tools", primitivesMore), ("Annotation & Data", annotationMore), ("BIM Grids, Zones & Data", bimMore2), ("Arrays, Macros & Monitor", toolsMore), ("Temporary Visibility", visibilityMore), ("Import, Export & Collaboration", interopMore), ("Analysis & Design Assist", analysisAssist), ("Navigation & Sheets", navigationItems), ("File Tools & Exchange", fileExchangeItems), ("Analysis & Generative", analysisGenerativeItems)]
     }
 }

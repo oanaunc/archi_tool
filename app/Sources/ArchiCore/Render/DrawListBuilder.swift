@@ -42,10 +42,23 @@ public enum DrawListBuilder {
             // View range: elements above the top or below the view depth are left out; those below the bottom (and
             // lower-level elements within the view depth) are drawn as "beyond".
             var elsInRange = els.map { ($0.element, false) }
+            // Plan regions (DOC-012): elements inside a region use its local view range.
+            let regions = options.level.map { PlanRegions.regions(doc, level: $0) } ?? []
+            if let l = options.level, !regions.isEmpty, ViewRange.range(doc) == nil {
+                elsInRange = []
+                for (_, el) in els {
+                    guard let rr = PlanRegions.range(for: el, regions: regions, doc: doc) else { elsInRange.append((el, false)); continue }
+                    switch ViewRange.visibility(el, level: l, range: rr, doc: doc) {
+                    case .normal: elsInRange.append((el, false))
+                    case .beyond: elsInRange.append((el, true))
+                    case .hidden: break
+                    }
+                }
+            }
             if let l = options.level, let vr = ViewRange.range(doc) {
                 elsInRange = []
                 for (_, el) in els {
-                    switch ViewRange.visibility(el, level: l, range: vr, doc: doc) {
+                    switch ViewRange.visibility(el, level: l, range: PlanRegions.range(for: el, regions: regions, doc: doc) ?? vr, doc: doc) {
                     case .normal: elsInRange.append((el, false))
                     case .beyond: elsInRange.append((el, true))
                     case .hidden: break
@@ -56,13 +69,20 @@ public enum DrawListBuilder {
                     if ViewRange.visibility(el, level: l, range: vr, doc: doc) == .beyond { elsInRange.insert((el, true), at: 0) }
                 }
             }
+            // Visibility/graphics overrides and view filters of this view (DOC-020/021).
+            let vgOn = VisibilityGraphics.isActive(doc)
+            let vgCats = vgOn ? VisibilityGraphics.categoryOverrides(doc) : [:]
+            let vgFilters = vgOn ? VisibilityGraphics.filters(doc) : []
             for (el, isBeyond) in elsInRange {
+                var vg = GraphicOverride()
+                if vgOn { vg = VisibilityGraphics.override(el, doc: doc, categories: vgCats, filters: vgFilters); if vg.hidden == true { continue } }
                 var st = Phasing.Status.new
                 if phased { st = Phasing.status(el.props, doc: doc); if !Phasing.visible(st, pf) { continue } }
                 if el.props["kind"] == "ceiling" && !(options.showCeilings ?? (doc.variable("CEILINGS") != "0")) { continue }
                 if options.reflectedCeiling && !ReflectedCeiling.shows(el) { continue }
                 var items = PlanRepresentation.items(el, ctx: ctx, options: options)
                 if isBeyond { items = ViewRange.beyond(items) }
+                if vgOn, !vg.isEmpty { items = VisibilityGraphics.apply(vg, to: items) ?? [] }
                 if phased { items = phaseStyled(items, Phasing.style(st, pf), doc: doc, options: options) }
                 items = items.map { paper($0, options) }
                 if !items.isEmpty { out.append(DrawEntry(id: el.id, items: items)) }

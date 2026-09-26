@@ -95,3 +95,118 @@ public enum FamilyTemplates {
                                 profiles: [FamilyProfile(name: name, points: pts)], description: "Profile family")
     }
 }
+
+// MARK: - Category templates (PAR-002)
+
+extension FamilyTemplates {
+    public static let categories = ["Generic", "Furniture", "Casework", "Lighting", "Door", "Window", "Profile", "Tag", "Annotation", "TitleBlock"]
+
+    /// A new family from its category template: parameters, forms and symbolic lines that already flex.
+    public static func template(name: String, category: String) -> FamilyDefinition {
+        func rect(_ x0: String, _ y0: String, _ x1: String, _ y1: String, detail: String? = nil, dashed: Bool = false) -> FamilySymbolic {
+            FamilySymbolic(points: [[x0, y0], [x1, y0], [x1, y1], [x0, y1]], closed: true, detail: detail, dashed: dashed)
+        }
+        switch category.lowercased() {
+        case "door": return door(name: name)
+        case "window": return window(name: name)
+        case "profile":
+            return profile(name: name, points: [Vec2(0, 0), Vec2(100, 0), Vec2(100, 100), Vec2(0, 100)], width: 100, height: 100)
+        case "tag", "annotation":
+            // Label box flexing with the text (Width/Height are supplied by the tag), label template {Mark}.
+            var d = FamilyDefinition(name: name, category: category.lowercased() == "tag" ? "Tag" : "Annotation",
+                                     parameters: [P("Width", "600"), P("Height", "300")])
+            d.symbolic = [rect("-Width/2", "-Height/2", "Width/2", "Height/2")]
+            d.label = "{Mark}"
+            d.description = "Annotation family: symbolic lines around a {Parameter} label."
+            return d
+        case "titleblock":
+            // Sheet border with a title strip; flexes with the paper Width × Height (mm).
+            var d = FamilyDefinition(name: name, category: "Title Block",
+                                     parameters: [P("Width", "420"), P("Height", "297"), P("Margin", "10"), P("StripHeight", "40")])
+            d.symbolic = [rect("Margin", "Margin", "Width-Margin", "Height-Margin"),
+                          FamilySymbolic(points: [["Margin", "Margin+StripHeight"], ["Width-Margin", "Margin+StripHeight"]])]
+            d.label = "{Name}"
+            return d
+        default:
+            // Generic model / furniture / casework / lighting: a flexing box with a plan outline at coarse detail and
+            // the box's cut at medium/fine.
+            var d = FamilyDefinition(name: name, category: category.lowercased() == "generic" ? "Generic Model" : category.capitalized,
+                                     parameters: [P("Width", "600"), P("Depth", "600"), P("Height", "750"), P("Material", "Wood", .material)])
+            var box = FamilyForm(.box, name: "Body", dims: ["width": "Width", "depth": "Depth", "height": "Height"], material: "=Material")
+            box.views = nil
+            d.forms = [box]
+            d.symbolic = [rect("0", "0", "Width", "Depth", detail: "coarse")]
+            return d
+        }
+    }
+}
+
+// MARK: - Family files (.archifam, PAR-012) and loading (PAR-011)
+
+public enum FamilyFiles {
+    public static let fileExtension = "archifam"
+    struct Envelope: Codable {
+        var app: String
+        var formatVersion: Int
+        var family: FamilyDefinition
+        var nested: [FamilyDefinition]
+        var materials: [Material]
+    }
+    public enum FamilyFileError: Error, LocalizedError {
+        case notAFamily
+        public var errorDescription: String? { "The file is not an Oanarina Archi Tool family (.archifam)." }
+    }
+
+    /// Families a family depends on (nested forms, recursively).
+    static func dependencies(_ def: FamilyDefinition, doc: ArchiDocument, seen: inout Set<String>) -> [FamilyDefinition] {
+        var out: [FamilyDefinition] = []
+        for f in def.forms where f.kind == .nested {
+            guard let n = f.family, !n.hasPrefix("="), let sub = doc.family(named: n), !seen.contains(sub.name.lowercased()) else { continue }
+            seen.insert(sub.name.lowercased())
+            out.append(sub)
+            out += dependencies(sub, doc: doc, seen: &seen)
+        }
+        return out
+    }
+
+    /// Standalone family file: the definition, the families it nests and the materials it names.
+    public static func encode(_ def: FamilyDefinition, doc: ArchiDocument) throws -> Data {
+        var seen: Set<String> = [def.name.lowercased()]
+        let nested = dependencies(def, doc: doc, seen: &seen)
+        let names = Set(([def] + nested).flatMap { $0.forms.compactMap(\.material) } + ([def] + nested).flatMap { $0.parameters.filter { $0.kind == .material }.map(\.value) })
+        var d = def; d.source = nil
+        let env = Envelope(app: ArchiFile.appName, formatVersion: 1, family: d, nested: nested, materials: doc.materials.filter { names.contains($0.name) })
+        let enc = JSONEncoder(); enc.outputFormatting = [.prettyPrinted, .sortedKeys]
+        return try enc.encode(env)
+    }
+
+    public static func decode(_ data: Data) throws -> (family: FamilyDefinition, nested: [FamilyDefinition], materials: [Material]) {
+        guard let env = try? JSONDecoder().decode(Envelope.self, from: data) else { throw FamilyFileError.notAFamily }
+        return (env.family, env.nested, env.materials)
+    }
+
+    public enum LoadResult: Equatable { case added, replaced, kept }
+
+    /// Loads a family into a document. An existing family of the same name is replaced; with `overwriteValues` false,
+    /// the project's parameter values and types of that family are kept (Revit "overwrite existing version" vs "and its
+    /// parameter values"). Nested families and missing materials come along. Returns what happened to the main family.
+    @discardableResult
+    public static func load(_ data: Data, source: String?, into doc: inout ArchiDocument, overwriteValues: Bool) throws -> (name: String, result: LoadResult) {
+        let (f0, nested, mats) = try decode(data)
+        for m in mats where doc.material(m.name) == nil { doc.materials.append(m) }
+        for n in nested where doc.family(named: n.name) == nil { doc.families.append(n) }
+        var f = f0
+        f.source = source
+        if let i = doc.familyIndex(f.name) {
+            if !overwriteValues {
+                let old = doc.families[i]
+                for k in f.parameters.indices { if let p = old.parameter(f.parameters[k].name), f.parameters[k].formula == nil { f.parameters[k].value = p.value } }
+                for (t, vals) in old.types { f.types[t] = vals }
+            }
+            doc.families[i] = f
+            return (f.name, .replaced)
+        }
+        doc.families.append(f)
+        return (f.name, .added)
+    }
+}

@@ -25,6 +25,16 @@ struct PageSetup: Codable, Hashable {
     var plotStyleTable: String?
     /// Plot stamp text with fields {project} {number} {sheet} {date} {time} {user} {file} {style}; nil = default.
     var stampText: String?
+    /// Model-space plot area (SHT-028): drawing extents, the displayed view, the drawing limits or a window.
+    var plotArea: PlotArea = .extents
+    /// Display / window rectangle in model units: [minX, minY, maxX, maxY].
+    var plotWindow: [Double]?
+    /// Fit to paper at the exact ratio (not rounded to a standard scale) (SHT-029).
+    var exactFit = false
+    /// Named plot style table (STB); when set it is used instead of the colour-dependent table (SHT-031).
+    var namedStyleTable: String?
+
+    enum PlotArea: String, Codable, CaseIterable, Identifiable { case extents = "Extents", display = "Display", limits = "Limits", window = "Window"; var id: String { rawValue } }
 
     init() {}
     init(from decoder: Decoder) throws {
@@ -37,7 +47,18 @@ struct PageSetup: Codable, Hashable {
         modelScale = try c.decodeIfPresent(Double.self, forKey: .modelScale)
         plotStyleTable = try c.decodeIfPresent(String.self, forKey: .plotStyleTable)
         stampText = try c.decodeIfPresent(String.self, forKey: .stampText)
+        plotArea = try c.decodeIfPresent(PlotArea.self, forKey: .plotArea) ?? .extents
+        plotWindow = try c.decodeIfPresent([Double].self, forKey: .plotWindow)
+        exactFit = try c.decodeIfPresent(Bool.self, forKey: .exactFit) ?? false
+        namedStyleTable = try c.decodeIfPresent(String.self, forKey: .namedStyleTable)
     }
+
+    var windowBox: BBox2? {
+        guard let w = plotWindow, w.count == 4 else { return nil }
+        let b = BBox2(points: [Vec2(w[0], w[1]), Vec2(w[2], w[3])])
+        return b.width > 0 && b.height > 0 ? b : nil
+    }
+    mutating func setWindow(_ b: BBox2?) { plotWindow = b.map { [$0.min.x, $0.min.y, $0.max.x, $0.max.y] } }
 
     static let modelKey = "PAGESETUP:*MODEL*"
     static func key(_ doc: ArchiDocument, layoutIndex: Int?) -> String {
@@ -57,7 +78,7 @@ struct PageSetup: Codable, Hashable {
     }
 
     var modelPaperSize: PaperSize {
-        let p = PaperSize.standard.first { $0.name == modelPaper } ?? PaperSize.standard[1]
+        let p = PaperCatalog.find(modelPaper) ?? PaperSize.standard[1]
         return modelPortrait ? PaperSize(name: p.name + " portrait", width: p.height, height: p.width) : p
     }
 }
@@ -110,11 +131,18 @@ enum ViewportLock {
 
 extension Plotter {
     /// All (or the given) sheets in one multi-page vector PDF, each page at its own paper size (PUBLISH).
-    @MainActor static func writeSheetsPDF(doc: ArchiDocument, to url: URL, layouts: [Int]? = nil) throws {
-        let list = (layouts ?? Array(doc.layouts.indices)).filter { doc.layouts.indices.contains($0) }
+    /// `progress(done, total)` is called before each page; returning false cancels (the partial file is removed).
+    @MainActor static func writeSheetsPDF(doc: ArchiDocument, to url: URL, layouts: [Int]? = nil, progress: ((Int, Int) -> Bool)? = nil) throws {
+        // Placeholder sheets are listed but never plotted (SHT-020).
+        let list = (layouts ?? SheetTools.publishable(doc)).filter { doc.layouts.indices.contains($0) && !SheetTools.isPlaceholder(doc.layouts[$0]) }
         guard !list.isEmpty else { throw ExportError(errorDescription: "The document has no sheets. Create one in the Sheet view first.") }
         guard let ctx = CGContext(url as CFURL, mediaBox: nil, pdfInfo(doc, title: "\(doc.info.name) — \(list.count) sheet(s)")) else { throw PlotError.cannotCreate(url.path) }
-        for li in list {
+        for (k, li) in list.enumerated() {
+            if let progress, !progress(k, list.count) {
+                ctx.closePDF()
+                try? FileManager.default.removeItem(at: url)
+                throw ExportError(errorDescription: "Publishing cancelled.")
+            }
             let layout = doc.layouts[li]
             var box = CGRect(x: 0, y: 0, width: layout.paper.width * pointsPerMM, height: layout.paper.height * pointsPerMM)
             let boxData = Data(bytes: &box, count: MemoryLayout<CGRect>.size) as CFData
@@ -141,8 +169,16 @@ extension Plotter {
             url = u
         }
         do {
-            try publishPDF(doc: doc, layouts: Array(doc.layouts.indices), to: url, bookmarks: true)
-            model.editor.print("Published \(doc.layouts.count) sheet(s) to \(url.path)")
+            let list = SheetTools.publishable(doc)
+            // Progress in the status bar with Cancel (APP-044); events are pumped between pages.
+            let job = ProgressCenter.shared.begin("Publishing \(list.count) sheet(s)")
+            defer { ProgressCenter.shared.end(job) }
+            try publishPDF(doc: doc, layouts: list, to: url, bookmarks: true) { k, n in
+                ProgressCenter.shared.update(job, fraction: Double(k) / Double(max(n, 1)), detail: "sheet \(k + 1) of \(n)")
+                ProgressCenter.pumpEvents()
+                return !ProgressCenter.shared.isCancelled(job)
+            }
+            model.editor.print("Published \(list.count) sheet(s) to \(url.path)" + (list.count < doc.layouts.count ? " (\(doc.layouts.count - list.count) placeholder sheet(s) skipped)" : ""))
         } catch { model.files.showError(error) }
     }
 }
@@ -322,6 +358,10 @@ struct PageSetupForm: View {
     @Binding var scaleText: String
     /// Plot style tables available in the document.
     var tables: [String] = []
+    /// The 2D view shown in the window (for the Display plot area).
+    var displayBox: BBox2? = nil
+    /// Named plot style tables (STB) of the document.
+    var namedTables: [String] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -332,6 +372,12 @@ struct PageSetupForm: View {
                 Picker("Plot style table", selection: Binding(get: { setup.plotStyleTable ?? "" }, set: { setup.plotStyleTable = $0.isEmpty ? nil : $0 })) {
                     Text("None").tag("")
                     ForEach(tables, id: \.self) { Text($0).tag($0) }
+                }
+            }
+            if !namedTables.isEmpty {
+                Picker("Named plot styles", selection: Binding(get: { setup.namedStyleTable ?? "" }, set: { setup.namedStyleTable = $0.isEmpty ? nil : $0 })) {
+                    Text("None (colour-dependent)").tag("")
+                    ForEach(namedTables, id: \.self) { Text($0).tag($0) }
                 }
             }
             HStack {
@@ -348,13 +394,17 @@ struct PageSetupForm: View {
             if showModel {
                 Divider()
                 Picker("Paper", selection: $setup.modelPaper) {
-                    ForEach(PaperSize.standard, id: \.name) { p in Text("\(p.name) (\(fmt(p.width, 0))×\(fmt(p.height, 0)))").tag(p.name) }
+                    ForEach(PaperCatalog.builtIn, id: \.name) { p in Text("\(p.name) (\(fmt(p.width, 0))×\(fmt(p.height, 0)))").tag(p.name) }
                 }
                 Picker("Orientation", selection: $setup.modelPortrait) {
                     Text("Landscape").tag(false)
                     Text("Portrait").tag(true)
                 }
                 .pickerStyle(.segmented)
+                Picker("Plot area", selection: $setup.plotArea) { ForEach(PageSetup.PlotArea.allCases) { Text($0.rawValue).tag($0) } }
+                    .onChange(of: setup.plotArea) { a in if (a == .display || (a == .window && setup.windowBox == nil)), let d = displayBox { setup.setWindow(d) } }
+                if setup.plotArea == .window { Text("Window: PLOTAREA Window picks the corners in the drawing.").font(Theme.fontSmall).foregroundStyle(Theme.textDim) }
+                Toggle("Exact fit (not rounded to a standard scale)", isOn: $setup.exactFit).disabled(scaleText != "Fit")
                 Picker("Scale", selection: $scaleText) {
                     Text("Fit to paper").tag("Fit")
                     ForEach([1.0, 5, 10, 20, 25, 50, 75, 100, 200, 250, 500, 1000], id: \.self) { r in Text("1:\(fmt(r, 0))").tag("1:\(fmt(r, 0))") }
@@ -389,7 +439,7 @@ struct PageSetupSheet: View {
             VStack(alignment: .leading, spacing: 10) {
                 if isSheet {
                     Picker("Paper", selection: $paper) {
-                        ForEach(PaperSize.standard, id: \.name) { p in Text("\(p.name) (\(fmt(p.width, 0))×\(fmt(p.height, 0)) mm)").tag(p.name) }
+                        ForEach(PaperCatalog.builtIn, id: \.name) { p in Text("\(p.name) (\(fmt(p.width, 0))×\(fmt(p.height, 0)) mm)").tag(p.name) }
                     }
                     Picker("Orientation", selection: $portrait) {
                         Text("Landscape").tag(false)
@@ -398,7 +448,7 @@ struct PageSetupSheet: View {
                     .pickerStyle(.segmented)
                     Divider()
                 }
-                PageSetupForm(setup: $setup, showModel: !isSheet, scaleText: $scaleText, tables: PlotStyleTable.all(model.doc).map(\.name))
+                PageSetupForm(setup: $setup, showModel: !isSheet, scaleText: $scaleText, tables: PlotStyleTable.all(model.doc).map(\.name), displayBox: model.canvas?.visibleWorldBox, namedTables: NamedPlotStyles.tables(model.doc))
             }
             .padding(14)
             .frame(width: 420)
@@ -419,14 +469,14 @@ struct PageSetupSheet: View {
             if isSheet {
                 let p = model.doc.layouts[layoutIndex].paper
                 portrait = p.height > p.width
-                paper = PaperSize.standard.first { p.name.hasPrefix($0.name) }?.name ?? "A3"
+                paper = PaperCatalog.builtIn.first { p.name.hasPrefix($0.name) }?.name ?? "A3"
             }
         }
     }
 
     private func apply() {
         let s = setup, li = isSheet ? layoutIndex : nil, isSheet = self.isSheet
-        let base = PaperSize.standard.first { $0.name == paper } ?? PaperSize.standard[1]
+        let base = PaperCatalog.find(paper) ?? PaperSize.standard[1]
         let p = portrait ? PaperSize(name: base.name + " portrait", width: base.height, height: base.width) : base
         model.editor.transaction("Page Setup") { d in
             s.store(in: &d, layoutIndex: li)
@@ -443,6 +493,11 @@ struct TitleBlockSheet: View {
     @State private var fields: [String: String] = [:]
     @State private var info = ProjectInfo()
     @State private var applyToAll: Set<String> = []
+    /// Custom fields (SHT-021): label → project value / this sheet's override.
+    @State private var projectCustom: [String: String] = [:]
+    @State private var sheetCustom: [String: String] = [:]
+    @State private var newLabel = ""
+    @State private var logo = ""
 
     static let sheetKeys: [(String, String)] = [("sheetName", "Sheet title"), ("sheetNumber", "Sheet number"), ("scale", "Scale"), ("date", "Date"), ("revision", "Revision")]
     static let projectOverrideKeys: [(String, String)] = [("project", "Project"), ("client", "Client"), ("author", "Drawn by"), ("number", "Project no.")]
@@ -465,6 +520,25 @@ struct TitleBlockSheet: View {
                     field("Drawn by", $info.author)
                     Text("Every title block shows these unless a sheet overrides them.").font(Theme.fontSmall).foregroundStyle(Theme.textDim)
                         .fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: 6) {
+                        Text("Logo").frame(width: 84, alignment: .leading).foregroundStyle(Theme.textDim)
+                        Text(logo.isEmpty ? "None" : (logo as NSString).lastPathComponent).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+                        Button("Choose…") {
+                            let p = NSOpenPanel(); p.allowedContentTypes = [.image]
+                            if p.runModal() == .OK, let u = p.url { logo = u.path }
+                        }.buttonStyle(FlatButtonStyle(compact: true))
+                        if !logo.isEmpty { Button("Remove") { logo = "" }.buttonStyle(FlatButtonStyle(compact: true)) }
+                    }
+                    Text("CUSTOM FIELDS").font(.system(size: 9.5, weight: .semibold)).tracking(0.6).foregroundStyle(Theme.textDim).padding(.top, 6)
+                    ForEach(Array(Set(projectCustom.keys).union(sheetCustom.keys)).sorted(), id: \.self) { k in
+                        field(k.capitalized, Binding(get: { projectCustom[k] ?? "" }, set: { projectCustom[k] = $0 }), placeholder: "project value")
+                        field("  this sheet", Binding(get: { sheetCustom[k] ?? "" }, set: { sheetCustom[k] = $0 }), placeholder: "same as project")
+                    }
+                    HStack(spacing: 6) {
+                        TextField("New field label", text: $newLabel).darkField()
+                        Button("Add") { let l = newLabel.trimmingCharacters(in: .whitespaces).uppercased(); if !l.isEmpty { projectCustom[l] = projectCustom[l] ?? ""; newLabel = "" } }
+                            .buttonStyle(FlatButtonStyle())
+                    }
                 }
                 .frame(width: 250)
                 VStack(alignment: .leading, spacing: 7) {
@@ -495,6 +569,11 @@ struct TitleBlockSheet: View {
         .background(Theme.panel)
         .onAppear {
             info = model.doc.info
+            projectCustom = Dictionary(SheetTools.projectFields(model.doc), uniquingKeysWith: { a, _ in a })
+            logo = model.doc.variable("TITLEBLOCKLOGO") ?? ""
+            if model.doc.layouts.indices.contains(layoutIndex) {
+                for (k, v) in model.doc.layouts[layoutIndex].titleBlock where k.hasPrefix(SheetTools.sheetPrefix) { sheetCustom[String(k.dropFirst(SheetTools.sheetPrefix.count))] = v }
+            }
             if model.doc.layouts.indices.contains(layoutIndex) {
                 // Only the lower-case keys are read by the title block.
                 fields = model.doc.layouts[layoutIndex].titleBlock.filter { k, _ in (TitleBlockSheet.sheetKeys + TitleBlockSheet.projectOverrideKeys).contains { $0.0 == k } }
@@ -530,9 +609,13 @@ struct TitleBlockSheet: View {
     }
 
     private func apply() {
-        let li = layoutIndex, newInfo = info, f = fields, all = applyToAll
+        let li = layoutIndex, newInfo = info, f = fields, all = applyToAll, pc = projectCustom, sc = sheetCustom, lg = logo
         model.editor.transaction("Title Block") { d in
             d.info = newInfo
+            d.variables["TITLEBLOCKLOGO"] = lg.isEmpty ? nil : lg
+            for (k, _) in SheetTools.projectFields(d) where pc[k] == nil { SheetTools.setProjectField(&d, k, nil) }
+            for (k, v) in pc { SheetTools.setProjectField(&d, k, v.trimmingCharacters(in: .whitespaces)) }
+            for (k, v) in sc { SheetTools.setSheetField(&d, li, k, v.trimmingCharacters(in: .whitespaces)) }
             guard d.layouts.indices.contains(li) else { return }
             var tb = d.layouts[li].titleBlock
             for (k, _) in TitleBlockSheet.sheetKeys + TitleBlockSheet.projectOverrideKeys {

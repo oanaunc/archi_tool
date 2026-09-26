@@ -420,8 +420,8 @@ enum ModelingCommands {
     }
 
     static var site: [CommandDef] { [
-        CommandDef("TOPO", aliases: ["TOPOSURFACE", "TERRAIN"], category: "Site", summary: "Creates a toposurface from points (with elevations), contour polylines, an XYZ/CSV file or typed x,y,z values.") { ed in
-            let k = try await ed.getKeyword("Create from", ["Points", "Contours", "File", "Enter"], defaultValue: "Points") ?? "Points"
+        CommandDef("TOPO", aliases: ["TOPOSURFACE", "TERRAIN"], category: "Site", summary: "Creates a toposurface from points (with elevations), contour polylines (picked, or every object on contour Layers of an imported DXF), an XYZ/CSV file or typed x,y,z values.") { ed in
+            let k = try await ed.getKeyword("Create from", ["Points", "Contours", "Layer", "File", "Enter"], defaultValue: "Points") ?? "Points"
             let u = 1 / ed.doc.units.mm
             var pts: [Vec3] = []
             switch k {
@@ -433,24 +433,26 @@ enum ModelingCommands {
                     if z == nil { z = try await ed.getDistance("Elevation of point \(fmt(p.x)),\(fmt(p.y))", defaultValue: 0).value }
                     pts.append(Vec3(p.x, p.y, z ?? 0))
                 }
-            case "Contours":
-                let ids = try await ed.getEntitySelection("Select contour lines (elevation from their elevation property, or typed)")
+            case "Contours", "Layer":
+                // Contours (BIM-111): drawn or imported (DXF) polylines, lines, arcs and splines with an elevation
+                // property, 3D polylines with per-vertex z (vertexZ), or a typed elevation.
+                var ids: [EntityID]
+                var typed = true
+                if k == "Layer" {
+                    let pat = try await ed.getWord("Enter contour layer name(s) (wildcards * ?, comma-separated)", defaultValue: ed.doc.variable("TOPOLAYER") ?? "*CONT*") ?? "*CONT*"
+                    ed.doc.setVariable("TOPOLAYER", pat)
+                    let pats = pat.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
+                    ids = ed.doc.entities.filter { e in pats.contains { TopoContours.wildcard($0, e.layer) } }.map(\.id)
+                    typed = false   // imported contours at elevation 0 carry no elevation property
+                    if ids.isEmpty { throw CommandError.invalid("No objects on layer(s) \(pat).") }
+                } else {
+                    ids = try await ed.getEntitySelection("Select contour lines (elevation from their elevation property, or typed)")
+                }
                 for id in ids {
                     guard let e = ed.doc.entity(id) else { continue }
-                    let lines = GeometryOps.tessellate(e.geometry, doc: ed.doc).filter { $0.count >= 2 }
-                    guard !lines.isEmpty else { continue }
                     var z = e.props["elevation"].flatMap(Double.init)
-                    if z == nil { z = try await ed.getDistance("Elevation of contour #\(id)", defaultValue: 0).value }
-                    // Resample long segments so the triangulation follows the contour.
-                    for l in lines {
-                        for i in 0..<l.count {
-                            pts.append(Vec3(l[i].x, l[i].y, z ?? 0))
-                            if i + 1 < l.count {
-                                let len = l[i].distance(to: l[i + 1]), step = 2000 * u
-                                if len > step { let m = Int(len / step); for j in 1..<(m + 1) { let q = l[i].lerp(l[i + 1], Double(j) / Double(m + 1)); pts.append(Vec3(q.x, q.y, z ?? 0)) } }
-                            }
-                        }
-                    }
+                    if z == nil && e.props["vertexZ"] == nil && typed { z = try await ed.getDistance("Elevation of contour #\(id)", defaultValue: 0).value }
+                    pts += TopoContours.points(e, doc: ed.doc, elevation: z ?? 0, step: 2000 * u)
                 }
             case "File":
                 guard let path = try await ed.getString("Enter XYZ/CSV file path") else { return }

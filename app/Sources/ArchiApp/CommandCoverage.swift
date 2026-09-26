@@ -19,7 +19,7 @@ extension CommandCatalog {
         c("Points on Line", "ellipsis", "POINTSLINE"),
     ]
     static let construction: [CmdItem] = [
-        c("Parallel Line", "equal", "LINEPAR"), c("Perpendicular Line", "perpendicular", "LINEPERP"), c("Line at Angle", "angle", "LINEANG"),
+        c("Parallel Line", "equal", "LINEPAR"), c("Perpendicular Line", "angle", "LINEPERP"), c("Line at Angle", "angle", "LINEANG"),
         c("Bisector", "arrow.triangle.branch", "LINEBISECT"), c("Horizontal/Vertical", "plus", "LINEHV"), c("Relative Line", "arrow.up.right", "LINEREL"),
         c("Tangent Line", "circle.and.line.horizontal", "LINETAN"), c("Tangent to 2 Circles", "circle.circle", "LINETAN2"), c("Tangent Ortho", "circle.bottomhalf.filled", "LINETANORTHO"),
         c("Circle 2 Points + R", "circle", "CIRCLE2PR"), c("Circle Tan-Pt-Pt", "circle", "CIRCLETPP"), c("Circle Tan-Tan-Pt", "circle", "CIRCLETTP"),
@@ -72,7 +72,7 @@ extension CommandCatalog {
         c("Convert Dims", "arrow.triangle.swap", "DCCONVERT"), c("Parameters", "function", "PARAMETERS", "PARAM"), c("List Constraints", "list.bullet", "CONSTRAINTLIST"),
         c("Delete Constraints", "trash", "DELCONSTRAINT"),
         c("Coincident", "smallcircle.filled.circle", "GCCOINCIDENT"), c("Horizontal", "arrow.left.and.right", "GCHORIZONTAL"), c("Vertical", "arrow.up.and.down", "GCVERTICAL"),
-        c("Parallel", "equal", "GCPARALLEL"), c("Perpendicular", "perpendicular", "GCPERPENDICULAR"), c("Collinear", "line.diagonal", "GCCOLLINEAR"),
+        c("Parallel", "equal", "GCPARALLEL"), c("Perpendicular", "angle", "GCPERPENDICULAR"), c("Collinear", "line.diagonal", "GCCOLLINEAR"),
         c("Equal", "equal.circle", "GCEQUAL"), c("Fix", "lock", "GCFIX"), c("Concentric", "circle.circle", "GCCONCENTRIC"), c("Tangent", "circle.and.line.horizontal", "GCTANGENT"),
         c("Symmetric", "arrow.left.and.right.righttriangle.left.righttriangle.right", "GCSYMMETRIC"), c("Midpoint", "circle.and.line.horizontal", "GCMIDPOINT"),
         c("Point on Curve", "point.topleft.down.curvedto.point.bottomright.up", "GCPOINTONCURVE"),
@@ -247,7 +247,7 @@ struct RibbonCatalogMenu: View {
                         let r = model.command(item.names)
                         Button { if let r { model.runCommand(item.args.isEmpty ? r : r + " " + item.args) } } label: { Label(item.title, systemImage: item.symbol) }
                             .disabled(r == nil)
-                            .help(r.flatMap { model.editor.registry.lookup($0) }.map { "\($0.name) — \($0.summary)" } ?? "")
+                            .help(r.flatMap { model.editor.registry.lookup($0) }.map { "\(item.title) — \($0.summary)  [\($0.name)\($0.aliases.isEmpty ? "" : ", " + $0.aliases.joined(separator: ", "))]" } ?? "")
                     }
                 }
             }

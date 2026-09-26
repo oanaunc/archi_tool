@@ -22,7 +22,7 @@ public enum SystemVariables {
                                "TEXTSIZE", "FILLETRAD", "CHAMFERA", "OFFSETDIST", "CLAYER", "CECOLOR", "CELTYPE", "CELWEIGHT", "DIMSTYLE", "TEXTSTYLE", "LTSCALE",
                                "WALLTHICKNESS", "WALLHEIGHT", "INSUNITS", "CLEVEL", "OTRACK"]
     /// Other commonly used variables registered as commands.
-    public static let stored = ["CANNOSCALE", "PICKSTYLE", "SELECTSIMILARMODE", "INSBASE", "CENTEREXE", "CHAMFERB", "DIMSCALE", "DIMDLI", "LUPREC", "PDMODE", "PDSIZE", "MIRRTEXT", "DELOBJ", "HPNAME", "HPSCALE", "HPANG", "PLINEWID", "TRIMMODE", "DIMLAYER", "TEXTLAYER", "CONSTRAINTINFER", "AUTOCONSTRAINDIST", "AUTOCONSTRAINANGLE"]
+    public static let stored = ["CANNOSCALE", "PICKSTYLE", "SELECTSIMILARMODE", "INSBASE", "CENTEREXE", "CHAMFERB", "DIMSCALE", "DIMDLI", "LUPREC", "PDMODE", "PDSIZE", "MIRRTEXT", "DELOBJ", "HPNAME", "HPSCALE", "HPANG", "PLINEWID", "TRIMMODE", "DIMLAYER", "TEXTLAYER", "CONSTRAINTINFER", "AUTOCONSTRAINDIST", "AUTOCONSTRAINANGLE", "CETRANSPARENCY", "TRANSPARENCYDISPLAY", "PLOTTRANSPARENCY"]
 
     static func flag(_ b: Bool) -> String { b ? "1" : "0" }
     public static func parseFlag(_ s: String) -> Bool? {
@@ -211,7 +211,7 @@ enum SettingsCommands {
     static var layers: [CommandDef] { [
         CommandDef("LAYER", aliases: ["LA", "-LAYER", "-LA"], category: "Settings", summary: "Manages layers: make, set, new, rename, on/off, freeze/thaw, lock/unlock, color, linetype, lineweight, delete.") { ed in
             ed.host?.perform(.showPanel("Layers"), editor: ed)
-            let kws = ["?", "Make", "Set", "New", "Rename", "ON", "OFF", "Color", "Ltype", "LWeight", "Freeze", "Thaw", "LOck", "Unlock", "Delete", "Plot"]
+            let kws = ["?", "Make", "Set", "New", "Rename", "ON", "OFF", "Color", "Ltype", "LWeight", "TRansparency", "Freeze", "Thaw", "LOck", "Unlock", "Delete", "Plot"]
             ed.print("Current layer: \"\(ed.doc.currentLayer)\"")
             while let k = try await ed.getKeyword("Enter an option", kws) {
                 switch k {
@@ -258,6 +258,10 @@ enum SettingsCommands {
                     guard let lt = try await ed.getWord("Enter a loaded linetype name", defaultValue: "Continuous"), let t = ed.doc.linetype(lt) else { ed.print("Linetype not loaded."); continue }
                     let s = try await ed.getWord("Enter name list of layer(s) for linetype", defaultValue: ed.doc.currentLayer) ?? ed.doc.currentLayer
                     for i in matchLayers(ed.doc, s) { ed.doc.layers[i].linetype = t.name }
+                case "TRansparency":
+                    guard let v = try await ed.getReal("Enter transparency value (0-90)", defaultValue: 0).value, v >= 0, v <= 90 else { ed.print("Transparency must be between 0 and 90."); continue }
+                    let s = try await ed.getWord("Enter name list of layer(s) for transparency", defaultValue: ed.doc.currentLayer) ?? ed.doc.currentLayer
+                    for i in matchLayers(ed.doc, s) { ed.doc.layers[i].transparency = v / 100 }
                 case "LWeight":
                     guard let v = try await ed.getReal("Enter lineweight (mm)", defaultValue: 0.25).value, v >= 0, v <= 2.11 else { ed.print("Lineweight must be between 0 and 2.11 mm."); continue }
                     let s = try await ed.getWord("Enter name list of layers(s) for lineweight", defaultValue: ed.doc.currentLayer) ?? ed.doc.currentLayer
@@ -364,14 +368,29 @@ enum SettingsCommands {
             if let e = SystemVariables.set("CECOLOR", v, ed) { throw CommandError.invalid(e) }
         },
         CommandDef("LINETYPE", aliases: ["LT", "-LINETYPE", "LTYPE"], category: "Settings", summary: "Lists, loads, creates and sets the current linetype.") { ed in
-            while let k = try await ed.getKeyword("Enter an option", ["?", "Load", "Create", "Set"]) {
+            while let k = try await ed.getKeyword("Enter an option", ["?", "Load", "File", "Create", "Set", "Export"]) {
                 switch k {
-                case "?": for l in ed.doc.linetypes { ed.print("\(l.name == ed.doc.variable("CELTYPE") ? "*" : " ") \(l.name): \(l.description)") }
+                case "?": for l in ed.doc.linetypes { ed.print("\(l.name == ed.doc.variable("CELTYPE") ? "*" : " ") \(l.name): \(l.description)\(ed.doc.variable(LinFile.complexVariable(l.name)) != nil ? " (complex)" : "")") }
                 case "Load":
+                    // The basic set plus the bundled ISO / complex library (acadiso.lin equivalents).
                     let s = try await ed.getWord("Enter linetype(s) to load (* = all standard)", defaultValue: "*") ?? "*"
                     var n = 0
                     for lt in Linetype.standard where glob(s, lt.name) && ed.doc.linetype(lt.name) == nil { ed.doc.linetypes.append(lt); n += 1 }
+                    n += LinFile.load(LinFile.standard.filter { glob(s, $0.name) }, into: &ed.doc).count
                     ed.print("\(n) linetype(s) loaded.")
+                case "File":
+                    // Linetypes from a .lin file (AutoCAD format, complex text/shape elements included).
+                    guard let path = try await ed.getString("Enter .lin file name") , !path.isEmpty else { continue }
+                    let defs = LinFile.parse(try LayerToolCommands.readFile(path))
+                    guard !defs.isEmpty else { throw CommandError.invalid("No linetype definitions in \(path).") }
+                    let s = try await ed.getWord("Enter linetype(s) to load (* = all)", defaultValue: "*") ?? "*"
+                    let names = LinFile.load(defs.filter { glob(s, $0.name) }, into: &ed.doc, replace: true)
+                    ed.print("\(names.count) linetype(s) loaded: \(names.joined(separator: ", "))")
+                case "Export":
+                    guard let path = try await ed.getString("Enter .lin file name to write"), !path.isEmpty else { continue }
+                    let defs = ed.doc.linetypes.filter { !$0.pattern.isEmpty }.compactMap { LinFile.definition($0.name, doc: ed.doc) }
+                    let url = try LayerToolCommands.writeFile(path, LinFile.write(defs))
+                    ed.print("\(defs.count) linetype(s) written to \(url).")
                 case "Create":
                     guard let name = try await ed.getWord("Enter name of linetype to create"), !name.isEmpty else { continue }
                     guard ed.doc.linetype(name) == nil else { ed.print("Linetype \(name) already exists."); continue }
@@ -467,7 +486,7 @@ enum SettingsCommands {
             ed.settings.ortho = k == "ON"; ed.print("<Ortho \(ed.settings.ortho ? "on" : "off")>")
         },
         CommandDef("OSNAP", aliases: ["OS", "-OSNAP", "DDOSNAP"], category: "Settings", summary: "Sets running object snap modes (END,MID,CEN,NOD,QUA,INT,EXT,INS,PER,TAN,NEA,PAR, ON/OFF).") { ed in
-            let cur = ed.settings.snapModes.map(\.rawValue).sorted().joined(separator: ",")
+            let cur = (ed.settings.snapModes.map(\.rawValue) + (ed.settings.geometricCenterSnap ? ["gcen"] : [])).sorted().joined(separator: ",")
             guard let s = try await ed.getWord("Enter list of object snap modes [?/ON/OFF]", defaultValue: cur) else { return }
             let map: [String: SnapKind] = ["END": .endpoint, "MID": .midpoint, "CEN": .center, "NOD": .node, "QUA": .quadrant, "INT": .intersection, "EXT": .extension,
                                            "INS": .insertion, "PER": .perpendicular, "TAN": .tangent, "NEA": .nearest, "PAR": .parallel, "GRI": .grid]
@@ -477,11 +496,13 @@ enum SettingsCommands {
             case "OFF", "NON", "NONE": ed.settings.objectSnap = false
             default:
                 var modes = Set<SnapKind>()
+                var gcen = false
                 for part in s.split(separator: ",") {
                     let p = part.trimmingCharacters(in: .whitespaces).uppercased()
+                    if p.hasPrefix("GCE") || p == "GEOMETRICCENTER" { gcen = true; continue }
                     if let k = map[String(p.prefix(3))] ?? SnapKind(rawValue: p.lowercased()) { modes.insert(k) } else { throw CommandError.invalid("Unknown snap mode \(p).") }
                 }
-                ed.settings.snapModes = modes; ed.settings.objectSnap = !modes.isEmpty
+                ed.settings.snapModes = modes; ed.settings.geometricCenterSnap = gcen; ed.settings.objectSnap = !modes.isEmpty || gcen
             }
             ed.print("OSMODE = \(SystemVariables.osmode(ed.settings))")
         },

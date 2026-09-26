@@ -118,6 +118,9 @@ extension Editor {
         if let c = doc.variable("CECOLOR"), let cr = ColorRef.parse(c) { e.color = cr }
         if let lt = doc.variable("CELTYPE"), !lt.isEmpty, lt.lowercased() != "bylayer" { e.linetype = lt }
         if let lw = doc.variable("CELWEIGHT"), let v = Double(lw), v >= 0 { e.lineweight = v }
+        // Object linetype scale of new objects (CELTSCALE, LAY-024) and transparency (CETRANSPARENCY: ByLayer, ByBlock or 0–90).
+        if let s = doc.variable("CELTSCALE").flatMap(Double.init), s > 0, abs(s - 1) > 1e-12 { e.props["ltscale"] = fmt(s) }
+        if let t = doc.variable("CETRANSPARENCY"), !t.isEmpty, t.caseInsensitiveCompare("ByLayer") != .orderedSame { e.props["transparency"] = t }
         return doc.add(e)
     }
 

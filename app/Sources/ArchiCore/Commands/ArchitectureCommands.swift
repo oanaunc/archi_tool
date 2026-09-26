@@ -37,9 +37,18 @@ enum ArchitectureCommands {
 
     /// Outer boundary of the walls around a picked point (inner faces offset by the wall thickness).
     @MainActor static func wallsBoundary(_ ed: Editor, outside: Bool) async throws -> [Vec2]? {
-        let p = try await ed.requirePoint("Pick a point inside the walls")
+        let a = try await ed.getPoint("Pick a point inside the walls or [Pick walls]", keywords: ["Pick"])
+        if case .keyword = a {
+            // Boundary from picked walls: the outer outline of their (mitred) union — their outside faces (BIM-048).
+            let ids = try await elements(ed, "Select the bounding walls", { if case .wall = $0 { return true }; return false })
+            guard let b = WallOutlines.outer(ids: ids, doc: ed.doc, inner: !outside) else { ed.print("The selected walls do not form a closed loop."); return nil }
+            return b
+        }
+        guard let p = a.point else { return nil }
         guard let inner = RoomBounding.boundary(at: p, doc: ed.doc, level: ed.doc.currentLevel) else { ed.print("No closed wall loop found around that point."); return nil }
         guard outside else { return inner }
+        // Outside faces of the walls enclosing the point (exact for mixed thicknesses); offset fallback.
+        if let b = WallOutlines.outer(around: p, doc: ed.doc, level: ed.doc.currentLevel) { return b }
         let t = ed.doc.elements.compactMap { el -> Double? in if el.level == ed.doc.currentLevel, case .wall(let w) = el.geometry { return w.thickness }; return nil }.max() ?? 0
         return CommandHelpers.offsetPolygon(ccw(inner), t)
     }
@@ -74,8 +83,39 @@ enum ArchitectureCommands {
                     s.wallJustification = WallJustification(rawValue: j.lowercased()) ?? .center
                 case "Type":
                     let names = ed.doc.wallTypes.map(\.name)
-                    guard let n = try await ed.getWord("Enter wall type name or [?]", defaultValue: wallType ?? names.first) else { return }
+                    guard let n = try await ed.getWord("Enter wall type name or [?/New/Edit/Delete/Show]", defaultValue: wallType ?? names.first, keywords: ["?", "New", "Edit", "Delete", "Show"]) else { return }
                     if n == "?" { ed.print("Wall types: " + ed.doc.wallTypes.map { "\"\($0.name)\" (\(fmt($0.thickness)))" }.joined(separator: ", ")); return }
+                    if ["New", "Edit", "Delete", "Show"].contains(n) {
+                        // Compound wall type editor (BIM-014/015): plies "Material thickness Function; …" left face → right face.
+                        guard let tn = try await ed.getWord(n == "New" ? "Enter new wall type name" : "Enter wall type name", defaultValue: n == "New" ? nil : wallType) else { return }
+                        let idx = ed.doc.wallTypes.firstIndex { $0.name.caseInsensitiveCompare(tn) == .orderedSame }
+                        switch n {
+                        case "Show":
+                            guard let i = idx else { ed.print("Wall type \(tn) not found."); return }
+                            let wt = ed.doc.wallTypes[i]
+                            ed.print("\(wt.name): \(fmt(wt.thickness)) — " + WallTypeEditor.describe(wt))
+                            return
+                        case "Delete":
+                            guard let i = idx else { ed.print("Wall type \(tn) not found."); return }
+                            let used = ed.doc.elements.contains { if case .wall(let w) = $0.geometry { return w.wallType == ed.doc.wallTypes[i].name }; return false }
+                            guard !used else { throw CommandError.invalid("Wall type \(tn) is used by walls.") }
+                            ed.doc.wallTypes.remove(at: i)
+                            if wallType?.caseInsensitiveCompare(tn) == .orderedSame { wallType = nil }
+                            ed.print("Wall type \(tn) deleted.")
+                            return
+                        default:
+                            if n == "New" && idx != nil { throw CommandError.invalid("Wall type \(tn) already exists.") }
+                            if n == "Edit" && idx == nil { throw CommandError.invalid("Wall type \(tn) not found.") }
+                            let cur = idx.map { WallTypeEditor.describe(ed.doc.wallTypes[$0]) }
+                            guard let spec = try await ed.getWord("Plies \"Material thickness [Function]; …\" (Function: Structure, Thermal, Finish, Membrane, Substrate, Air)", defaultValue: cur) else { return }
+                            guard let plies = WallTypeEditor.parse(spec, doc: ed.doc) else { throw CommandError.invalid("Use plies like \"Plaster 15 Finish; Brick 240 Structure\".") }
+                            let wt = WallType(name: idx.map { ed.doc.wallTypes[$0].name } ?? tn, plies: plies)
+                            let n2 = WallTypeEditor.apply(wt, doc: &ed.doc)
+                            wallType = wt.name; s.wallThickness = wt.thickness
+                            ed.print("Wall type \(wt.name): \(fmt(wt.thickness)) thick, \(plies.count) plies" + (n2 > 0 ? "; \(n2) wall(s) updated." : "."))
+                        }
+                        break
+                    }
                     guard let wt = ed.doc.wallTypes.first(where: { $0.name.caseInsensitiveCompare(n) == .orderedSame }) else { ed.print("Wall type \(n) not found."); return }
                     wallType = wt.name; s.wallThickness = wt.thickness
                 case "Base": baseOffset = try await ed.getDistance("Specify base offset from level", defaultValue: baseOffset).value ?? baseOffset
@@ -152,9 +192,28 @@ enum ArchitectureCommands {
             var gu = ed.variableDouble("CWGRIDU", 1200), gv = ed.variableDouble("CWGRIDV", 1500)
             var start: Vec2
             while true {
-                let a = try await ed.getPoint("Specify start point", keywords: ["Height", "GridU", "GridV"])
+                let a = try await ed.getPoint("Specify start point", keywords: ["Height", "GridU", "GridV", "Embed"])
                 switch a {
                 case .point(let p): start = p
+                case .keyword("Embed"):
+                    // Curtain wall embedded in a host wall: the wall is cut where the curtain wall runs (BIM-028).
+                    guard case .pick(let pk) = try await ed.pickObject("Select host wall", filter: { isWall(ed.doc, $0) }),
+                          let host = ed.doc.element(pk.id), case .wall(let w) = host.geometry else { return }
+                    let c0 = w.centerStart, c1 = w.centerEnd, len = c0.distance(to: c1)
+                    guard len > 1e-9 else { return }
+                    let d = (c1 - c0) / len
+                    func onWall(_ p: Vec2) -> Vec2 { c0 + d * min(max((p - c0).dot(d), 0), len) }
+                    var pa = c0, pb = c1
+                    if let p0 = try await ed.getPoint("Specify start point on the wall (Enter = whole wall)").point {
+                        pa = onWall(p0)
+                        pb = onWall(try await ed.getPoint("Specify end point on the wall", base: pa).point ?? c1)
+                    }
+                    guard pa.distance(to: pb) > 1e-6 else { throw CommandError.invalid("The curtain wall needs a length.") }
+                    let hh = min(h, BIMConstraints.wallHeight(host, doc: ed.doc))
+                    let id = ed.doc.addElement(.curtainWall(CurtainWallGeom(start: pa, end: pb, height: hh, baseOffset: w.baseOffset, gridU: gu, gridV: gv)), level: host.level)
+                    if let i = ed.doc.elementIndex(id) { ed.doc.elements[i].props["hostWall"] = "\(host.id)" }
+                    ed.print("Curtain wall embedded in wall #\(host.id) (\(fmt(pa.distance(to: pb))) long).")
+                    return
                 case .keyword("Height"): h = try await ed.getPositive("Specify height", defaultValue: h); continue
                 case .keyword("GridU"): gu = try await ed.getPositive("Specify vertical mullion spacing", defaultValue: gu); ed.doc.setVariable("CWGRIDU", fmt(gu)); continue
                 case .keyword("GridV"): gv = try await ed.getPositive("Specify horizontal mullion spacing", defaultValue: gv); ed.doc.setVariable("CWGRIDV", fmt(gv)); continue
@@ -172,7 +231,7 @@ enum ArchitectureCommands {
             }
             ed.print("\(n) curtain wall(s) created.")
         },
-        CommandDef("WALLBYLINES", aliases: ["WALLFROMLINES", "WBL"], category: "Architecture", summary: "Converts selected lines, arcs and polylines into walls.") { ed in
+        CommandDef("WALLBYLINES", aliases: ["WALLFROMLINES", "WBL"], category: "Architecture", summary: "Converts selected lines, arcs, polylines, splines and ellipses into walls (curves become chains of arc walls).") { ed in
             let ids = try await ed.getEntitySelection("Select lines, arcs or polylines")
             guard !ids.isEmpty else { return }
             let th = try await ed.getPositive("Specify wall thickness", defaultValue: ed.settings.wallThickness)
@@ -183,9 +242,18 @@ enum ArchitectureCommands {
             var n = 0
             var used = Set<EntityID>()
             for id in ids {
-                guard let e = ed.doc.entity(id), let v = CommandHelpers.polylineVertices(e.geometry) else { continue }
-                if case .ellipse = e.geometry { continue }
-                if case .spline = e.geometry { continue }
+                guard let e = ed.doc.entity(id) else { continue }
+                var v: (vertices: [PolyVertex], closed: Bool)
+                if let c = CurveWalls.chain(for: e.geometry, doc: ed.doc, tolerance: max(1 / ed.doc.units.mm, th * 0.01)) {
+                    // Splines and ellipses: chains of arc walls fitted to the curve (BIM-013).
+                    let closed = c.count > 2 && c[0].p.distance(to: c[c.count - 1].p) < 1e-6
+                    v = (closed ? Array(c.dropLast()) : c, closed)
+                } else {
+                    guard let pv = CommandHelpers.polylineVertices(e.geometry) else { continue }
+                    if case .ellipse = e.geometry { continue }
+                    if case .spline = e.geometry { continue }
+                    v = (pv.vertices, pv.closed)
+                }
                 let segs = v.closed ? v.vertices.count : v.vertices.count - 1
                 var chain: [EntityID] = []
                 for i in 0..<max(segs, 0) {
@@ -242,16 +310,19 @@ enum ArchitectureCommands {
         var windowStyle = WindowStyle(rawValue: ed.doc.variable("WINDOWSTYLE") ?? "") ?? .casement
         var flip = false
         var n = 0
+        var variant = OpeningVariant(rawValue: ed.doc.variable(key + "VARIANT") ?? "").flatMap { $0.isDoor == (kind == .door) ? $0 : nil }
         var typeName: String? = kind == .opening ? nil : ed.doc.variable(key + "TYPE").flatMap { ed.doc.openingType($0)?.kind == kind ? $0 : nil }
-        if let t = ed.doc.openingType(typeName) { width = t.width; height = t.height; sill = t.sill; doorStyle = t.doorStyle; windowStyle = t.windowStyle }
+        if let t = ed.doc.openingType(typeName) { width = t.width; height = t.height; sill = t.sill; doorStyle = t.doorStyle; windowStyle = t.windowStyle; variant = t.variant }
+        func styleName() -> String { variant?.rawValue ?? (kind == .door ? doorStyle.rawValue : windowStyle.rawValue) }
         @MainActor func save() {
             ed.doc.setVariable(key + "WIDTH", fmt(width)); ed.doc.setVariable(key + "HEIGHT", fmt(height)); ed.doc.setVariable(key + "SILL", fmt(sill))
             ed.doc.setVariable("DOORSTYLE", doorStyle.rawValue); ed.doc.setVariable("WINDOWSTYLE", windowStyle.rawValue)
+            ed.doc.setVariable(key + "VARIANT", variant?.rawValue ?? "")
         }
         while true {
             var kws = ["Width", "Height", "Sill", "Flip"]
             if kind != .opening { kws.insert("Style", at: 3); kws.append("Type") }
-            ed.print("\(kind.rawValue.capitalized): " + (typeName.map { "Type = \($0), " } ?? "") + "Width = \(fmt(width)), Height = \(fmt(height)), Sill = \(fmt(sill))" + (kind == .door ? ", Style = \(doorStyle.rawValue)" : kind == .window ? ", Style = \(windowStyle.rawValue)" : ""))
+            ed.print("\(kind.rawValue.capitalized): " + (typeName.map { "Type = \($0), " } ?? "") + "Width = \(fmt(width)), Height = \(fmt(height)), Sill = \(fmt(sill))" + (kind != .opening ? ", Style = \(styleName())" : ""))
             let a = try await ed.pickObject("Select wall location for the \(kind.rawValue)", keywords: kws) { isWall(ed.doc, $0) }
             switch a {
             case .keyword("Width"): width = try await ed.getPositive("Specify width", defaultValue: width); typeName = nil
@@ -262,16 +333,19 @@ enum ArchitectureCommands {
                 guard let w = try await ed.getWord("Enter \(kind.rawValue) type name or [?]", defaultValue: typeName ?? types.first?.name) else { break }
                 if w == "?" { ed.print("Types: " + types.map { "\"\($0.name)\"" }.joined(separator: ", ")); break }
                 guard let t = types.first(where: { $0.name.caseInsensitiveCompare(w) == .orderedSame }) ?? types.first(where: { $0.name.lowercased().hasPrefix(w.lowercased()) }) else { ed.print("Type \(w) not found."); break }
-                typeName = t.name; width = t.width; height = t.height; sill = t.sill; doorStyle = t.doorStyle; windowStyle = t.windowStyle
+                typeName = t.name; width = t.width; height = t.height; sill = t.sill; doorStyle = t.doorStyle; windowStyle = t.windowStyle; variant = t.variant
                 ed.doc.setVariable(key + "TYPE", t.name)
             case .keyword("Flip"): flip.toggle(); ed.print("Hand \(flip ? "flipped" : "normal").")
             case .keyword("Style"):
+                typeName = nil
                 if kind == .door {
-                    let s = try await ed.getWord("Door style [\(DoorStyle.allCases.map(\.rawValue).joined(separator: "/"))]", defaultValue: doorStyle.rawValue) ?? ""
-                    if let d = DoorStyle.allCases.first(where: { $0.rawValue.lowercased().hasPrefix(s.lowercased()) }) { doorStyle = d } else { ed.print("Unknown style.") }
+                    let s = try await ed.getWord("Door style [\(DoorStyle.allCases.map(\.rawValue).joined(separator: "/"))/pocket/biFold]", defaultValue: styleName()) ?? ""
+                    if let v = OpeningVariant(name: s), v.isDoor { variant = v; doorStyle = v.baseDoorStyle }
+                    else if let d = DoorStyle.allCases.first(where: { $0.rawValue.lowercased().hasPrefix(s.lowercased()) }) { doorStyle = d; variant = nil } else { ed.print("Unknown style.") }
                 } else {
-                    let s = try await ed.getWord("Window style [\(WindowStyle.allCases.map(\.rawValue).joined(separator: "/"))]", defaultValue: windowStyle.rawValue) ?? ""
-                    if let w = WindowStyle.allCases.first(where: { $0.rawValue.lowercased() == s.lowercased() }) ?? WindowStyle.allCases.first(where: { $0.rawValue.lowercased().hasPrefix(s.lowercased()) }) { windowStyle = w } else { ed.print("Unknown style.") }
+                    let s = try await ed.getWord("Window style [\(WindowStyle.allCases.map(\.rawValue).joined(separator: "/"))/pivot/tiltTurn]", defaultValue: styleName()) ?? ""
+                    if let v = OpeningVariant(name: s), !v.isDoor { variant = v; windowStyle = .casement }
+                    else if let w = WindowStyle.allCases.first(where: { $0.rawValue.lowercased() == s.lowercased() }) ?? WindowStyle.allCases.first(where: { $0.rawValue.lowercased().hasPrefix(s.lowercased()) }) { windowStyle = w; variant = nil } else { ed.print("Unknown style.") }
                 }
             case .pick(let pk):
                 guard let host = ed.doc.element(pk.id), case .wall(let w) = host.geometry else { continue }
@@ -288,6 +362,7 @@ enum ArchitectureCommands {
                 let facing = dir.cross(pk.point - w.centerStart) < 0
                 var o = OpeningGeom(kind: kind, hostWall: pk.id, offset: along, width: width, height: height, sill: sill, flipHand: flip, flipFacing: facing, doorStyle: doorStyle, windowStyle: windowStyle,
                                     typeName: typeName, mark: kind == .opening ? nil : nextMark(ed.doc, kind))
+                if kind != .opening { o.variant = variant }
                 if let t = ed.doc.openingType(typeName) { o.frameWidth = t.frameWidth }
                 let oid = ed.doc.addElement(.opening(o), level: host.level, material: ed.doc.openingType(typeName)?.material,
                                             name: typeName ?? (kind == .door ? "Door \(fmt(width))x\(fmt(height))" : (kind == .window ? "Window \(fmt(width))x\(fmt(height))" : "Opening")))
@@ -454,14 +529,26 @@ enum ArchitectureCommands {
             ed.print("Stair created: \(rc) risers of \(fmt(s.riserHeight, 1))" + (topLevel.flatMap { ed.doc.level($0)?.name }.map { ", arriving at \($0)" } ?? "") + ".")
             for issue in BIMConstraints.stairIssues(s, units: ed.doc.units) { ed.print("Note: " + issue) }
         },
-        CommandDef("RAILING", aliases: ["RAIL"], category: "Architecture", summary: "Draws a railing along a path.") { ed in
+        CommandDef("RAILING", aliases: ["RAIL"], category: "Architecture", summary: "Draws a railing along a path, or on both sides of a Stair's flights (sloped, following the stair).") { ed in
             var h = ed.variableDouble("RAILHEIGHT", 1000)
             var pts: [Vec2] = []
             while pts.isEmpty {
-                let a = try await ed.getPoint("Specify start point of railing path", keywords: ["Height"])
+                let a = try await ed.getPoint("Specify start point of railing path", keywords: ["Height", "Stair"])
                 switch a {
                 case .point(let p): pts = [p]
-                case .keyword: h = try await ed.getPositive("Specify railing height", defaultValue: h)
+                case .keyword("Stair"):
+                    guard case .pick(let pk) = try await ed.pickObject("Select stair", filter: { if case .stair? = ed.doc.element($0)?.geometry { return true }; return false }) else { return }
+                    ed.doc.setVariable("RAILHEIGHT", fmt(h))
+                    let ids = StairRailings.create(on: pk.id, height: h, doc: &ed.doc)
+                    ed.selection = Set(ids)
+                    ed.print("\(ids.count) stair railing(s) created.")
+                    // Guarding rules: handrail 900–1000 mm above the pitch line; the stair itself must satisfy the rise/going rules.
+                    let mm = h * ed.doc.units.mm
+                    if mm < 900 { ed.print("Note: railing height \(fmt(mm, 0)) mm is below 900 mm above the pitch line.") }
+                    if mm > 1100 { ed.print("Note: handrail height \(fmt(mm, 0)) mm is above 1100 mm.") }
+                    if case .stair(let sg)? = ed.doc.element(pk.id)?.geometry { for issue in BIMConstraints.stairIssues(sg, units: ed.doc.units) { ed.print("Note: " + issue) } }
+                    return
+                case .keyword("Height"): h = try await ed.getPositive("Specify railing height", defaultValue: h)
                 default: return
                 }
             }
@@ -474,7 +561,7 @@ enum ArchitectureCommands {
             ed.doc.setVariable("RAILHEIGHT", fmt(h))
             ed.doc.addElement(.railing(RailingGeom(path: pts, height: h)), name: "Railing")
         },
-        CommandDef("COLUMN", aliases: ["COLUMNS"], category: "Architecture", summary: "Places structural columns (rectangular or round).") { ed in
+        CommandDef("COLUMN", aliases: ["COLUMNS"], category: "Architecture", summary: "Places structural columns (rectangular or round); Grids places one at every grid intersection, hosted so it follows the grids.") { ed in
             var w = ed.variableDouble("COLWIDTH", 300), d = ed.variableDouble("COLDEPTH", 300)
             var round = ed.doc.variable("COLROUND") == "1"
             var rot = 0.0
@@ -482,12 +569,30 @@ enum ArchitectureCommands {
             var n = 0
             while true {
                 let (cw, cd, cr, crot, ch) = (w, d, round, rot, h)
-                let a = try await ed.getPoint("Specify column location", keywords: ["Width", "Depth", "Round", "Rotation", "Height"]) { c in
+                let a = try await ed.getPoint("Specify column location", keywords: ["Width", "Depth", "Round", "Rotation", "Height", "Grids"]) { c in
                     [footprintPreview(CommandHelpers.footprint(BIMElement(geometry: .column(ColumnGeom(position: c, width: cw, depth: cd, height: ch, rotation: crot, round: cr))), doc: ArchiDocument()))] }
                 switch a {
                 case .point(let p):
-                    ed.doc.addElement(.column(ColumnGeom(position: p, width: w, depth: round ? w : d, height: h, rotation: rot, round: round)), name: round ? "Column Ø\(fmt(w))" : "Column \(fmt(w))x\(fmt(d))")
+                    let id = ed.doc.addElement(.column(ColumnGeom(position: p, width: w, depth: round ? w : d, height: h, rotation: rot, round: round)), name: round ? "Column Ø\(fmt(w))" : "Column \(fmt(w))x\(fmt(d))")
+                    // A column dropped on a grid intersection is hosted by those grids.
+                    if let pair = GridHosting.hostPair(at: p, doc: ed.doc, tolerance: 1 / ed.doc.units.mm), let i = ed.doc.elementIndex(id) {
+                        ed.doc.elements[i].props[GridHosting.prop] = "\(pair.a),\(pair.b)"
+                    }
                     n += 1
+                case .keyword("Grids"):
+                    var sel = Set(try await elements(ed, "Select grid lines (Enter = all grids)", { if case .gridLine = $0 { return true }; return false }))
+                    if sel.isEmpty { sel = Set(ed.doc.elements.filter { if case .gridLine = $0.geometry { return true }; return false }.map(\.id)) }
+                    let tol = 1 / ed.doc.units.mm
+                    var k = 0
+                    for x in GridHosting.allIntersections(ed.doc, among: sel, tolerance: tol) {
+                        let taken = ed.doc.elements.contains { el in if el.level == ed.doc.currentLevel, case .column(let c) = el.geometry { return c.position.distance(to: x.point) <= tol }; return false }
+                        if taken { continue }
+                        let id = ed.doc.addElement(.column(ColumnGeom(position: x.point, width: w, depth: round ? w : d, height: h, rotation: rot, round: round)), name: round ? "Column Ø\(fmt(w))" : "Column \(fmt(w))x\(fmt(d))")
+                        if let i = ed.doc.elementIndex(id) { ed.doc.elements[i].props[GridHosting.prop] = "\(x.a),\(x.b)" }
+                        k += 1
+                    }
+                    n += k
+                    ed.print("\(k) column(s) placed at grid intersections.")
                 case .keyword("Width"): w = try await ed.getPositive(round ? "Specify diameter" : "Specify width", defaultValue: w)
                 case .keyword("Depth"): d = try await ed.getPositive("Specify depth", defaultValue: d)
                 case .keyword("Round"): round = try await ed.getYesNo("Round column?", defaultValue: !round)
@@ -500,14 +605,32 @@ enum ArchitectureCommands {
                 }
             }
         },
-        CommandDef("BEAM", category: "Architecture", summary: "Draws structural beams between points.") { ed in
+        CommandDef("BEAM", category: "Architecture", summary: "Draws structural beams between points, or between picked columns (Columns: top of beam at the column tops).") { ed in
             var w = ed.variableDouble("BEAMWIDTH", 200), dp = ed.variableDouble("BEAMDEPTH", 400)
             var top = ed.currentLevelHeight
             var start: Vec2
             while true {
-                let a = try await ed.getPoint("Specify beam start point", keywords: ["Width", "Depth", "Top"])
+                let a = try await ed.getPoint("Specify beam start point", keywords: ["Width", "Depth", "Top", "Columns"])
                 switch a {
                 case .point(let p): start = p
+                case .keyword("Columns"):
+                    ed.doc.setVariable("BEAMWIDTH", fmt(w)); ed.doc.setVariable("BEAMDEPTH", fmt(dp))
+                    var n = 0
+                    let isCol: (BIMGeometry) -> Bool = { if case .column = $0 { return true }; return false }
+                    guard case .pick(let p0) = try await ed.pickObject("Select first column", filter: { ed.doc.element($0).map { isCol($0.geometry) } ?? false }),
+                          case .column(var prev)? = ed.doc.element(p0.id)?.geometry else { return }
+                    while true {
+                        guard case .pick(let p1) = try await ed.pickObject("Select next column (Enter to finish)", filter: { ed.doc.element($0).map { isCol($0.geometry) } ?? false }),
+                              p1.id != p0.id, let el = ed.doc.element(p1.id), case .column(let c) = el.geometry else { break }
+                        guard c.position.distance(to: prev.position) > 1e-6 else { continue }
+                        let topZ = prev.baseOffset + prev.height
+                        let id = ed.doc.addElement(.beam(BeamGeom(start: prev.position, end: c.position, width: w, depth: dp, topOffset: topZ,
+                                                                  endTopOffset: abs(c.baseOffset + c.height - topZ) > 1e-6 ? c.baseOffset + c.height : nil)), level: el.level, name: "Beam \(fmt(w))x\(fmt(dp))")
+                        _ = id
+                        prev = c; n += 1
+                    }
+                    ed.print("\(n) beam(s) created between columns.")
+                    return
                 case .keyword("Width"): w = try await ed.getPositive("Specify beam width", defaultValue: w); continue
                 case .keyword("Depth"): dp = try await ed.getPositive("Specify beam depth", defaultValue: dp); continue
                 case .keyword("Top"): top = try await ed.getDistance("Specify top of beam above level", defaultValue: top).value ?? top; continue
@@ -529,6 +652,16 @@ enum ArchitectureCommands {
     ] }
 
     // MARK: - Rooms, grids, components, levels
+    /// Bulge of the arc from `a` through `m` to `b` (0 when collinear).
+    static func gridBulge(_ a: Vec2, _ m: Vec2, _ b: Vec2) -> Double {
+        guard let arc = CommandHelpers.arcFrom3(a, m, b) else { return 0 }
+        let c = arc.center
+        let ccw = (m - a).cross(b - m) > 0
+        let a1 = (a - c).angle, a3 = (b - c).angle
+        let sweep = ccw ? normAngle(a3 - a1) : normAngle(a1 - a3)
+        return (ccw ? 1 : -1) * tan(sweep / 4)
+    }
+
     static func nextGridLabel(_ doc: ArchiDocument, numeric: Bool) -> String {
         let labels = doc.elements.compactMap { el -> String? in if case .gridLine(let g) = el.geometry { return g.label }; return nil }
         if numeric { return "\((labels.compactMap { Int($0) }.max() ?? 0) + 1)" }
@@ -609,21 +742,46 @@ enum ArchitectureCommands {
                 }
             }
         },
-        CommandDef("GRID", aliases: ["GRIDLINE", "GR"], category: "Architecture", summary: "Places structural grid lines, auto-labelled 1,2,3 (vertical) and A,B,C (horizontal).") { ed in
+        CommandDef("GRID", aliases: ["GRIDLINE", "GR"], category: "Architecture", summary: "Places structural grid lines (straight, Arc through 3 points or Multi-segment), auto-labelled 1,2,3 (vertical) and A,B,C (horizontal).") { ed in
             var label: String? = nil
+            var heads = ed.doc.variable("GRIDHEADS") ?? "start"
+            @MainActor func add(_ g0: GridLineGeom, vertical: Bool) {
+                var g = g0
+                g.label = label ?? nextGridLabel(ed.doc, numeric: vertical)
+                if heads != "start" { g.heads = heads }
+                if ed.doc.elements.contains(where: { if case .gridLine(let h) = $0.geometry { return h.label == g.label }; return false }) { ed.print("Note: grid label \(g.label) is already used.") }
+                ed.doc.addElement(.gridLine(g), name: "Grid \(g.label)")
+                ed.print("Grid \(g.label) created.")
+                label = nil
+            }
             while true {
-                let a = try await ed.getPoint("Specify grid line start point", keywords: ["Label"])
+                let a = try await ed.getPoint("Specify grid line start point", keywords: ["Arc", "Multi", "Label", "Heads"])
                 switch a {
-                case .keyword: label = try await ed.getWord("Enter label for the next grid line"); continue
+                case .keyword("Label"): label = try await ed.getWord("Enter label for the next grid line"); continue
+                case .keyword("Heads"):
+                    heads = (try await ed.getKeyword("Grid heads at", ["Start", "End", "Both", "None"], defaultValue: heads.capitalized) ?? "Start").lowercased()
+                    ed.doc.setVariable("GRIDHEADS", heads); continue
+                case .keyword("Arc"):
+                    let p1 = try await ed.requirePoint("Specify start point of arc grid")
+                    let p2 = try await ed.requirePoint("Specify second point of arc grid", base: p1)
+                    let p3 = try await ed.requirePoint("Specify end point of arc grid", base: p2) { c in
+                        if let arc = CommandHelpers.arcFrom3(p1, p2, c) { return [.arc(arc)] }; return [.line(LineGeom(p1, c))] }
+                    guard p1.distance(to: p3) > 1e-6 else { continue }
+                    let bulge = gridBulge(p1, p2, p3)
+                    add(GridLineGeom(start: p1, end: p3, label: "", bulge: bulge), vertical: abs(p3.y - p1.y) > abs(p3.x - p1.x))
+                case .keyword("Multi"):
+                    var pts = [try await ed.requirePoint("Specify first point of multi-segment grid")]
+                    while true {
+                        let snap = pts
+                        guard let p = try await ed.getPoint("Specify next point (Enter to finish)", base: pts.last!, preview: { c in [.polyline(PolylineGeom(points: snap + [c]))] }).point else { break }
+                        if p.distance(to: pts.last!) > 1e-6 { pts.append(p) }
+                    }
+                    guard pts.count >= 2, let g = GridLineGeom(through: pts, label: "") else { ed.print("A grid needs two distinct points."); continue }
+                    add(g, vertical: abs(pts.last!.y - pts[0].y) > abs(pts.last!.x - pts[0].x))
                 case .point(let s):
                     let e = try await ed.requirePoint("Specify grid line end point", base: s) { c in [.line(LineGeom(s, c))] }
                     guard e.distance(to: s) > 1e-6 else { continue }
-                    let vertical = abs(e.y - s.y) > abs(e.x - s.x)
-                    let l = label ?? nextGridLabel(ed.doc, numeric: vertical)
-                    if ed.doc.elements.contains(where: { if case .gridLine(let g) = $0.geometry { return g.label == l }; return false }) { ed.print("Note: grid label \(l) is already used.") }
-                    ed.doc.addElement(.gridLine(GridLineGeom(start: s, end: e, label: l)), name: "Grid \(l)")
-                    ed.print("Grid \(l) created.")
-                    label = nil
+                    add(GridLineGeom(start: s, end: e, label: ""), vertical: abs(e.y - s.y) > abs(e.x - s.x))
                 default: return
                 }
             }
@@ -646,7 +804,7 @@ enum ArchitectureCommands {
             }
             ed.doc.setVariable("COMPONENT", k)
             var cat = fam?.category ?? "Furniture", size = fam?.size ?? Vec3(600, 600, 750)
-            let base = fam?.baseOffset ?? 0
+            var base = fam?.baseOffset ?? 0
             if fam == nil {
                 cat = try await ed.getWord("Enter category", defaultValue: "Furniture") ?? "Furniture"
                 size.x = try await ed.getPositive("Specify width", defaultValue: size.x)
@@ -657,16 +815,28 @@ enum ArchitectureCommands {
             var rot = 0.0
             var n = 0
             let famID = fam?.id
+            var hostKind: HostedComponents.Kind? = nil
             while true {
                 let (r, sz) = (rot, size)
-                let a = try await ed.getPoint("Specify insertion point (center)", keywords: ["Rotation", "Size"]) { c in
+                let a = try await ed.getPoint("Specify insertion point (center)" + (hostKind.map { " on a \($0.rawValue)" } ?? ""), keywords: ["Rotation", "Size", "Host"]) { c in
                     let g = ComponentGeom(category: cat, position: c, rotation: r, size: sz, family: famID)
                     if let f = fam { return ComponentLibrary.worldSymbol(f, g).map { .polyline(PolylineGeom(points: $0.points, closed: $0.closed)) } }
                     return [footprintPreview(PlanRepresentation.componentPoly(g))] }
                 switch a {
                 case .point(let p):
-                    ed.doc.addElement(.component(ComponentGeom(category: cat, position: p, rotation: rot, size: size, baseOffset: base, family: famID)), name: fam?.name ?? cat)
+                    // Hosted placement (BIM-099): against a wall face, on a floor or under a ceiling.
+                    var host: BIMElement? = nil
+                    if let hk = hostKind {
+                        host = HostedComponents.host(hk, at: p, doc: ed.doc, level: ed.doc.currentLevel, reach: max(size.y, 500 / ed.doc.units.mm))
+                        if host == nil { ed.print("No \(hk.rawValue) there."); continue }
+                    }
+                    let id = ed.doc.addElement(.component(ComponentGeom(category: cat, position: p, rotation: rot, size: size, baseOffset: base, family: famID)), name: fam?.name ?? cat)
+                    if let hk = hostKind, let h = host { HostedComponents.attach(id, to: h.id, kind: hk, doc: &ed.doc) }
                     n += 1
+                case .keyword("Host"):
+                    let k = try await ed.getKeyword("Host on", ["Wall", "Floor", "Ceiling", "None"], defaultValue: hostKind?.rawValue.capitalized ?? "Wall") ?? "None"
+                    hostKind = HostedComponents.Kind(rawValue: k.lowercased())
+                    if hostKind == .wall { base = try await ed.getDistance("Height of the component base above the floor", defaultValue: base).value ?? base }
                 case .keyword("Rotation"): rot = try await ed.getAngle("Specify rotation angle", defaultValue: rot).value ?? rot
                 case .keyword("Size"):
                     size.x = try await ed.getPositive("Specify width", defaultValue: size.x)
@@ -677,7 +847,12 @@ enum ArchitectureCommands {
             }
         },
         CommandDef("LEVEL", aliases: ["LEVELS", "LV"], category: "Architecture", summary: "Lists, creates, sets, renames and deletes levels; sets elevation and height.") { ed in
-            let k = try await ed.getKeyword("Enter an option", ["List", "New", "Set", "Rename", "Delete", "Elevation", "Height"], defaultValue: "List") ?? "List"
+            let k = try await ed.getKeyword("Enter an option", ["List", "New", "Offset", "Copy", "Set", "Rename", "Delete", "Elevation", "Height", "Extents", "Heads"], defaultValue: "List") ?? "List"
+            @MainActor func uniqueName(_ base: String) -> String {
+                var n = base, k = 2
+                while levelLookup(ed, n) != nil { n = "\(base) (\(k))"; k += 1 }
+                return n
+            }
             @MainActor func pickLevel(_ msg: String) async throws -> Level {
                 let cur = ed.doc.level(ed.doc.currentLevel)?.name ?? ""
                 guard let s = try await ed.getWord(msg, defaultValue: cur), let l = levelLookup(ed, s) else { throw CommandError.invalid("Level not found.") }
@@ -695,6 +870,42 @@ enum ArchitectureCommands {
                 ed.doc.levels.sort { $0.elevation < $1.elevation }
                 ed.doc.currentLevel = id
                 ed.print("Level \"\(name)\" created at \(fmt(elev)) and made current.")
+            case "Offset", "Copy":
+                // New level offset from an existing one; Copy also duplicates the level's elements onto it (BIM-002).
+                let base = try await pickLevel(k == "Copy" ? "Enter level to copy" : "Enter base level")
+                let off = try await ed.getDistance("Specify offset from \(base.name)", defaultValue: base.height).value ?? base.height
+                guard abs(off) > 1e-9 else { throw CommandError.invalid("The offset must not be zero.") }
+                let name = try await ed.getWord("Enter level name", defaultValue: uniqueName(k == "Copy" ? base.name + " Copy" : "Level \(ed.doc.levels.count)")) ?? "Level"
+                guard levelLookup(ed, name) == nil else { throw CommandError.invalid("Level \(name) already exists.") }
+                let id = (ed.doc.levels.map(\.id).max() ?? -1) + 1
+                ed.doc.levels.append(Level(id: id, name: name, elevation: base.elevation + off, height: base.height,
+                                           extentStart: base.extentStart, extentEnd: base.extentEnd, heads: base.heads))
+                ed.doc.levels.sort { $0.elevation < $1.elevation }
+                var copied = 0
+                if k == "Copy" {
+                    let ids = ed.doc.elements.filter { $0.level == base.id }.map(\.id)
+                    copied = LevelCopy.copy(&ed.doc, ids: ids, toLevels: [id]).count
+                }
+                ed.doc.currentLevel = id
+                ed.print("Level \"\(name)\" created at \(fmt(base.elevation + off))" + (k == "Copy" ? " with \(copied) copied element(s)." : "."))
+            case "Extents":
+                // 3D extents of the level datum in elevations/sections (BIM-004); Enter = automatic.
+                let l = try await pickLevel("Enter level")
+                guard let i = ed.doc.levels.firstIndex(where: { $0.id == l.id }) else { return }
+                guard let a = try await ed.getPoint("Specify first extent point in plan (Enter = automatic)").point else {
+                    ed.doc.levels[i].extentStart = nil; ed.doc.levels[i].extentEnd = nil
+                    ed.print("Level \(l.name) spans the whole model."); return
+                }
+                let b = try await ed.requirePoint("Specify second extent point", base: a) { c in [.line(LineGeom(a, c))] }
+                guard a.distance(to: b) > 1e-6 else { throw CommandError.invalid("The extents need two distinct points.") }
+                ed.doc.levels[i].extentStart = a; ed.doc.levels[i].extentEnd = b
+                ed.print("Level \(l.name) extents set (\(fmt(a.distance(to: b))) long).")
+            case "Heads":
+                let l = try await pickLevel("Enter level")
+                guard let i = ed.doc.levels.firstIndex(where: { $0.id == l.id }) else { return }
+                let h = try await ed.getKeyword("Level heads at", ["Start", "End", "Both", "None"], defaultValue: (l.heads ?? "end").capitalized) ?? "End"
+                ed.doc.levels[i].heads = h.lowercased() == "end" ? nil : h.lowercased()
+                ed.print("Level \(l.name) heads: \(h.lowercased()).")
             case "Set":
                 let l = try await pickLevel("Enter level name or number to make current")
                 ed.doc.currentLevel = l.id; ed.selection = []
@@ -836,15 +1047,36 @@ enum ArchitectureCommands {
     }
 
     static var management: [CommandDef] { [
-        CommandDef("BUILDING", aliases: ["MASS", "QUICKBUILDING"], category: "Architecture", summary: "Quick massing: a rectangle becomes walls, floor slabs and a roof on one or more storeys.") { ed in
+        CommandDef("BUILDING", aliases: ["MASS", "QUICKBUILDING"], category: "Architecture", summary: "Quick massing: a rectangle becomes walls, floor slabs and a roof on one or more storeys; Mass turns 3D solids (conceptual masses) into mass floors or walls/floors/roofs by face.") { ed in
             var th = ed.settings.wallThickness
             var storeys = 1
             var roofKind = RoofKind(rawValue: ed.doc.variable("ROOFKIND") ?? "") ?? .gable
             var c1: Vec2
             while true {
-                let a = try await ed.getPoint("Specify first corner of building", keywords: ["Thickness", "Storeys", "Roof"])
+                let a = try await ed.getPoint("Specify first corner of building", keywords: ["Thickness", "Storeys", "Roof", "Mass"])
                 switch a {
                 case .point(let p): c1 = p
+                case .keyword("Mass"):
+                    // Conceptual masses (M3D-096/097/098): any closed 3D solid → mass floors, or walls/floors/roof by face.
+                    let ids = try await ed.getEntitySelection("Select mass solids").filter { if case .solid? = ed.doc.entity($0)?.geometry { return true }; return false }
+                    guard !ids.isEmpty else { throw CommandError.invalid("Select 3D solids to use as masses.") }
+                    let what = try await ed.getKeyword("Create from the masses", ["Floors", "Elements", "Report"], defaultValue: "Elements") ?? "Elements"
+                    var nw = 0, ns = 0, nr = 0
+                    for id in ids {
+                        guard let e = ed.doc.entity(id), case .solid(let sg) = e.geometry else { continue }
+                        if let i = ed.doc.entityIndex(id) { ed.doc.entities[i].props["mass"] = "1" }
+                        if what == "Report" {
+                            for f in MassTools.floors(sg, levels: ed.doc.levels) {
+                                ed.print("Mass #\(id) \(ed.doc.level(f.level)?.name ?? "?"): " + CommandHelpers.areaText(f.area, units: ed.doc.units))
+                            }
+                            continue
+                        }
+                        let r = MassTools.convert(sg, massID: id, doc: &ed.doc, wallThickness: th, slabThickness: 200 / ed.doc.units.mm,
+                                                  walls: what == "Elements", slabs: true, roof: what == "Elements")
+                        nw += r.walls.count; ns += r.slabs.count; nr += r.roofs.count
+                    }
+                    if what != "Report" { ed.print("From \(ids.count) mass(es): \(nw) wall(s), \(ns) floor(s), \(nr) roof(s).") }
+                    return
                 case .keyword("Thickness"): th = try await ed.getPositive("Specify wall thickness", defaultValue: th); continue
                 case .keyword("Storeys"): if let n = try await ed.getInteger("Enter number of storeys", defaultValue: storeys), n >= 1, n <= 100 { storeys = n }; continue
                 case .keyword("Roof"):
@@ -894,8 +1126,17 @@ enum ArchitectureCommands {
             }
             ed.print("Building created: \(walls) walls, \(levelIDs.count) floor slab(s)\(roofMsg). Footprint " + CommandHelpers.areaText(abs(GeometryOps.signedArea(outer)), units: ed.doc.units) + ".")
         },
-        CommandDef("SCHEDULE", aliases: ["SCH"], category: "Architecture", summary: "Creates a schedule table (walls, doors, windows, rooms, slabs) or prints it.") { ed in
-            let k = try await ed.getKeyword("Enter schedule type", ["Walls", "Doors", "Windows", "Rooms", "Slabs", "Types", "Areas", "Keynotes", "Lighting", "Systems", "All"], defaultValue: "Rooms") ?? "Rooms"
+        CommandDef("SCHEDULE", aliases: ["SCH"], category: "Architecture", summary: "Creates a schedule table (walls, doors, windows, rooms, slabs…) or prints it; Define/Edit/Export/Import/Place manage stored schedules (fields, filters, sorting, grouping, totals, round-trip editing, CSV/XLSX, sheets).") { ed in
+            let k = try await ed.getKeyword("Enter schedule type or option", ["Walls", "Doors", "Windows", "Rooms", "Slabs", "Types", "Areas", "Keynotes", "Lighting", "Systems", "All",
+                                                                             "Define", "Edit", "Export", "Import", "Place"], defaultValue: "Rooms") ?? "Rooms"
+            switch k {
+            case "Define": try await ScheduleCommands.scheduleDef.run(ed); return
+            case "Edit": try await ScheduleCommands.scheduleEdit.run(ed); return
+            case "Export": try await ScheduleCommands.scheduleExport.run(ed); return
+            case "Import": try await ScheduleCommands.scheduleImport.run(ed); return
+            case "Place": try await ScheduleCommands.schedulePlace.run(ed); return
+            default: break
+            }
             let kind = k.lowercased()
             // Schedules count what SCHEDULEFILTER selects (default: what the views show — worksets, design options, systems).
             let sd = ModelSets.scheduleModel(ed.doc)
@@ -1141,8 +1382,8 @@ extension ArchitectureCommands {
     }
 
     static var wallSweepCommand: CommandDef {
-        CommandDef("WALLSWEEP", aliases: ["SWEEPWALL", "CORNICE", "SKIRTING"], category: "Architecture", summary: "Adds cornices, skirting boards or string courses along wall faces (or removes them).") { ed in
-            let mode = try await ed.getKeyword("Wall sweep", ["Add", "Remove"], defaultValue: "Add") ?? "Add"
+        CommandDef("WALLSWEEP", aliases: ["SWEEPWALL", "CORNICE", "SKIRTING"], category: "Architecture", summary: "Adds cornices, skirting boards or string courses along wall faces, Reveals (grooves cut into the faces), or removes them.") { ed in
+            let mode = try await ed.getKeyword("Wall sweep", ["Add", "Reveal", "Remove"], defaultValue: "Add") ?? "Add"
             if mode == "Remove" {
                 var n = 0
                 for id in try await elements(ed, "Select walls", isWallGeom) {
@@ -1151,25 +1392,27 @@ extension ArchitectureCommands {
                 }
                 ed.selection = []; ed.print("\(n) sweep(s) removed."); return
             }
-            let profile = (try await ed.getKeyword("Profile", ["Rect", "Cornice", "Skirting", "Cove"], defaultValue: ed.doc.variable("SWEEPPROFILE") ?? "Cornice") ?? "Cornice")
+            let isReveal = mode == "Reveal"
+            let profile = isReveal ? (try await ed.getKeyword("Reveal profile", ["Rect", "Cove"], defaultValue: "Rect") ?? "Rect")
+                : (try await ed.getKeyword("Profile", ["Rect", "Cornice", "Skirting", "Cove"], defaultValue: ed.doc.variable("SWEEPPROFILE") ?? "Cornice") ?? "Cornice")
             let isBase = profile == "Skirting"
-            let depth = try await ed.getPositive("Specify projection from the face", defaultValue: isBase ? 15 : 80)
-            let height = try await ed.getPositive("Specify profile height", defaultValue: isBase ? 100 : 200)
+            let depth = try await ed.getPositive(isReveal ? "Specify reveal depth into the face" : "Specify projection from the face", defaultValue: isReveal ? 20 : (isBase ? 15 : 80))
+            let height = try await ed.getPositive("Specify profile height", defaultValue: isReveal ? 20 : (isBase ? 100 : 200))
             let side = try await ed.getKeyword("Face", ["Left", "Right", "Both"], defaultValue: "Both") ?? "Both"
             let elevInput = try await ed.getDistance("Specify bottom of the profile above the wall base (Enter = \(isBase ? "floor" : "wall top"))").value
-            ed.doc.setVariable("SWEEPPROFILE", profile)
+            if !isReveal { ed.doc.setVariable("SWEEPPROFILE", profile) }
             var n = 0
             for id in try await elements(ed, "Select walls", isWallGeom) {
                 guard let i = ed.doc.elementIndex(id), case .wall(var w) = ed.doc.elements[i].geometry else { continue }
                 let elev = elevInput ?? (isBase ? 0 : max(w.height - height, 0))
                 for sd in (side == "Both" ? [1.0, -1.0] : [side == "Left" ? 1.0 : -1.0]) {
-                    w.sweeps.append(WallSweep(profile: profile.lowercased(), depth: depth, height: height, elevation: elev, side: sd))
+                    w.sweeps.append(WallSweep(profile: profile.lowercased(), depth: depth, height: height, elevation: elev, side: sd, reveal: isReveal ? true : nil))
                     n += 1
                 }
                 ed.doc.elements[i].geometry = .wall(w)
             }
             ed.selection = []
-            ed.print("\(n) sweep(s) added.")
+            ed.print("\(n) \(isReveal ? "reveal" : "sweep")(s) added.")
         }
     }
 
@@ -1293,6 +1536,14 @@ extension ArchitectureCommands {
                 var boundary: [Vec2]? = nil
                 switch a {
                 case .point(let p):
+                    // Associative boundary from the scheme's rule (BIM-093): regenerates when the walls change.
+                    if let id = AreaSchemes.create(AreaSchemes.scheme(scheme), at: p, doc: &ed.doc, level: ed.doc.currentLevel),
+                       case .space(let sg)? = ed.doc.element(id)?.geometry {
+                        if let i = ed.doc.elementIndex(id) { ed.doc.elements[i].props["areaScheme"] = scheme; ed.doc.elements[i].props["tag"] = nil }
+                        ed.print("\(scheme) area: " + CommandHelpers.areaText(abs(GeometryOps.signedArea(sg.boundary)), units: ed.doc.units))
+                        n += 1
+                        continue
+                    }
                     // Gross area measures to the outside face of exterior walls.
                     guard let inner = RoomBounding.boundary(at: p, doc: ed.doc, level: ed.doc.currentLevel) else { ed.print("No enclosing walls found (use Points)."); continue }
                     if scheme.lowercased() == "gross" {
@@ -1561,7 +1812,13 @@ extension ArchitectureCommands {
             while true {
                 let a = try await ed.pickObject("Select element to tag", keywords: ["Field"]) { ed.doc.element($0) != nil }
                 switch a {
-                case .keyword: field = try await ed.getKeyword("Tag field", ["Mark", "Type", "Name", "Number", "Area", "Room", "Keynote", "Size"], defaultValue: "Mark")?.lowercased()
+                case .keyword:
+                    // Built-in fields, any parameter/property name (multi-category tags), or a tag family (FAMILY New … Tag).
+                    let tagFams = ed.doc.families.filter { $0.category == "Tag" }.map(\.name)
+                    let w = try await ed.getWord("Tag field [Mark/Type/Name/Number/Area/Room/Keynote/Size, a parameter name" + (tagFams.isEmpty ? "" : ", or tag family " + tagFams.joined(separator: "/")) + "]", defaultValue: "Mark") ?? "Mark"
+                    if let f = tagFams.first(where: { $0.caseInsensitiveCompare(w) == .orderedSame }) { field = "family:" + f }
+                    else if ["mark", "type", "name", "number", "area", "room", "keynote", "size"].contains(w.lowercased()) { field = w.lowercased() }
+                    else { field = w }
                 case .pick(let pk):
                     guard let el = ed.doc.element(pk.id) else { continue }
                     var f = field ?? "mark"
@@ -1910,9 +2167,46 @@ extension ArchitectureCommands {
             ed.selection = Set(made)
             ed.print("\(made.count) element(s) copied to " + targets.compactMap { ed.doc.level($0)?.name }.joined(separator: ", ") + ".")
         },
-        CommandDef("WALLTOP", aliases: ["WALLCONSTRAINT", "TOPCONSTRAINT", "WT"], category: "Architecture", summary: "Sets the top constraint of walls: up to a level (with offset), the next level, or an unconnected height.") { ed in
+        CommandDef("WALLTOP", aliases: ["WALLCONSTRAINT", "TOPCONSTRAINT", "WT"], category: "Architecture", summary: "Sets the top constraint of walls (a level with offset, the next level, or an unconnected height) and their shape: elevation Profile or Gable, Slant, Taper, Reset.") { ed in
             let ids = try await selectWalls(ed, "Select walls")
-            let w = try await ed.getWord("Top constraint: level name, Next (level above) or Unconnected", defaultValue: "Next") ?? "Next"
+            let w = try await ed.getWord("Top constraint: level name, Next (level above), Unconnected, or [Profile/Gable/Slant/Taper/Reset]", defaultValue: "Next",
+                                         keywords: ["Profile", "Gable", "Slant", "Taper", "Reset"]) ?? "Next"
+            if ["Profile", "Gable", "Slant", "Taper", "Reset"].contains(w) {
+                // Wall shapes: elevation profiles (BIM-020), slanted and tapered walls (BIM-023).
+                var profile: [Vec2]? = nil, peak = 0.0, slant = 0.0, taper = 0.0
+                switch w {
+                case "Profile":
+                    guard let spec = try await ed.getWord("Profile points \"s,z; s,z; …\" (distance along the wall, height above its base)") else { return }
+                    let pts = spec.split(separator: ";").compactMap { p -> Vec2? in
+                        let c = p.split(separator: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) }
+                        return c.count == 2 ? Vec2(c[0], c[1]) : nil }
+                    guard pts.count >= 3, abs(GeometryOps.signedArea(pts)) > 1e-6 else { throw CommandError.invalid("A profile needs at least three points enclosing an area.") }
+                    profile = pts
+                case "Gable": peak = try await ed.getPositive("Specify gable peak height above the wall base", defaultValue: ed.settings.wallHeight * 1.5)
+                case "Slant": slant = try await ed.getAngle("Specify lean from vertical (positive = towards the left side)", defaultValue: 0).value.map { $0 * 180 / .pi } ?? 0
+                case "Taper": taper = try await ed.getPositive("Specify thickness at the top", defaultValue: ed.settings.wallThickness / 2)
+                default: break
+                }
+                var n = 0
+                for id in ids {
+                    guard let i = ed.doc.elementIndex(id), case .wall(var g) = ed.doc.elements[i].geometry else { continue }
+                    switch w {
+                    case "Profile": g.profile = profile; g.height = max(g.height, profile!.map(\.y).max() ?? g.height); g.topLevel = nil
+                    case "Gable":
+                        guard peak > 1e-6 else { continue }
+                        let eave = min(BIMConstraints.wallHeight(ed.doc.elements[i], doc: ed.doc), peak)
+                        g.profile = WallShapes.gable(length: g.length, eave: eave, peak: peak); g.height = peak; g.topLevel = nil
+                    case "Slant":
+                        guard abs(slant) < 80 else { throw CommandError.invalid("The lean must stay below 80°.") }
+                        g.slant = abs(slant) < 1e-9 ? nil : slant
+                    case "Taper": g.topThickness = abs(taper - g.thickness) < 1e-9 ? nil : taper
+                    default: g.profile = nil; g.slant = nil; g.topThickness = nil
+                    }
+                    ed.doc.elements[i].geometry = .wall(g); n += 1
+                }
+                ed.print("\(n) wall(s) " + (w == "Reset" ? "reset to vertical prisms." : "shaped (\(w.lowercased())).") + (w == "Profile" && ids.contains { if case .wall(let g)? = ed.doc.element($0)?.geometry { return g.bulge != 0 }; return false } ? " Profiles apply to straight walls." : ""))
+                return
+            }
             var spec = ""
             if w.lowercased() == "next" || w.lowercased() == "n" { spec = "next" }
             else if let l = levelLookup(ed, w) { spec = l.name }

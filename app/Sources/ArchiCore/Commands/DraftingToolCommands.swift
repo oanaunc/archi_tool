@@ -10,7 +10,7 @@ enum DraftingToolCommands {
     static var precision: [CommandDef] { [
         CommandDef("UCS", category: "Settings", summary: "Sets the user coordinate system: World, Origin, Z rotation, 3point, Object, Previous, Named save/restore.") { ed in
             let cur = UCSFrame.current(ed.doc)
-            let a = try await ed.getPoint("Specify origin of UCS", keywords: ["World", "Origin", "Z", "3point", "Object", "Previous", "Named"])
+            let a = try await ed.getPoint("Specify origin of UCS", keywords: ["World", "Origin", "Z", "3point", "Object", "View", "Previous", "Named"])
             switch a {
             case .point(let o):
                 let x = try await ed.getPoint("Specify point on X-axis or <accept>", base: o) { c in [.line(LineGeom(o, c))] }
@@ -18,6 +18,9 @@ enum DraftingToolCommands {
                 if let p = x.point, p.distance(to: o) > 1e-9 { f.angle = (p - o).angle }
                 f.apply(to: &ed.doc)
             case .keyword("World"), .none: UCSFrame.world.apply(to: &ed.doc)
+            case .keyword("View"):
+                // XY parallel to the screen (plan views are not twisted): X axis horizontal, origin kept.
+                UCSFrame(origin: cur.origin, angle: 0).apply(to: &ed.doc)
             case .keyword("Origin"):
                 let o = try await ed.requirePoint("Specify new origin point")
                 UCSFrame(origin: o, angle: cur.angle).apply(to: &ed.doc)
@@ -58,12 +61,37 @@ enum DraftingToolCommands {
             let f = UCSFrame.current(ed.doc)
             ed.print(f.isWorld ? "UCS: World" : "UCS origin \(fmt(f.origin.x)),\(fmt(f.origin.y)), X axis \(fmt(deg(f.angle)))°")
         },
-        CommandDef("UCSMAN", aliases: ["UC", "DDUCS"], category: "Settings", summary: "Lists named user coordinate systems and restores one.") { ed in
+        CommandDef("UCSMAN", aliases: ["UC", "DDUCS"], category: "Settings", summary: "Named UCS manager: lists the saved user coordinate systems and restores, saves, renames or deletes them (World and Previous too).") { ed in
             listUCS(ed)
-            guard let n = try await ed.getWord("Enter UCS name to make current (World, or Enter to keep)") else { return }
-            if n.lowercased() == "world" { UCSFrame.world.apply(to: &ed.doc); return }
-            guard let f = ed.doc.variable("UCS:" + n).flatMap(UCSFrame.init(text:)) else { throw CommandError.invalid("UCS \(n) not found.") }
-            f.apply(to: &ed.doc)
+            while true {
+                guard let r = try await ed.getWord("Enter UCS name to make current or [Save/Rename/Delete/World/Previous/?]", keywords: ["Save", "Rename", "Delete", "World", "Previous", "?"]) else { return }
+                let cur = UCSFrame.current(ed.doc)
+                switch r {
+                case "World": UCSFrame.world.apply(to: &ed.doc); ed.print("UCS: World"); return
+                case "Previous":
+                    var prev = (ed.doc.variable("UCSPREV") ?? "").split(separator: ";").map(String.init)
+                    guard let last = prev.popLast(), let f = UCSFrame(text: last) else { throw CommandError.invalid("No previous UCS.") }
+                    f.apply(to: &ed.doc, remember: false)
+                    ed.doc.setVariable("UCSPREV", prev.joined(separator: ";")); return
+                case "?": listUCS(ed)
+                case "Save":
+                    guard let n = try await ed.getWord("Enter name to save current UCS"), UserAliases.isValidName(n.uppercased()) else { throw CommandError.invalid("Invalid name.") }
+                    ed.doc.setVariable("UCS:" + n, cur.text); ed.print("UCS \(n.uppercased()) saved.")
+                case "Rename":
+                    guard let o = try await ed.getWord("Enter UCS name to rename"), let v = ed.doc.variable("UCS:" + o) else { throw CommandError.invalid("UCS not found.") }
+                    guard let n = try await ed.getWord("Enter new name"), UserAliases.isValidName(n.uppercased()) else { throw CommandError.invalid("Invalid name.") }
+                    guard ed.doc.variable("UCS:" + n) == nil else { throw CommandError.invalid("UCS \(n.uppercased()) already exists.") }
+                    ed.doc.variables.removeValue(forKey: "UCS:" + o.uppercased()); ed.doc.setVariable("UCS:" + n, v)
+                case "Delete":
+                    guard let n = try await ed.getWord("Enter UCS name to delete"), ed.doc.variables.removeValue(forKey: "UCS:" + n.uppercased()) != nil else { throw CommandError.invalid("UCS not found.") }
+                    ed.print("UCS \(n.uppercased()) deleted.")
+                default:
+                    let n = r
+                    if n.lowercased() == "world" { UCSFrame.world.apply(to: &ed.doc); return }
+                    guard let f = ed.doc.variable("UCS:" + n).flatMap(UCSFrame.init(text:)) else { throw CommandError.invalid("UCS \(n) not found.") }
+                    f.apply(to: &ed.doc); return
+                }
+            }
         },
     ] }
 

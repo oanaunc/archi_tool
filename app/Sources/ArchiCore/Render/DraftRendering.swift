@@ -65,6 +65,8 @@ public enum DraftRendering {
 
     /// Draw items for an entity with drafting extras; nil when the default representation applies.
     public static func items(_ e: Entity, doc: ArchiDocument, options: DrawOptions, color: RGBA, lineweight: Double) -> [DrawItem]? {
+        if let t = Transparency.items(e, doc: doc, options: options, color: color, lineweight: lineweight) { return t }
+        if let c = ComplexLinetypes.items(e, doc: doc, options: options, color: color, lineweight: lineweight) { return c }
         guard handles(e) else { return nil }
         if !annotationVisible(e, doc: doc) { return [] }
         let solid = StrokeStyle(color: color, lineweight: lineweight)
@@ -725,5 +727,102 @@ public enum TextStacks {
     /// Stacks back to plain a/b text.
     public static func unstack(_ s: String) -> String {
         runs(s).map { r -> String in if case .stack(let a, let b, let k) = r { return a + k + b }; if case .plain(let p) = r { return p }; return "" }.joined()
+    }
+}
+
+// MARK: - Complex linetypes (LAY-022)
+
+/// Curves drawn with a complex linetype: the dash pattern as solid strokes plus the text and shape elements placed along
+/// the curve (scaled by LTSCALE × object scale, rotated with the curve unless absolute, text kept upright with U=).
+public enum ComplexLinetypes {
+    static func resolvedName(_ e: Entity, doc: ArchiDocument) -> String? {
+        let n = e.linetype ?? "ByLayer"
+        if n.caseInsensitiveCompare("ByBlock") == .orderedSame { return nil }
+        if n.caseInsensitiveCompare("ByLayer") == .orderedSame { return doc.layer(named: e.layer)?.linetype }
+        return n
+    }
+
+    static func items(_ e: Entity, doc: ArchiDocument, options: DrawOptions, color: RGBA, lineweight: Double) -> [DrawItem]? {
+        switch e.geometry { case .line, .arc, .circle, .polyline, .ellipse, .spline: break; default: return nil }
+        guard let name = resolvedName(e, doc: doc), let v = doc.variable(LinFile.complexVariable(name)),
+              let def = LinFile.parse(v).first, def.isComplex else { return nil }
+        let scale = DrawListBuilder.ltScale(doc, e, options)
+        let style = StrokeStyle(color: color, lineweight: lineweight)
+        let font = DrawListBuilder.textFont("Standard", doc: doc).font
+        var out: [DrawItem] = []
+        for pts in GeometryOps.tessellate(e.geometry, doc: doc) where pts.count >= 2 {
+            out += along(pts, def: def, scale: scale, style: style, font: font)
+        }
+        return out
+    }
+
+    /// Dashes, dots and elements along one polyline.
+    public static func along(_ pts: [Vec2], def: LinFile.Definition, scale s: Double, style: StrokeStyle, font: String) -> [DrawItem] {
+        var cum = [0.0]
+        for i in 1..<pts.count { cum.append(cum[i - 1] + pts[i].distance(to: pts[i - 1])) }
+        let total = cum.last ?? 0
+        let period = def.pattern.reduce(0) { $0 + abs($1) } * s
+        guard total > 1e-12, period > 1e-12 else { return [.stroke(points: pts, closed: false, style: style)] }
+        func at(_ d: Double) -> (p: Vec2, dir: Vec2) {
+            let dd = Swift.min(Swift.max(d, 0), total)
+            var i = 1
+            while i < pts.count - 1 && cum[i] < dd { i += 1 }
+            let seg = cum[i] - cum[i - 1]
+            let t = seg > 0 ? (dd - cum[i - 1]) / seg : 0
+            let dir = (pts[i] - pts[i - 1]).normalized
+            return (pts[i - 1] + (pts[i] - pts[i - 1]) * t, dir == .zero ? Vec2(1, 0) : dir)
+        }
+        func piece(_ d0: Double, _ d1: Double) -> [Vec2] {
+            var r = [at(d0).p]
+            for i in 1..<(pts.count - 1) where cum[i] > d0 && cum[i] < d1 { r.append(pts[i]) }
+            r.append(at(d1).p)
+            return r
+        }
+        var out: [DrawItem] = []
+        var d = 0.0, idx = 0, guardCount = 0
+        while d < total && guardCount < 200_000 {
+            guardCount += 1
+            let v = def.pattern[idx] * s
+            if v > 0 { out.append(.stroke(points: piece(d, Swift.min(d + v, total)), closed: false, style: style)) }
+            else if v == 0 { let q = at(d); out.append(.stroke(points: [q.p, q.p + q.dir * (1e-3 * Swift.max(s, 1e-9))], closed: false, style: style)) }
+            d += abs(v)
+            for el in def.elements where el.after == idx && d <= total + 1e-9 {
+                out += element(el, at: at(d), scale: s, style: style, font: font)
+            }
+            idx = (idx + 1) % def.pattern.count
+        }
+        return out
+    }
+
+    static func element(_ el: LinFile.Element, at a: (p: Vec2, dir: Vec2), scale s: Double, style: StrokeStyle, font: String) -> [DrawItem] {
+        let k = Swift.max(el.scale, 1e-9) * s
+        var rot = el.absolute ? rad(el.rotation) : a.dir.angle + rad(el.rotation)
+        let u = a.dir, n = a.dir.perp
+        let origin = a.p + u * (el.x * s) + n * (el.y * s)
+        switch el.kind {
+        case .text(let t, _):
+            var pos = origin
+            if el.upright {
+                let nr = normAngle(rot)
+                if nr > .pi / 2 && nr <= 3 * .pi / 2 {
+                    // Flip to read upright: rotate by π about the text's middle.
+                    let w = 0.6 * k * Double(t.count), c = pos + Vec2.polar(w / 2, rot) + Vec2.polar(k / 2, rot + .pi / 2)
+                    rot += .pi
+                    pos = c - Vec2.polar(w / 2, rot) - Vec2.polar(k / 2, rot + .pi / 2)
+                }
+            }
+            return [.text(TextGeom(position: pos, height: k, content: t, rotation: rot), font: font, color: style.color)]
+        case .shape(let name, _):
+            let r = Transform2D.translation(origin) * Transform2D.rotation(rot)
+            let local: [[Vec2]]
+            switch name {
+            case "BOX": local = [[Vec2(k / 2, -k / 2), Vec2(3 * k / 2, -k / 2), Vec2(3 * k / 2, k / 2), Vec2(k / 2, k / 2), Vec2(k / 2, -k / 2)]]
+            case "TRACK1": local = [[Vec2(0, -k / 2), Vec2(0, k / 2)]]
+            case "ZIG": local = [[Vec2(0, 0), Vec2(k / 2, k / 2), Vec2(k, 0)]]
+            default: // CIRC1 and unknown shapes: a circle of diameter k.
+                local = [(0...24).map { Vec2(k, 0) + Vec2.polar(k / 2, Double($0) / 24 * 2 * .pi) }]
+            }
+            return local.map { .stroke(points: $0.map(r.apply), closed: false, style: style) }
+        }
     }
 }

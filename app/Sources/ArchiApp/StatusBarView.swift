@@ -51,7 +51,11 @@ struct StatusBarView: View {
                 if sel > 0 {
                     Label("\(sel) selected", systemImage: "cursorarrow.rays").foregroundStyle(Theme.accent)
                 }
+                ProgressStatusView()
                 isolateMenu
+                AnnotationScaleMenu(model: model)
+                Button { model.showQuickProperties.toggle() } label: { Image(systemName: "slider.horizontal.below.rectangle").foregroundStyle(model.showQuickProperties ? Theme.accent : Theme.textDim) }
+                    .buttonStyle(.plain).help("Quick Properties (QP) \(model.showQuickProperties ? "on" : "off")")
                 Menu {
                     ForEach(Units.allCases, id: \.self) { u in
                         Button(u.rawValue.capitalized) { model.editor.transaction("Units") { $0.units = u } }
