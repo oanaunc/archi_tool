@@ -1,0 +1,36 @@
+# Tutorial 09 — sun, saved cameras, render presets and a final image.
+title: Rendering
+summary: Sun position, render presets, saved cameras and a final render to an image
+---
+open sample "Cedar House"
+caption "Saved cameras" "CAMERA restores the views saved with the project"
+click mode 3D
+camera Front
+wait 2
+camera Aerial
+wait 2
+camera Corner
+wait 2
+caption "The sun" "SUNSTUDY: date and time sliders; the shadows follow the solar position"
+type SUNSTUDY
+wait 4
+type SUNSTUDY
+caption "Your own camera" "Orbit to a view you like and SAVECAMERA it"
+orbit 25 3
+type SAVECAMERA "Garden view"
+wait 1
+caption "Render settings" "RENDER opens the render window: presets from Draft to Print 4K"
+type RENDER
+wait 4
+caption "Render" "Sky, sun, exposure, ambient occlusion and soft shadows"
+click button "Render" in "Render"
+wait 8
+close "Render"
+caption "Render to a file" "RENDERTOFILE: size, pass, style and the image path"
+camera Front
+type RENDERTOFILE 1920x1080 Beauty Photographic ; $TMP/cedar-front.png
+wait 2
+note "Saved as a 1920 × 1080 PNG" top for 3
+wait 3
+caption "Next: sheets and PDF" "Tutorial 10 lays out drawings on paper"
+wait 3

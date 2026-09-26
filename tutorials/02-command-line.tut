@@ -1,0 +1,46 @@
+# Tutorial 02 — driving the app from the command line.
+title: The command line
+summary: Commands, aliases, coordinates, options, repeat and undo
+---
+open new
+zoom window -1000,-1500 15000,8500
+caption "Just start typing" "Commands go straight to the command line; Enter or Space confirms"
+wait 1.5
+type LINE 0,0 4000,0 ;
+note "Each prompt waits for a point, a value or an [option]" at commandline for 3.5
+wait 2.5
+caption "Aliases" "L is LINE, C is CIRCLE, REC is RECTANG, PL is PLINE…"
+type L 0,1000 3000,1000 ;
+type C 6000,1200 900
+wait 1.5
+caption "Absolute coordinates" "x,y measured from the origin"
+type REC 8500,0 12500,2500
+wait 1.5
+caption "Relative coordinates" "@dx,dy measured from the last point"
+type PL 0,3000 @3000,0 @0,1500 @-3000,0 C
+wait 1.5
+caption "Polar coordinates" "@distance<angle, angles in degrees counter-clockwise"
+type LINE 4000,3000 @2500<30 @2500<-30 ;
+wait 1.5
+caption "Options" "Type the capital letters of an option: D for Diameter"
+type CIRCLE 10500,5000 D 1800
+note "D switched the prompt from radius to diameter" at 10500,5900 for 3
+wait 3
+caption "Enter repeats the last command" "An empty Enter starts CIRCLE again"
+enter
+type 13500,5000 600
+wait 1.5
+caption "Undo and redo" "U undoes the last command, REDO brings it back"
+type U
+wait 1.2
+type REDO
+wait 1.2
+caption "Units and arithmetic" "2.5m, 30cm, 3'6\" and 2400/2 are all valid input"
+type LINE 0,6000 @2.5m<0 @2400/2<90 ;
+wait 2
+caption "History" "↑ and ↓ recall earlier lines; F2 shows the whole history"
+click panel History
+wait 3
+click panel Properties
+caption "Next: drawing basics" "Tutorial 03 covers snaps, ortho, trim, offset and fillet"
+wait 3

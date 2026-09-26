@@ -1,0 +1,50 @@
+# Tutorial 08 — the 3D view: orbiting, visual styles, materials and textures, the section box.
+title: 3D and materials
+summary: The 3D view, orbiting, visual styles, materials and textures, and the section box
+---
+open sample "Cedar House"
+caption "The 3D view" "The model is always live: every plan edit shows in 3D"
+click mode 3D
+wait 1.5
+camera Aerial
+wait 1.5
+caption "Orbit" "Drag to orbit, scroll to zoom, the view cube jumps to standard views"
+orbit 90 5
+wait 1
+caption "Visual styles" "VSCURRENT: Realistic, Shaded, Hidden line, Conceptual, X-ray, Sketchy"
+style Realistic
+wait 2
+style Hidden
+wait 2
+style Conceptual
+wait 2
+style Sketchy
+wait 2
+style Realistic
+camera Corner
+wait 1.5
+caption "Materials" "Colour, roughness, metalness, transparency and textures"
+click panel Materials
+wait 3.5
+caption "Assign a material" "Pick in the plan, then CHPROP Material"
+click mode Split
+wait 1.5
+pick 8500,0
+type CHPROP Material Limestone ;
+wait 2.5
+note "The cedar tower wall is now limestone" top for 3
+wait 2.5
+type U
+escape
+wait 1.5
+caption "Section box" "Cut the model live to look inside"
+click mode 3D
+type SECTIONBOX Level
+wait 2
+orbit -40 4
+wait 1.5
+type SECTIONBOX Off
+wait 1
+click panel Properties
+caption "Next: rendering" "Tutorial 09 renders the house"
+wait 3

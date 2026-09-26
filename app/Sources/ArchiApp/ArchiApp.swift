@@ -10,6 +10,7 @@ struct ArchiToolApp: App {
 
     /// `--selftest`: runs APPSELFTEST headless (no window), prints the report and exits with 0 (pass) or 1 (fail).
     init() {
+        MainActor.assumeIsolated { BeautyCLI.runIfRequested() }   // --render-cedar: headless sample renders, then exit
         guard CommandLine.arguments.contains("--selftest") else { return }
         let failed: Bool = MainActor.assumeIsolated {
             AppSelfTests.headless = true
@@ -65,7 +66,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         AppleScriptBridge.shared.install()
         CrashReporter.install()
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { MainActor.assumeIsolated { if CrashReporter.enabled { CrashReporter.offerPendingReports() } } }
-        LaunchArguments.apply(LaunchArguments.parse(Array(CommandLine.arguments.dropFirst())))
+        LaunchArguments.apply(LaunchArguments.parse(TutorialLaunch.filter(Array(CommandLine.arguments.dropFirst()))))
+        TutorialLaunch.start(CommandLine.arguments)
         _ = AppPreferences.shared
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { e in
             MainActor.assumeIsolated { ShortcutDispatcher.handle(e) || AppDelegate.handleFunctionKey(e) } ? nil : e

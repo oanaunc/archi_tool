@@ -20,6 +20,7 @@ cp "$ROOT/app/Info.plist" "$APP/Contents/Info.plist"
 cp -R "$ROOT/app/Resources/." "$APP/Contents/Resources/" 2>/dev/null || true
 cp "$ROOT/LICENSE" "$APP/Contents/Resources/LICENSE.txt"
 mkdir -p "$APP/Contents/Resources/Samples" && cp -R "$ROOT/assets/demo/." "$APP/Contents/Resources/Samples/"
+mkdir -p "$APP/Contents/Resources/tutorials" && cp -R "$ROOT/tutorials/." "$APP/Contents/Resources/tutorials/"
 cp "$ROOT"/docs/*.md "$APP/Contents/Resources/" 2>/dev/null || true
 codesign --force --sign - "$APP" >/dev/null 2>&1 || true
 echo "BUILD OK: $APP"

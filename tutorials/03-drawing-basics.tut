@@ -1,0 +1,55 @@
+# Tutorial 03 — 2D drafting: shapes, snaps, ortho, trim, offset and fillet.
+title: Drawing basics
+summary: Lines, polylines, rectangles, circles, snaps, ortho, trim, offset and fillet
+---
+open new
+zoom window -1500,-3000 15500,7500
+caption "Shapes" "Rectangles, circles and polylines with arc segments"
+type RECTANG 0,0 @6000,4000
+type CIRCLE 3000,2000 1200
+type PLINE 8000,4000 @3000,0 A @0,2000 L @-3000,0 C
+wait 1.5
+caption "Object snaps" "OSNAP locks the cursor to endpoints, midpoints and centres"
+note "OSNAP is on in the status bar (F3)" at status OSNAP for 3.5
+type LINE
+move 300,3700
+pick 0,4000
+type CEN
+pick 4200,2000
+type MID
+pick 6000,1200
+enter
+wait 1.5
+caption "Ortho" "F8 keeps lines horizontal or vertical; type a length to go that far"
+click status ORTHO
+type LINE 8000,0
+move 10500,200
+type 3000
+move 11100,2200
+type 2500
+enter
+click status ORTHO
+wait 1
+caption "Fillet" "FILLET rounds the corner between two lines"
+type FILLET Radius 800
+pick 9500,0
+pick 11000,1500
+wait 1.5
+caption "Trim" "TRIM cuts objects back to the edges they cross"
+type LINE 3000,-2200 3000,5800 ;
+type TRIM
+pick 3000,-1300
+pick 3000,5000
+enter
+wait 1.5
+caption "Offset" "OFFSET makes parallel copies at a distance"
+type OFFSET 400
+pick 6000,2800
+pick 6900,2800
+pick 4200,2000
+pick 3000,2000
+enter
+wait 2
+zoom extents
+caption "Next: levels and walls" "Tutorial 04 starts the Cedar House"
+wait 3

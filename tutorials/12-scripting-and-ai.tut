@@ -1,0 +1,38 @@
+# Tutorial 12 — the JavaScript console, the archi API, the agent server and archi-cli --mcp for Claude.
+title: Scripting and AI
+summary: The JavaScript console, the archi API, the agent server and archi-cli --mcp for Claude
+---
+open new
+zoom window -2000,-2000 16000,9000
+caption "The script console" "SCRIPTCONSOLE (⌥⌘J): JavaScript with an archi object"
+type SCRIPTCONSOLE
+js clear
+wait 1
+caption "The archi API" "Commands, documents and building elements from code"
+speed 22
+js // Four walls and a row of windows
+js const w = [archi.wall(0, 0, 12000, 0, { thickness: 300, height: 3000 }),
+js   archi.wall(12000, 0, 12000, 6000), archi.wall(12000, 6000, 0, 6000), archi.wall(0, 6000, 0, 0)];
+js for (let x = 1500; x < 12000; x += 3000) archi.window(w[0], x, { width: 1500 });
+js archi.run("ROOM 6000,3000 ");
+js archi.print(archi.summary());
+wait 1
+click button "Run"
+zoom extents
+wait 2
+note "One undo step per call; errors show in red with the line number" top for 3.5
+wait 3
+type SCRIPTCONSOLE
+caption "The agent server" "AI agents drive the open drawing through a local JSON-RPC server"
+type AGENTSETTINGS
+wait 4
+close "Settings"
+close "Preferences"
+caption "Claude and MCP" "archi-cli --mcp is a Model Context Protocol server for Claude"
+type CONNECTCLAUDE
+wait 5
+close sheet
+note "Claude can create walls, read schedules, check the model and export" top for 4
+wait 4
+caption "That's the series" "Free for macOS · www.oanarinaldi.com"
+wait 3

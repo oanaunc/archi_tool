@@ -1,0 +1,9 @@
+; Cedar House, stage 1: levels and walls (tutorial 04). Used as the starting point of tutorials 05-07.
+LEVEL Height "Ground Floor" 3200
+LEVEL New "Upper Floor" 3200 3000
+LEVEL Set "Ground Floor"
+WALL Thickness 300 Height 6200 0,1500 6000,1500 6000,10000 0,10000 C
+WALL Height 7200 6000,1500 6000,0 11000,0 11000,7500 6000,7500
+WALL Height 3300 11000,7500 11000,10000 21000,10000 21000,3200 11000,3200
+WALL Height 6400 11200,5600 16200,5600 16200,10000
+WALL Thickness 120 Height 3000 14600,3200 14600,10000

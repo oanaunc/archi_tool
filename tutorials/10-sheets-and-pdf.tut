@@ -1,0 +1,33 @@
+# Tutorial 10 — sheets (layouts), viewports at scale, the title block and plotting to PDF.
+title: Sheets and PDF
+summary: Sheets, viewports at a scale, the title block and plotting to PDF
+---
+open sample "Cedar House"
+caption "Sheets" "LAYOUT New adds a paper sheet (A3 landscape by default)"
+type LAYOUT New "A-102 Plans"
+click mode Sheet
+wait 2
+caption "Viewports" "MVIEW: corners in paper millimetres, a scale and a view"
+type MVIEW 15,40 205,280 1:150 Plan "Ground Floor"
+wait 2
+type LEVEL Set "Upper Floor"
+type MVIEW 215,150 405,280 1:200 Plan "Upper Floor"
+type LEVEL Set "Ground Floor"
+wait 1.5
+caption "Elevations on paper" "Elevations, sections and 3D views are generated from the model"
+type MVIEW 215,40 405,140 1:200 South "South Elevation"
+wait 2.5
+caption "Title block" "Sheet title, number, scale and date, plus project information"
+type LAYOUT Titleblock Title "Plans" Number "A-102" ;
+wait 2.5
+caption "Plot to PDF" "PLOT writes the current sheet to a vector PDF at true scale"
+type PLOT $TMP/Cedar-A-102.pdf
+wait 2
+caption "Publish" "PUBLISH writes every sheet into one multi-page PDF"
+type PUBLISH $TMP/Cedar-House-sheets.pdf
+wait 2
+note "Vector PDFs, one page per sheet" top for 3
+wait 3
+click mode 2D
+caption "Next: import and export" "Tutorial 11 exchanges the model with other software"
+wait 3

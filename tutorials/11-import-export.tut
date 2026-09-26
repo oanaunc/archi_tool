@@ -1,0 +1,37 @@
+# Tutorial 11 — DXF, IFC, OBJ/GLB and CSV schedules; importing IFC back.
+title: Import and export
+summary: DXF, IFC, OBJ and GLB export, schedules to CSV and IFC import
+---
+open sample "Cedar House"
+caption "DXF" "EXPORT DXF: the plan for AutoCAD and other CAD software"
+type EXPORT DXF $TMP/Cedar-House.dxf
+wait 1.5
+caption "IFC" "EXPORT IFC: walls, slabs, doors, windows and spaces for BIM software"
+type EXPORT IFC $TMP/Cedar-House.ifc
+wait 1.5
+caption "3D models" "OBJ and GLB for 3D software, game engines and the web"
+type EXPORT OBJ $TMP/Cedar-House.obj
+type EXPORT GLB $TMP/Cedar-House.glb
+wait 1.5
+caption "Schedules" "SCHEDULE builds tables of doors, windows, rooms and walls"
+type SCHEDULE Doors ;
+wait 2
+type SCHEDULE Rooms ;
+wait 2
+caption "Schedules to CSV" "EXPORT CSV writes the schedules for spreadsheets"
+type EXPORT CSV $TMP/Cedar-House-schedules.csv
+wait 1.5
+caption "Importing IFC" "IFCIMPORT reads IFC into native, editable elements"
+open new
+type IFCIMPORT $TMP/Cedar-House.ifc
+escape
+zoom extents
+wait 2
+click mode 3D
+wait 1
+type SEISO
+orbit 50 4
+wait 1
+click mode 2D
+caption "Also: DWG, Rhino, SketchUp, STEP, PDF…" "File ▸ Import and IMPORTFILE accept many more formats"
+wait 3.5

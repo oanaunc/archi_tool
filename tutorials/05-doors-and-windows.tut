@@ -1,0 +1,53 @@
+# Tutorial 05 — hosted openings: windows and doors in the Cedar House walls.
+title: Doors and windows
+summary: Placing windows and doors in walls, types, sizes, openings and flipping
+---
+speed 18
+open new
+runfile setup/cedar-walls.scr
+zoom window -2500,-2500 23500,12000
+caption "Windows" "WINDOW places a window where you pick a wall"
+type WINDOW Width 2400 Height 1100 Sill 900
+pick 1500,1500
+enter
+wait 1.5
+caption "Sizes by option" "Width, Height and Sill: a tall window high in the wall"
+type WINDOW Width 2400 Height 1500 Sill 3800 4300,1500 ;
+type WINDOW Width 2200 Height 1100 Sill 900 0,6500 ;
+type WINDOW Width 3000 Height 2400 Sill 300 3000,10000 ;
+wait 1
+caption "The cedar tower" "A 5.3 m glazing strip and a high window"
+type WINDOW Width 1300 Height 5300 Sill 1600 7650,0 ;
+type WINDOW Width 1600 Height 1400 Sill 4200 8500,7500 ;
+wait 1
+caption "Door types" "The Type option lists the door types of the project"
+type DOOR Type ?
+escape
+wait 1
+caption "The entrance" "A 1100 × 2700 pivot door, full-height glazing and a sidelight"
+type DOOR Width 1100 Height 2700
+pick 16300,3200
+enter
+type WINDOW Width 900 Height 2900 Sill 0 11700,3200 ;
+type WINDOW Width 600 Height 2700 Sill 0 17250,3200 ;
+type WINDOW Width 1500 Height 2800 Sill 200 18900,3200 ;
+zoom window 10500,1500 20500,6000
+wait 1
+caption "Flipping" "OPENINGFLIP turns a door to open the other way"
+type OPENINGFLIP
+pick 16300,3200
+enter
+wait 1
+zoom extents
+caption "Openings" "OPENING cuts an empty doorway in the partition"
+type OPENING Width 1800 Height 2400 Sill 0 14600,6600 ;
+type WINDOW Width 1400 Height 1400 Sill 4300 15100,5600 ;
+wait 1
+caption "In 3D" "Openings cut through their walls and move with them"
+click mode 3D
+wait 1
+type SEISO
+orbit 40 3
+click mode 2D
+caption "Next: floors, roofs and stairs" "Tutorial 06 closes the house"
+wait 3

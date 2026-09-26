@@ -23,6 +23,8 @@ enum AppCommands {
         r.register(AppCommandsRound10.all)
         r.register(AppCommandsRound11.all)
         r.register(AppCommandsRound12.all)
+        r.register(TutorialCommands.all)
+        r.register(BeautyCommands.all)
         AppCommandsRound10.startDevices()
         r.register(AppSelfTests.command)
         AppCommandsExtra.installSpellChecker()

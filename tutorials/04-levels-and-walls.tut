@@ -1,0 +1,49 @@
+# Tutorial 04 — the Cedar House starts: levels, then walls with thickness, height and justification.
+title: Levels and walls
+summary: Levels, walls with thickness, height and justification, wall types and joins
+---
+speed 18
+open new
+zoom window -3000,-3000 24500,13000
+caption "Levels" "Every building element belongs to a level (storey)"
+click panel Levels
+wait 1.5
+type LEVEL Rename "First Floor" "Upper Floor"
+type LEVEL Elevation "Upper Floor" 3200
+type LEVEL Height "Ground Floor" 3200
+note "Ground Floor 0 – 3200, Upper Floor from 3200" at panel Levels for 3.5
+wait 3
+caption "Walls" "WALL draws a chain of joined walls; Thickness and Height are options"
+type WALL Thickness 300 Height 6200 0,1500 6000,1500 6000,10000 0,10000 C
+note "C closes the chain: the limestone wing" at 3000,10000 for 3
+wait 3
+caption "The cedar tower" "A taller chain: 7.2 m, joined to the wing"
+type WALL Height 7200 6000,1500 6000,0 11000,0 11000,7500 6000,7500 ;
+wait 1.5
+caption "The entry wing" "3.3 m walls around the entrance and the kitchen"
+type WALL Height 3300 11000,7500 11000,10000 21000,10000 21000,3200 11000,3200 ;
+wait 1.5
+caption "Justification" "Walls are drawn by their centre line, or their left or right face"
+type WALL Justify Left 22500,0 22500,3000 ;
+wait 1.5
+type U
+type WALL Justify Center
+escape
+caption "Wall types" "The Type option lists and edits layered wall types"
+type WALL Type ?
+escape
+wait 2.5
+caption "Partitions and joins" "A thin 120 mm partition T-joins the walls automatically"
+type WALL Thickness 120 Height 3000 14600,3200 14600,10000 ;
+zoom window 12500,2000 17500,11000
+wait 2.5
+zoom extents
+type WALL Thickness 300 Height 6400 11200,5600 16200,5600 16200,10000 ;
+caption "In 3D" "The walls with their heights"
+click mode 3D
+wait 1.5
+orbit 60 4
+wait 1
+click mode 2D
+caption "Next: doors and windows" "Tutorial 05 cuts the openings"
+wait 3

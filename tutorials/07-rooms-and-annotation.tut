@@ -1,0 +1,48 @@
+# Tutorial 07 — rooms with areas, dimensions, text, tags and hatches.
+title: Rooms and annotation
+summary: Rooms with areas, dimensions, text, tags and hatches
+---
+speed 18
+open new
+runfile setup/cedar-walls.scr
+runfile setup/cedar-openings.scr
+runfile setup/cedar-floors.scr
+zoom window -3500,-4000 23500,12500
+caption "Rooms" "ROOM: click inside the walls; the area is computed"
+type ROOM Name Living
+pick 3000,5000
+enter
+type ROOM Name "Stair Hall"
+pick 8000,4000
+enter
+type ROOM Name Entry
+pick 12500,6000
+enter
+type ROOM Name "Kitchen & Dining"
+pick 18000,6000
+enter
+wait 1.5
+caption "Dimensions" "DIMLINEAR: two points, then where the dimension line goes"
+type DIMLINEAR 0,10000 21000,10000 10500,11800
+type DIMLINEAR 0,1500 0,10000 -1800,5750
+wait 1.5
+caption "Text" "TEXT: position, height, rotation, then the words"
+type TEXT 7000,-3000 400 0 "CEDAR HOUSE" ;
+wait 1.5
+caption "Tags" "TAGALL labels every door, window and room with live values"
+type TAGALL All
+wait 2
+zoom window 10000,1500 21500,10500
+wait 2
+zoom extents
+caption "Hatches" "Draw a boundary and fill it with a pattern"
+type RECTANG 12600,-1100 17400,0
+type HATCH Pattern ANSI31 Scale 20
+pick 15000,-500
+enter
+wait 1.5
+caption "Schedules" "SCHEDULE lists the rooms with their areas and volumes"
+type SCHEDULE Rooms ;
+wait 3
+caption "Next: 3D and materials" "Tutorial 08 goes into the model"
+wait 3

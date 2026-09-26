@@ -1,0 +1,66 @@
+# Tutorial 01 — the start screen, the interface and the Cedar House sample.
+title: Getting started
+summary: The start screen, the interface tour and the Cedar House sample
+---
+open start
+caption "Welcome to Oanarina Archi Tool" "A free, native Mac app for drafting and building design"
+wait 3
+note "Start an empty drawing, open a project or build the sample house" at start "New Drawing" for 4
+wait 3.5
+caption "Sample projects" "The Cedar House: the house this tutorial series builds step by step"
+hover start "Cedar House"
+wait 1.5
+click start "Cedar House"
+wait 2.5
+caption "The ribbon" "Tools grouped in tabs; every button runs a command you could also type"
+note "Home, Insert, Annotate, Architecture, View, Output…" at tab Architecture for 3.5
+click tab Architecture
+wait 2
+hover ribbon WALL
+wait 1.5
+hover ribbon DOOR
+wait 1
+click tab Home
+wait 1
+caption "The canvas" "The 2D plan of the current level: scroll to zoom, drag to pan"
+move 10500,6000
+wait 1
+zoom window -500,0 11500,10500
+wait 1.5
+zoom extents
+wait 1
+caption "The command line" "Just start typing: commands, options and coordinates"
+note "Prompts and [options] appear here" at commandline for 3.5
+type ZOOM E
+wait 1.5
+caption "Side panels" "Properties, Layers, Levels, project Browser, Materials and more"
+click panel Layers
+wait 2
+click panel Levels
+wait 2
+click panel Properties
+pick 3000,1500
+wait 2.5
+note "The selected wall's type, material, height and thickness" at panel Properties for 3
+wait 3
+escape
+caption "The status bar" "Snaps, grid, ortho and polar tracking toggles, cursor coordinates"
+note "Click to toggle, or press F3, F7, F8, F10…" at status OSNAP for 3.5
+hover status ORTHO
+wait 1.2
+hover status OSNAP
+wait 2.5
+caption "2D, 3D, Split and Sheet" "Switch the workspace with these buttons or ⌥⌘1–4"
+click mode 3D
+wait 2.5
+orbit 50 4
+wait 1
+camera Corner
+wait 2.5
+click mode Split
+wait 3
+click mode Sheet
+wait 2.5
+click mode 2D
+caption "Next: the command line" "Tutorial 02 shows how to drive the app by typing"
+wait 3

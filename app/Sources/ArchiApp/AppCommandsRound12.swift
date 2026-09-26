@@ -89,5 +89,5 @@ extension CommandCatalog {
     static let round12Core: [CmdItem] = [
         c13("Rhino 3DM In", "square.and.arrow.down.on.square", "RHINOIN"), c13("Rhino 3DM Out", "square.and.arrow.up.on.square", "RHINOOUT"),
     ]
-    static var coverageMenus9: [(String, [CmdItem])] { [("Styles, Patterns & Occlusion", round12Items), ("Exchange More", round12Core)] }
+    static var coverageMenus9: [(String, [CmdItem])] { [("Styles, Patterns & Occlusion", round12Items), ("Exchange More", round12Core)] + TutorialCommands.coverageMenus }
 }
