@@ -434,7 +434,7 @@ public enum TextExplode {
 /// A reference with values (prop "dynValues" = "Width=1200;Count=3") points at a generated variant block
 /// "<block>$D<hash>" (prop "dynBase" = the base block), so display, export and snaps need no special handling.
 public enum DynamicBlocks {
-    public enum Kind: String { case stretch, array }
+    public enum Kind: String { case stretch, array, constraint }
     public struct Param: Hashable {
         public var name: String; public var kind: Kind; public var window: BBox2; public var vector: Vec2; public var base: Double
         public init(name: String, kind: Kind, window: BBox2, vector: Vec2, base: Double) {
@@ -448,6 +448,14 @@ public enum DynamicBlocks {
     public static func key(_ block: String) -> String { "BDYNPARAMS:" + block }
 
     public static func params(_ block: String, _ doc: ArchiDocument) -> [Param] {
+        var out = storedParams(block, doc).filter { $0.kind != .constraint }
+        // Named length constraints of a parametric block (BLK-027) are parameters too.
+        for (n, v) in BlockConstraints.parameters(block, doc: doc) where !out.contains(where: { $0.name.caseInsensitiveCompare(n) == .orderedSame }) {
+            out.append(Param(name: n, kind: .constraint, window: BBox2(points: [.zero]), vector: .zero, base: v))
+        }
+        return out
+    }
+    static func storedParams(_ block: String, _ doc: ArchiDocument) -> [Param] {
         (doc.variable(key(block)) ?? "").split(separator: ";").compactMap { s in
             let f = s.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
             guard f.count == 5, let k = Kind(rawValue: f[1]), let b = Double(f[4]) else { return nil }
@@ -456,7 +464,8 @@ public enum DynamicBlocks {
             return Param(name: f[0], kind: k, window: BBox2(points: [Vec2(w[0], w[1]), Vec2(w[2], w[3])]), vector: Vec2(v[0], v[1]), base: b)
         }
     }
-    public static func setParams(_ block: String, _ ps: [Param], _ doc: inout ArchiDocument) {
+    public static func setParams(_ block: String, _ ps0: [Param], _ doc: inout ArchiDocument) {
+        let ps = ps0.filter { $0.kind != .constraint }
         if ps.isEmpty { doc.variables[key(block).uppercased()] = nil } else { doc.setVariable(key(block), ps.map(\.text).joined(separator: ";")) }
     }
 
@@ -471,8 +480,12 @@ public enum DynamicBlocks {
     public static func valuesText(_ v: [String: Double]) -> String { v.keys.sorted().map { "\($0)=\(fmt(v[$0]!, 9))" }.joined(separator: ";") }
 
     /// The block's entities with parameter values applied (in parameter order; stretches first, then arrays).
-    public static func entities(of b: Block, params: [Param], values: [String: Double]) -> [Entity] {
+    public static func entities(of b: Block, params: [Param], values: [String: Double], constraints: ConstraintSet? = nil) -> [Entity] {
         var ents = b.entities
+        if let cs = constraints {
+            let cv = values.filter { k, _ in params.contains { $0.kind == .constraint && $0.name == k } }
+            if !cv.isEmpty { ents = BlockConstraints.solved(ents, set: cs, values: cv) }
+        }
         for p in params where p.kind == .stretch {
             guard let v = values[p.name] else { continue }
             let dir = p.vector.lengthSquared > 0 ? p.vector.normalized : Vec2(1, 0)
@@ -519,7 +532,7 @@ public enum DynamicBlocks {
         } else {
             let name = variantName(block, vals)
             if doc.blocks[name] == nil {
-                doc.blocks[name] = Block(name: name, basePoint: b.basePoint, entities: entities(of: b, params: ps, values: vals),
+                doc.blocks[name] = Block(name: name, basePoint: b.basePoint, entities: entities(of: b, params: ps, values: vals, constraints: BlockConstraints.load(block, doc: doc)),
                                          description: "Dynamic variant of \(block): \(valuesText(vals))")
             }
             ins.block = name

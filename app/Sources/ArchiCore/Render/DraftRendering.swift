@@ -65,9 +65,13 @@ public enum DraftRendering {
 
     /// Draw items for an entity with drafting extras; nil when the default representation applies.
     public static func items(_ e: Entity, doc: ArchiDocument, options: DrawOptions, color: RGBA, lineweight: Double) -> [DrawItem]? {
+        if let g = GraphicStyles.items(e, doc: doc, options: options, color: color, lineweight: lineweight) { return g }
         if let t = Transparency.items(e, doc: doc, options: options, color: color, lineweight: lineweight) { return t }
         if let c = ComplexLinetypes.items(e, doc: doc, options: options, color: color, lineweight: lineweight) { return c }
-        guard handles(e) else { return nil }
+        var custom = false
+        if case .text(let t) = e.geometry, e.props["tagOf"] == nil, TextStyleFonts.drawsStrokes(t, doc: doc) { custom = true }
+        if case .dimension(let d) = e.geometry, DimStyleExtras.needsCustomRendering(e, d, doc: doc) { custom = true }
+        guard custom || handles(e) else { return nil }
         if !annotationVisible(e, doc: doc) { return [] }
         let solid = StrokeStyle(color: color, lineweight: lineweight)
         switch e.geometry {
@@ -438,6 +442,7 @@ public enum DraftRendering {
         var out: [DrawItem] = []
         let text = props[textColumnsProp].flatMap { columnTextItems(t, spec: $0, doc: doc, color: color) }
             ?? stackedTextItems(t, doc: doc, color: color, lineweight: lineweight)
+            ?? TextStyleFonts.strokeItems(t, doc: doc, color: color, lineweight: lineweight)
             ?? DrawListBuilder.textItems(t, doc: doc, color: color)
         if let f = props[textMaskProp] {
             let factor = Double(f).map { $0 > 0 ? $0 : 1.5 } ?? 1.5
@@ -576,15 +581,19 @@ extension DraftRendering {
     /// Dimension with tolerance / alternate units / inspection text and its frame.
     static func dimensionItems(_ d: DimensionGeom, props: [String: String], doc: ArchiDocument, color: RGBA, lineweight: Double) -> [DrawItem] {
         let ds = doc.dimStyle(d.style)
+        let x = DimStyleExtras.get(ds.name, doc: doc)
+        let merged = x.mergedProps(props)
         var dd = d
-        dd.textOverride = DimExtras.text(d, style: ds, props: props)
-        let prim = DimensionRenderer.primitives(dd, style: ds)
+        dd.textOverride = DimStyleExtras.text(d, props: props, doc: doc)
+        let prim = DimensionRenderer.primitives(dd, style: ds, layout: x.layout)
         let st = StrokeStyle(color: color, lineweight: lineweight)
         var out: [DrawItem] = prim.lines.filter { $0.count >= 2 }.map { .stroke(points: $0, closed: false, style: st) }
         out += prim.arrows.filter { $0.count >= 3 }.map { .fill(loops: [$0], color: color) }
-        if let t = prim.text {
-            out.append(.text(t, font: DrawListBuilder.textFont(t.style, doc: doc).font, color: color))
-            if let shape = DimExtras.frame(props) { out += frameItems(t, shape: shape, doc: doc, style: st) }
+        if var t = prim.text {
+            if let ts = x.textStyle { t.style = ts }
+            out += TextStyleFonts.strokeItems(t, doc: doc, color: color, lineweight: lineweight)
+                ?? [.text(t, font: DrawListBuilder.textFont(t.style, doc: doc).font, color: color)]
+            if let shape = DimExtras.frame(merged) { out += frameItems(t, shape: shape, doc: doc, style: st) }
         }
         return out
     }

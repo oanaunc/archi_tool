@@ -149,7 +149,7 @@ enum DrawCommands {
         return Vec2.polar(1, a)
     }
 
-    static var all: [CommandDef] { basic + curves + fills + solids }
+    static var all: [CommandDef] { basic + curves + fills + solids + FeatureCommands9.drawOverrides }
 
     // MARK: - Lines and polylines
     static var basic: [CommandDef] { [
@@ -944,19 +944,6 @@ enum DrawCommands {
             ed.doc.setVariable("BOXHEIGHT", fmt(h))
             ed.addEntity(.solid(SolidGeom(kind: .box, origin: Vec3(b.min.x, b.min.y, h < 0 ? z + h : z), size: Vec3(b.width, b.height, abs(h)))))
         },
-        CommandDef("CYLINDER", aliases: ["CYL"], category: "Draw", summary: "Creates a 3D solid cylinder.") { ed in
-            let c = try await ed.requirePoint("Specify center point of base")
-            let r = try await ed.getDistance("Specify base radius", base: c, keywords: ["Diameter"]) { p in [.circle(CircleGeom(c, c.distance(to: p)))] }
-            var radius: Double
-            switch r { case .value(let v): radius = v
-            case .keyword: radius = (try await ed.getDistance("Specify diameter", base: c).value ?? 0) / 2
-            default: return }
-            guard radius > 1e-9 else { throw CommandError.invalid("Radius must be positive.") }
-            let h = try await ed.getDistance("Specify height", base: c, defaultValue: ed.variableDouble("BOXHEIGHT", 1000)).value ?? 1000
-            guard abs(h) > 1e-9 else { throw CommandError.invalid("Height must not be zero.") }
-            let z = elevation(ed)
-            ed.addEntity(.solid(SolidGeom(kind: .cylinder, origin: Vec3(c.x, c.y, h < 0 ? z + h : z), size: Vec3(radius, radius, abs(h)))))
-        },
         CommandDef("CONE", category: "Draw", summary: "Creates a 3D solid cone or frustum.") { ed in
             let c = try await ed.requirePoint("Specify center point of base")
             guard let radius = try await ed.getDistance("Specify base radius", base: c, preview: { p in [.circle(CircleGeom(c, c.distance(to: p)))] }).value, radius > 0 else { return }
@@ -974,47 +961,6 @@ enum DrawCommands {
             let c = try await ed.requirePoint("Specify center point")
             guard let r = try await ed.getDistance("Specify radius", base: c, preview: { p in [.circle(CircleGeom(c, c.distance(to: p)))] }).value, r > 0 else { throw CommandError.invalid("Radius must be positive.") }
             ed.addEntity(.solid(SolidGeom(kind: .sphere, origin: Vec3(c.x, c.y, elevation(ed)), size: Vec3(r, r, r))))
-        },
-        CommandDef("EXTRUDE", aliases: ["EXT"], category: "Draw", summary: "Extrudes closed 2D objects into 3D solids.") { ed in
-            let ids = try await ed.getEntitySelection("Select objects to extrude")
-            let profiles = ids.compactMap { id -> (EntityID, [Vec2])? in
-                guard let e = ed.doc.entity(id), let l = CommandHelpers.closedLoop(e.geometry) else { return nil }
-                let pts = CommandHelpers.loopPoints(l); return pts.count >= 3 ? (id, pts) : nil
-            }
-            guard !profiles.isEmpty else { throw CommandError.invalid("No closed profiles selected.") }
-            guard let h = try await ed.getDistance("Specify height of extrusion", defaultValue: ed.variableDouble("BOXHEIGHT", 1000)).value, abs(h) > 1e-9 else { return }
-            let z = elevation(ed)
-            for (_, pts) in profiles {
-                let o = pts[0]
-                ed.addEntity(.solid(SolidGeom(kind: .extrusion, origin: Vec3(o.x, o.y, h < 0 ? z + h : z), profile: pts.map { $0 - o }, height: abs(h))))
-            }
-            if ed.variableDouble("DELOBJ", 1) != 0 { ed.doc.remove(ids: Set(profiles.map(\.0))) }
-            ed.selection = []
-            ed.print("\(profiles.count) solid(s) created.")
-        },
-        CommandDef("REVOLVE", aliases: ["REV"], category: "Draw", summary: "Revolves closed 2D objects about an axis into 3D solids.") { ed in
-            let ids = try await ed.getEntitySelection("Select objects to revolve")
-            let profiles = ids.compactMap { id -> (EntityID, [Vec2])? in
-                guard let e = ed.doc.entity(id), let l = CommandHelpers.closedLoop(e.geometry) else { return nil }
-                return (id, CommandHelpers.loopPoints(l))
-            }
-            guard !profiles.isEmpty else { throw CommandError.invalid("No closed profiles selected.") }
-            let a = try await ed.requirePoint("Specify axis start point")
-            let b = try await ed.requirePoint("Specify axis endpoint", base: a) { p in [.line(LineGeom(a, p))] }
-            guard a.distance(to: b) > 1e-9 else { throw CommandError.invalid("Axis has zero length.") }
-            let ang = try await ed.getAngle("Specify angle of revolution", defaultValue: 2 * .pi).value ?? 2 * .pi
-            let rot = (b - a).angle - .pi / 2
-            let z = elevation(ed)
-            for (_, pts) in profiles {
-                // Local frame: Y along the axis, X = distance from the axis. Revolved about local Y.
-                let local = pts.map { ($0 - a).rotated(by: -rot) }
-                var s = SolidGeom(kind: .revolve, origin: Vec3(a.x, a.y, z), profile: local, height: abs(ang) < 1e-9 ? 2 * .pi : ang, rotation: rot)
-                s.size = Vec3(1, 1, 1)
-                let id = ed.addEntity(.solid(s))
-                if let i = ed.doc.entityIndex(id) { ed.doc.entities[i].props["revolveAxis"] = "localY" }
-            }
-            if ed.variableDouble("DELOBJ", 1) != 0 { ed.doc.remove(ids: Set(profiles.map(\.0))) }
-            ed.selection = []
         },
     ] }
 }

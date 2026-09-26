@@ -936,5 +936,6 @@ enum WindowTabs {
         w.collectionBehavior.insert(.fullScreenPrimary)
         w.collectionBehavior.insert(.managed)
         w.collectionBehavior.remove(.fullScreenAuxiliary)
+        FullScreenState.track(w)
     }
 }

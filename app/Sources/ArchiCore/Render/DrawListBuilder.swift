@@ -114,7 +114,9 @@ public enum DrawListBuilder {
         out += ViewRange.revealEntries(doc, options: options)
         // Project view: linework overrides, crop region / annotation crop, matchlines, scope boxes (DOC-013…016/027, BIM-008).
         if viewsOn, options.level != nil { out = ProjectViews.apply(out, doc: doc, options: options) }
-        return out
+        // Graphic display options of the view (DOC-029): cast shadows under everything, sketchy lines, silhouettes.
+        if let l = options.level, options.showElements { let sh = GraphicDisplay.shadowEntries(doc, level: l); if !sh.isEmpty { out = sh + out } }
+        return GraphicDisplay.apply(out, doc: doc)
     }
 
     /// Phase graphic overrides: halftone for existing work, dashed and tinted for demolished work.

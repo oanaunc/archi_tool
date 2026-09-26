@@ -482,7 +482,7 @@ public enum DXFWriter {
                 let c = RGBA(Double(r) / 255, Double(gg) / 255, Double(b) / 255)
                 g(62, DXFWriter.nearestACI(c)); g(420, Int(r) << 16 | Int(gg) << 8 | Int(b))
             }
-            if let lw = s.lineweight { g(370, DXFWriter.lineweightCode(lw)) }
+            if let lw = s.lineweight { g(370, lw < 0 ? (lw > -1.5 ? -1 : (lw > -2.5 ? -2 : -3)) : DXFWriter.lineweightCode(lw)) } // -1 ByLayer, -2 ByBlock, -3 Default
             if let t = entityTransparency { g(440, t) }
             g(100, sub)
             if let x = armedXData { pendingXData = x; armedXData = nil }

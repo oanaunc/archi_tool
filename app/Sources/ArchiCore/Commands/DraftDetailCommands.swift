@@ -501,9 +501,9 @@ enum DraftDetailCommands {
             var vals = DynamicBlocks.values(e.props)
             for p in ps {
                 let cur = vals[p.name] ?? p.base
-                guard let v = try await ed.getReal("Enter \(p.name) (\(p.kind == .array ? "count" : "length"))", defaultValue: cur).value else { continue }
+                guard let v = try await ed.getReal("Enter \(p.name) (\(p.kind == .array ? "count" : (p.kind == .constraint ? "constraint value" : "length")))", defaultValue: cur).value else { continue }
                 if p.kind == .array && (v < 1 || v > 1000) { throw CommandError.invalid("The count must be between 1 and 1000.") }
-                if p.kind == .stretch && v <= 0 { throw CommandError.invalid("The length must be positive.") }
+                if p.kind != .array && v <= 0 { throw CommandError.invalid("The length must be positive.") }
                 vals[p.name] = p.kind == .array ? v.rounded() : v
             }
             for id in ids {

@@ -512,7 +512,7 @@ public enum Schedules {
                 case "\"": inQ = true
                 case ",": row.append(cur); cur = ""
                 case "\r": continue
-                case "\n": row.append(cur); cur = ""; rows.append(row); row = []
+                case "\n", "\r\n": row.append(cur); cur = ""; rows.append(row); row = []   // CRLF is one Character in Swift
                 default: cur.append(ch)
                 }
             }

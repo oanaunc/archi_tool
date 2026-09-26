@@ -13,7 +13,7 @@ public enum Round7Updaters {
                 el.props["stairType"] != nil || el.props["railingType"] != nil || el.props["stack"] != nil || el.props["stackOf"] != nil
                     || el.props["partOf"] != nil || el.props.keys.contains { $0.hasPrefix(Expressions.prefix) }
             }
-            || doc.entities.contains { e in e.props.keys.contains { $0.hasPrefix(Expressions.prefix) } || e.props["materialTagOf"] != nil || e.props["repeatDetail"] != nil || e.props["repeatOf"] != nil || e.props["cvGrid"] != nil }
+            || doc.entities.contains { e in e.props.keys.contains { $0.hasPrefix(Expressions.prefix) } || e.props["materialTagOf"] != nil || e.props["repeatDetail"] != nil || e.props["repeatOf"] != nil || e.props["cvGrid"] != nil || e.props[ProjectedGeometry.prop] != nil }
     }
 
     @discardableResult
@@ -29,6 +29,7 @@ public enum Round7Updaters {
         if MaterialTags.updateAll(&doc) { changed = true }
         if RepeatingDetails.updateAll(&doc) { changed = true }
         if MeshOps.updateSurfaces(&doc) { changed = true }
+        if ProjectedGeometry.updateAll(&doc) { changed = true }
         return changed
     }
 }

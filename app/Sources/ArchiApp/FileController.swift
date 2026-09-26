@@ -156,6 +156,8 @@ final class FileController: EditorHost {
             model.viewStyle = VisualStyleDef.named(s, in: model.doc)?.name ?? VisualStyleNames.canonical(s)
             model.pendingHostAction = action
             model.revision &+= 1
+        case .setView("redraw"):
+            model.canvas?.redraw(); model.viewport3D?.view?.needsDisplay = true
         case .setView("zoomPrevious"):
             model.canvas?.zoomPrevious()
         case .setView(let v) where v.hasPrefix("layout:"):

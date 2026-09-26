@@ -915,6 +915,10 @@ final class PlanCanvasView: NSView {
         return s
     }
     func invalidateCache() { sceneKey = []; content.needsDisplay = true; overlay.needsDisplay = true }
+    /// REDRAW: repaints from the display cache without rebuilding it (REGEN rebuilds).
+    func redraw() { content.needsDisplay = true; overlay.needsDisplay = true }
+    /// Whether the display cache is current (tests of REDRAW vs REGEN).
+    var isSceneCached: Bool { scene != nil && !sceneKey.isEmpty }
 
     var params: RenderParams {
         var p = RenderParams()

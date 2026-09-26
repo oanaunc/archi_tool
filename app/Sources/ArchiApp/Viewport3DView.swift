@@ -123,6 +123,8 @@ final class Scene3DBuilder {
             if byKey[key] == nil { order.append(key) }
             byKey[key, default: []].append(g)
         }
+        // Doors with a swing animation get their leaves as separate nodes (VIS-045).
+        doorAnimated = Set(ObjectAnimations.load(doc).filter { $0.kind == .door }.map(\.target))
         // Materials may have been edited: they are part of each group's hash.
         var seen = Set<String>()
         var newBounds = BBox3.empty
@@ -130,7 +132,10 @@ final class Scene3DBuilder {
             let gs = byKey[key]!
             var h = Hasher()
             h.combine(gs)
-            for g in gs { h.combine(doc.material(g.material)); h.combine(doc.variable(TextureMapping.key(g.material))); h.combine(doc.variable(Emissive.key(g.material))) }
+            for g in gs { h.combine(doc.material(g.material)); h.combine(doc.variable(TextureMapping.key(g.material))); h.combine(doc.variable(Emissive.key(g.material)))
+                h.combine(doc.variable(MaterialMaps.key(g.material))); h.combine(doc.variable(MaterialAssetSet.key(g.material))); h.combine(doc.variable(WaterSurface.key(g.material))) }
+            h.combine(doc.variable(WeatherSettings.variable))
+            if let id = gs.first?.id, doorAnimated.contains(id) { h.combine("animatedDoor") }
             let hash = h.finalize()
             for g in gs { for p in g.mesh.positions { newBounds.add(p) }; for e in g.edges { for p in e { newBounds.add(p) } } }
             seen.insert(key)
@@ -157,12 +162,32 @@ final class Scene3DBuilder {
         n.enumerateHierarchy { c, _ in originalMaterials[ObjectIdentifier(c)] = nil }
     }
 
+    /// Door elements whose leaves are animated (split from the frame in `makeNode`).
+    private(set) var doorAnimated: Set<EntityID> = []
+
     private func makeNode(key: String, groups: [MeshGroup], doc: ArchiDocument) -> SCNNode {
         let parent = SCNNode()
         parent.name = key
+        var groups = groups
+        if let id = groups.first?.id, doorAnimated.contains(id), let el = doc.element(id) {
+            let leaves = ObjectAnimations.doorLeaves(el, doc: doc)
+            if !leaves.isEmpty, let i = groups.firstIndex(where: { $0.material == (el.material ?? "Wood") }) {
+                let split = ObjectAnimations.splitDoor(groups[i].mesh, leaves: leaves)
+                groups[i].mesh = split.rest
+                for (k, lm) in split.leaves.enumerated() where !lm.isEmpty {
+                    if let geo = Scene3DBuilder.geometry(lm) {
+                        geo.materials = [material(for: groups[i].material, doc: doc)]
+                        let n = SCNNode(geometry: geo)
+                        n.name = "leaf:\(id):\(k)"
+                        parent.addChildNode(n)
+                    }
+                }
+            }
+        }
         for g in groups {
             if style != "Wireframe", let geo = Scene3DBuilder.geometry(TextureMapping.apply(g.mesh, material: g.material, doc: doc)) {
                 geo.materials = [material(for: g.material, doc: doc)]
+                if style == "Realistic", let t = MaterialMaps.tessellator(material: g.material, doc: doc) { geo.tessellator = t }
                 let n = SCNNode(geometry: geo)
                 n.name = key
                 let transparent = (doc.material(g.material)?.transparency ?? 0) > 0.3
@@ -220,10 +245,14 @@ final class Scene3DBuilder {
         let src = doc.material(name) ?? Material(name: name, color: RGBA(0.8, 0.8, 0.8))
         // Cached per material state (edits, glow and bump settings make a new material).
         let cacheKey = name + "|\(src.hashValue)|" + (doc.variable(Emissive.key(name)) ?? "") + "|" + (doc.variable("MATBUMP:" + name) ?? "")
+            + "|" + (doc.variable(MaterialMaps.key(name)) ?? "") + "|" + (doc.variable(MaterialAssetSet.key(name)) ?? "") + "|" + (doc.variable(WeatherSettings.variable) ?? "")
+            + "|" + (doc.variable(WaterSurface.key(name)) ?? "")
         if let m = materialCache[cacheKey] { return m }
         let m = SCNMaterial()
         m.name = name
-        let color = NSColor(srgbRed: src.color.r, green: src.color.g, blue: src.color.b, alpha: 1)
+        // Graphics asset (VIS-068): non-realistic views may use their own shading colour.
+        let shade = style == "Realistic" ? nil : MaterialAssetSet.shadingColor(name, doc: doc)
+        let color = shade.map { NSColor(srgbRed: $0.r, green: $0.g, blue: $0.b, alpha: 1) } ?? NSColor(srgbRed: src.color.r, green: src.color.g, blue: src.color.b, alpha: 1)
         let t = min(max(src.transparency, 0), 0.95)
         switch style {
         case "Hidden Line":
@@ -297,6 +326,10 @@ final class Scene3DBuilder {
             m.transparencyMode = .dualLayer
         }
         if style != "Hidden Line" && style != "Wireframe" { Emissive.apply(m, name: name, color: src.color, doc: doc) }
+        // PBR maps (VIS-061), water (VIS-083), weather and season (VIS-058).
+        if style == "Realistic" { _ = MaterialMaps.apply(m, material: src, doc: doc) }
+        if WaterSurface.isWater(name, doc: doc) { WaterSurface.apply(m, style: style) }
+        if !["Hidden Line", "Wireframe", "X-Ray", "Sketchy"].contains(style) { WeatherSettings.load(doc).apply(m, name: name, color: shade ?? src.color, style: style) }
         if let o = custom?.faceOpacity, o < 1 {
             m.transparency = CGFloat(max(0.05, min(o, 1)) * Double(m.transparency))
             m.isDoubleSided = true

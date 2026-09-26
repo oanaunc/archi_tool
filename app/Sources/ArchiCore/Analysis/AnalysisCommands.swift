@@ -103,7 +103,15 @@ public enum AnalysisCommands {
             var cal = Calendar(identifier: .gregorian); cal.timeZone = TimeZone.current
             let c = cal.dateComponents([.year, .month, .day], from: now)
             let today = String(format: "%04d-%02d-%02d", c.year ?? 2025, c.month ?? 6, c.day ?? 21)
-            let day = try await ed.getWord("Enter date (YYYY-MM-DD)", defaultValue: ed.doc.variable("SUNDATE") ?? today) ?? today
+            let day = try await ed.getWord("Enter date (YYYY-MM-DD) or validate against references", defaultValue: ed.doc.variable("SUNDATE") ?? today, keywords: ["Validate"]) ?? today
+            if day == "Validate" {
+                let lines = SolarCalculator.validate()
+                for l in lines {
+                    ed.print("\(l.passes ? "PASS" : "FAIL")  \(l.reference) — \(l.quantity): reference \(fmt(l.expected, 5)) \(l.unit), computed \(fmt(l.computed, 5)) \(l.unit) (Δ \(fmt(l.deviation, 4)), tolerance ±\(fmt(l.tolerance, 3)))")
+                }
+                ed.print("Solar position validation: \(lines.filter(\.passes).count) of \(lines.count) checks within tolerance.")
+                return
+            }
             let time = try await ed.getWord("Enter local time (HH:MM)", defaultValue: ed.doc.variable("SUNTIME") ?? "12:00") ?? "12:00"
             let defOff = Double(ed.doc.variable("UTCOFFSET") ?? "") ?? Double(TimeZone.current.secondsFromGMT()) / 3600
             let off = try await ed.getReal("Enter UTC offset in hours", defaultValue: defOff).value ?? defOff

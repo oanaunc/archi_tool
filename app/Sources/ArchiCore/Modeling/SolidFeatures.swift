@@ -11,10 +11,26 @@ public enum SolidHistoryEngine {
         guard !h.solids.isEmpty else { return nil }
         var acc: SolidGeom? = h.base
         for f in h.features where !f.suppressed {
-            guard f.tool >= 0, f.tool < h.solids.count, let a = acc else { continue }
+            guard let a = acc else { continue }
+            let tool: SolidGeom
+            if f.tool == SolidFeature.bodyTool { tool = a }
+            else { guard f.tool >= 0, f.tool < h.solids.count else { continue }; tool = h.solids[f.tool] }
             let op: CSG.Operation = f.op == .union ? .union : (f.op == .subtract ? .subtract : .intersect)
-            acc = CSG.apply(op, a, h.solids[f.tool])
-            if acc == nil && f.op == .union { acc = a }
+            // Pattern / mirror instances of the tool (M3D-026/027); the body itself is not re-applied to itself.
+            var tools = FeatureInstances.instances(of: tool, pattern: f.pattern, mirror: f.mirror)
+            if f.tool == SolidFeature.bodyTool { tools.removeFirst() }
+            if op == .intersect && tools.count > 1 {
+                var u: SolidGeom? = tools[0]
+                for t in tools.dropFirst() { if let x = u { u = CSG.apply(.union, x, t) ?? x } }
+                tools = u.map { [$0] } ?? []
+            }
+            var r: SolidGeom? = a
+            for t in tools {
+                guard let cur = r else { break }
+                r = CSG.apply(op, cur, t)
+                if r == nil && op == .union { r = cur }
+            }
+            acc = r
         }
         return acc
     }
@@ -49,7 +65,12 @@ public enum SolidHistoryEngine {
     public static func describe(_ h: SolidHistory) -> [String] {
         var out = ["0  Base: \(h.base.kind.rawValue)"]
         for (i, f) in h.features.enumerated() {
-            out.append("\(i + 1)  \(f.name.isEmpty ? f.op.rawValue : f.name) [\(f.op.rawValue) \(h.solids[f.tool].kind.rawValue)]\(f.suppressed ? " (suppressed)" : "")")
+            let tool = f.tool == SolidFeature.bodyTool ? "body" : (f.tool >= 0 && f.tool < h.solids.count ? h.solids[f.tool].kind.rawValue : "?")
+            var extra = ""
+            if let p = f.pattern { extra += p.kind == .linear ? ", linear pattern \(p.count)×\(p.count2 ?? 1)" : ", polar pattern \(p.count)" }
+            if f.mirror != nil { extra += ", mirrored" }
+            if f.source != nil { extra += ", sketch-driven" }
+            out.append("\(i + 1)  \(f.name.isEmpty ? f.op.rawValue : f.name) [\(f.op.rawValue) \(tool)\(extra)]\(f.suppressed ? " (suppressed)" : "")")
         }
         return out
     }
@@ -63,7 +84,14 @@ public enum AssociativeSolids {
         var ids = src.profiles
         if let p = src.path { ids.append(p) }
         var out: [Geometry] = []
-        for id in ids { guard let e = doc.entity(id) else { return nil }; out.append(e.geometry) }
+        for id in ids {
+            guard let e = doc.entity(id) else { return nil }
+            // 3D paths: their per-vertex elevations are part of the input (a helix edited by its z values).
+            if src.kind == .sweep3D || src.kind == .followMe, id == src.path, let vz = e.props["vertexZ"] {
+                out.append(.text(TextGeom(position: .zero, height: 1, content: vz)))
+            }
+            out.append(e.geometry)
+        }
         return out
     }
 
@@ -91,6 +119,8 @@ public enum AssociativeSolids {
             var acc = MeshAcc()
             SweepMesh.loft(rings, into: &acc)
             return acc.mesh.isEmpty ? nil : MeshTools.solid(from: MeshTools.triangles(acc.mesh), tolerance: 1e-6)
+        case .revolve, .sweep3D, .followMe, .extrude, .hole, .csgTree, .script, .binder:
+            return FeatureSources.build(src, doc: doc)
         }
     }
 
@@ -108,15 +138,25 @@ public enum AssociativeSolids {
         var changed = false
         let snap = doc
         for (i, e) in snap.entities.enumerated() {
-            guard case .solid(let s) = e.geometry, let src = s.source, let cur = inputs(src, doc: snap), cur != src.inputs else { continue }
-            guard var n = build(src, doc: snap) else { continue }
-            var ns = src; ns.inputs = cur
-            if var h = s.history {
-                var b = n; b.history = nil; b.source = nil
-                h.solids[0] = b
-                if var r = SolidHistoryEngine.evaluate(h) { r.history = h; n = r }
+            guard case .solid(let s) = e.geometry, s.source != nil || s.history != nil else { continue }
+            // Sketch-driven features (pad, pocket, hole, groove) rebuild their tools when their sketches change.
+            var hist = s.history
+            var featChanged = false
+            if var h = hist { featChanged = FeatureSources.refreshTools(&h, doc: snap); hist = h }
+            var srcChanged = false, cur: [Geometry] = []
+            if let src = s.source, let c = inputs(src, doc: snap), c != src.inputs { srcChanged = true; cur = c }
+            guard featChanged || srcChanged else { continue }
+            var n = s
+            if srcChanged, let src = s.source {
+                guard let b = build(src, doc: snap) else { continue }
+                n = b
+                var ns = src; ns.inputs = cur
+                n.source = ns
             }
-            n.source = ns
+            if var h = hist {
+                if srcChanged { var b = n; b.history = nil; b.source = nil; h.solids[0] = b }
+                if var r = SolidHistoryEngine.evaluate(h) { r.history = h; r.source = n.source; n = r }
+            }
             doc.entities[i].geometry = .solid(n)
             changed = true
         }

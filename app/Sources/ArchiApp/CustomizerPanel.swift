@@ -1,0 +1,124 @@
+// Oanarina Archi Tool — GPL-3.0-or-later
+import SwiftUI
+import AppKit
+import ArchiCore
+
+// MARK: - Customizer parameters panel (M3D-093)
+
+/// Auto-generated controls for the parameters of a scripted (OpenSCAD) object, from the script's customizer
+/// comments: sliders for ranges, pickers for choices, check boxes for booleans, fields for text and vectors.
+/// Each change rewrites the assignment in the script and regenerates the solid (one undo step).
+@MainActor
+enum Customizer {
+    /// The scripted solid among the selection (or nil).
+    static func target(_ doc: ArchiDocument, selection: [EntityID]) -> (id: EntityID, solid: SolidGeom, script: String)? {
+        for id in selection {
+            if let e = doc.entity(id), case .solid(let s) = e.geometry, let src = s.source, src.kind == .script, let code = src.expression { return (id, s, code) }
+        }
+        return nil
+    }
+
+    /// Sets one parameter and regenerates the object; returns an error message or nil.
+    @discardableResult
+    static func set(_ name: String, _ value: String, id: EntityID, editor: Editor) -> String? {
+        guard let e = editor.doc.entity(id), case .solid(let s) = e.geometry, var src = s.source, let code = src.expression else { return "Not a scripted object." }
+        do { src.expression = try SCADCustomizer.set(code, name, value) } catch let err as SCADCustomizer.SetError { return err.description } catch { return error.localizedDescription }
+        guard var n = FeatureSources.build(src, doc: editor.doc) else { return "The script produces no solid with \(name) = \(value)." }
+        n.source = src
+        editor.transaction("Customize \(name)") { d in
+            if let i = d.entities.firstIndex(where: { $0.id == id }) { d.entities[i].geometry = .solid(n) }
+        }
+        return nil
+    }
+}
+
+private struct CustomizerView: View {
+    @ObservedObject var model: AppModel
+    @State private var message = ""
+    @State private var drafts: [String: Double] = [:]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let t = Customizer.target(model.doc, selection: Array(model.editor.selection)) {
+                let ps = SCADCustomizer.parameters(t.script)
+                Text("Scripted object #\(t.id) — \(ps.count) parameter(s)").font(Theme.fontBold)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(ps.map(\.group).reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }, id: \.self) { group in
+                            if !group.isEmpty { Text(group).font(Theme.fontBold).foregroundStyle(Theme.textDim).padding(.top, 4) }
+                            ForEach(ps.filter { $0.group == group }, id: \.name) { p in control(p, id: t.id) }
+                        }
+                    }
+                }
+            } else {
+                Text("Select a scripted object (SCADOBJECT) to edit its parameters.").foregroundStyle(Theme.textDim)
+            }
+            if !message.isEmpty { Text(message).font(Theme.fontSmall).foregroundStyle(Theme.danger) }
+        }
+        .font(Theme.font)
+        .padding(12)
+        .frame(minWidth: 360, minHeight: 300, alignment: .topLeading)
+        .background(Theme.panel)
+    }
+
+    private func apply(_ name: String, _ value: String, _ id: EntityID) { message = Customizer.set(name, value, id: id, editor: model.editor) ?? "" }
+
+    @ViewBuilder private func control(_ p: SCADCustomizer.Parameter, id: EntityID) -> some View {
+        HStack(spacing: 6) {
+            Text(p.name).frame(width: 110, alignment: .leading).help(p.description)
+            switch p.kind {
+            case .bool:
+                Toggle("", isOn: Binding(get: { p.value.trimmingCharacters(in: .whitespaces) == "true" }, set: { apply(p.name, $0 ? "true" : "false", id) })).labelsHidden()
+            case .number where !p.options.isEmpty, .string where !p.options.isEmpty:
+                Picker("", selection: Binding(get: { p.value.trimmingCharacters(in: CharacterSet(charactersIn: "\" ")) }, set: { apply(p.name, $0, id) })) {
+                    ForEach(p.options.map { $0.trimmingCharacters(in: CharacterSet(charactersIn: "\" ")) }, id: \.self) { Text($0).tag($0) }
+                }
+                .labelsHidden()
+            case .number:
+                let v = Double(p.value.trimmingCharacters(in: .whitespaces)) ?? 0
+                if let lo = p.min, let hi = p.max, hi > lo {
+                    let key = "\(id):\(p.name)"
+                    Slider(value: Binding(get: { drafts[key] ?? v }, set: { drafts[key] = snap($0, p) }), in: lo...hi, onEditingChanged: { editing in
+                        if !editing, let d = drafts[key] { apply(p.name, fmt(d, 6), id); drafts[key] = nil }
+                    })
+                    Text(fmt(drafts[key] ?? v, 3)).font(Theme.mono).frame(width: 60, alignment: .trailing)
+                } else {
+                    TextField("", value: Binding(get: { v }, set: { apply(p.name, fmt($0, 6), id) }), format: .number).darkField().frame(width: 90)
+                }
+            default:
+                Text(p.value.trimmingCharacters(in: .whitespaces)).font(Theme.mono).lineLimit(1).truncationMode(.middle)
+                Spacer()
+                Button("Edit…") { editText(p, id) }.buttonStyle(FlatButtonStyle(compact: true))
+            }
+        }
+    }
+    private func snap(_ v: Double, _ p: SCADCustomizer.Parameter) -> Double {
+        guard let st = p.step, st > 0 else { return v }
+        let base = p.min ?? 0
+        return base + ((v - base) / st).rounded() * st
+    }
+    private func editText(_ p: SCADCustomizer.Parameter, _ id: EntityID) {
+        let a = NSAlert()
+        a.messageText = p.name
+        a.informativeText = p.description.isEmpty ? (p.kind == .vector ? "Vector like [10, 20, 30]" : "Text value") : p.description
+        let tf = NSTextField(string: p.value.trimmingCharacters(in: .whitespaces))
+        tf.frame = NSRect(x: 0, y: 0, width: 260, height: 22)
+        a.accessoryView = tf
+        a.addButton(withTitle: "Set"); a.addButton(withTitle: "Cancel")
+        if a.runModal() == .alertFirstButtonReturn { apply(p.name, tf.stringValue, id) }
+    }
+}
+
+@MainActor
+enum CustomizerWindow {
+    private static var window: NSWindow?
+    static func show(model: AppModel) {
+        let view = CustomizerView(model: model).preferredColorScheme(Theme.colorScheme)
+        if let w = window { w.contentViewController = NSHostingController(rootView: view); w.makeKeyAndOrderFront(nil); return }
+        let w = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 400, height: 420), styleMask: [.titled, .closable, .resizable, .utilityWindow], backing: .buffered, defer: false)
+        w.title = "Customizer"; w.isReleasedWhenClosed = false; w.appearance = Theme.appearance; w.hidesOnDeactivate = false
+        w.contentViewController = NSHostingController(rootView: view)
+        w.center(); w.makeKeyAndOrderFront(nil)
+        window = w
+    }
+}

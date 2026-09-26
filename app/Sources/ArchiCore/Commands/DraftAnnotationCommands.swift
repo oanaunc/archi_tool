@@ -159,18 +159,19 @@ enum DraftAnnotationCommands {
     }
 
     static var tableLink: CommandDef {
-        CommandDef("TABLELINK", aliases: ["DATALINK", "TABLEFROMCSV"], category: "Annotate", summary: "Inserts a table linked to a CSV file (update with DATALINKUPDATE when the file changes).") { ed in
-            guard let path = try await ed.getWord("Enter CSV file name") else { return }
+        CommandDef("TABLELINK", aliases: ["DATALINK", "TABLEFROMCSV"], category: "Annotate", summary: "Inserts a table linked to a CSV or Excel (.xlsx) file (update with DATALINKUPDATE when the file changes).") { ed in
+            guard let spec = try await ed.getWord("Enter CSV or XLSX file name (book.xlsx!Sheet for a sheet)") else { return }
+            let (path, sheet) = TableDataLink.splitSheet(spec)
             let base = ed.fileURL?.deletingLastPathComponent()
             let url = TableDataLink.url(path, base: base)
-            guard let text = try? String(contentsOf: url, encoding: .utf8) else { throw CommandError.invalid("Cannot read \(url.path).") }
-            let rows = TableDataLink.parseCSV(text)
+            guard let rows = try? TableDataLink.rows(at: url, sheet: sheet) else { throw CommandError.invalid("Cannot read \(url.path).") }
             guard !rows.isEmpty else { throw CommandError.invalid("The file has no rows.") }
             let th = ed.settings.textHeight
             let p = try await ed.requirePoint("Specify insertion point") { c in [.table(TableDataLink.table(rows, origin: c, textHeight: th))] }
             let id = ed.addEntity(.table(TableDataLink.table(rows, origin: p, textHeight: th)))
             if let i = ed.doc.entityIndex(id) {
                 ed.doc.entities[i].props[TableDataLink.prop] = path
+                ed.doc.entities[i].props[TableDataLink.sheetProp] = sheet
                 ed.doc.entities[i].props[TableDataLink.modifiedProp] = TableDataLink.modified(url).map { fmt($0, 3) }
             }
             ed.print("Table with \(rows.count) row(s) linked to \(url.lastPathComponent).")
@@ -178,7 +179,7 @@ enum DraftAnnotationCommands {
     }
 
     static var dataLinkUpdate: CommandDef {
-        CommandDef("DATALINKUPDATE", aliases: ["DLU"], category: "Annotate", summary: "Updates linked tables from their CSV files (Update) or writes table cells back to the files (Write).") { ed in
+        CommandDef("DATALINKUPDATE", aliases: ["DLU"], category: "Annotate", summary: "Updates linked tables from their CSV/XLSX files (Update) or writes table cells back to the files (Write).") { ed in
             let k = try await ed.getKeyword("Select a data link option", ["Update", "Write"], defaultValue: "Update") ?? "Update"
             let w = try await ed.getWord("Select tables (#ids) or [All]", defaultValue: "All", keywords: ["All"]) ?? "All"
             let base = ed.fileURL?.deletingLastPathComponent()

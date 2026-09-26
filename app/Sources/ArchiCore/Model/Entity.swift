@@ -237,7 +237,49 @@ public struct SolidFeature: Codable, Hashable {
     public var tool: Int
     public var suppressed: Bool
     public var name: String
-    public init(op: Op, tool: Int, suppressed: Bool = false, name: String = "") { self.op = op; self.tool = tool; self.suppressed = suppressed; self.name = name }
+    /// Sketch-driven tool (pad, pocket, hole, groove): the tool solid is rebuilt from this source when its sketch changes.
+    public var source: SolidSource?
+    /// Pattern of the tool (linear or polar instances), applied with the same operation.
+    public var pattern: FeaturePattern?
+    /// Mirror of the tool (the original and its mirror image are both applied).
+    public var mirror: FeatureMirror?
+    public init(op: Op, tool: Int, suppressed: Bool = false, name: String = "", source: SolidSource? = nil, pattern: FeaturePattern? = nil, mirror: FeatureMirror? = nil) {
+        self.op = op; self.tool = tool; self.suppressed = suppressed; self.name = name
+        self.source = source; self.pattern = pattern; self.mirror = mirror
+    }
+    /// `tool` value meaning "the body evaluated so far" (mirror / pattern the whole body).
+    public static let bodyTool = -1
+}
+
+/// Linear (one or two directions) or polar pattern of a feature's tool (M3D-026).
+public struct FeaturePattern: Codable, Hashable {
+    public enum Kind: String, Codable { case linear, polar }
+    public var kind: Kind
+    /// Instances in the first direction (linear) or around the axis (polar), the original included.
+    public var count: Int
+    /// Linear: offset between instances.
+    public var step: Vec3
+    /// Linear: second direction (rows).
+    public var count2: Int?
+    public var step2: Vec3?
+    /// Polar: vertical axis through `center`, total angle (2π = full circle, equally spaced).
+    public var center: Vec2
+    public var angle: Double
+    public init(linear count: Int, step: Vec3, count2: Int? = nil, step2: Vec3? = nil) {
+        kind = .linear; self.count = count; self.step = step; self.count2 = count2; self.step2 = step2; center = .zero; angle = 0
+    }
+    public init(polar count: Int, center: Vec2, angle: Double = 2 * .pi) {
+        kind = .polar; self.count = count; step = .zero; self.center = center; self.angle = angle
+    }
+}
+
+/// Mirror of a feature's tool or of the body (M3D-027): the vertical plane through a → b, or the horizontal plane at `z`.
+public struct FeatureMirror: Codable, Hashable {
+    public var a: Vec2
+    public var b: Vec2
+    public var z: Double?
+    public init(a: Vec2, b: Vec2) { self.a = a; self.b = b; z = nil }
+    public init(z: Double) { a = .zero; b = Vec2(1, 0); self.z = z }
 }
 
 /// Feature list of a solid: `solids[0]` is the base, features apply tools in order; the solid's mesh is the evaluated result.
@@ -254,7 +296,12 @@ public struct SolidHistory: Codable, Hashable {
 
 /// Associative source of a generated solid.
 public struct SolidSource: Codable, Hashable {
-    public enum Kind: String, Codable { case sweep, loft, pipe }
+    /// sweep/loft/pipe; revolve (profile about an axis, M3D-016), sweep3D (profile centred on a 3D path such as a helix,
+    /// M3D-021), followMe (profile placed relative to the path start, M3D-020), extrude (sketch pad/pocket, M3D-022),
+    /// hole (M3D-023) and csgTree (BRL-CAD style combination of other solids, M3D-095).
+    /// script: an OpenSCAD-language parametric object (script in `expression`, placement x, y, z in `params`; PAR-016).
+    /// binder: associative copy of another solid or of one of its faces (M3D-029; params: mode, pick x, y, face mode, dx, dy, dz).
+    public enum Kind: String, Codable { case sweep, loft, pipe, revolve, sweep3D, followMe, extrude, hole, csgTree, script, binder }
     public var kind: Kind
     /// Profile entity ids (sweep: one profile; loft: sections in order).
     public var profiles: [EntityID]
@@ -267,9 +314,15 @@ public struct SolidSource: Codable, Hashable {
     public var endScale: Double
     /// Snapshot of the source geometries the solid was built from (regenerated when they differ).
     public var inputs: [Geometry]
-    public init(kind: Kind, profiles: [EntityID], path: EntityID? = nil, elevation: Double = 0, heights: [Double] = [], twist: Double = 0, endScale: Double = 1, inputs: [Geometry] = []) {
+    /// Kind-specific numbers (revolve: axis a.x, a.y, b.x, b.y, angle, z; followMe: reference x, y; extrude: z, height;
+    /// hole: diameter, depth, type, counterbore/countersink diameter, counterbore depth, countersink angle, top z).
+    public var params: [Double]?
+    /// csgTree: the combination in BRL-CAD syntax with entity ids ("u #12 - #13 + #14").
+    public var expression: String?
+    public init(kind: Kind, profiles: [EntityID], path: EntityID? = nil, elevation: Double = 0, heights: [Double] = [], twist: Double = 0, endScale: Double = 1, inputs: [Geometry] = [],
+                params: [Double]? = nil, expression: String? = nil) {
         self.kind = kind; self.profiles = profiles; self.path = path; self.elevation = elevation; self.heights = heights
-        self.twist = twist; self.endScale = endScale; self.inputs = inputs
+        self.twist = twist; self.endScale = endScale; self.inputs = inputs; self.params = params; self.expression = expression
     }
 }
 

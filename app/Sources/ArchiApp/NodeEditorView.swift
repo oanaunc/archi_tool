@@ -147,6 +147,7 @@ struct NodeEditorView: View {
             } label: { Label("Graphs", systemImage: "folder") }
             .menuStyle(.borderlessButton).fixedSize()
             .help("Named graphs stored in the drawing, JSON import/export")
+            NodePackagesMenu(graph: $graph, status: $status)
             Divider().frame(height: 16)
             Toggle("Live", isOn: $live).toggleStyle(.switch).controlSize(.mini)
                 .help("Update the drawing on every change (the baked objects are replaced)")

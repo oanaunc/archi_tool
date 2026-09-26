@@ -60,6 +60,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         CommandRegistry.shared.ensureBuiltins()
         AppCommands.registerAll()
         AppPlugins.install()
+        AppleScriptBridge.shared.install()
+        LaunchArguments.apply(LaunchArguments.parse(Array(CommandLine.arguments.dropFirst())))
         _ = AppPreferences.shared
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { e in
             MainActor.assumeIsolated { ShortcutDispatcher.handle(e) || AppDelegate.handleFunctionKey(e) } ? nil : e
@@ -112,7 +114,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
-        for u in urls { WindowRouter.openFile(u) }
+        for u in urls {
+            if u.scheme?.lowercased() == AutomationURL.scheme { MainActor.assumeIsolated { AutomationURL.handle(u) } } else { WindowRouter.openFile(u) }
+        }
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
@@ -121,6 +125,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if !m.files.confirmClose() { return .terminateCancel }
             m.editor.isDirty = false
         }
+        FullScreenQuit.quitting = true
         return .terminateNow
     }
 

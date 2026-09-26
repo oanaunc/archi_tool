@@ -10,11 +10,13 @@ public enum SystemVariables {
     ]
     public static func osmode(_ s: DraftSettings) -> Int {
         var v = osmodeBits.reduce(0) { s.snapModes.contains($1.0) ? $0 | $1.1 : $0 }
+        if s.apparentIntersectionSnap { v |= 2048 }
         if !s.objectSnap { v |= 16384 }
         return v
     }
     public static func applyOsmode(_ v: Int, to s: inout DraftSettings) {
         s.snapModes = Set(osmodeBits.filter { v & $0.1 != 0 }.map(\.0)).union(s.snapModes.contains(.grid) ? [.grid] : [])
+        s.apparentIntersectionSnap = v & 2048 != 0
         s.objectSnap = v & 16384 == 0 && v != 0
     }
     /// Names with dedicated handling (others are stored in ArchiDocument.variables).
@@ -485,8 +487,8 @@ enum SettingsCommands {
             let k = try await ed.getKeyword("Enter mode", ["ON", "OFF"], defaultValue: ed.settings.ortho ? "OFF" : "ON") ?? "ON"
             ed.settings.ortho = k == "ON"; ed.print("<Ortho \(ed.settings.ortho ? "on" : "off")>")
         },
-        CommandDef("OSNAP", aliases: ["OS", "-OSNAP", "DDOSNAP"], category: "Settings", summary: "Sets running object snap modes (END,MID,CEN,NOD,QUA,INT,EXT,INS,PER,TAN,NEA,PAR, ON/OFF).") { ed in
-            let cur = (ed.settings.snapModes.map(\.rawValue) + (ed.settings.geometricCenterSnap ? ["gcen"] : [])).sorted().joined(separator: ",")
+        CommandDef("OSNAP", aliases: ["OS", "-OSNAP", "DDOSNAP"], category: "Settings", summary: "Sets running object snap modes (END,MID,CEN,NOD,QUA,INT,EXT,INS,PER,TAN,NEA,PAR,APP,GCEN, ON/OFF).") { ed in
+            let cur = (ed.settings.snapModes.map(\.rawValue) + (ed.settings.geometricCenterSnap ? ["gcen"] : []) + (ed.settings.apparentIntersectionSnap ? ["appint"] : [])).sorted().joined(separator: ",")
             guard let s = try await ed.getWord("Enter list of object snap modes [?/ON/OFF]", defaultValue: cur) else { return }
             let map: [String: SnapKind] = ["END": .endpoint, "MID": .midpoint, "CEN": .center, "NOD": .node, "QUA": .quadrant, "INT": .intersection, "EXT": .extension,
                                            "INS": .insertion, "PER": .perpendicular, "TAN": .tangent, "NEA": .nearest, "PAR": .parallel, "GRI": .grid]
@@ -496,13 +498,15 @@ enum SettingsCommands {
             case "OFF", "NON", "NONE": ed.settings.objectSnap = false
             default:
                 var modes = Set<SnapKind>()
-                var gcen = false
+                var gcen = false, app = false
                 for part in s.split(separator: ",") {
                     let p = part.trimmingCharacters(in: .whitespaces).uppercased()
                     if p.hasPrefix("GCE") || p == "GEOMETRICCENTER" { gcen = true; continue }
+                    if p.hasPrefix("APP") { app = true; continue }
                     if let k = map[String(p.prefix(3))] ?? SnapKind(rawValue: p.lowercased()) { modes.insert(k) } else { throw CommandError.invalid("Unknown snap mode \(p).") }
                 }
-                ed.settings.snapModes = modes; ed.settings.geometricCenterSnap = gcen; ed.settings.objectSnap = !modes.isEmpty || gcen
+                ed.settings.snapModes = modes; ed.settings.geometricCenterSnap = gcen; ed.settings.apparentIntersectionSnap = app
+                ed.settings.objectSnap = !modes.isEmpty || gcen || app
             }
             ed.print("OSMODE = \(SystemVariables.osmode(ed.settings))")
         },

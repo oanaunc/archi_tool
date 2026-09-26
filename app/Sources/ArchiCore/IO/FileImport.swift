@@ -133,15 +133,15 @@ public enum FileImport {
         case "architemplate":
             return (try ArchiTemplate.decode(Data(contentsOf: url)).document, "template")
         case "las":
-            let r = try LASReader.entities(try Data(contentsOf: url), options: PointCloudOptions(scale: 1000 / reference.units.mm, maxPoints: MemoryBudget.pointLimit(reference)))
+            let r = try PointCloudStream.load(url, options: PointCloudOptions(scale: 1000 / reference.units.mm, maxPoints: MemoryBudget.pointLimit(reference)))
             return (entityDoc(r.entities, native: true), "\(r.entities.count) of \(r.total) LAS points")
         case "laz":
             let las = try LAZConverter.decompress(url, converter: reference.variable("LAZCONVERTER"))
             let r = try LASReader.entities(las, options: PointCloudOptions(scale: 1000 / reference.units.mm, maxPoints: MemoryBudget.pointLimit(reference)))
             return (entityDoc(r.entities, native: true), "\(r.entities.count) of \(r.total) LAZ points")
         case "pointcloud":
-            let r = try PointCloud.load(try Data(contentsOf: url), ext: url.pathExtension, options: PointCloudOptions(scale: 1000 / reference.units.mm, maxPoints: MemoryBudget.pointLimit(reference)))
-            return (entityDoc(r.entities, native: true), "\(r.entities.count) of \(r.total) points")
+            let r = try PointCloudStream.load(url, options: PointCloudOptions(scale: 1000 / reference.units.mm, maxPoints: MemoryBudget.pointLimit(reference)))
+            return (entityDoc(r.entities, native: true), "\(r.entities.count) of \(r.sampled && url.pathExtension.lowercased() != "las" ? "about " : "")\(r.total) points")
         case "off":
             let e = try PointCloud.off(try readText(url))
             return (entityDoc([e]), "OFF mesh")

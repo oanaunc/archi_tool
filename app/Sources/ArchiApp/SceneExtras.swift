@@ -304,14 +304,23 @@ extension Scene3DBuilder {
         let lights = style == "Hidden Line" || style == "Wireframe" ? [] : SceneLights.all(doc)
         let boards = Billboards.items(doc)
         let fog = FogSettings.load(doc)
+        let weather = WeatherSettings.load(doc)
         var h = Hasher(); h.combine(lights); h.combine(boards); h.combine(fog.on); h.combine(fog.start); h.combine(fog.end); h.combine(fog.color); h.combine(fog.density)
+        h.combine(weather); h.combine(style == "Hidden Line" || style == "Wireframe")
         let hash = h.finalize()
         fog.apply(to: scene)
+        // Weather haze when no explicit fog is set (VIS-058).
+        if !fog.on, let d = weather.fogDistance, style != "Hidden Line", style != "Wireframe" {
+            scene.fogStartDistance = CGFloat(d * 0.1); scene.fogEndDistance = CGFloat(d)
+            scene.fogColor = weather.kind == .snow ? NSColor(white: 0.9, alpha: 1) : NSColor(white: 0.75, alpha: 1)
+            scene.fogDensityExponent = 1
+        }
         guard hash != extrasHash else { return }
         extrasHash = hash
         extrasRoot.childNodes.forEach { $0.removeFromParentNode() }
         for l in lights { extrasRoot.addChildNode(SceneLights.node(l)) }
         for b in boards { extrasRoot.addChildNode(Billboards.node(b)) }
+        if style != "Hidden Line", style != "Wireframe", let s = Optional(worldSphere), let w = weather.node(center: s.center, radius: s.radius) { extrasRoot.addChildNode(w) }
     }
     var lightNodes: [SCNNode] { extrasRoot.childNodes.filter { $0.light != nil } }
     var billboardNodes: [SCNNode] { extrasRoot.childNodes.filter { $0.name?.hasPrefix("billboard:") == true } }

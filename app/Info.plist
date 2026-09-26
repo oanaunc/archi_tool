@@ -15,6 +15,16 @@
   <key>NSHighResolutionCapable</key><true/>
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>NSHumanReadableCopyright</key><string>© 2026 Oana Rinaldi. Free software under GPL-3.0-or-later.</string>
+  <key>NSAppleScriptEnabled</key><true/>
+  <key>NSAppleEventsUsageDescription</key><string>Oanarina Archi Tool can be automated by scripts and Shortcuts.</string>
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleURLName</key><string>com.oanarina.architool.automation</string>
+      <key>CFBundleURLSchemes</key><array><string>oanarina-archi</string></array>
+      <key>CFBundleTypeRole</key><string>Editor</string>
+    </dict>
+  </array>
   <key>CFBundleDocumentTypes</key>
   <array>
     <dict>

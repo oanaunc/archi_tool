@@ -62,7 +62,7 @@ public struct ViewTemplate: Codable, Hashable {
     /// Variables a template may carry.
     public static let keys: [String] = ["PHASE", "PHASEFILTER", "CUTPLANE", "DETAILLEVEL", "ELEVHIDDEN", "DEPTHCUE", "ELEVFARCLIP", "ELEVDIMS",
                                         "VIEWANNOTATIONS", "WORKSETSHIDDEN", "DESIGNOPTIONVIEW", "MEPSYSTEMSHOW", "RCP", "MEPCONNECTORS", "ROOFSLOPEARROWS", "HPSCALE",
-                                        "VGCATEGORIES", "VIEWFILTERS", "SECTIONPOCHE"]
+                                        "VGCATEGORIES", "VIEWFILTERS", "SECTIONPOCHE", "SKETCHY", "SILHOUETTES", "VIEWSHADOWS"]
     /// The document as a view with this template applied.
     public func apply(to doc: ArchiDocument) -> ArchiDocument {
         var d = doc

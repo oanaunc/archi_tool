@@ -561,10 +561,11 @@ public enum DXFReader {
                 if c == 0 { color = .byBlock } else if c == 256 || c < 0 { color = .byLayer } else { color = .aci(min(c, 255)) }
             }
             var lt: String? = r.s(6)?.trimmingCharacters(in: .whitespaces)
-            if let l = lt, ["BYLAYER", "BYBLOCK", ""].contains(l.uppercased()) { lt = nil }
+            if let l = lt, ["BYLAYER", ""].contains(l.uppercased()) { lt = nil }
+            if let l = lt, l.uppercased() == "BYBLOCK" { lt = "ByBlock" }
             if let l = lt, l.uppercased() == "CONTINUOUS" { lt = "Continuous" }
             var lw: Double? = nil
-            if let w = r.i(370), w >= 0 { lw = Double(w) / 100 }
+            if let w = r.i(370) { if w >= 0 { lw = Double(w) / 100 } else if w == -2 { lw = -2 } } // -2 = ByBlock
             var props: [String: String] = [:]
             if let h = r.s(5) { props["dxfHandle"] = h.trimmingCharacters(in: .whitespaces) }
             // Elevation (contour polylines, survey points) so TOPO and POINTSEXPORT can use it.
@@ -635,6 +636,23 @@ public enum DXFReader {
                     var e = common(r, geometry: .polyline(PolylineGeom(points: pts, closed: true)))
                     e.props["_viewport"] = "1"; e.props["vpCenter"] = "\(vc.x),\(vc.y)"; e.props["vpScale"] = "\(vh / h)"
                     out.append(e)
+                case "3DFACE" where face3(r).contains(where: { abs($0.z) > 1e-9 }):
+                    // Consecutive 3D faces of one layer and colour form one mesh solid (z is kept; flat faces at
+                    // z = 0 stay 2D outlines below).
+                    var verts: [Vec3] = [], tris: [Int] = [], index: [Vec3: Int] = [:]
+                    func vid(_ p: Vec3) -> Int { if let k = index[p] { return k }; index[p] = verts.count; verts.append(p); return verts.count - 1 }
+                    func add(_ rec: DXFRecord) {
+                        let f = face3(rec)
+                        guard f.count >= 3 else { return }
+                        tris += [vid(f[0]), vid(f[1]), vid(f[2])]
+                        if f.count == 4 { tris += [vid(f[0]), vid(f[2]), vid(f[3])] }
+                    }
+                    add(r)
+                    while i < recs.count, recs[i].type == "3DFACE", recs[i].s(8) == r.s(8), recs[i].i(62) == r.i(62), recs[i].i(420) == r.i(420),
+                          (recs[i].i(67) ?? 0) == (r.i(67) ?? 0) {
+                        add(recs[i]); i += 1
+                    }
+                    if !tris.isEmpty { out.append(common(r, geometry: .solid(SolidGeom(kind: .mesh, origin: .zero, meshVertices: verts, meshTriangles: tris)))) }
                 case "MULTILEADER", "MLEADER":
                     for g in mleader(r) { out.append(common(r, geometry: g)) }
                 case "POLYLINE":
@@ -671,6 +689,17 @@ public enum DXFReader {
                     for g in convert(r) { out.append(common(r, geometry: g)) }
                 }
             }
+            return out
+        }
+
+        /// Corners of a 3DFACE (3 or 4, the fourth dropped when it repeats the third).
+        func face3(_ r: DXFRecord) -> [Vec3] {
+            var out: [Vec3] = []
+            for k in 0..<4 {
+                guard let x = r.d(10 + k), let y = r.d(20 + k) else { continue }
+                out.append(Vec3(x, y, r.d(30 + k) ?? 0))
+            }
+            if out.count == 4, out[3].distance(to: out[2]) < 1e-12 { out.removeLast() }
             return out
         }
 

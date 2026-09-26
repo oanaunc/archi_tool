@@ -480,3 +480,117 @@ public enum DimensionRenderer {
         return out
     }
 }
+
+// MARK: - Fit and text placement (ANN-031)
+
+/// Dimension style layout options beyond `DimStyle`: what moves outside the extension lines when there is not enough
+/// room (DIMATFIT) and whether the text sits above the dimension line or centred in a break of it (DIMTAD).
+public struct DimLayout: Hashable {
+    /// "best" (default placement), "arrows" (move arrows out first), "text" (move text out first), "both".
+    public var fit: String
+    /// Text centred on the dimension line (the line is broken around it) instead of above it.
+    public var textCentered: Bool
+    public init(fit: String = "best", textCentered: Bool = false) { self.fit = fit; self.textCentered = textCentered }
+    public var isDefault: Bool { fit.lowercased() == "best" && !textCentered }
+}
+
+extension DimensionRenderer {
+    /// Approximate width of a dimension text (stroke-font metrics).
+    public static func textWidth(_ s: String, height: Double) -> Double {
+        let widest = s.components(separatedBy: "\n").map { StrokeFont.lineWidth($0) }.max() ?? 0
+        return widest * height / StrokeFont.capHeight
+    }
+
+    /// Where the parts of a linear/aligned dimension go for a span, text width and arrow size.
+    public static func fitPlacement(fit: String, span: Double, textWidth tw: Double, arrow arr: Double) -> (arrowsOutside: Bool, textOutside: Bool) {
+        let both = tw + 2 * arr * 1.5
+        switch fit.lowercased() {
+        case "arrows":
+            let ao = span < both
+            return (ao, ao && span < tw)
+        case "text":
+            let to = span < both
+            return (to && span < arr * 2.5, to)
+        case "both":
+            let out = span < both
+            return (out, out)
+        default:
+            return (span < arr * 2.5, false)
+        }
+    }
+
+    /// Dimension graphics with a layout; linear and aligned dimensions honour fit and centred text, other kinds use
+    /// the default placement.
+    public static func primitives(_ d: DimensionGeom, style: DimStyle, layout: DimLayout) -> Primitives {
+        guard !layout.isDefault, d.kind == .linear || d.kind == .aligned else { return primitives(d, style: style) }
+        let gaps = breaks(d)
+        var prim = linearPrimitives(withoutBreaks(d), style: style, layout: layout, jogs: jogs(d))
+        if !gaps.isEmpty { prim.lines = clip(prim.lines, gaps: gaps) }
+        return prim
+    }
+
+    static func linearPrimitives(_ d: DimensionGeom, style: DimStyle, layout: DimLayout, jogs: [Vec2]) -> Primitives {
+        var prim = Primitives()
+        let p = d.points
+        guard p.count >= 2 else { return prim }
+        let sc = style.scale > 0 ? style.scale : 1
+        let th = style.textHeight * sc, arr = style.arrowSize * sc
+        let exo = style.extensionOffset * sc, exe = style.extensionExtend * sc, gap = style.textGap * sc
+        let text = formatted(d, style: style)
+        let p1 = p[0], p2 = p[1]
+        let p3 = p.count > 2 ? p[2] : p2
+        var u = d.kind == .linear ? linearDirection(d) : (p2 - p1).normalized
+        if u.lengthSquared < 1e-18 { u = Vec2(1, 0) }
+        let n = u.perp
+        let d1 = p1 + n * (p3 - p1).dot(n), d2 = p2 + n * (p3 - p2).dot(n)
+        for (pt, dp) in [(p1, d1), (p2, d2)] {
+            let v = dp - pt
+            let len = v.length
+            if len > exo + 1e-9 { let dir = v / len; prim.lines.append([pt + dir * exo, dp + dir * exe]) }
+            else if len > 1e-9 { let dir = v / len; prim.lines.append([dp, dp + dir * exe]) }
+        }
+        let span = d1.distance(to: d2)
+        let along = span > 1e-12 ? (d2 - d1) / span : u
+        let tw = textWidth(text, height: th) + 2 * gap
+        let fit = fitPlacement(fit: layout.fit, span: span, textWidth: tw, arrow: arr)
+        let arrowsOut = fit.arrowsOutside && !isTick(style)
+        // Dimension line extent.
+        var lineStart = d1, lineEnd = d2
+        if isTick(style) { lineStart = d1 - along * (arr * 0.5); lineEnd = d2 + along * (arr * 0.5) }
+        else if arrowsOut { lineStart = d1 - along * (arr * 1.8); lineEnd = d2 + along * (arr * 1.8) }
+        // Text position along the line.
+        let r = readable(along.angle)
+        let up = Vec2.polar(1, r + .pi / 2)
+        var mid = (d1 + d2) / 2
+        if fit.textOutside {
+            let beyond = (arrowsOut ? arr * 1.8 : arr * 0.5) + gap + tw / 2
+            mid = d2 + along * beyond
+            lineEnd = mid + along * (layout.textCentered ? tw / 2 : tw / 2)
+        }
+        let jogH = style.textHeight * sc * jogHeightFactor
+        func dimLine(_ a: Vec2, _ b: Vec2) -> [Vec2] {
+            guard let j = jogs.first else { return [a, b] }
+            return jogLine(a, b, at: j, height: jogH)
+        }
+        if layout.textCentered {
+            // Break the line around the text.
+            let half = tw / 2
+            let sA = (mid - lineStart).dot(along) - half, sB = (mid - lineStart).dot(along) + half
+            let total = (lineEnd - lineStart).dot(along)
+            if sA > 1e-9 { prim.lines.append(dimLine(lineStart, lineStart + along * min(sA, total))) }
+            if sB < total - 1e-9 { prim.lines.append([lineStart + along * max(sB, 0), lineEnd]) }
+            prim.text = TextGeom(position: mid, height: th, content: text, rotation: r, halign: .center, valign: .middle)
+        } else {
+            prim.lines.append(dimLine(lineStart, lineEnd))
+            prim.text = TextGeom(position: mid + up * gap, height: th, content: text, rotation: r, halign: .center, valign: .baseline)
+        }
+        if isTick(style) || !arrowsOut {
+            arrow(&prim, tip: d1, dir: -along, style: style, lineDir: along)
+            arrow(&prim, tip: d2, dir: along, style: style, lineDir: along)
+        } else {
+            arrow(&prim, tip: d1, dir: along, style: style, lineDir: along)
+            arrow(&prim, tip: d2, dir: -along, style: style, lineDir: along)
+        }
+        return prim
+    }
+}

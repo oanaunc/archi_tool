@@ -21,7 +21,7 @@ public enum AdvancedAnalysisCommands {
             let path = try await ed.getWord("EPW weather file <clear-sky year>")
             let c = try climate(ed, path)
             var o = ClimateDaylight.Options()
-            o.gridSpacing = try await ed.getReal("Grid spacing mm <600>", defaultValue: 600).value ?? 600
+            o.gridSpacing = try await ed.getReal("Grid spacing mm", defaultValue: 600).value ?? 600
             let draw = try await ed.getYesNo("Draw the grid results?", defaultValue: false)
             let r = ClimateDaylight.analyse(ed.doc, climate: c, options: o)
             guard !r.isEmpty else { throw CommandError.invalid("The model has no rooms.") }
@@ -51,9 +51,9 @@ public enum AdvancedAnalysisCommands {
                    summary: "Writes an OpenFOAM wind-study case (simpleFoam, atmospheric boundary layer inlet, snappyHexMesh around the building, pedestrian-level sampling) for the given wind speed and direction.", modifies: false) { ed in
             let dir = try await IOCommands.path(ed, "Enter case folder")
             var o = WindStudy.Options.from(ed.doc)
-            o.speed = try await ed.getReal("Wind speed m/s at 10 m <\(fmt(o.speed, 1))>", defaultValue: o.speed).value ?? o.speed
-            o.direction = try await ed.getReal("Wind from (degrees clockwise from north) <\(fmt(o.direction, 0))>", defaultValue: o.direction).value ?? o.direction
-            o.roughness = try await ed.getReal("Terrain roughness z0 m <\(fmt(o.roughness, 2))>", defaultValue: o.roughness).value ?? o.roughness
+            o.speed = try await ed.getReal("Wind speed m/s at 10 m", defaultValue: o.speed).value ?? o.speed
+            o.direction = try await ed.getReal("Wind from (degrees clockwise from north)", defaultValue: o.direction).value ?? o.direction
+            o.roughness = try await ed.getReal("Terrain roughness z0 m", defaultValue: o.roughness).value ?? o.roughness
             let files: [String]
             do { files = try WindStudy.writeCase(ed.doc, to: dir, options: o) } catch { throw fail(error) }
             ed.doc.setVariable("WINDSPEED", fmt(o.speed, 3)); ed.doc.setVariable("WINDDIRECTION", fmt(o.direction, 3)); ed.doc.setVariable("WINDROUGHNESS", fmt(o.roughness, 4))
@@ -63,12 +63,31 @@ public enum AdvancedAnalysisCommands {
 
     static var windResults: CommandDef {
         CommandDef("WINDRESULTS", aliases: ["CFDRESULTS", "WINDIMPORT"], category: "Analysis",
-                   summary: "Imports an OpenFOAM pedestrian-level velocity sample (raw x y z Ux Uy Uz) as wind arrows coloured by speed with Lawson comfort classes (the case's wind direction is taken from WINDDIRECTION).") { ed in
-            let url = try await IOCommands.path(ed, "Enter sample file (postProcessing/…/U_zPedestrian.raw)")
-            let text: String
-            do { text = try FileImport.readText(url) } catch { throw fail(error) }
-            let s = WindStudy.parseSamples(text)
-            guard !s.isEmpty else { throw CommandError.invalid("No samples in \(url.lastPathComponent).") }
+                   summary: "Imports an OpenFOAM pedestrian-level velocity sample (raw x y z Ux Uy Uz) as wind arrows coloured by speed with Lawson comfort classes (the case's wind direction is taken from WINDDIRECTION); the Solve option runs the built-in 2D lattice Boltzmann solver instead (no external CFD needed).") { ed in
+            guard let answer = try await ed.getWord("Enter sample file (postProcessing/…/U_zPedestrian.raw) or run the built-in solver", keywords: ["Solve"]), !answer.isEmpty else {
+                throw CommandError.invalid("A file name is required.")
+            }
+            let s: [WindStudy.Sample]
+            if answer == "Solve" {
+                var o = WindStudy.Options.from(ed.doc)
+                o.speed = try await ed.getReal("Wind speed m/s at 10 m", defaultValue: o.speed).value ?? o.speed
+                o.direction = try await ed.getReal("Wind from (degrees clockwise from north)", defaultValue: o.direction).value ?? o.direction
+                let cell = try await ed.getReal("Cell size m (0 = automatic)", defaultValue: 0).value ?? 0
+                guard let st = WindFlow.study(ed.doc, options: o, cellSize: max(0, cell)) else {
+                    throw CommandError.invalid("The model has no building mass above pedestrian height.")
+                }
+                guard st.field.stable else { throw CommandError.invalid("The flow solution diverged; try a larger cell size.") }
+                ed.doc.setVariable("WINDSPEED", fmt(o.speed, 3)); ed.doc.setVariable("WINDDIRECTION", fmt(o.direction, 3))
+                ed.print("Built-in 2D lattice Boltzmann solution: \(st.field.nx) × \(st.field.ny) cells of \(fmt(st.cell, 2)) m, \(st.field.iterations) iterations; free-stream pedestrian speed \(fmt(st.pedestrianSpeed, 2)) m/s, max speed-up ×\(fmt(st.maxAmplification, 2)).")
+                ed.print("Near the building: " + st.comfort.sorted { $0.key < $1.key }.map { "\($0.key) \(fmt($0.value, 0)) %" }.joined(separator: ", ") + " (2D screening — use CFDEXPORT/OpenFOAM for design decisions).")
+                s = st.samples
+            } else {
+                let url = IOCommands.resolve(ed, answer)
+                let text: String
+                do { text = try FileImport.readText(url) } catch { throw fail(error) }
+                s = WindStudy.parseSamples(text)
+                guard !s.isEmpty else { throw CommandError.invalid("No samples in \(url.lastPathComponent).") }
+            }
             let spacing = try await ed.getReal("Arrow spacing m <2>", defaultValue: 2).value ?? 2
             let arrows = WindStudy.arrows(s, doc: ed.doc, options: WindStudy.Options.from(ed.doc), spacing: spacing)
             var d = ed.doc

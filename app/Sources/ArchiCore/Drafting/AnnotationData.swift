@@ -117,6 +117,30 @@ public enum TableDataLink {
         return rows.map { $0 + [String](repeating: "", count: w - $0.count) }
     }
 
+    /// Linked sheet of a spreadsheet link (prop), "" = first sheet.
+    public static let sheetProp = "dataLinkSheet"
+
+    /// Splits "file.xlsx!Sheet" into the path and the sheet name.
+    public static func splitSheet(_ spec: String) -> (path: String, sheet: String?) {
+        guard let bang = spec.lastIndex(of: "!"), spec[..<bang].lowercased().hasSuffix(".xlsx") else { return (spec, nil) }
+        let sh = String(spec[spec.index(after: bang)...])
+        return (String(spec[..<bang]), sh.isEmpty ? nil : sh)
+    }
+    public static func isSpreadsheet(_ path: String) -> Bool { path.lowercased().hasSuffix(".xlsx") }
+
+    /// Rows of a linked file: CSV text, or one sheet of an .xlsx workbook (by name, else the first sheet).
+    public static func rows(at u: URL, sheet: String?) throws -> [[String]] {
+        if isSpreadsheet(u.path) {
+            guard let data = try? Data(contentsOf: u) else { throw Xrefs.XrefError.unreadable(u.path) }
+            guard let sheets = try? XLSX.read(data), !sheets.isEmpty else { throw Xrefs.XrefError.unreadable(u.path) }
+            let sh = sheet.flatMap { n in sheets.first { $0.name.caseInsensitiveCompare(n) == .orderedSame } } ?? sheets[0]
+            let w = sh.rows.map(\.count).max() ?? 0
+            return sh.rows.map { $0 + [String](repeating: "", count: w - $0.count) }
+        }
+        guard let text = try? String(contentsOf: u, encoding: .utf8) else { throw Xrefs.XrefError.unreadable(u.path) }
+        return parseCSV(text)
+    }
+
     static func modified(_ url: URL) -> Double? {
         guard let a = try? FileManager.default.attributesOfItem(atPath: url.path), let d = a[.modificationDate] as? Date else { return nil }
         return d.timeIntervalSince1970
@@ -135,8 +159,7 @@ public enum TableDataLink {
     public static func update(_ e: inout Entity, base: URL?) throws -> Bool {
         guard case .table(var t) = e.geometry, let p = e.props[prop] else { return false }
         let u = url(p, base: base)
-        guard let text = try? String(contentsOf: u, encoding: .utf8) else { throw Xrefs.XrefError.unreadable(u.path) }
-        let rows = parseCSV(text)
+        let rows = try self.rows(at: u, sheet: e.props[sheetProp])
         let cols = rows.map(\.count).max() ?? 0
         if cols != t.columnWidths.count { t.columnWidths = table(rows, origin: t.origin, textHeight: t.textHeight).columnWidths }
         let changed = t.cells != rows
@@ -156,6 +179,15 @@ public enum TableDataLink {
     public static func writeBack(_ e: Entity, base: URL?) throws {
         guard case .table(let t) = e.geometry, let p = e.props[prop] else { return }
         let u = url(p, base: base)
+        if isSpreadsheet(u.path) {
+            // Replace the linked sheet, keep the workbook's other sheets.
+            var sheets = (try? Data(contentsOf: u)).flatMap { try? XLSX.read($0) } ?? []
+            let name = e.props[sheetProp] ?? sheets.first?.name ?? "Sheet1"
+            if let i = sheets.firstIndex(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) { sheets[i].rows = t.cells }
+            else { sheets.append(XLSX.Sheet(name: name, rows: t.cells)) }
+            do { try XLSX.write(sheets).write(to: u) } catch { throw Xrefs.XrefError.unreadable(u.path) }
+            return
+        }
         do { try TableFormulas.csv(t).write(to: u, atomically: true, encoding: .utf8) } catch { throw Xrefs.XrefError.unreadable(u.path) }
     }
 }

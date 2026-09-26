@@ -10,7 +10,9 @@ extension Editor {
         let a = try await getPoint(msg, base: base.map { Vec2($0.x, $0.y) }, keywords: keywords)
         switch a {
         case .point(let p):
-            let z = InputParser.lastParsedZ ?? defaultZ
+            // A picked point on a 3D object snap (3DOSNAP) keeps the Z of the snapped feature.
+            // With dynamic UCS on, a point picked over a solid lies on the face under it.
+            let z = InputParser.lastParsedZ ?? Snap3D.elevation(at: p, doc: doc) ?? DynamicUCS.elevation(at: p, doc: doc) ?? defaultZ
             InputParser.lastParsedZ = nil
             InputParser.lastZ = z
             return (Vec3(p.x, p.y, z), nil)

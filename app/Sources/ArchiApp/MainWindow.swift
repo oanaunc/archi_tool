@@ -11,6 +11,7 @@ struct MainWindow: View {
     @State private var didSetup = false
     /// Docked panel column width (drag the divider; remembered across launches).
     @AppStorage("panelWidth") private var panelWidth = 300.0
+    @AppStorage(CommandLineAppearance.floatingKey) private var floatingCommandLine = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -37,6 +38,12 @@ struct MainWindow: View {
                         }
                     }
                     .overlay(alignment: .bottom) {
+                        // Floating command line (CMD-014): over the canvas, draggable by its grip.
+                        if floatingCommandLine {
+                            FloatingCommandLine(model: model)
+                        }
+                    }
+                    .overlay(alignment: .bottom) {
                         if let mv = model.maximizedViewport {
                             Button { model.runCommand("VPMIN") } label: {
                                 Label("Viewport \(mv.viewport + 1) of \(model.doc.layouts.indices.contains(mv.layout) ? model.doc.layouts[mv.layout].name : "sheet") maximised — click or VPMIN to return", systemImage: "arrow.down.right.and.arrow.up.left")
@@ -57,8 +64,10 @@ struct MainWindow: View {
                 HSeparator()
                 ScriptConsoleView(model: model).frame(height: 210)
             }
-            HSeparator()
-            CommandLineView(model: model)
+            if !floatingCommandLine {
+                HSeparator()
+                CommandLineView(model: model)
+            }
             HSeparator()
             StatusBarView(model: model)
         }
@@ -81,7 +90,7 @@ struct MainWindow: View {
         .background(WindowAccessor { w in attach(w) })
         .focusedSceneObject(model)
         .preferredColorScheme(Theme.colorScheme)
-        .frame(minWidth: 720, minHeight: 560)
+        .frame(minWidth: 600, minHeight: 480)
         .onAppear(perform: setup)
         .onChange(of: model.revision) { _ in updateWindowState() }
     }

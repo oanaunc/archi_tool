@@ -395,6 +395,8 @@ public struct ComponentGeom: Codable, Hashable {
     public var path: [Vec2]?
     /// Heights of the path vertices above `baseOffset` (sloped runs); nil = level at `baseOffset`.
     public var pathZ: [Double]?
+    /// In-place model geometry (BIM-103): a mesh in component-local coordinates (base centred at the origin).
+    public var mesh: SolidGeom?
     public init(category: String = "Furniture", position: Vec2, rotation: Double = 0, size: Vec3 = Vec3(600, 600, 750), baseOffset: Double = 0, block: String? = nil,
                 family: String? = nil, path: [Vec2]? = nil, pathZ: [Double]? = nil) {
         self.category = category; self.position = position; self.rotation = rotation; self.size = size; self.baseOffset = baseOffset; self.block = block

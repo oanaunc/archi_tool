@@ -4,8 +4,10 @@
 // stamped with a Lamport clock and the site name; tombstones record deletions. Replicas exchange operations through
 // append-only logs in a shared folder (iCloud Drive, a network share, Dropbox…) — one "<site>.ops.jsonl" per user —
 // and converge to the same document whatever the order of synchronisation. New objects get ids from a range owned by
-// the site, so ids (and references such as a door's host wall) never collide between users. Concurrent edits of the
-// same object keep the later stamp and are reported as conflicts; edits of different objects are all kept.
+// the site, so ids (and references such as a door's host wall) never collide between users. Each object is a map of
+// last-writer-wins field registers (its top-level properties: layer, colour, geometry, props…) plus an existence
+// register, so concurrent edits of different properties of one object are all kept; only concurrent edits of the same
+// property keep the later stamp and are reported as conflicts. Edits of different objects are always all kept.
 import Foundation
 
 public struct CoEditStamp: Codable, Hashable, Comparable {
@@ -19,13 +21,25 @@ public struct CoEditOp: Codable, Hashable {
     /// Canonical JSON of the object; nil = deleted.
     public var value: Data?
     public var stamp: CoEditStamp
+    /// Top-level properties this operation changed (nil = all of them: a new object, or a log written by an older
+    /// version).
+    public var fields: [String]?
+    public init(key: String, value: Data?, stamp: CoEditStamp, fields: [String]? = nil) {
+        self.key = key; self.value = value; self.stamp = stamp; self.fields = fields
+    }
 }
 
 public final class CoEditSession {
     public let site: String
     public private(set) var clock = 0
-    /// Latest register per object key.
-    private(set) var registers: [String: (stamp: CoEditStamp, value: Data?)] = [:]
+    /// One replicated object: field registers and an existence register.
+    struct Obj {
+        var fields: [String: Data] = [:]
+        var fieldStamps: [String: CoEditStamp] = [:]
+        var alive = false
+        var aliveStamp = CoEditStamp(clock: -1, site: "")
+    }
+    private var objs: [String: Obj] = [:]
     /// First stamp of each key (canonical ordering of entities, layers, …).
     private var created: [String: CoEditStamp] = [:]
     /// Object values as of the last commit/materialise (to find local edits).
@@ -34,6 +48,31 @@ public final class CoEditSession {
     public private(set) var outbox: [CoEditOp] = []
     private var readOffsets: [String: UInt64] = [:]
     public private(set) var conflicts: [String] = []
+
+    /// Top-level properties of an object's canonical JSON, each as canonical JSON.
+    static func fields(_ d: Data) -> [String: Data]? {
+        guard let o = try? JSONSerialization.jsonObject(with: d, options: [.fragmentsAllowed]) as? [String: Any] else { return nil }
+        var out: [String: Data] = [:]
+        for (k, v) in o { out[k] = (try? JSONSerialization.data(withJSONObject: v, options: [.sortedKeys, .fragmentsAllowed])) ?? Data("null".utf8) }
+        return out
+    }
+    /// Canonical JSON object from its properties.
+    static func assemble(_ f: [String: Data]) -> Data {
+        var out = Data("{".utf8)
+        for (i, k) in f.keys.sorted().enumerated() {
+            if i > 0 { out.append(contentsOf: Array(",".utf8)) }
+            out.append((try? JSONEncoder().encode(k)) ?? Data("\"\"".utf8))
+            out.append(contentsOf: Array(":".utf8))
+            out.append(f[k]!)
+        }
+        out.append(contentsOf: Array("}".utf8))
+        return out
+    }
+    /// Current value of an object (nil = deleted or unknown).
+    func value(_ key: String) -> Data? {
+        guard let o = objs[key], o.alive else { return nil }
+        return Self.assemble(o.fields)
+    }
 
     /// First id of the range owned by `site` (1e9 ids per site; stays below 2^53 for JavaScript clients).
     public static func idBase(_ site: String) -> Int {
@@ -46,13 +85,17 @@ public final class CoEditSession {
     /// Starts a session on a document that every participant opened from the same file.
     public init(site: String, document: ArchiDocument) {
         self.site = site
-        let objs = Self.objects(document)
-        for (k, v) in objs {
-            let s = CoEditStamp(clock: 0, site: "")
-            registers[k] = (s, v)
+        let all = Self.objects(document)
+        let s0 = CoEditStamp(clock: 0, site: "")
+        for (k, v) in all {
+            var o = Obj()
+            o.fields = Self.fields(v) ?? [:]
+            for f in o.fields.keys { o.fieldStamps[f] = s0 }
+            o.alive = true; o.aliveStamp = s0
+            objs[k] = o
             created[k] = CoEditStamp(clock: 0, site: String(format: "%09d", Self.initialOrder(document, k)))
         }
-        synced = objs
+        synced = all
     }
 
     static func initialOrder(_ d: ArchiDocument, _ key: String) -> Int {
@@ -102,11 +145,12 @@ public final class CoEditSession {
 
     /// Rebuilds the document from the registers (canonical order), keeping `local`'s id counter in the site's range.
     public func materialize(local: ArchiDocument) -> ArchiDocument {
-        var d = registers["rest"]?.value.flatMap { Self.dec(ArchiDocument.self, $0) } ?? local
-        let live = registers.filter { $0.value.value != nil }.sorted { (created[$0.key] ?? $0.value.stamp, $0.key) < (created[$1.key] ?? $1.value.stamp, $1.key) }
+        var d = value("rest").flatMap { Self.dec(ArchiDocument.self, $0) } ?? local
+        let live = objs.filter { $0.value.alive }.map { (key: $0.key, stamp: $0.value.aliveStamp) }
+            .sorted { (created[$0.key] ?? $0.stamp, $0.key) < (created[$1.key] ?? $1.stamp, $1.key) }
         d.entities = []; d.elements = []; d.layers = []; d.blocks = [:]; d.variables = [:]; d.levels = []; d.materials = []; d.layouts = []
-        for (k, r) in live {
-            guard let v = r.value else { continue }
+        for (k, _) in live {
+            guard let v = value(k) else { continue }
             if k.hasPrefix("e:"), let x = Self.dec(Entity.self, v) { d.entities.append(x) }
             else if k.hasPrefix("b:"), let x = Self.dec(BIMElement.self, v) { d.elements.append(x) }
             else if k.hasPrefix("lv:"), let x = Self.dec(Level.self, v) { d.levels.append(x) }
@@ -147,9 +191,23 @@ public final class CoEditSession {
         clock += 1
         let st = CoEditStamp(clock: clock, site: site)
         for k in changed.sorted() {
-            let op = CoEditOp(key: k, value: cur[k], stamp: st)
+            var o = objs[k] ?? Obj()
+            let op: CoEditOp
+            if let v = cur[k] {
+                let nf = Self.fields(v) ?? [:]
+                let names: [String]? = (o.alive ? synced[k].flatMap { Self.fields($0) } : nil).map { old in
+                    Set(nf.keys).union(old.keys).filter { nf[$0] != old[$0] }.sorted()
+                }
+                op = CoEditOp(key: k, value: v, stamp: st, fields: names)
+                for n in names ?? Array(Set(nf.keys).union(o.fields.keys)) { o.fields[n] = nf[n]; o.fieldStamps[n] = st }
+                o.alive = true
+            } else {
+                op = CoEditOp(key: k, value: nil, stamp: st)
+                o.alive = false
+            }
+            o.aliveStamp = st
+            objs[k] = o
             ops.append(op)
-            registers[k] = (st, cur[k])
             if created[k] == nil { created[k] = st }
         }
         synced = cur
@@ -166,14 +224,31 @@ public final class CoEditSession {
         for op in ops where op.stamp.site != site {
             clock = max(clock, op.stamp.clock)
             if created[op.key] == nil || op.stamp < created[op.key]! { if op.value != nil || created[op.key] == nil { created[op.key] = op.stamp } }
-            if let r = registers[op.key], !(r.stamp < op.stamp) {
-                if r.stamp != op.stamp, r.stamp.site == site, r.value != op.value { conflicts.append(op.key) }
-                continue
+            var o = objs[op.key] ?? Obj()
+            let before = o.alive ? Self.assemble(o.fields) : nil
+            var conflict = false
+            if let v = op.value, let nf = Self.fields(v) {
+                for n in op.fields ?? Array(Set(nf.keys).union(o.fields.keys)) {
+                    let st = o.fieldStamps[n] ?? CoEditStamp(clock: -1, site: "")
+                    if st == op.stamp { continue }
+                    let ours = st.site == site && st.clock > 0 && o.fields[n] != nf[n]
+                    if st < op.stamp {
+                        if ours { conflict = true }
+                        o.fields[n] = nf[n]; o.fieldStamps[n] = op.stamp
+                    } else if ours { conflict = true }
+                }
+                if o.aliveStamp < op.stamp { o.alive = true; o.aliveStamp = op.stamp }
+            } else if op.value == nil {
+                if o.aliveStamp < op.stamp {
+                    if o.alive, o.aliveStamp.site == site, o.aliveStamp.clock > 0 { conflict = true }
+                    o.alive = false; o.aliveStamp = op.stamp
+                } else if o.alive, o.aliveStamp.site == site { conflict = true }
             }
-            if localPending.contains(op.key) { conflicts.append(op.key) }
-            if let r = registers[op.key], r.stamp.site == site, r.stamp.clock > 0, r.value != op.value, !conflicts.contains(op.key) { conflicts.append(op.key) }
-            registers[op.key] = (op.stamp, op.value)
-            changed.append(op.key)
+            objs[op.key] = o
+            let after = o.alive ? Self.assemble(o.fields) : nil
+            if localPending.contains(op.key) { conflict = true }
+            if conflict, !conflicts.contains(op.key) { conflicts.append(op.key) }
+            if before != after { changed.append(op.key) }
         }
         return changed
     }

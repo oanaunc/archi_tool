@@ -140,6 +140,8 @@ public struct DraftSettings: Codable, Hashable {
     public var isoPlane = 0
     /// Geometric centre snap (GCEN): centroids of closed polylines, shown with the centre marker.
     public var geometricCenterSnap = false
+    /// Apparent / extended intersection snap (APPINT, OSMODE 2048).
+    public var apparentIntersectionSnap = false
     /// Axis lock (PRC-028, arrow keys while drawing): points are projected on the line through the base point at this
     /// angle (radians). Session state, not saved.
     public var axisLock: Double? = nil
@@ -148,7 +150,7 @@ public struct DraftSettings: Codable, Hashable {
     private enum Keys: String, CodingKey {
         case ortho, gridSnap, gridSpacing, showGrid, objectSnap, snapModes, polarTracking, polarIncrement, dynamicInput, lineweightDisplay
         case textHeight, wallThickness, wallHeight, wallJustification, offsetDistance, filletRadius, chamferDistance, objectSnapTracking
-        case isometric, isoPlane, geometricCenterSnap
+        case isometric, isoPlane, geometricCenterSnap, apparentIntersectionSnap
     }
     /// Tolerant decoding: settings saved by older builds (missing keys) keep the defaults for the new fields.
     public init(from decoder: Decoder) throws {
@@ -175,6 +177,7 @@ public struct DraftSettings: Codable, Hashable {
         isometric = try c.decodeIfPresent(Bool.self, forKey: .isometric) ?? d.isometric
         isoPlane = try c.decodeIfPresent(Int.self, forKey: .isoPlane) ?? d.isoPlane
         geometricCenterSnap = try c.decodeIfPresent(Bool.self, forKey: .geometricCenterSnap) ?? d.geometricCenterSnap
+        apparentIntersectionSnap = try c.decodeIfPresent(Bool.self, forKey: .apparentIntersectionSnap) ?? d.apparentIntersectionSnap
     }
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: Keys.self)
@@ -186,6 +189,7 @@ public struct DraftSettings: Codable, Hashable {
         try c.encode(filletRadius, forKey: .filletRadius); try c.encode(chamferDistance, forKey: .chamferDistance); try c.encode(objectSnapTracking, forKey: .objectSnapTracking)
         try c.encode(isometric, forKey: .isometric); try c.encode(isoPlane, forKey: .isoPlane)
         if geometricCenterSnap { try c.encode(geometricCenterSnap, forKey: .geometricCenterSnap) }
+        if apparentIntersectionSnap { try c.encode(apparentIntersectionSnap, forKey: .apparentIntersectionSnap) }
     }
 }
 

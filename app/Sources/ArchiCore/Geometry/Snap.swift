@@ -389,7 +389,7 @@ public enum Snap {
         let modes: Set<SnapKind> = settings.objectSnap ? settings.snapModes : []
         var c = Collector(cursor: cursor, tol: tol, box: BBox2(min: cursor - Vec2(tol, tol), max: cursor + Vec2(tol, tol)), modes: modes)
         c.geometricCenter = settings.objectSnap && settings.geometricCenterSnap
-        if !modes.isEmpty || c.geometricCenter {
+        if !modes.isEmpty || c.geometricCenter || (settings.objectSnap && settings.apparentIntersectionSnap) {
             let shown = PickFilter(doc)
             var hidden = Set<String>()
             for l in doc.layers where !l.visible || l.frozen { hidden.insert(l.name); hidden.insert(l.name.lowercased()) }
@@ -495,6 +495,29 @@ public enum Snap {
                         let r = cursor - pc.center
                         if r.length > 1e-12 { c.offer(pc.center + r.normalized * pc.radius, .extension, nil) }
                     } else { c.offer(pc.point(t), .extension, nil) }
+                }
+            }
+        }
+        // 3D object snaps on solids (3DOSMODE), projected on the plan.
+        if settings.objectSnap {
+            for (p, k, id) in Snap3D.planCandidates(cursor: cursor, tolerance: tol, doc: doc) { c.offer(p, k, id, force: true) }
+        }
+        // Apparent / extended intersection (APPINT): intersections of the extensions of nearby and acquired objects.
+        if settings.objectSnap && settings.apparentIntersectionSnap {
+            var pcs: [(EntityID?, CurvePiece)] = c.local.filter { !$0.piece.approx }.map { ($0.id, $0.piece) }
+            for (_, pc) in c.local where !pc.approx && (pc.p0.distance(to: cursor) <= tol || pc.p1.distance(to: cursor) <= tol) { tracker.acquireExtension(pc) }
+            pcs += tracker.extensions.map { (nil, $0) }
+            let far = Swift.max(1e6, cursor.length * 4)
+            func extended(_ p: CurvePiece) -> CurvePiece {
+                if p.isArc { return CurvePiece(arc: p.center, p.radius, 0, 2 * .pi) }
+                let d = (p.p1 - p.p0).normalized
+                return CurvePiece(seg: p.p0 - d * far, p.p1 + d * far)
+            }
+            let ext = pcs.map { ($0.0, extended($0.1)) }
+            for i in 0..<ext.count {
+                for j in (i + 1)..<Swift.max(i + 1, ext.count) {
+                    if let a = ext[i].0, let b = ext[j].0, a == b { continue }
+                    for r in CurveMath.intersect(ext[i].1, ext[j].1) { c.offer(r.p, .intersection, ext[i].0 ?? ext[j].0, force: true) }
                 }
             }
         }

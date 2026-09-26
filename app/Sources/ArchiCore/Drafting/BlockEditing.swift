@@ -62,7 +62,9 @@ public enum BlockEditing {
         let b = doc.blocks[key]!
         let m = marker(key)
         doc.setVariable("DRAFTINGSTART", "\(doc.nextID)")
-        for var e in b.entities { e.props["draftingView"] = m; doc.add(e) }
+        var map: [EntityID: EntityID] = [:]
+        for var e in b.entities { let old = e.id; e.props["draftingView"] = m; map[old] = doc.add(e) }
+        BlockConstraints.restore(key, map: map, doc: &doc)
         doc.setVariable(DraftingViews.editing, m)
         doc.setVariable(beditVar, key)
         return b.entities.count
@@ -83,6 +85,9 @@ public enum BlockEditing {
         for i in ents.indices { ents[i].props["draftingView"] = nil }
         if references(ents, block: n, doc: doc) { throw EditError.selfReference(n) }
         doc.blocks[n]?.entities = ents
+        // Constraints among the block's objects are saved with the definition (BLK-027); dynamic variants follow.
+        BlockConstraints.capture(n, ids: Set(ents.map(\.id)), doc: &doc)
+        DynamicBlocks.regenerate(n, &doc)
         return ents.count
     }
 
@@ -91,7 +96,9 @@ public enum BlockEditing {
     public static func endBlockEdit(save: Bool, doc: inout ArchiDocument) throws -> Int {
         guard editingBlock(doc) != nil else { return 0 }
         let n = save ? try saveBlockEdit(doc: &doc) : 0
-        doc.remove(ids: Set(blockEditContent(doc).map(\.id)))
+        let content = Set(blockEditContent(doc).map(\.id))
+        doc.remove(ids: content)
+        BlockConstraints.prune(ids: content, doc: &doc)
         doc.variables[DraftingViews.editing] = nil
         doc.variables["DRAFTINGSTART"] = nil
         doc.variables[beditVar] = nil

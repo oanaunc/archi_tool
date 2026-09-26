@@ -66,6 +66,10 @@ public enum ComponentLibrary {
         ComponentFamily("light-wall", "Wall Light", "Lighting", Vec3(250, 150, 250), baseOffset: 1800, aliases: ["Sconce", "WallLight"]),
         ComponentFamily("panel", "Electrical Panel", "Electrical", Vec3(450, 150, 600), baseOffset: 1300, aliases: ["DistributionBoard", "Panelboard"]),
         ComponentFamily("smoke-detector", "Smoke Detector", "Electrical", Vec3(120, 120, 50), baseOffset: 2650, aliases: ["SmokeDetector"]),
+        ComponentFamily("data-outlet", "Data Outlet", "Communications", Vec3(80, 45, 80), baseOffset: 300, aliases: ["DataOutlet", "Network", "RJ45"]),
+        ComponentFamily("air-supply", "Supply Air Diffuser", "Mechanical", Vec3(600, 600, 300), baseOffset: 2700, aliases: ["Diffuser", "SupplyDiffuser", "AirTerminal"]),
+        ComponentFamily("air-return", "Return Air Grille", "Mechanical", Vec3(600, 600, 300), baseOffset: 2700, aliases: ["ReturnGrille", "Grille"]),
+        ComponentFamily("radiator", "Radiator", "Mechanical", Vec3(1000, 100, 600), baseOffset: 150, aliases: ["Heater", "PanelRadiator"]),
         ComponentFamily("elevator", "Elevator Car", "Vertical Circulation", Vec3(1100, 1400, 2300), aliases: ["Lift", "Elevator", "LiftCar"]),
         ComponentFamily("escalator", "Escalator", "Vertical Circulation", Vec3(1600, 12_600, 4000), aliases: ["Escalator", "MovingStair"]),
         ComponentFamily("truss-pratt", "Pratt Truss", "Structural", Vec3(12000, 100, 1500), baseOffset: 3000, aliases: ["Truss", "PrattTruss"]),
@@ -391,6 +395,8 @@ public enum ComponentLibrary {
             p.box("Glass", x0 + 180, x0 + 480, y0 - 2, y0 + 5, H * 0.40, H * 0.47); p.box("Glass", x1 - 480, x1 - 180, y0 - 2, y0 + 5, H * 0.40, H * 0.47)
         case "outlet", "switch", "light-ceiling", "light-wall", "panel", "smoke-detector":
             electricalParts(f.id, &p, W: W, D: D, H: H)
+        case let id where terminalIDs.contains(id):
+            terminalParts(id, &p, W: W, D: D, H: H)
         case let id where Trusses.kind(of: id) != nil:
             Trusses.parts(Trusses.kind(of: id)!, &p, W: W, D: D, H: H)
         case "person-standing", "person-walking", "person-child":
@@ -572,6 +578,8 @@ public enum ComponentLibrary {
             add([Vec2(x0, y0), Vec2(x0, y1), Vec2(x1, y1), Vec2(x1, y0)], outline: true)
         case "outlet", "switch", "light-ceiling", "light-wall", "panel", "smoke-detector":
             out += electricalSymbol(f.id, W: W, D: D)
+        case let id where terminalIDs.contains(id):
+            out += terminalSymbol(id, W: W, D: D)
         case let id where Trusses.kind(of: id) != nil:
             rect(x0, x1, y0, y1, outline: true)
             add([Vec2(x0, 0), Vec2(x1, 0)])

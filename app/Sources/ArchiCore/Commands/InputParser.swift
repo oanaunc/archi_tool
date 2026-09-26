@@ -19,7 +19,7 @@ public enum InputParser {
         "GCE": "GCEN", "GCEN": "GCEN", "NOD": "NOD", "NODE": "NOD", "QUA": "QUA", "QUAD": "QUA", "QUADRANT": "QUA",
         "INT": "INT", "INTERSECTION": "INT", "EXT": "EXT", "EXTENSION": "EXT", "INS": "INS", "INSERT": "INS", "PER": "PER", "PERP": "PER",
         "PERPENDICULAR": "PER", "TAN": "TAN", "TANGENT": "TAN", "NEA": "NEA", "NEAR": "NEA", "NEAREST": "NEA", "PAR": "PAR", "PARALLEL": "PAR",
-        "NON": "NON", "NONE": "NON",
+        "NON": "NON", "NONE": "NON", "APP": "APP", "APPINT": "APP", "APPARENT": "APP",
     ]
     public static func snapOverride(_ token: String, keywords: [String] = []) -> String? {
         let t = token.uppercased().trimmingCharacters(in: CharacterSet(charactersIn: "_'"))

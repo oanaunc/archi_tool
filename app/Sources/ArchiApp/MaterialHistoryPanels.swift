@@ -192,6 +192,7 @@ private struct MaterialEditor: View {
                 }
                 .labelsHidden().frame(width: 140)
             }
+            MaterialMapsSection(model: model, material: material)
         }
         .font(Theme.font)
         .padding(10)

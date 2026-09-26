@@ -204,7 +204,11 @@ public enum IOCommands {
             guard let ver = DXFVersion.parse(v) else { throw CommandError.invalid("Unknown DXF version \(v).") }
             var url = try await path(ed, "Enter DXF file name")
             if url.pathExtension.isEmpty { url.appendPathExtension("dxf") }
-            try write(ed, url, "DXF \(ver.rawValue)", { try DXFWriter.write(ed.doc, version: ver).write(to: url, atomically: true, encoding: .utf8) })
+            let text = DXFWriter.write(ed.doc, version: ver)
+            try write(ed, url, "DXF \(ver.rawValue)", { try text.write(to: url, atomically: true, encoding: .utf8) })
+            let issues = DXFConformance.audit(text)
+            if issues.isEmpty { ed.print("DXF audit: structure, handles and table references are valid.") }
+            else { for i in issues.prefix(20) { ed.print("DXF audit: \(i)") } }
         }
     }
 

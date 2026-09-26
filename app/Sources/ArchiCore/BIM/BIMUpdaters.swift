@@ -30,7 +30,7 @@ public enum BIMUpdaters {
     public static func hasAssociative(_ doc: ArchiDocument) -> Bool {
         doc.elements.contains { $0.props["areaAuto"] == "1" }
             || doc.entities.contains { e in
-                if case .solid(let s) = e.geometry { return s.source != nil }
+                if case .solid(let s) = e.geometry { return s.source != nil || (s.history?.features.contains { $0.source != nil } ?? false) }
                 return e.props["autoDimSet"] != nil || e.props["autoDimGrids"] != nil || e.props["sectionBlock"] != nil || e.props["sectionLive"] != nil
             }
             || !doc.families.isEmpty

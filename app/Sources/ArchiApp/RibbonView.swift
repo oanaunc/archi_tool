@@ -148,6 +148,9 @@ struct RibbonGroup<Content: View>: View {
     let title: String
     @ViewBuilder var content: Content
     var body: some View {
+        if RibbonCustom.isHidden(title) { EmptyView() } else { panel }
+    }
+    private var panel: some View {
         HStack(spacing: 0) {
             VStack(spacing: 2) {
                 HStack(alignment: .top, spacing: 2) { content }
@@ -180,7 +183,7 @@ struct RibbonView: View {
             if !collapsed {
                 HSeparator()
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(alignment: .top, spacing: 0) { content }
+                    HStack(alignment: .top, spacing: 0) { content; CustomRibbonPanels(model: model, tab: tab.rawValue) }
                         .frame(height: 90)
                 }
                 .background(Theme.ribbon)

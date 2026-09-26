@@ -64,6 +64,6 @@ extension CommandCatalog {
     /// Sections added in round 9 (names unique across `coverageMenus`).
     static var coverageMenus4: [(String, [CmdItem])] {
         [("BIM Types & Parameters", bimRound9), ("Detailing & Tags", annotateRound9), ("Views & Coordinates", viewRound9), ("Mesh & Procedural 3D", modelingRound9),
-         ("Block & Reference Editing", blocksRound9), ("Exchange Options", exchangeRound9), ("Navigate, Light & Publish", appRound9), ("Studies, Signatures & Publishing", analysisRound9)]
+         ("Block & Reference Editing", blocksRound9), ("Exchange Options", exchangeRound9), ("Navigate, Light & Publish", appRound9), ("Studies, Signatures & Publishing", analysisRound9)] + coverageMenus5
     }
 }

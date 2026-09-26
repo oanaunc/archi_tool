@@ -23,6 +23,7 @@ public enum RunFamilies {
         ("SAN", "Sanitary Waste", RGBA(0.65, 0.45, 0.25)), ("VENT", "Vent", RGBA(0.45, 0.8, 0.45)),
         ("RWL", "Rainwater", RGBA(0.3, 0.75, 0.85)), ("GAS", "Gas", RGBA(1.0, 0.85, 0.2)),
         ("SA", "Supply Air", RGBA(0.35, 0.65, 1.0)), ("RA", "Return Air", RGBA(0.95, 0.55, 0.75)), ("EA", "Exhaust Air", RGBA(0.75, 0.6, 0.4)),
+        ("HWS", "Heating Flow", RGBA(0.95, 0.25, 0.45)), ("HWR", "Heating Return", RGBA(0.55, 0.35, 0.95)),
         ("POWER", "Power", RGBA(1.0, 0.6, 0.1)), ("DATA", "Data", RGBA(0.6, 0.5, 1.0)), ("FIRE", "Fire Protection", RGBA(0.9, 0.15, 0.15)),
     ]
     public static func systemColor(_ code: String?) -> RGBA? {
@@ -201,6 +202,7 @@ extension ComponentLibrary {
         case "washer": return [MEPConnector("SAN", Vec3(W / 4, back, 600), 40), MEPConnector("DCW", Vec3(-W / 4, back, 900), 15), MEPConnector("POWER", Vec3(0, back, 300), 0)]
         case "fridge", "range": return [MEPConnector("POWER", Vec3(0, back, 300), 0)]
         case "outlet", "switch", "light-ceiling", "light-wall", "panel", "smoke-detector": return [MEPConnector("POWER", Vec3(0, 0, 0), 0)]
+        case let id where terminalIDs.contains(id): return terminalConnectors(id, W: W, D: D, H: H)
         default: return []
         }
     }

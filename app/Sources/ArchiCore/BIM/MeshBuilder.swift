@@ -594,6 +594,7 @@ public enum MeshBuilder {
                     solid.group(el.id, kind, el.props["panelMaterial"] ?? "Aluminium"), spandrel.group(el.id, kind, el.props["spandrelMaterial"] ?? "Steel")].compactMap { $0 }
 
         case .component(let g):
+            if g.mesh != nil { return InPlaceModels.meshGroups(el, g, z0: elev + g.baseOffset) }
             if el.props["kind"] == "skylight" { return RoofDetails.skylightGroups(el, g, doc: doc) }
             if g.block == nil, g.path == nil, let def = doc.family(named: g.family) {
                 return FamilyEngine.meshGroups(def, el: el, g: g, doc: doc, z0: elev + g.baseOffset)
@@ -870,6 +871,8 @@ public enum MeshBuilder {
         case .solid(let s):
             var acc = MeshAcc()
             solid(s, into: &acc)
+            // Softened edges (M3D-101): smooth shading and hidden edges below the angle.
+            if let a = props["softenAngle"].flatMap(Double.init), a > 0 { SoftEdges.apply(&acc, angle: a) }
             return [acc.group(id, "solid", props["material"] ?? "Concrete")].compactMap { $0 }
         case .insert(let ins):
             guard depth < 8, let b = doc.blocks[ins.block] else { return [] }

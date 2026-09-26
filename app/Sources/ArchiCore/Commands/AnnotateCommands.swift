@@ -516,7 +516,9 @@ enum AnnotateCommands {
                     guard let n = try await ed.getWord("Enter new dimension style name"), !n.isEmpty else { return }
                     guard !ed.doc.dimStyles.contains(where: { $0.name.caseInsensitiveCompare(n) == .orderedSame }) else { throw CommandError.invalid("Dimension style \(n) already exists.") }
                     var s = ed.doc.dimStyle; s.name = n
+                    let from = ed.doc.dimStyle.name
                     ed.doc.dimStyles.append(s); ed.doc.currentDimStyle = n
+                    DimStyleExtras.copy(from: from, to: n, doc: &ed.doc)
                     ed.print("Dimension style \(n) created (based on the current style) and made current.")
                     try await editDimStyle(ed, n); return
                 case "Edit": try await editDimStyle(ed, ed.doc.currentDimStyle); return
@@ -526,7 +528,8 @@ enum AnnotateCommands {
                     ed.selection = []; return
                 default:
                     for s in ed.doc.dimStyles {
-                        ed.print("\(s.name == ed.doc.currentDimStyle ? "*" : " ") \(s.name): text \(fmt(s.textHeight)), arrow \(s.arrow.rawValue) \(fmt(s.arrowSize)), scale \(fmt(s.scale)), decimals \(s.decimals)")
+                        let x = DimStyleExtras.get(s.name, doc: ed.doc)
+                        ed.print("\(s.name == ed.doc.currentDimStyle ? "*" : " ") \(s.name): text \(fmt(s.textHeight)), arrow \(s.arrow.rawValue) \(fmt(s.arrowSize)), scale \(fmt(s.scale)), decimals \(s.decimals)" + (x.isDefault ? "" : ", " + x.encoded.replacingOccurrences(of: ";", with: ", ")))
                     }
                     return
                 }
@@ -535,14 +538,19 @@ enum AnnotateCommands {
         CommandDef("TEXTSTYLE", aliases: ["STYLE", "ST", "-STYLE"], category: "Annotate", summary: "Creates or modifies a text style and makes it current.") { ed in
             let cur = ed.doc.variable("TEXTSTYLE") ?? "Standard"
             guard let name = try await ed.getWord("Enter name of text style or [?]", defaultValue: cur) else { return }
-            if name == "?" { for s in ed.doc.textStyles { ed.print("\(s.name == cur ? "*" : " ") \(s.name): \(s.font), height \(fmt(s.height)), width \(fmt(s.widthFactor)), oblique \(fmt(s.oblique))") }; return }
+            if name == "?" { for s in ed.doc.textStyles { ed.print("\(s.name == cur ? "*" : " ") " + TextStyleFonts.describe(s, doc: ed.doc)) }; return }
             var idx = ed.doc.textStyles.firstIndex { $0.name.caseInsensitiveCompare(name) == .orderedSame }
             if idx == nil { ed.doc.textStyles.append(TextStyle(name: name)); idx = ed.doc.textStyles.count - 1; ed.print("New style \(name).") }
             var s = ed.doc.textStyles[idx!]
             s.font = try await ed.getWord("Specify font name", defaultValue: s.font) ?? s.font
             if let h = try await ed.getReal("Specify height of text (0 = set when placing)", defaultValue: s.height).value, h >= 0 { s.height = h }
             if let w = try await ed.getReal("Specify width factor", defaultValue: s.widthFactor).value, w > 0 { s.widthFactor = w }
-            if let o = try await ed.getReal("Specify obliquing angle (degrees)", defaultValue: s.oblique).value, abs(o) < 85 { s.oblique = o }
+            let oldDeg = TextStyleFonts.obliqueRadians(s) * 180 / .pi
+            s.oblique = oldDeg * .pi / 180
+            if let o = try await ed.getReal("Specify obliquing angle (degrees)", defaultValue: oldDeg).value {
+                guard abs(o) <= 85 else { throw CommandError.invalid("The obliquing angle must be between -85 and 85 degrees.") }
+                s.oblique = o * .pi / 180
+            }
             ed.doc.textStyles[idx!] = s
             ed.doc.setVariable("TEXTSTYLE", s.name)
             ed.print("\(s.name) is now the current text style.")
@@ -553,9 +561,50 @@ enum AnnotateCommands {
         guard let i = ed.doc.dimStyles.firstIndex(where: { $0.name == name }) else { return }
         while true {
             let s = ed.doc.dimStyles[i]
-            let k = try await ed.getKeyword("Edit \(name)", ["TextHeight", "ArrowSize", "ARrow", "Scale", "Decimals", "Prefix", "SUffix", "LinearScale", "EXtension", "Offset", "Gap", "eXit"], defaultValue: "eXit") ?? "eXit"
+            let k = try await ed.getKeyword("Edit \(name)", ["TextHeight", "ArrowSize", "ARrow", "Scale", "Decimals", "Prefix", "SUffix", "LinearScale", "EXtension", "Offset", "Gap",
+                                                             "Units", "TOlerance", "ALternate", "Fit", "PLacement", "Zeros", "ROund", "STyle", "eXit"], defaultValue: "eXit") ?? "eXit"
             var n = s
+            var x = DimStyleExtras.get(name, doc: ed.doc)
             switch k {
+            case "Units":
+                let opts = DimStyleExtras.UnitFormat.allCases.map { $0.rawValue.capitalized }
+                if let u = try await ed.getKeyword("Unit format", ["Decimal", "Architectural", "Engineering", "Fractional", "SCientific"], defaultValue: x.units.rawValue.capitalized) {
+                    x.units = DimStyleExtras.UnitFormat(rawValue: u.lowercased()) ?? .decimal
+                } else { ed.print("Formats: " + opts.joined(separator: ", ")) }
+            case "TOlerance":
+                let t = try await ed.getKeyword("Tolerance", ["None", "Symmetrical", "Deviation", "Limits", "Basic"], defaultValue: "None") ?? "None"
+                switch t {
+                case "Symmetrical":
+                    let v = try await ed.getPositive("Tolerance value", defaultValue: 0.1, allowZero: true)
+                    x.tolerance = "sym:" + fmt(v, 8)
+                case "Deviation", "Limits":
+                    let up = try await ed.getPositive("Upper value", defaultValue: 0.1, allowZero: true)
+                    let lo = try await ed.getPositive("Lower value", defaultValue: up, allowZero: true)
+                    x.tolerance = (t == "Deviation" ? "dev:" : "limits:") + fmt(up, 8) + "," + fmt(lo, 8)
+                case "Basic": x.tolerance = "basic"
+                default: x.tolerance = nil
+                }
+            case "ALternate":
+                guard try await ed.getYesNo("Display alternate units?", defaultValue: x.alternate != nil) else { x.alternate = nil; break }
+                let f = try await ed.getPositive("Multiplier for alternate units", defaultValue: 1 / 25.4)
+                let dec = try await ed.getInteger("Alternate decimal places", defaultValue: 2) ?? 2
+                let suf = try await ed.getWord("Alternate suffix (. = none)", defaultValue: ".") ?? "."
+                x.alternate = fmt(f, 10) + "," + String(max(0, min(8, dec))) + (suf == "." ? "" : "," + suf)
+            case "Fit":
+                x.fit = (try await ed.getKeyword("When there is not room for text and arrows, move", ["Best", "Arrows", "Text", "BOth"], defaultValue: x.fit.capitalized) ?? "Best").lowercased()
+            case "PLacement":
+                let p = try await ed.getKeyword("Text placement", ["Above", "Centered"], defaultValue: x.textCentered ? "Centered" : "Above") ?? "Above"
+                x.textCentered = p == "Centered"
+            case "Zeros":
+                x.suppressLeadingZeros = try await ed.getYesNo("Suppress leading zeros?", defaultValue: x.suppressLeadingZeros)
+                x.suppressTrailingZeros = try await ed.getYesNo("Suppress trailing zeros?", defaultValue: x.suppressTrailingZeros)
+            case "ROund":
+                x.roundOff = try await ed.getPositive("Round distances to (0 = off)", defaultValue: x.roundOff, allowZero: true)
+            case "STyle":
+                let t = try await ed.getWord("Text style (. = default)", defaultValue: x.textStyle ?? ".") ?? "."
+                if t == "." { x.textStyle = nil }
+                else if let st = ed.doc.textStyles.first(where: { $0.name.caseInsensitiveCompare(t) == .orderedSame }) { x.textStyle = st.name }
+                else { throw CommandError.invalid("Text style \(t) not found.") }
             case "TextHeight": n.textHeight = try await ed.getPositive("Text height", defaultValue: s.textHeight)
             case "ArrowSize": n.arrowSize = try await ed.getPositive("Arrow size", defaultValue: s.arrowSize, allowZero: true)
             case "ARrow":
@@ -573,6 +622,7 @@ enum AnnotateCommands {
             default: return
             }
             ed.doc.dimStyles[i] = n
+            DimStyleExtras.set(x, style: name, doc: &ed.doc)
         }
     }
 }

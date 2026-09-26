@@ -269,6 +269,7 @@ public enum PlanRepresentation {
             }
             return out
         case .component(let g):
+            if g.mesh != nil { return InPlaceModels.planEdges(g).map { stroke($0, closed: false, color, lwProj) } }
             if el.props["kind"] == "skylight" { return RoofDetails.skylightPlan(g, color: color, unit: u) }
             if let b = g.block, doc.blocks[b] != nil {
                 let ins = Entity(id: el.id, layer: el.layer, color: .byLayer, geometry: .insert(InsertGeom(block: b, position: g.position, rotation: g.rotation)))
@@ -291,8 +292,10 @@ public enum PlanRepresentation {
             }
             if let fam = ComponentLibrary.family(g.family) {
                 let dash = hiddenDash(doc, options)
+                // Terminals and equipment display in their system colour (unless the element has an explicit colour).
+                let fc = el.props["color"] == nil ? (ComponentLibrary.systemDisplayColor(fam, g, props: el.props) ?? color) : color
                 var out = ComponentLibrary.worldSymbol(fam, g).filter { $0.points.count >= 2 }.map {
-                    stroke($0.points, closed: $0.closed, color, $0.outline ? lwProj : lwFine, $0.hidden ? dash : [])
+                    stroke($0.points, closed: $0.closed, fc, $0.outline ? lwProj : lwFine, $0.hidden ? dash : [])
                 }
                 // MEP connection points (MEPCONNECTORS = 1): small circles tagged with the system.
                 if doc.variable("MEPCONNECTORS") == "1" {

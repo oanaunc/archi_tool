@@ -288,9 +288,9 @@ public enum StrokeFont {
         }
     }
 
-    /// Geometry for a text entity using the drawing's text style (width factor, oblique angle in degrees).
+    /// Geometry for a text entity using the drawing's text style (width factor, oblique angle).
     public static func geometry(_ t: TextGeom, doc: ArchiDocument) -> [Geometry] {
         let st = doc.textStyles.first { $0.name.caseInsensitiveCompare(t.style) == .orderedSame }
-        return geometry(t, widthFactor: st?.widthFactor ?? 1, oblique: (st?.oblique ?? 0) * .pi / 180)
+        return geometry(t, widthFactor: st.map(TextStyleFonts.widthFactor) ?? 1, oblique: st.map(TextStyleFonts.obliqueRadians) ?? 0)
     }
 }

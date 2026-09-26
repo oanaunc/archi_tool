@@ -486,7 +486,7 @@ enum ModelingCommands {
             ed.selection = []
             ed.print(iv > 0 ? "Contours every \(fmt(iv)), major every \(major)." : "Contours hidden.")
         },
-        CommandDef("BUILDINGPAD", aliases: ["PAD", "SITEPAD"], category: "Site", summary: "Levels a toposurface inside a boundary to a pad elevation (cut and fill).") { ed in
+        CommandDef("BUILDINGPAD", aliases: ["SITEPAD"], category: "Site", summary: "Levels a toposurface inside a boundary to a pad elevation (cut and fill).") { ed in
             guard case .pick(let pk) = try await ed.pickObject("Select toposurface", filter: { ed.doc.entity($0)?.props["topo"] == "1" }),
                   let topo = solidOf(ed.doc, pk.id) else { return }
             let a = try await ed.getPoint("Specify first point of pad boundary", keywords: ["Select"])

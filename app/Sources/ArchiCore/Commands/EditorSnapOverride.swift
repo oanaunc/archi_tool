@@ -15,9 +15,10 @@ extension Editor {
         s.objectSnapTracking = false; s.gridSnap = false
         if o == "NON" { s.objectSnap = false; s.snapModes = []; s.geometricCenterSnap = false }
         else if o == "GCEN" { s.objectSnap = true; s.snapModes = []; s.geometricCenterSnap = true }
+        else if o == "APP" { s.objectSnap = true; s.snapModes = []; s.geometricCenterSnap = false; s.apparentIntersectionSnap = true }
         else if let k = InputParser.snapKind(override: o) { s.objectSnap = true; s.snapModes = [k]; s.geometricCenterSnap = false }
         settings = s
-        activeSnapOverride = s.objectSnap ? s.snapModes : []
+        activeSnapOverride = s.objectSnap ? (o == "APP" ? [.intersection] : s.snapModes) : []
         let r = InputRequest("of", kinds: [.point], base: req.base, preview: req.preview)
         let base = req.base ?? lastPoint
         let answer = await ask(r)
@@ -33,7 +34,7 @@ extension Editor {
         }
         // As in AutoCAD, the override applies to the object under the aperture even when its snap point is farther away
         // (MID anywhere on a line, END on the nearer end, CEN on a circle's edge).
-        if o != "INT", let hit = objectSnap(near: p, settings: snapSettings, tolerance: tol, base: base) {
+        if o != "INT", o != "APP", let hit = objectSnap(near: p, settings: snapSettings, tolerance: tol, base: base) {
             lastPoint = hit
             return .point(hit)
         }
@@ -59,5 +60,5 @@ extension Editor {
 
     static let snapOverrideNames = ["END": "endpoint", "MID": "midpoint", "CEN": "center", "GCEN": "geometric center", "NOD": "node",
                                     "QUA": "quadrant", "INT": "intersection", "EXT": "extension", "INS": "insertion", "PER": "perpendicular",
-                                    "TAN": "tangent", "NEA": "nearest", "PAR": "parallel"]
+                                    "TAN": "tangent", "NEA": "nearest", "PAR": "parallel", "APP": "apparent intersection"]
 }

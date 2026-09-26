@@ -123,3 +123,76 @@ public enum SolarCalculator {
         return base.addingTimeInterval(secs - utcOffset * 3600)
     }
 }
+
+// MARK: - Validation against published reference results (ANL-019)
+
+/// A published solar-position result used to validate the calculator.
+public struct SolarReference: Hashable {
+    public var name: String
+    public var source: String
+    public var day: String, time: String, utcOffset: Double
+    public var latitude: Double, longitude: Double
+    /// Expected values; nil when the source does not give them.
+    public var zenith: Double?, azimuth: Double?, declination: Double?, equationOfTime: Double?
+    /// Expected local sunrise / sunset "HH:MM:SS".
+    public var sunrise: String?, sunset: String?
+}
+
+public struct SolarValidationLine: Hashable {
+    public var reference: String
+    public var quantity: String
+    public var expected: Double
+    public var computed: Double
+    public var tolerance: Double
+    public var unit: String
+    public var deviation: Double { computed - expected }
+    public var passes: Bool { abs(deviation) <= tolerance }
+}
+
+extension SolarCalculator {
+    /// Reference cases: the NREL Solar Position Algorithm worked example (Reda & Andreas, NREL/TP-560-34302, 2004)
+    /// and the solar coordinates / equation of time examples 25.a and 28.a of Meeus, Astronomical Algorithms (1998).
+    public static let references: [SolarReference] = [
+        SolarReference(name: "NREL SPA example (Golden, CO)", source: "Reda & Andreas 2004, Table A5.1",
+                       day: "2003-10-17", time: "12:30:30", utcOffset: -7, latitude: 39.742476, longitude: -105.1786,
+                       zenith: 50.11162, azimuth: 194.34024, declination: nil, equationOfTime: 14.641503,
+                       sunrise: "06:12:43", sunset: "17:20:19"),
+        SolarReference(name: "Meeus example 25.a / 28.a", source: "Meeus, Astronomical Algorithms, 2nd ed.",
+                       day: "1992-10-13", time: "00:00:00", utcOffset: 0, latitude: 0, longitude: 0,
+                       zenith: nil, azimuth: nil, declination: -7.78507, equationOfTime: 13.71,
+                       sunrise: nil, sunset: nil),
+    ]
+
+    /// Compares the calculator with every reference result. Tolerances: 0.05° for angles (the NREL case includes
+    /// topocentric parallax and a site-pressure refraction the NOAA algorithm does not model), 0.1 min for the
+    /// equation of time and 2 min for sunrise/sunset.
+    public static func validate(_ refs: [SolarReference] = references) -> [SolarValidationLine] {
+        var out: [SolarValidationLine] = []
+        func seconds(_ s: String) -> Double? {
+            let p = s.split(separator: ":").compactMap { Double($0) }
+            guard p.count >= 2 else { return nil }
+            return p[0] * 3600 + p[1] * 60 + (p.count > 2 ? p[2] : 0)
+        }
+        for r in refs {
+            guard let date = SolarCalculator.date(r.day, r.time, utcOffset: r.utcOffset) else { continue }
+            let p = position(date: date, latitude: r.latitude, longitude: r.longitude)
+            if let z = r.zenith { out.append(.init(reference: r.name, quantity: "zenith", expected: z, computed: 90 - p.altitude, tolerance: 0.05, unit: "°")) }
+            if let a = r.azimuth { out.append(.init(reference: r.name, quantity: "azimuth", expected: a, computed: p.azimuth, tolerance: 0.05, unit: "°")) }
+            if let d = r.declination { out.append(.init(reference: r.name, quantity: "declination", expected: d, computed: p.declination, tolerance: 0.01, unit: "°")) }
+            if let e = r.equationOfTime { out.append(.init(reference: r.name, quantity: "equation of time", expected: e, computed: p.equationOfTime, tolerance: 0.1, unit: "min")) }
+            let t = sunTimes(date: date.addingTimeInterval(r.utcOffset * 3600), latitude: r.latitude, longitude: r.longitude)
+            func localMinutes(_ d: Date?) -> Double? {
+                guard let d else { return nil }
+                let s = (d.timeIntervalSince1970 + r.utcOffset * 3600).truncatingRemainder(dividingBy: 86400)
+                return (s < 0 ? s + 86400 : s) / 60
+            }
+            if let s = r.sunrise.flatMap(seconds), let c = localMinutes(t.sunrise) {
+                out.append(.init(reference: r.name, quantity: "sunrise", expected: s / 60, computed: c, tolerance: 2, unit: "min"))
+            }
+            if let s = r.sunset.flatMap(seconds), let c = localMinutes(t.sunset) {
+                out.append(.init(reference: r.name, quantity: "sunset", expected: s / 60, computed: c, tolerance: 2, unit: "min"))
+            }
+        }
+        return out
+    }
+}

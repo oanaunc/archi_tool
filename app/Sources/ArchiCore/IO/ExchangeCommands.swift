@@ -90,9 +90,9 @@ public enum ExchangeCommands {
             o.maxPoints = try await ed.getInteger("Maximum number of points (0 = all)", defaultValue: o.maxPoints) ?? o.maxPoints
             o.voxel = try await ed.getPositive("Voxel size for thinning (0 = off)", defaultValue: 0, allowZero: true)
             do {
-                let r = try PointCloud.load(try Data(contentsOf: url), ext: url.pathExtension, options: o)
+                let r = try PointCloudStream.load(url, options: o)
                 let ids = addEntities(ed, r.entities)
-                ed.print("Imported \(ids.count) of \(r.total) points from \(url.lastPathComponent) on layer \(o.layer).")
+                ed.print("Imported \(ids.count) of \(r.sampled ? "about " : "")\(r.total) points from \(url.lastPathComponent) on layer \(o.layer)\(r.sampled ? " (large file sampled out of core)" : "").")
                 ed.host?.perform(.zoomExtents, editor: ed)
             } catch { throw fail(url, error) }
         }

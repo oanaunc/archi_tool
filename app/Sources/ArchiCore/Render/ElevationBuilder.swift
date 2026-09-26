@@ -50,7 +50,7 @@ public enum ElevationBuilder {
             line = (Vec2(b.min.x - 1, cy), Vec2(b.max.x + 1, cy))
         }
         guard let proj = projection(view, section: line) else { return [] }
-        return entries(groups: groups, doc: doc, proj: proj, cut: view == .section)
+        return GraphicDisplay.apply(entries(groups: groups, doc: doc, proj: proj, cut: view == .section), doc: doc)
     }
 
     /// Axonometric (orthographic camera) or perspective drawing of the model seen from a camera (DOC-009 / DOC-010):
@@ -59,7 +59,7 @@ public enum ElevationBuilder {
         var groups = MeshBuilder.build(doc: doc)
         if let box = SectionBoxes.active(doc) { groups = SectionBoxes.clip(groups, box: box) }
         guard let proj = projection(camera: c) else { return [] }
-        return entries(groups: groups, doc: doc, proj: proj, cut: false, annotate: false)
+        return GraphicDisplay.apply(entries(groups: groups, doc: doc, proj: proj, cut: false, annotate: false), doc: doc)
     }
 
     static func projection(camera c: Camera) -> Projection? {

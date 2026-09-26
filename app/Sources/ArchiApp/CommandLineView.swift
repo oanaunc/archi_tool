@@ -11,6 +11,9 @@ struct CommandLineView: View {
     @State private var suggestionsDismissed = false
     @State private var historyIndex: Int?
     @State private var expanded = false
+    @AppStorage(CommandLineAppearance.fontKey) private var fontSize = CommandLineAppearance.defaultFont
+    @AppStorage(CommandLineAppearance.linesKey) private var linesShown = CommandLineAppearance.defaultLines
+    @AppStorage(CommandLineAppearance.opacityKey) private var opacity = CommandLineAppearance.defaultOpacity
 
     private struct Suggestion: Hashable { var name: String; var command: String; var summary: String }
 
@@ -56,14 +59,14 @@ struct CommandLineView: View {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(lines, id: \.offset) { i, line in
                             Text(line)
-                                .font(Theme.mono)
+                                .font(.system(size: CGFloat(CommandLineAppearance.clampFont(fontSize)), design: .monospaced))
                                 .foregroundStyle(color(for: line))
                                 .lineLimit(1)
                                 .truncationMode(.tail)
                                 .textSelection(.enabled)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 10)
-                                .frame(height: 15)
+                                .frame(height: CommandLineAppearance.rowHeight(fontSize))
                                 .id(i)
                         }
                     }
@@ -79,8 +82,8 @@ struct CommandLineView: View {
             }
             .padding(4)
         }
-        .frame(height: expanded ? 240 : 64)
-        .background(Theme.canvas.opacity(0.55))
+        .frame(height: expanded ? max(240, CommandLineAppearance.historyHeight(fontSize: fontSize, lines: linesShown)) : CommandLineAppearance.historyHeight(fontSize: fontSize, lines: linesShown))
+        .background(Theme.canvas.opacity(CommandLineAppearance.clampOpacity(opacity)))
     }
 
     private func color(for line: String) -> Color {

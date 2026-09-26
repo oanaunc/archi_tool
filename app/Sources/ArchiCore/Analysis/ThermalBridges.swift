@@ -131,7 +131,54 @@ public enum ThermalBridges {
                 add("column", [el.id, wel.id], c.height * m, c.position)
             }
         }
+        if usesNumericPsi(doc) {
+            var cache: [String: Double] = [:]
+            for i in out.indices where doc.variable("PSI:" + out[i].kind).flatMap(Double.init) == nil {
+                if let v = numericPsi(out[i], doc: doc, cache: &cache) { out[i].psi = v }
+            }
+        }
         return out
+    }
+
+    /// True when the drawing variable PSIMETHOD asks for EN ISO 10211 numerical ψ values.
+    public static func usesNumericPsi(_ doc: ArchiDocument) -> Bool {
+        let v = (doc.variable("PSIMETHOD") ?? "").uppercased().replacingOccurrences(of: " ", with: "")
+        return v == "ISO10211" || v == "NUMERIC" || v == "2D"
+    }
+
+    /// Wall build-up (outside → inside, plies of the wall type) for the numerical junction models.
+    public static func layers(_ el: BIMElement, doc: ArchiDocument) -> [JunctionPsi.Layer]? {
+        guard let c = Thermal.uValue(el, doc: doc, component: "wall"), !c.layers.isEmpty else { return nil }
+        let l = c.layers.filter { $0.thickness > 0 }.map { JunctionPsi.Layer($0.thickness, $0.lambda ?? 1.0) }
+        return l.isEmpty ? nil : l
+    }
+
+    /// External-dimension ψ of a detected junction from a 2D EN ISO 10211 calculation (corners, floor edges,
+    /// balconies); nil for junction kinds without a numerical model.
+    public static func numericPsi(_ b: ThermalBridge, doc: ArchiDocument, cache: inout [String: Double]) -> Double? {
+        let mm = doc.units.mm / 1000
+        func key(_ l: [JunctionPsi.Layer], _ extra: String) -> String { b.kind + "|" + extra + "|" + l.map { "\($0.thickness):\($0.lambda)" }.joined(separator: ",") }
+        switch b.kind {
+        case "corner", "corner-reentrant":
+            guard let w = b.elements.first.flatMap({ doc.element($0) }), let l = layers(w, doc: doc) else { return nil }
+            let k = key(l, "")
+            if let v = cache[k] { return v }
+            let v = JunctionPsi.corner(l, reentrant: b.kind == "corner-reentrant", maxCell: 0.015).psiExternal
+            cache[k] = v; return v
+        case "intermediate-floor", "balcony":
+            guard b.elements.count >= 2, let s = doc.element(b.elements[0]), case .slab(let sg) = s.geometry,
+                  let w = doc.element(b.elements[1]), let l = layers(w, doc: doc) else { return nil }
+            let mat = s.material ?? "Concrete"
+            let lam = ThermalLibrary.lambda(mat, doc: doc) ?? 2.0
+            let ts = sg.thickness * mm
+            guard ts > 0 else { return nil }
+            let proj = b.kind == "balcony" ? 1.2 : 0
+            let k = key(l, "\(ts):\(lam):\(proj)")
+            if let v = cache[k] { return v }
+            let v = JunctionPsi.floorEdge(wall: l, slabThickness: ts, slabLambda: lam, balcony: proj, maxCell: 0.015).psiExternal
+            cache[k] = v; return v
+        default: return nil
+        }
     }
 
     public struct Summary { public var bridges: [ThermalBridge]; public var htb: Double; public var transmission: Double
@@ -156,9 +203,10 @@ extension ThermalBridges {
                    summary: "Finds geometric linear thermal bridges of the envelope (wall corners, ground and intermediate floor edges, balconies, eaves, window/door reveals, columns in exterior walls) with lengths, ψ values (PSI:<kind> overrides) and H_TB = Σψ·L; selects the elements.", modifies: false) { ed in
             let s = summary(ed.doc)
             guard !s.bridges.isEmpty else { ed.print("No exterior walls found: nothing to check."); return }
+            ed.print(usesNumericPsi(ed.doc) ? "ψ of corners, floor edges and balconies: EN ISO 10211 2D calculation from the wall build-ups (PSIMETHOD)." : "ψ: EN ISO 14683 default values (set PSIMETHOD to ISO10211 for a 2D calculation from the wall build-ups).")
             ed.print("Thermal bridges: \(s.bridges.count) junction(s), H_TB = \(fmt(s.htb, 2)) W/K (\(fmt(s.share * 100, 1)) % of the plain transmission loss \(fmt(s.transmission, 1)) W/K).")
             for k in s.byKind {
-                ed.print("  \(titles[k.kind] ?? k.kind): \(fmt(k.length, 2)) m × ψ \(fmt(psi(k.kind, doc: ed.doc), 2)) = \(fmt(k.h, 2)) W/K")
+                ed.print("  \(titles[k.kind] ?? k.kind): \(fmt(k.length, 2)) m × ψ \(fmt(k.length > 0 ? k.h / k.length : psi(k.kind, doc: ed.doc), 2)) = \(fmt(k.h, 2)) W/K")
             }
             if s.share > 0.15 { ed.print("Hint: thermal bridges exceed 15 % of the element losses — insulate balconies (thermal breaks) and slab edges first.") }
             ed.selection = Set(s.bridges.filter { $0.psi > 0.3 }.flatMap(\.elements)).filter { ed.doc.contains($0) }
