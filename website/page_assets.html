@@ -1,0 +1,154 @@
+<style>
+.at-page { --ink:#1e1f22; --ink2:#26272b; --acc:#f5c518; --muted:#9a9ca3; }
+.at-badges span { display:inline-block; margin:4px; padding:4px 12px; border:1px solid #ddd; font-size:12px; letter-spacing:.04em; }
+.at-stats { background:var(--ink); color:#fff; padding:56px 0; margin:30px 0 0; }
+.at-stats-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:24px; text-align:center; }
+.at-stats strong { display:block; font-size:44px; line-height:1.1; color:var(--acc); font-weight:700; }
+.at-stats span { font-size:13px; color:#c9cbd1; letter-spacing:.03em; }
+.at-studio { background:linear-gradient(180deg,var(--ink) 0%,#141518 100%); color:#e6e6e6; padding:70px 0 80px; }
+.at-studio h2, .at-ai h2 { color:inherit; }
+.at-studio h2 { color:#fff; font-size:32px; margin-bottom:16px; }
+.at-studio p { color:#c9cbd1; }
+.at-kicker { text-transform:uppercase; letter-spacing:.18em; font-size:12px; color:var(--acc) !important; margin-bottom:8px; font-weight:600; }
+.at-term { background:#101114; border:1px solid #2f3035; border-radius:10px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,.35); margin:22px 0 14px; }
+.at-term-bar { display:flex; align-items:center; gap:6px; padding:9px 12px; background:#1b1c20; border-bottom:1px solid #2a2b30; }
+.at-term-bar i { width:11px; height:11px; border-radius:50%; background:#3a3b40; display:inline-block; }
+.at-term-bar i:first-child { background:#ff5f57; } .at-term-bar i:nth-child(2) { background:#febc2e; } .at-term-bar i:nth-child(3) { background:#28c840; }
+.at-term-bar span { margin-left:10px; font-size:12px; color:#8c8e95; }
+.at-term-body { font:13px/1.65 Menlo,Consolas,monospace; color:#d7d8dc; padding:14px 16px; height:250px; overflow:hidden; white-space:pre-wrap; }
+.at-term-body .c { color:var(--acc); } .at-term-body .o { color:#8c8e95; }
+.at-term-body .cur { display:inline-block; width:8px; height:15px; background:var(--acc); vertical-align:-2px; animation:atblink 1s steps(1) infinite; }
+@keyframes atblink { 50% { opacity:0; } }
+.at-replay { background:none; border:1px solid #3a3b40; color:#c9cbd1; padding:6px 14px; font-size:12px; border-radius:6px; cursor:pointer; }
+.at-replay:hover { border-color:var(--acc); color:var(--acc); }
+.at-plan { background:radial-gradient(ellipse at center,#23252a 0%,#17181b 75%); border:1px solid #2a2b30; border-radius:14px; padding:14px; min-height:420px; }
+.at-plan svg { width:100%; height:auto; max-height:640px; display:block; }
+.plan-anim { font-family:Helvetica,Arial,sans-serif; }
+.plan-anim .ps { fill:none; vector-effect:non-scaling-stroke; stroke-width:1.1px; stroke:#dcdcdc; stroke-linecap:round; stroke-linejoin:round; }
+.plan-anim .ps:not(.dashed) { stroke-dasharray:1; stroke-dashoffset:1; }
+.plan-anim .pf, .plan-anim .pt, .plan-anim .dashed { opacity:0; }
+.plan-anim .pt { fill:#c9cbd1; }
+.plan-anim .lyr-a-wall .pf { fill:#cfc6b4; } .plan-anim .lyr-a-wall .ps { stroke:#ffffff; stroke-width:1.4px; }
+.plan-anim .lyr-a-glaz .ps { stroke:#6fd3ff; } .plan-anim .lyr-a-glaz .pf { fill:#6fd3ff; }
+.plan-anim .lyr-a-door .ps { stroke:#f5c518; } .plan-anim .lyr-a-door .pf { fill:#f5c518; }
+.plan-anim .lyr-a-anno-dims .ps, .plan-anim .lyr-a-anno-dims .dashed { stroke:#f5c518; } .plan-anim .lyr-a-anno-dims .pt, .plan-anim .lyr-a-anno-dims .pf { fill:#f5c518; }
+.plan-anim .lyr-a-area .pf { fill:#e8a36b; fill-opacity:.08; } .plan-anim .lyr-a-area .pt { fill:#e8a36b; }
+.plan-anim .lyr-l-plnt .ps { stroke:#7bc47f; } .plan-anim .lyr-l-plnt .pf { fill:#7bc47f; fill-opacity:.25; }
+.plan-anim .lyr-a-elements .ps { stroke:#9a9ca3; } .plan-anim .lyr-a-elements .pf { fill:#55575d; }
+.plan-anim.play .ps:not(.dashed) { animation:atdraw .7s ease forwards; animation-delay:calc(var(--i) * 11ms); }
+.plan-anim.play .pf, .plan-anim.play .pt, .plan-anim.play .dashed { animation:atfade .8s ease forwards; animation-delay:calc(var(--i) * 11ms + .3s); }
+@keyframes atdraw { to { stroke-dashoffset:0; } }
+@keyframes atfade { to { opacity:1; } }
+.at-section { padding:70px 0 20px; }
+.at-section h2 { font-size:32px; margin-bottom:12px; }
+.at-lead { font-size:16px; max-width:760px; margin-bottom:28px; }
+.at-gallery { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px; margin-top:22px; }
+.at-gallery figure { margin:0; } .at-gallery img { width:100%; display:block; border:1px solid #e5e5e5; }
+.at-gallery figcaption { font-size:13px; padding-top:8px; color:#666; }
+.at-search { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+.at-search input { flex:1; padding:12px 16px; border:1px solid #d8d8d8; font-size:15px; outline:none; }
+.at-search input:focus { border-color:#d9a400; box-shadow:0 0 0 3px rgba(245,197,24,.25); }
+.at-search span { font-size:13px; color:#888; white-space:nowrap; }
+.at-areas { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+.at-areas button { border:1px solid #ddd; background:#fff; padding:7px 12px; font-size:13px; cursor:pointer; transition:all .15s; }
+.at-areas button b { color:#b58a00; margin-left:6px; font-weight:600; }
+.at-areas button[aria-selected="true"], .at-areas button:hover { background:#1e1f22; color:#fff; border-color:#1e1f22; }
+.at-areas button[aria-selected="true"] b, .at-areas button:hover b { color:#f5c518; }
+.at-list { list-style:none; padding:0; margin:0; columns:3 280px; column-gap:28px; }
+.at-list li { break-inside:avoid; padding:7px 0; border-bottom:1px solid #eee; font-size:14px; line-height:1.4; }
+.at-list li code { font-size:11px; color:#b58a00; background:#fff8dd; padding:1px 5px; margin-left:4px; }
+.at-list li small { display:block; color:#777; font-size:12px; margin-top:2px; }
+.at-steps .row > div { margin-bottom:24px; }
+.at-num { display:inline-flex; width:38px; height:38px; border-radius:50%; background:#1e1f22; color:#f5c518; align-items:center; justify-content:center; font-weight:700; margin-bottom:12px; }
+.at-tutorials { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:20px; }
+.at-tut { background:#1e1f22; color:#e6e6e6; border-radius:10px; overflow:hidden; }
+.at-tut video, .at-tut .at-tut-soon { width:100%; aspect-ratio:16/10; display:block; background:#101114; }
+.at-tut .at-tut-soon { display:flex; align-items:center; justify-content:center; color:#f5c518; font-size:36px; font-weight:700; }
+.at-tut div.t { padding:12px 14px 16px; } .at-tut h5 { color:#fff; font-size:15px; margin:0 0 4px; } .at-tut p { color:#9a9ca3; font-size:12px; margin:0; }
+.at-ai { background:#f7f7f5; padding:60px 40px; margin:70px 0 30px; }
+.at-code { margin:0; padding:18px 20px; font:13px/1.6 Menlo,Consolas,monospace; color:#e6e6e6; white-space:pre; overflow:auto; background:none; }
+.at-code b { color:#8c8e95; font-weight:normal; }
+@media (max-width:991px) { .at-stats-grid { grid-template-columns:repeat(2,1fr); } .at-plan { margin-top:24px; } }
+@media (prefers-reduced-motion: reduce) { .plan-anim .ps:not(.dashed) { stroke-dashoffset:0; } .plan-anim .pf, .plan-anim .pt, .plan-anim .dashed { opacity:1; } .plan-anim.play * { animation:none !important; } }
+
+.photo-editor-intro{text-align:center;max-width:860px;margin:0 auto 56px}
+.photo-editor-intro .editor-icon{width:92px;height:92px;border-radius:22px;box-shadow:0 12px 34px rgba(0,0,0,.22);margin:0 auto 22px;display:block}
+.photo-editor-intro h1{font-size:44px;margin-bottom:6px}
+.photo-editor-intro h4{color:#F5C518;font-weight:600;margin-bottom:18px}
+.photo-editor-intro p{font-size:17px;line-height:1.7}
+.editor-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:26px 0 14px}
+.editor-actions .btn{margin:0}
+.editor-shot{display:block;width:100%;height:auto;border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.28);margin:28px 0}
+.editor-download{text-align:center;padding:48px 24px;border-radius:18px;background:#111;color:#eee;margin:40px 0}
+.editor-download h2,.editor-download h3{color:#fff}
+.editor-download p{color:#c9c9c9}
+.editor-specs{width:100%;max-width:760px;margin:24px auto;border-collapse:collapse;text-align:left}
+.editor-specs th,.editor-specs td{padding:10px 14px;border-bottom:1px solid rgba(127,127,127,.25);vertical-align:top}
+.editor-specs th{width:36%;font-weight:600}
+.editor-faq{max-width:860px;margin:40px auto}
+.editor-faq details{border-bottom:1px solid rgba(127,127,127,.25);padding:14px 0}
+.editor-faq summary{cursor:pointer;font-weight:600;font-size:17px}
+.editor-faq details p{margin:10px 0 0}
+@media (max-width:767px){.photo-editor-intro h1{font-size:32px}}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const onView = (el, fn, opts) => { if (!el) return; const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { fn(); io.disconnect(); } }), opts || { threshold: .35 }); io.observe(el); };
+  // Counters
+  document.querySelectorAll('.at-stats [data-count]').forEach(el => {
+    const end = +el.dataset.count; if (reduce) return;
+    onView(el, () => { const t0 = performance.now(), d = 1400; const step = t => { const k = Math.min(1, (t - t0) / d); el.textContent = Math.round(end * (1 - Math.pow(1 - k, 3))).toLocaleString('en-US'); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); });
+  });
+  // Plan + terminal
+  const holder = document.getElementById('at-plan'), term = document.getElementById('at-term');
+  const script = [
+    ['OPEN "Cedar House.archi"', 'Opened Cedar House.archi — 55 building elements.'],
+    ['WALL 0,1500 @6000,0 @0,8500 @-6000,0 C', '4 walls · Limestone · 300 mm · height 6200'],
+    ['WALL 6000,0 @5000,0 @0,7500 @-5000,0', 'Cedar tower · 7200 mm'],
+    ['WINDOW  Width 1300  Height 5300  Sill 1600', 'Window strip hosted in wall #6'],
+    ['DOOR  Width 1100  Style Single', 'Pivot entrance door placed'],
+    ['SLAB Walls  Thickness 250', 'Floor slab 21.0 × 8.5 m'],
+    ['ROOF Kind Shed  Pitch 4  Overhang 1300', 'Roof plate with deep overhang'],
+    ['STAIR Top "Upper Floor"', '18 risers · 177.8 mm · rule check OK'],
+    ['ROOM Pick', 'Living 01 · 46.4 m²'],
+    ['DIMLINEAR  Architectural 1:100', 'Dimension 21000'],
+    ['COMPONENT Tree  Birch', '6 trees placed'],
+    ['VS Realistic', 'Sun: golden hour · shadows on']
+  ];
+  let run = 0;
+  function play() {
+    const my = ++run; if (term) term.innerHTML = '';
+    const svg = holder && holder.querySelector('svg'); if (svg) { svg.classList.remove('play'); void svg.getBoundingClientRect(); svg.classList.add('play'); }
+    if (!term) return;
+    let li = 0;
+    const next = () => {
+      if (my !== run || li >= script.length) { if (my === run) term.insertAdjacentHTML('beforeend', '<span class="c">Command:</span> <span class="cur"></span>'); return; }
+      const [cmd, out] = script[li++]; const line = document.createElement('div'); line.innerHTML = '<span class="c">Command:</span> '; term.appendChild(line); term.scrollTop = term.scrollHeight;
+      const txt = document.createElement('span'); line.appendChild(txt); let ci = 0;
+      const type = () => { if (my !== run) return; if (ci < cmd.length) { txt.textContent += cmd[ci++]; setTimeout(type, reduce ? 0 : 28 + Math.random() * 40); } else { const o = document.createElement('div'); o.className = 'o'; o.textContent = out; term.appendChild(o); term.scrollTop = term.scrollHeight; while (term.children.length > 14) term.removeChild(term.firstChild); setTimeout(next, reduce ? 0 : 380); } };
+      type();
+    };
+    next();
+  }
+  if (holder) fetch(holder.dataset.src).then(r => r.text()).then(t => { holder.innerHTML = t; onView(holder, play, { threshold: .25 }); }).catch(() => {});
+  const rb = document.getElementById('at-replay'); if (rb) rb.addEventListener('click', play);
+  // Feature explorer
+  const areasEl = document.getElementById('at-areas'), listEl = document.getElementById('at-list'), q = document.getElementById('at-q'), countEl = document.getElementById('at-count');
+  if (areasEl) fetch('downloads/archi-tool/features.json?v={{V}}').then(r => r.json()).then(data => {
+    const keys = Object.keys(data.areas); let current = keys[0];
+    const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const render = () => {
+      const term = (q.value || '').trim().toLowerCase(); let items = [];
+      if (term) keys.forEach(k => data.areas[k].items.forEach(it => { if ((it[0] + ' ' + it[1] + ' ' + it[2]).toLowerCase().includes(term)) items.push([...it, data.areas[k].name]); }));
+      else items = data.areas[current].items.map(it => [...it, '']);
+      [...areasEl.children].forEach(b => b.setAttribute('aria-selected', !term && b.dataset.k === current));
+      listEl.innerHTML = items.slice(0, 400).map(it => `<li><strong>${esc(it[0])}</strong>${it[1] && !/^[—–-]+$/.test(it[1].trim()) ? `<code>${esc(it[1].split(/[ (,]/)[0])}</code>` : ''}<small>${esc(it[3] ? it[3] + ' · ' : '')}${esc(it[2])}</small></li>`).join('') || '<li>No matching feature yet.</li>';
+      countEl.textContent = term ? `${items.length} found` : `${items.length} in ${data.areas[current].name}`;
+    };
+    areasEl.innerHTML = keys.map(k => `<button type="button" role="tab" data-k="${k}">${esc(data.areas[k].name)}<b>${data.areas[k].items.length}</b></button>`).join('');
+    areasEl.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; current = b.dataset.k; q.value = ''; render(); });
+    q.addEventListener('input', render); render();
+  }).catch(() => {});
+});
+</script>

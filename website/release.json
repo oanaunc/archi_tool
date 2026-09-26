@@ -1,16 +1,77 @@
 {
  "version": "1.0",
- "asset_version": "20260925b",
- "commands": 150,
- "formats": 10,
+ "asset_version": "20260926",
+ "commands": 1041,
+ "formats": 30,
  "size_mb": "13.3",
  "signing": "Developer ID-signed and notarized by Apple.",
- "note": "Preview build \u2014 25 September: drafting and editing, the command line, walls, doors, windows, floors, roofs, stairs and rooms, 3D views, rendering, sheets and PDF, DXF and IFC exchange, and scripting for AI agents. Updated builds follow as development continues.",
+ "note": "Preview build \u2014 the final 1.0 release with all features, realistic rendering and tutorials follows shortly.",
  "dmg": "Oanarina-Archi-Tool-1.0.0.dmg",
  "sha_short": "10ea21d8c070",
  "agent_doc": "downloads/archi-tool/AGENT-API.md",
- "imports": ".archi, DXF (R12\u2013R2018)",
- "exports": "PDF, DXF, SVG, PNG, IFC4, OBJ, STL, glTF (GLB), CSV schedules, .archi",
+ "imports": ".archi, DXF (R12\u2013R2018), IFC 2x3/4, Rhino 3DM, SketchUp (with converter), SVG, OBJ, STL, 3MF, glTF, GeoJSON, point clouds (XYZ, PTS, PLY, E57, LAS), images",
+ "exports": "PDF, DXF, SVG, PNG, IFC4 / IFC4.3, glTF (GLB), USDZ, OBJ, STL, 3MF, STEP, Collada, KML, Rhino 3DM, CSV and Excel schedules, BCF, MP4 walkthroughs, 360\u00b0 panoramas",
  "pending": false,
- "guide": false
+ "guide": false,
+ "features": 1114,
+ "total_features": 1157,
+ "tests": 945,
+ "source_public": false,
+ "gallery": [
+  {
+   "src": "images/apps/archi-tool/model-front.jpg",
+   "alt": "The Cedar House in the Realistic 3D view",
+   "caption": "The Cedar House, Realistic view"
+  }
+ ],
+ "tutorial_titles": [
+  [
+   "Getting started",
+   "The start screen, the interface and the sample house"
+  ],
+  [
+   "The command line",
+   "Commands, aliases and coordinates"
+  ],
+  [
+   "Drawing basics",
+   "Lines, snaps, trim, offset and fillet"
+  ],
+  [
+   "Levels and walls",
+   "Levels, wall types and clean joins"
+  ],
+  [
+   "Doors and windows",
+   "Hosted openings, types and sizes"
+  ],
+  [
+   "Floors, roofs and stairs",
+   "Slabs, roofs with overhangs and stairs"
+  ],
+  [
+   "Rooms and annotation",
+   "Areas, dimensions, text and tags"
+  ],
+  [
+   "3D and materials",
+   "Orbit, visual styles, materials and textures"
+  ],
+  [
+   "Rendering",
+   "Sun, presets, cameras and final images"
+  ],
+  [
+   "Sheets and PDF",
+   "Viewports at scale, title blocks, plotting"
+  ],
+  [
+   "Import and export",
+   "DXF, IFC, glTF and schedules"
+  ],
+  [
+   "Scripting and AI",
+   "JavaScript, plugins and AI agents over MCP"
+  ]
+ ]
 }

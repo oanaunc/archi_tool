@@ -1,0 +1,96 @@
+<section class="contact-area section-padding-100 bg-img bg-overlay has-bg-img editor-breadcrumb" style="background-image:url(images/apps/archi-tool/breadcrumb.png?v={{V}})">
+        <div class="container"><div class="row"><div class="col-12"><div class="section-heading white"><p>Architecture &amp; Design</p><h2>Archi Tool</h2></div></div></div></div>
+    </section>
+    <main class="album-catagory section-padding-100-0 at-page" id="main">
+    <div class="container">
+        <div class="photo-editor-intro">
+            <img class="editor-icon" src="images/apps/archi-tool/icon.png?v={{V}}" alt="Oanarina Archi Tool icon" width="92" height="92">
+            <h1>Oanarina Archi Tool</h1><h4>Draw it. Build it. See it.</h4>
+            <p>A free, native Mac studio for architecture: precise 2D drafting with a command line that speaks AutoCAD, intelligent building elements in the spirit of Revit, parametric 3D modelling, realistic rendering, sheets and printing — and an open door for AI agents that can design alongside you.</p>
+            <div class="editor-actions"><a href="#download" class="btn oneMusic-btn">Get the app <i class="fa fa-angle-double-right" aria-hidden="true"></i></a><a href="#watch" class="btn oneMusic-btn">Watch it draw</a><a href="#tutorials" class="btn oneMusic-btn">Tutorials</a></div>
+            <p class="at-badges"><span>Free</span><span>Open source · GPL-3.0</span><span>Apple silicon &amp; Intel</span><span>macOS 14+</span><span>No account</span></p>
+        </div>
+    </div>
+
+    <section class="at-stats" aria-label="Oanarina Archi Tool in numbers"><div class="container"><div class="at-stats-grid">
+        <div><strong data-count="{{FEATURES}}">{{FEATURES}}</strong><span>features built and tested</span></div>
+        <div><strong data-count="{{COMMANDS}}">{{COMMANDS}}</strong><span>commands, each on the command line</span></div>
+        <div><strong data-count="{{TESTS}}">{{TESTS}}</strong><span>automated tests on every build</span></div>
+        <div><strong data-count="{{FORMATS}}">{{FORMATS}}</strong><span>file formats in and out</span></div>
+        <div><strong>0&nbsp;€</strong><span>forever — no subscription</span></div>
+    </div></div></section>
+
+    <section id="watch" class="at-studio"><div class="container"><div class="row align-items-center">
+        <div class="col-12 col-lg-5">
+            <p class="at-kicker">Watch it draw</p>
+            <h2>Every line starts on the command line</h2>
+            <p>Type what you want to build. The plan on the right is the Cedar House, the sample project that ships with the app — exported straight from Oanarina Archi Tool and replayed here, wall by wall.</p>
+            <div class="at-term" aria-hidden="true"><div class="at-term-bar"><i></i><i></i><i></i><span>Command line</span></div><div class="at-term-body" id="at-term"></div></div>
+            <button type="button" class="at-replay" id="at-replay">↻ Replay</button>
+        </div>
+        <div class="col-12 col-lg-7"><div class="at-plan" id="at-plan" data-src="images/apps/archi-tool/plan-anim.svg?v={{V}}"></div></div>
+    </div></div></section>
+
+    <div class="container">
+        <section class="at-section">
+            <p class="at-kicker">One model, every view</p>
+            <h2>Plan and model side by side</h2>
+            <p class="at-lead">Walls, doors, windows, floors and roofs are real building elements. Draw them in 2D and they stand up in 3D — with materials, sun and shadows.</p>
+            <img class="editor-shot" src="images/apps/archi-tool/workspace.png?v={{V}}" alt="The Oanarina Archi Tool workspace with the Cedar House plan in 2D beside its realistic 3D model, the ribbon, properties panel and command line" loading="lazy">
+            {{GALLERY}}
+        </section>
+
+        <section id="features" class="at-section">
+            <p class="at-kicker">Everything an architect reaches for</p>
+            <h2>Explore {{FEATURES}} features</h2>
+            <p class="at-lead">Pick an area, or search for a command you know from AutoCAD, Revit, ArchiCAD, SketchUp or FreeCAD.</p>
+            <div class="at-search"><input id="at-q" type="search" placeholder="Search features — e.g. hatch, stair, IFC, fillet, render…" aria-label="Search features"><span id="at-count"></span></div>
+            <div class="at-areas" id="at-areas" role="tablist"></div>
+            <ul class="at-list" id="at-list" aria-live="polite"></ul>
+        </section>
+
+        <section class="at-section at-steps">
+            <p class="at-kicker">From idea to building</p>
+            <h2>Four steps, one app</h2>
+            <div class="row">
+                <div class="col-12 col-md-6 col-lg-3"><span class="at-num">1</span><h4>Draw the plan</h4><p>Levels, walls with real layer build-ups, doors and windows that cut their openings, rooms that find their own boundaries and areas.</p></div>
+                <div class="col-12 col-md-6 col-lg-3"><span class="at-num">2</span><h4>Shape it in 3D</h4><p>Floors, roofs of every shape, stairs between levels, curtain walls, terrain, parametric families and solid modelling.</p></div>
+                <div class="col-12 col-md-6 col-lg-3"><span class="at-num">3</span><h4>Render the light</h4><p>Sun for your site and hour, materials and textures, realistic views, walkthrough videos and 360° panoramas.</p></div>
+                <div class="col-12 col-md-6 col-lg-3"><span class="at-num">4</span><h4>Share the drawings</h4><p>Sheets with title blocks and viewports at scale, PDF, DXF, IFC for BIM, glTF, USDZ, OBJ and schedules for spreadsheets.</p></div>
+            </div>
+        </section>
+
+        <section id="tutorials" class="at-section">
+            <p class="at-kicker">Learn by watching</p>
+            <h2>Tutorials: build the Cedar House with me</h2>
+            <p class="at-lead">Short videos recorded inside the app, from the first click to the final render.</p>
+            <div class="at-tutorials">{{TUTORIALS}}</div>
+        </section>
+
+        <section class="at-section at-ai"><div class="row align-items-center">
+            <div class="col-12 col-lg-5">
+                <p class="at-kicker">Scripting &amp; AI agents</p>
+                <h2>Design together with an AI</h2>
+                <p>Everything you can click, you can type — and everything you can type, a script or an AI agent can do. Automate with the JavaScript console, visual node graphs and plugins, or connect Claude and other agents through the built-in Model Context Protocol server.</p>
+                <p><code>archi-cli --mcp ~/Documents/house.archi</code></p>
+            </div>
+            <div class="col-12 col-lg-7"><div class="at-term"><div class="at-term-bar"><i></i><i></i><i></i><span>JavaScript console</span></div><pre class="at-code"><b>// A row of houses, each one a real building element</b>
+for (let i = 0; i &lt; 4; i++) {
+  const x = i * 14000
+  const w = [[x,0],[x+10000,0],[x+10000,8000],[x,8000]]
+  w.forEach((p, k) =&gt; archi.wall(...p, ...w[(k+1)%4], { height: 3200 }))
+  archi.slab(w, { thickness: 250 })
+  archi.addElement({ type: "roof", boundary: w, kind: "gable", pitch: 35 })
+}
+archi.run("ZOOM E")</pre></div></div>
+        </div></section>
+
+        <section id="download" class="editor-download"><div class="row"><div class="col-12 col-lg-6"><h2>Get Oanarina Archi Tool</h2><p>Free architecture software for your Mac.</p><p id="release-status">{{STATUS}}</p><p>{{NOTE}}</p>{{BUTTON}}</div><div class="col-12 col-lg-6"><table class="editor-specs"><caption class="sr-only">System requirements and file formats</caption><tbody><tr><th scope="row">Platform</th><td>macOS 14 or later · Apple silicon and Intel</td></tr><tr><th scope="row">Price</th><td>Free · open source (GPL-3.0)</td></tr><tr><th scope="row">Opens</th><td>{{IMPORTS}}</td></tr><tr><th scope="row">Exports</th><td>{{EXPORTS}}</td></tr><tr><th scope="row">Projects</th><td>.archi</td></tr></tbody></table></div></div></section>
+        <p class="text-center">{{LINKS}}</p>
+        <section class="editor-faq mb-100"><div class="section-heading"><p>A few useful details</p><h2>Before you begin</h2></div>
+<details><summary>Is it really free?</summary><p>Yes. Oanarina Archi Tool is free software under the GNU General Public License 3.0: no account, no subscription and no watermark.</p></details>
+<details><summary>Can I open my AutoCAD, Revit or SketchUp work?</summary><p>Open and save DXF, the exchange format AutoCAD, LibreCAD and most CAD tools read and write; save DWG files as DXF first. Exchange building models as IFC with Revit, ArchiCAD and other BIM tools. Rhino 3DM files open directly; SketchUp files open through a free converter.</p></details>
+<details><summary>Does it work offline?</summary><p>Yes. Drawings and models stay on your Mac. The optional agent server listens only on your own computer and is off until you turn it on.</p></details>
+<details><summary>How complete is it?</summary><p>{{FEATURES}} of the {{TOTALFEATURES}} capabilities in the public feature register are built and tested. The remaining ones are marked openly in the register, most of them waiting for outside validation.</p></details>
+<details><summary>Who makes Oanarina Archi Tool?</summary><p>Oanarina Archi Tool is developed by Oana Rinaldi, with ideas drawn from the open-source FreeCAD, LibreCAD, IfcOpenShell, SolveSpace, OpenSCAD, BRL-CAD, Sverchok and CAD Sketcher communities.</p></details>
+<details><summary>How can I share feedback?</summary><p>Report a reproducible problem or suggest an improvement through the <a href="index.html#contact">contact page</a>. Include your macOS version and the steps that led to the problem.</p></details></section><p class="text-center mb-100"><a href="apps.html">← Back to all apps</a></p></div></main>
