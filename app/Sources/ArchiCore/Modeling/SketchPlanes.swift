@@ -19,6 +19,12 @@ public struct SketchPlane: Codable, Hashable {
         let x = xAxis - n * xAxis.dot(n)
         self.xAxis = x.length > 1e-9 ? x.normalized : Mesh.basis(n).0
     }
+    /// Face-hosted planes (M3D-084): the solid whose planar face carries the sketch, the origin's offset from that
+    /// face's centroid, and the host geometry signature the plane was last placed on. The plane follows the face
+    /// when the solid is moved, pushed or pulled (nil for free planes; absent in older files).
+    public var host: EntityID?
+    public var hostOffset: Vec3?
+    public var hostSig: String?
     public var yAxis: Vec3 { normal.cross(xAxis).normalized }
     public func world(_ p: Vec2, _ h: Double = 0) -> Vec3 { origin + xAxis * p.x + yAxis * p.y + normal * h }
     public func local(_ p: Vec3) -> Vec2 { let d = p - origin; return Vec2(d.dot(xAxis), d.dot(yAxis)) }
@@ -89,7 +95,7 @@ public enum Sketches {
     }
 
     static func signature(_ name: String, doc: ArchiDocument) -> String {
-        let p = plane(name, doc: doc).map { "\($0)" } ?? ""
+        let p = plane(name, doc: doc).map { "\($0.origin)|\($0.xAxis)|\($0.normal)" } ?? ""
         return p + "|" + entities(name, doc: doc).map { "\($0.id):\($0.geometry)" }.joined(separator: ";")
     }
 
@@ -102,12 +108,81 @@ public enum Sketches {
         return doc.add(e)
     }
 
-    public static func hasContent(_ doc: ArchiDocument) -> Bool { doc.entities.contains { $0.props["sketchPad"] != nil } }
+    public static func hasContent(_ doc: ArchiDocument) -> Bool {
+        doc.entities.contains { $0.props["sketchPad"] != nil } || (doc.variable(variable)?.contains("\"host\"") ?? false)
+    }
+
+    /// Planar face regions of a solid: (triangles, unit normal, area-weighted centroid, area).
+    static func faces(_ m: SubObjects.IM) -> [(tris: Set<Int>, normal: Vec3, centroid: Vec3, area: Double)] {
+        var seen = Set<Int>(), out: [(tris: Set<Int>, normal: Vec3, centroid: Vec3, area: Double)] = []
+        for f in 0..<(m.triangles.count / 3) where !seen.contains(f) {
+            let r = SubObjects.faceRegion(m, seed: f)
+            seen.formUnion(r)
+            var c = Vec3.zero, a = 0.0
+            for t in r {
+                let (p, q, w) = SubObjects.corners(m, t)
+                let ar = (q - p).cross(w - p).length / 2
+                c = c + (p + q + w) * (ar / 3); a += ar
+            }
+            guard a > 1e-12 else { continue }
+            out.append((r, SubObjects.normal(m, f), c / a, a))
+        }
+        return out
+    }
+
+    /// Hosts a plane on the face of solid `host` nearest to `point`: the plane records the face centroid offset.
+    public static func hosted(_ p: SketchPlane, on host: EntityID, doc: ArchiDocument) -> SketchPlane {
+        guard let s = ModelingCommands.solidOf(doc, host) else { return p }
+        let w = SolidOps.welded(s)
+        let fs = faces(w).filter { $0.normal.dot(p.normal) > 1 - 1e-6 && abs(($0.centroid - p.origin).dot(p.normal)) < 1e-6 * max(1, $0.centroid.length) + 1e-6 }
+        guard let f = fs.min(by: { $0.centroid.distance(to: p.origin) < $1.centroid.distance(to: p.origin) }) else { return p }
+        var q = p
+        q.host = host; q.hostOffset = p.origin - f.centroid; q.hostSig = "\(s)"
+        return q
+    }
+
+    /// Moves face-hosted planes with their faces after the host solid changed (the face with the closest normal and
+    /// centroid to the old one). Planes whose host was deleted become free planes.
+    @discardableResult
+    public static func followHosts(_ doc: inout ArchiDocument) -> Bool {
+        var planes = all(doc)
+        var changed = false
+        for i in planes.indices {
+            guard let hid = planes[i].host else { continue }
+            guard let s = ModelingCommands.solidOf(doc, hid) else { planes[i].host = nil; planes[i].hostOffset = nil; planes[i].hostSig = nil; changed = true; continue }
+            let sig = "\(s)"
+            if sig == planes[i].hostSig { continue }
+            let p = planes[i]
+            let off = p.hostOffset ?? .zero
+            let oldC = p.origin - off
+            let fs = faces(SolidOps.welded(s))
+            guard !fs.isEmpty else { continue }
+            let best = fs.max { a, b in
+                let da = a.normal.dot(p.normal), db = b.normal.dot(p.normal)
+                if abs(da - db) > 1e-6 { return da < db }
+                return a.centroid.distance(to: oldC) > b.centroid.distance(to: oldC)
+            }!
+            var np = SketchPlane(name: p.name, origin: best.centroid + off, xAxis: p.xAxis, normal: best.normal)
+            // Keep the origin on the face plane (the offset lies in the old plane).
+            np.origin = np.origin - np.normal * (np.origin - best.centroid).dot(np.normal)
+            np.host = hid; np.hostOffset = np.origin - best.centroid; np.hostSig = sig
+            planes[i] = np
+            changed = true
+        }
+        if changed { save(planes, doc: &doc) }
+        return changed
+    }
+
+    /// World-space polylines of a sketch object drawn on its (non-plan) work plane, for the 3D views.
+    public static func edges3D(_ e: Entity, doc: ArchiDocument) -> [[Vec3]]? {
+        guard let n = e.props[key], let p = plane(n, doc: doc), !p.isPlan else { return nil }
+        return GeometryOps.tessellate(e.geometry, doc: doc).filter { $0.count >= 2 }.map { $0.map { p.world($0) } }
+    }
 
     /// Rebuilds pads whose sketch changed.
     @discardableResult
     public static func updateAll(_ doc: inout ArchiDocument) -> Bool {
-        var changed = false
+        var changed = followHosts(&doc)
         for i in doc.entities.indices {
             guard let n = doc.entities[i].props["sketchPad"], let d = doc.entities[i].props["padDistance"].flatMap(Double.init) else { continue }
             let sig = signature(n, doc: doc)
@@ -160,7 +235,8 @@ enum SketchPlaneCommands {
                     let v0 = w.vertices[w.triangles[3 * f]]
                     let o = q - n * (q - v0).dot(n)
                     let x = abs(n.z) > 0.99 ? Vec3(1, 0, 0) : Vec3(0, 0, 1).cross(n)
-                    p = SketchPlane(name: name, origin: o, xAxis: x, normal: n)
+                    // Hosted on the face: the sketch follows it when the solid is edited (M3D-084).
+                    p = Sketches.hosted(SketchPlane(name: name, origin: o, xAxis: x, normal: n), on: pk.id, doc: ed.doc)
                 case "Line":
                     guard case .pick(let pk) = try await ed.pickObject("Select a line (the sketch x axis)", filter: { id in if case .line? = ed.doc.entity(id)?.geometry { return true }; return false }),
                           case .line(let l)? = ed.doc.entity(pk.id)?.geometry, l.a.distance(to: l.b) > 1e-9 else { return }

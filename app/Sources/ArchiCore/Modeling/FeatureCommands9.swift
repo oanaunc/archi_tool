@@ -44,10 +44,53 @@ enum FeatureCommands9 {
     // MARK: SCALE3D (M3D-106)
 
     static var scale3D: CommandDef {
-        CommandDef("SCALE3D", aliases: ["SCALENU", "SCALEXYZ"], category: "3D", summary: "Non-uniform scale of solids about a base point: separate X, Y and Z factors (negative factors mirror).") { ed in
+        CommandDef("SCALE3D", aliases: ["SCALENU", "SCALEXYZ"], category: "3D", summary: "Non-uniform scale of solids about a base point: separate X, Y and Z factors (negative factors mirror), or Handles: drag a bounding-box handle (corner, edge midpoint, Top/Bottom) about the opposite side or the Center, optionally Uniform.") { ed in
             let ids = try await ModelingCommands.selectSolids(ed, "Select solids to scale")
             guard !ids.isEmpty else { return }
-            let b = try await ed.requirePoint("Specify base point")
+            var box = BBox3.empty
+            for id in ids { if let s = ModelingCommands.solidOf(ed.doc, id) { let bb = ModelingCommands.bounds(s); if !bb.isEmpty { box.add(bb.min); box.add(bb.max) } } }
+            guard !box.isEmpty else { throw CommandError.invalid("The selection is empty.") }
+            let hs = max(box.size.x, box.size.y, 1) * 0.03
+            let first = try await ed.getPoint("Specify base point or [Handles]", keywords: ["Handles"]) { _ in ScaleHandles.planPreview(box, size: hs) }
+            if case .keyword("Handles") = first {
+                // Scale with handles (M3D-106): drag a bounding-box handle; the opposite side (or the centre) stays.
+                var center = false, uniform = false
+                var handle: ScaleHandles.Handle
+                while true {
+                    let r = try await ed.getPoint("Pick a handle (box corner or edge midpoint) or [Top/Bottom/Center/Uniform]", keywords: ["Top", "Bottom", "Center", "Uniform"]) { _ in ScaleHandles.planPreview(box, size: hs) }
+                    switch r {
+                    case .point(let p): handle = ScaleHandles.nearestPlan(p, box: box)
+                    case .keyword("Top"): handle = ScaleHandles.Handle(0, 0, 1)
+                    case .keyword("Bottom"): handle = ScaleHandles.Handle(0, 0, -1)
+                    case .keyword("Center"): center.toggle(); ed.print("Scale about the \(center ? "centre" : "opposite handle")."); continue
+                    case .keyword("Uniform"): uniform.toggle(); ed.print(uniform ? "Uniform (proportional) scale." : "Non-uniform scale."); continue
+                    default: return
+                    }
+                    break
+                }
+                let hp = handle.point(box)
+                var target: Vec3
+                if handle.sz != 0 {
+                    guard let z = try await ed.getDistance("New \(handle.sz > 0 ? "top" : "bottom") elevation", defaultValue: hp.z).value else { return }
+                    target = Vec3(hp.x, hp.y, z)
+                } else {
+                    let q = try await ed.requirePoint("Specify new position of the \(handle)", base: hp.xy) { p in
+                        guard let sc = ScaleHandles.scale(box: box, handle: handle, to: Vec3(p.x, p.y, hp.z), aboutCenter: center, uniform: uniform) else { return [] }
+                        return ScaleHandles.planPreview(ScaleHandles.scaled(box, origin: sc.origin, factors: sc.factors), size: hs)
+                    }
+                    target = Vec3(q.x, q.y, hp.z)
+                }
+                guard let sc = ScaleHandles.scale(box: box, handle: handle, to: target, aboutCenter: center, uniform: uniform) else { throw CommandError.invalid("The handle cannot collapse the selection.") }
+                let f = sc.factors
+                for id in ids {
+                    guard let s = ModelingCommands.solidOf(ed.doc, id) else { continue }
+                    ModelingCommands.replace(ed, id, with: SolidOps.mapped(s, mirroring: f.x * f.y * f.z < 0) { ScaleHandles.map($0, origin: sc.origin, factors: f) })
+                }
+                ed.selection = []
+                ed.print("\(ids.count) solid(s) scaled by \(fmt(f.x)) × \(fmt(f.y)) × \(fmt(f.z)) with the \(handle).")
+                return
+            }
+            guard case .point(let b) = first else { return }
             let bz = try await ed.getDistance("Specify base point elevation", defaultValue: z(ed)).value ?? 0
             let fx = try await ed.getReal("Scale factor X", defaultValue: 1).value ?? 1
             let fy = try await ed.getReal("Scale factor Y", defaultValue: fx).value ?? fx

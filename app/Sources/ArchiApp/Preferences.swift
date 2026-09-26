@@ -350,6 +350,9 @@ private struct GeneralPrefs: View {
             Button("Show Recovery Folder") { NSWorkspace.shared.activateFileViewerSelecting([AutosaveManager.folder]) }
                 .buttonStyle(FlatButtonStyle(compact: true))
         }
+        PrefSection(title: "Crash reports") {
+            CrashReportToggle()
+        }
         PrefSection(title: "Recent files") {
             Stepper("Remember \(prefs.recentLimit) documents", value: $prefs.recentLimit, in: 1...50)
             Button("Clear Recent Documents") { RecentFiles.clear() }.buttonStyle(FlatButtonStyle(compact: true))

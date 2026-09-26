@@ -10,5 +10,5 @@ extension CommandCatalog {
         c12("Corner Window", "square.split.bottomrightquarter", "CORNERWINDOW"), c12("Roof Join", "house", "ROOFJOIN"), c12("Mechanism Simulation", "gearshape.2", "MECHANISM"), c12("Scripted Component", "curlybraces.square", "SCRIPTCOMPONENT"),
         c12("Sketch Environment", "pencil.and.ruler", "SKETCHPAD"), c12("Sketch Plane", "square.and.pencil", "SKETCHPLANE"),
     ]
-    static var coverageMenus8: [(String, [CmdItem])] { lateRound11.isEmpty ? [] : [("Adaptive, Corners & Roofs", lateRound11)] }
+    static var coverageMenus8: [(String, [CmdItem])] { (lateRound11.isEmpty ? [] : [("Adaptive, Corners & Roofs", lateRound11)]) + coverageMenus9 }
 }

@@ -105,7 +105,9 @@ final class AppleScriptBridge: NSObject {
         guard let m = AutomationURL.front() else {
             reply.setParam(NSAppleEventDescriptor(string: "No drawing is open."), forKeyword: keyErrorString); return
         }
-        let suspended = NSAppleEventManager.shared().suspendCurrentAppleEvent()
+        // Fire-and-forget events ("ignoring application responses") run without holding the event; others get the output.
+        let wantsReply = event.attributeDescriptor(forKeyword: AEKeyword(keyReplyRequestedAttr))?.booleanValue ?? true
+        let suspended = wantsReply ? NSAppleEventManager.shared().suspendCurrentAppleEvent() : nil
         Task { @MainActor in
             var out: [String] = []
             for l in AppleScriptBridge.lines(text) { out += await m.editor.run(l) }

@@ -81,6 +81,7 @@ enum LayeredPDF {
     }
 
     static func build(doc: ArchiDocument, pages: [Page], title: String, compress: Bool = true) -> Output {
+        AppRenderInfo.register(doc)
         let layerOf = layerMap(doc), links = hyperlinks(doc)
         // Layer order: document order of the layers used, then the sheet pseudo-layer.
         var used = Set<String>()
@@ -97,6 +98,10 @@ enum LayeredPDF {
 
         let catalog = reserve(), pagesObj = reserve(), font = reserve(), info = reserve()
         set(font, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")
+        // Bold / oblique faces for formatted text (ANN-003): F2 bold, F3 oblique, F4 bold oblique.
+        let styledFonts = ["Helvetica-Bold", "Helvetica-Oblique", "Helvetica-BoldOblique"].map { name -> Int in
+            let n = reserve(); set(n, "<< /Type /Font /Subtype /Type1 /BaseFont /\(name) /Encoding /WinAnsiEncoding >>"); return n
+        }
         var ocg: [String: Int] = [:]
         for (i, l) in order.enumerated() { let n = reserve(); ocg[l] = n; set(n, "<< /Type /OCG /Name \(pdfString(l)) >>"); _ = i }
         let ocRef = { (l: String) in "/L\(order.firstIndex(of: l) ?? 0)" }
@@ -116,6 +121,7 @@ enum LayeredPDF {
                     for e in part.entries where (e.id.flatMap { layerOf[$0] } ?? sheetLayer) == layer {
                         var r = part.renderer
                         if let ep = r.entryPen, let id = e.id, let pen = ep(id) { r.activePen = pen }
+                        r.textFormat = e.id.flatMap { AppRenderInfo.textFormats[$0] }
                         for it in e.items { partChunk += emit(it, r, gs: &gs, images: &images, reserve: reserve, setData: setData) }
                         if let id = e.id, let url = links[id], !e.bounds.isEmpty, linked.insert(id).inserted {
                             let a = part.renderer.point(e.bounds.min), b = part.renderer.point(e.bounds.max)
@@ -143,7 +149,7 @@ enum LayeredPDF {
             let w = page.widthMM * Plotter.pointsPerMM, h = page.heightMM * Plotter.pointsPerMM
             let p = reserve()
             set(p, "<< /Type /Page /Parent \(pagesObj) 0 R /MediaBox [0 0 \(num(w)) \(num(h))] /Contents \(stream) 0 R"
-                + " /Resources << /Font << /F1 \(font) 0 R >> /Properties << \(props) >>" + (ext.isEmpty ? "" : " /ExtGState << \(ext) >>") + (xo.isEmpty ? "" : " /XObject << \(xo) >>") + " >>"
+                + " /Resources << /Font << /F1 \(font) 0 R /F2 \(styledFonts[0]) 0 R /F3 \(styledFonts[1]) 0 R /F4 \(styledFonts[2]) 0 R >> /Properties << \(props) >>" + (ext.isEmpty ? "" : " /ExtGState << \(ext) >>") + (xo.isEmpty ? "" : " /XObject << \(xo) >>") + " >>"
                 + (annots.isEmpty ? "" : " /Annots [\(annots.map { "\($0) 0 R" }.joined(separator: " "))]") + " >>")
             pageRefs.append(p)
         }
@@ -238,13 +244,18 @@ enum LayeredPDF {
         guard h > 0.2, h < 20000, !t.content.isEmpty else { return "" }
         let capRatio: CGFloat = 0.718
         let size = h / capRatio
-        let font = CTFontCreateWithName("Helvetica" as CFString, size, nil)
+        let fmt = r.textFormat
+        let bold = fmt?.bold ?? false, italic = fmt?.italic ?? false
+        let resource = bold && italic ? "F4" : bold ? "F2" : italic ? "F3" : "F1"
+        let font = CTFontCreateWithName((bold && italic ? "Helvetica-BoldOblique" : bold ? "Helvetica-Bold" : italic ? "Helvetica-Oblique" : "Helvetica") as CFString, size, nil)
         func width(_ s: String) -> CGFloat {
             CGFloat(CTLineGetTypographicBounds(CTLineCreateWithAttributedString(NSAttributedString(string: s, attributes: [NSAttributedString.Key(kCTFontAttributeName as String): font])), nil, nil, nil))
         }
         let paragraphs = t.content.replacingOccurrences(of: "\\P", with: "\n").components(separatedBy: "\n")
         var lines: [String] = []
-        let wrap = CGFloat(t.width) * r.scaleFactor
+        let shape = AppRenderInfo.shape(t)
+        let wf = CGFloat(shape?.widthFactor ?? 1), sl = CGFloat(tan(shape?.oblique ?? 0))
+        let wrap = CGFloat(t.width) * r.scaleFactor / max(wf, 0.01)
         for para in paragraphs {
             guard wrap > 0 else { lines.append(para); continue }
             var cur = ""
@@ -264,14 +275,25 @@ enum LayeredPDF {
         }
         let o = r.point(t.position), a = CGFloat(t.rotation) + r.rotation
         let ca = cos(a), sa = sin(a)
-        var s = "q BT /F1 \(num(size)) Tf \(color) rg\n"
+        var s = "q BT /\(resource) \(num(size)) Tf \(color) rg\n"
+        var underlines = ""
         for (i, line) in lines.enumerated() where !line.isEmpty {
             let w = width(line)
             let x: CGFloat = t.halign == .left ? 0 : (t.halign == .center ? -w / 2 : -w)
             let y = first - CGFloat(i) * spacing
-            s += "\(num(ca)) \(num(sa)) \(num(-sa)) \(num(ca)) \(num(o.x + ca * x - sa * y)) \(num(o.y + sa * x + ca * y)) Tm <\(hex(line))> Tj\n"
+            // Text style width factor and obliquing (ANN-004): glyph matrix [wf tan; 0 1] after the rotation.
+            let lx = wf * x + sl * y
+            s += "\(num(ca * wf)) \(num(sa * wf)) \(num(ca * sl - sa)) \(num(sa * sl + ca)) \(num(o.x + ca * lx - sa * y)) \(num(o.y + sa * lx + ca * y)) Tm <\(hex(line))> Tj\n"
+            if fmt?.underline == true {
+                let uy = y - h * 0.2, uh = max(h * 0.07, 0.1)
+                let pts = [(x, uy), (x + w, uy), (x + w, uy + uh), (x, uy + uh)].map { p -> (CGFloat, CGFloat) in
+                    let gx = wf * p.0 + sl * p.1
+                    return (o.x + ca * gx - sa * p.1, o.y + sa * gx + ca * p.1)
+                }
+                underlines += "\(num(pts[0].0)) \(num(pts[0].1)) m " + pts.dropFirst().map { "\(num($0.0)) \(num($0.1)) l" }.joined(separator: " ") + " h f\n"
+            }
         }
-        return s + "ET Q\n"
+        return s + "ET\n" + (underlines.isEmpty ? "" : "\(color) rg\n" + underlines) + "Q\n"
     }
 
     // MARK: Encoding

@@ -24,6 +24,8 @@ struct PlotRenderer {
     var colorMode: PlotColorMode = .color
     /// Colour-dependent plot style table (pen colour, lineweight, screening per ACI colour), applied before `colorMode`.
     var penTable: PlotStyleTable?
+    /// Whole-text formatting of the entry being drawn (bold, italic, underline, font — ANN-003).
+    var textFormat: AppRenderInfo.TextFormat?
 
     /// Applies a page setup (colour mode, lineweight scale, plot style table of the document).
     mutating func apply(_ setup: PageSetup, doc: ArchiDocument) {
@@ -83,8 +85,12 @@ struct PlotRenderer {
                 let r = CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(b.x - a.x), height: abs(b.y - a.y)).insetBy(dx: -2, dy: -2)
                 if !r.intersects(v) { continue }
             }
+            let format = e.id.flatMap { AppRenderInfo.textFormats[$0] }
             if let ep = entryPen, let id = e.id, let pen = ep(id) {
-                var r = self; r.activePen = pen
+                var r = self; r.activePen = pen; r.textFormat = format
+                for item in e.items { r.draw(item, in: ctx) }
+            } else if format != nil {
+                var r = self; r.textFormat = format
                 for item in e.items { r.draw(item, in: ctx) }
             } else {
                 for item in e.items { draw(item, in: ctx) }
@@ -140,9 +146,15 @@ struct PlotRenderer {
         }
     }
 
-    func drawText(_ t: TextGeom, font fontName: String, color: CGColor, in ctx: CGContext) {
+    func drawText(_ t: TextGeom, font requested: String, color: CGColor, in ctx: CGContext) {
         let h = CGFloat(t.height) * scaleFactor
         guard h > 0.4, h < 20000, !t.content.isEmpty else { return }
+        var fontName = textFormat?.font.map(RenderScene.fontName) ?? requested
+        var syntheticItalic = false
+        if let f = textFormat, f.bold || f.italic {
+            let st = AppRenderInfo.styledFont(RenderScene.fontName(fontName), bold: f.bold, italic: f.italic)
+            fontName = st.name; syntheticItalic = st.syntheticItalic
+        }
         let probe = CTFontCreateWithName(fontName as CFString, 100, nil)
         let capRatio = max(0.5, CTFontGetCapHeight(probe) / 100)
         let font = CTFontCreateWithName(fontName as CFString, h / capRatio, nil)
@@ -153,7 +165,8 @@ struct PlotRenderer {
         // Paragraphs: "\n" or MTEXT "\P".
         let paragraphs = t.content.replacingOccurrences(of: "\\P", with: "\n").components(separatedBy: "\n")
         var lines: [String] = []
-        let wrap = CGFloat(t.width) * scaleFactor
+        let shape = AppRenderInfo.shape(t)
+        let wrap = CGFloat(t.width) * scaleFactor / CGFloat(max(shape?.widthFactor ?? 1, 0.01))
         for para in paragraphs {
             guard wrap > 0 else { lines.append(para); continue }
             var cur = ""
@@ -176,6 +189,9 @@ struct PlotRenderer {
         let origin = point(t.position)
         ctx.translateBy(x: origin.x, y: origin.y)
         ctx.rotate(by: CGFloat(t.rotation) + rotation)
+        var g = shape.map(AppRenderInfo.glyphTransform) ?? .identity
+        if syntheticItalic { g.c += CGFloat(AppRenderInfo.syntheticItalicSlant) }
+        if !g.isIdentity { ctx.concatenate(g) }
         ctx.textMatrix = .identity
         for (i, s) in lines.enumerated() where !s.isEmpty {
             let line = makeLine(s)
@@ -183,19 +199,25 @@ struct PlotRenderer {
             let x: CGFloat = t.halign == .left ? 0 : (t.halign == .center ? -w / 2 : -w)
             ctx.textPosition = CGPoint(x: x, y: firstBaseline - CGFloat(i) * spacing)
             CTLineDraw(line, ctx)
+            if textFormat?.underline == true {
+                ctx.setFillColor(color)
+                ctx.fill(CGRect(x: x, y: firstBaseline - CGFloat(i) * spacing - h * 0.2, width: w, height: max(h * 0.07, 0.1)))
+            }
         }
         ctx.restoreGState()
     }
 
     func drawImage(_ im: ImageGeom, in ctx: CGContext) {
         guard let img = NSImage(contentsOfFile: (im.path as NSString).expandingTildeInPath),
-              let cg = img.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+              let cg0 = img.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
             // Missing image: draw a crossed frame.
             let corners = [im.origin, im.origin + Vec2(im.size.x, 0), im.origin + im.size, im.origin + Vec2(0, im.size.y)].map { $0.rotated(by: im.rotation, around: im.origin) }
             draw(.stroke(points: corners, closed: true, style: ArchiCore.StrokeStyle(color: RGBA(0.6, 0.6, 0.6), lineweight: 0.18)), in: ctx)
             draw(.stroke(points: [corners[0], corners[2]], closed: false, style: ArchiCore.StrokeStyle(color: RGBA(0.6, 0.6, 0.6), lineweight: 0.13)), in: ctx)
             return
         }
+        // Pixel adjustment only when the draw list was built with the renderer applying pixels (no veils then).
+        let cg = ImageDisplay.rendererAppliesPixels ? (AppRenderInfo.adjustedImage(cg0, path: im.path, background: paper ? RGBA(1, 1, 1) : DraftRendering.screenBackground) ?? cg0) : cg0
         ctx.saveGState()
         let o = point(im.origin)
         ctx.translateBy(x: o.x, y: o.y)
@@ -515,6 +537,11 @@ enum Plotter {
     }
 
     @MainActor static func writePDF(doc: ArchiDocument, to url: URL, layoutIndex: Int?, level: Int?) throws {
+        AppRenderInfo.register(doc)
+        try AppRenderInfo.withPixels { try writePDFBody(doc: doc, to: url, layoutIndex: layoutIndex, level: level) }
+    }
+
+    @MainActor private static func writePDFBody(doc: ArchiDocument, to url: URL, layoutIndex: Int?, level: Int?) throws {
         if let li = layoutIndex, doc.layouts.indices.contains(li) {
             let layout = doc.layouts[li]
             var box = CGRect(x: 0, y: 0, width: layout.paper.width * pointsPerMM, height: layout.paper.height * pointsPerMM)
@@ -638,6 +665,11 @@ enum Plotter {
 
     /// PNG of the plan (agent screenshots): dark screen colors or white paper.
     @MainActor static func planPNG(doc: ArchiDocument, level: Int?, width: Int, height: Int, paper: Bool, highlight: Set<EntityID> = []) -> Data? {
+        AppRenderInfo.register(doc)
+        return AppRenderInfo.withPixels { planPNGBody(doc: doc, level: level, width: width, height: height, paper: paper, highlight: highlight) }
+    }
+
+    @MainActor private static func planPNGBody(doc: ArchiDocument, level: Int?, width: Int, height: Int, paper: Bool, highlight: Set<EntityID>) -> Data? {
         let w = max(16, min(width, 8192)), h = max(16, min(height, 8192))
         guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
                                   space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }

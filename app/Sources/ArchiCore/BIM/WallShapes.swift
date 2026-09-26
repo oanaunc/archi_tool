@@ -18,6 +18,88 @@ enum WallShapes {
         }
     }
 
+    /// Offset map of a wall's local t at absolute height z (identity for vertical, untapered walls).
+    static func tMap(_ el: BIMElement, doc: ArchiDocument) -> (Double, Double) -> Double {
+        guard case .wall(let g) = el.geometry, g.isSlantedOrTapered else { return { t, _ in t } }
+        let r = BIMConstraints.wallRange(el, doc: doc)
+        let height = max(r.z1 - r.z0, 1e-9)
+        let tanA = tan((g.slant ?? 0) * .pi / 180)
+        let t0 = max(g.thickness, 1e-9), t1 = max(g.topThickness ?? g.thickness, 1e-6)
+        return { t, z in
+            let dz = min(max(z - r.z0, 0), height)
+            return t * (t0 + (t1 - t0) * dz / height) / t0 + dz * tanA
+        }
+    }
+
+    /// Join-aware shape map of a wall (BIM-023 clean joins): body points shift across the wall by its own slant/taper;
+    /// points in a joined end zone that lie inside a neighbouring wall's band go to the intersection of both walls'
+    /// shifted lines, so mitres, butt and T-joins stay closed at every height — also for a vertical wall whose
+    /// neighbour leans. nil when neither the wall nor any wall joined at its ends is slanted or tapered.
+    static func jointMapper(_ f: WallFrame, el: BIMElement, ctx: BIMContext) -> ((Vec2, Double) -> Vec2)? {
+        guard ctx.hasShapedWalls else { return nil }
+        let doc = ctx.doc
+        let tol = ctx.tol
+        let own = tMap(el, doc: doc)
+        var ends: [(P: Vec2, reach: Double, nb: [(WallFrame, (Double, Double) -> Double)])] = []
+        var anyShaped = f.g.isSlantedOrTapered
+        if !f.isCurved {
+            for (P, D) in [(f.cs, f.g.start), (f.ce, f.g.end)] {
+                var nb: [(WallFrame, (Double, Double) -> Double)] = []
+                for (_, b) in ctx.frames where b.id != f.id && b.level == f.level && !b.isCurved {
+                    let near = [b.cs, b.ce, b.g.start, b.g.end].contains { $0.distance(to: P) <= 2 * tol || $0.distance(to: D) <= 2 * tol }
+                    let pr = b.project(P)
+                    let host = pr.s > -tol && pr.s < b.L + tol && abs(pr.t) <= b.h + tol
+                    guard near || host, let bel = doc.element(b.id) else { continue }
+                    if b.g.isSlantedOrTapered { anyShaped = true }
+                    nb.append((b, tMap(bel, doc: doc)))
+                }
+                let reach = 8 * max(f.h, nb.map { $0.0.h }.max() ?? 0) + tol
+                ends.append((P, reach, nb))
+            }
+        }
+        guard anyShaped else { return nil }
+        return { p, z in
+            let (s, t) = f.project(p)
+            let tA = own(t, z)
+            if !f.isCurved {
+                var best: (score: Double, q: Vec2)? = nil
+                for e in ends where p.distance(to: e.P) <= e.reach {
+                    for (b, bm) in e.nb {
+                        let pb = b.project(p)
+                        guard abs(pb.t) <= b.h + tol, pb.s > -b.h * 8 - tol, pb.s < b.L + b.h * 8 + tol else { continue }
+                        let score = abs(abs(pb.t) - b.h)
+                        if let bs = best, bs.score <= score { continue }
+                        let tB = bm(pb.t, z)
+                        let a0 = f.cs + f.dir.perp * tA, b0 = b.cs + b.dir.perp * tB
+                        guard let x = GeometryOps.lineIntersection(a0, a0 + f.dir, b0, b0 + b.dir) else { continue }
+                        best = (score, x)
+                    }
+                }
+                if let b = best { return b.q }
+            }
+            return f.pt(s, tA)
+        }
+    }
+
+    /// Applies a shape map (see `jointMapper`) to a wall mesh (positions, feature edges; normals recomputed per face).
+    static func shape(_ acc: inout MeshAcc, map m: (Vec2, Double) -> Vec2) {
+        guard !acc.mesh.isEmpty || !acc.edges.isEmpty else { return }
+        let old = acc.mesh
+        var out = MeshAcc()
+        var i = 0
+        while i + 2 < old.indices.count {
+            let v = [old.positions[Int(old.indices[i])], old.positions[Int(old.indices[i + 1])], old.positions[Int(old.indices[i + 2])]].map { p -> Vec3 in
+                let q = m(p.xy, p.z); return Vec3(q.x, q.y, p.z) }
+            i += 3
+            let n = (v[1] - v[0]).cross(v[2] - v[0])
+            guard n.length > 1e-14 else { continue }
+            let nn = n.normalized
+            out.tri(v[0], v[1], v[2], nn, nn, nn)
+        }
+        out.edges = acc.edges.map { $0.map { p in let q = m(p.xy, p.z); return Vec3(q.x, q.y, p.z) } }
+        acc = out
+    }
+
     /// Applies slant/taper to a wall mesh (positions, feature edges; normals recomputed per face).
     static func shape(_ acc: inout MeshAcc, _ g: WallGeom, f: WallFrame, zBase: Double, height: Double) {
         guard let m = mapper(g, f: f, zBase: zBase, height: height), !acc.mesh.isEmpty else { return }

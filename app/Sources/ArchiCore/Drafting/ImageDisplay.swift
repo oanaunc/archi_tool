@@ -122,6 +122,47 @@ public enum ImageDisplay {
         return RGBA(ch(c.r, background.r), ch(c.g, background.g), ch(c.b, background.b), c.a)
     }
 
+    /// Whether an adjustment needs per-pixel processing by the renderer (contrast above 50 cannot be expressed with
+    /// veils). Renderers that support it apply `lookupTables` to the decoded pixels and skip `veils` entirely.
+    /// Set by a renderer that applies `lookupTables` to images needing pixel processing; `items` then omits the veils
+    /// for those images so the adjustment is not applied twice.
+    nonisolated(unsafe) public static var rendererAppliesPixels = false
+
+    public static func needsPixelProcessing(_ a: Adjustment) -> Bool { a.contrast > 50 + 1e-9 }
+
+    /// 256-entry lookup tables (red, green, blue) that realise an adjustment exactly on 8-bit pixels; identical to
+    /// `adjusted(_:_:background:)` per channel. Alpha is unchanged.
+    public static func lookupTables(_ a: Adjustment, background: RGBA) -> [[UInt8]] {
+        [background.r, background.g, background.b].enumerated().map { ch, _ in
+            (0..<256).map { v -> UInt8 in
+                let x = Double(v) / 255
+                let c = adjusted(RGBA(x, x, x), a, background: background)
+                let o = ch == 0 ? c.r : ch == 1 ? c.g : c.b
+                return UInt8(max(0, min(255, (o * 255).rounded())))
+            }
+        }
+    }
+
+    /// Applies an adjustment in place to interleaved 8-bit pixels (`channels` = 3 RGB or 4 RGBA/RGBX, colour first;
+    /// premultiplied alpha is un-premultiplied and re-premultiplied when `premultiplied` is true).
+    public static func apply(_ a: Adjustment, background: RGBA, to pixels: inout [UInt8], channels: Int = 4, premultiplied: Bool = false) {
+        guard channels >= 3, !a.isDefault else { return }
+        let lut = lookupTables(a, background: background)
+        var i = 0
+        while i + channels <= pixels.count {
+            let alpha = channels >= 4 ? Int(pixels[i + 3]) : 255
+            for c in 0..<3 {
+                var v = Int(pixels[i + c])
+                if premultiplied && channels >= 4 {
+                    guard alpha > 0 else { break }
+                    v = min(255, (v * 255 + alpha / 2) / alpha)
+                    pixels[i + c] = UInt8((Int(lut[c][v]) * alpha + 127) / 255)
+                } else { pixels[i + c] = lut[c][v] }
+            }
+            i += channels
+        }
+    }
+
     /// Composites veils over a colour the way the renderers do (source-over).
     public static func composite(_ c: RGBA, veils: [(RGBA, Double)]) -> RGBA {
         var r = c
@@ -131,16 +172,30 @@ public enum ImageDisplay {
 
     // MARK: Drawing
 
+    /// Adjustment of the image entity that produced an `ImageGeom` draw item (matched by path, origin and size).
+    public static func adjustment(for im: ImageGeom, doc: ArchiDocument) -> Adjustment? {
+        for e in doc.entities {
+            guard case .image(let g) = e.geometry, g.path == im.path, g.origin.isClose(im.origin, tol: 1e-6), g.size.isClose(im.size, tol: 1e-6) else { continue }
+            let a = adjustment(e)
+            return a.isDefault ? nil : a
+        }
+        return nil
+    }
+
     /// Lightest grey that paper output keeps (lighter colours print black).
     public static let paperWhite = 0.9
     public static func background(_ options: DrawOptions) -> RGBA { options.forPaper ? RGBA(1, 1, 1) : DraftRendering.screenBackground }
 
-    /// Draw items of an image with clipping / adjustment.
+    /// Draw items of an image with clipping / adjustment. Veils approximate the adjustment for renderers without pixel
+    /// access; with contrast above 50 (`needsPixelProcessing`) renderers should instead apply `lookupTables` to the
+    /// image of the entity, which they can find through `adjustment(for:doc:)`.
     public static func items(_ e: Entity, _ im: ImageGeom, doc: ArchiDocument, options: DrawOptions, color: RGBA) -> [DrawItem] {
         let bg = background(options)
         let rect = frame(im)
         var out: [DrawItem] = [.image(im)]
-        for (c, a) in veils(adjustment(e), background: bg) {
+        let adj = adjustment(e)
+        let pixelDone = rendererAppliesPixels && needsPixelProcessing(adj)
+        for (c, a) in pixelDone ? [] : veils(adj, background: bg) {
             // Paper output prints near-white colours black (ACI 7); white veils are drawn in the lightest printable grey.
             let v = options.forPaper && c.r > 0.9 && c.g > 0.9 && c.b > 0.9 ? RGBA(paperWhite, paperWhite, paperWhite) : c
             out.append(.fill(loops: [rect], color: RGBA(v.r, v.g, v.b, a)))

@@ -544,7 +544,8 @@ final class FileController: EditorHost {
         let doc = model.doc
         var opts = DrawOptions(level: doc.currentLevel)
         opts.forPaper = true
-        let scene = RenderScene(DrawListBuilder.entries(doc: doc, options: opts))
+        AppRenderInfo.register(doc)
+        let scene = RenderScene(AppRenderInfo.withPixels { DrawListBuilder.entries(doc: doc, options: opts) })
         guard !scene.bounds.isNull, scene.bounds.width.isFinite else { throw ExportError(errorDescription: "The drawing is empty.") }
         let b = scene.bounds.insetBy(dx: -max(scene.bounds.width, scene.bounds.height) * 0.03, dy: -max(scene.bounds.width, scene.bounds.height) * 0.03)
         let extent = max(b.width, b.height, 1e-9)

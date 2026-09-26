@@ -164,6 +164,10 @@ enum RenderEngine {
         c.whiteBalanceTemperature = CGFloat(settings.whiteBalance)
         c.screenSpaceAmbientOcclusionIntensity = CGFloat(settings.ambientOcclusion)
         c.screenSpaceAmbientOcclusionRadius = 0.45
+        if let ao = AOForm.viewport(doc) {
+            c.screenSpaceAmbientOcclusionIntensity = max(c.screenSpaceAmbientOcclusionIntensity, ao.intensity)
+            c.screenSpaceAmbientOcclusionRadius = ao.radius
+        }
         c.vignettingIntensity = 0.3
         c.vignettingPower = 0.6
         c.fieldOfView = 45

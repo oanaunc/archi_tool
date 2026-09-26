@@ -136,7 +136,7 @@ public enum GeometryOps {
         case .spline(let s): return [splinePoints(s)]
         case .hatch(let h): return h.loops.map { polylinePoints($0, closed: true) }
         case .leader(let l): return [l.points]
-        case .text(let t): return [textBoxCorners(t) + [textBoxCorners(t)[0]]]
+        case .text(let t): let c = doc.map { TextStyleFonts.boxCorners(t, doc: $0) } ?? textBoxCorners(t); return [c + [c[0]]]
         case .dimension(let d): return [DimensionRenderer.definitionPoints(d)]
         case .image(let im):
             let t = Transform2D.translation(im.origin) * Transform2D.rotation(im.rotation)
@@ -166,10 +166,11 @@ public enum GeometryOps {
     }
 
     /// Approximate text box (for picking/bounds) — width estimated at 0.6 × height per character.
-    public static func textBoxCorners(_ t: TextGeom) -> [Vec2] {
+    /// Corners of a text object's box; `widthFactor` (text style) widens unwrapped text.
+    public static func textBoxCorners(_ t: TextGeom, widthFactor: Double = 1) -> [Vec2] {
         let lines = t.content.components(separatedBy: "\n")
         let longest = Double(lines.map(\.count).max() ?? 0)
-        let w = t.width > 0 ? t.width : longest * t.height * 0.62
+        let w = t.width > 0 ? t.width : longest * t.height * 0.62 * (widthFactor > 0 ? widthFactor : 1)
         let h = t.height * (1 + 1.5 * Double(lines.count - 1))
         var x0 = 0.0, y0 = 0.0
         switch t.halign { case .left: x0 = 0; case .center: x0 = -w / 2; case .right: x0 = -w }
@@ -221,7 +222,7 @@ public enum GeometryOps {
         switch g {
         case .circle(let c): return abs(p.distance(to: c.center) - c.radius)
         case .text(let t):
-            let box = textBoxCorners(t)
+            let box = doc.map { TextStyleFonts.boxCorners(t, doc: $0) } ?? textBoxCorners(t)
             if pointInPolygon(p, box) { return 0 }
             return distance(from: p, toPolyline: box + [box[0]])
         case .hatch(let h):
@@ -301,6 +302,8 @@ public enum GeometryOps {
         switch g {
         case .circle(let c): return 2 * .pi * c.radius
         case .arc(let a): return a.radius * a.sweep
+        case .polyline(let p): return polylineLength(p)
+        case .ellipse(let e): return ellipseLength(e)
         default:
             return tessellate(g, doc: doc).reduce(0) { acc, pl in
                 acc + zip(pl, pl.dropFirst()).reduce(0) { $0 + $1.0.distance(to: $1.1) }
@@ -312,12 +315,11 @@ public enum GeometryOps {
         switch g {
         case .circle(let c): return .pi * c.radius * c.radius
         case .ellipse(let e) where e.isFull: return .pi * e.majorAxis.length * e.majorAxis.length * e.ratio
-        case .polyline(let p) where p.closed: return abs(signedArea(polylinePoints(p)))
+        case .polyline(let p) where p.closed: return abs(signedArea(p.vertices))
         case .spline(let s) where s.closed: return abs(signedArea(splinePoints(s)))
         case .hatch(let h):
-            let loops = h.loops.map { abs(signedArea(polylinePoints($0, closed: true))) }.sorted(by: >)
-            guard let outer = loops.first else { return nil }
-            return outer - loops.dropFirst().reduce(0, +)
+            guard !h.loops.isEmpty else { return nil }
+            return hatchRegions(h).reduce(0) { $0 + ($1.hole ? -$1.area : $1.area) }
         default: return nil
         }
     }

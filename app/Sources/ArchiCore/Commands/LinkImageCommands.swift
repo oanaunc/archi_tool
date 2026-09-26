@@ -4,7 +4,7 @@ import Foundation
 /// Image clipping / adjustment (DRW-085/086), tag label templates (ANN-080), linked BIM models (BLK-035) and
 /// copy/monitor from links (BLK-036).
 public enum LinkImageCommands {
-    static var all: [CommandDef] { [imageClip, imageAdjust, imageFrame, tagLabel, modelLink, copyMonitor, materialHatch, materialPattern] }
+    static var all: [CommandDef] { [imageClip, imageAdjust, imageFrame, tagLabel, modelLink, copyMonitor, materialHatch, materialPattern, floorPattern] }
 
     // MARK: Images
 
@@ -271,6 +271,35 @@ public enum LinkImageCommands {
             let value: String? = p.caseInsensitiveCompare("None") == .orderedSame ? nil : p
             guard MaterialPatterns.setPattern(m.name, kind: kind, pattern: value, doc: &ed.doc) else { throw CommandError.invalid("Unknown pattern \(p).") }
             ed.print("\(m.name) \(kind.rawValue) pattern: \(value?.uppercased() ?? "none").")
+        }
+    }
+    static var floorPattern: CommandDef {
+        CommandDef("FLOORPATTERN", aliases: ["FLOORPAT", "SURFACEPATTERN"], category: "Annotate",
+                   summary: "Shows the surface pattern of floor materials in plan: select slabs (or All on the current level); Remove deletes the patterns. The patterns follow slab, wall and material changes.") { ed in
+            let k = try await ed.getKeyword("Floor surface patterns", ["Select", "All", "Remove"], defaultValue: "Select") ?? "Select"
+            var slabs: [EntityID] = []
+            if k == "All" {
+                slabs = ed.doc.elements.filter { el in if case .slab = el.geometry, el.level == ed.doc.currentLevel { return true }; return false }.map(\.id)
+            } else {
+                let sel = try await ed.getSelection("Select floors (slabs)")
+                slabs = sel.filter { id in if case .slab? = ed.doc.element(id)?.geometry { return true }; return false }
+                if k == "Remove" {
+                    let fromSlabs = Set(slabs.map(String.init))
+                    let ids = Set(ed.doc.entities.filter { e in
+                        guard let s = e.props[FloorPatterns.prop] else { return false }
+                        return fromSlabs.contains(s) || sel.contains(e.id)
+                    }.map(\.id))
+                    ed.doc.remove(ids: ids)
+                    ed.print("\(ids.count) floor pattern(s) removed.")
+                    return
+                }
+            }
+            guard !slabs.isEmpty else { throw CommandError.invalid("No floors selected.") }
+            var n = 0
+            for id in slabs where FloorPatterns.create(for: id, doc: &ed.doc) != nil { n += 1 }
+            FloorPatterns.updateAll(&ed.doc)
+            let missing = Set(slabs.compactMap { ed.doc.element($0) }.compactMap(FloorPatterns.material(of:)).filter { MaterialPatterns.surfacePattern($0, doc: ed.doc) == nil })
+            ed.print("\(n) floor pattern(s)." + (missing.isEmpty ? "" : " No surface pattern yet for: \(missing.sorted().joined(separator: ", ")) (set one with MATPATTERN)."))
         }
     }
 }

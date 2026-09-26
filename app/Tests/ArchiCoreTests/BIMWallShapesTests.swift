@@ -62,4 +62,47 @@ final class BIMWallShapesTests: XCTestCase {
         await ed.run("WINDOW 3000,0 ")
         XCTAssertLessThan(vol(ed, id), 6000 * 3000 * 150 - 1e8)
     }
+
+    /// BIM-023 clean joins: walls joined to a slanted wall follow it, so corners stay closed at every height.
+    func testSlantedWallJoinsStayClean() async throws {
+        let ed = Editor()
+        await ed.run("WALL 0,0 6000,0 ")
+        await ed.run("WALL 6000,0 9000,3000 ")
+        let a = ed.doc.elements[0].id, b = ed.doc.elements[1].id
+        ed.selection = [a]
+        await ed.run("WALLTOP Slant 10")
+        func top(_ id: EntityID) -> [Vec3] {
+            MeshBuilder.groups(for: ed.doc.element(id)!, doc: ed.doc).filter { $0.kind == "wall" }.flatMap(\.mesh.positions)
+                .filter { abs($0.z - 3000) < 1e-6 && $0.xy.distance(to: Vec2(6000, 0)) < 1500 }
+        }
+        let ta = top(a), tb = top(b)
+        XCTAssertFalse(ta.isEmpty); XCTAssertFalse(tb.isEmpty)
+        // Every corner vertex of the slanted wall at the top has a matching vertex on the joined wall.
+        for p in ta where p.x > 5000 {
+            XCTAssertLessThan(tb.map { $0.distance(to: p) }.min() ?? .infinity, 1e-6, "corner vertex \(p) is matched")
+        }
+        // The joined (vertical) wall's corner moved with the lean at the top but not at the base.
+        let shift = 3000 * tan(10 * Double.pi / 180)
+        XCTAssertGreaterThan(tb.map(\.y).min() ?? 0, -100 + shift - 150)
+        let base = MeshBuilder.groups(for: ed.doc.element(b)!, doc: ed.doc)[0].mesh.positions.filter { abs($0.z) < 1e-6 }
+        XCTAssertLessThan(base.map(\.y).min() ?? 0, 1e-6)
+        // Plan at the cut plane: both walls meet at the same corner points.
+        func planPts(_ id: EntityID) -> [Vec2] {
+            PlanRepresentation.items(ed.doc.element(id)!, doc: ed.doc).compactMap { if case .fill(let l, _) = $0 { return l.flatMap { $0 } }; return nil }.flatMap { $0 }
+        }
+        let pa = planPts(a).filter { $0.x > 5500 }, pb = planPts(b)
+        XCTAssertFalse(pa.isEmpty)
+        for p in pa { XCTAssertLessThan(pb.map { $0.distance(to: p) }.min() ?? .infinity, 1e-6) }
+        // A T-join into a tapered wall: the butting wall ends on the thinner face at the top.
+        let ed2 = Editor()
+        await ed2.run("WALL 0,0 6000,0 ")
+        await ed2.run("WALL 3000,3000 3000,0 ")
+        let host = ed2.doc.elements[0].id, stem = ed2.doc.elements[1].id
+        ed2.selection = [host]
+        await ed2.run("WALLTOP Taper 100")
+        let stemTop = MeshBuilder.groups(for: ed2.doc.element(stem)!, doc: ed2.doc)[0].mesh.positions.filter { abs($0.z - 3000) < 1e-6 }
+        XCTAssertEqual(stemTop.map(\.y).min() ?? 0, 50, accuracy: 1e-6)
+        let stemBase = MeshBuilder.groups(for: ed2.doc.element(stem)!, doc: ed2.doc)[0].mesh.positions.filter { abs($0.z) < 1e-6 }
+        XCTAssertEqual(stemBase.map(\.y).min() ?? 0, 100, accuracy: 1e-6)
+    }
 }

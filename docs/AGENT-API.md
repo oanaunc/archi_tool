@@ -109,10 +109,10 @@ Tools:
 | `update_entity` | `id`, `patch` | modify an entity/element |
 | `delete` | `ids` | delete |
 | `save` | `path?` | save as `.archi` (default: the opened file) |
-| `export` | `path`, `format?`, `level?` | dxf, dxf12, svg, ifc, ifczip, obj, stl, glb, 3mf, usda, usdz, step, ply, plt (HP-GL/2), xlsx, csv, geojson, points, analytical, opensees (Tcl), gbxml, cobie, dae, fbx, igs (IGES), dgn (V7), laser (CNC/laser SVG), html (read-only viewer), archit (git-friendly text), dwg (converter needed), archi |
+| `export` | `path`, `format?`, `level?` | dxf, dxf12, svg, ifc, ifczip, obj, stl, glb, 3mf, usda, usdz, step, ply, plt (HP-GL/2), xlsx, csv, geojson, points, analytical, opensees (Tcl), gbxml, cobie, dae, fbx, igs (IGES), dgn (V7), laser (CNC/laser SVG), html (read-only viewer), archit (git-friendly text), 3dm (Rhino, version 4 archive), dwg (converter needed), archi |
 | `list_commands` | `category?` | available commands |
 | `undo` | – | undo last change |
-| `import_file` | `path`, `format?`, `offset?` | merge .archi, .archit, .dxf, .dwg (converter), .ifc/.ifczip, .svg, .obj, .stl, .3mf, .gltf/.glb, .fbx, .usd/.usda/.usdz, .igs/.iges, .dgn (V7), .pdf (vectors and text), .dwfx, .ply, .off, .amf, .dae, .step, .geojson, .cityjson, .shp, .osm, .asc, .xlsx, CSV points, XYZ/PTS or LAS point clouds into the document |
+| `import_file` | `path`, `format?`, `offset?` | merge .archi, .archit, .dxf, .dwg (converter), .ifc/.ifczip, .svg, .obj, .stl, .3mf, .gltf/.glb, .fbx, .usd/.usda/.usdz, .igs/.iges, .dgn (V7), .pdf (vectors and text), .dwfx, .ply, .off, .amf, .dae, .step, .geojson, .cityjson, .shp, .osm, .asc, .xlsx, CSV points, XYZ/PTS or LAS point clouds, .3dm (Rhino 2–8), .skp (SketchUp, converter needed) into the document |
 | `takeoff` | `level?`, `format?` (json, csv) | quantity takeoff of walls, slabs, roofs, columns, beams, openings and spaces |
 | `cost_estimate` | `prices?`, `path?`, `format?` | cost of the takeoff from unit rates (inline, a JSON file, or the drawing's UNITPRICE rates) |
 | `room_schedule` | `level?`, `format?` | rooms with net/gross area, perimeter, height and volume |
@@ -591,3 +591,24 @@ tessellated geometry and assembly placements (mapped items, transformed represen
 | PDF output without the app (`archi-cli --out plan.pdf`, `--convert pdf`, batch/automation outputs, MCP `export` pdf) | `PDFWriter`: every sheet with content plotted at true scale on its paper (viewports clipped, paper-space annotation, title block), or the current level's plan on A3 at the largest standard scale that fits; plotted line weights and dashes, even-odd fills, Helvetica text, embedded JPEGs. `PDFWriter.objects(doc, ids:)` makes a PDF of a selection (Copy as PDF) |
 | IFC export of imported objects | objects imported from IFC as meshes (props `ifcType` / `ifcGuid`) are exported again as their IFC class (or `IfcBuildingElementProxy` with the class in ObjectType when the target schema lacks it) with their original GlobalId, so import → export keeps every product's GlobalId |
 | Drag and drop / paste | dropped GeoJSON, shapefiles, OSM, CityJSON, terrain grids, point clouds, survey point tables and world-file images keep their georeferenced position (project location) instead of the drop point (`ExternalContent.isGeoreferenced`); pasted GeoJSON text is placed on the map the same way |
+
+## 14. Rhino 3DM and SketchUp (IO-044, IO-043)
+
+- **Import `.3dm`** (`import_file`, `IMPORTFILE`, `RHINOIN`/`3DMIN`, the Import dialog, `archi-cli model.3dm --out …`):
+  3DM versions 2–8. Meshes; B-reps from Rhino's cached render meshes, or — when the file was saved without them, or with
+  `RHINOIN` → `Tessellate` — by tessellating each trimmed face (NURBS, plane, revolution and sum surfaces; trim loops
+  sampled in the parameter plane, constrained Delaunay triangulation); lightweight extrusions (capped, with holes);
+  untrimmed surfaces; curves (lines, arcs and circles, polylines and NURBS splines stay exact when parallel to XY, else
+  3D polylines with `vertexZ`); points and point clouds; blocks (instance definitions, nested) are exploded. Layers keep
+  full `Parent::Child` names, colours, visibility and locking; object colours, V4/V5 render materials and the unit
+  system (scaled into the drawing units). Props: `rhinoId`, `rhinoType`, `name`, `material`.
+- **Export `.3dm`** (`export` with `format: "3dm"`, `RHINOOUT`/`3DMOUT`, `--out model.3dm`, batch jobs): a version 4
+  archive (opens in Rhino 4–8): unit system and tolerances, layers, the 3D model as meshes with normals coloured by
+  material (object colour, name "Element — Material"), drafting curves as exact lines, arcs/circles, polylines (bulges as
+  poly curves of lines and arcs), NURBS splines and hatch boundaries at their elevation. Text, dimensions, tables and
+  images are not written. `Rhino3DM.exportWithReport(doc)` returns counts.
+- **SketchUp `.skp`**: the format is closed (only Trimble's proprietary SDK reads it), so `import_file` identifies the
+  file (`SketchUpImport.header` → version) and converts it with a user-installed converter named by the `SKPCONVERTER`
+  variable or `ARCHI_SKP_CONVERTER` environment variable, run as `converter input.skp output.dae` (it may write .dae,
+  .3dm, .obj, .fbx or .gltf); the output goes through the matching importer. Without one the error explains how to
+  export COLLADA or 3DM from SketchUp. `SketchUpImport.preview(data)` returns the embedded PNG thumbnail if present.

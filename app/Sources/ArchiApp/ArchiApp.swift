@@ -63,6 +63,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         PaperZoom.installZoomHook()
         OnlineLookups.install()
         AppleScriptBridge.shared.install()
+        CrashReporter.install()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { MainActor.assumeIsolated { if CrashReporter.enabled { CrashReporter.offerPendingReports() } } }
         LaunchArguments.apply(LaunchArguments.parse(Array(CommandLine.arguments.dropFirst())))
         _ = AppPreferences.shared
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { e in
@@ -81,6 +83,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        CrashReporter.uninstall()
         MainActor.assumeIsolated {
             // A normal quit: the user already decided about unsaved changes.
             for m in AppModel.all { m.autosave?.stop() }
@@ -233,14 +236,14 @@ struct ArchiCommands: Commands {
 
     @ViewBuilder private func menuItems(_ items: [CmdItem]) -> some View {
         ForEach(items) { item in
-            Button(item.title) { run(item) }
+            Button(L10n.t(item.title)) { run(item) }
                 .disabled(model?.command(item.names) == nil)
         }
     }
 
     @ViewBuilder private func extraMenu(_ i: Int) -> some View {
         ForEach(CommandCatalog.extraMenus[i].1, id: \.0) { name, items in
-            Section(name) { menuItems(items) }
+            Section(L10n.t(name)) { menuItems(items) }
         }
     }
 
@@ -256,7 +259,7 @@ struct ArchiCommands: Commands {
         CommandGroup(replacing: .newItem) {
             Button("New Drawing") { openWindow(value: DocumentRequest(kind: .start)) }
                 .keyboardShortcut("n")
-            Menu("New from Template") {
+            Menu(L10n.t("New from Template")) {
                 Button("Metric Drawing (mm)") { openWindow(value: DocumentRequest(kind: .blankMetric)) }
                 Button("Imperial Drawing (in)") { openWindow(value: DocumentRequest(kind: .blankImperial)) }
                 Button("Building (levels, grid, sheets)") { openWindow(value: DocumentRequest(kind: .building)) }
@@ -273,7 +276,7 @@ struct ArchiCommands: Commands {
             }
             Button("Open…") { openFromMenu() }
                 .keyboardShortcut("o")
-            Menu("Open Recent") {
+            Menu(L10n.t("Open Recent")) {
                 ForEach(RecentFiles.urls, id: \.self) { u in
                     Button(u.lastPathComponent) {
                         if let m = model { m.files.openURL(u) } else { openWindow(value: DocumentRequest(kind: .open, path: u.path)) }
@@ -296,16 +299,16 @@ struct ArchiCommands: Commands {
             Button("Import…") { model?.files.importPanel() }
                 .keyboardShortcut("i", modifiers: [.command, .shift])
                 .disabled(model == nil)
-            Menu("Insert") { menuItems(CommandCatalog.importItems + CommandCatalog.referenceItems) }
+            Menu(L10n.t("Insert")) { menuItems(CommandCatalog.importItems + CommandCatalog.referenceItems) }
                 .disabled(model == nil)
-            Menu("Export") {
+            Menu(L10n.t("Export")) {
                 ForEach(ExportFormat.all, id: \.ext) { f in
                     Button("\(f.title)…") { model?.files.export(format: f.ext, path: nil) }
                 }
                 Divider()
                 menuItems(CommandCatalog.exportItems)
                 Divider()
-                Menu("Schedules (CSV)") {
+                Menu(L10n.t("Schedules (CSV)")) {
                     ForEach(ScheduleExporter.kinds, id: \.self) { k in
                         Button("\(k.capitalized)…") { model?.files.export(format: "csv:\(k)", path: nil) }
                     }
@@ -374,9 +377,9 @@ struct ArchiCommands: Commands {
                 .keyboardShortcut("a", modifiers: [.command, .shift])
             Button("Quick Select…") { model?.sheet = .quickSelect }
                 .disabled(model == nil)
-            Menu("Selection Tools") { menuItems(CommandCatalog.selection) }
+            Menu(L10n.t("Selection Tools")) { menuItems(CommandCatalog.selection) }
                 .disabled(model == nil)
-            Menu("Groups & Isolation") { menuItems(CommandCatalog.groups) }
+            Menu(L10n.t("Groups & Isolation")) { menuItems(CommandCatalog.groups) }
                 .disabled(model == nil)
             Button("Match Properties") { model?.runCommand("MATCHPROP") }
                 .disabled(model == nil)
@@ -399,12 +402,12 @@ struct ArchiCommands: Commands {
             Button("Zoom In") { model?.canvas?.zoomBy(1.5) }.keyboardShortcut("=")
             Button("Zoom Out") { model?.canvas?.zoomBy(1 / 1.5) }.keyboardShortcut("-")
             Button("Zoom Window") { model?.zoomWindowPending = true; model?.canvas?.focus() }
-            Menu("Visual Style") {
+            Menu(L10n.t("Visual Style")) {
                 ForEach(Scene3DBuilder.visualStyles, id: \.self) { s in
                     Button(s) { model?.files.handle(.setViewStyle(s)) }
                 }
             }
-            Menu("3D View") {
+            Menu(L10n.t("3D View")) {
                 ForEach(["Top", "Front", "Right", "Back", "Left", "Iso"], id: \.self) { v in Button(v) { model?.files.handle(.setView(v)) } }
             }
             Divider()
@@ -418,13 +421,13 @@ struct ArchiCommands: Commands {
             Button("History Panel") { model?.showPanels = true; model?.panelTab = .history }
             Button("Sheet Set Manager") { model?.showPanels = true; model?.panelTab = .sheets }
             Button("Tool Palettes") { model?.showPanels = true; model?.panelTab = .tools }
-            Menu("Float Panel") {
+            Menu(L10n.t("Float Panel")) {
                 ForEach(PanelTab.allCases) { t in Button(t.rawValue) { if let m = model { FloatingPanels.float(t, model: m) } } }
             }
             .disabled(model == nil)
             Button("Material Library…") { if let m = model { MaterialLibraryWindow.show(model: m) } }.disabled(model == nil)
             Button("Layer States…") { model?.sheet = .layerStates }
-            Menu("Workspace") {
+            Menu(L10n.t("Workspace")) {
                 ForEach(Workspaces.all) { w in
                     Button(w.name) { if let m = model { Workspaces.apply(w, to: m) } }
                 }
@@ -433,7 +436,7 @@ struct ArchiCommands: Commands {
             }
             .disabled(model == nil)
             Button((model?.cleanScreen ?? false) ? "Exit Clean Screen" : "Clean Screen") { model?.cleanScreen.toggle() }
-            Menu("3D Tools") {
+            Menu(L10n.t("3D Tools")) {
                 Button("View Cube") { model?.showViewCube.toggle() }
                 Button("Section Box") { if let m = model { if m.mode == .plan || m.mode == .sheet { m.mode = .model }; m.showSectionBoxPanel.toggle() } }
                 Button("Sun Study") { if let m = model { if m.mode == .plan || m.mode == .sheet { m.mode = .model }; m.showSunStudy.toggle() } }
@@ -445,29 +448,29 @@ struct ArchiCommands: Commands {
                 .keyboardShortcut("j", modifiers: [.command, .option])
             Divider()
         }
-        CommandMenu("Draw") { menuItems(CommandCatalog.draw) }
-        CommandMenu("Modify") { menuItems(CommandCatalog.modify) }
-        CommandMenu("Annotate") { menuItems(CommandCatalog.text + CommandCatalog.dimensions) }
-        CommandMenu("Architecture") {
+        CommandMenu(L10n.t("Draw")) { menuItems(CommandCatalog.draw) }
+        CommandMenu(L10n.t("Modify")) { menuItems(CommandCatalog.modify) }
+        CommandMenu(L10n.t("Annotate")) { menuItems(CommandCatalog.text + CommandCatalog.dimensions) }
+        CommandMenu(L10n.t("Architecture")) {
             menuItems(CommandCatalog.build + CommandCatalog.spaces)
             Divider()
-            Menu("More Building Tools") { menuItems(CommandCatalog.buildMore) }
-            Menu("Rooms & Areas") { menuItems(CommandCatalog.roomsMore) }
-            Menu("Documentation") { menuItems(CommandCatalog.documentation) }
+            Menu(L10n.t("More Building Tools")) { menuItems(CommandCatalog.buildMore) }
+            Menu(L10n.t("Rooms & Areas")) { menuItems(CommandCatalog.roomsMore) }
+            Menu(L10n.t("Documentation")) { menuItems(CommandCatalog.documentation) }
         }
-        CommandMenu("Model") {
+        CommandMenu(L10n.t("Model")) {
             extraMenu(0)
             Divider()
             Button("Node Editor…") { if let m = model { NodeEditorWindow.show(model: m) } }.disabled(model == nil)
         }
-        CommandMenu("Analyze") { extraMenu(1) }
-        CommandMenu("Tools") {
+        CommandMenu(L10n.t("Analyze")) { extraMenu(1) }
+        CommandMenu(L10n.t("Tools")) {
             ForEach(CommandCatalog.coverageMenus, id: \.0) { name, items in
-                Menu(name) { menuItems(items) }
+                Menu(L10n.t(name)) { menuItems(items) }
             }
-            Menu("System Variables") { menuItems(CommandCatalog.variableItems) }
+            Menu(L10n.t("System Variables")) { menuItems(CommandCatalog.variableItems) }
             Divider()
-            Menu("All Commands") {
+            Menu(L10n.t("All Commands")) {
                 let reg = CommandRegistry.shared
                 let groups = Dictionary(grouping: reg.sorted, by: \.category).sorted { $0.key < $1.key }
                 ForEach(groups, id: \.key) { cat, list in
@@ -501,7 +504,7 @@ struct ArchiCommands: Commands {
             Divider()
             Button("Connect Claude…") { model?.sheet = .connectClaude }
                 .disabled(model == nil)
-            Button("Oanarina Website") { if let u = URL(string: "https://oanarina.com") { NSWorkspace.shared.open(u) } }
+            Button("Oana Rinaldi Website") { if let u = URL(string: "https://www.oanarinaldi.com") { NSWorkspace.shared.open(u) } }
         }
     }
 }

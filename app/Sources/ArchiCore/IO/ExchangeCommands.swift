@@ -5,7 +5,7 @@ import Foundation
 
 public enum ExchangeCommands {
     public static var all: [CommandDef] { [dwgIn, dwgOut, dwgConverter, stepIn, stepOut, plyOut, pointCloudImport, shpImport, osmImport, demImport,
-                                           hpglOut, xlsxOut, xlsxIn, ifcZipOut, gbxmlOut, cobieOut, daeOut, cityJSONImport, idsCheck] }
+                                           hpglOut, xlsxOut, xlsxIn, ifcZipOut, gbxmlOut, cobieOut, daeOut, cityJSONImport, idsCheck, rhinoIn, rhinoOut] }
 
     @MainActor static func addEntities(_ ed: Editor, _ ents: [Entity]) -> [EntityID] {
         var ids: [EntityID] = []

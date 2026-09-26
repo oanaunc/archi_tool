@@ -182,7 +182,11 @@ public enum MeshBuilder {
     }
 
     public static func groups(for e: Entity, doc: ArchiDocument) -> [MeshGroup] {
-        entityGroups(e.geometry, id: e.id, layer: e.layer, props: e.props, doc: doc, depth: 0)
+        // Sketch objects on a 3D work plane (M3D-084) are drawn on that plane.
+        if e.props[Sketches.key] != nil, let ed = Sketches.edges3D(e, doc: doc) {
+            return ed.isEmpty ? [] : [MeshGroup(id: e.id, kind: "sketch", material: "Datum", mesh: Mesh(), edges: ed)]
+        }
+        return entityGroups(e.geometry, id: e.id, layer: e.layer, props: e.props, doc: doc, depth: 0)
     }
 
     // MARK: Elements
@@ -283,9 +287,9 @@ public enum MeshBuilder {
                 acc = WallShapes.trim(acc, to: cutter); acc.edges = pe
                 for k in plyAcc.indices { plyAcc[k] = WallShapes.trim(plyAcc[k], to: cutter); plyAcc[k].edges = pe }
             }
-            if g.isSlantedOrTapered {
-                WallShapes.shape(&acc, g, f: f, zBase: z0, height: z1 - z0)
-                for k in plyAcc.indices { WallShapes.shape(&plyAcc[k], g, f: f, zBase: z0, height: z1 - z0) }
+            if let m = WallShapes.jointMapper(f, el: el, ctx: ctx) {
+                WallShapes.shape(&acc, map: m)
+                for k in plyAcc.indices { WallShapes.shape(&plyAcc[k], map: m) }
             }
             // Reveals (BIM-021) are grooves cut into the faces.
             let reveals = g.sweeps.filter(\.isReveal)

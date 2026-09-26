@@ -141,6 +141,13 @@ public enum PlanRepresentation {
     // MARK: Items
 
     static func items(_ el: BIMElement, ctx: BIMContext, options: DrawOptions) -> [DrawItem] {
+        let base = categoryItems(el, ctx: ctx, options: options)
+        // Object styles (LAY-033): project-wide category line weights, colours and cut fills.
+        guard let os = ObjectStyles.style(for: el, doc: ctx.doc) else { return base }
+        return ObjectStyles.apply(os, to: base)
+    }
+
+    static func categoryItems(_ el: BIMElement, ctx: BIMContext, options: DrawOptions) -> [DrawItem] {
         let doc = ctx.doc
         let color = layerColor(el, doc)
         let u = unit(doc)
@@ -523,7 +530,7 @@ public enum PlanRepresentation {
             fills.append(.fill(loops: [pc.poly], color: fill))
             if options.cutHatches && !coarse {
                 for ply in plies {
-                    let pat = doc.material(ply.material)?.cutPattern ?? "SOLID"
+                    let pat = ObjectStyles.style("wall", doc: doc)?.cutPattern ?? doc.material(ply.material)?.cutPattern ?? "SOLID"
                     guard pat.uppercased() != "SOLID", HatchPatterns.names.contains(pat.uppercased()) else { continue }
                     if f.isCurved && plies.count > 1 { continue }
                     let origin = f.pt(0, ply.tlo)
@@ -575,10 +582,11 @@ public enum PlanRepresentation {
         }
         var all = fills + patterns + lines
         // Slanted/tapered walls (BIM-023) are drawn where the plan cut plane passes through them.
-        if f.g.isSlantedOrTapered {
+        // Walls joined to them follow, so corners stay clean at the cut height.
+        if let m = WallShapes.jointMapper(f, el: el, ctx: ctx) {
             let range = BIMConstraints.wallRange(el, doc: doc)
             let zc = (doc.level(options.level ?? el.level)?.elevation ?? 0) + BIMConstraints.cutHeight(doc)
-            if let m = WallShapes.mapper(f.g, f: f, zBase: range.z0, height: range.z1 - range.z0) {
+            do {
                 let z = min(max(zc, range.z0), range.z1)
                 all = all.map { it in
                     switch it {

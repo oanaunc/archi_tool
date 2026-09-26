@@ -214,7 +214,9 @@ final class AssistantSession: ObservableObject {
                 self.messages.append(AssistantMessage(role: .assistant, text: reply.text.isEmpty ? "(commands only)" : reply.text, commands: reply.commands))
                 if !reply.commands.isEmpty { await self.propose(reply.commands) }
             } catch {
-                self.messages.append(AssistantMessage(role: .system, text: "Request failed: \(error.localizedDescription)"))
+                let why: String
+                if case CommandError.invalid(let m) = error { why = m } else { why = error.localizedDescription }
+                self.messages.append(AssistantMessage(role: .system, text: "Request failed: \(why)"))
             }
         }
     }

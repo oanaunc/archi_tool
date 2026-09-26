@@ -3,6 +3,7 @@ import Foundation
 import AppKit
 import SceneKit
 import PDFKit
+import Network
 import ArchiCore
 
 /// Self-test checks of the navigation, selection, sheet, view and help additions (APP, SEL, SHT, VIS, SCR).
@@ -706,5 +707,39 @@ extension AppSelfTests {
         let la = rpc("call_tool", ["name": "level_areas", "arguments": [String: Any]()])
         check(la?["result"] != nil, "agent server calls a tool (level_areas)")
         check(rpc("list_prompts", [:])?["result"] is [Any], "agent server lists prompts")
+    }
+}
+
+/// One-shot JSON HTTP server on 127.0.0.1 for self-tests (a stand-in for a local model server, SCR-035).
+final class MockHTTPServer {
+    var replies: [String] = []
+    var requests: [[String: Any]] = []
+    let listener: NWListener
+    init?() {
+        let params = NWParameters.tcp
+        params.requiredLocalEndpoint = NWEndpoint.hostPort(host: "127.0.0.1", port: .any)
+        guard let l = try? NWListener(using: params) else { return nil }
+        listener = l
+        l.newConnectionHandler = { [weak self] c in c.start(queue: .main); self?.read(c, Data()) }
+        l.start(queue: .main)
+    }
+    var port: UInt16? { listener.port?.rawValue }
+    func read(_ c: NWConnection, _ buf: Data) {
+        c.receive(minimumIncompleteLength: 1, maximumLength: 1 << 20) { [weak self] data, _, done, _ in
+            guard let self else { return }
+            var b = buf; if let data { b.append(data) }
+            if let r = b.range(of: Data("\r\n\r\n".utf8)) {
+                let head = String(decoding: b[..<r.lowerBound], as: UTF8.self).lowercased()
+                let len = head.components(separatedBy: "\r\n").first { $0.hasPrefix("content-length:") }.flatMap { Int($0.dropFirst(15).trimmingCharacters(in: .whitespaces)) } ?? 0
+                if b.count - r.upperBound >= len {
+                    if let j = try? JSONSerialization.jsonObject(with: b[r.upperBound...]) as? [String: Any] { self.requests.append(j) }
+                    let body = self.replies.isEmpty ? #"{"error":{"message":"no reply"}}"# : self.replies.removeFirst()
+                    let resp = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: \(body.utf8.count)\r\nConnection: close\r\n\r\n" + body
+                    c.send(content: Data(resp.utf8), completion: .contentProcessed { _ in c.cancel() })
+                    return
+                }
+            }
+            if done { c.cancel() } else { self.read(c, b) }
+        }
     }
 }

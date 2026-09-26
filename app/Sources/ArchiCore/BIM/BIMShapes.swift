@@ -142,6 +142,9 @@ final class BIMContext {
 
     func levelElevation(_ l: Int) -> Double { doc.level(l)?.elevation ?? 0 }
 
+    /// Whether any wall is slanted or tapered (BIM-023): walls then shape their joins at every height.
+    lazy var hasShapedWalls: Bool = frames.values.contains { $0.g.isSlantedOrTapered }
+
     func joinMode(_ id: EntityID, atStart: Bool) -> String {
         guard let m = joinModes[id] else { return "" }
         return atStart ? m.start : m.end

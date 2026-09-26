@@ -69,4 +69,45 @@ public enum TextStyleFonts {
         let kind = usesStrokes(s, doc: doc) ? "stroke font" : "TrueType"
         return "\(s.name): \(s.font) (\(kind)), height \(fmt(s.height)), width factor \(fmt(widthFactor(s))), oblique \(fmt(obliqueRadians(s) * 180 / .pi))°"
     }
+
+    // MARK: Width factor and obliquing for TrueType text (ANN-004)
+
+    /// Resolved appearance of a text object: font family, width factor and obliquing angle (radians) of its style.
+    public struct Shape: Equatable {
+        public var font: String; public var widthFactor: Double; public var oblique: Double
+        public init(font: String, widthFactor: Double = 1, oblique: Double = 0) { self.font = font; self.widthFactor = widthFactor; self.oblique = oblique }
+        /// Whether the text is drawn plainly (no horizontal scaling or slant).
+        public var isPlain: Bool { abs(widthFactor - 1) < 1e-9 && abs(oblique) < 1e-9 }
+        /// Glyph transform in the text's local frame (baseline along +x): x' = a·x + c·y, y' = b·x + d·y.
+        /// Renderers concatenate it after rotating to the text direction (CGAffineTransform(a:b:c:d:tx:0,ty:0)).
+        public var glyphMatrix: (a: Double, b: Double, c: Double, d: Double) { (widthFactor, 0, tan(oblique), 1) }
+    }
+
+    /// Shape of a text object by its style name (a text item keeps `TextGeom.style`, so renderers can look it up).
+    public static func shape(_ t: TextGeom, doc: ArchiDocument) -> Shape {
+        guard let s = style(t.style, doc: doc) else { return Shape(font: "Helvetica") }
+        return Shape(font: s.font, widthFactor: widthFactor(s), oblique: obliqueRadians(s))
+    }
+
+    /// Maps a point given in the text's plain (unscaled, upright) layout into world coordinates, applying the style's
+    /// width factor and slant about the insertion point. Used for boxes, grips and hit tests of styled text.
+    public static func place(_ local: Vec2, text t: TextGeom, shape: Shape) -> Vec2 {
+        let m = shape.glyphMatrix
+        let q = Vec2(m.a * local.x + m.c * local.y, m.b * local.x + m.d * local.y)
+        return t.position + q.rotated(by: t.rotation)
+    }
+
+    /// Box corners of a text object honouring its style's width factor and obliquing angle (a parallelogram for slanted text).
+    public static func boxCorners(_ t: TextGeom, doc: ArchiDocument) -> [Vec2] {
+        let sh = shape(t, doc: doc)
+        let plain = GeometryOps.textBoxCorners(t)
+        guard !sh.isPlain else { return plain }
+        // Back to the local frame, scale only unwrapped text horizontally (wrapped text keeps its frame width), then slant.
+        let inv = Transform2D.rotation(-t.rotation) * Transform2D.translation(-t.position)
+        let wf = t.width > 0 ? 1 : sh.widthFactor
+        return plain.map { p -> Vec2 in
+            let l = inv.apply(p)
+            return t.position + Vec2(l.x * wf + tan(sh.oblique) * l.y, l.y).rotated(by: t.rotation)
+        }
+    }
 }

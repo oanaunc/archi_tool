@@ -36,6 +36,10 @@ final class RenderScene {
         var height: CGFloat
         var localBox: CGRect
         var box: CGRect
+        /// Width factor and obliquing of the text style (ANN-004), applied in the text's local frame.
+        var glyph: CGAffineTransform = .identity
+        /// Underlined text (whole-text formatting, ANN-003).
+        var underline = false
     }
     struct Prepared {
         var id: EntityID?
@@ -70,13 +74,20 @@ final class RenderScene {
     /// Entry indices per object id.
     private(set) var index: [EntityID: [Int]] = [:]
     private(set) var bounds: CGRect = .null
+    /// R-tree over the entry bounds (SYS-015): picking and window selection visit only nearby entries. Built on first use.
+    private(set) lazy var tree: SpatialIndex = SpatialIndex(items: entries.enumerated().map { i, e in
+        SpatialIndex.Item(id: i, box: BBox2(min: Vec2(Double(e.bounds.minX), Double(e.bounds.minY)), max: Vec2(Double(e.bounds.maxX), Double(e.bounds.maxY))))
+    })
+    /// Indices of the entries whose bounds meet a world box.
+    func entryIndices(near box: BBox2) -> [Int] { entries.count < 256 ? Array(entries.indices) : tree.query(box).sorted() }
 
     init(_ drawEntries: [DrawEntry]) {
         var styleIndex: [ArchiCore.StrokeStyle: Int] = [:]
         entries.reserveCapacity(drawEntries.count)
         for e in drawEntries {
             var p = Prepared(id: e.id)
-            for it in e.items { RenderScene.add(it, to: &p, styles: &styles, styleIndex: &styleIndex) }
+            let format = e.id.flatMap { AppRenderInfo.textFormats[$0] }
+            for it in e.items { RenderScene.add(it, to: &p, styles: &styles, styleIndex: &styleIndex, format: format) }
             if p.bounds.isNull, !e.bounds.isEmpty {
                 p.bounds = CGRect(x: e.bounds.min.x, y: e.bounds.min.y, width: e.bounds.width, height: e.bounds.height)
             }
@@ -94,7 +105,7 @@ final class RenderScene {
         return r.insetBy(dx: -eps, dy: -eps)
     }
 
-    static func add(_ it: DrawItem, to p: inout Prepared, styles: inout [ArchiCore.StrokeStyle], styleIndex: inout [ArchiCore.StrokeStyle: Int]) {
+    static func add(_ it: DrawItem, to p: inout Prepared, styles: inout [ArchiCore.StrokeStyle], styleIndex: inout [ArchiCore.StrokeStyle: Int], format: AppRenderInfo.TextFormat? = nil) {
         switch it {
         case .stroke(let pts, let closed, let st):
             guard let first = pts.first else { return }
@@ -121,7 +132,7 @@ final class RenderScene {
             p.bounds = p.bounds.union(path.boundingBoxOfPath)
         case .text(let t, let font, let color):
             guard !t.content.isEmpty, t.height > 0 else { return }
-            let run = RenderScene.layoutText(t, font: font, color: color)
+            let run = RenderScene.layoutText(t, font: font, color: color, format: format)
             p.texts.append(run)
             p.bounds = p.bounds.union(run.box)
         case .image(let im):
@@ -305,8 +316,13 @@ final class RenderScene {
         return f
     }
 
-    static func layoutText(_ t: TextGeom, font requested: String, color: RGBA) -> TextRun {
-        let name = fontName(requested)
+    static func layoutText(_ t: TextGeom, font requested: String, color: RGBA, format: AppRenderInfo.TextFormat? = nil) -> TextRun {
+        var name = fontName(format?.font ?? requested)
+        var syntheticItalic = false
+        if let f = format, f.bold || f.italic {
+            let st = AppRenderInfo.styledFont(name, bold: f.bold, italic: f.italic)
+            name = st.name; syntheticItalic = st.syntheticItalic
+        }
         let h = CGFloat(max(t.height, 1e-9))
         let size = h / capRatio(name)
         let ctFont = font(name, size: size)
@@ -315,6 +331,11 @@ final class RenderScene {
             NSAttributedString.Key(kCTForegroundColorFromContextAttributeName as String): true,
         ]
         let content = t.content.replacingOccurrences(of: "\\P", with: "\n").replacingOccurrences(of: "\r\n", with: "\n")
+        let shape = AppRenderInfo.shape(t)
+        var glyph = shape.map(AppRenderInfo.glyphTransform) ?? .identity
+        if syntheticItalic { glyph.c += CGFloat(AppRenderInfo.syntheticItalicSlant) }
+        // Wrapped text keeps its frame width: lines break at width / width factor, then are scaled into the frame.
+        let wrapWidth = Double(t.width) / max(shape?.widthFactor ?? 1, 0.01)
         var lines: [CTLine] = []
         for para in content.components(separatedBy: "\n") {
             let ats = NSAttributedString(string: para.isEmpty ? " " : para, attributes: attrs)
@@ -323,7 +344,7 @@ final class RenderScene {
                 var start = 0
                 let len = ats.length
                 while start < len {
-                    let cnt = max(1, CTTypesetterSuggestLineBreak(ts, start, Double(t.width)))
+                    let cnt = max(1, CTTypesetterSuggestLineBreak(ts, start, wrapWidth))
                     lines.append(CTTypesetterCreateLine(ts, CFRange(location: start, length: cnt)))
                     start += cnt
                 }
@@ -352,11 +373,12 @@ final class RenderScene {
         }
         if !minX.isFinite { minX = 0; maxX = 0 }
         let lastBaseline = firstBaseline - (n - 1) * spacing
-        let local = CGRect(x: minX, y: lastBaseline - h * 0.3, width: maxX - minX, height: firstBaseline + h * 1.05 - (lastBaseline - h * 0.3))
+        var local = CGRect(x: minX, y: lastBaseline - h * 0.3, width: maxX - minX, height: firstBaseline + h * 1.05 - (lastBaseline - h * 0.3))
+        if !glyph.isIdentity { local = local.applying(glyph) }
         let rot = CGFloat(t.rotation)
         let tr = CGAffineTransform(translationX: CGFloat(t.position.x), y: CGFloat(t.position.y)).rotated(by: rot)
         let box = local.applying(tr)
-        return TextRun(lines: out, position: cg(t.position), rotation: rot, color: color.cgColor, height: h, localBox: local, box: box)
+        return TextRun(lines: out, position: cg(t.position), rotation: rot, color: color.cgColor, height: h, localBox: local, box: box, glyph: glyph, underline: format?.underline ?? false)
     }
 
     static func drawText(_ t: TextRun, ctx: CGContext, scale: CGFloat, color: CGColor?) {
@@ -365,6 +387,7 @@ final class RenderScene {
         ctx.saveGState()
         ctx.translateBy(x: t.position.x, y: t.position.y)
         ctx.rotate(by: t.rotation)
+        if !t.glyph.isIdentity { ctx.concatenate(t.glyph) }
         if screenH < 3.5 {
             // Greeking: tiny text becomes a faint bar.
             ctx.setFillColor((color ?? t.color).copy(alpha: 0.35) ?? t.color)
@@ -376,6 +399,12 @@ final class RenderScene {
             ctx.setFillColor(color ?? t.color)
             ctx.textMatrix = .identity
             for (l, o) in t.lines { ctx.textPosition = o; CTLineDraw(l, ctx) }
+            if t.underline {
+                for (l, o) in t.lines {
+                    let w = CGFloat(CTLineGetTypographicBounds(l, nil, nil, nil))
+                    ctx.fill(CGRect(x: o.x, y: o.y - t.height * 0.2, width: w, height: max(t.height * 0.07, 1 / max(scale, 1e-9))))
+                }
+            }
         }
         ctx.restoreGState()
     }
@@ -396,7 +425,9 @@ final class RenderScene {
         ctx.translateBy(x: im.origin.x, y: im.origin.y)
         ctx.rotate(by: CGFloat(im.rotation))
         let r = CGRect(x: 0, y: 0, width: im.size.x, height: im.size.y)
-        if let img = cgImage(im.path) {
+        if let img0 = cgImage(im.path) {
+            // Exact pixel adjustment (DRW-086) for images whose contrast cannot be drawn with veils.
+            let img = AppRenderInfo.adjustedImage(img0, path: im.path, background: DraftRendering.screenBackground) ?? img0
             ctx.interpolationQuality = .medium
             ctx.draw(img, in: r)
         } else {
@@ -924,7 +955,8 @@ final class PlanCanvasView: NSView {
         let ed = model.editor
         let key = [ed.changeCount, ed.doc.currentLevel]
         if let s = scene, key == sceneKey { return s }
-        let entries = DrawListBuilder.entries(doc: ed.doc, options: DrawOptions(level: ed.doc.currentLevel))
+        AppRenderInfo.register(ed.doc)
+        let entries = AppRenderInfo.withPixels { DrawListBuilder.entries(doc: ed.doc, options: DrawOptions(level: ed.doc.currentLevel)) }
         let s = RenderScene(entries)
         scene = s
         sceneKey = key
@@ -1551,6 +1583,23 @@ final class PlanCanvasView: NSView {
     }
 
     /// Topmost selectable object near a world point (6 px tolerance); strokes win over area fills.
+    /// Layer of every object for the current revision (hover picking asks per candidate; a document lookup by id is linear).
+    private var layerCache: (key: Int, layers: [EntityID: String])?
+    /// Whether an object may be picked (its layer is editable) — `Editor.isSelectable` with a cached id → layer map.
+    func selectable(_ id: EntityID) -> Bool {
+        guard let model else { return false }
+        let key = model.editor.changeCount
+        if layerCache?.key != key {
+            var m: [EntityID: String] = [:]
+            m.reserveCapacity(model.doc.entities.count + model.doc.elements.count)
+            for e in model.doc.entities { m[e.id] = e.layer }
+            for e in model.doc.elements { m[e.id] = e.layer }
+            layerCache = (key, m)
+        }
+        guard let l = layerCache?.layers[id] else { return false }
+        return model.doc.isEditable(layer: l)
+    }
+
     func pick(at w: Vec2) -> EntityID? {
         guard let model else { return nil }
         let s = ensureScene()
@@ -1558,11 +1607,12 @@ final class PlanCanvasView: NSView {
         let q = cg(w)
         let ct = CGFloat(tol)
         var best: (EntityID, Double)?
-        for (i, e) in s.entries.enumerated() {
+        for i in s.entryIndices(near: BBox2(min: Vec2(w.x - tol, w.y - tol), max: Vec2(w.x + tol, w.y + tol))) {
+            let e = s.entries[i]
             guard let id = e.id, e.bounds.insetBy(dx: -ct, dy: -ct).contains(q) else { continue }
             var d = s.distance(from: w, entry: i)
             if d == 0 && e.texts.isEmpty { d = tol * 0.9 }
-            if d <= tol, d < (best?.1 ?? .infinity), model.editor.isSelectable(id) { best = (id, d) }
+            if d <= tol, d < (best?.1 ?? .infinity), selectable(id) { best = (id, d) }
         }
         return best?.0
     }
@@ -1602,7 +1652,11 @@ final class PlanCanvasView: NSView {
         let doc = model.doc
         let r = CGRect(x: box.min.x, y: box.min.y, width: box.width, height: box.height)
         var state: [EntityID: (inside: Bool, cross: Bool)] = [:]
-        for (i, e) in s.entries.enumerated() {
+        // Candidates meet the box; an object is inside only when every one of its entries is (checked via the id index).
+        var candidates = Set<Int>()
+        for i in s.entryIndices(near: box) { if let id = s.entries[i].id { for k in s.index[id] ?? [i] { candidates.insert(k) } } }
+        for i in candidates.sorted() {
+            let e = s.entries[i]
             guard let id = e.id else { continue }
             var st = state[id] ?? (true, false)
             let inside = r.contains(e.bounds)
@@ -2196,6 +2250,8 @@ final class PlanCanvasView: NSView {
             model?.editor.selection = [id]; model?.showPanels = true; model?.panelTab = .properties
             return
         }
+        // Text objects open the in-place editor (ANN-003); leaders and dimensions keep the dialog.
+        if case .text = e.geometry, InPlaceTextEditor.begin(canvas: self, model: model, id: id) { return }
         let current: String
         let multiline: Bool
         switch e.geometry {

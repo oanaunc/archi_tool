@@ -432,7 +432,7 @@ public enum DraftRendering {
         let items = DrawListBuilder.textItems(t, doc: doc, color: .white)
         let rot = Transform2D.rotation(-t.rotation) * Transform2D.translation(-t.position)
         var b = BBox2.empty
-        for it in items { if case .text(let lt, _, _) = it { GeometryOps.textBoxCorners(lt).forEach { b.add(rot.apply($0)) } } }
+        for it in items { if case .text(let lt, _, _) = it { TextStyleFonts.boxCorners(lt, doc: doc).forEach { b.add(rot.apply($0)) } } }
         if b.isEmpty { GeometryOps.textBoxCorners(t).forEach { b.add(rot.apply($0)) } }
         let h = t.height > 0 ? t.height : 2.5
         let m = max(factor - 1, 0) * h

@@ -6,9 +6,9 @@ public enum FileImport {
     public static let importFormats = ["archi", "dxf", "dwg", "ifc", "ifczip", "ifcxml", "svg", "obj", "usda", "usdz", "usd", "stl", "3mf", "gltf", "glb", "ply", "off", "amf", "dae", "stp", "step",
                                        "geojson", "cityjson", "shp", "osm", "asc", "xlsx", "csv", "tsv", "txt", "xyz", "pts", "las", "igs", "iges", "fbx", "pdf", "dwfx", "dwf", "dgn",
                                        "png", "jpg", "jpeg", "gif", "bmp", "tif", "tiff", "webp", "heic", "heif", "avif",
-                                       "e57", "brep", "brp", "architemplate", "laz"]
+                                       "e57", "brep", "brp", "architemplate", "laz", "3dm", "skp"]
     public static let exportFormats = ["3mf", "usda", "usdz", "geojson", "dxf12", "points", "stp", "step", "ply", "plt", "hpgl", "xlsx", "ifczip", "dwg", "analytical", "opensees", "tcl", "laser", "igs", "iges", "fbx", "html", "dgn", "gbxml", "cobie", "dae",
-                                       "kml", "kmz", "bcfzip", "bcf", "boq", "svglayers", "brep", "e57", "architemplate", "openfoam"]
+                                       "kml", "kmz", "bcfzip", "bcf", "boq", "svglayers", "brep", "e57", "architemplate", "openfoam", "3dm"]
 
     public enum ImportError: Error, LocalizedError {
         case unsupported(String), unreadable(String)
@@ -132,6 +132,10 @@ public enum FileImport {
             return (entityDoc(ents, native: true), "\(ents.count) BREP shapes (\(ents.reduce(0) { if case .solid(let s) = $1.geometry { return $0 + s.meshTriangles.count / 3 }; return $0 }) triangles)")
         case "architemplate":
             return (try ArchiTemplate.decode(Data(contentsOf: url)).document, "template")
+        case "3dm":
+            return try Rhino3DM.document(try Data(contentsOf: url), reference: reference)
+        case "skp":
+            return try SketchUpImport.load(url, reference: reference)
         case "las":
             let r = try PointCloudStream.load(url, options: PointCloudOptions(scale: 1000 / reference.units.mm, maxPoints: MemoryBudget.pointLimit(reference)))
             return (entityDoc(r.entities, native: true), "\(r.entities.count) of \(r.total) LAS points")
@@ -286,6 +290,7 @@ public enum FileImport {
             guard !pts.isEmpty else { throw ImportError.unsupported("e57 (the drawing has no points)") }
             try E57.write([E57.Scan(name: doc.info.name, points: pts)]).write(to: url, options: .atomic)
         case "architemplate": try ArchiTemplate.save(doc, to: url)
+        case "3dm", "rhino": try Rhino3DM.export(doc).write(to: url, options: .atomic)
         case "openfoam": _ = try WindStudy.writeCase(doc, to: url, options: WindStudy.Options.from(doc))
         case "fbx": try FBX.export(MeshBuilder.build(doc: doc), materials: doc.materials, unitMM: unitMM, name: doc.info.name).write(to: url, options: .atomic)
         case "igs", "iges": try IGES.export(doc).write(to: url, atomically: true, encoding: .ascii)

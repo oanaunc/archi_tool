@@ -95,6 +95,9 @@ public enum ElevationBuilder {
 
         var prims: [(key: Double, id: EntityID?, prim: Prim)] = []
         var poche: [DrawEntry] = []
+        // Ambient occlusion (VIS-033): faces in corners and under overhangs darken, identically on screen and in exports.
+        let aoSettings = AmbientOcclusion.settings(doc)
+        let aoScene = aoSettings.map { _ in AmbientOcclusion.Scene(groups: groups) }
         for g in groups {
             let mat = doc.material(g.material)
             let base = mat?.color ?? RGBA(0.8, 0.8, 0.8)
@@ -115,7 +118,11 @@ public enum ElevationBuilder {
                 guard abs(GeometryOps.signedArea(pts)) > 1e-12 else { continue }
                 let key = poly.map(proj.depth).reduce(0, +) / Double(poly.count)
                 let shade = 0.78 + 0.22 * abs(nn.dot(light))
-                let tone = RGBA(min(1, (0.55 + base.r * 0.45) * shade), min(1, (0.55 + base.g * 0.45) * shade), min(1, (0.55 + base.b * 0.45) * shade), isGlass ? 0.45 : 1)
+                var tone = RGBA(min(1, (0.55 + base.r * 0.45) * shade), min(1, (0.55 + base.g * 0.45) * shade), min(1, (0.55 + base.b * 0.45) * shade), isGlass ? 0.45 : 1)
+                if let sc = aoScene, let st = aoSettings {
+                    let k = AmbientOcclusion.factor(sc.occlusion(at: (a + b + c) / 3, normal: nn, settings: st), intensity: st.intensity)
+                    tone = RGBA(tone.r * k, tone.g * k, tone.b * k, tone.a)
+                }
                 prims.append((key, g.id, .face(pts, tone)))
             }
             for e in g.edges where e.count >= 2 {
@@ -140,9 +147,19 @@ public enum ElevationBuilder {
                 let loops = sectionLoops(m, proj)
                 if !loops.closed.isEmpty || !loops.open.isEmpty {
                     var items: [DrawItem] = []
-                    if !loops.closed.isEmpty { items += cutFill(loops.closed, material: mat, doc: doc) }
-                    for l in loops.closed { items.append(.stroke(points: l, closed: true, style: StrokeStyle(color: edgeColor, lineweight: 0.5))) }
-                    for l in loops.open { items.append(.stroke(points: l, closed: false, style: StrokeStyle(color: edgeColor, lineweight: 0.5))) }
+                    // Object styles (LAY-033): the category's cut line weight, colour and poché.
+                    let os = g.id.flatMap { doc.element($0) }.flatMap { ObjectStyles.style(for: $0, doc: doc) }
+                    let cutSt = StrokeStyle(color: os?.color ?? edgeColor, lineweight: os?.cutLineweight ?? 0.5)
+                    if !loops.closed.isEmpty {
+                        if let f = os?.cutFill { items.append(.fill(loops: loops.closed, color: f)) }
+                        else {
+                            var m = mat
+                            if let pat = os?.cutPattern { m = m ?? Material(name: "Object style", color: RGBA(0.62, 0.62, 0.62)); m?.cutPattern = pat }
+                            items += cutFill(loops.closed, material: m, doc: doc)
+                        }
+                    }
+                    for l in loops.closed { items.append(.stroke(points: l, closed: true, style: cutSt)) }
+                    for l in loops.open { items.append(.stroke(points: l, closed: false, style: cutSt)) }
                     poche.append(DrawEntry(id: g.id, items: items))
                 }
             }

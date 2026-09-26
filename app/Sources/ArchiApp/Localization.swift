@@ -27,7 +27,7 @@ enum L10n {
     /// Translation of an English ribbon string (the English text when there is none).
     static func t(_ s: String, _ lang: String? = nil) -> String {
         let l = resolved(lang ?? setting)
-        guard l != "en", let row = table[s], let i = order.firstIndex(of: l), i < row.count else { return s }
+        guard l != "en", let row = table[s] ?? menuTable[s], let i = order.firstIndex(of: l), i < row.count else { return s }
         return row[i]
     }
     /// Share of the ribbon's tab and panel names translated for a language (0…1).

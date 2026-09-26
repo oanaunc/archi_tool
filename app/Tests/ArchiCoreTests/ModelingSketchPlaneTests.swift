@@ -61,4 +61,37 @@ final class ModelingSketchPlaneTests: XCTestCase {
         let t = Sketches.plane("T1", doc: ed.doc)!
         XCTAssertEqual(t.origin.z, 1000, accuracy: 1e-6); XCTAssertEqual(t.normal.z, 1, accuracy: 1e-9)
     }
+
+    /// M3D-084: a sketch on a solid's face follows the face when the solid is edited; its objects show on the plane in 3D.
+    func testFaceSketchFollowsHostSolid() async throws {
+        let ed = Editor()
+        let bx = ed.doc.add(.solid(SolidGeom(kind: .box, origin: Vec3(5000, 0, 0), size: Vec3(1000, 1000, 1000))))
+        await ed.run("SKETCHPLANE New T1 Face #\(bx) 5500,500,1000")
+        let t = try XCTUnwrap(Sketches.plane("T1", doc: ed.doc))
+        XCTAssertEqual(t.host, bx)
+        let c = ed.doc.add(.circle(CircleGeom(Vec2(0, 0), 200)))
+        await ed.run("SKETCHPLANE Add T1 #\(c) ")
+        await ed.run("SKETCHPAD T1 300")
+        let pad = try XCTUnwrap(ed.doc.entities.last?.id)
+        guard case .solid(let p0)? = ed.doc.entity(pad)?.geometry else { return XCTFail() }
+        XCTAssertEqual(bounds(p0).min.z, 1000, accuracy: 1e-6); XCTAssertEqual(bounds(p0).max.z, 1300, accuracy: 1e-6)
+        // 3D: the circle is drawn on the face.
+        let g = MeshBuilder.groups(for: ed.doc.entity(c)!, doc: ed.doc)
+        XCTAssertEqual(g.first?.kind, "sketch")
+        XCTAssertTrue(g.flatMap(\.edges).flatMap { $0 }.allSatisfy { abs($0.z - 1000) < 1e-6 })
+        // Pull the top face up to 2000 and move the solid: the sketch plane and the pad follow.
+        if let i = ed.doc.entityIndex(bx) { ed.doc.entities[i].geometry = .solid(SolidGeom(kind: .box, origin: Vec3(8000, 0, 0), size: Vec3(1000, 1000, 2000))) }
+        BIMUpdaters.run(&ed.doc)
+        let t2 = try XCTUnwrap(Sketches.plane("T1", doc: ed.doc))
+        XCTAssertEqual(t2.origin.z, 2000, accuracy: 1e-6); XCTAssertEqual(t2.origin.x, 8500, accuracy: 1e-6)
+        guard case .solid(let p1)? = ed.doc.entity(pad)?.geometry else { return XCTFail() }
+        XCTAssertEqual(bounds(p1).min.z, 2000, accuracy: 1e-6); XCTAssertEqual(bounds(p1).center.x, 8500, accuracy: 1e-6)
+        // Persists in the file; deleting the host frees the plane.
+        let back = try JSONDecoder().decode(ArchiDocument.self, from: JSONEncoder().encode(ed.doc))
+        XCTAssertEqual(Sketches.plane("T1", doc: back)?.host, bx)
+        ed.doc.entities.removeAll { $0.id == bx }
+        BIMUpdaters.run(&ed.doc)
+        XCTAssertNil(Sketches.plane("T1", doc: ed.doc)?.host)
+        XCTAssertEqual(Sketches.plane("T1", doc: ed.doc)?.origin.z ?? 0, 2000, accuracy: 1e-6)
+    }
 }

@@ -64,7 +64,7 @@ public enum MaterialPatterns {
     @discardableResult
     public static func updateAll(_ doc: inout ArchiDocument) -> Bool {
         var changed = false
-        for i in doc.entities.indices where doc.entities[i].props[prop] != nil {
+        for i in doc.entities.indices where doc.entities[i].props[prop] != nil && doc.entities[i].props[FloorPatterns.prop] == nil {
             guard let h = resolved(doc.entities[i], doc: doc), case .hatch(let old) = doc.entities[i].geometry, h != old else { continue }
             doc.entities[i].geometry = .hatch(h); changed = true
         }

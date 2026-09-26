@@ -601,6 +601,11 @@ final class Viewport3DController: NSObject, ObservableObject {
         cam.screenSpaceAmbientOcclusionRadius = 0.4
         cam.screenSpaceAmbientOcclusionNormalThreshold = 0.3
         cam.screenSpaceAmbientOcclusionDepthThreshold = 0.2
+        // Document ambient occlusion (AMBIENTOCCLUSION / AODIALOG, VIS-033) overrides the style default.
+        if let d = model?.doc, let ao = AOForm.viewport(d) {
+            cam.screenSpaceAmbientOcclusionIntensity = ao.intensity
+            cam.screenSpaceAmbientOcclusionRadius = ao.radius
+        }
         cam.vignettingIntensity = realistic ? 0.25 : 0
         cam.vignettingPower = 0.6
     }
