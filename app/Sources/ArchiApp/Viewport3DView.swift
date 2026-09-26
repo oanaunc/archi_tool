@@ -29,6 +29,10 @@ final class Scene3DBuilder {
     /// Lights, billboards (SceneExtras) and a hash of their inputs.
     let extrasRoot = SCNNode()
     var extrasHash = 0
+    /// Photographic look of the Realistic style (RENDERPRESET; renders may override it) and whether it was chosen explicitly.
+    var beautyOverride: BeautyPreset?
+    private(set) var beautyPreset: BeautyPreset = .daylight
+    private(set) var beautyExplicit = false
     /// Model meshes of the last update and their bounds (walk-mode collisions, in model millimetres).
     private(set) var collisionGroups: [(bounds: BBox3, mesh: Mesh)] = []
 
@@ -102,7 +106,12 @@ final class Scene3DBuilder {
         // Custom styles resolve to a built-in base plus overrides (VIS-034).
         let def = VisualStyleDef.named(requested, in: doc)
         let newStyle = def.map { VisualStyleNames.canonical($0.base) } ?? requested
-        let styleChanged = newStyle != style || def != custom
+        let wantedBeauty = beautyOverride ?? BeautyPreset.current(doc)
+        let beautyChanged = (wantedBeauty ?? .daylight) != beautyPreset || (wantedBeauty != nil) != beautyExplicit
+        beautyPreset = wantedBeauty ?? .daylight
+        beautyExplicit = wantedBeauty != nil
+        let styleChanged = newStyle != style || def != custom || (beautyChanged && newStyle == "Realistic")
+        lastDoc = doc
         if styleChanged {
             style = newStyle
             custom = def
@@ -156,6 +165,11 @@ final class Scene3DBuilder {
         highlighted = []
         applySelection(h)
         syncExtras(doc: doc)
+        // A chosen photographic preset adds horizon haze and scales the artificial lights for its time of day.
+        if style == "Realistic" && beautyExplicit {
+            if !FogSettings.load(doc).on && WeatherSettings.load(doc).fogDistance == nil { BeautyLighting.applyFog(beautyPreset, to: self) }
+            BeautyLighting.applyArtificial(beautyPreset, to: self)
+        }
     }
 
     private func forgetMaterials(_ n: SCNNode) {
@@ -246,7 +260,7 @@ final class Scene3DBuilder {
         // Cached per material state (edits, glow and bump settings make a new material).
         let cacheKey = name + "|\(src.hashValue)|" + (doc.variable(Emissive.key(name)) ?? "") + "|" + (doc.variable("MATBUMP:" + name) ?? "")
             + "|" + (doc.variable(MaterialMaps.key(name)) ?? "") + "|" + (doc.variable(MaterialAssetSet.key(name)) ?? "") + "|" + (doc.variable(WeatherSettings.variable) ?? "")
-            + "|" + (doc.variable(WaterSurface.key(name)) ?? "")
+            + "|" + (doc.variable(WaterSurface.key(name)) ?? "") + "|" + (style == "Realistic" ? beautyPreset.rawValue : "")
         if let m = materialCache[cacheKey] { return m }
         let m = SCNMaterial()
         m.name = name
@@ -327,7 +341,10 @@ final class Scene3DBuilder {
         }
         if style != "Hidden Line" && style != "Wireframe" { Emissive.apply(m, name: name, color: src.color, doc: doc) }
         // PBR maps (VIS-061), water (VIS-083), weather and season (VIS-058).
-        if style == "Realistic" { _ = MaterialMaps.apply(m, material: src, doc: doc) }
+        if style == "Realistic" {
+            let hasMaps = MaterialMaps.apply(m, material: src, doc: doc)
+            BeautyLighting.enhance(m, material: src, preset: beautyPreset, doc: doc, hasMaps: hasMaps || BumpMap.strength(name, doc: doc) > 0)
+        }
         if WaterSurface.isWater(name, doc: doc) { WaterSurface.apply(m, style: style) }
         if !["Hidden Line", "Wireframe", "X-Ray", "Sketchy"].contains(style) { WeatherSettings.load(doc).apply(m, name: name, color: shade ?? src.color, style: style) }
         if let o = custom?.faceOpacity, o < 1 {
@@ -367,23 +384,47 @@ final class Scene3DBuilder {
         if let bg = custom?.background { scene.background.contents = NSColor(hex: bg) }
         sunNode.light?.intensity = realistic ? 1600 : (light ? 0 : 900)
         ambientNode.light?.intensity = realistic ? 220 : (light ? 1000 : 420)
+        if realistic {
+            // Photographic look (VIS beauty pass): HDR sky lighting, soft sun, fog; the sun keeps its direction unless a preset was chosen.
+            if beautyExplicit {
+                BeautyLighting.apply(beautyPreset, to: self, doc: lastDoc ?? ArchiDocument(), quality: .interactive)
+            } else {
+                // Default Realistic look: the procedural HDR daylight sky for lighting and background, the sun as it was.
+                BeautyLighting.applySky(.daylight, to: self, quality: .interactive)
+            }
+            if let bg = custom?.background { scene.background.contents = NSColor(hex: bg) }
+            if let sh = custom?.shadows { sunNode.light?.castsShadow = sh }
+        } else {
+            scene.fogStartDistance = 0; scene.fogEndDistance = 0
+            ambientNode.light?.color = NSColor(white: 0.9, alpha: 1)
+            sunNode.light?.color = NSColor(srgbRed: 1, green: 0.97, blue: 0.92, alpha: 1)
+            sunNode.light?.shadowColor = NSColor(white: 0, alpha: 0.45)
+        }
     }
 
+    /// Document of the running update (for environment settings that depend on it).
+    private var lastDoc: ArchiDocument?
+
     private func updateGround() {
-        let size = bounds.isEmpty ? 100_000.0 : max(100_000, max(bounds.size.x, bounds.size.y) * 6)
+        let realisticGround = style == "Realistic" && beautyExplicit
+        // Realistic with a photographic preset: a large meadow that fades into the horizon haze instead of the grid.
+        let size = bounds.isEmpty ? (realisticGround ? 1_600_000.0 : 100_000.0)
+            : (realisticGround ? max(1_600_000, max(bounds.size.x, bounds.size.y) * 40) : max(100_000, max(bounds.size.x, bounds.size.y) * 6))
         let plane = SCNPlane(width: size, height: size)
-        let m = SCNMaterial()
+        let m = realisticGround ? BeautyGround.material(size: size) : SCNMaterial()
         let realistic = style == "Realistic", light = style == "Hidden Line" || style == "Sketchy"
         let base: NSColor = realistic ? NSColor(srgbRed: 0.56, green: 0.58, blue: 0.53, alpha: 1)
             : (light ? NSColor.white : NSColor(srgbRed: 0.17, green: 0.18, blue: 0.19, alpha: 1))
         let line: NSColor = realistic ? NSColor(white: 0.48, alpha: 1) : (light ? NSColor(white: 0.86, alpha: 1) : NSColor(white: 0.30, alpha: 1))
-        m.diffuse.contents = Scene3DBuilder.gridImage(base: base, line: line)
-        m.diffuse.wrapS = .repeat; m.diffuse.wrapT = .repeat
-        m.diffuse.mipFilter = .linear
-        m.diffuse.maxAnisotropy = 8
-        m.diffuse.contentsTransform = SCNMatrix4MakeScale(CGFloat(size / 5000), CGFloat(size / 5000), 1)
-        m.lightingModel = realistic ? .physicallyBased : (light ? .constant : .lambert)
-        m.roughness.contents = NSNumber(value: 1)
+        if !realisticGround {
+            m.diffuse.contents = Scene3DBuilder.gridImage(base: base, line: line)
+            m.diffuse.wrapS = .repeat; m.diffuse.wrapT = .repeat
+            m.diffuse.mipFilter = .linear
+            m.diffuse.maxAnisotropy = 8
+            m.diffuse.contentsTransform = SCNMatrix4MakeScale(CGFloat(size / 5000), CGFloat(size / 5000), 1)
+            m.lightingModel = realistic ? .physicallyBased : (light ? .constant : .lambert)
+            m.roughness.contents = NSNumber(value: 1)
+        }
         m.writesToDepthBuffer = true
         if style == "Wireframe" || style == "X-Ray" { m.transparency = 0.5 }
         plane.materials = [m]
@@ -608,6 +649,14 @@ final class Viewport3DController: NSObject, ObservableObject {
         }
         cam.vignettingIntensity = realistic ? 0.25 : 0
         cam.vignettingPower = 0.6
+        cam.whitePoint = 1; cam.saturation = 1; cam.contrast = 0; cam.colorFringeStrength = 0
+        if realistic && builder.beautyExplicit {
+            BeautyLighting.configure(cam, builder.beautyPreset, quality: .interactive)
+            if let d = model?.doc, let ao = AOForm.viewport(d) {
+                cam.screenSpaceAmbientOcclusionIntensity = ao.intensity
+                cam.screenSpaceAmbientOcclusionRadius = ao.radius
+            }
+        }
     }
 
     // MARK: Views

@@ -199,7 +199,7 @@ extension CommandCatalog {
          ("Layers", layersMore), ("BIM Data", bimMore), ("Structure", structure), ("MEP", mep), ("Site More", siteMore), ("Surfaces & Mesh", surfaces),
          ("Analysis", analysisMore), ("Exchange", exchange), ("File", fileCommands), ("Tools & Scripting", tools), ("Settings", settingsMore),
          ("View", viewMore), ("Output", outputMore), ("Animation & Export", animationItems), ("Plot Styles", plotItems),
-         ("Start & Templates", startItems), ("Help", helpCommands)] + coverageMenus2
+         ("Start & Templates", startItems), ("Help", helpCommands)] + coverageMenus2 + beautyMenus
     }
 
     /// Every ribbon/menu item of the curated catalogs (the original ones plus the coverage catalogs).

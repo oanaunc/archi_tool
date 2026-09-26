@@ -75,6 +75,10 @@ struct RenderSettings {
     var bloom = 0.15
     /// Clay / white model: every surface uses one matte white material.
     var clay = false
+    /// Photographic lighting preset (sun, HDR sky, exposure, glass); nil keeps the environment settings above.
+    var beauty: BeautyPreset?
+    /// Supersampling factor of final renders (rendered at n× the size, then filtered down).
+    var supersample = 1
 
     static var defaultDate: Date {
         var c = Calendar.current.dateComponents([.year], from: Date())
@@ -125,6 +129,7 @@ enum RenderEngine {
     /// Builds a realistic scene for the document with the given camera and sun.
     static func makeScene(doc: ArchiDocument, settings: RenderSettings) -> (Scene3DBuilder, SCNNode) {
         let b = Scene3DBuilder()
+        b.beautyOverride = settings.beauty
         b.update(doc: doc, style: "Realistic")
         let sun = SunPosition.compute(date: settings.date, latitude: doc.info.latitude, longitude: doc.info.longitude)
         b.setSun(direction: SunPosition.direction(altitude: sun.altitude, azimuth: sun.azimuth, northAngleDegrees: doc.info.northAngle))
@@ -161,7 +166,7 @@ enum RenderEngine {
         c.wantsExposureAdaptation = false
         c.bloomIntensity = CGFloat(settings.bloom)
         c.bloomThreshold = 0.9
-        c.whiteBalanceTemperature = CGFloat(settings.whiteBalance)
+        // White balance is applied to the finished image (BeautyRenderer.whiteBalance): SCNCamera's tints every frame.
         c.screenSpaceAmbientOcclusionIntensity = CGFloat(settings.ambientOcclusion)
         c.screenSpaceAmbientOcclusionRadius = 0.45
         if let ao = AOForm.viewport(doc) {
@@ -194,6 +199,16 @@ enum RenderEngine {
             c.apertureBladeCount = 6
             c.focalBlurSampleCount = 16
         }
+        if let p = settings.beauty {
+            // Photographic preset: replaces the environment, sun and camera response set above.
+            BeautyLighting.apply(p, to: b, doc: doc, quality: .final(supersample: settings.supersample))
+            BeautyLighting.configure(c, p, quality: .final(supersample: settings.supersample))
+            c.exposureOffset += CGFloat(settings.exposure)
+            if settings.clay { b.scene.lightingEnvironment.intensity *= 1.1 }
+            if settings.background == .white { b.scene.background.contents = NSColor.white }
+            if settings.background == .transparent { b.scene.background.contents = NSColor.clear }
+            if settings.depthOfField { c.focalBlurSampleCount = 24 }
+        }
         b.scene.rootNode.addChildNode(cam)
         return (b, cam)
     }
@@ -224,8 +239,9 @@ enum RenderEngine {
         r.pointOfView = cam
         r.autoenablesDefaultLighting = false
         r.isJitteringEnabled = settings.antialias
-        return r.snapshot(atTime: 0, with: CGSize(width: settings.width, height: settings.height),
-                          antialiasingMode: settings.antialias ? .multisampling4X : .none)
+        let img = BeautyRenderer.snapshot(r, width: settings.width, height: settings.height, supersample: settings.antialias ? settings.supersample : 1,
+                                          antialias: settings.antialias)
+        return BeautyRenderer.whiteBalance(img, kelvin: settings.whiteBalance)
     }
 
     /// 360° orbit around the model written as H.264 MP4.
@@ -472,6 +488,17 @@ private struct RenderPanel: View {
                     }
                     Picker("Background", selection: $settings.background) { ForEach(RenderSettings.Background.allCases, id: \.self) { Text($0.rawValue) } }
                     Toggle("Antialiasing (4× MSAA + jitter)", isOn: $settings.antialias)
+                }
+                Section("Photographic Look") {
+                    Picker("Look", selection: $settings.beauty) {
+                        Text("Custom (settings below)").tag(BeautyPreset?.none)
+                        ForEach(BeautyPreset.allCases, id: \.self) { Text($0.rawValue).tag(BeautyPreset?.some($0)) }
+                    }
+                    .help("Daylight, Golden hour, Overcast or Night: sun, HDR sky lighting, soft shadows, exposure, bloom and glass (RENDERPRESET, RENDERSAVE)")
+                    Picker("Supersampling", selection: $settings.supersample) {
+                        Text("Off").tag(1); Text("2× (4 samples)").tag(2); Text("3× (9 samples)").tag(3)
+                    }
+                    .help("Renders at a multiple of the size and filters down: smoother edges and fine texture detail on top of 4× multisampling")
                 }
                 Section("Environment") {
                     Picker("Lighting", selection: $settings.environment) { ForEach(RenderSettings.Environment.allCases, id: \.self) { Text($0.rawValue) } }
