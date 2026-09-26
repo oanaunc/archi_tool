@@ -328,6 +328,12 @@ make tags annotative; labels follow changes to the element's data and the annota
 material a cut and a surface fill pattern, and `MATHATCH` ties a hatch to a material so it follows pattern changes
 (also in DXF).
 
+**Round 10 annotation.** Double-click text (or run `TEXTEDITINPLACE`) to edit it on the canvas with bold, italic,
+underline, font, height and colour; the formatting prints to PDF and survives DXF. `TEXTSTYLEDIALOG` manages text
+styles; width factor and oblique angle now show on screen and in PDF. `FLOORPATTERN` shows a slab's material surface
+pattern in plan, cut around holes and walls, following slab, wall and material changes; `MATPATTERNDIALOG` edits the
+cut and surface patterns of every material. `IMAGEADJUSTDIALOG` adjusts raster images, applied exactly on screen and in plots.
+
 ## Layers and properties
 
 - The **Layers** panel and the `LAYER` command create layers and set them current, on/off, frozen/thawed,
@@ -355,6 +361,9 @@ material a cut and a surface fill pattern, and `MATHATCH` ties a hatch to a mate
 `LWTABLE` maps lineweights by view scale, `PENSETS` sets pen tables for plotting and `GFILTERS` applies graphic
 overrides to objects that match a filter. `GRAPHICSTYLES` opens a dialog for all four. They apply to drafting objects,
 not yet to BIM plan graphics.
+
+**Object styles.** `OBJECTSTYLES` (or the `OBJECTSTYLESDIALOG` window) sets cut and projection line weight, line
+colour, cut fill and cut pattern per BIM category; every plan and section follows, and view overrides still win.
 
 ## Blocks, attributes and groups
 
@@ -608,6 +617,11 @@ to BIM). `MAKECOMPONENT`, `MAKEGROUP`, `MAKEUNIQUE` and `COMPONENTTOBIM` work li
 `OUTLINER` and the `OUTLINERPANEL` window show their tree. `OFFSETFACE` offsets solid faces. Dynamic UCS: the first
 point picked on a solid face becomes the working plane for that command, and typed coordinates use the face's axes.
 
+**Round 10 modelling.** Slanted and tapered walls join cleanly with the walls around them in plan, 3D and sections.
+A sketch drawn on a solid's face follows the face when the solid moves or is pushed/pulled. `SCALE3D Handles` scales a
+solid by dragging a bounding-box handle (corner, edge midpoint, Top/Bottom) with Center and Uniform options; the result
+converts to BIM with `BUILDING Mass`.
+
 ## 3D view and rendering
 
 - **Navigation:** orbit, pan and zoom with the trackpad or mouse. Use the **view cube** (`NAVVCUBE`) to click a face,
@@ -656,6 +670,10 @@ rebuilds the display and `REDRAW` repaints from the cache. `SPACEMOUSE` configur
 
 **Round 9 view.** `ZOOM 1/100XP` (or `ZOOMXP`) sets the selected sheet viewport to 1:100, or on the plan shows the
 drawing at that paper scale at true size on the screen. The 3D viewport casts sun shadows that follow the solar position.
+
+**Ambient occlusion and VR.** `AMBIENTOCCLUSION` (or `AODIALOG`) sets intensity, radius and samples; the 3D viewport,
+renders and shaded elevations, sections and axonometric/perspective views (and their PDF/SVG exports) follow it.
+`VRVIEW` writes a WebXR page with an Enter VR button for headsets (not yet tested on a real headset).
 
 ## Sheets, plotting and PDF
 
@@ -829,6 +847,11 @@ into unsaved edits; iCloud conflict copies are merged. `CENTRAL Permissions` add
 protected layers that Sync enforces. `archi-cli --out x.pdf` writes PDF without the app and `archi-cli --validate`
 checks exchange files.
 
+**Rhino and SketchUp.** `RHINOIN` imports Rhino .3dm files (versions 2–8) with units, layers, meshes, B-reps and
+blocks; `RHINOOUT` writes a version 4 .3dm with layers, meshes and exact curves (materials go out as object colours).
+SketchUp .skp files open through a converter you install yourself, set in `SKPCONVERTER`; without one, the app shows
+the preview image and explains how to export from SketchUp.
+
 ## Scripting and AI agents
 
 - **Script files:** `SCRIPT` runs a `.scr` file of command lines, as in AutoCAD. A blank line or `;` is Enter.
@@ -913,7 +936,11 @@ floats. The app accepts launch arguments: files to open, `-t`/`--template`, `-s`
 **Round 9 accessibility.** VoiceOver reads the canvas, 3D view, sheet view, status toggles and icon buttons, and
 speaks new prompts; `SPEAKDRAWING` describes the drawing. Keyboard-only drawing: arrow keys move the crosshair at
 prompts, Return picks the point and Tab selects under it (`KEYBOARDNAV` sets the step). `LANGUAGE` translates the
-ribbon into Romanian, German, French, Spanish and Italian (menus and dialogs are still English).
+ribbon and the menu bar into Romanian, German, French, Spanish and Italian (dialogs are still English).
+
+**Crash reports and menus.** `CRASHREPORTS On` turns on opt-in crash reports (off by default). Reports have file
+names and home paths removed, and the next launch offers to open a GitHub issue or copy the report; nothing is sent
+automatically. The menu bar titles and common menu items now follow `LANGUAGE`.
 
 ## Keyboard and mouse
 
@@ -956,7 +983,7 @@ command inside the app. This table is generated from the command definitions in 
 (`python3 docs/gen_command_reference.py`).
 
 <!-- BEGIN COMMAND REFERENCE -->
-981 commands.
+994 commands.
 
 ### Draw
 
@@ -1218,6 +1245,7 @@ command inside the app. This table is generated from the command definitions in 
 | `FIELD` |  | Inserts text containing a field (area, length, property, variable, count, date) that updates automatically. |
 | `FILLEDREGION` | `FR`, `REGIONFILL` | View-specific filled region on the current level: solid colour or a drafting / model pattern, with optional boundary lines; associative to its boundary. |
 | `FIND` |  | Finds (and optionally replaces) text in texts, leaders, dimensions, tables and attributes. |
+| `FLOORPATTERN` | `FLOORPAT`, `SURFACEPATTERN` | Shows the surface pattern of floor materials in plan: select slabs (or All on the current level); Remove deletes the patterns. The patterns follow slab, wall and material changes. |
 | `HATCHTYPE` | `HPTYPE`, `PATTERNTYPE` | Sets hatches to Model patterns (real size, scale with the model) or Drafting patterns (fixed size on paper at the annotation scale). |
 | `HYPERLINK` | `LINK`, `URL`, `-HYPERLINK` | Attaches a URL (web page or file) to objects; exported PDFs make them clickable. Empty removes the link. *(app)* |
 | `INSULATION` | `BATT`, `INSUL`, `BATTINSULATION` | Draws the batt insulation symbol along a line at a given width (associative: stretch the line to extend it). |
@@ -1229,6 +1257,7 @@ command inside the app. This table is generated from the command definitions in 
 | `MATERIALTAG` | `MATTAG`, `TAGMATERIAL` | Tags the material under a picked point (the layer of a compound wall, a slab's finish, or the element material); the tag follows material changes. |
 | `MATHATCH` | `MATERIALHATCH`, `HATCHMATERIAL` | Binds hatches to a material: they show its cut or surface pattern (and optionally its colour) and follow later pattern changes. |
 | `MATPATTERN` | `MATERIALPATTERN`, `FILLPATTERNS` | Sets the cut or surface fill pattern of a material; walls and bound hatches update everywhere. |
+| `MATPATTERNDIALOG` | `MATERIALPATTERNSDIALOG`, `FILLPATTERNSDIALOG` | Material Fill Patterns dialog: cut and surface pattern of every material; bound hatches and floor patterns update. *(app)* |
 | `MLEADER` | `MLD` | Creates a multileader (arrowhead, landing, text). |
 | `MLEADERALIGN` | `MLA` | Aligns the landings (text) of leaders with a reference leader, vertically or horizontally. |
 | `MLEADERCOLLECT` | `MLC` | Collects several leaders into one: the first leader's arrow with all texts stacked (Vertical) or in a row (Horizontal) at a new landing. |
@@ -1260,11 +1289,13 @@ command inside the app. This table is generated from the command definitions in 
 | `TAGLABEL` | `EDITLABEL`, `TAGFORMAT` | Tag labels linked to element parameters: Label template with {Parameter} fields, single Field, Annotative paper height, List. |
 | `TEXT` | `DT`, `DTEXT` | Creates single-line text objects. |
 | `TEXTEDIT` | `ED`, `DDEDIT` | Edits text, leader, dimension text, table cells or attribute values. |
+| `TEXTEDITINPLACE` | `MTEDIT`, `INPLACETEXT`, `TEXTFORMAT` | In-place text editor on the canvas: bold, italic, underline, font, height and colour (also opened by double-clicking text); exported to PDF and DXF MTEXT. *(app)* |
 | `TEXTFRAME` | `TFRAME`, `TEXTBORDER` | Draws or removes a frame around text. |
 | `TEXTLIST` | `BULLETS`, `NUMBERING`, `MTEXTLIST` | Adds bullets, numbers or letters to the paragraphs of multiline text (or removes them). |
 | `TEXTMASK` | `BACKGROUNDMASK`, `TMASK` | Hides objects behind text with a background mask (offset factor, background or a colour). |
 | `TEXTREADABLE` | `TEXTFLIP` | Turns upside-down text (rotated between 90° and 270°) by 180° so it reads left-to-right, keeping its position. |
 | `TEXTSTYLE` | `STYLE`, `ST`, `-STYLE` | Creates or modifies a text style and makes it current. |
+| `TEXTSTYLEDIALOG` | `TEXTSTYLEMANAGER`, `STYLEDIALOG` | Text Style manager: font, height, width factor and oblique angle with a live preview; renaming a style updates its text. *(app)* |
 | `TEXTUNMASK` | `TUNMASK` | Removes background masks from text. |
 | `TOLERANCE` | `TOL`, `GDT` | Creates a GD&T feature control frame: characteristic symbol, tolerance value, datums. |
 | `TXT2MTXT` | `TEXTTOMTEXT` | Combines single-line texts into one multiline text (top to bottom). |
@@ -1298,6 +1329,7 @@ command inside the app. This table is generated from the command definitions in 
 | `DYNPROP` | `BDYNSET`, `DYNVALUE` | Sets dynamic parameter values of block references (stretch lengths, array counts). |
 | `GROUP` | `G`, `-GROUP` | Creates and manages named groups (Create/Add/Remove/Explode/REName/List); picking a member selects the group (PICKSTYLE). |
 | `IMAGEADJUST` | `IAD`, `-IMAGEADJUST` | Adjusts the brightness, contrast and fade (0–100) of images; Reset restores the defaults. |
+| `IMAGEADJUSTDIALOG` | `IMAGEADJUSTDLG`, `IADDIALOG` | Image Adjust dialog: brightness, contrast and fade of the selected raster images with a preview (exact on screen and in PDF plots). *(app)* |
 | `IMAGEATTACH` | `IAT`, `IMAGE` | Places a raster image reference (path, insertion point, width, rotation). |
 | `IMAGECLIP` | `ICL`, `CLIPIMAGE` | Clips an image to a rectangular or polygonal boundary: ON/OFF, Delete, New boundary, Invert. |
 | `IMAGEFRAME` |  | Image clip frames: 0 hidden, 1 shown and plotted, 2 shown but not plotted. |
@@ -1333,6 +1365,7 @@ command inside the app. This table is generated from the command definitions in 
 | `AXISLOCK` | `LOCKAXIS` | Locks point input to the UCS X or Y axis, an angle, or turns the lock Off (arrow keys while drawing). |
 | `CMDLINEOPTIONS` | `CLISETTINGS`, `COMMANDLINEOPTIONS`, `CLIFLOAT` | Command line appearance: text Size, history Lines shown, background Opacity; Float it over the canvas or Dock it at the bottom. *(app)* |
 | `COLOR` | `COL`, `COLOUR` | Sets the color for new objects (CECOLOR). |
+| `CRASHREPORTS` | `CRASHREPORT`, `CRASHLOG` | Opt-in crash reports: On, Off, Status, Show the saved reports (reviewed and sent only by you), Clear. *(app)* |
 | `CUI` | `CUSTOMIZE`, `RIBBONCUSTOMIZE`, `-CUI` | Customizes the ribbon: Dialog, Add a panel of commands to a tab, Remove, Hide/Show a built-in panel, List, Export/Import a customisation file, Reset. *(app)* |
 | `CURSORSIZE` |  | Sets the crosshair size as a percentage of the view (1–100). *(app)* |
 | `DBLCLKEDIT` |  | Turns double-click editing of objects on or off; with an object, runs its double-click editor. |
@@ -1612,7 +1645,7 @@ command inside the app. This table is generated from the command definitions in 
 | `SCAD` | `OPENSCAD`, `CSGSCRIPT` | Evaluates an OpenSCAD-language script (cube, sphere, cylinder, polyhedron, extrudes, transforms, union/difference/intersection/hull/minkowski, modules, loops) into a solid. |
 | `SCADFILE` | `SCADIN`, `IMPORTSCAD` | Imports an OpenSCAD .scad file (with include / use of neighbouring files) as a solid. |
 | `SCADOBJECT` | `SCRIPTOBJECT`, `CUSTOMIZER`, `GDLOBJECT` | Scripted parametric objects (OpenSCAD language, GDL-like): New from a script or File, list Params (Customizer ranges and choices), Set a parameter to regenerate. |
-| `SCALE3D` | `SCALENU`, `SCALEXYZ` | Non-uniform scale of solids about a base point: separate X, Y and Z factors (negative factors mirror). |
+| `SCALE3D` | `SCALENU`, `SCALEXYZ` | Non-uniform scale of solids about a base point: separate X, Y and Z factors (negative factors mirror), or Handles: drag a bounding-box handle (corner, edge midpoint, Top/Bottom) about the opposite side or the Center, optionally Uniform. |
 | `SECTIONOBJECT` | `SECTIONPLANEOBJ`, `SPOBJECT`, `SECTIONPLANES` | Section plane objects: Add a named vertical plane (its plan trace can be moved), make it Live (clips the 3D view with caps), Flip, Generate/update its 2D section block, Slice solids into closed halves, List, Off, Delete. |
 | `SECTIONSOLIDS` | `GENERATESECTION`, `SECTIONBLOCK`, `SOLIDSECTION` | Cuts 3D solids with a vertical section plane (two points) and places the 2D section (cut poché + projection) as a block; Plan cuts them horizontally. |
 | `SEPARATE` | `SOLIDSEPARATE`, `SOLIDCLEAN` | Separates solids into their disjoint bodies and cleans them (duplicate/degenerate faces, consistent outward orientation). |
@@ -1654,7 +1687,9 @@ command inside the app. This table is generated from the command definitions in 
 
 | Command | Aliases | Description |
 | --- | --- | --- |
+| `AMBIENTOCCLUSION` | `AOCCLUSION`, `AOBAKE`, `AOSETTINGS` | Ambient occlusion baked on the model: Intensity (0 = off … 2), Radius and Samples; shaded elevations, sections, axonometrics and perspectives (and their PDF/SVG exports) darken corners and overhangs; Report prints the average occlusion. |
 | `ANIMATE` | `OBJANIMATE`, `OBJECTANIMATION`, `DOORANIMATE` | Object animation saved in the drawing: Door swings, Rotate about a pivot, Move by a vector (start time, duration, there and back); Play/Stop in 3D, List, Delete, Clear, Render a frame. *(app)* |
+| `AODIALOG` | `AMBIENTOCCLUSIONDIALOG`, `AOPANEL` | Ambient Occlusion dialog: intensity, radius and rays per point for the 3D viewport, renders and shaded views. *(app)* |
 | `ARQUICKLOOK` | `ARVIEW`, `USDZPREVIEW`, `ARPREVIEW` | AR Quick Look: exports the model as a real-scale USDZ and Previews it or Shares it to an iPhone/iPad (AirDrop) to place it in AR. *(app)* |
 | `AXONVIEW` | `AXONVIEWSAVE`, `SAVE3DVIEW`, `AXONOMETRIC` | Saves a 3D axonometric view (SW / SE / NE / NW isometric, Top, or Custom azimuth/elevation) that refits to the model after every change. |
 | `BACKVIEW` | `BACK` | Sets the 3D view to back. |
@@ -1765,6 +1800,7 @@ command inside the app. This table is generated from the command definitions in 
 | `VPCLIP` |  | Clips a sheet viewport to a polygon of paper points (x,y in mm), or Deletes the clip. *(app)* |
 | `VPMAX` | `VPMAXIMIZE` | Maximises a sheet viewport: edits the model through it at full window size (VPMIN returns). *(app)* |
 | `VPMIN` | `VPMINIMIZE` | Returns from a maximised viewport to its sheet, keeping the new view centre (unless the viewport is locked). *(app)* |
+| `VRVIEW` | `WEBXR`, `VREXPORT`, `HEADSETVIEW` | VR headset viewing: writes the model as a WebXR page (life-size, floor on the room floor, pinch/trigger steps forward) for Apple Vision Pro, Meta Quest or OpenXR browsers; Open, Reveal (AirDrop) or just Save. *(app)* |
 | `VSCURRENT` | `VS`, `SHADEMODE` | Sets the visual style of the 3D view. |
 | `WALK` | `3DWALK`, `WALKTHROUGH`, `3DFLY` | Starts a first-person walkthrough of the 3D model. |
 | `WALKTHROUGHVIDEO` | `WALKVIDEO`, `ANIPATH`, `CAMERAPATH` | Exports an MP4 walkthrough along a smooth path through the saved cameras (in order). *(app)* |
@@ -1869,6 +1905,8 @@ command inside the app. This table is generated from the command definitions in 
 | `QUIT` | `EXIT` | Quits the application. |
 | `RECOVER` | `RECOVERFILE`, `OPENRECOVER` | Opens a damaged .archi drawing, repairing it: truncated files are closed after the last complete object, undecodable objects and settings are dropped, and the model is audited. |
 | `RECOVERYFILES` | `JOURNALRECOVERY`, `RECOVERJOURNAL` | Lists the autosave copies and change journals left by a crash or forced quit, and opens one (Open n) or deletes them (Clear). |
+| `RHINOIN` | `3DMIN`, `3DMIMPORT`, `IMPORT3DM`, `RHINOIMPORT` | Imports a Rhino .3dm file (versions 2–8): meshes, B-reps (render meshes or tessellated trimmed faces), extrusions, surfaces, curves, points and blocks, with layers, colours, materials and units. |
+| `RHINOOUT` | `3DMOUT`, `3DMEXPORT`, `EXPORT3DM`, `RHINOEXPORT` | Exports a Rhino .3dm (version 4) file in the drawing units: the 3D model as meshes coloured by material, drafting curves as exact lines, arcs, polylines and NURBS, with layers. |
 | `SAVE` | `QSAVE` | Saves the drawing. |
 | `SAVEAS` | `SA` | Saves the drawing under a new name. |
 | `SAVEASTEMPLATE` | `SAVETEMPLATE`, `TEMPLATESAVE` | Saves the drawing's settings, layers, styles and content as a template in the templates folder. *(app)* |
@@ -2028,15 +2066,6 @@ command inside the app. This table is generated from the command definitions in 
 | `VERIFYSIGNATURE` | `CHECKSIGNATURE`, `SIGVERIFY` | Checks a file against its <file>.sig: valid signature, unchanged content, and whether the signer is trusted (TRUSTEDSIGNERS). |
 | `VERSIONS` | `CHECKPOINT`, `DOCVERSIONS`, `VERSIONHISTORY` | Version history saved next to the drawing: Save a named checkpoint, List, Restore a version (undoable), Diff two versions (or a version and the current drawing), Delete, Prune. |
 
-### Analyze
-
-| Command | Aliases | Description |
-| --- | --- | --- |
-| `ENERGYPLUS` | `EPLUS`, `IDFEXPORT`, `ENERGYSIM` | EnergyPlus simulation: Export an IDF (rooms as zones, envelope surfaces, windows, layered constructions, ideal-loads HVAC, location) or Run an installed EnergyPlus on it with an EPW weather file: site energy, EUI, end uses, unmet hours and per-room heating/cooling energy and peak loads (written to the rooms). |
-| `QAASSIST` | `MODELQA`, `EXPLAINWARNINGS`, `FIXMODEL` | Model QA assistant: explains each model-checker finding (why it matters, what to do), Zoom to one, or Fix one / all fixable issues automatically after confirmation (one undo step). |
-| `THERMALBRIDGES` | `THERMALBRIDGE`, `PSIVALUES`, `TBHINT` | Finds geometric linear thermal bridges of the envelope (wall corners, ground and intermediate floor edges, balconies, eaves, window/door reveals, columns in exterior walls) with lengths, ψ values (PSI:<kind> overrides) and H_TB = Σψ·L; selects the elements. |
-| `WORKSCHEDULE` | `SCHEDULE4D`, `4D`, `GANTT`, `CONSTRUCTIONSEQUENCE` | Construction sequencing (4D) and resources: Generate tasks from the model (by level and trade, quantity-based durations, crews), List with dates and critical path, Duration/Link to edit tasks, Simulate a date (selects the elements built by then), Resources (histogram, over-allocation, cost), Level (resource levelling), Gantt (SVG), Csv. |
-
 ### Manage
 
 | Command | Aliases | Description |
@@ -2048,6 +2077,8 @@ command inside the app. This table is generated from the command definitions in 
 | `FAMILYLOCK` | `FAMLOCK`, `FAMILYEQ`, `PARAMLOCK` | Family constraints: Lock a reference plane to a parameter (dimension label), EQ planes equally spaced, Plane (add a reference plane). |
 | `GEOLOCATION` | `GEOLOC`, `LOCATION`, `SITELOCATION` | Project geolocation: City preset, or Set latitude, longitude, site elevation, time zone and true north (used by sun studies, energy and exports); List shows it. |
 | `GLOBALPARAM` | `GLOBALPARAMS`, `GLOBALPARAMETERS`, `PROJECTPARAM` | Global parameters: New/Set a value or =formula, Bind element dimensions (wall height, thickness, opening width…) to an expression, Unbind, List, Delete; bound elements and family formulas update when a value changes. |
+| `OBJECTSTYLES` | `OBJSTYLES`, `OBJECTSTYLE`, `CATEGORYSTYLES` | Object styles: project-wide projection/cut line weights, line colour, cut fill and cut pattern per BIM category (wall, door, window, slab, column…); every plan and section follows. List, Reset, or set e.g. "cut:0.7;proj:0.35;color:red;fill:0.3,0.3,0.3;pattern:ANSI31". |
+| `OBJECTSTYLESDIALOG` | `OBJECTSTYLESDLG`, `OSTYLESDIALOG` | Object Styles dialog: projection/cut line weights, line colour, cut fill and cut pattern per BIM category for every plan and section. *(app)* |
 | `PARAMCELL` | `PARAMLINK`, `SPREADSHEETPARAM`, `BINDCELL` | Drives a global parameter from a spreadsheet cell (a table in the drawing, e.g. Params!B3 or #12!B3); None removes the link. |
 | `PLUGINS` | `PLUGINMANAGER`, `APPLOAD` | Plugin manager: List plugins (folders with plugin.json + JavaScript), Reload and register their commands, Enable/Disable, Info, New (scaffold a plugin, optionally from a recorded script), Folder. |
 | `PSET` | `PSETS`, `PROPERTYSET`, `PROPERTYSETS` | Property sets (IFC Psets): Set Pset.Property values (typed by templates), Apply a template's defaults, List an element's sets, Remove, Check values, and custom Templates (New/Add/Delete/List). |
@@ -2056,6 +2087,15 @@ command inside the app. This table is generated from the command definitions in 
 | `TRANSFERSTANDARDS` | `TRANSFERPROJECTSTANDARDS`, `COPYSTANDARDS`, `TPS` | Copies types, styles and settings (wall/slab/opening/stair/railing types, materials, layers, linetypes, text and dimension styles, view templates, families, parameters, schedules, keynotes) from another .archi file. |
 | `TYPEIMAGE` | `SCHEDULEIMAGE`, `TYPEPICTURE` | Assigns an image file to a type (wall/opening/family type); schedules with an Image field show it in placed tables. |
 | `WORKSET` | `WORKSETS` | Worksets (named element sets): list, new, current, assign selection, hide/show, select members. |
+
+### Analyze
+
+| Command | Aliases | Description |
+| --- | --- | --- |
+| `ENERGYPLUS` | `EPLUS`, `IDFEXPORT`, `ENERGYSIM` | EnergyPlus simulation: Export an IDF (rooms as zones, envelope surfaces, windows, layered constructions, ideal-loads HVAC, location) or Run an installed EnergyPlus on it with an EPW weather file: site energy, EUI, end uses, unmet hours and per-room heating/cooling energy and peak loads (written to the rooms). |
+| `QAASSIST` | `MODELQA`, `EXPLAINWARNINGS`, `FIXMODEL` | Model QA assistant: explains each model-checker finding (why it matters, what to do), Zoom to one, or Fix one / all fixable issues automatically after confirmation (one undo step). |
+| `THERMALBRIDGES` | `THERMALBRIDGE`, `PSIVALUES`, `TBHINT` | Finds geometric linear thermal bridges of the envelope (wall corners, ground and intermediate floor edges, balconies, eaves, window/door reveals, columns in exterior walls) with lengths, ψ values (PSI:<kind> overrides) and H_TB = Σψ·L; selects the elements. |
+| `WORKSCHEDULE` | `SCHEDULE4D`, `4D`, `GANTT`, `CONSTRUCTIONSEQUENCE` | Construction sequencing (4D) and resources: Generate tasks from the model (by level and trade, quantity-based durations, crews), List with dates and critical path, Duration/Link to edit tasks, Simulate a date (selects the elements built by then), Resources (histogram, over-allocation, cost), Level (resource levelling), Gantt (SVG), Csv. |
 
 ### MEP
 

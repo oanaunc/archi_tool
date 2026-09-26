@@ -2518,7 +2518,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "could",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Image adjust displays correctly on screen, in PDF and after reopening."
  },
  {
@@ -4871,7 +4871,7 @@
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "Changing Walls cut lineweight updates all plans."
  },
  {
@@ -4962,7 +4962,7 @@
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "must",
-  "status": "planned",
+  "status": "done",
   "acceptance": "In-place text editor renders identically on screen, PDF and DXF round-trip."
  },
  {
@@ -4975,7 +4975,7 @@
   "reference": "AutoCAD, LibreCAD",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Text styles renders identically on screen, PDF and DXF round-trip."
  },
  {
@@ -5859,7 +5859,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 3,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Fill patterns for materials fills the right area, updates with its boundary and prints correctly."
  },
  {
@@ -7328,7 +7328,7 @@
   "reference": "Revit, ArchiCAD",
   "phase": 3,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Slanted/tapered walls generates correct plan, 3D and section geometry with clean joins."
  },
  {
@@ -11007,7 +11007,7 @@
   "reference": "SolveSpace, CAD Sketcher",
   "phase": 4,
   "priority": "could",
-  "status": "partial",
+  "status": "done",
   "acceptance": "3D sketches is solved by the constraint solver and persists after edits."
  },
  {
@@ -11293,7 +11293,7 @@
   "reference": "SketchUp",
   "phase": 4,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Scale tool with gizmo can be converted into BIM elements."
  },
  {
@@ -11735,7 +11735,7 @@
   "reference": "Enscape",
   "phase": 5,
   "priority": "should",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Ambient occlusion renders consistently in viewport and exports."
  },
  {
@@ -12424,7 +12424,7 @@
   "reference": "Enscape",
   "phase": 5,
   "priority": "could",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "VR headset viewing is placed and shown in viewport and renders."
  },
  {
@@ -13009,7 +13009,7 @@
   "reference": "SketchUp",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "SketchUp SKP import exports correct scale, units and materials."
  },
  {
@@ -13022,7 +13022,7 @@
   "reference": "Rhino",
   "phase": 6,
   "priority": "should",
-  "status": "planned",
+  "status": "partial",
   "acceptance": "Rhino 3DM import/export exports correct scale, units and materials."
  },
  {
@@ -14465,7 +14465,7 @@
   "reference": "Native (new)",
   "phase": 8,
   "priority": "could",
-  "status": "partial",
+  "status": "done",
   "acceptance": "AppleScript support is covered by integration tests."
  },
  {
@@ -14595,7 +14595,7 @@
   "reference": "Native (new)",
   "phase": 8,
   "priority": "could",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Local model support produces valid, undoable edits and asks for confirmation for bulk changes."
  },
  {
@@ -14673,7 +14673,7 @@
   "reference": "Native (new)",
   "phase": 1,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Geometry services is covered by unit tests."
  },
  {
@@ -14790,7 +14790,7 @@
   "reference": "Native (new)",
   "phase": 2,
   "priority": "must",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Spatial index meets the stated benchmark on an M1 Mac."
  },
  {
@@ -14920,7 +14920,7 @@
   "reference": "Native (new)",
   "phase": 2,
   "priority": "could",
-  "status": "partial",
+  "status": "done",
   "acceptance": "Crash reporting (opt-in) works on the stated platforms."
  },
  {
