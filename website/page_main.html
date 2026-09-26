@@ -1,80 +1,153 @@
 <section class="contact-area section-padding-100 bg-img bg-overlay has-bg-img editor-breadcrumb" style="background-image:url(images/apps/archi-tool/breadcrumb.png?v={{V}})">
         <div class="container"><div class="row"><div class="col-12"><div class="section-heading white"><p>Architecture &amp; Design</p><h2>Archi Tool</h2></div></div></div></div>
     </section>
-    <main class="album-catagory section-padding-100-0 at-page" id="main">
-    <div class="container">
-        <div class="photo-editor-intro">
-            <img class="editor-icon" src="images/apps/archi-tool/icon.png?v={{V}}" alt="Oanarina Archi Tool icon" width="92" height="92">
-            <h1>Oanarina Archi Tool</h1><h4>Draw it. Build it. See it.</h4>
-            <p>A free, native Mac studio for architecture: precise 2D drafting with a command line that speaks AutoCAD, intelligent building elements in the spirit of Revit, parametric 3D modelling, realistic rendering, sheets and printing — and an open door for AI agents that can design alongside you.</p>
-            <div class="editor-actions"><a href="#download" class="btn oneMusic-btn">Get the app <i class="fa fa-angle-double-right" aria-hidden="true"></i></a><a href="#watch" class="btn oneMusic-btn">Watch it draw</a><a href="#tutorials" class="btn oneMusic-btn">Tutorials</a></div>
-            <p class="at-badges"><span>Free</span><span>Open source · GPL-3.0</span><span>Apple silicon &amp; Intel</span><span>macOS 14+</span><span>No account</span></p>
-        </div>
-    </div>
+<main class="pe-page at-page" id="main">
+<section class="pe-hero" id="download" aria-labelledby="at-hero-title">
+<div class="pe-hero-glow" aria-hidden="true"></div>
+<div class="at-blueprint" aria-hidden="true"></div>
+<div class="container"><div class="pe-hero-grid">
+<div class="pe-hero-copy">
+<img class="pe-hero-icon" src="images/apps/archi-tool/icon.png?v={{V}}" alt="" width="84" height="84">
+<p class="pe-eyebrow">Free for Mac · open source · no account</p>
+<h1 id="at-hero-title">Oanarina Archi Tool</h1>
+<p class="pe-lede">Draw it. Build it. See it. Precise 2D drafting with a command line that speaks AutoCAD, real building elements, 3D modelling, photographic renders and drawing sheets — and an open door for AI agents that design alongside you.</p>
+<div class="pe-hero-actions">
+{{HEROBUTTON}}
+<a class="pe-btn pe-btn-ghost" href="#studio">Watch it build a house</a>
+</div>
+<p class="pe-trust" id="release-status">{{STATUS}}</p>
+<ul class="pe-chips" aria-label="Highlights">
+<li>macOS 14 or later</li><li>Apple silicon &amp; Intel</li><li>DXF · IFC · PDF</li><li>GPL-3.0</li>
+</ul>
+<p class="pe-hero-links">{{LINKS}}</p>
+</div>
+<div class="pe-hero-shot" aria-hidden="true">
+<div class="pe-window pe-window-tilt">
+<div class="pe-titlebar"><i></i><i></i><i></i><span>Cedar House.archi</span></div>
+<img src="images/apps/archi-tool/workspace.jpg?v={{V}}" alt="" loading="eager">
+</div>
+<img class="pe-float pe-float-a at-float-night" src="images/apps/archi-tool/renders/front-night.jpg?v={{V}}" alt="">
+<div class="pe-float pe-float-b at-float-cmd"><span>Command:</span> WALL<br><em>Thickness 300 · Height 6200</em><br><b>4 wall(s) created.</b></div>
+</div>
+</div></div>
+</section>
 
-    <section class="at-stats" aria-label="Oanarina Archi Tool in numbers"><div class="container"><div class="at-stats-grid">
-        <div><strong data-count="{{FEATURES}}">{{FEATURES}}</strong><span>features built and tested</span></div>
-        <div><strong data-count="{{COMMANDS}}">{{COMMANDS}}</strong><span>commands, each on the command line</span></div>
-        <div><strong data-count="{{TESTS}}">{{TESTS}}</strong><span>automated tests on every build</span></div>
-        <div><strong data-count="{{FORMATS}}">{{FORMATS}}</strong><span>file formats in and out</span></div>
-        <div><strong>0&nbsp;€</strong><span>forever — no subscription</span></div>
-    </div></div></section>
+<section class="at-stats" aria-label="Oanarina Archi Tool in numbers"><div class="container"><div class="at-stats-grid">
+<div><strong data-count="{{FEATURES}}">{{FEATURES}}</strong><span>features built and tested</span></div>
+<div><strong data-count="{{COMMANDS}}">{{COMMANDS}}</strong><span>commands on the command line</span></div>
+<div><strong data-count="{{TESTS}}">{{TESTS}}</strong><span>automated tests on every build</span></div>
+<div><strong data-count="{{FORMATS}}">{{FORMATS}}</strong><span>file formats in and out</span></div>
+<div><strong data-count="12">12</strong><span>video tutorials, one house</span></div>
+</div></div></section>
 
-    <section id="watch" class="at-studio"><div class="container"><div class="row align-items-center">
-        <div class="col-12 col-lg-5">
-            <p class="at-kicker">Watch it draw</p>
-            <h2>Every line starts on the command line</h2>
-            <p>Type what you want to build. The plan on the right is the Cedar House, the sample project that ships with the app — exported straight from Oanarina Archi Tool and replayed here, wall by wall.</p>
-            <div class="at-term" aria-hidden="true"><div class="at-term-bar"><i></i><i></i><i></i><span>Command line</span></div><div class="at-term-body" id="at-term"></div></div>
-            <button type="button" class="at-replay" id="at-replay">↻ Replay</button>
-        </div>
-        <div class="col-12 col-lg-7"><div class="at-plan" id="at-plan" data-src="images/apps/archi-tool/plan-anim.svg?v={{V}}"></div></div>
-    </div></div></section>
+<section class="pe-studio" id="studio" aria-labelledby="at-studio-title">
+<div class="container">
+<div class="pe-section-head"><p>Twelve lessons, recorded in the app</p><h2 id="at-studio-title">Build the Cedar House with me</h2>
+<p class="pe-section-sub">Pick a lesson on the left. The window plays a real recording of the Mac app, from the first wall to the printed sheet, and the steps on the right follow along. Click any step to jump to it.</p></div>
+<div class="pe-app" data-tutorials='{{TUTDATA}}'>
+<div class="pe-app-bar"><i></i><i></i><i></i><div class="pe-app-menu" aria-hidden="true"><span>Archi Tool</span><span>File</span><span>Edit</span><span>View</span><span>Draw</span><span>Modify</span><span>Architecture</span><span>Modeling</span><span>Output</span><span>Script</span></div><span class="pe-app-doc" id="pe-doc">Cedar House.archi</span></div>
+<div class="pe-app-body">
+<div class="pe-toolbar" role="tablist" aria-label="Tutorials">{{TOOLS}}</div>
+<div class="pe-stage" id="pe-stage">
+<video id="pe-video" playsinline muted preload="metadata" poster="{{FIRSTPOSTER}}" src="{{FIRSTVIDEO}}" aria-label="Screen recording"></video>
+<button type="button" class="pe-play" id="pe-play" aria-label="Play"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></button>
+<div class="pe-scrub"><div class="pe-scrub-fill" id="pe-fill"></div><div class="pe-scrub-marks" id="pe-marks"></div></div>
+<div class="pe-stage-foot"><button type="button" id="pe-toggle" class="pe-mini">Play</button><span id="pe-time">0:00</span><button type="button" id="pe-speed" class="pe-mini">1×</button><button type="button" id="pe-full" class="pe-mini">Full screen</button></div>
+</div>
+<aside class="pe-panel" aria-live="polite">
+<div class="pe-panel-tabs"><span class="is-on">Steps</span><span>Properties</span><span>Levels</span></div>
+<p class="at-lesson" id="at-lesson">Lesson 1 of 12</p>
+<h3 id="pe-title"></h3>
+<p id="pe-summary"></p>
+<ol class="pe-steps" id="pe-steps"></ol>
+<p class="pe-panel-foot" id="pe-next"></p>
+</aside>
+</div>
+</div>
+<noscript><p class="pe-section-sub">The recordings are in videos/archi-tool/ on this site.</p></noscript>
+</div>
+</section>
 
-    <div class="container">
-        <section class="at-section">
-            <p class="at-kicker">One model, every view</p>
-            <h2>Plan and model side by side</h2>
-            <p class="at-lead">Walls, doors, windows, floors and roofs are real building elements. Draw them in 2D and they stand up in 3D — with materials, sun and shadows.</p>
-            <img class="editor-shot" src="images/apps/archi-tool/workspace.png?v={{V}}" alt="The Oanarina Archi Tool workspace with the Cedar House plan in 2D beside its realistic 3D model, the ribbon, properties panel and command line" loading="lazy">
-            {{GALLERY}}
-        </section>
+<section class="pe-compare" aria-labelledby="at-compare-title">
+<div class="container"><div class="pe-compare-grid">
+<div class="pe-compare-copy">
+<div class="pe-section-head pe-left"><p>One model, every sky</p><h2 id="at-compare-title">Drag the sun across</h2></div>
+<p>Same house, same camera, a different lighting preset: Daylight, Golden hour, Overcast and Night each bring their own sun, sky, shadows and exposure. At night the windows light up on their own. Every picture here was rendered by the app from the Cedar House sample.</p>
+<div class="pe-ba-tabs" role="group" aria-label="Choose a view">
+<button type="button" class="pe-ba-tab is-active" data-a="front-daylight" data-b="front-night" data-la="Daylight" data-lb="Night">Front · night</button>
+<button type="button" class="pe-ba-tab" data-a="corner-daylight" data-b="corner-golden-hour" data-la="Daylight" data-lb="Golden hour">Corner · golden hour</button>
+<button type="button" class="pe-ba-tab" data-a="corner-overcast" data-b="corner-golden-hour" data-la="Overcast" data-lb="Golden hour">Corner · overcast</button>
+<button type="button" class="pe-ba-tab" data-a="aerial-daylight" data-b="aerial-golden-hour" data-la="Daylight" data-lb="Golden hour">Aerial</button>
+</div>
+<p class="at-cmdline"><code>RENDERPRESET Night</code> <code>RENDERSAVE</code></p>
+</div>
+<div class="pe-ba at-ba" id="pe-ba" style="--pos:50%">
+<img class="pe-ba-img" id="pe-ba-before" src="images/apps/archi-tool/renders/front-night.jpg?v={{V}}" alt="The Cedar House at night">
+<div class="pe-ba-top"><img class="pe-ba-img" id="pe-ba-after" src="images/apps/archi-tool/renders/front-daylight.jpg?v={{V}}" alt="The Cedar House in daylight"></div>
+<span class="pe-ba-label pe-ba-l" id="pe-ba-la">Daylight</span><span class="pe-ba-label pe-ba-r" id="pe-ba-lb">Night</span>
+<div class="pe-ba-handle" aria-hidden="true"><span></span></div>
+<input class="pe-ba-range" type="range" min="0" max="100" value="50" aria-label="Lighting divider">
+</div>
+</div></div>
+</section>
 
-        <section id="features" class="at-section">
-            <p class="at-kicker">Everything an architect reaches for</p>
-            <h2>Explore {{FEATURES}} features</h2>
-            <p class="at-lead">Pick an area, or search for a command you know from AutoCAD, Revit, ArchiCAD, SketchUp or FreeCAD.</p>
-            <div class="at-search"><input id="at-q" type="search" placeholder="Search features — e.g. hatch, stair, IFC, fillet, render…" aria-label="Search features"><span id="at-count"></span></div>
-            <div class="at-areas" id="at-areas" role="tablist"></div>
-            <ul class="at-list" id="at-list" aria-live="polite"></ul>
-        </section>
+<section id="watch" class="at-studio"><div class="container"><div class="row align-items-center">
+<div class="col-12 col-lg-5">
+<p class="at-kicker">Every line starts on the command line</p>
+<h2>Type it, and it is drawn</h2>
+<p>The plan on the right is the Cedar House, exported from Oanarina Archi Tool as SVG and replayed here wall by wall. Commands, aliases and coordinates work the way your fingers already know them from AutoCAD.</p>
+<div class="at-term" aria-hidden="true"><div class="at-term-bar"><i></i><i></i><i></i><span>Command line</span></div><div class="at-term-body" id="at-term"></div></div>
+<button type="button" class="at-replay" id="at-replay">↻ Replay</button>
+</div>
+<div class="col-12 col-lg-7"><div class="at-plan" id="at-plan" data-src="images/apps/archi-tool/plan-anim.svg?v={{V}}"></div></div>
+</div></div></section>
 
-        <section class="at-section at-steps">
-            <p class="at-kicker">From idea to building</p>
-            <h2>Four steps, one app</h2>
-            <div class="row">
-                <div class="col-12 col-md-6 col-lg-3"><span class="at-num">1</span><h4>Draw the plan</h4><p>Levels, walls with real layer build-ups, doors and windows that cut their openings, rooms that find their own boundaries and areas.</p></div>
-                <div class="col-12 col-md-6 col-lg-3"><span class="at-num">2</span><h4>Shape it in 3D</h4><p>Floors, roofs of every shape, stairs between levels, curtain walls, terrain, parametric families and solid modelling.</p></div>
-                <div class="col-12 col-md-6 col-lg-3"><span class="at-num">3</span><h4>Render the light</h4><p>Sun for your site and hour, materials and textures, realistic views, walkthrough videos and 360° panoramas.</p></div>
-                <div class="col-12 col-md-6 col-lg-3"><span class="at-num">4</span><h4>Share the drawings</h4><p>Sheets with title blocks and viewports at scale, PDF, DXF, IFC for BIM, glTF, USDZ, OBJ and schedules for spreadsheets.</p></div>
-            </div>
-        </section>
+<section class="pe-made" aria-labelledby="at-made-title">
+<div class="container">
+<div class="pe-section-head"><p>Straight out of the app</p><h2 id="at-made-title">Made in Archi Tool</h2></div>
+<div class="pe-made-grid at-made-grid">
+<figure class="pe-card pe-wide"><img src="images/apps/archi-tool/renders/corner-golden-hour.jpg?v={{V}}" alt="The Cedar House at golden hour: limestone wing, cedar tower and lit path" loading="lazy"><figcaption>Render · golden hour</figcaption></figure>
+<figure class="pe-card"><img src="images/apps/archi-tool/renders/front-night.jpg?v={{V}}" alt="The Cedar House at night with glowing windows under the stars" loading="lazy"><figcaption>Render · night</figcaption></figure>
+<figure class="pe-card"><img src="images/apps/archi-tool/renders/sheet-a102.jpg?v={{V}}" alt="Sheet A-102 with ground and upper floor plans, the south elevation and a title block" loading="lazy"><figcaption>Sheet A-102 · PDF</figcaption></figure>
+<figure class="pe-card"><img src="images/apps/archi-tool/renders/aerial-golden-hour.jpg?v={{V}}" alt="Aerial view of the Cedar House and its drive at golden hour" loading="lazy"><figcaption>Render · aerial</figcaption></figure>
+<figure class="pe-card"><img src="images/apps/archi-tool/renders/front-golden-hour.jpg?v={{V}}" alt="The cedar tower and the entrance canopy at dusk" loading="lazy"><figcaption>Render · front at dusk</figcaption></figure>
+</div>
+<p class="pe-credit">The Cedar House ships with the app as a sample project: open it from the start screen and render it yourself.</p>
+</div>
+</section>
 
-        <section id="tutorials" class="at-section">
-            <p class="at-kicker">Learn by watching</p>
-            <h2>Tutorials: build the Cedar House with me</h2>
-            <p class="at-lead">Short videos recorded inside the app, from the first click to the final render.</p>
-            <div class="at-tutorials">{{TUTORIALS}}</div>
-        </section>
+<section class="pe-features" aria-labelledby="at-features-title">
+<div class="container">
+<div class="pe-section-head"><p>From the first line to the finished building</p><h2 id="at-features-title">A studio for architecture</h2></div>
+<div class="pe-feature-grid">
+<article class="pe-feature"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M4 20 20 4M4 20h6M4 20v-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="20" cy="4" r="1.8" fill="currentColor"/></svg><h3>Draft with precision</h3><p>Lines, polylines, arcs, splines and hatches with object snaps, polar and object tracking, dynamic input, layers, blocks and dimensions. Trim, extend, offset, fillet, array and stretch, all from the command line or the ribbon.</p></article>
+<article class="pe-feature"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M3 21V9l9-6 9 6v12H3zm6 0v-6h6v6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><h3>Build with real elements</h3><p>Levels, layered walls that join cleanly, doors and windows that cut their openings, floors, roofs with overhangs, stairs, railings, curtain walls, columns and rooms that find their own boundaries and areas.</p></article>
+<article class="pe-feature"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M12 2 3 7v10l9 5 9-5V7l-9-5zm0 0v20M3 7l9 5 9-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><h3>Model in 3D</h3><p>Extrude, revolve, sweep and loft; solids with union, subtract and intersect; parametric families, terrain from contours, section boxes and six visual styles from wireframe to sketchy.</p></article>
+<article class="pe-feature"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><h3>Render the light</h3><p>A sun for your site and hour, lighting presets, textured materials with bump and roughness, soft shadows, bloom and ambient occlusion. Save stills, walkthrough videos and 360° panoramas.</p></article>
+<article class="pe-feature"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M13 14h8M13 14v6M3 12h8V4" fill="none" stroke="currentColor" stroke-width="1.7"/></svg><h3>Draw the sheets</h3><p>Sheets with title blocks, viewports at scale, elevations and sections, schedules of doors, windows and rooms, then plot to PDF or publish a whole set in one multi-page file.</p></article>
+<article class="pe-feature"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="m15 15 2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><h3>Check the design</h3><p>Areas and volumes, clash detection, code checks for stairs and egress, sun and shadow studies, energy estimates and quantity take-offs that update as you draw.</p></article>
+<article class="pe-feature"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M7 7h10v10H7z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3 12h4M17 12h4M12 3v4M12 17v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><h3>Work with others</h3><p>Open and save DXF for AutoCAD, exchange IFC with Revit and ArchiCAD, read Rhino, send glTF, USDZ, OBJ and STEP, share BCF issues and keep versions you can compare and restore.</p></article>
+<article class="pe-feature"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="m8 8-5 4 5 4M16 8l5 4-5 4M14 5l-4 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><h3>Script it</h3><p>A JavaScript console, visual node graphs, macros and plugins. Every command, typed or clicked, can be recorded and replayed.</p></article>
+<article class="pe-feature"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M12 3a7 7 0 0 0-4 12.7V19h8v-3.3A7 7 0 0 0 12 3zM9 22h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><h3>Design with an AI</h3><p>A built-in Model Context Protocol server lets Claude and other agents read the model and draw walls, rooms and sheets with you, on your own Mac only, and only when you turn it on.</p></article>
+</div>
+</div>
+</section>
 
-        <section class="at-section at-ai"><div class="row align-items-center">
-            <div class="col-12 col-lg-5">
-                <p class="at-kicker">Scripting &amp; AI agents</p>
-                <h2>Design together with an AI</h2>
-                <p>Everything you can click, you can type — and everything you can type, a script or an AI agent can do. Automate with the JavaScript console, visual node graphs and plugins, or connect Claude and other agents through the built-in Model Context Protocol server.</p>
-                <p><code>archi-cli --mcp ~/Documents/house.archi</code></p>
-            </div>
-            <div class="col-12 col-lg-7"><div class="at-term"><div class="at-term-bar"><i></i><i></i><i></i><span>JavaScript console</span></div><pre class="at-code"><b>// A row of houses, each one a real building element</b>
+<section id="features" class="at-explore"><div class="container">
+<div class="pe-section-head"><p>Everything an architect reaches for</p><h2>Explore {{FEATURES}} features</h2>
+<p class="pe-section-sub">Pick an area, or search for a command you know from AutoCAD, Revit, ArchiCAD, SketchUp or FreeCAD.</p></div>
+<div class="at-search"><input id="at-q" type="search" placeholder="Search features — e.g. hatch, stair, IFC, fillet, render…" aria-label="Search features"><span id="at-count"></span></div>
+<div class="at-areas" id="at-areas" role="tablist"></div>
+<ul class="at-list" id="at-list" aria-live="polite"></ul>
+</div></section>
+
+<section class="at-ai-band"><div class="container"><div class="row align-items-center">
+<div class="col-12 col-lg-5">
+<div class="pe-section-head pe-left"><p>Scripting &amp; AI agents</p><h2>Everything you can click, a script can do</h2></div>
+<p>Automate with the JavaScript console, node graphs and plugins, or connect Claude and other agents through the built-in MCP server.</p>
+<p><code>archi-cli --mcp ~/Documents/house.archi</code></p>
+</div>
+<div class="col-12 col-lg-7"><div class="at-term"><div class="at-term-bar"><i></i><i></i><i></i><span>JavaScript console</span></div><pre class="at-code"><b>// A row of houses, each one a real building element</b>
 for (let i = 0; i &lt; 4; i++) {
   const x = i * 14000
   const w = [[x,0],[x+10000,0],[x+10000,8000],[x,8000]]
@@ -83,14 +156,31 @@ for (let i = 0; i &lt; 4; i++) {
   archi.addElement({ type: "roof", boundary: w, kind: "gable", pitch: 35 })
 }
 archi.run("ZOOM E")</pre></div></div>
-        </div></section>
+</div></div></section>
 
-        <section id="download" class="editor-download"><div class="row"><div class="col-12 col-lg-6"><h2>Get Oanarina Archi Tool</h2><p>Free architecture software for your Mac.</p><p id="release-status">{{STATUS}}</p><p>{{NOTE}}</p>{{BUTTON}}</div><div class="col-12 col-lg-6"><table class="editor-specs"><caption class="sr-only">System requirements and file formats</caption><tbody><tr><th scope="row">Platform</th><td>macOS 14 or later · Apple silicon and Intel</td></tr><tr><th scope="row">Price</th><td>Free · open source (GPL-3.0)</td></tr><tr><th scope="row">Opens</th><td>{{IMPORTS}}</td></tr><tr><th scope="row">Exports</th><td>{{EXPORTS}}</td></tr><tr><th scope="row">Projects</th><td>.archi</td></tr></tbody></table></div></div></section>
-        <p class="text-center">{{LINKS}}</p>
-        <section class="editor-faq mb-100"><div class="section-heading"><p>A few useful details</p><h2>Before you begin</h2></div>
+<section class="pe-specs" aria-labelledby="at-specs-title">
+<div class="container"><div class="pe-specs-grid">
+<div><div class="pe-section-head pe-left"><p>Opens and saves</p><h2 id="at-specs-title">Formats &amp; system</h2></div><p class="pe-update">{{NOTE}}</p></div>
+<div><table class="editor-specs"><caption class="sr-only">System requirements and file formats</caption><tbody><tr><th scope="row">Platform</th><td>macOS 14 or later · Apple silicon and Intel</td></tr><tr><th scope="row">Price</th><td>Free · open source (GPL-3.0)</td></tr><tr><th scope="row">Opens</th><td>{{IMPORTS}}</td></tr><tr><th scope="row">Exports</th><td>{{EXPORTS}}</td></tr><tr><th scope="row">Projects</th><td>.archi</td></tr></tbody></table></div>
+</div></div>
+</section>
+
+<section class="pe-faq editor-faq" id="faq" aria-labelledby="at-faq-title">
+<div class="container"><div class="pe-section-head"><p>A few useful details</p><h2 id="at-faq-title">Before you begin</h2></div>
 <details><summary>Is it really free?</summary><p>Yes. Oanarina Archi Tool is free software under the GNU General Public License 3.0: no account, no subscription and no watermark.</p></details>
 <details><summary>Can I open my AutoCAD, Revit or SketchUp work?</summary><p>Open and save DXF, the exchange format AutoCAD, LibreCAD and most CAD tools read and write; save DWG files as DXF first. Exchange building models as IFC with Revit, ArchiCAD and other BIM tools. Rhino 3DM files open directly; SketchUp files open through a free converter.</p></details>
 <details><summary>Does it work offline?</summary><p>Yes. Drawings and models stay on your Mac. The optional agent server listens only on your own computer and is off until you turn it on.</p></details>
 <details><summary>How complete is it?</summary><p>{{FEATURES}} of the {{TOTALFEATURES}} capabilities in the public feature register are built and tested. The remaining ones are marked openly in the register, most of them waiting for outside validation.</p></details>
 <details><summary>Who makes Oanarina Archi Tool?</summary><p>Oanarina Archi Tool is developed by Oana Rinaldi, with ideas drawn from the open-source FreeCAD, LibreCAD, IfcOpenShell, SolveSpace, OpenSCAD, BRL-CAD, Sverchok and CAD Sketcher communities.</p></details>
-<details><summary>How can I share feedback?</summary><p>Report a reproducible problem or suggest an improvement through the <a href="index.html#contact">contact page</a>. Include your macOS version and the steps that led to the problem.</p></details></section><p class="text-center mb-100"><a href="apps.html">← Back to all apps</a></p></div></main>
+<details><summary>How can I share feedback?</summary><p>Report a reproducible problem or suggest an improvement through the <a href="index.html#contact">contact page</a>. Include your macOS version and the steps that led to the problem.</p></details></div>
+</section>
+
+<section class="pe-final" aria-label="Download">
+<div class="container"><div class="pe-final-inner">
+<img src="images/apps/archi-tool/icon.png?v={{V}}" alt="" width="64" height="64">
+<h2>Draw it. Build it. See it.</h2>
+{{FINALBUTTON}}
+<p><a href="apps.html">← Back to all apps</a></p>
+</div></div>
+</section>
+</main>

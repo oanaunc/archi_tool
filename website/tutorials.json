@@ -1,0 +1,580 @@
+[
+ {
+  "n": 1,
+  "slug": "01-getting-started",
+  "title": "Getting started",
+  "summary": "The start screen, the interface tour and the Cedar House sample",
+  "dur": "1:28",
+  "steps": [
+   [
+    0.0,
+    "Welcome to Oanarina Archi Tool",
+    "A free, native Mac app for drafting and building design"
+   ],
+   [
+    7.8,
+    "Sample projects",
+    "The Cedar House: the house this tutorial series builds step by step"
+   ],
+   [
+    16.7,
+    "The ribbon",
+    "Tools grouped in tabs; every button runs a command you could also type"
+   ],
+   [
+    26.4,
+    "The canvas",
+    "The 2D plan of the current level: scroll to zoom, drag to pan"
+   ],
+   [
+    29.9,
+    "The command line",
+    "Just start typing: commands, options and coordinates"
+   ],
+   [
+    37.0,
+    "Side panels",
+    "Properties, Layers, Levels, project Browser, Materials and more"
+   ],
+   [
+    52.0,
+    "The status bar",
+    "Snaps, grid, ortho and polar tracking toggles, cursor coordinates"
+   ],
+   [
+    55.7,
+    "2D, 3D, Split and Sheet",
+    "Switch the workspace with these buttons or ⌥⌘1–4"
+   ],
+   [
+    82.2,
+    "Next: the command line",
+    "Tutorial 02 shows how to drive the app by typing"
+   ]
+  ]
+ },
+ {
+  "n": 2,
+  "slug": "02-command-line",
+  "title": "The command line",
+  "summary": "Commands, aliases, coordinates, options, repeat and undo",
+  "dur": "1:15",
+  "steps": [
+   [
+    0.0,
+    "Just start typing",
+    "Commands go straight to the command line; Enter or Space confirms"
+   ],
+   [
+    11.9,
+    "Aliases",
+    "L is LINE, C is CIRCLE, REC is RECTANG, PL is PLINE…"
+   ],
+   [
+    20.0,
+    "Absolute coordinates",
+    "x,y measured from the origin"
+   ],
+   [
+    25.1,
+    "Relative coordinates",
+    "@dx,dy measured from the last point"
+   ],
+   [
+    32.5,
+    "Polar coordinates",
+    "@distance<angle, angles in degrees counter-clockwise"
+   ],
+   [
+    39.2,
+    "Options",
+    "Type the capital letters of an option: D for Diameter"
+   ],
+   [
+    46.3,
+    "Enter repeats the last command",
+    "An empty Enter starts CIRCLE again"
+   ],
+   [
+    51.1,
+    "Undo and redo",
+    "U undoes the last command, REDO brings it back"
+   ],
+   [
+    55.9,
+    "Units and arithmetic",
+    "2.5m, 30cm, 3'6\" and 2400/2 are all valid input"
+   ],
+   [
+    63.0,
+    "History",
+    "↑ and ↓ recall earlier lines; F2 shows the whole history"
+   ],
+   [
+    68.8,
+    "Next: drawing basics",
+    "Tutorial 03 covers snaps, ortho, trim, offset and fillet"
+   ]
+  ]
+ },
+ {
+  "n": 3,
+  "slug": "03-drawing-basics",
+  "title": "Drawing basics",
+  "summary": "Lines, polylines, rectangles, circles, snaps, ortho, trim, offset and fillet",
+  "dur": "1:08",
+  "steps": [
+   [
+    0.0,
+    "Shapes",
+    "Rectangles, circles and polylines with arc segments"
+   ],
+   [
+    19.4,
+    "Object snaps",
+    "OSNAP locks the cursor to endpoints, midpoints and centres"
+   ],
+   [
+    27.9,
+    "Ortho",
+    "F8 keeps lines horizontal or vertical; type a length to go that far"
+   ],
+   [
+    36.4,
+    "Fillet",
+    "FILLET rounds the corner between two lines"
+   ],
+   [
+    43.1,
+    "Trim",
+    "TRIM cuts objects back to the edges they cross"
+   ],
+   [
+    52.3,
+    "Offset",
+    "OFFSET makes parallel copies at a distance"
+   ],
+   [
+    60.9,
+    "Next: levels and walls",
+    "Tutorial 04 starts the Cedar House"
+   ]
+  ]
+ },
+ {
+  "n": 4,
+  "slug": "04-levels-and-walls",
+  "title": "Levels and walls",
+  "summary": "Levels, walls with thickness, height and justification, wall types and joins",
+  "dur": "1:45",
+  "steps": [
+   [
+    0.0,
+    "Levels",
+    "Every building element belongs to a level (storey)"
+   ],
+   [
+    21.8,
+    "Walls",
+    "WALL draws a chain of joined walls; Thickness and Height are options"
+   ],
+   [
+    33.6,
+    "The cedar tower",
+    "A taller chain: 7.2 m, joined to the wing"
+   ],
+   [
+    43.1,
+    "The entry wing",
+    "3.3 m walls around the entrance and the kitchen"
+   ],
+   [
+    53.1,
+    "Justification",
+    "Walls are drawn by their centre line, or their left or right face"
+   ],
+   [
+    63.2,
+    "Wall types",
+    "The Type option lists and edits layered wall types"
+   ],
+   [
+    68.6,
+    "Partitions and joins",
+    "A thin 120 mm partition T-joins the walls automatically"
+   ],
+   [
+    87.9,
+    "In 3D",
+    "The walls with their heights"
+   ],
+   [
+    98.8,
+    "Next: doors and windows",
+    "Tutorial 05 cuts the openings"
+   ]
+  ]
+ },
+ {
+  "n": 5,
+  "slug": "05-doors-and-windows",
+  "title": "Doors and windows",
+  "summary": "Placing windows and doors in walls, types, sizes, openings and flipping",
+  "dur": "1:54",
+  "steps": [
+   [
+    0.0,
+    "Windows",
+    "WINDOW places a window where you pick a wall"
+   ],
+   [
+    13.1,
+    "Sizes by option",
+    "Width, Height and Sill: a tall window high in the wall"
+   ],
+   [
+    34.0,
+    "The cedar tower",
+    "A 5.3 m glazing strip and a high window"
+   ],
+   [
+    48.5,
+    "Door types",
+    "The Type option lists the door types of the project"
+   ],
+   [
+    52.1,
+    "The entrance",
+    "A 1100 × 2700 pivot door, full-height glazing and a sidelight"
+   ],
+   [
+    78.3,
+    "Flipping",
+    "OPENINGFLIP turns a door to open the other way"
+   ],
+   [
+    83.4,
+    "Openings",
+    "OPENING cuts an empty doorway in the partition"
+   ],
+   [
+    99.0,
+    "In 3D",
+    "Openings cut through their walls and move with them"
+   ],
+   [
+    108.0,
+    "Next: floors, roofs and stairs",
+    "Tutorial 06 closes the house"
+   ]
+  ]
+ },
+ {
+  "n": 6,
+  "slug": "06-floors-roofs-stairs",
+  "title": "Floors, roofs and stairs",
+  "summary": "Slabs, flat and shed roofs with overhangs, a stair between levels and the canopy",
+  "dur": "1:58",
+  "steps": [
+   [
+    0.0,
+    "Floor slabs",
+    "SLAB from points: 250 mm oak floors"
+   ],
+   [
+    24.7,
+    "The porch",
+    "Offset raises a slab above its level: 180 mm"
+   ],
+   [
+    34.2,
+    "Flat roof",
+    "Kind, Overhang and Base (eave height) are options"
+   ],
+   [
+    46.3,
+    "Shed roof",
+    "A 4° mono-pitch plate with a deep 1.3 m overhang on the tower"
+   ],
+   [
+    69.3,
+    "The canopy",
+    "A 450 mm slab at 3.75 m over the whole entry wing"
+   ],
+   [
+    79.6,
+    "Stair",
+    "STAIR runs to the Upper Floor level; the risers are computed"
+   ],
+   [
+    87.2,
+    "The upper floor",
+    "Set the level current and draw its slab"
+   ],
+   [
+    100.7,
+    "In 3D",
+    "Floors, roofs, canopy and stair"
+   ],
+   [
+    111.7,
+    "Next: rooms and annotation",
+    "Tutorial 07 documents the plan"
+   ]
+  ]
+ },
+ {
+  "n": 7,
+  "slug": "07-rooms-and-annotation",
+  "title": "Rooms and annotation",
+  "summary": "Rooms with areas, dimensions, text, tags and hatches",
+  "dur": "1:08",
+  "steps": [
+   [
+    0.0,
+    "Rooms",
+    "ROOM: click inside the walls; the area is computed"
+   ],
+   [
+    21.7,
+    "Dimensions",
+    "DIMLINEAR: two points, then where the dimension line goes"
+   ],
+   [
+    31.6,
+    "Text",
+    "TEXT: position, height, rotation, then the words"
+   ],
+   [
+    38.1,
+    "Tags",
+    "TAGALL labels every door, window and room with live values"
+   ],
+   [
+    44.3,
+    "Hatches",
+    "Draw a boundary and fill it with a pattern"
+   ],
+   [
+    56.5,
+    "Schedules",
+    "SCHEDULE lists the rooms with their areas and volumes"
+   ],
+   [
+    62.4,
+    "Next: 3D and materials",
+    "Tutorial 08 goes into the model"
+   ]
+  ]
+ },
+ {
+  "n": 8,
+  "slug": "08-3d-and-materials",
+  "title": "3D and materials",
+  "summary": "The 3D view, orbiting, visual styles, materials and textures, and the section box",
+  "dur": "1:27",
+  "steps": [
+   [
+    0.0,
+    "The 3D view",
+    "The model is always live: every plan edit shows in 3D"
+   ],
+   [
+    8.5,
+    "Orbit",
+    "Drag to orbit, scroll to zoom, the view cube jumps to standard views"
+   ],
+   [
+    9.5,
+    "Visual styles",
+    "VSCURRENT: Realistic, Shaded, Hidden line, Conceptual, X-ray, Sketchy"
+   ],
+   [
+    19.0,
+    "Materials",
+    "Colour, roughness, metalness, transparency and textures"
+   ],
+   [
+    47.4,
+    "Assign a material",
+    "Pick in the plan, then CHPROP Material"
+   ],
+   [
+    63.5,
+    "Section box",
+    "Cut the model live to look inside"
+   ],
+   [
+    80.8,
+    "Next: rendering",
+    "Tutorial 09 renders the house"
+   ]
+  ]
+ },
+ {
+  "n": 9,
+  "slug": "09-rendering",
+  "title": "Rendering",
+  "summary": "Sun position, render presets, saved cameras and a final render to an image",
+  "dur": "1:11",
+  "steps": [
+   [
+    0.0,
+    "Saved cameras",
+    "CAMERA restores the views saved with the project"
+   ],
+   [
+    11.5,
+    "The sun",
+    "SUNSTUDY: date and time sliders; the shadows follow the solar position"
+   ],
+   [
+    25.0,
+    "Your own camera",
+    "Orbit to a view you like and SAVECAMERA it"
+   ],
+   [
+    32.9,
+    "Render settings",
+    "RENDER opens the render window: presets from Draft to Print 4K"
+   ],
+   [
+    38.7,
+    "Render",
+    "Sky, sun, exposure, ambient occlusion and soft shadows"
+   ],
+   [
+    48.3,
+    "Render to a file",
+    "RENDERTOFILE: size, pass, style and the image path"
+   ],
+   [
+    61.4,
+    "Next: sheets and PDF",
+    "Tutorial 10 lays out drawings on paper"
+   ]
+  ]
+ },
+ {
+  "n": 10,
+  "slug": "10-sheets-and-pdf",
+  "title": "Sheets and PDF",
+  "summary": "Sheets, viewports at a scale, the title block and plotting to PDF",
+  "dur": "1:15",
+  "steps": [
+   [
+    0.0,
+    "Sheets",
+    "LAYOUT New adds a paper sheet (A3 landscape by default)"
+   ],
+   [
+    10.4,
+    "Viewports",
+    "MVIEW: corners in paper millimetres, a scale and a view"
+   ],
+   [
+    32.3,
+    "Elevations on paper",
+    "Elevations, sections and 3D views are generated from the model"
+   ],
+   [
+    41.5,
+    "Title block",
+    "Sheet title, number, scale and date, plus project information"
+   ],
+   [
+    50.7,
+    "Plot to PDF",
+    "PLOT writes the current sheet to a vector PDF at true scale"
+   ],
+   [
+    54.3,
+    "Publish",
+    "PUBLISH writes every sheet into one multi-page PDF"
+   ],
+   [
+    69.1,
+    "Next: import and export",
+    "Tutorial 11 exchanges the model with other software"
+   ]
+  ]
+ },
+ {
+  "n": 11,
+  "slug": "11-import-export",
+  "title": "Import and export",
+  "summary": "DXF, IFC, OBJ and GLB export, schedules to CSV and IFC import",
+  "dur": "1:11",
+  "steps": [
+   [
+    0.0,
+    "DXF",
+    "EXPORT DXF: the plan for AutoCAD and other CAD software"
+   ],
+   [
+    7.3,
+    "IFC",
+    "EXPORT IFC: walls, slabs, doors, windows and spaces for BIM software"
+   ],
+   [
+    14.2,
+    "3D models",
+    "OBJ and GLB for 3D software, game engines and the web"
+   ],
+   [
+    25.5,
+    "Schedules",
+    "SCHEDULE builds tables of doors, windows, rooms and walls"
+   ],
+   [
+    38.0,
+    "Schedules to CSV",
+    "EXPORT CSV writes the schedules for spreadsheets"
+   ],
+   [
+    41.9,
+    "Importing IFC",
+    "IFCIMPORT reads IFC into native, editable elements"
+   ],
+   [
+    64.6,
+    "Also: DWG, Rhino, SketchUp, STEP, PDF…",
+    "File ▸ Import and IMPORTFILE accept many more formats"
+   ]
+  ]
+ },
+ {
+  "n": 12,
+  "slug": "12-scripting-and-ai",
+  "title": "Scripting and AI",
+  "summary": "The JavaScript console, the archi API, the agent server and archi-cli --mcp for Claude",
+  "dur": "0:52",
+  "steps": [
+   [
+    0.0,
+    "The script console",
+    "SCRIPTCONSOLE (⌥⌘J): JavaScript with an archi object"
+   ],
+   [
+    7.6,
+    "The archi API",
+    "Commands, documents and building elements from code"
+   ],
+   [
+    29.0,
+    "The agent server",
+    "AI agents drive the open drawing through a local JSON-RPC server"
+   ],
+   [
+    34.9,
+    "Claude and MCP",
+    "archi-cli --mcp is a Model Context Protocol server for Claude"
+   ],
+   [
+    45.8,
+    "That's the series",
+    "Free for macOS · www.oanarinaldi.com"
+   ]
+  ]
+ }
+]

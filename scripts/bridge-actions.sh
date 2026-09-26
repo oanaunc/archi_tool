@@ -47,7 +47,7 @@ run_action() {
       [[ ${#req[@]} -gt 0 ]] || req=(record)
       case "${req[0]}" in record|check|status|stop) targs=("${req[0]}") ;; *) echo "Unknown tutorials mode: ${req[0]} (record|check|status|stop)"; return 64 ;; esac
       for n in "${req[@]:1}"; do
-        [[ "$n" =~ ^[0-9]{2}(-[a-z0-9-]+)?$ ]] && targs+=("$n") || echo "ignored: $n"
+        [[ "$n" == dev || "$n" =~ ^[0-9]{2}(-[a-z0-9-]+)?$ ]] && targs+=("$n") || echo "ignored: $n"
       done
       "$ROOT/scripts/make-tutorials.sh" "${targs[@]}" ;;
     *) echo "Unknown action: $1"; return 64 ;;

@@ -71,25 +71,52 @@
 @media (max-width:991px) { .at-stats-grid { grid-template-columns:repeat(2,1fr); } .at-plan { margin-top:24px; } }
 @media (prefers-reduced-motion: reduce) { .plan-anim .ps:not(.dashed) { stroke-dashoffset:0; } .plan-anim .pf, .plan-anim .pt, .plan-anim .dashed { opacity:1; } .plan-anim.play * { animation:none !important; } }
 
-.photo-editor-intro{text-align:center;max-width:860px;margin:0 auto 56px}
-.photo-editor-intro .editor-icon{width:92px;height:92px;border-radius:22px;box-shadow:0 12px 34px rgba(0,0,0,.22);margin:0 auto 22px;display:block}
-.photo-editor-intro h1{font-size:44px;margin-bottom:6px}
-.photo-editor-intro h4{color:#F5C518;font-weight:600;margin-bottom:18px}
-.photo-editor-intro p{font-size:17px;line-height:1.7}
-.editor-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:26px 0 14px}
-.editor-actions .btn{margin:0}
-.editor-shot{display:block;width:100%;height:auto;border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.28);margin:28px 0}
-.editor-download{text-align:center;padding:48px 24px;border-radius:18px;background:#111;color:#eee;margin:40px 0}
-.editor-download h2,.editor-download h3{color:#fff}
-.editor-download p{color:#c9c9c9}
-.editor-specs{width:100%;max-width:760px;margin:24px auto;border-collapse:collapse;text-align:left}
-.editor-specs th,.editor-specs td{padding:10px 14px;border-bottom:1px solid rgba(127,127,127,.25);vertical-align:top}
-.editor-specs th{width:36%;font-weight:600}
-.editor-faq{max-width:860px;margin:40px auto}
-.editor-faq details{border-bottom:1px solid rgba(127,127,127,.25);padding:14px 0}
-.editor-faq summary{cursor:pointer;font-weight:600;font-size:17px}
-.editor-faq details p{margin:10px 0 0}
-@media (max-width:767px){.photo-editor-intro h1{font-size:32px}}
+
+/* ---- Archi Tool on the shared pe-* layout: yellow and blueprint blue instead of pink and blue ---- */
+.pe-page.at-page { --pink:#f5c518; --pink-soft:#ffe07a; --blue:#6fb4ff; --cyan:#7fd4ff; --ink:#15171b; --ink2:#1d2025; --ink3:#282c33; --line:#31353c; }
+.at-page .pe-btn-primary { color:#1a1400; background:linear-gradient(135deg,#fff1b0,#f5c518 55%,#d9a400); box-shadow:0 10px 30px rgba(245,197,24,.32); }
+.at-page .pe-btn-primary:hover, .at-page .pe-btn-primary:focus-visible { color:#1a1400; box-shadow:0 16px 40px rgba(245,197,24,.48); }
+.at-page .pe-hero-glow { background:radial-gradient(40% 50% at 18% 30%, rgba(245,197,24,.20), transparent 70%), radial-gradient(35% 45% at 85% 20%, rgba(111,180,255,.22), transparent 70%), radial-gradient(30% 40% at 70% 90%, rgba(232,122,63,.16), transparent 70%); }
+.at-blueprint { position:absolute; inset:0; pointer-events:none; opacity:.5;
+  background-image:linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size:24px 24px, 24px 24px, 120px 120px, 120px 120px; -webkit-mask-image:radial-gradient(70% 80% at 60% 40%, #000 30%, transparent 85%); mask-image:radial-gradient(70% 80% at 60% 40%, #000 30%, transparent 85%); }
+.at-page .pe-app-doc { color:#1a1400; }
+.at-page .pe-tool.is-active { background:rgba(245,197,24,.16); color:var(--pink-soft); box-shadow:inset 0 0 0 1px rgba(245,197,24,.45); }
+.at-page .pe-play { color:#1a1400; box-shadow:0 12px 40px rgba(245,197,24,.45); }
+.at-page .pe-steps .is-now button { background:rgba(245,197,24,.12); }
+.at-page .pe-steps .is-now .pe-n { color:#1a1400; }
+.at-page .pe-steps .is-done .pe-n { background:rgba(111,180,255,.2); }
+.at-page .pe-feature:hover { border-color:rgba(245,197,24,.5); }
+.at-page .pe-ba-handle span::before { border-right-color:#1a1400; } .at-page .pe-ba-handle span::after { border-left-color:#1a1400; }
+.at-page .pe-final-inner { background:radial-gradient(60% 90% at 20% 0%, rgba(245,197,24,.28), transparent 70%), radial-gradient(50% 80% at 90% 100%, rgba(111,180,255,.26), transparent 70%), var(--ink); }
+.at-page .pe-app-body { grid-template-columns:136px minmax(0,1fr) 320px; height:auto; }
+.at-page .pe-toolbar { display:grid; grid-template-columns:1fr 1fr; align-content:start; gap:4px; padding:10px 8px; contain:size; overflow-y:auto; }
+.at-page .pe-tool { padding:8px 2px; font-size:10.5px; }
+.at-page .pe-stage video { flex:none; height:auto; aspect-ratio:16/10; object-fit:contain; }
+.at-page .pe-panel { contain:size; }
+.at-lesson { font-size:11px !important; text-transform:uppercase; letter-spacing:.14em; color:var(--pink) !important; margin:0 0 6px !important; font-weight:600; }
+.pe-steps .pe-t b { display:block; color:#fff; font-weight:600; margin-bottom:1px; }
+.pe-steps .pe-t i { font-style:normal; color:#9da2ab; font-size:12.5px; }
+.at-float-night { width:46%; aspect-ratio:16/9; left:-9%; bottom:-12%; }
+.at-float-cmd { right:-5%; top:-9%; padding:12px 16px; font:12px/1.6 Menlo,Consolas,monospace; color:#d7d8dc; background:rgba(16,17,20,.92); backdrop-filter:blur(8px); aspect-ratio:auto; width:auto; }
+.at-float-cmd span { color:var(--pink); } .at-float-cmd em { color:#8c8e95; font-style:normal; } .at-float-cmd b { color:#7bc47f; font-weight:normal; }
+.at-page .at-stats { margin:0; background:#101114; border-top:1px solid #23262c; padding:44px 0; }
+.at-ba { aspect-ratio:16/9; }
+.at-cmdline { margin-top:18px; } .at-cmdline code { font-size:12px; background:#fff8dd; color:#8a6a00; padding:3px 8px; border-radius:6px; margin-right:6px; }
+.at-made-grid { grid-auto-rows:230px; }
+.at-made-grid .pe-card img { object-position:center 60%; }
+.at-page .at-studio { padding:90px 0; }
+.at-page .at-studio h2 { font-size:clamp(28px,3.6vw,42px); }
+.at-explore { padding:90px 0 60px; background:#f6f5f2; }
+.at-explore .at-search input { border-radius:12px; background:#fff; }
+.at-explore .at-areas button { border-radius:999px; }
+.at-explore .at-list li { border-bottom-color:#e4e2dc; }
+.at-ai-band { padding:90px 0; background:var(--ink); color:#c8cad0; }
+.at-ai-band h2 { color:#fff; }
+.at-ai-band code { color:var(--pink-soft); background:#23262c; padding:3px 8px; border-radius:6px; }
+.at-page #watch, .at-page #features { scroll-margin-top:110px; }
+@media (max-width:1199px) { .at-page .pe-app-body { grid-template-columns:124px minmax(0,1fr) 270px; } }
+@media (max-width:991px) { .at-page .pe-app-body { grid-template-columns:1fr; } .at-page .pe-toolbar { display:flex; contain:none; overflow-x:auto; } .at-page .pe-tool { min-width:70px; } .at-page .pe-panel { contain:none; } .at-page .pe-steps { max-height:420px; } .at-float-cmd { display:none; } }
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -103,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Plan + terminal
   const holder = document.getElementById('at-plan'), term = document.getElementById('at-term');
   const script = [
-    ['OPEN "Cedar House.archi"', 'Opened Cedar House.archi — 55 building elements.'],
+    ['OPEN "Cedar House.archi"', 'Opened Cedar House.archi — 408 objects, 59 building elements.'],
     ['WALL 0,1500 @6000,0 @0,8500 @-6000,0 C', '4 walls · Limestone · 300 mm · height 6200'],
     ['WALL 6000,0 @5000,0 @0,7500 @-5000,0', 'Cedar tower · 7200 mm'],
     ['WINDOW  Width 1300  Height 5300  Sill 1600', 'Window strip hosted in wall #6'],
@@ -150,5 +177,86 @@ document.addEventListener('DOMContentLoaded', () => {
     areasEl.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; current = b.dataset.k; q.value = ''; render(); });
     q.addEventListener('input', render); render();
   }).catch(() => {});
+  // ---- Tutorial studio (same player as the Photo Editor page) ----
+  (function () {
+    const app = document.querySelector('.at-page .pe-app'); if (!app) return;
+    const data = JSON.parse(app.getAttribute('data-tutorials'));
+    const $ = id => document.getElementById(id);
+    const v = $('pe-video'), steps = $('pe-steps'), fill = $('pe-fill'), marks = $('pe-marks'), time = $('pe-time'), speed = $('pe-speed');
+    const tools = [...document.querySelectorAll('.at-page .pe-tool')]; let cur = 0, lastK = -1, rate = 1;
+    const fmt = t => { t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + ('0' + t % 60).slice(-2); };
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    function layoutMarks() { if (!v.duration) return; [...marks.children].forEach(m => m.style.left = (m.dataset.t / v.duration * 100) + '%'); }
+    function sync() {
+      const d = data[cur], t = v.currentTime; let k = 0;
+      d.steps.forEach((s, i) => { if (t >= s[0] - 0.05) k = i; });
+      [...steps.children].forEach((li, i) => { li.classList.toggle('is-now', i === k); li.classList.toggle('is-done', i < k); });
+      if (k !== lastK) { lastK = k; const li = steps.children[k]; if (li) { const top = li.offsetTop - steps.offsetTop; if (top < steps.scrollTop || top + li.offsetHeight > steps.scrollTop + steps.clientHeight) steps.scrollTop = Math.max(0, top - 8); } }
+      fill.style.width = (v.duration ? t / v.duration * 100 : 0) + '%';
+      time.textContent = fmt(t) + ' / ' + (v.duration ? fmt(v.duration) : d.dur);
+    }
+    function render() {
+      const d = data[cur]; steps.innerHTML = ''; marks.innerHTML = ''; lastK = -1; steps.scrollTop = 0;
+      $('pe-title').textContent = d.title; $('pe-summary').textContent = d.summary;
+      $('at-lesson').textContent = 'Lesson ' + d.n + ' of ' + data.length + ' · ' + d.dur;
+      const nx = data[(cur + 1) % data.length];
+      $('pe-next').innerHTML = 'Next: <button type="button" class="pe-link">' + esc(nx.title) + ' →</button>';
+      $('pe-next').querySelector('.pe-link').onclick = () => select((cur + 1) % data.length, true);
+      d.steps.forEach((s, i) => {
+        const li = document.createElement('li'), b = document.createElement('button'); b.type = 'button';
+        b.innerHTML = '<span class="pe-n">' + (i + 1) + '</span><span class="pe-t"><b>' + esc(s[1]) + '</b>' + (s[2] ? '<i>' + esc(s[2]) + '</i>' : '') + '</span><span class="pe-at">' + fmt(s[0]) + '</span>';
+        b.onclick = () => { v.currentTime = s[0] + 0.05; start(); };
+        li.appendChild(b); steps.appendChild(li);
+        const m = document.createElement('i'); m.dataset.t = s[0]; marks.appendChild(m);
+      });
+      layoutMarks(); sync();
+    }
+    function start() { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
+    function select(i, autoplay) {
+      cur = i; tools.forEach((b, j) => { b.classList.toggle('is-active', j === i); b.setAttribute('aria-selected', j === i ? 'true' : 'false'); });
+      const d = data[i]; v.poster = d.poster; v.src = d.video; v.playbackRate = rate; v.setAttribute('aria-label', 'Screen recording: ' + d.title); render(); if (autoplay) start();
+    }
+    tools.forEach((b, i) => b.onclick = () => select(i, true));
+    $('pe-play').onclick = start;
+    $('pe-toggle').onclick = () => v.paused ? start() : v.pause();
+    speed.onclick = () => { rate = rate === 1 ? 1.5 : rate === 1.5 ? 2 : 1; v.playbackRate = rate; speed.textContent = rate + '×'; };
+    $('pe-full').onclick = () => (v.requestFullscreen || v.webkitRequestFullscreen || v.webkitEnterFullscreen || function () {}).call(v);
+    v.addEventListener('click', () => v.paused ? start() : v.pause());
+    v.addEventListener('play', () => { app.classList.add('is-playing'); $('pe-toggle').textContent = 'Pause'; });
+    v.addEventListener('pause', () => { app.classList.remove('is-playing'); $('pe-toggle').textContent = 'Play'; });
+    v.addEventListener('timeupdate', sync); v.addEventListener('loadedmetadata', () => { v.playbackRate = rate; layoutMarks(); sync(); });
+    v.addEventListener('ended', () => select((cur + 1) % data.length, true));
+    document.querySelector('.at-page .pe-scrub').addEventListener('click', function (e) { const r = this.getBoundingClientRect(); if (v.duration) { v.currentTime = (e.clientX - r.left) / r.width * v.duration; start(); } });
+    document.querySelector('.at-page .pe-toolbar').addEventListener('keydown', e => {
+      if (!['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft'].includes(e.key)) return;
+      e.preventDefault(); const n = (cur + ((e.key === 'ArrowDown' || e.key === 'ArrowRight') ? 1 : -1) + data.length) % data.length; select(n, false); tools[n].focus();
+    });
+    if (!reduce) new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && e.intersectionRatio > .45) { if (v.paused && !v.ended) start(); } else if (!e.isIntersecting) v.pause(); }), { threshold: [0, .45] }).observe(v);
+    render();
+  })();
+  // ---- Lighting slider ----
+  (function () {
+    const ba = document.getElementById('pe-ba'); if (!ba) return;
+    const range = ba.querySelector('.pe-ba-range'), base = 'images/apps/archi-tool/renders/', Q = '.jpg?v={{V}}';
+    range.addEventListener('input', () => ba.style.setProperty('--pos', range.value + '%'));
+    const tabs = [...document.querySelectorAll('.at-page .pe-ba-tab')];
+    tabs.forEach(b => b.onclick = () => {
+      tabs.forEach(x => x.classList.toggle('is-active', x === b));
+      document.getElementById('pe-ba-after').src = base + b.dataset.a + Q; document.getElementById('pe-ba-before').src = base + b.dataset.b + Q;
+      document.getElementById('pe-ba-la').textContent = b.dataset.la; document.getElementById('pe-ba-lb').textContent = b.dataset.lb;
+      document.querySelector('.at-cmdline code').textContent = 'RENDERPRESET ' + b.dataset.lb.replace(' ', '');
+      range.value = 50; ba.style.setProperty('--pos', '50%');
+    });
+    // a gentle sweep the first time the slider comes into view
+    if (!reduce) { const io = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return; io.disconnect(); const t0 = performance.now();
+      const f = t => { const k = Math.min(1, (t - t0) / 2200), p = 50 + 32 * Math.sin(k * Math.PI * 2) * (1 - k); range.value = p; ba.style.setProperty('--pos', p + '%'); if (k < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); }), { threshold: .6 }); io.observe(ba); }
+  })();
+  // ---- Hero window parallax ----
+  (function () {
+    const shot = document.querySelector('.at-page .pe-hero-shot');
+    if (!shot || reduce || !matchMedia('(pointer:fine)').matches) return;
+    shot.addEventListener('mousemove', e => { const r = shot.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5; shot.style.setProperty('--rx', (-y * 6) + 'deg'); shot.style.setProperty('--ry', (x * 8) + 'deg'); });
+    shot.addEventListener('mouseleave', () => { shot.style.removeProperty('--rx'); shot.style.removeProperty('--ry'); });
+  })();
 });
 </script>
