@@ -7,5 +7,5 @@
 - Work the backlog in `docs/FEATURE-REGISTER.md` / `docs/features.json`. Mark a feature `done` only when it has a working command, UI entry (menu/ribbon/command line), undo, file persistence where applicable, and a test.
 - Every command must be reachable from the command line (AutoCAD-style name and alias) and from the scripting/agent API.
 - Preserve `.archi` document compatibility: bump `formatVersion` and add migration when the schema changes.
-- The companion website is `/Users/oanarinaldi/Desktop/oanarina_website`, page `archi-tool.html`, linked from the Apps menu on every standard page. List only implemented capabilities there.
+- The public website is https://www.oanarinaldi.com (never "oanarina.com"). The companion website source is `/Users/oanarinaldi/Desktop/oanarina_website`, page `archi-tool.html`, linked from the Apps menu on every standard page. List only implemented capabilities there.
 - Do not publish a download as notarized unless notarization and Gatekeeper checks succeeded.
