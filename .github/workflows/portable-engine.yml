@@ -48,7 +48,7 @@ jobs:
             exit 1
           fi
           echo "=== building tests" | tee -a ../ci.log
-          swift build --build-tests 2>&1 | tail -30 | tee -a ../ci.log
+          swift build --build-tests 2>&1 | tee -a ../ci.log
           echo "=== running tests (40 min limit)" | tee -a ../ci.log
           timeout 40m swift test --skip-build 2>&1 | tee -a ../ci.log
       - name: Publish the log to ci-log-${{ runner.os }}

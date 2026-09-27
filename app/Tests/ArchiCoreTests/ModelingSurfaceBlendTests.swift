@@ -6,7 +6,10 @@ import XCTest
 @MainActor
 final class ModelingSurfaceBlendTests: XCTestCase {
     func plane(x0: Double, x1: Double, z: Double) -> SurfaceBlend.IM {
-        let rows = (0...4).map { i in (0...4).map { j in Vec3(x0 + (x1 - x0) * Double(i) / 4, 1000 * Double(j) / 4, z) } }
+        let rows: [[Vec3]] = (0...4).map { (i: Int) -> [Vec3] in
+            let x: Double = x0 + (x1 - x0) * Double(i) / 4
+            return (0...4).map { (j: Int) -> Vec3 in Vec3(x, 1000 * Double(j) / 4, z) }
+        }
         return SurfaceBlend.mesh(rows)
     }
     func add(_ ed: Editor, _ m: SurfaceBlend.IM) -> EntityID {

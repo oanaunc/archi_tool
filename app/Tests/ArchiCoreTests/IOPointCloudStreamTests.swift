@@ -12,7 +12,10 @@ final class IOPointCloudStreamTests: XCTestCase {
     override func tearDownWithError() throws { try? FileManager.default.removeItem(at: dir) }
 
     func grid(_ n: Int) -> [CloudPoint] {
-        (0..<n).map { i in CloudPoint(Vec3(Double(i % 100) * 0.1, Double(i / 100) * 0.1, Double(i % 7) * 0.5), color: (UInt8(i % 256), 10, 200)) }
+        (0..<n).map { (i: Int) -> CloudPoint in
+            let x: Double = Double(i % 100) * 0.1, y: Double = Double(i / 100) * 0.1, z: Double = Double(i % 7) * 0.5
+            return CloudPoint(Vec3(x, y, z), color: (UInt8(i % 256), 10, 200))
+        }
     }
 
     func testLASSamplingMatchesTheFullReader() throws {
