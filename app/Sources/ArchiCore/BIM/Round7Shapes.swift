@@ -105,7 +105,10 @@ enum Round7Shapes {
         var out: [String] = []
         if r > maxRiser + 1e-9 { out.append("Riser \(fmt(r, 1)) mm exceeds \(fmt(maxRiser)) mm.") }
         if let gmin = gs.min(), gmin < minGoing - 1e-9 { out.append("Going \(fmt(gmin, 1)) mm is below \(fmt(minGoing)) mm.") }
-        for gg in gs where 2 * r + gg < 550 || 2 * r + gg > 700 { out.append("2R+G = \(fmt(2 * r + gg, 1)) mm is outside 550–700 mm."); break }
+        for gg in gs {
+            let blondel: Double = 2 * r + gg
+            if blondel < 550 || blondel > 700 { out.append("2R+G = \(fmt(blondel, 1)) mm is outside 550–700 mm."); break }
+        }
         if let a = gs.min(), let b = gs.max(), b - a > 5 { out.append("Goings vary by \(fmt(b - a, 1)) mm on the walking line.") }
         return out
     }
