@@ -226,8 +226,8 @@ public final class PDFFile {
             case "FlateDecode", "Fl":
                 guard data.count > 2 else { return nil }
                 let body = data.subdata(in: 2..<data.count)
-                if let out = try? (body as NSData).decompressed(using: .zlib) as Data { data = out }
-                else if data.count > 6, let out = try? (data.subdata(in: 2..<(data.count - 4)) as NSData).decompressed(using: .zlib) as Data { data = out }
+                if let out = try? RawDeflate.decompress(body) { data = out }
+                else if data.count > 6, let out = try? RawDeflate.decompress(data.subdata(in: 2..<(data.count - 4))) { data = out }
                 else { return nil }
                 if let parms = dict(d["DecodeParms"]), let pred = parms["Predictor"]?.num, pred >= 10 {
                     let cols = Int(parms["Columns"]?.num ?? 1) * Int(parms["Colors"]?.num ?? 1) * Int(parms["BitsPerComponent"]?.num ?? 8) / 8

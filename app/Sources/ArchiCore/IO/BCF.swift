@@ -2,6 +2,9 @@
 // BIM Collaboration Format 2.1 (buildingSMART): markups exported as topics (markup.bcf with comments and a
 // viewpoint.bcfv holding the camera and the selected components by IFC GlobalId) in a .bcfzip, and imported back.
 import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 
 public struct BCFTopic: Hashable {
     public var guid: String

@@ -1,0 +1,63 @@
+# Builds the Oanarina Archi Tool engine (ArchiCore) and runs its tests on Windows and Linux.
+# Each run also publishes its log to the branch ci-log-<os>, so it can be read with plain git.
+name: Portable engine
+on:
+  push:
+    branches: [main]
+    paths: ["app/Sources/ArchiCore/**", "app/Tests/**", "app/Package.swift", ".github/workflows/portable-engine.yml"]
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency:
+  group: portable-engine-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  engine:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Swift (Windows)
+        if: runner.os == 'Windows'
+        uses: compnerd/gha-setup-swift@main
+        with:
+          branch: swift-6.1.2-release
+          tag: 6.1.2-RELEASE
+      - name: Install Swift (Linux)
+        if: runner.os == 'Linux'
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.1"
+      - name: Build and test
+        id: tests
+        continue-on-error: true
+        shell: bash
+        working-directory: app
+        run: |
+          set -o pipefail
+          swift --version 2>&1 | tee ../ci.log
+          swift build --target ArchiCore 2>&1 | tee -a ../ci.log
+          swift test 2>&1 | tee -a ../ci.log
+      - name: Publish the log to ci-log-${{ runner.os }}
+        if: always()
+        shell: bash
+        run: |
+          os=$(echo "${{ runner.os }}" | tr 'A-Z' 'a-z')
+          mkdir -p /tmp/cilog && cd /tmp/cilog
+          cp "$GITHUB_WORKSPACE/ci.log" full.log 2>/dev/null || echo "no log" > full.log
+          {
+            echo "commit ${GITHUB_SHA} · run ${GITHUB_RUN_ID} · outcome ${{ steps.tests.outcome }}"
+            grep -E "error:|Test Suite 'All tests'|Executed [0-9]+ tests|failed \(|Fatal error|Build complete" full.log | head -300
+          } > summary.txt
+          git init -q . && git checkout -q -b "ci-log-$os"
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com add -A
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "CI ${os} ${GITHUB_SHA::12} ${{ steps.tests.outcome }}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "ci-log-$os"
+      - name: Fail if the tests failed
+        if: steps.tests.outcome != 'success'
+        shell: bash
+        run: exit 1

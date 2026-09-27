@@ -4,6 +4,9 @@
 // and StaticResource geometries) become polylines with their stroke colours, glyph runs become text, one page per sheet
 // laid side by side, in millimetres (XPS units are 1/96 inch). Classic binary .dwf (W2D streams) is not supported.
 import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 
 public enum DWFxImporter {
     public struct DWFError: Error, LocalizedError { public let message: String; public var errorDescription: String? { message } }

@@ -7,11 +7,6 @@
 // reported, new objects that collide by id are renumbered. The merged model is written to central and becomes the local
 // model and the new base; borrowed elements are relinquished unless asked to keep them.
 import Foundation
-#if canImport(Darwin)
-import Darwin
-#else
-import Glibc
-#endif
 
 public enum CentralModel {
     public struct CentralError: Error, LocalizedError { public let message: String; public var errorDescription: String? { message } }
@@ -40,20 +35,17 @@ public enum CentralModel {
 
     /// Runs `body` holding the central lock (exclusive create; a lock older than `stale` seconds is broken).
     static func withLock<T>(_ central: URL, stale: TimeInterval = 120, _ body: () throws -> T) throws -> T {
-        let path = lockURL(central).path
-        var fd: Int32 = -1
+        let url = lockURL(central), path = url.path
+        let info = Data("\(ProcessInfo.processInfo.processIdentifier) \(NSUserName())\n".utf8)
         for attempt in 0..<50 {
-            fd = open(path, O_CREAT | O_EXCL | O_WRONLY, 0o644)
-            if fd >= 0 { break }
+            // .withoutOverwriting is an exclusive create on every platform: it fails if another process holds the lock.
+            if (try? info.write(to: url, options: .withoutOverwriting)) != nil { break }
             if let a = try? FileManager.default.attributesOfItem(atPath: path), let d = a[.modificationDate] as? Date, Date().timeIntervalSince(d) > stale {
                 try? FileManager.default.removeItem(atPath: path); continue
             }
             if attempt == 49 { throw CentralError(message: "The central model is locked by another synchronisation (\(path)).") }
-            usleep(100_000)
+            Thread.sleep(forTimeInterval: 0.1)
         }
-        let info = "\(ProcessInfo.processInfo.processIdentifier) \(NSUserName())\n"
-        _ = info.withCString { write(fd, $0, strlen($0)) }
-        close(fd)
         defer { try? FileManager.default.removeItem(atPath: path) }
         return try body()
     }

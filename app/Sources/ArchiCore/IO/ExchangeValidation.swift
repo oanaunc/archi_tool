@@ -3,6 +3,9 @@
 // gbXML 0.37 XSD (required attributes, enumerations, element order where it matters, id references) and the COBie 2.4
 // spreadsheet (BS 1192-4: required sheets and columns, required values, name uniqueness and foreign keys).
 import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 
 public struct ExchangeIssue: Hashable, CustomStringConvertible {
     public var code: String

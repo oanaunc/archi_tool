@@ -7,6 +7,9 @@
 // for the IFC importer (inline nested instances and references in any order are accepted). Attribute order and kinds
 // come from the IFC4 schema table (IFCSchemaTable, IFCSchema4.swift).
 import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 
 public enum IFCXML {
     public struct XMLError: Error, LocalizedError { public var message: String; public var errorDescription: String? { "ifcXML: " + message } }

@@ -9,14 +9,14 @@ enum R3Zlib {
         let start = b.startIndex + 2
         for trim in [4, 0] where b.count - 2 - trim > 0 {
             let raw = Data(b[start..<(b.endIndex - trim)])
-            if let d = try? (raw as NSData).decompressed(using: .zlib) as Data { return [UInt8](d) }
+            if let d = try? RawDeflate.decompress(raw) { return [UInt8](d) }
         }
         return nil
     }
 
     /// zlib stream of `d` (header 0x78 0x9C, raw DEFLATE from Foundation, Adler-32).
     static func deflate(_ d: [UInt8]) -> [UInt8]? {
-        guard let raw = try? (Data(d) as NSData).compressed(using: .zlib) as Data else { return nil }
+        let raw = RawDeflate.compress(Data(d))
         var a: UInt32 = 1, b: UInt32 = 0
         var i = 0
         while i < d.count {

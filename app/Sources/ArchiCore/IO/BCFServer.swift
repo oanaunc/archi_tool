@@ -4,6 +4,9 @@
 // GlobalId) into review markups, and pushes local markups back (new topics, status/title changes, new comments and
 // viewpoints). Network access happens only when the user runs BCFSERVER; the transport is replaceable (tests).
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 public final class BCFAPIClient {
     public typealias Transport = (URLRequest) throws -> (status: Int, body: Data)

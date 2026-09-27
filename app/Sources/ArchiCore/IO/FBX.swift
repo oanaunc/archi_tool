@@ -124,8 +124,8 @@ public enum FBX {
                         // zlib stream: skip the 2-byte header, inflate the raw DEFLATE data.
                         // zlib = 2-byte header + DEFLATE + 4-byte Adler-32.
                         guard raw.count > 6 else { throw FBXError(message: "Cannot inflate an FBX array.") }
-                        if let d = try? (raw.subdata(in: 2..<(raw.count - 4)) as NSData).decompressed(using: .zlib) as Data { raw = d }
-                        else if let d = try? (raw.subdata(in: 2..<raw.count) as NSData).decompressed(using: .zlib) as Data { raw = d }
+                        if let d = try? RawDeflate.decompress(raw.subdata(in: 2..<(raw.count - 4))) { raw = d }
+                        else if let d = try? RawDeflate.decompress(raw.subdata(in: 2..<raw.count)) { raw = d }
                         else { throw FBXError(message: "Cannot inflate an FBX array.") }
                     }
                     let r = [UInt8](raw)

@@ -2,6 +2,9 @@
 // SVG 1.1 importer: paths (all commands incl. elliptical arcs and Béziers), lines, polylines, polygons,
 // circles, ellipses, rectangles (with rounded corners) and text, with nested transforms and style inheritance.
 import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 
 public struct SVGImportOptions {
     /// Drawing units per SVG user unit; nil = derive from the root width/height units (mm, cm, in, pt, pc) or 1.

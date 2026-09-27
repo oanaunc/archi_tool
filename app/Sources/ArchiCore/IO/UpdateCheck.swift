@@ -4,6 +4,9 @@
 // privacy-preserving report (version, OS, reason, stack, the last command lines) with the home folder, user name
 // and e-mail addresses removed, written locally; nothing is sent unless the user chooses to.
 import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 
 public enum UpdateCheck {
     public struct Item: Hashable {

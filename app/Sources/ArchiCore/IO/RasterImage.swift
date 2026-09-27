@@ -31,8 +31,8 @@ public struct RasterImage: Hashable {
 
     static func inflateZlib(_ d: [UInt8]) throws -> [UInt8] {
         guard d.count > 6 else { throw DecodeError(message: "PNG: empty image data") }
-        guard let out = try? (Data(d[2..<(d.count - 4)]) as NSData).decompressed(using: .zlib) as Data else {
-            if let out2 = try? (Data(d[2...]) as NSData).decompressed(using: .zlib) as Data { return [UInt8](out2) }
+        guard let out = try? RawDeflate.decompress(Data(d[2..<(d.count - 4)])) else {
+            if let out2 = try? RawDeflate.decompress(Data(d[2...])) { return [UInt8](out2) }
             throw DecodeError(message: "PNG: corrupt image data")
         }
         return [UInt8](out)
@@ -196,7 +196,7 @@ public struct RasterImage: Hashable {
         for y in 0..<height { raw.append(0); raw += gray[(y * width)..<((y + 1) * width)] }
         var a: UInt32 = 1, bb: UInt32 = 0
         for x in raw { a = (a + UInt32(x)) % 65521; bb = (bb + a) % 65521 }
-        let deflated = (try? (Data(raw) as NSData).compressed(using: .zlib) as Data) ?? Data()
+        let deflated = RawDeflate.compress(Data(raw))
         let z = [0x78, 0x9C] + [UInt8](deflated) + [UInt8(bb >> 8), UInt8(bb & 0xFF), UInt8(a >> 8), UInt8(a & 0xFF)]
         func be(_ v: Int) -> [UInt8] { [UInt8((v >> 24) & 0xFF), UInt8((v >> 16) & 0xFF), UInt8((v >> 8) & 0xFF), UInt8(v & 0xFF)] }
         func chunk(_ t: String, _ d: [UInt8]) -> [UInt8] { let td = Array(t.utf8) + d; let c = RasterImage.crc(td); return be(d.count) + td + be(Int(c)) }

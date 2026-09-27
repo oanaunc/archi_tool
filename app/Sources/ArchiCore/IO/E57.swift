@@ -5,6 +5,9 @@
 // colorRed/Green/Blue and intensity (normalised with colorLimits / intensityLimits), and each scan's pose
 // (rigidBodyTransform). Written from the ASTM E2807 standard's description; no libE57Format code is used.
 import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 
 public enum E57 {
     public struct E57Error: Error, LocalizedError { public let message: String; public var errorDescription: String? { "E57: " + message } }

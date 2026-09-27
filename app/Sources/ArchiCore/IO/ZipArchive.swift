@@ -30,7 +30,7 @@ public enum ZipArchive {
             let crc = crc32(e.data)
             var payload = e.data
             var method = 0
-            if compress, !e.data.isEmpty, let c = try? (e.data as NSData).compressed(using: .zlib) as Data, c.count < e.data.count {
+            if compress, !e.data.isEmpty, case let c = RawDeflate.compress(e.data), c.count < e.data.count {
                 payload = c; method = 8
             }
             let offset = out.count
@@ -101,7 +101,7 @@ public enum ZipArchive {
             switch method {
             case 0: out.append(Entry(name: name, data: raw))
             case 8:
-                guard let d = try? (raw as NSData).decompressed(using: .zlib) as Data else { throw ZipError.corrupt(name) }
+                guard let d = try? RawDeflate.decompress(raw) else { throw ZipError.corrupt(name) }
                 if usize > 0 && d.count != usize { throw ZipError.corrupt(name) }
                 out.append(Entry(name: name, data: d))
             default: throw ZipError.unsupported("compression method \(method)")

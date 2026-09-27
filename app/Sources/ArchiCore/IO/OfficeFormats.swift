@@ -1,6 +1,9 @@
 // Oanarina Archi Tool — GPL-3.0-or-later
 // XLSX (Office Open XML SpreadsheetML, ECMA-376) schedules export/import, and HP-GL/2 (PLT) plotter output.
 import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 
 public enum XLSX {
     public struct Sheet {

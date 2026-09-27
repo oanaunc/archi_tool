@@ -43,7 +43,7 @@ final class IOFBXTests: XCTestCase {
         }
         var raw = Data()
         for v in [0.0, 0, 0, 10, 0, 0, 0, 10, 0] { var x = v.bitPattern.littleEndian; raw += Data(bytes: &x, count: 8) }
-        let deflated = try (raw as NSData).compressed(using: .zlib) as Data
+        let deflated = RawDeflate.compress(raw)
         let zlib = Data([0x78, 0x9C]) + deflated + Data([0, 0, 0, 0])
         let vertsProp = Data([UInt8(ascii: "d")]) + u32(9) + u32(1) + u32(UInt32(zlib.count)) + zlib
         var idx = Data([UInt8(ascii: "i")]) + u32(3) + u32(0) + u32(12)

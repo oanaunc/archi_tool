@@ -1,6 +1,9 @@
 // Oanarina Archi Tool — GPL-3.0-or-later
 // COLLADA 1.4.1 (Khronos) export/import of triangle meshes, and CityJSON 1.x (cityjson.org) city model import.
 import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 
 public enum ColladaExporter {
     /// COLLADA document: one geometry + node per mesh group, Phong materials from the model's materials, metres, Z up.

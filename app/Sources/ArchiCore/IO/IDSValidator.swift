@@ -4,6 +4,9 @@
 // min/max inclusive/exclusive, length); cardinality required / optional / prohibited. Classification and partOf
 // facets are reported as unsupported.
 import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 
 public struct IDSValue: Hashable {
     public var simple: String?

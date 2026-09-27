@@ -12,7 +12,7 @@ final class IOPDFImportTests: XCTestCase {
         var a: UInt32 = 1, b: UInt32 = 0
         for x in d { a = (a + UInt32(x)) % 65521; b = (b + a) % 65521 }
         let adler = (b << 16) | a
-        return Data([0x78, 0x9C]) + (try (d as NSData).compressed(using: .zlib) as Data) + Data([UInt8(adler >> 24), UInt8((adler >> 16) & 0xFF), UInt8((adler >> 8) & 0xFF), UInt8(adler & 0xFF)])
+        return Data([0x78, 0x9C]) + (RawDeflate.compress(d)) + Data([UInt8(adler >> 24), UInt8((adler >> 16) & 0xFF), UInt8((adler >> 8) & 0xFF), UInt8(adler & 0xFF)])
     }
 
     static func samplePDF() throws -> Data {

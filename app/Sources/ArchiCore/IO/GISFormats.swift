@@ -2,6 +2,9 @@
 // GIS/site formats: ESRI Shapefile (.shp + .dbf + .prj, per the ESRI Shapefile Technical Description, 1998),
 // OpenStreetMap XML (.osm) buildings/roads/context, and ESRI ASCII grid (.asc) elevation rasters as toposurfaces.
 import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 
 public struct GISImportOptions {
     /// Reference point for geographic data (lat, lon); nil = the document's project location.

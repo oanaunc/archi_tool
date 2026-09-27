@@ -50,6 +50,16 @@ run_action() {
         [[ "$n" == dev || "$n" =~ ^[0-9]{2}(-[a-z0-9-]+)?$ ]] && targs+=("$n") || echo "ignored: $n"
       done
       "$ROOT/scripts/make-tutorials.sh" "${targs[@]}" ;;
+    ci)            # GitHub Actions status for this repo (needs the gh CLI signed in on this Mac)
+      cd "$ROOT" && { command -v gh >/dev/null || { echo "gh not installed"; return 1; }; gh run list --limit 6 2>&1; } ;;
+    ci-log)        # log of the failed steps of the latest run (optionally a run id in build/ci-run.txt), last 400 lines
+      cd "$ROOT" && rid="$(tr -cd '0-9' < build/ci-run.txt 2>/dev/null)"; [[ -n "$rid" ]] || rid="$(gh run list --limit 1 --json databaseId -q '.[0].databaseId')"
+      gh run view "$rid" --log-failed 2>&1 | tail -400 ;;
+    ci-fetch)      # latest Windows/Linux engine CI logs (branches ci-log-windows / ci-log-linux)
+      cd "$ROOT" && git fetch -q origin '+refs/heads/ci-log-*:refs/remotes/origin/ci-log-*' 2>&1 | tail -3
+      for b in windows linux; do echo "===== $b: $(git log -1 --format='%s (%cr)' origin/ci-log-$b 2>/dev/null)"; git show origin/ci-log-$b:summary.txt 2>/dev/null | head -150; done ;;
+    ci-full)       # tail of the full CI log; build/ci-os.txt holds windows or linux
+      cd "$ROOT" && os="$(tr -cd 'a-z' < build/ci-os.txt 2>/dev/null)"; git show "origin/ci-log-${os:-windows}:full.log" 2>/dev/null | tail -300 ;;
     *) echo "Unknown action: $1"; return 64 ;;
   esac
 }

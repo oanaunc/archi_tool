@@ -1,6 +1,9 @@
 // Oanarina Archi Tool — GPL-3.0-or-later
 // 3MF (3D Manufacturing Format core spec 1.3) export/import and USD (usda text / usdz package) export.
 import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 
 /// Welded triangle list of a mesh group (degenerate triangles removed).
 struct WeldedMesh {

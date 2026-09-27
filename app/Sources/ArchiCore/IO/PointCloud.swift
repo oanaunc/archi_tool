@@ -2,6 +2,9 @@
 // Point clouds (XYZ, PTS, PLY ASCII/binary) as point entities with decimation, PLY meshes (import/export),
 // OFF and AMF mesh import.
 import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 
 public struct PointCloudOptions {
     /// Drawing units per file unit (1000 for metres into a millimetre drawing).

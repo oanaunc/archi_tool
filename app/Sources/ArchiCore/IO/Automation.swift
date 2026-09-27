@@ -7,6 +7,9 @@
 // Placeholders in the job: {file} (full path), {name} (base name), {ext}, {dir}. Processed files and their modification
 // dates are remembered in ".archi-automation.json" inside the watched folder.
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 public struct AutomationRule {
     public var name: String
