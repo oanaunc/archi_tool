@@ -82,6 +82,7 @@ async function launch(args = []) {
 function watch(pg) {
   pg.on("console", (m) => log.write(`[console.${m.type()}] ${m.text()}\n`));
   pg.on("pageerror", (e) => log.write(`[pageerror] ${e}\n`));
+  pg.on("requestfailed", (r) => log.write(`[requestfailed] ${r.url()} ${r.failure()?.errorText ?? ""}\n`));
 }
 const shot = (name) => page.screenshot({ path: path.join(out, name + ".png") }).catch((e) => check(`screenshot ${name}`, false, String(e)));
 const title = () => page.textContent(".titlebar .title").catch(() => "");
@@ -144,7 +145,8 @@ await shot("03-cedar-3d-golden-hour");
 await page.evaluate(() => window.archiApp?.setUI?.("mode", "2D")).catch(() => {});
 await page.waitForTimeout(800);
 await typeLine("LINE");
-const prompting = await page.evaluate(() => !!window.archiApp?.prompt?.active).catch(() => false);
+// The real engine answers over a pipe: wait for the point prompt instead of a fixed delay.
+const prompting = await page.waitForFunction(() => !!window.archiApp?.prompt?.active, null, { timeout: 15_000 }).then(() => true, () => false);
 check("LINE starts and prompts for a point", prompting, await lastLog(3));
 await typeLine("-3000,-3000");
 await typeLine("-1000,-2000");
@@ -186,7 +188,11 @@ if (ok) {
   await shot("05-reopened");
 
   // ---- 6. PDF plot ----
-  await typeLine(`PLOT ${pdfFile}`);
+  // PLOT, then the file name at its prompt (typed once the prompt is there: the shell does not buffer type-ahead yet).
+  await typeLine("PLOT");
+  const plotPrompt = await page.waitForFunction(() => !!window.archiApp?.prompt?.active, null, { timeout: 15_000 }).then(() => true, () => false);
+  check("PLOT prompts for the PDF file", plotPrompt, await lastLog(2));
+  await typeLine(pdfFile);
   let pdf = await (async () => { for (let i = 0; i < 90; i++) { if (fs.existsSync(pdfFile) && fs.statSync(pdfFile).size > 0) return true; await wait(500); } return false; })();
   let how = "PLOT command";
   if (!pdf) {

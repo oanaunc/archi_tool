@@ -3,7 +3,7 @@
 # app/Info.plist), installs it per-user, checks the installation (shortcuts, file associations, uninstall entry),
 # smoke-tests the installed app (Playwright for Electron: start screen, Cedar House 2D, 3D Golden hour, LINE,
 # save/reopen, PDF plot) and uninstalls it again. Then the shell test suites run in Chromium against the fixture engine
-# (ui-snapshots, dialogs, partb-tools, canvas, output, windows-conventions, audit-spot, view3d/tools).
+# (ui-snapshots, dialogs, partb-tools, canvas, output, windows-conventions, menus-keys, audit-spot, view3d/tools).
 # Every step writes its own log to winapp-logs/ as it runs; the last steps run even when an earlier step failed or the
 # run was cancelled: logs, screenshots and summary.txt are uploaded as the artifact "winapp-logs" and force-pushed to the
 # branch ci-windows-app (bridge action "winapp-fetch"). The installer itself is a separate workflow artifact.
@@ -279,9 +279,18 @@ jobs:
             Write-Host "silent install (per-user, no elevation): $inst"
             $p = Start-Process -FilePath $inst -ArgumentList "/S" -Wait -PassThru
             Check "installer exit code 0" ($p.ExitCode -eq 0) "exit $($p.ExitCode)"
-            $dir = Join-Path $env:LOCALAPPDATA "Programs\oanarina-archi-tool"
+            # The install folder: InstallLocation of the per-user uninstall entry (the assisted NSIS installer uses
+            # %LOCALAPPDATA%\Programs\Oanarina Archi Tool), else the known candidates. The later steps read APPDIR.
+            $entry = Get-ChildItem "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall" | ForEach-Object { Get-ItemProperty $_.PSPath } | Where-Object { $_.DisplayName -like "Oanarina Archi Tool*" } | Select-Object -First 1
+            $cands = @()
+            if ($entry -and $entry.InstallLocation) { $cands += $entry.InstallLocation.Trim('"') }
+            $cands += (Join-Path $env:LOCALAPPDATA "Programs\Oanarina Archi Tool"), (Join-Path $env:LOCALAPPDATA "Programs\oanarina-archi-tool")
+            $dir = $cands | Where-Object { Test-Path (Join-Path $_ "Oanarina Archi Tool.exe") } | Select-Object -First 1
+            if (-not $dir) { $dir = $cands[0] }
+            Write-Host "install folder: $dir (InstallLocation: $($entry.InstallLocation))"
+            "APPDIR=$dir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
             $exe = Join-Path $dir "Oanarina Archi Tool.exe"
-            Check "installed per-user in %LOCALAPPDATA%\Programs" (Test-Path $exe) $exe
+            Check "installed per-user in %LOCALAPPDATA%\Programs" ((Test-Path $exe) -and $dir.StartsWith((Join-Path $env:LOCALAPPDATA "Programs"), 'OrdinalIgnoreCase')) $exe
             Check "uninstaller present" (Test-Path (Join-Path $dir "Uninstall Oanarina Archi Tool.exe"))
             Check "Cedar House sample installed" (Test-Path (Join-Path $dir "resources\samples\Cedar House.archi"))
             Check "archi-engine installed" (Test-Path (Join-Path $dir "resources\engine\archi-engine.exe"))
@@ -316,7 +325,7 @@ jobs:
         run: |
           set -o pipefail
           {
-          exe="$(cygpath -u "$LOCALAPPDATA")/Programs/oanarina-archi-tool/Oanarina Archi Tool.exe"
+          exe="$(cygpath -u "${APPDIR:-$LOCALAPPDATA/Programs/Oanarina Archi Tool}")/Oanarina Archi Tool.exe"
           if [ ! -f "$exe" ]; then
             echo "::warning title=Installed app not found::$exe is missing; testing out/win-unpacked instead"
             exe="$PWD/out/win-unpacked/Oanarina Archi Tool.exe"
@@ -336,7 +345,7 @@ jobs:
           $fail = 0
           try {
             Get-Process "Oanarina Archi Tool", "archi-engine" -ErrorAction SilentlyContinue | Stop-Process -Force
-            $dir = Join-Path $env:LOCALAPPDATA "Programs\oanarina-archi-tool"
+            $dir = if ($env:APPDIR) { $env:APPDIR } else { Join-Path $env:LOCALAPPDATA "Programs\Oanarina Archi Tool" }
             $un = Join-Path $dir "Uninstall Oanarina Archi Tool.exe"
             if (-not (Test-Path $un)) { Write-Host "::warning title=Uninstall skipped::$un not found"; exit 0 }
             Start-Process -FilePath $un -ArgumentList "/S" -Wait | Out-Null
@@ -368,7 +377,8 @@ jobs:
               || echo "::warning title=Engine fixtures::archi-engine.exe --fixtures failed (13-shell-tests.log)"
           fi
           fail=0
-          for t in ui-snapshots dialogs partb-tools canvas output windows-conventions audit-spot view3d/tools; do
+          for t in ui-snapshots dialogs partb-tools canvas output windows-conventions menus-keys audit-spot doctools view3d/tools; do
+            [ -f "test/$t.mjs" ] || { echo "SUITE SKIP test/$t.mjs (not in this commit)"; continue; }
             if [ "$t" = view3d/tools ] && [ ! -f ../build/engine-fixtures/meshes-all-lod2.json ]; then
               echo "SUITE SKIP test/$t.mjs (no build/engine-fixtures/meshes-all-lod2.json: archi-engine.exe was not built)"; continue; fi
             echo "===== test/$t.mjs"
