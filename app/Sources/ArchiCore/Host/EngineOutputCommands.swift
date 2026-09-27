@@ -504,7 +504,11 @@ enum EngineOutputCommands {
             let dest = s.url(p)
             do { try EnginePNG.rgb(px, width: w, height: h).write(to: dest) } catch { throw CommandError.invalid("Could not encode the image.") }
             let secs = Date().timeIntervalSince(job.started)
-            ed.print("Path traced " + String(w) + "×" + String(h) + ", " + String(job.session.samples) + " samples" + (dn ? ", denoised" : "") + " in " + fmt(secs, 1) + " s → " + dest.path)
+            var msg: String = "Path traced " + String(w) + "×" + String(h)
+            msg += ", " + String(job.session.samples) + " samples"
+            if dn { msg += ", denoised" }
+            msg += " in " + fmt(secs, 1) + " s → " + dest.path
+            ed.print(msg)
         }
     }
 
