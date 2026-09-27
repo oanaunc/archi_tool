@@ -1,0 +1,203 @@
+# Builds the Windows app of Oanarina Archi Tool: archi-engine.exe (Swift, ArchiCore) with its Swift runtime DLLs,
+# the Electron shell in windows/, the NSIS installer "Oanarina-Archi-Tool-Setup-<version>.exe", and a smoke test
+# of the installed app (Playwright for Electron: start screen, Cedar House 2D plan, 3D Golden hour).
+# The installer is a workflow artifact; logs and screenshots (not the installer) are force-pushed to the branch
+# ci-windows-app, so they can be read with plain git (bridge action "winapp-fetch").
+name: Windows app
+on:
+  push:
+    branches: [main]
+    paths: ["app/**", "windows/**", "assets/demo/**", ".github/workflows/windows-app.yml"]
+  workflow_dispatch:
+    inputs:
+      arm64:
+        description: "Also build an arm64 installer (Electron arm64; archi-engine stays x64 and runs under Windows on Arm emulation)"
+        type: boolean
+        default: false
+permissions:
+  contents: write
+concurrency:
+  group: windows-app-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  winapp:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check inputs
+        id: inputs
+        run: |
+          mkdir -p winapp-logs
+          missing=0
+          need() { if [ ! -e "$1" ]; then echo "::error title=Missing input::$1 is missing ($2)"; missing=1; else echo "ok  $1"; fi; }
+          need app/Package.swift "Swift package"
+          need app/Sources/archi-engine "archi-engine executable target, written by the engine engineer"
+          need windows/package.json "Electron shell, written by the shell engineer"
+          need windows/packaging/electron-builder.yml "installer configuration"
+          need windows/packaging/collect-dlls.py "Swift runtime DLL collector"
+          need windows/packaging/make-ico.py "icon converter"
+          need windows/packaging/smoke-electron.mjs "packaged-app smoke test"
+          need app/Resources/AppIcon.icns "Mac app icon, converted to .ico"
+          need "assets/demo/Cedar House.archi" "bundled sample"
+          need assets/demo/textures "sample textures"
+          if [ -f app/Package.swift ] && ! grep -q 'executable(name: "archi-engine"' app/Package.swift; then
+            echo "::error title=Missing input::app/Package.swift declares no archi-engine executable product"; missing=1; fi
+          if [ -f windows/package.json ] && ! node -e 'process.exit(require("./windows/package.json").scripts?.build ? 0 : 1)'; then
+            echo "::error title=Missing input::windows/package.json has no \"build\" script"; missing=1; fi
+          exit $missing
+
+      - name: Install Swift 6.1.2
+        uses: compnerd/gha-setup-swift@main
+        with:
+          swift-version: swift-6.1.2-release
+          swift-build: 6.1.2-RELEASE
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: Python tools (pefile, Pillow)
+        run: python -m pip install --disable-pip-version-check -q pefile pillow
+
+      - name: Build archi-engine (release) and collect the Swift runtime DLLs
+        id: engine
+        run: |
+          set -o pipefail
+          log="$GITHUB_WORKSPACE/winapp-logs/engine-build.log"
+          cd app
+          swift --version 2>&1 | tee "$log"
+          if ! swift build -c release --product archi-engine 2>&1 | tee -a "$log"; then
+            echo "::error title=archi-engine build failed::swift build -c release --product archi-engine failed (engine-build.log on branch ci-windows-app)"; exit 1; fi
+          bin="$(swift build -c release --product archi-engine --show-bin-path | tr -d '\r')"
+          exe="$bin/archi-engine.exe"
+          [ -f "$exe" ] || { echo "::error title=archi-engine missing::the build produced no $exe"; exit 1; }
+          rt="$(where.exe swiftCore.dll 2>/dev/null | tr -d '\r' | head -1)"
+          [ -n "$rt" ] || { echo "::error title=Swift runtime not found::swiftCore.dll is not on PATH (gha-setup-swift)"; exit 1; }
+          echo "Swift runtime: $(dirname "$rt")" | tee -a "$log"
+          cd ..
+          find windows/resources/engine -type f ! -name README.txt -delete 2>/dev/null || true
+          python windows/packaging/collect-dlls.py "$exe" windows/resources/engine --search "$(dirname "$rt")" 2>&1 | tee winapp-logs/engine-dlls.txt
+          ls -la windows/resources/engine | tee -a winapp-logs/engine-dlls.txt
+
+      - name: Check archi-engine.exe runs without the Swift toolchain
+        id: enginecheck
+        run: |
+          set -o pipefail
+          cd windows/resources/engine
+          out="$GITHUB_WORKSPACE/winapp-logs/engine-hello.txt"
+          # Only Windows' own folders on PATH: every other DLL must come from resources/engine.
+          timeout 30 env PATH="/c/Windows/System32:/c/Windows" ./archi-engine.exe --version 2>&1 | tee "$out" \
+            || { echo "::error title=archi-engine does not start::archi-engine.exe --version failed with only System32 on PATH (a DLL is missing, see engine-dlls.txt)"; exit 1; }
+          printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"engine.hello","params":{}}' \
+            | timeout 60 env PATH="/c/Windows/System32:/c/Windows" ./archi-engine.exe --cwd . > hello.jsonl 2>> "$out" || true
+          head -c 600 hello.jsonl | tee -a "$out"; echo
+          grep -q '"result"' hello.jsonl \
+            || { rm -f hello.jsonl; echo "::error title=engine.hello failed::archi-engine.exe gave no engine.hello result (engine-hello.txt)"; exit 1; }
+          rm -f hello.jsonl
+
+      - name: Build the Electron shell
+        id: shell
+        working-directory: windows
+        run: |
+          set -o pipefail
+          log="$GITHUB_WORKSPACE/winapp-logs/shell-build.log"
+          if [ -f package-lock.json ]; then npm ci --no-audit --no-fund 2>&1 | tee "$log"
+          else echo "::warning title=No lockfile::windows/package-lock.json is missing; using npm install (commit the lockfile for reproducible builds)"
+               npm install --no-audit --no-fund 2>&1 | tee "$log"; fi \
+            || { echo "::error title=npm install failed::see shell-build.log"; exit 1; }
+          npm run build 2>&1 | tee -a "$log" || { echo "::error title=Shell build failed::npm run build failed in windows/ (shell-build.log)"; exit 1; }
+          for f in dist/main/main.js dist/preload/preload.js dist/renderer/index.html; do
+            [ -f "$f" ] || { echo "::error title=Shell build incomplete::windows/$f was not produced by npm run build"; exit 1; }; done
+          node -e 'require("playwright-core")' || { echo "::error title=playwright-core missing::add playwright-core to windows/package.json devDependencies (smoke test)"; exit 1; }
+
+      - name: App icon (.icns to .ico)
+        id: icon
+        run: python windows/packaging/make-ico.py . windows/packaging/build/icon.ico 2>&1 | tee winapp-logs/icon.log
+
+      - name: Package the NSIS installer
+        id: package
+        working-directory: windows
+        run: |
+          set -o pipefail
+          log="$GITHUB_WORKSPACE/winapp-logs/package.log"
+          ver="$(node -p 'require("./package.json").version')"
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+          rm -rf out out-arm64
+          npx --yes electron-builder@25.1.8 --win --x64 --config packaging/electron-builder.yml --publish never 2>&1 | tee "$log" \
+            || { echo "::error title=electron-builder failed::x64 installer (package.log)"; exit 1; }
+          inst="out/Oanarina-Archi-Tool-Setup-$ver.exe"
+          [ -f "$inst" ] || { echo "::error title=Installer missing::$inst was not produced (package.log)"; ls -la out; exit 1; }
+          [ -f "out/win-unpacked/resources/engine/archi-engine.exe" ] || { echo "::error title=Engine not bundled::resources/engine/archi-engine.exe is missing in the package"; exit 1; }
+          [ -f "out/win-unpacked/resources/samples/Cedar House.archi" ] || { echo "::error title=Sample not bundled::resources/samples/Cedar House.archi is missing in the package"; exit 1; }
+          if [ "${{ inputs.arm64 }}" = "true" ]; then
+            npx --yes electron-builder@25.1.8 --win --arm64 --config packaging/electron-builder.yml --publish never \
+              -c.directories.output=out-arm64 '-c.nsis.artifactName=Oanarina-Archi-Tool-Setup-${version}-arm64.${ext}' 2>&1 | tee -a "$log" \
+              || { echo "::error title=electron-builder failed::arm64 installer (package.log)"; exit 1; }
+          fi
+          { echo "installers:"; for f in out/*.exe out-arm64/*.exe; do [ -f "$f" ] && echo "  $f  $(stat -c %s "$f") bytes  sha256 $(sha256sum "$f" | cut -d' ' -f1)"; done
+            echo "packaged resources:"; (cd out/win-unpacked && find resources -maxdepth 2 | sort); } | tee "$GITHUB_WORKSPACE/winapp-logs/installer.txt"
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@v5
+        with:
+          name: Oanarina-Archi-Tool-Windows-${{ steps.package.outputs.version }}
+          path: |
+            windows/out/Oanarina-Archi-Tool-Setup-*.exe
+            windows/out-arm64/Oanarina-Archi-Tool-Setup-*.exe
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Screen resolution 1920x1080 for the screenshots (best effort)
+        continue-on-error: true
+        shell: pwsh
+        run: Set-DisplayResolution -Width 1920 -Height 1080 -Force
+
+      - name: Smoke test the installed app (Playwright for Electron)
+        id: smoke
+        working-directory: windows
+        run: |
+          set -o pipefail
+          log="$GITHUB_WORKSPACE/winapp-logs/smoke.log"
+          inst="$(cygpath -w "out/Oanarina-Archi-Tool-Setup-${{ steps.package.outputs.version }}.exe")"
+          echo "silent install: $inst" | tee "$log"
+          powershell -NoProfile -Command "\$p = Start-Process -FilePath '$inst' -ArgumentList '/S' -Wait -PassThru; exit \$p.ExitCode" 2>&1 | tee -a "$log" \
+            || echo "::warning title=Silent install failed::the NSIS installer returned an error; testing out/win-unpacked instead"
+          exe="$(cygpath -u "$LOCALAPPDATA")/Programs/oanarina-archi-tool/Oanarina Archi Tool.exe"
+          if [ ! -f "$exe" ]; then
+            echo "::warning title=Installed app not found::$exe is missing; testing out/win-unpacked instead" | tee -a "$log"
+            exe="$PWD/out/win-unpacked/Oanarina Archi Tool.exe"
+          fi
+          echo "app: $exe" | tee -a "$log"
+          node packaging/smoke-electron.mjs "$exe" "$GITHUB_WORKSPACE/winapp-logs/screenshots" 2>&1 | tee -a "$log" \
+            || { echo "::error title=Smoke test failed::the packaged app did not show the start screen or open Cedar House (smoke.log, screenshots/app.log)"; exit 1; }
+
+      - name: Publish logs and screenshots to ci-windows-app
+        if: always()
+        run: |
+          mkdir -p /tmp/winapp && cd /tmp/winapp
+          cp -r "$GITHUB_WORKSPACE/winapp-logs/." . 2>/dev/null || echo "no logs" > none.txt
+          find . -name '*.exe' -delete
+          {
+            echo "commit ${GITHUB_SHA} · run ${GITHUB_RUN_ID} · version ${{ steps.package.outputs.version }}"
+            echo "inputs ${{ steps.inputs.outcome }} · engine ${{ steps.engine.outcome }} · engine-check ${{ steps.enginecheck.outcome }} · shell ${{ steps.shell.outcome }} · icon ${{ steps.icon.outcome }} · package ${{ steps.package.outcome }} · smoke ${{ steps.smoke.outcome }}"
+            for f in engine-build.log shell-build.log package.log; do
+              [ -f "$f" ] && { echo "=== $f"; sed 's/\x1b\[[0-9;]*m//g' "$f" | grep -E "error:|error |ERR!|⨯|Error:|failed|Build complete|target=" | head -60; }
+            done
+            [ -f engine-dlls.txt ] && { echo "=== bundled DLLs"; grep -E "^bundled:|collect-dlls:" engine-dlls.txt; }
+            [ -f engine-hello.txt ] && { echo "=== engine"; head -c 400 engine-hello.txt; echo; }
+            [ -f installer.txt ] && { echo "=== installer"; head -5 installer.txt; }
+            [ -f smoke.log ] && { echo "=== smoke"; grep -E "PASS|FAIL|app:" smoke.log; }
+            [ -d screenshots ] && { echo "=== screenshots"; ls screenshots; }
+            true
+          } > summary.txt
+          git init -q . && git checkout -q -b ci-windows-app
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com add -A
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "Windows app ${GITHUB_SHA::12} package ${{ steps.package.outcome }} smoke ${{ steps.smoke.outcome }}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-windows-app

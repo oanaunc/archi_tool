@@ -1,0 +1,1 @@
+{"request":{"jsonrpc":"2.0","id":19,"method":"panel.sheets","params":{}},"response":{"jsonrpc":"2.0","id":19,"result":{"current":"Model","sheets":[{"index":0,"name":"Sheet 1","paper":{"name":"A3","width":420,"height":297},"viewports":0,"titleBlock":{}}],"papers":["A4","A3","A2","A1","A0","Letter","Tabloid","ARCH D"]}},"notifications":[]}

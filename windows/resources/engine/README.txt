@@ -1,0 +1,1 @@
+Put archi-engine.exe (the portable ArchiCore JSON-RPC host, built by the engine CI) here. The shell spawns one per window: archi-engine.exe --stdio. Override with the ARCHI_ENGINE environment variable.

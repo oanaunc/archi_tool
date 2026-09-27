@@ -1,0 +1,7 @@
+node_modules/
+dist/
+out/
+resources/engine/*
+!resources/engine/README.txt
+test/view3d/harness.js
+test-results/

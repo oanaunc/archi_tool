@@ -1,0 +1,17 @@
+{
+  "note": "Saved cameras and material maps of assets/demo/Cedar House.archi (namedViews, MATMAPS:/MATEMIT: variables). The engine protocol does not return these yet; the shell passes them to View3D.",
+  "northAngle": 0,
+  "cameras": [
+    { "name": "Front", "eye": [5200, -18500, 1500], "target": [10800, 3500, 3200], "fov": 38, "orthographic": false },
+    { "name": "Aerial", "eye": [-9000, -19000, 13000], "target": [10500, 4500, 1500], "fov": 40, "orthographic": false },
+    { "name": "Corner", "eye": [-9500, -11500, 2200], "target": [9000, 4000, 3200], "fov": 42, "orthographic": false }
+  ],
+  "materialMaps": {
+    "CEDAR": { "normal": "textures/cedar_n.jpg", "normalStrength": 1.0, "roughness": "textures/cedar_r.jpg" },
+    "CONCRETE PAVING": { "normal": "textures/concrete_n.jpg", "normalStrength": 0.7, "roughness": "textures/concrete_r.jpg" },
+    "HEDGE": { "normal": "textures/hedge_n.jpg", "normalStrength": 1.0, "roughness": "textures/hedge_r.jpg" },
+    "LAWN": { "normal": "textures/lawn_n.jpg", "normalStrength": 0.9, "roughness": "textures/lawn_r.jpg" },
+    "LIMESTONE": { "normal": "textures/limestone_n.jpg", "normalStrength": 0.8, "roughness": "textures/limestone_r.jpg" },
+    "YOUNG LEAVES": { "normal": "textures/leaves_n.jpg", "normalStrength": 1.0, "roughness": "textures/leaves_r.jpg" }
+  }
+}

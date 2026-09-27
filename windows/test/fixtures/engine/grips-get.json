@@ -1,0 +1,1 @@
+{"request":{"jsonrpc":"2.0","id":23,"method":"grips.get","params":{}},"response":{"jsonrpc":"2.0","id":23,"result":[{"id":1,"index":0,"x":0,"y":1500,"kind":"element"},{"id":1,"index":1,"x":6000,"y":1500,"kind":"element"},{"id":1,"index":2,"x":3000,"y":1500,"kind":"element"}]},"notifications":[]}

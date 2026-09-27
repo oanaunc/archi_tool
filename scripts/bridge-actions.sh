@@ -58,12 +58,36 @@ run_action() {
     ci-fetch)      # latest Windows/Linux engine CI logs (branches ci-log-windows / ci-log-linux)
       cd "$ROOT" && git fetch -q origin '+refs/heads/ci-log-*:refs/remotes/origin/ci-log-*' 2>&1 | tail -3
       for b in windows linux; do echo "===== $b: $(git log -1 --format='%s (%cr)' origin/ci-log-$b 2>/dev/null)"; git show origin/ci-log-$b:summary.txt 2>/dev/null | head -150; done ;;
+    winapp-fetch)  # latest Windows app CI (windows-app.yml): logs + screenshots from the branch ci-windows-app -> build/winapp
+      cd "$ROOT" && git fetch -q origin '+refs/heads/ci-windows-app:refs/remotes/origin/ci-windows-app' 2>&1 | tail -3
+      git rev-parse -q --verify origin/ci-windows-app >/dev/null || { echo "branch ci-windows-app not found (has windows-app.yml run yet?)"; return 1; }
+      rm -rf "$ROOT/build/winapp" && mkdir -p "$ROOT/build/winapp"
+      git archive origin/ci-windows-app | tar -x -C "$ROOT/build/winapp"
+      echo "===== $(git log -1 --format='%s (%cr)' origin/ci-windows-app)"; head -150 "$ROOT/build/winapp/summary.txt" 2>/dev/null
+      ls -la "$ROOT/build/winapp/screenshots" 2>/dev/null ;;
     ci-full)       # tail of the full CI log; build/ci-os.txt holds windows or linux
       cd "$ROOT" && os="$(tr -cd 'a-z' < build/ci-os.txt 2>/dev/null)"; git show "origin/ci-log-${os:-windows}:full.log" 2>/dev/null | tail -300 ;;
     slow-exprs)    # expressions that take >150 ms to type-check (the Windows/Linux compilers are slower and give up)
       cd "$ROOT/app" && rm -rf "$ROOT/build/slowscan" && swift build --build-tests --scratch-path "$ROOT/build/slowscan" \
         -Xswiftc -Xfrontend -Xswiftc -warn-long-expression-type-checking=30 > "$ROOT/build/slowscan.log" 2>&1; cat "$ROOT/build/slowscan.log" \
         | grep -E "warning: expression took|error:" | sed -E "s|^$ROOT/app/||" | sort -u > "$ROOT/build/slow-exprs.txt"; wc -l "$ROOT/build/slow-exprs.txt" ;;
+    engine)        # archi-engine (portable JSON-RPC engine for the Windows shell): build it, replay the tracked request file
+                   # scripts/engine-smoke.jsonl (copied to build/engine-smoke.jsonl) into build/engine-smoke.out.jsonl, and
+                   # record the shell fixtures in build/engine-fixtures (Cedar House)
+      mkdir -p "$ROOT/build"
+      cd "$ROOT/app" && if ! swift build --product archi-engine > "$ROOT/build/engine-build.log" 2>&1; then
+        sed 's/\x1b\[[0-9;]*m//g' "$ROOT/build/engine-build.log" | grep -E "error:" | sed "s|$ROOT/||" | sort -u | head -60
+        echo "ENGINE BUILD FAILED (build/engine-build.log)"; return 1
+      fi
+      local eng; eng="$(swift build --product archi-engine --show-bin-path)/archi-engine"
+      cp "$ROOT/scripts/engine-smoke.jsonl" "$ROOT/build/engine-smoke.jsonl"
+      "$eng" --cwd "$ROOT" < "$ROOT/build/engine-smoke.jsonl" > "$ROOT/build/engine-smoke.out.jsonl" 2> "$ROOT/build/engine-smoke.err.log"
+      echo "engine exit $?; $(wc -l < "$ROOT/build/engine-smoke.out.jsonl") lines, $(grep -c '"id":' "$ROOT/build/engine-smoke.out.jsonl") responses, $(grep -c '"error":{' "$ROOT/build/engine-smoke.out.jsonl") errors"
+      grep '"id":' "$ROOT/build/engine-smoke.out.jsonl" | cut -c1-240
+      head -c 2000 "$ROOT/build/engine-smoke.err.log"
+      rm -rf "$ROOT/build/engine-fixtures"
+      "$eng" --fixtures "$ROOT/build/engine-fixtures" --sample "$ROOT/assets/demo/Cedar House.archi" 2>&1 | tail -5
+      ls -la "$ROOT/build/engine-fixtures" | tail -40 ;;
     *) echo "Unknown action: $1"; return 64 ;;
   esac
 }

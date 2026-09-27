@@ -1,0 +1,14 @@
+{"jsonrpc":"2.0","id":1,"method":"engine.hello","params":{}}
+{"jsonrpc":"2.0","id":2,"method":"doc.open","params":{"path":"assets/demo/Cedar House.archi"}}
+{"jsonrpc":"2.0","id":3,"method":"doc.info","params":{}}
+{"jsonrpc":"2.0","id":4,"method":"view.drawList","params":{"pixelsPerUnit":0.05}}
+{"jsonrpc":"2.0","id":5,"method":"command.run","params":{"line":"LINE"}}
+{"jsonrpc":"2.0","id":6,"method":"input.point","params":{"x":-30000,"y":-30000,"snap":false}}
+{"jsonrpc":"2.0","id":7,"method":"input.cursor","params":{"x":-25000,"y":-30000,"pixelsPerUnit":0.05}}
+{"jsonrpc":"2.0","id":8,"method":"input.point","params":{"x":-25000,"y":-30000,"snap":false}}
+{"jsonrpc":"2.0","id":9,"method":"input.key","params":{"key":"Enter"}}
+{"jsonrpc":"2.0","id":10,"method":"view.drawList","params":{"rect":[-31000,-31000,-24000,-29000],"pixelsPerUnit":0.05}}
+{"jsonrpc":"2.0","id":11,"method":"model.meshes","params":{"level":"all"}}
+{"jsonrpc":"2.0","id":12,"method":"render.preset","params":{"name":"Goldenhour"}}
+{"jsonrpc":"2.0","id":13,"method":"edit.undo","params":{}}
+{"jsonrpc":"2.0","id":14,"method":"no.such.method","params":{}}

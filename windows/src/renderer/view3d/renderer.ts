@@ -1,0 +1,645 @@
+// Oanarina Archi Tool for Windows — GPL-3.0-or-later
+// Frame renderer of the 3D view and the photographic renderer: shadow map, HDR scene (sky, ground, model, glass,
+// edges), ambient occlusion, bloom and the camera response, following Scene3DBuilder.configureEnvironment /
+// material, BeautyLighting.apply / configure and BeautyRenderer.snapshot (supersampling) of the Mac app.
+
+import { GL, Program, Target, target, msTarget, depthTarget, disposeTarget, texture2D, bytesTexture } from "./gl";
+import * as S from "./shaders";
+import { SceneModel, MeshGPU } from "./scene";
+import { Look, VisualStyle, styleEdges, SKETCH_PAPER, ACCENT, sunDirection } from "./look";
+import { V3, M4, mul, invert, lookAt, ortho, linearRGB, kelvin, norm, sub, len, toLinear } from "./math";
+import { CameraState, viewMatrix, projMatrix, zRange } from "./camera";
+import { skyPixels, irradianceSH, horizonColor, toSK, groundTexture, gridTexture, GROUND_TILE_METRES } from "./sky";
+
+export const UNIT = 0.001; // model millimetres → world metres
+
+export interface SectionBox { on: boolean; min: V3; max: V3 }      // model mm
+export interface SectionPlane { on: boolean; point: V3; normal: V3 } // model mm
+
+export interface FrameOptions {
+  width: number;
+  height: number;
+  camera: CameraState;
+  style: VisualStyle;
+  look: Look;
+  /** A preset was chosen in the drawing (RENDERPRESET): haze, meadow ground, preset camera response, scaled lights. */
+  explicitPreset: boolean;
+  quality: "interactive" | "final";
+  /** Supersampling factor of final renders (the frame is drawn k× larger, then filtered down). */
+  supersample?: number;
+  selection?: Set<string>;
+  sectionBox?: SectionBox | null;
+  sectionPlane?: SectionPlane | null;
+  northAngle?: number;
+  /** Overrides: sun direction (towards the sun, model axes) for sun studies; ambient occlusion from the drawing. */
+  sunOverride?: V3 | null;
+  aoOverride?: { intensity: number; radius: number } | null;
+  background?: "sky" | "white" | "transparent";
+}
+
+interface EnvState { key: string; tex: WebGLTexture; sh: Float32Array; maxLod: number; width: number }
+
+interface StyleSetup {
+  mode: number;               // shader mode 0..3
+  drawFaces: boolean;
+  sunI: number; sunColor: V3; ambient: V3; shadows: boolean; shadowAlpha: number; shadowRadius: number;
+  env: boolean; envIntensity: number; skyBackground: boolean; top: V3; bottom: V3;
+  hdr: boolean; exposure: number; white: number; bloom: number; bloomThreshold: number; saturation: number; contrast: number;
+  ao: number; aoRadius: number; vignette: number; vignettePower: number;
+  fog: boolean; groundKind: "meadow" | "grid"; groundBase: V3; groundLine: V3; groundMode: number; groundOpacity: number;
+  lightScale: number;
+}
+
+const SUN_DEFAULT: V3 = norm([-0.45, -0.7, 0.75]);
+
+export class Renderer {
+  readonly gl: GL;
+  private mesh: Program; private shadow: Program; private line: Program; private sky: Program; private ssao: Program;
+  private blur: Program; private bright: Program; private composite: Program; private down: Program; private copy: Program;
+  private env: EnvState | null = null;
+  private meadow: WebGLTexture | null = null;
+  private grids = new Map<string, WebGLTexture>();
+  private groundVAO: WebGLVertexArrayObject;
+  private boxVAO: WebGLVertexArrayObject; private boxBuf: WebGLBuffer;
+  private emptyVAO: WebGLVertexArrayObject;
+  private whiteTex: WebGLTexture;
+  private shadowT: Target | null = null;
+  private targets: { key: string; ms: Target | null; hdr: Target; ao: Target; ao2: Target; b1: Target; b2: Target; ldr: Target } | null = null;
+  readonly maxSamples: number;
+  readonly maxSize: number;
+  /** Calibration of SceneKit's photometric units against this shader (sun, IBL, lights); see test/view3d. */
+  static SUN_SCALE = 0.8;
+  /** SceneKit HDR camera: displayed = 0.21 × exposed scene radiance (sky, lit surfaces and emission alike), measured on
+   *  the Mac renders (build/renders) against the known sky radiance and the textures' albedo. */
+  static SCENE_SCALE = 0.245;
+  /** Placed lights and fixtures: lumens / 1000 × LIGHT_SCALE, SceneKit attenuation, measured on the Mac renders. */
+  static LIGHT_SCALE = 180;
+  static ENV_SCALE = 1.0;
+  /** Diffuse share of the image-based light (SceneKit lightingEnvironment), measured on the Mac renders. */
+  static ENV_DIFFUSE = 1.0;
+
+  constructor(gl: GL) {
+    this.gl = gl;
+    gl.getExtension("EXT_color_buffer_float");
+    gl.getExtension("EXT_color_buffer_half_float");
+    gl.getExtension("OES_texture_float_linear");
+    this.maxSamples = Math.min(4, gl.getParameter(gl.MAX_SAMPLES) || 0);
+    this.maxSize = Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE), gl.getParameter(gl.MAX_RENDERBUFFER_SIZE));
+    this.mesh = new Program(gl, S.meshVS, S.meshFS, "mesh");
+    this.shadow = new Program(gl, S.shadowVS, S.shadowFS, "shadow");
+    this.line = new Program(gl, S.lineVS, S.lineFS, "line");
+    this.sky = new Program(gl, S.quadVS, S.skyFS, "sky");
+    this.ssao = new Program(gl, S.quadVS, S.ssaoFS, "ssao");
+    this.blur = new Program(gl, S.quadVS, S.blurFS, "blur");
+    this.bright = new Program(gl, S.quadVS, S.brightFS, "bright");
+    this.composite = new Program(gl, S.quadVS, S.compositeFS, "composite");
+    this.down = new Program(gl, S.quadVS, S.downsampleFS, "downsample");
+    this.copy = new Program(gl, S.quadVS, S.copyFS, "copy");
+    this.emptyVAO = gl.createVertexArray()!;
+    // Ground: a unit quad scaled in the vertex data per frame (positions in model mm, uv in tiles).
+    this.groundVAO = gl.createVertexArray()!;
+    this.whiteTex = texture2D(gl, 1, 1, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
+    this.boxVAO = gl.createVertexArray()!;
+    this.boxBuf = gl.createBuffer()!;
+    gl.bindVertexArray(this.boxVAO);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.boxBuf);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    gl.bindVertexArray(null);
+  }
+
+  // MARK: style set-up (Scene3DBuilder.configureEnvironment + applyCameraEffects + BeautyLighting)
+
+  private setup(o: FrameOptions): StyleSetup {
+    const st = o.style, look = o.look, preset = o.explicitPreset;
+    const warm = linearRGB([1, 0.97, 0.92]);
+    const dark: [V3, V3] = [[0.2, 0.215, 0.24], [0.09, 0.095, 0.105]];
+    const light: [V3, V3] = [[0.98, 0.98, 0.98], [0.9, 0.9, 0.9]];
+    const base: StyleSetup = {
+      mode: 1, drawFaces: true, sunI: 0.9, sunColor: warm, ambient: [0.9 * 0.42, 0.9 * 0.42, 0.9 * 0.42].map(toLinear) as V3,
+      shadows: false, shadowAlpha: 0.45, shadowRadius: 4, env: false, envIntensity: 0, skyBackground: false,
+      top: linearRGB(dark[0]), bottom: linearRGB(dark[1]), hdr: false, exposure: 0, white: 1, bloom: 0, bloomThreshold: 1,
+      saturation: 1, contrast: 0, ao: 0, aoRadius: 0.4, vignette: 0, vignettePower: 0.6, fog: false,
+      groundKind: "grid", groundBase: [0.17, 0.18, 0.19], groundLine: [0.3, 0.3, 0.3], groundMode: 2, groundOpacity: 1, lightScale: 0,
+    };
+    // SceneKit ambient light: intensity/1000 × colour (0.9 white, sRGB).
+    const amb = (i: number, c: V3 = [0.9, 0.9, 0.9]): V3 => linearRGB(c).map((v) => (v * i) / 1000) as V3;
+    switch (st) {
+      case "Wireframe":
+        return { ...base, drawFaces: false, groundOpacity: 0.5, ambient: amb(420) };
+      case "Hidden Line":
+        return { ...base, mode: 3, sunI: 0, ambient: amb(1000), top: linearRGB(light[0]), bottom: linearRGB(light[1]),
+          groundBase: [1, 1, 1], groundLine: [0.86, 0.86, 0.86], groundMode: 3 };
+      case "Sketchy":
+        return { ...base, mode: 3, sunI: 0, top: linearRGB(SKETCH_PAPER), bottom: linearRGB(SKETCH_PAPER),
+          groundBase: [1, 1, 1], groundLine: [0.86, 0.86, 0.86], groundMode: 3 };
+      case "Conceptual":
+        return { ...base, mode: 3, ambient: amb(420) };
+      case "X-Ray":
+        return { ...base, mode: 2, ambient: amb(420), groundOpacity: 0.5 };
+      case "Realistic": {
+        const r: StyleSetup = {
+          ...base, mode: 0, sunI: 1.6, sunColor: warm, ambient: amb(220), shadows: true, env: true, envIntensity: 1.05, skyBackground: true,
+          hdr: true, bloom: 0.12, bloomThreshold: 0.92, ao: 0.9, aoRadius: 0.4, vignette: 0.25, vignettePower: 0.6,
+          groundBase: [0.56, 0.58, 0.53], groundLine: [0.48, 0.48, 0.48], groundMode: 0, lightScale: 1,
+        };
+        if (preset) {
+          r.sunI = look.sunIntensity / 1000; r.sunColor = [...look.sunColor] as V3;
+          r.shadowAlpha = look.shadowAlpha; r.shadowRadius = look.shadowRadius;
+          r.ambient = amb(look.ambient, [0.8, 0.85, 1.0]);
+          r.envIntensity = look.envIntensity;
+          r.exposure = look.exposure; r.white = look.whitePoint; r.bloom = look.bloom; r.bloomThreshold = look.bloomThreshold;
+          r.saturation = look.saturation; r.contrast = look.contrast; r.ao = look.ao; r.aoRadius = 0.35;
+          r.vignette = 0.22; r.vignettePower = 0.55;
+          r.fog = true; r.groundKind = "meadow"; r.lightScale = look.artificial;
+        }
+        if (o.aoOverride) { r.ao = o.aoOverride.intensity; r.aoRadius = o.aoOverride.radius; }
+        return r;
+      }
+      default: { // Shaded, Shaded with Edges
+        const r = { ...base, mode: 1, sunI: 0.9, ambient: amb(420), shadows: true, ao: 0.35 };
+        if (o.aoOverride) { r.ao = o.aoOverride.intensity; r.aoRadius = o.aoOverride.radius; }
+        return r;
+      }
+    }
+  }
+
+  // MARK: environment (procedural HDR sky)
+
+  private environment(look: Look, sun: V3, quality: "interactive" | "final", preset: boolean): EnvState {
+    const sky = preset ? look.sky : "daylight";
+    const width = quality === "final" ? 2048 : 1024;
+    const sunSK = toSK(norm(sun));
+    const key = `${sky}|${width}|${sunSK.map((v) => v.toFixed(3)).join(",")}`;
+    if (this.env?.key === key) return this.env;
+    const gl = this.gl;
+    const img = skyPixels(sky, sunSK, width);
+    if (this.env) gl.deleteTexture(this.env.tex);
+    const tex = gl.createTexture()!;
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    // Mip chain filtered on the CPU (box, wrapping horizontally): rough reflections sample coarser levels.
+    let w = img.width, h = img.height, data = img.data, level = 0;
+    for (;;) {
+      gl.texImage2D(gl.TEXTURE_2D, level, gl.RGBA16F, w, h, 0, gl.RGBA, gl.FLOAT, data);
+      if (w <= 8 || h <= 4) break;
+      const nw = w >> 1, nh = h >> 1, nd = new Float32Array(nw * nh * 4);
+      for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++) for (let c = 0; c < 4; c++) {
+        const s = (xx: number, yy: number) => data[(yy * w + xx) * 4 + c];
+        nd[(y * nw + x) * 4 + c] = (s(2 * x, 2 * y) + s(2 * x + 1, 2 * y) + s(2 * x, 2 * y + 1) + s(2 * x + 1, 2 * y + 1)) / 4;
+      }
+      w = nw; h = nh; data = nd; level++;
+    }
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, level);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const sh = irradianceSH(skyPixels(sky, sunSK, 256));
+    this.env = { key, tex, sh, maxLod: Math.max(1, level - 1), width };
+    return this.env;
+  }
+
+  private groundTexture(s: StyleSetup): WebGLTexture {
+    const gl = this.gl;
+    if (s.groundKind === "meadow") {
+      if (!this.meadow) { const g = groundTexture(); this.meadow = bytesTexture(gl, g.size, g.data, true, 16); }
+      return this.meadow;
+    }
+    const key = s.groundBase.join(",") + "|" + s.groundLine.join(",");
+    let t = this.grids.get(key);
+    if (!t) { const g = gridTexture(s.groundBase, s.groundLine); t = bytesTexture(gl, g.size, g.data, true, 8); this.grids.set(key, t); }
+    return t;
+  }
+
+  // MARK: render targets
+
+  private ensureTargets(w: number, h: number, msaa: boolean) {
+    const key = `${w}x${h}|${msaa}`;
+    if (this.targets?.key === key) return this.targets;
+    const gl = this.gl;
+    if (this.targets) for (const t of [this.targets.ms, this.targets.hdr, this.targets.ao, this.targets.ao2, this.targets.b1, this.targets.b2, this.targets.ldr]) disposeTarget(gl, t);
+    const hw = Math.max(1, w >> 1), hh = Math.max(1, h >> 1);
+    this.targets = {
+      key,
+      ms: msaa && this.maxSamples > 1 ? msTarget(gl, w, h, this.maxSamples) : null,
+      hdr: target(gl, w, h, { hdr: true, depth: true }),
+      ao: target(gl, hw, hh, { hdr: false }), ao2: target(gl, hw, hh, { hdr: false }),
+      b1: target(gl, hw, hh, { hdr: true }), b2: target(gl, hw, hh, { hdr: true }),
+      ldr: target(gl, w, h, { hdr: false }),
+    };
+    return this.targets;
+  }
+
+  // MARK: frame
+
+  /**
+   * Draws a frame of `o.width × o.height` device pixels into `out` (null = the canvas). Returns the matrices used.
+   * The model is `scene`; textures that are still loading are drawn with their base colour.
+   */
+  render(scene: SceneModel, o: FrameOptions, out: Target | null = null): { view: M4; proj: M4 } {
+    const gl = this.gl;
+    const W = o.width, H = o.height;
+    const s = this.setup(o);
+    const look = o.look;
+    const center: V3 = scene.center.map((v) => v * UNIT) as V3;
+    const radius = scene.radius * UNIT;
+    const ext = Math.max(scene.max[0] - scene.min[0], scene.max[1] - scene.min[1]) * UNIT;
+    const groundSize = s.groundKind === "meadow" ? Math.max(1600, ext * 40) : Math.max(100, ext * 6);
+
+    // Sun: preset direction, or the viewport default (Scene3DBuilder.setSun keeps z ≥ 0.05).
+    let sun: V3 = o.sunOverride ?? (o.explicitPreset && o.style === "Realistic" ? (look.sunDirection ?? sunDirection(look.sunAltitude, look.sunAzimuth, o.northAngle ?? 0)) : SUN_DEFAULT);
+    sun = norm(sun);
+    if (sun[2] < 0.05) sun = norm([sun[0], sun[1], 0.05]);
+
+    const env = s.env || s.skyBackground ? this.environment(look, sun, o.quality, o.explicitPreset) : null;
+    const sunSK = toSK(sun);
+    const fogColor: V3 = o.explicitPreset ? horizonColor(look.sky, sunSK).map((v) => Math.min(1, Math.max(0, v))) as V3 : [0, 0, 0];
+
+    // Camera
+    const aspect = W / Math.max(H, 1);
+    const [near, far] = zRange(o.camera, center, radius, groundSize);
+    const view = viewMatrix(o.camera);
+    const proj = projMatrix(o.camera, aspect, near, far);
+    const viewProj = mul(proj, view);
+
+    // Shadow map (sun, orthographic over the scene sphere)
+    const final = o.quality === "final";
+    let shadowMat: M4 | null = null;
+    if (s.shadows && s.drawFaces && !scene.empty && s.sunI > 0) {
+      const size = Math.min(this.maxSize, final ? 8192 : 4096);
+      if (!this.shadowT || this.shadowT.width !== size) { disposeTarget(gl, this.shadowT); this.shadowT = depthTarget(gl, size); }
+      const r = radius * 1.05;
+      const eye: V3 = [center[0] + sun[0] * r * 3, center[1] + sun[1] * r * 3, center[2] + sun[2] * r * 3];
+      const lv = lookAt(eye, center, Math.abs(sun[2]) > 0.99 ? [0, 1, 0] : [0, 0, 1]);
+      const lp = ortho(-r, r, -r, r, r * 0.5, r * 5.5);
+      shadowMat = mul(lp, lv);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.shadowT.fb);
+      gl.viewport(0, 0, size, size);
+      gl.clear(gl.DEPTH_BUFFER_BIT);
+      gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.depthMask(true);
+      gl.disable(gl.CULL_FACE); gl.disable(gl.BLEND);
+      gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(1.5, 2.0);
+      const p = this.shadow.use();
+      p.m4("uViewProj", shadowMat).f("uUnit", UNIT);
+      for (const m of scene.meshes) {
+        if (m.transparent) continue;
+        const tex = m.foliage ? scene.texturesFor(m.mat, false) : null;
+        p.f("uFoliage", m.foliage ? 1 : 0).f("uUVScale", 1000 / Math.max(m.mat.textureScale, 1));
+        const cut = m.foliage && !!tex?.albedo;
+        p.i("uCutout", cut ? 1 : 0).tex("uAlbedo", 0, cut ? tex!.albedo! : this.whiteTex);
+        const mult = multiplyTint(m.mat.color);
+        p.v3("uMultiply", mult);
+        gl.bindVertexArray(m.vao);
+        gl.drawElements(gl.TRIANGLES, m.count, gl.UNSIGNED_INT, 0);
+      }
+      gl.disable(gl.POLYGON_OFFSET_FILL);
+    }
+
+    // Scene into the HDR target
+    const T = this.ensureTargets(W, H, true);
+    const sceneFB = T.ms ?? T.hdr;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, sceneFB.fb);
+    gl.viewport(0, 0, W, H);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // Background: HDR sky (Realistic) or the style's gradient.
+    gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
+    {
+      const p = this.sky.use();
+      const white = o.background === "white", clear = o.background === "transparent";
+      p.m4("uInvViewProj", invert(mul(proj, view)));
+      p.i("uUseEnv", s.skyBackground && env && !white && !clear ? 1 : 0);
+      if (env) p.tex("uEnv", 0, env.tex);
+      const top = white ? [1, 1, 1] : clear ? [0, 0, 0] : s.top, bot = white ? [1, 1, 1] : clear ? [0, 0, 0] : s.bottom;
+      p.v3("uTop", top).v3("uBottom", bot);
+      gl.bindVertexArray(this.emptyVAO);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+
+    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.depthMask(true);
+    const p = this.mesh.use();
+    p.m4("uViewProj", viewProj).f("uUnit", UNIT);
+    p.v3("uCamPos", o.camera.eye).v3("uViewDir", norm(sub(o.camera.target, o.camera.eye))).i("uOrtho", o.camera.ortho ? 1 : 0);
+    p.v3("uSunDir", sun);
+    const sunScale = s.mode === 0 ? Renderer.SUN_SCALE : 1;
+    p.v3("uSunColor", s.sunColor.map((c) => c * s.sunI * sunScale));
+    p.i("uShadows", shadowMat ? 1 : 0).f("uShadowAlpha", s.shadowAlpha).f("uShadowRadius", s.shadowRadius * (this.shadowT ? this.shadowT.width / 4096 : 1))
+      .i("uShadowSamples", final ? 32 : 12).f("uShadowBias", 0.0004).f("uShadowTexel", (radius * 2.1) / (this.shadowT?.width ?? 4096));
+    if (shadowMat) p.m4("uShadowMat", shadowMat).tex("uShadowMap", 5, this.shadowT!.depth!);
+    else p.tex("uShadowMap", 5, this.whiteTex);
+    p.i("uHasEnv", s.env && env ? 1 : 0).f("uEnvIntensity", s.envIntensity * Renderer.ENV_SCALE).f("uEnvMaxLod", env ? env.maxLod : 0);
+    p.tex("uEnv", 4, env ? env.tex : this.whiteTex).f("uEnvDiffuse", Renderer.ENV_DIFFUSE);
+    p.v3a("uSH", env ? env.sh : new Float32Array(27));
+    p.v3("uAmbient", s.ambient);
+    const fogOn = s.fog;
+    p.f("uFog", Math.max(40, radius * 3), Math.max(450, radius * 20), 1.6, fogOn ? 1 : 0).v3("uFogColor", fogColor);
+    // Section box / plane (world metres)
+    const box = o.sectionBox?.on ? o.sectionBox : null;
+    const clipMin = box ? [box.min[0] * UNIT, box.min[1] * UNIT, box.min[2] * UNIT, 0] : [0, 0, 0, 0];
+    const clipMax = box ? [box.max[0] * UNIT, box.max[1] * UNIT, box.max[2] * UNIT, 1] : [0, 0, 0, 0];
+    const pl = o.sectionPlane?.on ? o.sectionPlane : null;
+    const nn = pl ? norm(pl.normal) : [0, 0, 1];
+    const planeP = pl ? [pl.point[0] * UNIT, pl.point[1] * UNIT, pl.point[2] * UNIT, 1] : [0, 0, 0, 0];
+    const planeN = pl ? [nn[0], nn[1], nn[2], 1] : [0, 0, 0, 0];
+    p.f("uClipMin", ...clipMin).f("uClipMax", ...clipMax).f("uPlaneP", ...planeP).f("uPlaneN", ...planeN);
+    // Artificial lights (placed lights and fixtures): lumens / 1000, scaled by the preset (BeautyLighting.applyArtificial).
+    this.setLights(p, scene, s.mode === 0 ? s.lightScale : 0, o.camera);
+    p.v3("uHighlight", [0, 0, 0]);
+
+    // Ground plane (drawn first, like renderingOrder −10), without the section clipping.
+    if (!scene.empty || true) {
+      const z = scene.empty ? 0 : scene.min[2] - 3;
+      const c = scene.empty ? [0, 0] : [(scene.min[0] + scene.max[0]) / 2, (scene.min[1] + scene.max[1]) / 2];
+      const half = (groundSize / UNIT) / 2;
+      const tile = s.groundKind === "meadow" ? GROUND_TILE_METRES * 1000 : 5000;
+      this.updateGround(c[0] - half, c[1] - half, c[0] + half, c[1] + half, z, tile);
+      p.f("uClipMax", 0, 0, 0, 0).f("uPlaneN", 0, 0, 0, 0);
+      p.i("uMode", s.groundMode).v3("uColor", [1, 1, 1]).f("uOpacity", s.groundOpacity);
+      p.i("uHasTex", 1).tex("uAlbedo", 0, this.groundTexture(s)).v3("uMultiply", [1, 1, 1]);
+      p.i("uHasNormal", 0).i("uHasRough", 0).f("uRoughness", s.groundKind === "meadow" ? 0.95 : 1).f("uMetalness", 0);
+      p.f("uSpecular", 0).f("uShininess", 1).v3("uEmissive", [0, 0, 0]).i("uCutout", 0).f("uFoliage", 0).f("uUVScale", 1);
+      p.tex("uNormalMap", 1, this.whiteTex).tex("uRoughMap", 2, this.whiteTex);
+      if (s.groundOpacity < 1) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); }
+      gl.bindVertexArray(this.groundVAO);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      gl.disable(gl.BLEND);
+      p.f("uClipMin", ...clipMin).f("uClipMax", ...clipMax).f("uPlaneP", ...planeP).f("uPlaneN", ...planeN);
+    }
+
+    const sel = o.selection ?? new Set<string>();
+    if (s.drawFaces) {
+      const opaque: MeshGPU[] = [], trans: MeshGPU[] = [];
+      const xray = o.style === "X-Ray";
+      for (const m of scene.meshes) (xray || this.isTransparent(m, o) ? trans : opaque).push(m);
+      for (const m of opaque) this.drawMesh(p, scene, m, o, s, sel);
+      // Transparent surfaces back to front.
+      const eyeMM = o.camera.eye.map((v) => v / UNIT) as V3;
+      trans.sort((a, b) => dist2(b, eyeMM) - dist2(a, eyeMM));
+      gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      for (const m of trans) {
+        gl.depthMask(!xray && o.style === "Realistic");
+        this.drawMesh(p, scene, m, o, s, sel);
+      }
+      gl.depthMask(true); gl.disable(gl.BLEND);
+    }
+
+    // Edges
+    const e = styleEdges(o.style);
+    if (e.show) this.drawEdges(scene, o, viewProj, e, sel, clipMin, clipMax, planeP, planeN);
+    else if (sel.size) this.drawEdges(scene, o, viewProj, { show: true, color: ACCENT, alpha: 1, depthTest: true }, sel, clipMin, clipMax, planeP, planeN, true);
+    if (box) this.drawBox(box, viewProj);
+
+    // Resolve MSAA
+    if (T.ms) {
+      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, T.ms.fb);
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, T.hdr.fb);
+      gl.blitFramebuffer(0, 0, W, H, 0, 0, W, H, gl.COLOR_BUFFER_BIT, gl.LINEAR);
+      gl.blitFramebuffer(0, 0, W, H, 0, 0, W, H, gl.DEPTH_BUFFER_BIT, gl.NEAREST);
+    }
+    gl.disable(gl.DEPTH_TEST); gl.depthMask(false);
+    gl.bindVertexArray(this.emptyVAO);
+
+    // Ambient occlusion (half resolution, blurred)
+    const hw = T.ao.width, hh = T.ao.height;
+    const aoOn = s.ao > 0 && s.drawFaces && o.style !== "X-Ray";
+    if (aoOn) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, T.ao.fb);
+      gl.viewport(0, 0, hw, hh);
+      const q = this.ssao.use();
+      q.tex("uDepth", 0, T.hdr.depth!).m4("uInvProj", invert(proj)).m4("uProj", proj).f("uRadius", s.aoRadius).f("uTexel", 1 / W, 1 / H);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      this.blurPass(T.ao, T.ao2, 1 / hw, 0, 2);
+      this.blurPass(T.ao2, T.ao, 0, 1 / hh, 2);
+    }
+    // Bloom (after exposure, above the threshold)
+    const bloomOn = s.hdr && s.bloom > 0;
+    if (bloomOn) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, T.b1.fb);
+      gl.viewport(0, 0, hw, hh);
+      this.bright.use().tex("uTex", 0, T.hdr.color!).f("uExposure", s.exposure).f("uSceneScale", s.hdr ? Renderer.SCENE_SCALE : 1).f("uThreshold", s.bloomThreshold);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      // SceneKit bloomBlurRadius 10 points (× supersampling in final renders), at half resolution.
+      const sigma = Math.max(1, (10 * (o.supersample ?? 1)) / 2 / 2);
+      this.blurPass(T.b1, T.b2, 1 / hw, 0, sigma);
+      this.blurPass(T.b2, T.b1, 0, 1 / hh, sigma);
+    }
+    // Camera response into `out` (or the canvas)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, out ? out.fb : null);
+    gl.viewport(0, 0, W, H);
+    const c = this.composite.use();
+    c.tex("uHDR", 0, T.hdr.color!).tex("uDepth", 1, T.hdr.depth!).tex("uAO", 2, T.ao.color!).tex("uBloom", 3, T.b1.color!);
+    c.i("uHasAO", aoOn ? 1 : 0).f("uAOIntensity", s.ao).f("uExposure", s.exposure).f("uSceneScale", s.hdr ? Renderer.SCENE_SCALE : 1).i("uHasBloom", bloomOn ? 1 : 0).f("uBloomIntensity", s.bloom);
+    c.i("uToneMap", s.hdr ? 1 : 0).f("uWhite", s.white).f("uSaturation", s.saturation).f("uContrast", s.contrast)
+      .f("uVignette", s.vignette).f("uVignettePower", s.vignettePower);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindVertexArray(null);
+    return { view, proj };
+  }
+
+  private isTransparent(m: MeshGPU, o: FrameOptions): boolean {
+    const t = 1 - m.mat.opacity;
+    if (o.style === "Realistic" && t > 0.3 && o.explicitPreset && o.look.windowGlow > 0) return false; // lit windows are opaque
+    return t > 0;
+  }
+
+  private blurPass(src: Target, dst: Target, dx: number, dy: number, sigma: number) {
+    const gl = this.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, dst.fb);
+    gl.viewport(0, 0, dst.width, dst.height);
+    this.blur.use().tex("uTex", 0, src.color!).f("uDir", dx, dy).f("uSigma", sigma);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  private groundKey = "";
+  private groundBuf: WebGLBuffer | null = null;
+  private updateGround(x0: number, y0: number, x1: number, y1: number, z: number, tile: number) {
+    const key = [x0, y0, x1, y1, z, tile].join(",");
+    if (key === this.groundKey) return;
+    this.groundKey = key;
+    const gl = this.gl;
+    // Interleaved position (mm), normal, uv (tiles, from the world origin so the pattern stays put).
+    const v = (x: number, y: number) => [x, y, z, 0, 0, 1, x / tile, -y / tile];
+    const data = new Float32Array([...v(x0, y0), ...v(x1, y0), ...v(x1, y1), ...v(x0, y0), ...v(x1, y1), ...v(x0, y1)]);
+    if (!this.groundBuf) this.groundBuf = gl.createBuffer();
+    gl.bindVertexArray(this.groundVAO);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.groundBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 32, 12);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 32, 24);
+    gl.bindVertexArray(null);
+  }
+
+  private setLights(p: Program, scene: SceneModel, scale: number, cam: CameraState) {
+    const lights = scale > 0 ? scene.lights.slice() : [];
+    // At most 16: the ones nearest the camera target.
+    const tgt = cam.target.map((v) => v / UNIT) as V3;
+    lights.sort((a, b) => len(sub(a.position, tgt)) - len(sub(b.position, tgt)));
+    const n = Math.min(16, lights.length);
+    const pos = new Float32Array(64), col = new Float32Array(64), dir = new Float32Array(64), inner = new Float32Array(16);
+    for (let i = 0; i < n; i++) {
+      const l = lights[i];
+      const end = Math.max(3, Math.sqrt(Math.max(l.lumens, 1)) / 4);
+      pos.set([l.position[0] * UNIT, l.position[1] * UNIT, l.position[2] * UNIT, end], i * 4);
+      const k = kelvin(l.cct);
+      const I = (l.lumens / 1000) * scale * Renderer.LIGHT_SCALE;
+      const spot = l.kind !== "point" && l.kind !== "area" && l.kind !== "line";
+      col.set([k[0] * I, k[1] * I, k[2] * I, spot ? 1 : 0], i * 4);
+      const t = l.target ?? [l.position[0], l.position[1], l.position[2] - 1000];
+      const d = norm(sub(t as V3, l.position));
+      const outer = Math.cos(((l.beam || 60) * Math.PI) / 360), inn = Math.cos(((l.beam || 60) * 0.7 * Math.PI) / 360);
+      dir.set([d[0], d[1], d[2], outer], i * 4);
+      inner[i] = inn;
+    }
+    p.i("uNumLights", n);
+    const gl = this.gl;
+    const L = (nm: string) => p.loc(nm);
+    gl.uniform4fv(L("uLightPos[0]"), pos); gl.uniform4fv(L("uLightColor[0]"), col); gl.uniform4fv(L("uLightDir[0]"), dir);
+    gl.uniform1fv(L("uLightInner[0]"), inner);
+  }
+
+  /** Per-mesh material of the style (Scene3DBuilder.material + BeautyLighting.enhance). */
+  private drawMesh(p: Program, scene: SceneModel, m: MeshGPU, o: FrameOptions, s: StyleSetup, sel: Set<string>) {
+    const gl = this.gl;
+    const mat = m.mat, st = o.style, look = o.look;
+    const t = Math.min(Math.max(1 - mat.opacity, 0), 0.95);
+    const colorS = mat.color;
+    let color = linearRGB(colorS);
+    let opacity = 1, rough = Math.min(Math.max(mat.roughness, 0.02), 1), metal = Math.min(Math.max(mat.metalness, 0), 1);
+    let emissive: V3 = [0, 0, 0];
+    let useTex = false, useNormal = false, useRough = false, normalStrength = 1, cutout = false;
+    let spec = mat.metalness > 0.5 ? 0.5 : 0.08, shin = Math.max(2, (1 - mat.roughness) * 60);
+    let mode = s.mode;
+    const tex = mat.texture && ["Shaded", "Shaded with Edges", "Realistic"].includes(st) ? scene.texturesFor(mat, st === "Realistic") : null;
+    switch (st) {
+      case "Hidden Line": color = linearRGB(t > 0.3 ? [0.93, 0.93, 0.93] : [1, 1, 1]); break;
+      case "Sketchy": color = linearRGB(mixS(SKETCH_PAPER, colorS, 0.16)); if (t > 0.3) opacity = 0.5; break;
+      case "Conceptual": color = linearRGB(mixS(colorS, [1, 1, 1], 0.18)); if (t > 0.3) opacity = 0.45; break;
+      case "X-Ray": opacity = 0.22; break;
+      case "Realistic": opacity = 1 - t; break;
+      default: opacity = 1 - t;
+    }
+    if (tex?.albedo) useTex = true;
+    if (st === "Realistic") {
+      const maps = mat.maps ?? scene.conventionalMaps(mat.texture ?? "");
+      if (tex?.normal) { useNormal = true; normalStrength = Math.max(0, maps?.normalStrength ?? 1); }
+      else if (tex?.derived) { useNormal = true; normalStrength = 0.8; }
+      if (tex?.rough) useRough = true;
+      if (t > 0.3) {
+        // Glass (BeautyLighting.enhance): green-grey tinted, reflective; lit interiors at dusk and night.
+        if (o.explicitPreset || true) {
+          color = linearRGB([colorS[0] * 0.25 + 0.08, colorS[1] * 0.25 + 0.1, colorS[2] * 0.25 + 0.11]);
+          rough = 0.04; metal = 0.55; opacity = Math.max(0.78, 1 - t);
+          useTex = false; useNormal = false; useRough = false;
+          if (o.explicitPreset && look.windowGlow > 0) { emissive = linearRGB([1, 0.74, 0.45]).map((v) => v * look.windowGlow) as V3; opacity = 1; }
+        }
+      } else if (mat.metalness > 0.5) rough = Math.max(0.28, Math.min(mat.roughness, 0.7));
+      if (m.foliage && useTex) { cutout = true; rough = 0.95; }
+      if (mat.emissive > 0) emissive = linearRGB(colorS).map((v) => v * mat.emissive * (o.explicitPreset ? look.lampGlow : 1)) as V3;
+    } else if (st !== "Hidden Line" && st !== "Wireframe" && mat.emissive > 0) {
+      emissive = linearRGB(colorS).map((v) => v * mat.emissive) as V3;
+    }
+    if (st === "X-Ray") mode = 2;
+    p.i("uMode", mode).v3("uColor", color).f("uOpacity", opacity);
+    p.i("uHasTex", useTex ? 1 : 0).tex("uAlbedo", 0, useTex ? tex!.albedo! : this.whiteTex).v3("uMultiply", multiplyTint(colorS));
+    p.i("uHasNormal", useNormal ? 1 : 0).tex("uNormalMap", 1, useNormal ? (tex!.normal ?? tex!.derived)! : this.whiteTex).f("uNormalStrength", normalStrength);
+    p.i("uHasRough", useRough ? 1 : 0).tex("uRoughMap", 2, useRough ? tex!.rough! : this.whiteTex);
+    p.f("uRoughness", rough).f("uMetalness", metal).f("uSpecular", spec).f("uShininess", shin);
+    p.v3("uEmissive", emissive).i("uCutout", cutout ? 1 : 0);
+    p.f("uFoliage", st === "Realistic" && m.foliage ? 1 : 0).f("uUVScale", 1000 / Math.max(mat.textureScale, 1));
+    const hl = m.id != null && sel.has(m.id);
+    p.v3("uHighlight", hl ? linearRGB(ACCENT).map((v) => v * 0.55) : [0, 0, 0]);
+    gl.bindVertexArray(m.vao);
+    gl.drawElements(gl.TRIANGLES, m.count, gl.UNSIGNED_INT, 0);
+  }
+
+  private drawEdges(scene: SceneModel, o: FrameOptions, viewProj: M4, e: { show?: boolean; color: V3; alpha: number; depthTest: boolean },
+    sel: Set<string>, clipMin: number[], clipMax: number[], planeP: number[], planeN: number[], onlySelected = false) {
+    const gl = this.gl;
+    const sketch = o.style === "Sketchy";
+    if (sketch) scene.ensureSketch();
+    const vao = sketch ? scene.sketchVAO : scene.edgeVAO;
+    if (!vao) return;
+    const p = this.line.use();
+    p.m4("uViewProj", viewProj).f("uUnit", UNIT).f("uClipMin", ...clipMin).f("uClipMax", ...clipMax).f("uPlaneP", ...planeP).f("uPlaneN", ...planeN);
+    if (e.depthTest) gl.enable(gl.DEPTH_TEST); else gl.disable(gl.DEPTH_TEST);
+    gl.depthMask(false);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.bindVertexArray(vao);
+    const range = (m: MeshGPU) => (sketch ? scene.sketchRanges[scene.meshes.indexOf(m)] : { start: m.edgeStart, count: m.edgeCount });
+    if (!onlySelected) {
+      p.f("uColor", ...linearRGB(e.color), e.alpha);
+      if (sketch) gl.drawArrays(gl.LINES, 0, scene.sketchRanges.reduce((a, r) => Math.max(a, r.start + r.count), 0));
+      else gl.drawArrays(gl.LINES, 0, scene.edgeCount);
+    }
+    if (sel.size) {
+      p.f("uColor", ...linearRGB(ACCENT), 1);
+      for (const m of scene.meshes) if (m.id != null && sel.has(m.id)) { const r = range(m); if (r && r.count) gl.drawArrays(gl.LINES, r.start, r.count); }
+    }
+    gl.disable(gl.BLEND); gl.depthMask(true); gl.enable(gl.DEPTH_TEST);
+  }
+
+  private drawBox(b: SectionBox, viewProj: M4) {
+    const gl = this.gl;
+    const [x0, y0, z0] = b.min, [x1, y1, z1] = b.max;
+    const c = [[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0], [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]];
+    const idx = [0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7];
+    const data = new Float32Array(idx.flatMap((i) => c[i]));
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.boxBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+    const p = this.line.use();
+    p.m4("uViewProj", viewProj).f("uUnit", UNIT).f("uColor", ...linearRGB(ACCENT), 1).f("uClipMax", 0, 0, 0, 0).f("uPlaneN", 0, 0, 0, 0);
+    gl.enable(gl.DEPTH_TEST); gl.depthMask(false);
+    gl.bindVertexArray(this.boxVAO);
+    gl.drawArrays(gl.LINES, 0, idx.length);
+    gl.depthMask(true);
+  }
+
+  // MARK: final renders
+
+  /**
+   * Renders offscreen at `width × height` with supersampling (BeautyRenderer.snapshot: frame drawn k× larger with 4×
+   * multisampling, then filtered down). Returns RGBA bytes, top row first.
+   */
+  renderPixels(scene: SceneModel, o: FrameOptions): { width: number; height: number; data: Uint8Array; supersample: number } {
+    const gl = this.gl;
+    const W = o.width, H = o.height;
+    let k = Math.max(1, Math.min(o.supersample ?? 2, 4));
+    while (k > 1 && Math.max(W, H) * k > Math.min(12288, this.maxSize)) k--;
+    const big = target(gl, W * k, H * k, { hdr: false });
+    this.render(scene, { ...o, width: W * k, height: H * k, supersample: k, quality: "final" }, big);
+    const small = target(gl, W, H, { hdr: false });
+    gl.bindFramebuffer(gl.FRAMEBUFFER, small.fb);
+    gl.viewport(0, 0, W, H);
+    gl.bindVertexArray(this.emptyVAO);
+    this.down.use().tex("uTex", 0, big.color!).i("uK", k).f("uSrcTexel", 1 / (W * k), 1 / (H * k));
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    const px = new Uint8Array(W * H * 4);
+    gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    disposeTarget(gl, big); disposeTarget(gl, small);
+    // The big frame's targets are not needed any more.
+    if (this.targets) { for (const t of [this.targets.ms, this.targets.hdr, this.targets.ao, this.targets.ao2, this.targets.b1, this.targets.b2, this.targets.ldr]) disposeTarget(gl, t); this.targets = null; }
+    // Flip to top-first rows.
+    const row = W * 4, out = new Uint8Array(px.length);
+    for (let y = 0; y < H; y++) out.set(px.subarray((H - 1 - y) * row, (H - y) * row), y * row);
+    if (o.background === "transparent") for (let i = 3; i < out.length; i += 4) out[i] = 255;
+    return { width: W, height: H, data: out, supersample: k };
+  }
+
+  dispose() {
+    const gl = this.gl;
+    disposeTarget(gl, this.shadowT);
+    if (this.targets) for (const t of [this.targets.ms, this.targets.hdr, this.targets.ao, this.targets.ao2, this.targets.b1, this.targets.b2, this.targets.ldr]) disposeTarget(gl, t);
+    if (this.env) gl.deleteTexture(this.env.tex);
+  }
+}
+
+/** SceneKit multiply of textured materials: the colour blended 75 % towards white (linear). */
+function multiplyTint(c: V3): V3 { return linearRGB(mixS(c, [1, 1, 1], 0.75)); }
+function mixS(a: V3, b: V3, t: number): V3 { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+function dist2(m: MeshGPU, e: V3) {
+  const c = [(m.min[0] + m.max[0]) / 2 - e[0], (m.min[1] + m.max[1]) / 2 - e[1], (m.min[2] + m.max[2]) / 2 - e[2]];
+  return c[0] * c[0] + c[1] * c[1] + c[2] * c[2];
+}

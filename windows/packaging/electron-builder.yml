@@ -1,0 +1,52 @@
+# Oanarina Archi Tool — electron-builder configuration for the Windows installer (used by .github/workflows/windows-app.yml).
+# Run from windows/:  npx electron-builder --win --x64 --config packaging/electron-builder.yml --publish never
+# Inputs: dist/ (npm run build), resources/engine/ (archi-engine.exe + Swift runtime DLLs),
+#         ../assets/demo (Cedar House, Nordic House, textures), packaging/build/icon.ico (make-ico.py).
+appId: com.oanarinaldi.architool
+productName: Oanarina Archi Tool
+copyright: Copyright © 2026 Oana Rinaldi. GPL-3.0-or-later.
+directories:
+  output: out
+  buildResources: packaging/build
+files:
+  - package.json
+  - dist/main/**
+  - dist/preload/**
+  - dist/renderer/**
+  - "!**/*.map"
+  - "!dist/renderer/fixtures/**"
+extraResources:
+  - from: resources/engine
+    to: engine
+    filter: ["**/*", "!README.txt"]
+  - from: ../assets/demo
+    to: samples
+    filter: ["**/*"]
+  - from: packaging/build/icon.ico
+    to: icon.ico
+  - from: ../LICENSE
+    to: LICENSE.txt
+asar: true
+win:
+  icon: packaging/build/icon.ico
+  target:
+    - target: nsis
+  executableName: Oanarina Archi Tool
+  fileAssociations:
+    - ext: archi
+      name: Oanarina Archi Tool project
+      description: Oanarina Archi Tool project
+      icon: packaging/build/icon.ico
+nsis:
+  artifactName: Oanarina-Archi-Tool-Setup-${version}.${ext}
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Oanarina Archi Tool
+  uninstallDisplayName: Oanarina Archi Tool
+  installerIcon: packaging/build/icon.ico
+  uninstallerIcon: packaging/build/icon.ico
+  deleteAppDataOnUninstall: false
+publish: null
