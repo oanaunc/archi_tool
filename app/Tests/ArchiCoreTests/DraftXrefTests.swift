@@ -4,7 +4,7 @@ import XCTest
 
 @MainActor
 final class DraftXrefTests: XCTestCase {
-    var dir: URL!
+    nonisolated(unsafe) var dir: URL!
     override func setUp() {
         super.setUp()
         dir = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("archi-xref-\(UUID().uuidString)")

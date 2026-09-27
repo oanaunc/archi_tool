@@ -42,7 +42,7 @@ final class IOInteropTests: XCTestCase {
         XCTAssertEqual(wall.props["Custom_Acoustics.Rw"].flatMap(Double.init) ?? 0, 52, accuracy: 1e-9)
         XCTAssertEqual(wall.props["note"], "check")
         XCTAssertEqual(Double(wall.props["Qto_WallBaseQuantities.Length"] ?? "") ?? 0, 5, accuracy: 1e-6)
-        let net = 5 * 3 - 1 * 2 - 1.2 * 1.2
+        let net: Double = 5 * 3 - 1 * 2 - 1.2 * 1.2
         XCTAssertEqual(Double(wall.props["Qto_WallBaseQuantities.NetSideArea"] ?? "") ?? 0, net, accuracy: 1e-6)
         XCTAssertEqual(Double(wall.props["Qto_WallBaseQuantities.NetVolume"] ?? "") ?? 0, net * 0.3, accuracy: 1e-6)
         let slab = try XCTUnwrap(r.doc.elements.first { if case .slab = $0.geometry { return true }; return false })

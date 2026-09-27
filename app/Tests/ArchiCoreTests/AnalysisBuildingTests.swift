@@ -60,7 +60,7 @@ final class AnalysisBuildingTests: XCTestCase {
         XCTAssertEqual(rows.count, 1)
         XCTAssertEqual(rows[0].id, room); XCTAssertEqual(rows[0].windows, [win])
         XCTAssertEqual(rows[0].glazedArea, 1.4 * 1.1, accuracy: 1e-9)
-        let expected = 0.7 * 1.54 * 65 * 0.9 / ((2 * 20 + 18 * 2.7) * 0.75)
+        let expected: Double = 0.7 * 1.54 * 65 * 0.9 / ((2 * 20 + 18 * 2.7) * 0.75)
         XCTAssertEqual(rows[0].daylightFactor, expected, accuracy: 1e-9)
         XCTAssertEqual(rows[0].windowToFloor, 1.54 / 20, accuracy: 1e-9)
         XCTAssertEqual(rows[0].rating, "poor")

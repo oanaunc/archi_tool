@@ -1,6 +1,9 @@
 // Oanarina Archi Tool — GPL-3.0-or-later
 // BCF 2.1 export/import: topics, comments, status, viewpoint camera and selection round trip.
 import XCTest
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 @testable import ArchiCore
 
 final class IOBCFTests: XCTestCase {

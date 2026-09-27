@@ -1,6 +1,9 @@
 // Oanarina Archi Tool — GPL-3.0-or-later
 // KML/KMZ geolocation, layered SVG, USDZ textures, raster image headers, world files and two-point image scaling.
 import XCTest
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 @testable import ArchiCore
 
 final class IOGeoImageTests: XCTestCase {

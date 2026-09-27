@@ -3,6 +3,9 @@
 // of archi-cli (SCR-017), CLI file options, licensing headers (SYS-023) and the no-telemetry / offline policy
 // (SYS-032, SYS-034), Unicode text through the exchange formats (SYS-027).
 import XCTest
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 @testable import ArchiCore
 
 final class AnalysisAgentAPITests: XCTestCase {

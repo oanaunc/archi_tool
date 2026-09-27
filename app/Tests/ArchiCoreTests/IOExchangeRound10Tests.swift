@@ -1,6 +1,9 @@
 // Oanarina Archi Tool — GPL-3.0-or-later
 // DXF versions (IO-009) and further exchange formats added in round 10.
 import XCTest
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 @testable import ArchiCore
 
 final class IOExchangeRound10Tests: XCTestCase {

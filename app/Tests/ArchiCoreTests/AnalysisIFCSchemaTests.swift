@@ -152,7 +152,8 @@ final class AnalysisIFCSchemaTests: XCTestCase {
         let text = IFCExporter.export(doc: d, meshes: MeshBuilder.build(doc: d))
         let clean = IFCValidator.validate(text)
         XCTAssertFalse(clean.contains { $0.severity == .error }, report(clean))
-        XCTAssertFalse(clean.contains { $0.code.hasPrefix("PSET") || $0.code == "SPATIAL-STRUCTURE" || $0.code == "SHELL-NOT-CLOSED" || $0.code == "RESOURCE-UNUSED" }, report(clean))
+        let expectedOnlyInDirty: Set<String> = ["SPATIAL-STRUCTURE", "SHELL-NOT-CLOSED", "RESOURCE-UNUSED"]
+        XCTAssertFalse(clean.contains { (i) -> Bool in i.code.hasPrefix("PSET") || expectedOnlyInDirty.contains(i.code) }, report(clean))
         // Violations: a made-up Pset_ name, a wrong value type, an unknown property, an unused point, a loose storey.
         let f = try STEPParser.parse(text)
         let pset = try XCTUnwrap(f.all("IFCPROPERTYSET").first { $0[2].string == "Pset_WallCommon" })

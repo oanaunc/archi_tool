@@ -1,6 +1,9 @@
 // Oanarina Archi Tool — GPL-3.0-or-later
 // Shadow studies (ANL-019): ground shadows against the analytic shadow of a box, time lists, frames, drawing output.
 import XCTest
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 @testable import ArchiCore
 
 final class AnalysisShadowStudyTests: XCTestCase {

@@ -35,7 +35,7 @@ final class AnalysisThermalBridgeTests: XCTestCase {
         XCTAssertEqual(byKind["balcony"] ?? 0, 4, accuracy: 0.5)
         XCTAssertEqual(byKind["window-reveal"] ?? 0, 5.2, accuracy: 1e-9)
         XCTAssertEqual(byKind["column"] ?? 0, 3, accuracy: 1e-9)
-        let expected = 24 * 0.10 + 36 * 0.60 + 36 * 0.50 + 36 * 0.40 + 4 * 0.90 + 5.2 * 0.10 + 3 * 0.30
+        let expected: Double = 24 * 0.10 + 36 * 0.60 + 36 * 0.50 + 36 * 0.40 + 4 * 0.90 + 5.2 * 0.10 + 3 * 0.30
         XCTAssertEqual(s.htb, expected, accuracy: 0.5)
         XCTAssertGreaterThan(s.transmission, 0)
         // Overrides.

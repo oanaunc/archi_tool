@@ -1,6 +1,9 @@
 // Oanarina Archi Tool — GPL-3.0-or-later
 // Real-time co-editing through shared op logs (COL-016) and the BCF API client (COL-010).
 import XCTest
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 @testable import ArchiCore
 
 final class IOCoEditingTests: XCTestCase {

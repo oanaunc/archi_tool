@@ -1,5 +1,8 @@
 // Oanarina Archi Tool — GPL-3.0-or-later
 import XCTest
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 @testable import ArchiCore
 
 /// gbXML, COBie, COLLADA and CityJSON.
