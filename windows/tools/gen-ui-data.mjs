@@ -82,7 +82,9 @@ try {
     const txt = fs.readFileSync(f, "utf8");
     const m = txt.match(/=\s*(\[[\s\S]*\]);/);
     if (!m) return null;
-    let nodes = Function(`return ${m[1]}`)();
+    // Newer lucide files reference their own helpers (e.g. defaultAttributes) inside the array: fall back if it cannot be evaluated.
+    let nodes;
+    try { nodes = Function(`return ${m[1]}`)(); } catch { return null; }
     if (nodes[0] === "svg") nodes = nodes[2];
     return nodes.map(([tag, attrs]) => [tag, Object.fromEntries(Object.entries(attrs).filter(([k]) => k !== "key"))]);
   };
