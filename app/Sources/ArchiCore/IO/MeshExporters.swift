@@ -160,7 +160,7 @@ public enum GLTFExporter {
         let ext = (t as NSString).pathExtension.lowercased()
         guard ["png", "jpg", "jpeg"].contains(ext) else { return nil }
         let expanded = (t as NSString).expandingTildeInPath
-        let url = expanded.hasPrefix("/") ? URL(fileURLWithPath: expanded) : (root ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath)).appendingPathComponent(t)
+        let url = PathSupport.isAbsolute(expanded) ? URL(fileURLWithPath: expanded) : (root ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath)).appendingPathComponent(t)
         guard let data = try? Data(contentsOf: url), ImageHeader.size(data) != nil else { return nil }
         return (data, ext == "png" ? "image/png" : "image/jpeg")
     }

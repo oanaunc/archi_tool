@@ -48,7 +48,7 @@ public enum MTLReader {
                 guard i < f.count else { break }
                 let file = f[i...].joined(separator: " ").replacingOccurrences(of: "\\", with: "/")
                 let expanded = (file as NSString).expandingTildeInPath
-                let path = expanded.hasPrefix("/") ? expanded : (baseURL?.appendingPathComponent(file).standardizedFileURL.path ?? file)
+                let path = PathSupport.isAbsolute(expanded) ? expanded : (baseURL?.appendingPathComponent(file).standardizedFileURL.path ?? file)
                 cur?.texture = path
                 // Texture repeat: -s u scales UVs; one tile per metre by default for imported models.
                 if let s = scaleU, s > 0 { cur?.textureScale = 1000 / s }
@@ -78,7 +78,7 @@ public enum MTLReader {
         var mats: [Material] = []
         let dir = url.deletingLastPathComponent()
         for lib in libraries(inOBJ: text) {
-            let u = lib.hasPrefix("/") ? URL(fileURLWithPath: lib) : dir.appendingPathComponent(lib)
+            let u = PathSupport.isAbsolute(lib) ? URL(fileURLWithPath: lib) : dir.appendingPathComponent(lib)
             guard let t = try? FileImport.readText(u) else { continue }
             for m in materials(t, baseURL: u.deletingLastPathComponent()) where !mats.contains(where: { $0.name == m.name }) { mats.append(m) }
         }
@@ -123,7 +123,7 @@ public enum USDImporter {
         }
         guard data.starts(with: Array("#usda".utf8)) else { throw USDError.binary }
         let base = url.deletingLastPathComponent()
-        return try parse(String(decoding: data, as: UTF8.self), assets: { $0.hasPrefix("/") ? $0 : base.appendingPathComponent($0).path })
+        return try parse(String(decoding: data, as: UTF8.self), assets: { PathSupport.isAbsolute($0) ? $0 : base.appendingPathComponent($0).path })
     }
 
     struct Prim {

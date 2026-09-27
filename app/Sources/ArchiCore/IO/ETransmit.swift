@@ -28,7 +28,7 @@ public enum ETransmit {
         var entries: [ZipArchive.Entry] = []
         func resolve(_ p: String) -> URL {
             let e = (p as NSString).expandingTildeInPath
-            if e.hasPrefix("/") { return URL(fileURLWithPath: e) }
+            if PathSupport.isAbsolute(e) { return URL(fileURLWithPath: e) }
             return (base ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath)).appendingPathComponent(e)
         }
         /// Packaged relative path for a referenced file, or nil when it cannot be read.

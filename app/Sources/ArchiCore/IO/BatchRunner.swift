@@ -58,7 +58,7 @@ public enum BatchRunner {
     public static func run(_ jobs: [BatchJob], stopOnError: Bool, base: URL, host: EditorHost? = nil, progress: ((String) -> Void)? = nil) async -> [String: Any] {
         func url(_ p: String) -> URL {
             let e = (p as NSString).expandingTildeInPath
-            return e.hasPrefix("/") ? URL(fileURLWithPath: e) : base.appendingPathComponent(e)
+            return PathSupport.isAbsolute(e) ? URL(fileURLWithPath: e) : base.appendingPathComponent(e)
         }
         var results: [[String: Any]] = []
         var failed = 0

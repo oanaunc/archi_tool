@@ -50,7 +50,7 @@ public enum Xrefs {
     /// Resolves a stored path against the host drawing's folder.
     public static func resolve(_ path: String, base: URL?) -> URL {
         let p = (path as NSString).expandingTildeInPath
-        if p.hasPrefix("/") { return URL(fileURLWithPath: p) }
+        if PathSupport.isAbsolute(p) { return URL(fileURLWithPath: (p as NSString).expandingTildeInPath) }
         if let b = base { return b.appendingPathComponent(p).standardizedFileURL }
         return URL(fileURLWithPath: p)
     }

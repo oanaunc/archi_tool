@@ -9,7 +9,7 @@ public enum IOCommands {
     /// Resolves a path typed on the command line (~, relative to the drawing's folder, else the working directory).
     @MainActor static func resolve(_ ed: Editor, _ path: String) -> URL {
         let p = (path.trimmingCharacters(in: CharacterSet(charactersIn: "\"' ")) as NSString).expandingTildeInPath
-        if p.hasPrefix("/") { return URL(fileURLWithPath: p) }
+        if PathSupport.isAbsolute(p) { return URL(fileURLWithPath: (p as NSString).expandingTildeInPath) }
         if let dir = ed.fileURL?.deletingLastPathComponent() { return dir.appendingPathComponent(p) }
         return URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent(p)
     }

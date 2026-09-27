@@ -7,6 +7,9 @@ import XCTest
 final class IOPluginCLITests: XCTestCase {
     /// The archi-cli executable built next to the test bundle (swift test builds every product), else the app bundle's copy.
     static func cliBinary() -> URL? {
+        #if !canImport(Darwin)
+        return nil          // archi-cli uses JavaScriptCore and is built on macOS only
+        #endif
         let fm = FileManager.default
         var candidates: [URL] = []
         for b in Bundle.allBundles where b.bundleURL.pathExtension == "xctest" {

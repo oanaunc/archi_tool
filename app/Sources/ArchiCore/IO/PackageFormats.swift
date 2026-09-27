@@ -371,7 +371,7 @@ public enum USDExporter {
             let ext = (t as NSString).pathExtension.lowercased()
             guard ["png", "jpg", "jpeg"].contains(ext) else { continue }
             let expanded = (t as NSString).expandingTildeInPath
-            let url = expanded.hasPrefix("/") ? URL(fileURLWithPath: expanded) : (textureRoot ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath)).appendingPathComponent(t)
+            let url = PathSupport.isAbsolute(expanded) ? URL(fileURLWithPath: expanded) : (textureRoot ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath)).appendingPathComponent(t)
             guard let data = try? Data(contentsOf: url), ImageHeader.size(data) != nil else { continue }
             var n = "textures/" + MeshExport.safeName(m.name) + "." + ext
             while usedNames.contains(n) { n = "textures/" + MeshExport.safeName(m.name) + "_\(usedNames.count)." + ext }

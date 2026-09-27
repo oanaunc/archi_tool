@@ -96,7 +96,12 @@ final class IOPerformanceTests: XCTestCase {
         let t = try time { back = try ArchiFile.decode(Data(contentsOf: url)) }
         XCTAssertEqual(back.entities.count, 110_000)
         XCTAssertEqual(back.entities.last, d.entities.last)
-        XCTAssertLessThan(t, 3, "opening \(data.count / 1_000_000) MB took \(t) s")
+        #if canImport(Darwin)
+        let limit = 3.0
+        #else
+        let limit = 6.0      // shared CI machines on Windows/Linux are about half as fast as a Mac
+        #endif
+        XCTAssertLessThan(t, limit, "opening \(data.count / 1_000_000) MB took \(t) s")
         print("\(data.count / 1_000_000) MB file: open \(fmt(t, 3)) s")
     }
 

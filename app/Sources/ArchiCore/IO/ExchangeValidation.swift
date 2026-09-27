@@ -55,7 +55,8 @@ public enum GBXMLValidator {
         func issue(_ c: String, _ m: String) { out.append(ExchangeIssue(code: c, message: m)) }
         let tb = TreeBuilder()
         let p = XMLParser(data: Data(xml.utf8)); p.delegate = tb
-        guard p.parse(), let root = tb.root else { return [ExchangeIssue(code: "XML-SYNTAX", message: p.parserError?.localizedDescription ?? "not well-formed")] }
+        // Some XML parsers (the open-source Foundation on Windows/Linux) accept unclosed elements, so check the nesting too.
+        guard p.parse(), tb.stack.isEmpty, let root = tb.root else { return [ExchangeIssue(code: "XML-SYNTAX", message: p.parserError?.localizedDescription ?? "not well-formed")] }
         guard root.name == "gbXML" else { return [ExchangeIssue(code: "ROOT", message: "root element is \(root.name), expected gbXML")] }
         if let ns = root.attrs["xmlns"], ns != "http://www.gbxml.org/schema" { issue("NAMESPACE", "gbXML must use the namespace http://www.gbxml.org/schema") }
         var ids: [String: String] = [:]   // id → element name

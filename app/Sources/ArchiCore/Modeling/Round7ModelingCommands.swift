@@ -220,7 +220,7 @@ enum Round7ModelingCommands {
             let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
             guard let src = try? String(contentsOf: url, encoding: .utf8) else { throw CommandError.invalid("Cannot read \(path).") }
             let dir = url.deletingLastPathComponent()
-            let r = SCAD.evaluate(src) { rel in try? String(contentsOf: rel.hasPrefix("/") ? URL(fileURLWithPath: rel) : dir.appendingPathComponent(rel), encoding: .utf8) }
+            let r = SCAD.evaluate(src) { rel in try? String(contentsOf: PathSupport.isAbsolute(rel) ? URL(fileURLWithPath: rel) : dir.appendingPathComponent(rel), encoding: .utf8) }
             try addSCAD(ed, r, name: url.lastPathComponent)
         }
     }

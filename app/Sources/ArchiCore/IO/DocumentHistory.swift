@@ -491,7 +491,7 @@ public enum ArchiPackage {
         let drawing = try ETransmit.unpack(data, to: dir)
         var d = try ArchiFile.decode(Data(contentsOf: drawing))
         let base = drawing.deletingLastPathComponent()
-        func absolute(_ p: String) -> String { p.hasPrefix("/") || p.hasPrefix("~") || p.isEmpty ? p : base.appendingPathComponent(p).path }
+        func absolute(_ p: String) -> String { PathSupport.isAbsolute(p) || p.isEmpty ? p : base.appendingPathComponent(p).path }
         func fix(_ e: inout Entity) { if case .image(var im) = e.geometry { im.path = absolute(im.path); e.geometry = .image(im) } }
         for i in d.entities.indices { fix(&d.entities[i]) }
         for k in d.blocks.keys { for i in d.blocks[k]!.entities.indices { fix(&d.blocks[k]!.entities[i]) } }
