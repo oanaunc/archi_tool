@@ -42,7 +42,8 @@ jobs:
           swift --version 2>&1 | tee ../ci.log
           if ! swift build --target ArchiCore 2>&1 | tee -a ../ci.log; then
             echo "=== build failed; verbose rebuild to name the failing compile job" | tee -a ../ci.log
-            swift build --target ArchiCore -v 2>&1 | grep -oE "exception [0-9]+|error: .*|-primary-file [^ ]+" | sort | uniq -c | sort -rn | head -60 | tee -a ../ci.log
+            swift build --target ArchiCore -v > ../verbose.log 2>&1 || true
+            grep -n -B2 -A2 "exception" ../verbose.log | grep -oE "exception [0-9]+.*|-primary-file [^ ]+" | head -60 | tee -a ../ci.log
             exit 1
           fi
           swift test 2>&1 | tee -a ../ci.log
