@@ -10,7 +10,7 @@ final class BIMMultiStoreyTests: XCTestCase {
         return m
     }
 
-    func testStackedOpeningsCutSeparateHoles() {
+    func testStackedOpeningsCutSeparateHoles() async {
         var doc = ArchiDocument()
         let w = doc.addElement(.wall(WallGeom(start: .zero, end: Vec2(5000, 0), thickness: 200, height: 3000)))
         // A door under a high window whose width overlaps the door along the wall.
@@ -204,7 +204,7 @@ final class BIMMultiStoreyTests: XCTestCase {
         XCTAssertGreaterThan(items.count, PlanRepresentation.items(BIMElement(id: 99, geometry: .curtainWall(CurtainWallGeom(start: .zero, end: Vec2(3600, 0), height: 3000, gridU: 1200, gridV: 2400))), doc: doc).count)
     }
 
-    func testDatums3D() {
+    func testDatums3D() async {
         var doc = ArchiDocument()
         _ = doc.addElement(.gridLine(GridLineGeom(start: .zero, end: Vec2(0, 10000), label: "1")))
         _ = doc.addElement(.wall(WallGeom(start: .zero, end: Vec2(5000, 0))))

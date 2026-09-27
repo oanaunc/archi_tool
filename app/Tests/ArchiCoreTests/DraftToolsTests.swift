@@ -41,7 +41,7 @@ final class DraftToolsTests: XCTestCase {
         XCTAssertEqual(ed3.doc.entities.count, 1)
     }
 
-    func testUnitSuffixesAndAngles() {
+    func testUnitSuffixesAndAngles() async {
         InputParser.context = ParseContext(units: .millimeters)
         XCTAssertEqual(InputParser.parseNumber("2.5m")!, 2500, accuracy: 1e-9)
         XCTAssertEqual(InputParser.parseNumber("30cm")!, 300, accuracy: 1e-9)
@@ -99,7 +99,7 @@ final class DraftToolsTests: XCTestCase {
         close(lines(ed)[2].b, Vec2(500, 600))
     }
 
-    func testCalDistance() {
+    func testCalDistance() async {
         XCTAssertEqual(CalcFunctions.evaluate("dist(0,0;3,4)")!, 5, accuracy: 1e-12)
         XCTAssertEqual(CalcFunctions.evaluate("dist([0,0],[3,4])*2")!, 10, accuracy: 1e-12)
         XCTAssertEqual(CalcFunctions.evaluate("ang(0,0;1,1)")!, 45, accuracy: 1e-9)
@@ -550,7 +550,7 @@ final class DraftToolsTests: XCTestCase {
         XCTAssertEqual(ed.doc.blocks["archi_block_src"]?.entities.count, 2)
     }
 
-    func testOverkillAndSelectionGeometryUnits() {
+    func testOverkillAndSelectionGeometryUnits() async {
         let r = Overkill.run([Entity(id: 1, geometry: .circle(CircleGeom(.zero, 5))), Entity(id: 2, geometry: .circle(CircleGeom(.zero, 5)))])
         XCTAssertEqual(r.removed, [2])
         XCTAssertTrue(SelectionGeometry.hits([[Vec2(1, 1), Vec2(2, 2)]], polygon: [.zero, Vec2(10, 0), Vec2(10, 10), Vec2(0, 10)], mode: .windowPolygon))

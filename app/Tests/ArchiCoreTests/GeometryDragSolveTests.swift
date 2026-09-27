@@ -28,7 +28,7 @@ final class GeometryDragSolveTests: XCTestCase {
         XCTAssertEqual(len(line(ed.doc, a)), 3 * len(line(ed.doc, b)), accuracy: 1e-5)
     }
 
-    func testLengthDifferenceConstraint() {
+    func testLengthDifferenceConstraint() async {
         var doc = ArchiDocument()
         let a = doc.add(.line(LineGeom(Vec2(0, 0), Vec2(1000, 0))))
         let b = doc.add(.line(LineGeom(Vec2(0, 500), Vec2(700, 500))))
@@ -76,7 +76,7 @@ final class GeometryDragSolveTests: XCTestCase {
         XCTAssertEqual(ed.doc.entities, before.entities)
     }
 
-    func testDragSolveUnreachableStopsAtLimitAndFreeEntityFollows() {
+    func testDragSolveUnreachableStopsAtLimitAndFreeEntityFollows() async {
         var doc = ArchiDocument()
         let a = doc.add(.line(LineGeom(Vec2(0, 0), Vec2(1000, 0))))
         var set = ConstraintSet()

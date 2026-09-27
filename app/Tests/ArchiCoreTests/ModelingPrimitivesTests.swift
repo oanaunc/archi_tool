@@ -11,7 +11,7 @@ final class ModelingPrimitivesTests: XCTestCase {
         return r.volume
     }
 
-    func testPrimitiveVolumesAndValidity() {
+    func testPrimitiveVolumesAndValidity() async {
         XCTAssertEqual(valid(SolidPrimitives.wedge(corner: .zero, length: 1000, width: 500, height: 300), "wedge"), 1000 * 500 * 300 / 2, accuracy: 1e-3)
         XCTAssertEqual(valid(SolidPrimitives.wedge(corner: .zero, length: -1000, width: 500, height: 300, rotation: 0.3), "mirrored wedge"), 1000 * 500 * 300 / 2, accuracy: 1e-3)
         // Square pyramid: circumradius r → side r√2, V = side² h / 3.
@@ -42,7 +42,7 @@ final class ModelingPrimitivesTests: XCTestCase {
         XCTAssertEqual(valid(closed, "closed polysolid"), (4000 * 3000 - 3600 * 2600) * 2500, accuracy: 1)
     }
 
-    func testHullThickenSeparateAndCheck() {
+    func testHullThickenSeparateAndCheck() async {
         // Hull of a cube's corners plus interior points = the cube.
         var pts: [Vec3] = []
         for x in [0.0, 1000] { for y in [0.0, 1000] { for z in [0.0, 1000] { pts.append(Vec3(x, y, z)) } } }

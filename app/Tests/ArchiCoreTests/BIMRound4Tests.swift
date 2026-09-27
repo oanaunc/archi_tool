@@ -142,7 +142,7 @@ final class BIMRound4Tests: XCTestCase {
 
     // MARK: M3D-038 section plane objects
 
-    func testPlaneClipperKeepsSolidsClosed() {
+    func testPlaneClipperKeepsSolidsClosed() async {
         let box = SolidGeom(kind: .box, origin: .zero, size: Vec3(1000, 1000, 1000))
         let half = PlaneClipper.clip(box, point: Vec3(500, 0, 0), normal: Vec3(1, 0, 0))!
         let m = MeshTools.mesh(of: half)

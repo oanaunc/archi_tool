@@ -4,7 +4,7 @@ import XCTest
 
 @MainActor
 final class DraftSystemVariableTests: XCTestCase {
-    func testCatalogCoverage() {
+    func testCatalogCoverage() async {
         XCTAssertGreaterThanOrEqual(SysVarCatalog.all.count, 150)
         XCTAssertEqual(Set(SysVarCatalog.all.map(\.name)).count, SysVarCatalog.all.count, "no duplicates")
         for n in ["OSMODE", "ORTHOMODE", "CLAYER", "LTSCALE", "PDMODE", "MIRRTEXT", "DIMSCALE", "FILEDIA", "CMDECHO", "PICKFIRST", "LUNITS", "AUNITS", "HPNAME", "INSUNITS", "TEXTSIZE", "USERI1"] {

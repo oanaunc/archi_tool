@@ -11,7 +11,7 @@ final class DraftFeatureTests: XCTestCase {
 
     // MARK: MOD-029 rotate 90° while dragging
 
-    func testQuarterTurnDragTransformIsExact() {
+    func testQuarterTurnDragTransformIsExact() async {
         XCTAssertEqual(Editor.quarterTurn(-.pi / 2), 3 * .pi / 2, accuracy: 1e-15)
         XCTAssertEqual(Editor.quarterTurn(4 * .pi), 0)
         let t = Editor.dragTransform(from: Vec2(10, 0), to: Vec2(100, 100), rotation: .pi / 2)
@@ -39,7 +39,7 @@ final class DraftFeatureTests: XCTestCase {
 
     // MARK: MOD-049 TXTEXP with the stroke font
 
-    func testStrokeFontCoversAsciiAndAccents() {
+    func testStrokeFontCoversAsciiAndAccents() async {
         for v in 32...126 {
             let c = Character(UnicodeScalar(UInt8(v)))
             XCTAssertNotNil(StrokeFont.parsed[c], "missing glyph \(c)")
@@ -100,7 +100,7 @@ final class DraftFeatureTests: XCTestCase {
 
     // MARK: ANN-013 text mask exchange
 
-    func testTextMaskMTextGroupsAndWipeoutRoundTrip() {
+    func testTextMaskMTextGroupsAndWipeoutRoundTrip() async {
         let bg = TextMaskExchange.mtextGroups([DraftRendering.textMaskProp: "1.5"])
         XCTAssertEqual(bg.first { $0.code == 90 }?.value, "3")
         XCTAssertEqual(TextMaskExchange.props(fromMTextGroups: bg)[DraftRendering.maskColorProp], "background")
@@ -126,7 +126,7 @@ final class DraftFeatureTests: XCTestCase {
 
     // MARK: ANN-065 pattern library
 
-    func testPatternLibraryFillsInsideBoundary() {
+    func testPatternLibraryFillsInsideBoundary() async {
         let sq = [[Vec2(0, 0), Vec2(2000, 0), Vec2(2000, 2000), Vec2(0, 2000)]]
         for n in ["ANGLE", "BOX", "BRASS", "BRSTONE", "CLAY", "CORK", "DASH", "DOLMIT", "ESCHER", "FLEX", "GRATE", "HEX", "HOUND", "MUDST", "NET3",
                   "PLAST", "PLASTI", "SACNCR", "STARS", "STEEL", "SWAMP", "TRANS", "TRIANG", "AR-B816C", "AR-B88", "AR-BRELM", "AR-PARQ1",
@@ -345,7 +345,7 @@ final class DraftFeatureTests: XCTestCase {
         XCTAssertFalse(ed4.forceClassicArray)
     }
 
-    func testFeatureCommandsRegistered() {
+    func testFeatureCommandsRegistered() async {
         let r = CommandRegistry.shared
         r.ensureBuiltins()
         for n in ["ARRAYEDIT", "ARRAYCLASSIC", "MACROBUTTON", "HELIX", "SYSVARMONITOR", "RELZERO", "XCLIP", "BTABLE", "TEXTLIST",
@@ -403,7 +403,7 @@ final class DraftFeatureTests: XCTestCase {
     }
 
     // ANN-013 through the DXF reader and writer: MTEXT background-fill codes and WIPEOUT entities.
-    func testTextMaskDXFRoundTrip() throws {
+    func testTextMaskDXFRoundTrip() async throws {
         var doc = ArchiDocument()
         let id = doc.add(.text(TextGeom(position: Vec2(10, 20), height: 5, content: "MASK")))
         doc.entities[0].props[DraftRendering.textMaskProp] = "1.25"

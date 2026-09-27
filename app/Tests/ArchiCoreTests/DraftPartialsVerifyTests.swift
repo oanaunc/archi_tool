@@ -79,7 +79,7 @@ final class DraftPartialsVerifyTests: XCTestCase {
         XCTAssertEqual(r1.first?.style.dash, rt.linetype("Hidden")?.pattern)
     }
 
-    func testTextStyleRoundTrip() throws {
+    func testTextStyleRoundTrip() async throws {
         var d = ArchiDocument()
         d.textStyles.append(TextStyle(name: "Narrow", font: "Helvetica", height: 3.5, widthFactor: 0.8, oblique: 15 * .pi / 180))
         let rt = try roundTrip(d)

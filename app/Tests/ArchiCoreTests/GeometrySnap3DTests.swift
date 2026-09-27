@@ -11,7 +11,7 @@ final class GeometrySnap3DTests: XCTestCase {
         return (d, id)
     }
 
-    func testFeaturesOfABox() {
+    func testFeaturesOfABox() async {
         let (d, id) = boxDoc()
         guard let f = Snap3D.features(d.entity(id)!, doc: d) else { return XCTFail("no features") }
         XCTAssertEqual(f.vertices.count, 8)
@@ -23,7 +23,7 @@ final class GeometrySnap3DTests: XCTestCase {
         XCTAssertTrue(f.faceCenters.contains { $0.distance(to: Vec3(500, 1000, top)) < 1e-6 })
     }
 
-    func testRaySnapsInA3DView() {
+    func testRaySnapsInA3DView() async {
         var (d, _) = boxDoc()
         Snap3D.setModes(Set(Snap3D.Mode.allCases), doc: &d)
         let top = Snap3D.features(d.entities[0], doc: d)!.vertices.map(\.z).max()!

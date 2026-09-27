@@ -305,7 +305,7 @@ final class DraftPlannedVerifyTests: XCTestCase {
         XCTAssertEqual(ed.doc.entity(dst)?.layer, "A-WALL"); XCTAssertEqual(ed.doc.entity(dst)?.lineweight, 0.5)
     }
 
-    func testLassoSelectionDirection() {
+    func testLassoSelectionDirection() async {
         let ed = Editor()
         let inside = ed.doc.add(.line(LineGeom(Vec2(10, 10), Vec2(20, 20))))
         let crossing = ed.doc.add(.line(LineGeom(Vec2(50, 50), Vec2(500, 50))))
@@ -474,7 +474,7 @@ final class DraftPlannedVerifyTests: XCTestCase {
 
     // MARK: LAY-021 / LAY-022
 
-    func testLinFileParseWriteAndLibrary() {
+    func testLinFileParseWriteAndLibrary() async {
         let text = """
         ;; test
         *MYDASH,My dash __ . __

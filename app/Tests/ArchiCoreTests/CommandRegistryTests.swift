@@ -5,7 +5,7 @@ import XCTest
 /// Guards against commands silently replacing each other when command lists from different areas are merged.
 @MainActor
 final class CommandRegistryTests: XCTestCase {
-    func testNoDuplicateCommandNames() {
+    func testNoDuplicateCommandNames() async {
         var seen: [String: String] = [:], dups: [String] = []
         for c in BuiltinCommands.allDefinitions {
             if let prev = seen[c.name] { dups.append("\(c.name) (\(prev) / \(c.category))") }
@@ -14,7 +14,7 @@ final class CommandRegistryTests: XCTestCase {
         XCTAssertEqual(dups, [], "duplicate command names")
     }
 
-    func testAliasesDoNotShadowOrCollide() {
+    func testAliasesDoNotShadowOrCollide() async {
         let defs = BuiltinCommands.allDefinitions
         let names = Set(defs.map(\.name))
         var owner: [String: String] = [:], problems: [String] = []
@@ -28,7 +28,7 @@ final class CommandRegistryTests: XCTestCase {
         XCTAssertEqual(problems, [], problems.joined(separator: "\n"))
     }
 
-    func testEveryCommandHasSummaryAndCategory() {
+    func testEveryCommandHasSummaryAndCategory() async {
         for c in BuiltinCommands.allDefinitions {
             XCTAssertFalse(c.summary.isEmpty, c.name); XCTAssertFalse(c.category.isEmpty, c.name)
         }

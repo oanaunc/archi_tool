@@ -4,7 +4,7 @@ import XCTest
 
 @MainActor
 final class ModelingSurfaceTests: XCTestCase {
-    func testRevolvedTabulatedRuledAndCoonsSurfaces() {
+    func testRevolvedTabulatedRuledAndCoonsSurfaces() async {
         let rev = SurfaceTools.revolve([Vec3(100, 0, 0), Vec3(100, 0, 1000)], axisFrom: .zero, to: Vec3(0, 0, 1), segments: 64)
         XCTAssertEqual(SurfaceTools.area(rev), 2 * Double.pi * 100 * 1000, accuracy: 2 * Double.pi * 100 * 1000 * 0.002)
         let half = SurfaceTools.revolve([Vec3(100, 0, 0), Vec3(100, 0, 1000)], axisFrom: .zero, to: Vec3(0, 0, 1), sweep: .pi, segments: 32)
@@ -23,7 +23,7 @@ final class ModelingSurfaceTests: XCTestCase {
         XCTAssertNil(SurfaceTools.coons([sq[0], sq[1], sq[2]]))
     }
 
-    func testTwistedSweepVolume() {
+    func testTwistedSweepVolume() async {
         let sq = [Vec2(-50, -50), Vec2(50, -50), Vec2(50, 50), Vec2(-50, 50)]
         let path = (0...20).map { Vec3(Double($0) * 50, 0, 0) }
         let m = SurfaceTools.twistedSweep(sq, along: path, twist: .pi / 2)
@@ -35,7 +35,7 @@ final class ModelingSurfaceTests: XCTestCase {
         XCTAssertEqual(MeshTools.signedVolume(tapered), 1000.0 / 3 * (10000 + 2500 + 5000), accuracy: 1)
     }
 
-    func testMeshRepairAndDecimate() {
+    func testMeshRepairAndDecimate() async {
         // A cube with duplicated vertices, one flipped face and a missing face.
         let c = [Vec3(0, 0, 0), Vec3(1000, 0, 0), Vec3(1000, 1000, 0), Vec3(0, 1000, 0), Vec3(0, 0, 1000), Vec3(1000, 0, 1000), Vec3(1000, 1000, 1000), Vec3(0, 1000, 1000)]
         let quads = [[0, 3, 2, 1], [4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6] /* [3,0,4,7] missing */]

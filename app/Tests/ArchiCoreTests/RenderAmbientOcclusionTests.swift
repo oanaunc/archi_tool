@@ -10,7 +10,7 @@ final class RenderAmbientOcclusionTests: XCTestCase {
         return MeshGroup(id: nil, kind: "test", material: "Concrete", mesh: m)
     }
 
-    func testOcclusionInCornerAndOpen() {
+    func testOcclusionInCornerAndOpen() async {
         let ground = quad(Vec3(-5000, -5000, 0), Vec3(5000, -5000, 0), Vec3(5000, 5000, 0), Vec3(-5000, 5000, 0))
         let wall = quad(Vec3(0, -5000, 0), Vec3(0, 5000, 0), Vec3(0, 5000, 3000), Vec3(0, -5000, 3000))
         let sc = AmbientOcclusion.Scene(groups: [ground, wall])

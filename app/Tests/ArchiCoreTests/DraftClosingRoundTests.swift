@@ -295,7 +295,7 @@ final class DraftClosingRoundTests: XCTestCase {
         XCTAssertTrue(ed.log.suffix(3).joined().contains("already exists"))
     }
 
-    func testLinkPlacementUnitsAndSharedCoordinates() {
+    func testLinkPlacementUnitsAndSharedCoordinates() async {
         var src = ArchiDocument(); src.units = .meters
         let host = ArchiDocument()
         let p = LinkedModels.placement(ModelLink(name: "M", path: "m.archi"), source: src, host: host)

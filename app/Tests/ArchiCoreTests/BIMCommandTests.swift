@@ -204,7 +204,7 @@ final class BIMCommandTests: XCTestCase {
         XCTAssertEqual(ed.doc.blocks["VIEW-SECTION-A"]!.entities.count, n0)
     }
 
-    func testRoomTagAvoidsFurniture() {
+    func testRoomTagAvoidsFurniture() async {
         var doc = ArchiDocument()
         let room = [Vec2(0, 0), Vec2(6000, 0), Vec2(6000, 4000), Vec2(0, 4000)]
         let r = doc.addElement(.space(SpaceGeom(boundary: room, name: "Bedroom", number: "101")))

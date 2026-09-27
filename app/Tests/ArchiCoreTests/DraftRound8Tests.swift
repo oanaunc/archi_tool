@@ -16,7 +16,7 @@ final class DraftRound8Tests: XCTestCase {
 
     // MARK: Grips (SEL-032…038)
 
-    func testSelectionGripsAndStretch() {
+    func testSelectionGripsAndStretch() async {
         let ed = Editor()
         let l = ed.doc.add(.line(LineGeom(Vec2(0, 0), Vec2(1000, 0))))
         let w = ed.doc.addElement(.wall(WallGeom(start: Vec2(0, 2000), end: Vec2(3000, 2000))))
@@ -43,7 +43,7 @@ final class DraftRound8Tests: XCTestCase {
         close(wall(ed, ids[0])!.start, Vec2(0, 2500)); close(wall(ed, w)!.start, Vec2(0, 2000))
     }
 
-    func testWallEndGripDragsJoinedWall() {
+    func testWallEndGripDragsJoinedWall() async {
         let ed = Editor()
         let a = ed.doc.addElement(.wall(WallGeom(start: Vec2(0, 0), end: Vec2(4000, 0))))
         let b = ed.doc.addElement(.wall(WallGeom(start: Vec2(4000, 0), end: Vec2(4000, 3000))))
@@ -53,7 +53,7 @@ final class DraftRound8Tests: XCTestCase {
         close(wall(ed, a)!.end, Vec2(5000, 0)); close(wall(ed, b)!.start, Vec2(5000, 0))
     }
 
-    func testGripModesActOnSelectionAndTypedValues() {
+    func testGripModesActOnSelectionAndTypedValues() async {
         let ed = Editor()
         let l1 = ed.doc.add(.line(LineGeom(Vec2(0, 0), Vec2(1000, 0))))
         let l2 = ed.doc.add(.line(LineGeom(Vec2(0, 100), Vec2(1000, 100))))
@@ -82,7 +82,7 @@ final class DraftRound8Tests: XCTestCase {
         }
     }
 
-    func testLassoApply() {
+    func testLassoApply() async {
         let ed = Editor()
         let a = ed.doc.add(.circle(CircleGeom(Vec2(0, 0), 100)))
         let b = ed.doc.add(.circle(CircleGeom(Vec2(5000, 0), 100)))
@@ -95,7 +95,7 @@ final class DraftRound8Tests: XCTestCase {
 
     // MARK: Coordinate entry (CMD-026, CMD-033, PRC-040)
 
-    func testThreeDCoordinateEntry() {
+    func testThreeDCoordinateEntry() async {
         InputParser.context = ParseContext()
         XCTAssertEqual(InputParser.parsePoint3("1,2,3", last: nil), Vec3(1, 2, 3))
         let cyl = InputParser.parsePoint3("100<90,50", last: nil)!
@@ -209,7 +209,7 @@ final class DraftRound8Tests: XCTestCase {
 
     // MARK: BIM reference snaps (PRC-016)
 
-    func testWallCoreFaceAndCentrelineSnaps() {
+    func testWallCoreFaceAndCentrelineSnaps() async {
         let ed = Editor()
         // Exterior Brick 365: plaster 15 | brick 240 (structure) | insulation 100 | plaster 10 → core faces at +167.5 and -72.5.
         let w = WallGeom(start: Vec2(0, 0), end: Vec2(4000, 0), thickness: 365, wallType: "Exterior Brick 365")
@@ -363,7 +363,7 @@ final class DraftRound8Tests: XCTestCase {
 
     // MARK: Temporary dimensions (CMD-035 core)
 
-    func testTemporaryDimensionMovesWall() {
+    func testTemporaryDimensionMovesWall() async {
         let ed = Editor()
         let a = ed.doc.addElement(.wall(WallGeom(start: Vec2(0, 0), end: Vec2(6000, 0))))
         let b = ed.doc.addElement(.wall(WallGeom(start: Vec2(0, 4000), end: Vec2(6000, 4000))))

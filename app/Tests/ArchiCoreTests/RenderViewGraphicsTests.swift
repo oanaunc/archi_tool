@@ -17,7 +17,7 @@ final class RenderViewGraphicsTests: XCTestCase {
         return doc
     }
 
-    func testHiddenLinesLineWeightsDepthCueAndFarClip() {
+    func testHiddenLinesLineWeightsDepthCueAndFarClip() async {
         var doc = twoBoxes()
         let plain = ElevationBuilder.entries(doc: doc, view: .elevationSouth)
         let weights = Set(strokes(plain).map(\.style.lineweight))
@@ -42,7 +42,7 @@ final class RenderViewGraphicsTests: XCTestCase {
         XCTAssertLessThanOrEqual(box.max.y, 1000 + 1e-6, "the taller rear box is beyond the far clip")
     }
 
-    func testDimensionsInElevations() {
+    func testDimensionsInElevations() async {
         var doc = ArchiDocument()
         doc.addElement(.wall(WallGeom(start: .zero, end: Vec2(6000, 0), height: 6000)))
         doc.setVariable("ELEVDIMS", "1")

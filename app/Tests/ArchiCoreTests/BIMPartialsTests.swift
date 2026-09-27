@@ -126,7 +126,7 @@ final class BIMPartialsTests: XCTestCase {
 
     // MARK: BIM-014 compound walls / DOC-024 cut patterns
 
-    func testCompoundWallPliesIn3DAndSection() throws {
+    func testCompoundWallPliesIn3DAndSection() async throws {
         var doc = ArchiDocument()
         let id = doc.addElement(.wall(WallGeom(start: .zero, end: Vec2(5000, 0), thickness: 365, wallType: "Exterior Brick 365")))
         let gs = MeshBuilder.groups(for: doc.element(id)!, doc: doc).filter { $0.kind == "wall" }

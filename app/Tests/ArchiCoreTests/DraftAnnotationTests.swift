@@ -11,7 +11,7 @@ final class DraftAnnotationTests: XCTestCase {
 
     // MARK: DIMBREAK
 
-    func testClipRemovesGapFromPolyline() {
+    func testClipRemovesGapFromPolyline() async {
         let out = DimensionRenderer.clip([[Vec2(0, 0), Vec2(100, 0)]], gaps: [DimensionRenderer.DimBreak(center: Vec2(50, 0), radius: 5)])
         XCTAssertEqual(out.count, 2)
         close(out[0].last!, Vec2(45, 0)); close(out[1].first!, Vec2(55, 0)); close(out[1].last!, Vec2(100, 0))
@@ -20,7 +20,7 @@ final class DraftAnnotationTests: XCTestCase {
         XCTAssertEqual(DimensionRenderer.clip([[Vec2(0, 0), Vec2(100, 0)]], gaps: [.init(center: Vec2(50, 50), radius: 10)]).count, 1)
     }
 
-    func testBreaksDoNotChangeMeasurementOrGrips() {
+    func testBreaksDoNotChangeMeasurementOrGrips() async {
         let st = DimStyle(name: "Standard")
         let d = DimensionGeom(kind: .linear, points: [Vec2(0, 0), Vec2(1000, 0), Vec2(500, 300)])
         let b = DimensionRenderer.withBreaks(d, [.init(center: Vec2(500, 300), radius: 20)], style: st)
@@ -134,7 +134,7 @@ final class DraftDimAssociationTests: XCTestCase {
         XCTAssertNil(ed.doc.entities.last?.props[DimAssociation.prop])
     }
 
-    func testTextOverrideWithMeasurement() {
+    func testTextOverrideWithMeasurement() async {
         let d = DimensionGeom(kind: .aligned, points: [.zero, Vec2(2500, 0), Vec2(0, 100)], textOverride: "<> TYP.")
         XCTAssertEqual(DimensionRenderer.formatted(d, style: DimStyle(name: "S")), "2500 TYP.")
     }

@@ -17,7 +17,7 @@ final class ModelingSurfaceBlendTests: XCTestCase {
         return ed.doc.add(e)
     }
 
-    func testBlendContinuity() {
+    func testBlendContinuity() async {
         let a = plane(x0: 0, x1: 1000, z: 0), b = plane(x0: 2000, x1: 3000, z: 500)
         guard let ea = SurfaceBlend.nearestEdge(a, to: Vec3(1000, 500, 0)), let eb = SurfaceBlend.nearestEdge(b, to: Vec3(2000, 500, 500)) else { return XCTFail() }
         XCTAssertEqual(ea.outward[ea.outward.count / 2].x, 1, accuracy: 1e-9)
@@ -55,7 +55,7 @@ final class ModelingSurfaceBlendTests: XCTestCase {
         XCTAssertEqual(e.props["blendContinuity"], "G2")
     }
 
-    func testCurvatureOfSphere() {
+    func testCurvatureOfSphere() async {
         let r = 500.0
         guard let s = SolidPrimitives.meshSphere(center: .zero, radius: r, segments: 48) else { return XCTFail() }
         let w = SolidOps.welded(s)

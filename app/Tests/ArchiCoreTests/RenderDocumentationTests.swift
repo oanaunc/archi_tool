@@ -32,7 +32,7 @@ final class RenderDocumentationTests: XCTestCase {
         XCTAssertEqual(AreaColors.legend(ed.doc).map(\.value), ["0–10 m²", "10–20 m²"])
     }
 
-    func testReflectedCeilingPlan() {
+    func testReflectedCeilingPlan() async {
         var doc = ArchiDocument()
         let ceil = doc.addElement(.slab(SlabGeom(boundary: rect(0, 0, 4200, 3000), thickness: 20, topOffset: 2620)))
         doc.elements[doc.elementIndex(ceil)!].props["kind"] = "ceiling"
@@ -83,7 +83,7 @@ final class RenderDocumentationTests: XCTestCase {
         XCTAssertEqual(ed.doc.entities.filter { $0.props["autoDim"] != nil }.count, 4 + 3)
     }
 
-    func testRoofSlopeArrows() {
+    func testRoofSlopeArrows() async {
         var doc = ArchiDocument()
         doc.addElement(.roof(RoofGeom(boundary: rect(0, 0, 10000, 8000), kind: .gable, pitch: 35)))
         let items = PlanRepresentation.items(doc.elements[0], doc: doc)

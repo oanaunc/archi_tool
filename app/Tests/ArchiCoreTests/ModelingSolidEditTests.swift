@@ -12,7 +12,7 @@ final class ModelingSolidEditTests: XCTestCase {
         return SolidOps.volume(vertices: s.meshVertices, triangles: s.meshTriangles)
     }
 
-    func testChamferAllEdgesExactVolume() throws {
+    func testChamferAllEdgesExactVolume() async throws {
         let r = 50.0
         let v = check(try SolidOps.filletEdges(box, radius: r, edges: .all, chamfer: true))
         let a = 1000 - 2 * r, b = 800 - 2 * r, c = 600 - 2 * r
@@ -21,7 +21,7 @@ final class ModelingSolidEditTests: XCTestCase {
         XCTAssertEqual(v, exact, accuracy: exact * 1e-9)
     }
 
-    func testFilletAllEdgesApproachesRoundedBox() throws {
+    func testFilletAllEdgesApproachesRoundedBox() async throws {
         let r = 80.0
         let s = try SolidOps.filletEdges(box, radius: r, edges: .all, chamfer: false, segments: 8)
         let v = check(s)
@@ -33,7 +33,7 @@ final class ModelingSolidEditTests: XCTestCase {
         XCTAssertEqual(bb.min.x, 100, accuracy: 1e-6); XCTAssertEqual(bb.max.z, 600, accuracy: 1e-6)
     }
 
-    func testFilletSubsetsAndLimits() throws {
+    func testFilletSubsetsAndLimits() async throws {
         let vert = check(try SolidOps.filletEdges(box, radius: 100, edges: .vertical, chamfer: false, segments: 16))
         let full: Double = 1000 * 800 * 600, corners: Double = (4 - Double.pi) * 100 * 100 * 600
         XCTAssertEqual(vert, full - corners, accuracy: full * 0.001)
@@ -46,7 +46,7 @@ final class ModelingSolidEditTests: XCTestCase {
         XCTAssertThrowsError(try SolidOps.filletEdges(SolidGeom(kind: .sphere, origin: .zero, size: Vec3(100, 0, 0)), radius: 10, edges: .all, chamfer: false))
     }
 
-    func testShell() throws {
+    func testShell() async throws {
         let t = 20.0
         let open = check(try SolidOps.shell(box, thickness: t, openTop: true))
         let full: Double = 1000 * 800 * 600, hole1: Double = (1000 - 2 * t) * (800 - 2 * t) * (600 - t), hole2: Double = (1000 - 2 * t) * (800 - 2 * t) * (600 - 2 * t)
@@ -56,7 +56,7 @@ final class ModelingSolidEditTests: XCTestCase {
         XCTAssertThrowsError(try SolidOps.shell(box, thickness: 450, openTop: true))
     }
 
-    func testLoopSubdivisionSmoothsClosedMesh() throws {
+    func testLoopSubdivisionSmoothsClosedMesh() async throws {
         let s = try SolidOps.smooth(SolidGeom(kind: .box, origin: .zero, size: Vec3(1000, 1000, 1000)), levels: 2)
         let v = check(s)
         XCTAssertEqual(s.meshTriangles.count / 3, 12 * 16)
@@ -66,7 +66,7 @@ final class ModelingSolidEditTests: XCTestCase {
         XCTAssertLessThan(maxR, 866)
     }
 
-    func testMirrorRotateAndTranslate() {
+    func testMirrorRotateAndTranslate() async {
         let m = SolidOps.mapped(box, mirroring: true) { SolidOps.reflect($0, plane: .yz, origin: .zero) }
         let v = check(m)
         XCTAssertEqual(v, 480_000_000, accuracy: 1)

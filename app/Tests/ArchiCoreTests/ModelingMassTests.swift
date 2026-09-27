@@ -30,7 +30,7 @@ final class ModelingMassTests: XCTestCase {
         XCTAssertEqual(roof.props["fromMass"], "\(mid)")
     }
 
-    func testTaperedAndCourtyardMassFloors() {
+    func testTaperedAndCourtyardMassFloors() async {
         var doc = ArchiDocument()
         doc.levels = [Level(id: 0, name: "L0", elevation: 0), Level(id: 1, name: "L1", elevation: 3000), Level(id: 2, name: "L2", elevation: 6000)]
         // Pyramid-like frustum (cone with top radius): floors shrink with height.

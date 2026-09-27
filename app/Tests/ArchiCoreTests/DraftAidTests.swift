@@ -7,7 +7,7 @@ final class DraftAidTests: XCTestCase {
     func sq(_ x: Double, _ y: Double, _ s: Double) -> [Vec2] { [Vec2(x, y), Vec2(x + s, y), Vec2(x + s, y + s), Vec2(x, y + s)] }
     func polylines(_ ed: Editor) -> [PolylineGeom] { ed.doc.entities.compactMap { if case .polyline(let p) = $0.geometry { return p }; return nil } }
 
-    func testPolygonBooleans() {
+    func testPolygonBooleans() async {
         let a = [sq(0, 0, 10)], b = [sq(5, 5, 10)]
         XCTAssertEqual(PolygonBoolean.area(PolygonBoolean.apply(.union, a, b)), 175, accuracy: 1e-9)
         XCTAssertEqual(PolygonBoolean.area(PolygonBoolean.apply(.intersect, a, b)), 25, accuracy: 1e-9)

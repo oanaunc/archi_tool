@@ -18,7 +18,7 @@ final class DraftRound8AnnotationTests: XCTestCase {
 
     // MARK: Revision clouds
 
-    func testFreehandResampling() {
+    func testFreehandResampling() async {
         let r = RevisionClouds.freehand([Vec2(0, 0), Vec2(1000, 0), Vec2(1000, 1000), Vec2(0, 1000), Vec2(0, 20)], arcLength: 500)
         XCTAssertTrue(r.closed)
         XCTAssertEqual(r.points.count, 8)
@@ -160,7 +160,7 @@ final class DraftRound8AnnotationTests: XCTestCase {
 
     // MARK: Stacked fractions in multiline text (ANN-007)
 
-    func testMultilineStackedFractions() {
+    func testMultilineStackedFractions() async {
         let doc = ArchiDocument()
         let t = TextGeom(position: Vec2(0, 0), height: 100, content: "Width 1\\S1/2;\\P3\\S3#4; in", valign: .top)
         let e = Entity(id: 1, geometry: .text(t))
@@ -242,7 +242,7 @@ final class DraftRound8AnnotationTests: XCTestCase {
 
     // MARK: Double-click editing (MOD-063)
 
-    func testDoubleClickCommands() {
+    func testDoubleClickCommands() async {
         let ed = Editor()
         let t = ed.doc.add(.text(TextGeom(position: .zero, height: 100, content: "A")))
         let p = ed.doc.add(.polyline(PolylineGeom(points: [.zero, Vec2(1, 0)])))

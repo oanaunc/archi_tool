@@ -10,7 +10,7 @@ final class CommandTests: XCTestCase {
         XCTAssertEqual(a.x, b.x, accuracy: tol, file: file, line: line); XCTAssertEqual(a.y, b.y, accuracy: tol, file: file, line: line)
     }
 
-    func testNoAliasCollisions() {
+    func testNoAliasCollisions() async {
         let r = CommandRegistry()
         BuiltinCommands.registerAll(r)
         var seen: [String: String] = [:]
@@ -383,7 +383,7 @@ final class CommandTests: XCTestCase {
         XCTAssertEqual(t.content, "Hello world"); XCTAssertEqual(t.height, 400)
     }
 
-    func testRegionFinderFaces() {
+    func testRegionFinderFaces() async {
         // Two rooms sharing a wall line: the face containing the point is the right one.
         let pls: [[Vec2]] = [[Vec2(0, 0), Vec2(2000, 0), Vec2(2000, 1000), Vec2(0, 1000), Vec2(0, 0)], [Vec2(1000, -200), Vec2(1000, 1200)]]
         let f = RegionFinder.planarFace(containing: Vec2(1500, 500), polylines: pls)
@@ -392,7 +392,7 @@ final class CommandTests: XCTestCase {
         XCTAssertNil(RegionFinder.planarFace(containing: Vec2(5000, 500), polylines: pls))
     }
 
-    func testAuditFixesDanglingOpening() {
+    func testAuditFixesDanglingOpening() async {
         var d = ArchiDocument()
         d.elements.append(BIMElement(id: 50, geometry: .opening(OpeningGeom(kind: .door, hostWall: 999, offset: 0, width: 900, height: 2100))))
         let issues = SettingsCommands.audit(&d, fix: true)

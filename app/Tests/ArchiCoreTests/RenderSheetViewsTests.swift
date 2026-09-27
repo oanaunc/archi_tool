@@ -49,7 +49,7 @@ final class RenderSheetViewsTests: XCTestCase {
         XCTAssertEqual(ed.doc.layouts[0].entities.filter { $0.props["viewTitle"] != nil }.count, 10)
     }
 
-    func testFamilyPlanSymbolsDrawn() {
+    func testFamilyPlanSymbolsDrawn() async {
         var doc = ArchiDocument()
         let id = doc.addElement(.component(ComponentGeom(position: .zero, size: Vec3(1600, 2000, 500), family: "bed-double")))
         let items = PlanRepresentation.items(doc.element(id)!, doc: doc)

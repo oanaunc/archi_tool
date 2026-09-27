@@ -13,7 +13,7 @@ final class DraftGripSnapTests: XCTestCase {
 
     // MARK: SEL-001
 
-    func testPickSelectsOnlyDisplayedUnlockedObjects() {
+    func testPickSelectsOnlyDisplayedUnlockedObjects() async {
         let ed = Editor()
         ed.doc.layers.append(Layer(name: "Locked", locked: true))
         ed.doc.layers.append(Layer(name: "Off", visible: false))
@@ -95,7 +95,7 @@ final class DraftGripSnapTests: XCTestCase {
         XCTAssertFalse(try! JSONDecoder().decode(DraftSettings.self, from: Data("{}".utf8)).geometricCenterSnap)
     }
 
-    func testExtensionSnapAlongLinesAndArcs() {
+    func testExtensionSnapAlongLinesAndArcs() async {
         var doc = ArchiDocument()
         _ = doc.add(.line(LineGeom(Vec2(0, 0), Vec2(100, 0))))
         _ = doc.add(.arc(ArcGeom(Vec2(0, 1000), 100, 0, .pi / 2)))
@@ -119,7 +119,7 @@ final class DraftGripSnapTests: XCTestCase {
         XCTAssertEqual(Snap.tracker.extensionCount, 0)
     }
 
-    func testRadialGridArcsSnapAsTrueArcs() {
+    func testRadialGridArcsSnapAsTrueArcs() async {
         var doc = ArchiDocument()
         // Quarter-circle arc grid of radius 5000 about the origin and a radial grid line along 45°.
         let b = tan(Double.pi / 2 / 4)
@@ -143,7 +143,7 @@ final class DraftGripSnapTests: XCTestCase {
 
     // MARK: Grips
 
-    func testGripPointsAndStretch() {
+    func testGripPointsAndStretch() async {
         let ln = Geometry.line(LineGeom(Vec2(0, 0), Vec2(100, 0)))
         let gl = Grips.grips(ln)
         XCTAssertEqual(gl.map(\.kind), [.vertex, .midpoint, .vertex])
@@ -174,7 +174,7 @@ final class DraftGripSnapTests: XCTestCase {
         XCTAssertEqual(c1.radius, 25)
     }
 
-    func testGripsOnTextAndDimensions() {
+    func testGripsOnTextAndDimensions() async {
         // Multiline text: insertion grip moves, width grip changes the wrap width.
         let t = Geometry.text(TextGeom(position: Vec2(0, 0), height: 10, content: "abc def", width: 200))
         let gt = Grips.grips(t)
@@ -195,7 +195,7 @@ final class DraftGripSnapTests: XCTestCase {
         XCTAssertEqual(Grips.dimTextSlot(.angular), 3)
     }
 
-    func testMultiFunctionalGrips() {
+    func testMultiFunctionalGrips() async {
         let pl = Geometry.polyline(PolylineGeom(points: [Vec2(0, 0), Vec2(100, 0), Vec2(100, 100)]))
         let g = Grips.grips(pl)
         let v1 = g.first { $0.kind == .vertex && $0.index == 1 }!, m0 = g.first { $0.kind == .midpoint && $0.index == 0 }!
@@ -229,7 +229,7 @@ final class DraftGripSnapTests: XCTestCase {
         XCTAssertEqual(rr.radius, 150); XCTAssertEqual(rr.end, .pi / 2)
     }
 
-    func testEditorGripEditSnapsModesCopyTypedAndUndo() {
+    func testEditorGripEditSnapsModesCopyTypedAndUndo() async {
         let ed = Editor()
         let a = ed.doc.add(.line(LineGeom(Vec2(0, 0), Vec2(1000, 0))))
         _ = ed.doc.add(.line(LineGeom(Vec2(2000, 500), Vec2(3000, 500))))
@@ -282,7 +282,7 @@ final class DraftGripSnapTests: XCTestCase {
         XCTAssertNil(ed.gripEdit(locked, grip: ed.grips(of: locked)![0], to: Vec2(5, 5), snap: false))
     }
 
-    func testArcAndBulgeHelpers() {
+    func testArcAndBulgeHelpers() async {
         let a = Grips.arc3(Vec2(100, 0), Vec2(0, 100), Vec2(-100, 0))!
         close(a.center, .zero, 1e-9); XCTAssertEqual(a.radius, 100, accuracy: 1e-9); XCTAssertEqual(a.start, 0, accuracy: 1e-12)
         let cw = Grips.arc3(Vec2(-100, 0), Vec2(0, 100), Vec2(100, 0))!
@@ -295,7 +295,7 @@ final class DraftGripSnapTests: XCTestCase {
 
     // MARK: MTEXT codes (ANN-005/006/007)
 
-    func testMTextListAndStackEncoding() {
+    func testMTextListAndStackEncoding() async {
         let content = TextLists.apply("Walls\nDoors\nWindows", style: .number) + "\nNote " + TextStacks.autoStack("1/2 and 3#4") + " {x}\\y"
         let m = MTextCodes.encode(content)
         XCTAssertEqual(m, "{\\pxi-3,l3,t3;1.^IWalls\\P2.^IDoors\\P3.^IWindows}\\PNote \\S1/2; and \\S3#4; \\{x\\}\\\\y")
@@ -315,7 +315,7 @@ final class DraftGripSnapTests: XCTestCase {
         XCTAssertEqual(MTextCodes.decode("x^ y^Iz"), "x^y\tz")
     }
 
-    func testMTextColumnsGroupsAndXData() {
+    func testMTextColumnsGroupsAndXData() async {
         let t = TextGeom(position: .zero, height: 10, content: String(repeating: "word ", count: 60), width: 420)
         guard let c = MTextCodes.columns(spec: "2,20,0", text: t) else { return XCTFail("no columns") }
         XCTAssertEqual(c.kind, .static); XCTAssertEqual(c.count, 2)

@@ -23,7 +23,7 @@ final class DraftModifyCurvesTests: XCTestCase {
         }
     }
 
-    func testFilletLineWithPolylineEndSegment() {
+    func testFilletLineWithPolylineEndSegment() async {
         let pl = Geometry.polyline(PolylineGeom(points: [Vec2(0, 1000), Vec2(0, -200)]))
         let ln = Geometry.line(LineGeom(Vec2(-300, 0), Vec2(1000, 0)))
         guard let r = Modify.fillet(pl, pickA: Vec2(0, 500), ln, pickB: Vec2(500, 0), radius: 100) else { return XCTFail("no fillet") }
@@ -37,7 +37,7 @@ final class DraftModifyCurvesTests: XCTestCase {
         close(p0.vertices.last!.p, .zero, 1e-6); close(l0.a, .zero, 1e-6); XCTAssertNil(s.arc)
     }
 
-    func testFilletWithSplineAndEllipse() {
+    func testFilletWithSplineAndEllipse() async {
         let sp = Geometry.spline(SplineGeom(degree: 3, controlPoints: [], fitPoints: [Vec2(0, 600), Vec2(200, 400), Vec2(350, 150), Vec2(400, -100)]))
         let ln = Geometry.line(LineGeom(Vec2(-100, 0), Vec2(1000, 0)))
         guard let r = Modify.fillet(sp, pickA: Vec2(200, 400), ln, pickB: Vec2(800, 0), radius: 50) else { return XCTFail("no spline fillet") }
@@ -65,7 +65,7 @@ final class DraftModifyCurvesTests: XCTestCase {
         XCTAssertTrue(ed.doc.entities.allSatisfy { if case .arc = $0.geometry { return false }; return true })
     }
 
-    func testChamferLineWithPolylineEndSegment() {
+    func testChamferLineWithPolylineEndSegment() async {
         let pl = Geometry.polyline(PolylineGeom(points: [Vec2(500, 1000), Vec2(0, 1000), Vec2(0, -200)]))
         let ln = Geometry.line(LineGeom(Vec2(-300, 0), Vec2(1000, 0)))
         guard let r = Modify.chamfer(pl, pickA: Vec2(0, 500), ln, pickB: Vec2(500, 0), d1: 100, d2: 200) else { return XCTFail("no chamfer") }
@@ -79,7 +79,7 @@ final class DraftModifyCurvesTests: XCTestCase {
         XCTAssertNil(Modify.chamfer(closedPl, pickA: Vec2(5, 0), ln, pickB: Vec2(500, 0), d1: 1, d2: 1))
     }
 
-    func testExtendSplinesAndRefusesCircles() {
+    func testExtendSplinesAndRefusesCircles() async {
         let wall = Geometry.line(LineGeom(Vec2(400, -500), Vec2(400, 500)))
         let fit = Geometry.spline(SplineGeom(degree: 3, controlPoints: [], fitPoints: [Vec2(0, 0), Vec2(100, 50), Vec2(200, 0)]))
         guard case .spline(let s)? = Modify.extend(fit, at: Vec2(190, 5), boundaries: [wall], doc: nil) else { return XCTFail("no extend") }

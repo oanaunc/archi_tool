@@ -67,7 +67,7 @@ final class DraftFinalRoundTests: XCTestCase {
         XCTAssertNil(hatch(ed))
     }
 
-    func testImageContrastAboveFiftyLookupTables() {
+    func testImageContrastAboveFiftyLookupTables() async {
         let a = ImageDisplay.Adjustment(brightness: 60, contrast: 75, fade: 10)
         let bg = RGBA(1, 1, 1)
         XCTAssertTrue(ImageDisplay.needsPixelProcessing(a))

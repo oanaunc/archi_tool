@@ -58,7 +58,7 @@ final class ModelingRound7Tests: XCTestCase {
 
     // MARK: M3D-063 / M3D-064 / M3D-061
 
-    func testWireframeUnfoldAndSections() {
+    func testWireframeUnfoldAndSections() async {
         let s = box(.zero, Vec3(1000, 1000, 1000))
         let w = MeshOps.wireframe(s, thickness: 20)!
         let parts = SolidCheck.separate(w)
@@ -120,7 +120,7 @@ final class ModelingRound7Tests: XCTestCase {
 
     // MARK: M3D-090 / M3D-092 / M3D-094
 
-    func testSCADPrimitivesMatchOpenSCAD() {
+    func testSCADPrimitivesMatchOpenSCAD() async {
         var r = SCAD.evaluate("cube([10, 20, 30]);")
         XCTAssertTrue(r.errors.isEmpty, "\(r.errors)")
         XCTAssertEqual(tvol(r.triangles), 6000, accuracy: 1e-6)
@@ -140,7 +140,7 @@ final class ModelingRound7Tests: XCTestCase {
         XCTAssertEqual(tvol(r.triangles), 200 * 30 / 3, accuracy: 1e-6)
     }
 
-    func testSCADLanguageAndBooleans() {
+    func testSCADLanguageAndBooleans() async {
         let src = """
         // A plate with holes, built from a module and a loop.
         size = 100;

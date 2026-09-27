@@ -79,7 +79,7 @@ final class DraftDetailTests: XCTestCase {
 
     // MARK: Gradient fills
 
-    func testLinearGradientBandsCoverRegionExactly() {
+    func testLinearGradientBandsCoverRegionExactly() async {
         let loops = [[Vec2(0, 0), Vec2(100, 0), Vec2(100, 100), Vec2(0, 100)], [Vec2(40, 40), Vec2(60, 40), Vec2(60, 60), Vec2(40, 60)]]
         let red = RGBA(1, 0, 0), blue = RGBA(0, 0, 1)
         let items = DraftRendering.gradientFills(loops: loops, type: "LINEAR", angle: 0, centered: true, stops: (red, blue), bands: 10)
@@ -97,7 +97,7 @@ final class DraftDetailTests: XCTestCase {
         if case .fill(let l, _) = v[0] { XCTAssertLessThanOrEqual(l.flatMap { $0 }.map(\.y).max() ?? 99, 25 + 1e-6) }
     }
 
-    func testCylinderAndSphericalGradients() {
+    func testCylinderAndSphericalGradients() async {
         let sq = [[Vec2(0, 0), Vec2(100, 0), Vec2(100, 100), Vec2(0, 100)]]
         XCTAssertEqual(DraftRendering.gradientParameter("CYLINDER", 0.5), 1, accuracy: 1e-12)
         XCTAssertEqual(DraftRendering.gradientParameter("CYLINDER", 0), 0, accuracy: 1e-12)
@@ -291,7 +291,7 @@ final class DraftDetailTests: XCTestCase {
 
     // MARK: Splines
 
-    func testSplineControlFormMatchesFitCurve() {
+    func testSplineControlFormMatchesFitCurve() async {
         for closed in [false, true] {
             let fit = [Vec2(0, 0), Vec2(100, 50), Vec2(200, -20), Vec2(260, 80), Vec2(300, 0)]
             let s = SplineGeom(controlPoints: [], fitPoints: fit, closed: closed)
@@ -617,7 +617,7 @@ final class DraftDetailTests: XCTestCase {
         XCTAssertNil(ed.pendingScript)
     }
 
-    func testNewCommandsRegistered() {
+    func testNewCommandsRegistered() async {
         let r = CommandRegistry(); BuiltinCommands.registerAll(r)
         for n in ["DIMJOGGED", "DIMJOGLINE", "GRADIENT", "HATCHSETORIGIN", "REVSTAMP", "TEXTMASK", "TEXTUNMASK", "TEXTFRAME", "FLATTEN", "CHSPACE",
                   "SPLINEDIT", "BLEND", "TRACE", "ROTATE90", "TXTEXP", "DIMREBASE", "SELECTINSTANCES", "BPARAMETER", "DYNPROP", "RESETBLOCK",
@@ -766,7 +766,7 @@ final class DraftDetailTests: XCTestCase {
         XCTAssertGreaterThan(ed.registry.usage["ERASE"] ?? 0, 0)
     }
 
-    func testPointStyleSymbols() {
+    func testPointStyleSymbols() async {
         var doc = ArchiDocument()
         let id = doc.add(.point(Vec2(10, 10)))
         let e = doc.entity(id)!

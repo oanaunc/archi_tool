@@ -25,7 +25,7 @@ final class ModelingMechanismTests: XCTestCase {
         return (g, c, r)
     }
 
-    func testSliderCrankFollowsKinematics() {
+    func testSliderCrankFollowsKinematics() async {
         var doc = ArchiDocument()
         let (_, _, rod) = sliderCrank(&doc, coupler: 300)
         guard let r = Mechanisms.simulate(doc, driver: "crank", from: 0, to: 2 * .pi, steps: 72, trace: CRef(rod, 1), measure: ["slide"]) else { return XCTFail() }
@@ -42,7 +42,7 @@ final class ModelingMechanismTests: XCTestCase {
         XCTAssertEqual(xs.max()! - xs.min()!, 200, accuracy: 1e-3)
     }
 
-    func testLockUpIsReported() {
+    func testLockUpIsReported() async {
         var doc = ArchiDocument()
         let (_, _, rod) = sliderCrank(&doc, coupler: 50)
         guard let r = Mechanisms.simulate(doc, driver: "crank", from: 0, to: .pi / 2, steps: 90, trace: CRef(rod, 1)) else { return XCTFail() }

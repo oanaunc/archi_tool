@@ -25,7 +25,7 @@ final class GeometryConstraintTests: XCTestCase {
         XCTAssertEqual(ConstraintSet.load(back).constraints.count, 3)
     }
 
-    func testParallelStaysSatisfiedWhenEndpointDragged() {
+    func testParallelStaysSatisfiedWhenEndpointDragged() async {
         var doc = ArchiDocument()
         let a = doc.add(.line(LineGeom(Vec2(0, 0), Vec2(1000, 0))))
         let b = doc.add(.line(LineGeom(Vec2(0, 500), Vec2(1000, 600))))
@@ -120,7 +120,7 @@ final class GeometryConstraintTests: XCTestCase {
         XCTAssertEqual(ConstraintSet.load(ed2.doc).constraints.count, 0)
     }
 
-    func testObjectSnapTracking() {
+    func testObjectSnapTracking() async {
         var s = DraftSettings()
         s.polarTracking = false
         // Aligned vertically below an acquired point and horizontally with another: intersection of the two paths.
@@ -142,7 +142,7 @@ final class GeometryConstraintTests: XCTestCase {
         XCTAssertTrue(d.ortho); XCTAssertEqual(d.gridSpacing, 50); XCTAssertTrue(d.objectSnapTracking)
     }
 
-    func testNewModelFieldsThroughPropertyAccess() {
+    func testNewModelFieldsThroughPropertyAccess() async {
         var doc = ArchiDocument()
         let w = doc.addElement(.wall(WallGeom(start: .zero, end: Vec2(5000, 0))))
         let s = doc.addElement(.slab(SlabGeom(boundary: [.zero, Vec2(4000, 0), Vec2(4000, 1000), Vec2(0, 1000)])))

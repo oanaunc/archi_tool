@@ -133,7 +133,7 @@ final class BIMSystemsTests: XCTestCase {
         XCTAssertEqual(spans, [6000, 7500, 13500])
     }
 
-    func testModelFilterForSchedulesAndExports() {
+    func testModelFilterForSchedulesAndExports() async {
         var doc = ArchiDocument()
         let a = doc.addElement(.wall(WallGeom(start: .zero, end: Vec2(4000, 0))))
         let b = doc.addElement(.wall(WallGeom(start: Vec2(0, 3000), end: Vec2(4000, 3000))))

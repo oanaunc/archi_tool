@@ -6,7 +6,7 @@ import XCTest
 final class BIMStairsCurtainEntourageTests: XCTestCase {
     func area(_ p: [Vec2]) -> Double { abs(GeometryOps.signedArea(p)) }
 
-    func testLShapeWindersFillTheCornerSquare() {
+    func testLShapeWindersFillTheCornerSquare() async {
         let g = StairGeom(start: .zero, direction: 0, width: 1000, totalRise: 3000, riserCount: 17, treadDepth: 280, kind: .lShape, winders: 3)
         let l = StairShapes.layout(g)
         XCTAssertEqual(l.treads.count, 16)
@@ -24,7 +24,7 @@ final class BIMStairsCurtainEntourageTests: XCTestCase {
         XCTAssertTrue(l.walk.last!.isClose(Vec2(Double(n1) * 280 + 500, 500 + Double(n2) * 280), tol: 1e-6))
     }
 
-    func testUShapeWindersAndRightHand() {
+    func testUShapeWindersAndRightHand() async {
         let g = StairGeom(start: .zero, direction: 0, width: 1000, totalRise: 3200, riserCount: 18, treadDepth: 280, kind: .uShape, winders: 6, clockwise: true)
         let l = StairShapes.layout(g)
         let w = l.treads.filter(\.winder)
@@ -36,7 +36,7 @@ final class BIMStairsCurtainEntourageTests: XCTestCase {
         XCTAssertEqual(l.treads.count, 17)
     }
 
-    func testWinderRulesAndSpiralHeadroom() {
+    func testWinderRulesAndSpiralHeadroom() async {
         let narrow = StairGeom(start: .zero, width: 1000, totalRise: 3000, riserCount: 17, treadDepth: 280, kind: .lShape, winders: 3)
         XCTAssertTrue(BIMConstraints.stairIssues(narrow).contains { $0.contains("Winder going") })
         let wide = StairGeom(start: .zero, width: 1200, totalRise: 3000, riserCount: 17, treadDepth: 280, kind: .lShape, winders: 2)
@@ -73,7 +73,7 @@ final class BIMStairsCurtainEntourageTests: XCTestCase {
         XCTAssertNil(o.winders); XCTAssertEqual(o.winderCount, 0)
     }
 
-    func testSpiralStairHasColumnAndHandrail() {
+    func testSpiralStairHasColumnAndHandrail() async {
         var doc = ArchiDocument()
         doc.addElement(.stair(StairGeom(start: .zero, width: 900, totalRise: 2800, riserCount: 16, treadDepth: 230, kind: .spiral, innerRadius: 150)))
         let groups = MeshBuilder.build(doc: doc)
@@ -82,7 +82,7 @@ final class BIMStairsCurtainEntourageTests: XCTestCase {
         XCTAssertEqual(b.max.x, 150 + 900, accuracy: 30)
     }
 
-    func testCurtainWallMullionTypes() {
+    func testCurtainWallMullionTypes() async {
         var doc = ArchiDocument()
         let g = CurtainWallGeom(start: .zero, end: Vec2(3600, 0), height: 3000, gridU: 1200, gridV: 1500, mullionSize: 60, mullionProfile: "fin", borderProfile: "capped")
         let id = doc.addElement(.curtainWall(g))
@@ -107,7 +107,7 @@ final class BIMStairsCurtainEntourageTests: XCTestCase {
         XCTAssertEqual(back, .curtainWall(cw))
     }
 
-    func testEntouragePeopleAndBicycle() {
+    func testEntouragePeopleAndBicycle() async {
         XCTAssertEqual(ComponentLibrary.family("Person")?.id, "person-standing")
         XCTAssertEqual(ComponentLibrary.family("bike")?.id, "bicycle")
         for id in ["person-standing", "person-walking", "person-child", "bicycle"] {

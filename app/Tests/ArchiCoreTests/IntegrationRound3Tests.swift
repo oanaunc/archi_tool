@@ -5,7 +5,7 @@ import XCTest
 /// Cross-area fixes made while integrating round 3 (run mirroring and footprints, CONSTRAINTBAR, LAYERSTATE options).
 @MainActor
 final class IntegrationRound3Tests: XCTestCase {
-    func testMirrorFlipsRunPath() {
+    func testMirrorFlipsRunPath() async {
         let run = ComponentGeom(category: "MEP", position: Vec2(1000, 0), rotation: .pi / 2, size: Vec3(100, 100, 100),
                                 family: "pipe", path: [.zero, Vec2(2000, 0), Vec2(2000, 1000)])
         let before = run.worldPath
@@ -21,7 +21,7 @@ final class IntegrationRound3Tests: XCTestCase {
         for (a, b) in zip(mv.worldPath, before) { XCTAssertEqual(a.x, b.x + 10, accuracy: 1e-6); XCTAssertEqual(a.y, b.y + 20, accuracy: 1e-6) }
     }
 
-    func testRunFootprintFollowsPath() {
+    func testRunFootprintFollowsPath() async {
         var doc = ArchiDocument()
         let run = ComponentGeom(category: "MEP", position: Vec2(0, 0), size: Vec3(100, 100, 100), family: "duct", path: [.zero, Vec2(5000, 0)])
         doc.addElement(.component(run))

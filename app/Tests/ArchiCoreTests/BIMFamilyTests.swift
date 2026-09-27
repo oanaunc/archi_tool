@@ -4,7 +4,7 @@ import XCTest
 
 @MainActor
 final class BIMFamilyTests: XCTestCase {
-    func testFamilyExpressionsFormulasAndRanges() {
+    func testFamilyExpressionsFormulasAndRanges() async {
         XCTAssertEqual(FamilyExpr.evaluate("if(w > 1000, 2, 1) * 10", ["W": 1200]), 20)
         XCTAssertEqual(FamilyExpr.evaluate("min(a, b) + max(a, b)", ["a": 3, "b": 5]), 8)
         XCTAssertEqual(FamilyExpr.evaluate("a >= 3 && b < 4", ["a": 3, "b": 5]), 0)
@@ -62,7 +62,7 @@ final class BIMFamilyTests: XCTestCase {
         XCTAssertEqual(back.families, ed.doc.families)
     }
 
-    func testVoidsNestedFamiliesSweepsAndRevolves() {
+    func testVoidsNestedFamiliesSweepsAndRevolves() async {
         var doc = ArchiDocument()
         doc.families.append(FamilyDefinition(name: "Knob", parameters: [FamilyParameter("R", value: "20")],
                                              forms: [FamilyForm(.cylinder, dims: ["radius": "R", "height": "30"], material: "Aluminium")]))

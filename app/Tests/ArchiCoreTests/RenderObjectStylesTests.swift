@@ -48,7 +48,7 @@ final class RenderObjectStylesTests: XCTestCase {
         XCTAssertNotNil(ObjectStyles.style("wall", doc: ed.doc))
     }
 
-    func testParse() {
+    func testParse() async {
         XCTAssertEqual(ObjectStyles.parse("cut:0.7; proj:0.25")?.projectionLineweight, 0.25)
         XCTAssertNil(ObjectStyles.parse("cut:-1"))
         XCTAssertNil(ObjectStyles.parse("pattern:NOPE"))

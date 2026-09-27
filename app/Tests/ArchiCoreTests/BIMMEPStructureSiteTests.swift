@@ -7,7 +7,7 @@ final class BIMMEPStructureSiteTests: XCTestCase {
     func bounds(_ groups: [MeshGroup]) -> BBox3 { var b = BBox3.empty; for g in groups { b.add(g.mesh.bounds.min); b.add(g.mesh.bounds.max) }; return b }
     func components(_ ed: Editor) -> [ComponentGeom] { ed.doc.elements.compactMap { if case .component(let c) = $0.geometry { return c }; return nil } }
 
-    func testStructuralProfiles() {
+    func testStructuralProfiles() async {
         let ipe = StructuralProfiles.section("IPE300")!
         XCTAssertEqual(ipe.h, 300); XCTAssertEqual(ipe.b, 150); XCTAssertEqual(ipe.outline().outer.count, 12)
         XCTAssertEqual(StructuralProfiles.section("rhs 200x100x8")!.area, 200 * 100 - 184 * 84, accuracy: 1e-6)

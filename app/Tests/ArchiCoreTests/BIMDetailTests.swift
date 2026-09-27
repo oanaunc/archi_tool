@@ -33,7 +33,7 @@ final class BIMDetailTests: XCTestCase {
         XCTAssertGreaterThan(lines, 10, "tile grid drawn")
     }
 
-    func testWallJoinOverrides() {
+    func testWallJoinOverrides() async {
         var doc = ArchiDocument()
         let a = doc.addElement(.wall(WallGeom(start: Vec2(0, 0), end: Vec2(4000, 0), thickness: 200)))
         let b = doc.addElement(.wall(WallGeom(start: Vec2(4000, 0), end: Vec2(4000, 3000), thickness: 200)))
@@ -69,7 +69,7 @@ final class BIMDetailTests: XCTestCase {
         XCTAssertEqual(ed.doc.variable("WALLWRAP"), "1")
     }
 
-    func testShaftsCutFloorsAndRoofsAndFollowWhenMoved() {
+    func testShaftsCutFloorsAndRoofsAndFollowWhenMoved() async {
         var doc = ArchiDocument()
         let s0 = doc.addElement(.slab(SlabGeom(boundary: [Vec2(0, 0), Vec2(6000, 0), Vec2(6000, 6000), Vec2(0, 6000)])), level: 0)
         let s1 = doc.addElement(.slab(SlabGeom(boundary: [Vec2(0, 0), Vec2(6000, 0), Vec2(6000, 6000), Vec2(0, 6000)])), level: 1)

@@ -55,7 +55,7 @@ final class BIMAdaptiveBSDDTests: XCTestCase {
         XCTAssertEqual(ed.doc.elements.count, n)
     }
 
-    func testFamilyDrivenByAdaptivePoints() {
+    func testFamilyDrivenByAdaptivePoints() async {
         var doc = ArchiDocument()
         doc.families.append(FamilyDefinition(name: "Brace", category: "Structural Framing", parameters: [FamilyParameter("Size", value: "80")],
                                              forms: [FamilyForm(.sweep, name: "Bar", dims: ["width": "Size", "height": "Size"], profile: "rect", path: [["P1x", "P1y", "P1z"], ["P2x", "P2y", "P2z"]], material: "Steel")]))
