@@ -2,7 +2,8 @@
 # the Electron shell in windows/, the NSIS installer "Oanarina-Archi-Tool-Setup-<version>.exe" (version from
 # app/Info.plist), installs it per-user, checks the installation (shortcuts, file associations, uninstall entry),
 # smoke-tests the installed app (Playwright for Electron: start screen, Cedar House 2D, 3D Golden hour, LINE,
-# save/reopen, PDF plot) and uninstalls it again.
+# save/reopen, PDF plot) and uninstalls it again. Then the shell test suites run in Chromium against the fixture engine
+# (ui-snapshots, dialogs, partb-tools, canvas, output, windows-conventions, audit-spot, view3d/tools).
 # Every step writes its own log to winapp-logs/ as it runs; the last steps run even when an earlier step failed or the
 # run was cancelled: logs, screenshots and summary.txt are uploaded as the artifact "winapp-logs" and force-pushed to the
 # branch ci-windows-app (bridge action "winapp-fetch"). The installer itself is a separate workflow artifact.
@@ -30,7 +31,7 @@ env:
 jobs:
   winapp:
     runs-on: windows-latest
-    timeout-minutes: 150
+    timeout-minutes: 210
     defaults:
       run:
         shell: bash
@@ -353,18 +354,30 @@ jobs:
       - name: Shell tests in Chromium (fixture engine)
         id: shelltests
         if: always() && steps.shell.outcome == 'success'
-        timeout-minutes: 30
+        timeout-minutes: 80
         working-directory: windows
         run: |
           set -o pipefail
           {
           npx playwright-core install chromium || { echo "::error title=Chromium download failed::see 13-shell-tests.log"; exit 1; }
           node build.mjs --web || { echo "::error title=Web build failed::see 13-shell-tests.log"; exit 1; }
+          # The 3D tool tests read the Cedar House meshes from build/engine-fixtures (not in git): written here by the
+          # archi-engine.exe this run built (the same file ./scripts/q.sh engine records on the Mac).
+          if [ -f resources/engine/archi-engine.exe ]; then
+            timeout 600 resources/engine/archi-engine.exe --fixtures ../build/engine-fixtures --sample "../assets/demo/Cedar House.archi" 2>&1 | tail -3 \
+              || echo "::warning title=Engine fixtures::archi-engine.exe --fixtures failed (13-shell-tests.log)"
+          fi
           fail=0
-          for t in ui-snapshots dialogs partb-tools canvas output windows-conventions; do
+          for t in ui-snapshots dialogs partb-tools canvas output windows-conventions audit-spot view3d/tools; do
+            if [ "$t" = view3d/tools ] && [ ! -f ../build/engine-fixtures/meshes-all-lod2.json ]; then
+              echo "SUITE SKIP test/$t.mjs (no build/engine-fixtures/meshes-all-lod2.json: archi-engine.exe was not built)"; continue; fi
             echo "===== test/$t.mjs"
-            timeout 900 node "test/$t.mjs" || { echo "::error title=Shell test failed::test/$t.mjs (13-shell-tests.log)"; fail=1; }
+            s=$SECONDS
+            if timeout 2400 node "test/$t.mjs"; then echo "SUITE PASS test/$t.mjs ($((SECONDS - s)) s)"
+            else echo "SUITE FAIL test/$t.mjs ($((SECONDS - s)) s)"; echo "::error title=Shell test failed::test/$t.mjs (13-shell-tests.log)"; fail=1; fi
           done
+          # Screenshots and results.json of every suite (test-results/*.png, test-results/3d/tools-*.png).
+          mkdir -p "$LOGS/shell-tests" && cp -r test-results/. "$LOGS/shell-tests/" 2>/dev/null || true
           exit $fail
           } 2>&1 | tee "$LOGS/13-shell-tests.log"
 
@@ -388,6 +401,7 @@ jobs:
             [ -f 10-install.log ] && { echo "=== install"; grep -E "PASS|::error" 10-install.log; }
             [ -f 11-smoke.log ] && { echo "=== smoke"; grep -E "PASS|FAIL|SKIP|smoke:|app:" 11-smoke.log; }
             [ -f 12-uninstall.log ] && { echo "=== uninstall"; grep -E "PASS|::error|::warning" 12-uninstall.log; }
+            [ -f 13-shell-tests.log ] && { echo "=== shell tests (Chromium)"; grep -E "^SUITE |^FAIL|::error" 13-shell-tests.log | cut -c1-300 | head -80; }
             [ -f package-lock.json ] && echo "=== package-lock.json generated (commit it as windows/package-lock.json)"
             [ -d screenshots ] && { echo "=== screenshots"; ls screenshots; }
             true

@@ -153,7 +153,9 @@ await wait(800);
 check("data passes come from the engine", ((await page.textContent(`${win("render")} .rw-form`)) ?? "").includes("Rendered Depth 1280×720"));
 await pick(win("render"), "Pass", "Beauty");
 await page.click(`${win("render")} button:has-text("Save…")`);
-await wait(500);
+// The Beauty pass is rendered again before it is encoded: slow on CI runners (SwiftShader), so wait for the file.
+await page.waitForFunction(() => [...(window.archiOutputFiles?.keys() ?? [])].some((k) => /render\.png$/.test(k)), null, { timeout: 60000 }).catch(() => {});
+await wait(200);
 const files = await page.evaluate(() => [...window.archiOutputFiles.entries()].map(([k, v]) => [k, v.length, [...v.slice(0, 4)]]));
 check("Save… writes a PNG", files.some(([k, n, b]) => /render\.png$/.test(k) && n > 1000 && b[0] === 0x89), JSON.stringify(files.map((f) => f.slice(0, 2))));
 
