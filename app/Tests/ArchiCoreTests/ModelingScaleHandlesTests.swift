@@ -7,7 +7,7 @@ import XCTest
 final class ModelingScaleHandlesTests: XCTestCase {
     let box = BBox3(min: Vec3(0, 0, 0), max: Vec3(1000, 2000, 3000))
 
-    func testHandleMaths() throws {
+    func testHandleMaths() async throws {
         XCTAssertEqual(ScaleHandles.all.count, 26)
         XCTAssertEqual(Set(ScaleHandles.all.map(\.kind)), ["face", "edge", "corner"])
         XCTAssertEqual(ScaleHandles.Handle(1, 0, 1).description, "top-right edge")
