@@ -42,8 +42,9 @@ jobs:
           swift --version 2>&1 | tee ../ci.log
           if ! swift build --target ArchiCore 2>&1 | tee -a ../ci.log; then
             echo "=== build failed; verbose rebuild to name the failing compile job" | tee -a ../ci.log
-            swift build --target ArchiCore -v > ../verbose.log 2>&1 || true
-            grep -n -B2 -A2 "exception" ../verbose.log | grep -oE "exception [0-9]+.*|-primary-file [^ ]+" | head -60 | tee -a ../ci.log
+            swift build --target ArchiCore -v -Xswiftc -disable-batch-mode > ../verbose.log 2>&1 || true
+            grep -n -A12 -E "Assertion|Stack dump|Program arguments|exception [0-9]" ../verbose.log | grep -vE "^[0-9]+-\s*$" | cut -c1-400 | head -80 | tee -a ../ci.log
+            grep -B1 "exception [0-9]" ../verbose.log | grep -oE "\-primary-file [^ ]+" | sort -u | tee -a ../ci.log
             exit 1
           fi
           swift test 2>&1 | tee -a ../ci.log
@@ -56,7 +57,7 @@ jobs:
           cp "$GITHUB_WORKSPACE/ci.log" full.log 2>/dev/null || echo "no log" > full.log
           {
             echo "commit ${GITHUB_SHA} · run ${GITHUB_RUN_ID} · outcome ${{ steps.tests.outcome }}"
-            grep -E "error:|exception|primary-file|Test Suite 'All tests'|Executed [0-9]+ tests|failed \(|Fatal error|Build complete" full.log | head -300
+            grep -E "error:|exception|primary-file|Assertion|Stack dump|Test Suite 'All tests'|Executed [0-9]+ tests|failed \(|Fatal error|Build complete" full.log | head -300
           } > summary.txt
           git init -q . && git checkout -q -b "ci-log-$os"
           git -c user.name=ci -c user.email=ci@users.noreply.github.com add -A
