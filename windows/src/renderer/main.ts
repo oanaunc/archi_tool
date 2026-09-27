@@ -15,9 +15,17 @@ import { PlanCanvas } from "./canvas/plan-canvas";
 import { help, closeMenus } from "./ui/menu";
 import { icon } from "./icons";
 import { View3D, EngineBridge } from "./view3d";
+import { installDialogs, handleDialogKey, newFromTemplate } from "./dialogs";
+import { installPartB } from "./partb";
+import { installOutput } from "./output";
+import { installWindowsConventions } from "./ui/windows-conventions";
 
 const app = new App(createEngine());
 (window as any).archiApp = app; // for tests and the script console
+installWindowsConventions(app);
+// Dialogs and UI-layer commands (Settings, Units, Drafting, Quick Select, Layer States, Page Setup, workspaces, ribbon
+// customisation, shortcuts, templates). The Display plot area of Page Setup is the visible plan.
+installDialogs(app, { displayBox: () => { const v = (plan as any).v; if (!v?.w) return null; const a = plan.toWorld(0, v.h), b = plan.toWorld(v.w, 0); return [a[0], a[1], b[0], b[1]]; } });
 
 const root = document.getElementById("app")!;
 const titlebar = new TitleBar(app);
@@ -45,7 +53,13 @@ function ensure3D() {
       icon: (sf, size) => icon(sf, size),
       resolveAsset: (p) => { const d = docFolder(); return n && d ? n.fileUrl(`${d}/${p}`) : n ? n.fileUrl(p) : `assets/demo/${p}`; },
     });
-    view3dBridge = new EngineBridge(view3dWidget, app.engine, { lod: 1, print: (t) => app.print(t) });
+    // Full detail in one binary buffer file the engine writes to a temporary file (Cedar House ~1.1 M triangles).
+    view3dBridge = new EngineBridge(view3dWidget, app.engine, {
+      lod: n ? 0 : 1,
+      readBinary: n ? (p) => fetch(n.fileUrl(p)).then((r) => r.arrayBuffer()) : undefined,
+      chooseSavePath: n ? (s) => n.saveFileDialog({ defaultPath: s }) : undefined,
+      print: (t) => app.print(t),
+    });
     (window as any).archiView3D = view3dWidget;
     view3dBridge.load().catch((e) => app.print(`3D view: ${e?.message ?? e}`));
   } catch (e: any) {
@@ -136,19 +150,13 @@ function commandSearch() {
 }
 document.addEventListener("archi:commandSearch", commandSearch);
 
-// ---- JavaScript console (the archi API runs in the shell's V8 and calls the engine) ----
-const consoleOut = h("div", { class: "out" });
-const consoleIn = h("textarea", { placeholder: "archi.run(\"LINE 0,0 1000,0 \")  ·  await archi.call(\"doc.info\")  —  Ctrl+Enter runs" }) as HTMLTextAreaElement;
-const scriptConsole = h("div", { class: "console" }, consoleOut, consoleIn);
-const archiApi = { run: (line: string) => app.runCommand(line), call: (m: string, p?: unknown) => app.engine.call(m, p ?? {}), print: (s: unknown) => { consoleOut.append(String(s) + "\n"); }, get selection() { return app.selection.ids; } };
-consoleIn.addEventListener("keydown", async (e) => {
-  e.stopPropagation();
-  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-    const src = consoleIn.value; consoleOut.append("› " + src + "\n");
-    try { const r = await new Function("archi", `return (async () => { ${/\breturn\b/.test(src) ? src : "return (" + src + ")"} })()`)(archiApi); if (r !== undefined) consoleOut.append(JSON.stringify(r, null, 1) + "\n"); }
-    catch (err: any) { consoleOut.append(`Error: ${err?.message ?? err}\n`); }
-    consoleOut.scrollTop = 1e9;
-  }
+// ---- JavaScript console, tool windows and agents (partb/) ----
+const scriptConsole = installPartB(app, { plan, ribbon, panels }).console.el;
+
+// ---- plotting, printing, publishing, rendering and videos (output/) ----
+installOutput(app, {
+  view3d: async () => { ensure3D(); if (view3dWidget && view3dWidget.scene.empty) await view3dBridge?.load().catch(() => {}); return view3dWidget; },
+  displayBox: () => { const v = (plan as any).v; if (!v?.w) return null; const a = plan.toWorld(0, v.h), b = plan.toWorld(v.w, 0); return [a[0], a[1], b[0], b[1]]; },
 });
 
 // ---- layout ----
@@ -176,6 +184,7 @@ layout(); renderWorkspace();
 addEventListener("keydown", (e) => {
   const t = e.target as HTMLElement;
   if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA") && t !== cmd.input) return;
+  if (handleDialogKey(e)) return;
   const ctrl = e.ctrlKey || e.metaKey;
   const fkeys: Record<string, string> = { F3: "OSMODE", F7: "GRIDMODE", F8: "ORTHOMODE", F9: "SNAPMODE", F10: "POLARMODE", F11: "OTRACK", F12: "DYNMODE" };
   if (fkeys[e.key]) { e.preventDefault(); app.toggleVar(fkeys[e.key], TOGGLES.find((x) => x.varName === fkeys[e.key])?.title); return; }
@@ -206,6 +215,8 @@ addEventListener("keyup", (e) => { if (e.key === " " && document.activeElement =
   if (req.kind === "open" && req.path) await app.open(req.path);
   else if (req.kind === "sample") await app.openSample(req.path ?? "Cedar House");
   else if (req.kind === "new") await app.newDocument(req.path ?? "metric");
+  else if (req.kind === "template" && req.path) await newFromTemplate(req.path, true);
   else { app.showStart = true; app.emit("start"); }
   document.body.classList.add("ready");
+  document.dispatchEvent(new CustomEvent("archi:ready"));
 })();

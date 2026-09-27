@@ -2313,17 +2313,21 @@ def previous_status(path):
     st = {}
     if os.path.exists(path):
         for line in open(path, encoding="utf-8"):
-            m = re.match(r"\| (todo|done|partial|n/a[^|]*|wip) \| (.*?) \| ", line)
-            if m and m.group(1) != "todo": st[m.group(2)] = m.group(1).strip()
+            # Status cells may carry an audit note ("partial: …", "todo: …"); every non-plain cell is kept.
+            m = re.match(r"\| (todo[^|]*|done[^|]*|partial[^|]*|n/a[^|]*|wip[^|]*) \| (.*?) \| ", line)
+            if m and m.group(1).strip() != "todo": st[m.group(2)] = m.group(1).strip()
     return st
 
 def checklist(cat, prev=None):
     prev = prev or {}
     L, counts, done = [], OrderedDict(), [0]
+    kinds = OrderedDict((k, 0) for k in ("done", "partial", "todo", "n/a", "wip"))
     def row(section, path, detail=""):
         counts[section] = counts.get(section, 0) + 1
         st = prev.get(md_escape(path), "todo")
-        if st != "todo": done[0] += 1
+        if not st.startswith("todo"): done[0] += 1
+        k = re.match(r"(done|partial|todo|n/a|wip)", st)
+        kinds[k.group(1) if k else "todo"] += 1
         L.append("| %s | %s | %s |" % (st, md_escape(path), md_escape(detail)))
     def head(t):
         L.append(""); L.append(t); L.append(""); L.append("| Status | Item | Command / detail |"); L.append("| --- | --- | --- |")
@@ -2407,7 +2411,7 @@ def checklist(cat, prev=None):
            "to `done`, `partial`, `wip` or `n/a (reason)`: the generator keeps every non-todo status whose Item text is unchanged.", "",
            "## Counts", "", "| Section | Items |", "| --- | ---: |"]
     for k, v in counts.items(): hdr.append("| %s | %d |" % (k, v))
-    hdr += ["| **Total checklist lines** | **%d** |" % sum(counts.values()), "", "Items not `todo`: %d" % done[0], "",
+    hdr += ["| **Total checklist lines** | **%d** |" % sum(counts.values()), "", "Items not `todo`: %d — **%s** (see docs/WINDOWS-GAPS.md)" % (done[0], " · ".join("%s %d" % kv for kv in kinds.items() if kv[0] != "wip" or kv[1])), "",
             "## Command coverage", "",
             "- Registered commands (CommandDef literals in app/Sources, incl. %d system-variable commands): **%d**; in the Mac curated ribbon/menu catalogs: %d (+ %d system variables by rule = %d)" % (sum(1 for c in cat["commands"] if c.get("systemVariable")), cov["registered"], cov["macCatalogCovered"], cov["systemVariablesByRule"], cov["macCatalogCovered"] + cov["systemVariablesByRule"]),
             "- Not registered (sub-steps of another command, excluded): %s" % ", ".join("`%s`" % x for x in cov["subcommandsNotRegistered"]),

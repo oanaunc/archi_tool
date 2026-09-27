@@ -28,7 +28,7 @@ to `done`, `partial`, `wip` or `n/a (reason)`: the generator keeps every non-tod
 | Theme | 50 |
 | **Total checklist lines** | **2904** |
 
-Items not `todo`: 0
+Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (parity audit; open items in docs/WINDOWS-GAPS.md)
 
 ## Command coverage
 
@@ -46,2383 +46,2383 @@ Items not `todo`: 0
 
 | Status | Item | Command / detail |
 | --- | --- | --- |
-| todo | Tab Home | 7 groups |
-| todo | Home ▸ Draw (group) |  |
-| todo | Home ▸ Draw ▸ Line | `LINE` |
-| todo | Home ▸ Draw ▸ Polyline | `PLINE` |
-| todo | Home ▸ Draw ▸ Circle | `CIRCLE` |
-| todo | Home ▸ Draw ▸ Arc | `ARC` |
-| todo | Home ▸ Draw ▸ Rectangle | `RECTANG` |
-| todo | Home ▸ Draw ▸ Polygon | `POLYGON` |
-| todo | Home ▸ Draw ▸ Ellipse | `ELLIPSE` |
-| todo | Home ▸ Draw ▸ Spline | `SPLINE` |
-| todo | Home ▸ Draw ▸ Hatch | `HATCH` |
-| todo | Home ▸ Modify (group) |  |
-| todo | Home ▸ Modify ▸ Move | `MOVE` |
-| todo | Home ▸ Modify ▸ Copy | `COPY` |
-| todo | Home ▸ Modify ▸ Rotate | `ROTATE` |
-| todo | Home ▸ Modify ▸ Mirror | `MIRROR` |
-| todo | Home ▸ Modify ▸ Scale | `SCALE` |
-| todo | Home ▸ Modify ▸ Stretch | `STRETCH` |
-| todo | Home ▸ Modify ▸ Trim | `TRIM` |
-| todo | Home ▸ Modify ▸ Extend | `EXTEND` |
-| todo | Home ▸ Modify ▸ Offset | `OFFSET` |
-| todo | Home ▸ Modify ▸ Fillet | `FILLET` |
-| todo | Home ▸ Modify ▸ Chamfer | `CHAMFER` |
-| todo | Home ▸ Modify ▸ Array | `ARRAY` |
-| todo | Home ▸ Modify ▸ Explode | `EXPLODE` |
-| todo | Home ▸ Modify ▸ Erase | `ERASE` |
-| todo | Home ▸ Modify ▸ Join | `JOIN` |
-| todo | Home ▸ Modify ▸ Break | `BREAK` |
-| todo | Home ▸ Layers (group) |  |
-| todo | Home ▸ Layers ▸ Layer (dropdown) |  |
-| todo | Home ▸ Layers ▸ Layer Properties | `@panel:Layers` |
-| todo | Home ▸ Layers ▸ States | `LAYERSTATE` |
-| todo | Home ▸ Properties (group) |  |
-| todo | Home ▸ Properties ▸ Color (dropdown) |  |
-| todo | Home ▸ Properties ▸ Linetype (dropdown) |  |
-| todo | Home ▸ Properties ▸ Lineweight (dropdown) |  |
-| todo | Home ▸ Selection (group) |  |
-| todo | Home ▸ Selection ▸ Select All | `@selectAll` |
-| todo | Home ▸ Selection ▸ Quick Select | `QSELECTDIALOG` |
-| todo | Home ▸ Selection ▸ Match Props | `MATCHPROP` |
-| todo | Home ▸ Selection ▸ Similar | `SELECTSIMILAR` |
-| todo | Home ▸ Selection ▸ Properties | `@panel:Properties` |
-| todo | Home ▸ Selection ▸ More (menu) | Selection tools: QSELECT, invert, by layer/type, chain, filter, named sets |
-| todo | Home ▸ Selection ▸ More ▸ Quick Select | `QSELECT` |
-| todo | Home ▸ Selection ▸ More ▸ Select Similar | `SELECTSIMILAR` |
-| todo | Home ▸ Selection ▸ More ▸ Invert | `SELECTINVERT` |
-| todo | Home ▸ Selection ▸ More ▸ By Layer | `SELECTLAYER` |
-| todo | Home ▸ Selection ▸ More ▸ By Type | `SELECTTYPE` |
-| todo | Home ▸ Selection ▸ More ▸ Chain | `SELECTCHAIN` |
-| todo | Home ▸ Selection ▸ More ▸ Intersecting | `SELECTINTERSECTING` |
-| todo | Home ▸ Selection ▸ More ▸ Filter | `FILTER` |
-| todo | Home ▸ Selection ▸ More ▸ Named Sets | `SELSET` |
-| todo | Home ▸ Groups (group) |  |
-| todo | Home ▸ Groups ▸ Group | `GROUP` |
-| todo | Home ▸ Groups ▸ Ungroup | `UNGROUP` |
-| todo | Home ▸ Groups ▸ Isolate | `ISOLATEOBJECTS` |
-| todo | Home ▸ Groups ▸ Hide | `HIDEOBJECTS` |
-| todo | Home ▸ Groups ▸ End Isolation | `UNISOLATEOBJECTS` |
-| todo | Home ▸ More (group) |  |
-| todo | Home ▸ More ▸ Draw (menu) | More drawing and construction tools |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Ray | `RAY` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Construction Line | `XLINE` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Point | `POINT` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Point Style | `PTYPE` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Donut | `DONUT` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Region | `REGION` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Boundary | `BOUNDARY` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Revision Cloud | `REVCLOUD` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Wipeout | `WIPEOUT` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Sketch | `SKETCH` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Multiline | `MLINE` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Multiline Style | `MLSTYLE` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Double Line | `DLINE` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ 2D Solid | `SOLID` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Star | `STAR` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Polygon by Side | `POLYGONSS` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Snake Line | `SNAKE` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Parabola | `PARABOLA` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Hyperbola | `HYPERBOLA` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Centerline | `CENTERLINE` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Center Mark | `CENTERMARK` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Bounding Box | `BOUNDINGBOX` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Point Lattice | `POINTLATTICE` |
-| todo | Home ▸ More ▸ Draw ▸ Draw More ▸ Points on Line | `POINTSLINE` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Parallel Line | `LINEPAR` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Perpendicular Line | `LINEPERP` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Line at Angle | `LINEANG` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Bisector | `LINEBISECT` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Horizontal/Vertical | `LINEHV` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Relative Line | `LINEREL` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Tangent Line | `LINETAN` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Tangent to 2 Circles | `LINETAN2` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Tangent Ortho | `LINETANORTHO` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Circle 2 Points + R | `CIRCLE2PR` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Circle Tan-Pt-Pt | `CIRCLETPP` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Circle Tan-Tan-Pt | `CIRCLETTP` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Circle Tan-Tan-Tan | `CIRCLETTT` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Incircle | `INCIRCLE` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Arc 2 Pts + Height | `ARC2PH` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Arc 2 Pts + Length | `ARC2PL` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Arc to Circle | `ARCTOCIRCLE` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Ellipse 4 Points | `ELLIPSE4P` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Ellipse Center 3P | `ELLIPSEC3P` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Ellipse by Foci | `ELLIPSEFOCI` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Multiple Offset | `OFFSETMULTI` |
-| todo | Home ▸ More ▸ Draw ▸ Construction ▸ Cut by Line | `CUTBYLINE` |
-| todo | Home ▸ More ▸ Modify (menu) | More modify, clipboard and selection tools |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Align | `ALIGN` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Align to Reference | `ALIGNREF` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Path Array | `ARRAYPATH` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Polar Array | `ARRAYPOLAR` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Break All | `BREAKALL` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Break at Point | `BREAKATPOINT` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Change Properties | `CHPROP` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Clip Polyline | `CLIPPOLY` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Convert to Polyline | `CONVERTTOPLINE` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Divide | `DIVIDE` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Measure | `MEASURE` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Draw Order | `DRAWORDER` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Text to Front | `TEXTTOFRONT` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Hatch to Back | `HATCHTOBACK` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Extend By | `EXTENDBY` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Lengthen | `LENGTHEN` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Line Gap | `LINEGAP` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Move + Rotate | `MOVEROTATE` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Rotate by Reference | `ROTATE2` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Nudge | `NUDGE` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Oops (Restore Erased) | `OOPS` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Overkill | `OVERKILL` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Edit Polyline | `PEDIT` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Polyline to Spline | `PLINETOSPLINE` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Reverse | `REVERSE` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Weld | `WELD` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Set ByLayer | `SETBYLAYER` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Paste to Points | `PASTETOPOINTS` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Region Union | `REGIONUNION` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Region Subtract | `REGIONSUBTRACT` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Region Intersect | `REGIONINTERSECT` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Edit Hatch | `HATCHEDIT` |
-| todo | Home ▸ More ▸ Modify ▸ Modify More ▸ Hatch Boundary | `HATCHGENERATEBOUNDARY` |
-| todo | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Copy | `COPYCLIP` |
-| todo | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Cut | `CUTCLIP` |
-| todo | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Copy with Base Point | `COPYBASE` |
-| todo | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Paste | `PASTECLIP` |
-| todo | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Paste as Block | `PASTEBLOCK` |
-| todo | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Undo | `UNDO` |
-| todo | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Redo | `REDO` |
-| todo | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Select | `SELECT` |
-| todo | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Select All | `SELECTALL` |
-| todo | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Quick Select… | `QSELECTDIALOG` |
-| todo | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Match Properties | `MATCHPROP` |
-| todo | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Blend Curves | `BLEND` |
-| todo | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Ellipse in Parallelogram | `ELLIPSEQUAD` |
-| todo | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Gradient | `GRADIENT` |
-| todo | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Trace | `TRACE` |
-| todo | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Flatten | `FLATTEN` |
-| todo | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Hatch Origin | `HATCHSETORIGIN` |
-| todo | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Rotate 90° | `ROTATE90` |
-| todo | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Edit Spline | `SPLINEDIT` |
-| todo | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Explode Text | `TXTEXP` |
-| todo | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Change Space | `CHSPACE` |
-| todo | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Deselect | `DESELECT` |
-| todo | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Select Previous | `SELECTPREVIOUS` |
-| todo | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Select Instances | `SELECTINSTANCES` |
-| todo | Home ▸ More ▸ Layers (menu) | Layer tools (LAYISO, LAYFRZ, LAYMRG…) |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Layer Properties | `LAYER` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Layer States | `LAYERSTATE` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Layer Filter | `LAYERFILTER` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Layer Filter (cmd) | `LAYFILTER` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Change to Current | `LAYCUR` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Make Current | `LAYMCUR` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Delete Layer | `LAYDEL` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Merge Layers | `LAYMRG` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Freeze | `LAYFRZ` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Thaw All | `LAYTHW` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Off | `LAYOFF` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ All On | `LAYON` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Isolate | `LAYISO` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Unisolate | `LAYUNISO` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Lock | `LAYLCK` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Unlock | `LAYULK` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Layer Previous | `LAYERP` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Translate Layers | `LAYTRANS` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Layer Walk | `LAYWALK` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Viewport Layers | `VPLAYER` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Color | `COLOR` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Linetype | `LINETYPE` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Lineweight | `LWEIGHT` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Linetype Scale | `LTSCALE` |
-| todo | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Rename | `RENAME` |
-| todo | Tab Insert | 7 groups |
-| todo | Insert ▸ Import (group) |  |
-| todo | Insert ▸ Import ▸ Import File | `IMPORTFILE` |
-| todo | Insert ▸ Import ▸ IFC | `IFCIMPORT` |
-| todo | Insert ▸ Import ▸ SVG | `SVGIMPORT` |
-| todo | Insert ▸ Import ▸ Mesh (OBJ/STL) | `MESHIMPORT` |
-| todo | Insert ▸ Import ▸ GeoJSON | `GEOJSONIMPORT` |
-| todo | Insert ▸ Import ▸ Points (CSV) | `POINTSIMPORT` |
-| todo | Insert ▸ Block & Reference (group) |  |
-| todo | Insert ▸ Block & Reference ▸ Insert Block | `INSERT` |
-| todo | Insert ▸ Block & Reference ▸ Create Block | `BLOCK` |
-| todo | Insert ▸ Block & Reference ▸ Xref | `XREF` |
-| todo | Insert ▸ Block & Reference ▸ Image | `IMAGEATTACH` |
-| todo | Insert ▸ Block & Reference ▸ Attribute | `ATTDEF` |
-| todo | Insert ▸ Block & Reference ▸ Paste Special | `PASTEORIG` |
-| todo | Insert ▸ Content (group) |  |
-| todo | Insert ▸ Content ▸ Tool Palettes | `@panel:Tools` |
-| todo | Insert ▸ Content ▸ Materials | `MATBROWSER` |
-| todo | Insert ▸ Content ▸ Component (menu) | Components are not available in this build / Place furniture and fixtures |
-| todo | Insert ▸ Content ▸ Component ▸ Chair | `{r} Chair` |
-| todo | Insert ▸ Content ▸ Component ▸ Table | `{r} Table` |
-| todo | Insert ▸ Content ▸ Component ▸ Desk | `{r} Desk` |
-| todo | Insert ▸ Content ▸ Component ▸ Sofa | `{r} Sofa` |
-| todo | Insert ▸ Content ▸ Component ▸ Bed | `{r} Bed` |
-| todo | Insert ▸ Content ▸ Component ▸ Wardrobe | `{r} Wardrobe` |
-| todo | Insert ▸ Content ▸ Component ▸ Kitchen | `{r} Kitchen` |
-| todo | Insert ▸ Content ▸ Component ▸ Sink | `{r} Sink` |
-| todo | Insert ▸ Content ▸ Component ▸ WC | `{r} WC` |
-| todo | Insert ▸ Content ▸ Component ▸ Bath | `{r} Bath` |
-| todo | Insert ▸ Content ▸ Component ▸ Car | `{r} Car` |
-| todo | Insert ▸ Content ▸ Component ▸ Component… | `{r}` |
-| todo | Insert ▸ Export (group) |  |
-| todo | Insert ▸ Export ▸ GeoJSON | `GEOJSONEXPORT` |
-| todo | Insert ▸ Export ▸ Points | `POINTSEXPORT` |
-| todo | Insert ▸ Export ▸ 3MF | `EXPORT3MF` |
-| todo | Insert ▸ Export ▸ USDZ | `USDEXPORT` |
-| todo | Insert ▸ Export ▸ DXF R12 | `DXFR12OUT` |
-| todo | Insert ▸ More (group) |  |
-| todo | Insert ▸ More ▸ Blocks (menu) | Block and attribute tools |
-| todo | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Block Library | `BLOCKLIBRARY` |
-| todo | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Write Block | `WBLOCK` |
-| todo | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Drawing Base | `BASE` |
-| todo | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Block Base Point | `BLOCKBASE` |
-| todo | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Replace Block | `BLOCKREPLACE` |
-| todo | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Count Blocks | `BCOUNT` |
-| todo | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Flip Block | `BFLIP` |
-| todo | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Visibility State | `BVSTATE` |
-| todo | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Edit Attributes | `ATTEDIT` |
-| todo | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Sync Attributes | `ATTSYNC` |
-| todo | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Attribute Manager | `BATTMAN` |
-| todo | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Extract Attributes | `ATTEXT` |
-| todo | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Data Extraction | `DATAEXTRACTION` |
-| todo | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Bind Xref | `XBIND` |
-| todo | Insert ▸ More ▸ Blocks ▸ Dynamic Blocks ▸ Dynamic Parameter | `BPARAMETER` |
-| todo | Insert ▸ More ▸ Blocks ▸ Dynamic Blocks ▸ Dynamic Value | `DYNPROP` |
-| todo | Insert ▸ More ▸ Blocks ▸ Dynamic Blocks ▸ Reset Block | `RESETBLOCK` |
-| todo | Insert ▸ More ▸ Exchange (menu) | More import/export formats and file commands |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ DWG In | `DWGIN` |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ DWG Converter | `DWGCONVERTER` |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ STEP In | `STEPIN` |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ Shapefile | `SHPIMPORT` |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ OpenStreetMap | `OSMIMPORT` |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ CityJSON | `CITYJSONIMPORT` |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ Point Cloud | `POINTCLOUDIMPORT` |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ Excel In | `XLSXIN` |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ DWG Out | `DWGOUT` |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ STEP Out | `STEPOUT` |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ Collada | `DAEOUT` |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ PLY | `PLYOUT` |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ gbXML | `GBXMLOUT` |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ COBie | `COBIEOUT` |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ IFC ZIP | `IFCZIPOUT` |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ HPGL | `HPGLOUT` |
-| todo | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ Excel Out | `XLSXOUT` |
-| todo | Insert ▸ More ▸ Exchange ▸ File ▸ New | `NEW` |
-| todo | Insert ▸ More ▸ Exchange ▸ File ▸ Open | `OPEN` |
-| todo | Insert ▸ More ▸ Exchange ▸ File ▸ Save | `SAVE` |
-| todo | Insert ▸ More ▸ Exchange ▸ File ▸ Save As | `SAVEAS` |
-| todo | Insert ▸ More ▸ Exchange ▸ File ▸ Close | `CLOSE` |
-| todo | Insert ▸ More ▸ Exchange ▸ File ▸ Import | `IMPORT` |
-| todo | Insert ▸ More ▸ Exchange ▸ File ▸ Export | `EXPORT` |
-| todo | Insert ▸ More ▸ Exchange ▸ File ▸ Plot | `PLOT` |
-| todo | Insert ▸ More ▸ Exchange ▸ File ▸ Drawing Recovery | `DRAWINGRECOVERY` |
-| todo | Insert ▸ More ▸ Exchange ▸ File ▸ Run Script | `SCRIPT` |
-| todo | Insert ▸ More ▸ Exchange ▸ File ▸ Script Text | `SCRIPTTEXT` |
-| todo | Insert ▸ More ▸ Exchange ▸ File ▸ Quit | `QUIT` |
-| todo | Insert ▸ Images & Geo (group) |  |
-| todo | Insert ▸ Images & Geo ▸ Import Image | `IMAGEIMPORT` |
-| todo | Insert ▸ Images & Geo ▸ Scale Image | `IMAGESCALE` |
-| todo | Insert ▸ Images & Geo ▸ KML / KMZ Out | `KMLOUT` |
-| todo | Insert ▸ Images & Geo ▸ Layered SVG Out | `SVGLAYERSOUT` |
-| todo | Insert ▸ Images & Geo ▸ Load .pat Patterns | `PATLOAD` |
-| todo | Insert ▸ Library (group) |  |
-| todo | Insert ▸ Library ▸ Block Library | `BLOCKLIBRARY` |
-| todo | Tab Annotate | 6 groups |
-| todo | Annotate ▸ Text (group) |  |
-| todo | Annotate ▸ Text ▸ Text | `TEXT` |
-| todo | Annotate ▸ Text ▸ MText | `MTEXT` |
-| todo | Annotate ▸ Dimensions (group) |  |
-| todo | Annotate ▸ Dimensions ▸ Linear | `DIMLINEAR` |
-| todo | Annotate ▸ Dimensions ▸ Aligned | `DIMALIGNED` |
-| todo | Annotate ▸ Dimensions ▸ Angular | `DIMANGULAR` |
-| todo | Annotate ▸ Dimensions ▸ Radius | `DIMRADIUS` |
-| todo | Annotate ▸ Dimensions ▸ Diameter | `DIMDIAMETER` |
-| todo | Annotate ▸ Leaders & Tables (group) |  |
-| todo | Annotate ▸ Leaders & Tables ▸ Leader | `LEADER` |
-| todo | Annotate ▸ Leaders & Tables ▸ Table | `TABLE` |
-| todo | Annotate ▸ More (group) |  |
-| todo | Annotate ▸ More ▸ Dims (menu) | Baseline, continue, ordinate, QDIM, dimension editing |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Smart Dimension | `DIM` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Quick Dimension | `QDIM` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Baseline | `DIMBASELINE` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Continue | `DIMCONTINUE` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Arc Length | `DIMARC` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Ordinate | `DIMORDINATE` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Dimension Break | `DIMBREAK` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Dimension Space | `DIMSPACE` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Edit Dimension | `DIMEDIT` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Move Dim Text | `DIMTEDIT` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Dim Override | `DIMOVERRIDE` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Reassociate | `DIMREASSOCIATE` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Disassociate | `DIMDISASSOCIATE` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Regenerate Dims | `DIMREGEN` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Dimension Style | `DIMSTYLE` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Tolerance | `TOLERANCE` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Dimension Walls | `AUTODIMWALLS` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Spot Elevation | `SPOTELEV` |
-| todo | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Spot Slope | `SPOTSLOPE` |
-| todo | Annotate ▸ More ▸ Text (menu) | Text editing, spelling, fields, tables, symbols |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Edit Text | `TEXTEDIT` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Text Style | `TEXTSTYLE` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Find & Replace | `FIND` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Spelling | `SPELL` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Spelling Dialog | `SPELLDIALOG` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Field | `FIELD` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Update Fields | `UPDATEFIELD` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Justify Text | `JUSTIFYTEXT` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Scale Text | `SCALETEXT` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Text to MText | `TXT2MTXT` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Readable Text | `TEXTREADABLE` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Arc Text | `ARCTEXT` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Annotative | `ANNOTATIVE` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Scale List | `SCALELISTEDIT` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Leader Style | `MLEADERSTYLE` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Align Leaders | `MLEADERALIGN` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Collect Leaders | `MLEADERCOLLECT` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Edit Table | `TABLEEDIT` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Export Table | `TABLEEXPORT` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Link Table | `TABLELINK` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Update Data Links | `DATALINKUPDATE` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ North Arrow | `NORTHARROW` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Scale Bar | `SCALEBAR` |
-| todo | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Break Line | `BREAKLINE` |
-| todo | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Jogged Radius | `DIMJOGGED` |
-| todo | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Jog Line | `DIMJOGLINE` |
-| todo | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Ordinate Datum | `DIMREBASE` |
-| todo | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Grid Dimensions | `AUTODIMGRIDS` |
-| todo | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Object Scale | `OBJECTSCALE` |
-| todo | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Spot Coordinate | `SPOTCOORD` |
-| todo | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Text Frame | `TEXTFRAME` |
-| todo | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Text Mask | `TEXTMASK` |
-| todo | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Remove Text Mask | `TEXTUNMASK` |
-| todo | Annotate ▸ Parametric (group) |  |
-| todo | Annotate ▸ Parametric ▸ Constrain (menu) | Geometric and dimensional constraints |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Geometric | `GEOMCONSTRAINT` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Auto Constrain | `AUTOCONSTRAIN` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Dimensional | `DIMCONSTRAINT` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Convert Dims | `DCCONVERT` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Parameters | `PARAMETERS` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ List Constraints | `CONSTRAINTLIST` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Delete Constraints | `DELCONSTRAINT` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Coincident | `GCCOINCIDENT` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Horizontal | `GCHORIZONTAL` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Vertical | `GCVERTICAL` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Parallel | `GCPARALLEL` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Perpendicular | `GCPERPENDICULAR` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Collinear | `GCCOLLINEAR` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Equal | `GCEQUAL` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Fix | `GCFIX` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Concentric | `GCCONCENTRIC` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Tangent | `GCTANGENT` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Symmetric | `GCSYMMETRIC` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Midpoint | `GCMIDPOINT` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Point on Curve | `GCPOINTONCURVE` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Linear (dim) | `DCLINEAR` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Horizontal (dim) | `DCHORIZONTAL` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Vertical (dim) | `DCVERTICAL` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Aligned (dim) | `DCALIGNED` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Angular (dim) | `DCANGULAR` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Radius (dim) | `DCRADIUS` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Diameter (dim) | `DCDIAMETER` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Ratio (dim) | `DCRATIO` |
-| todo | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Difference (dim) | `DCDIFFERENCE` |
-| todo | Annotate ▸ Parametric ▸ Show Constraints | `CONSTRAINTBAR Toggle` |
-| todo | Annotate ▸ Style (group) |  |
-| todo | Annotate ▸ Style ▸ Dimension style (label) |  |
-| todo | Annotate ▸ Style ▸ {model.doc.currentDimStyle} (menu) |  |
-| todo | Annotate ▸ Style ▸ {model.doc.currentDimStyle} ▸ {model.doc.dimStyles} |  |
-| todo | Annotate ▸ Style ▸ Text height: {fmt(model.editor.settings.textHeight, 2)} (label) |  |
-| todo | Tab Architecture | 7 groups |
-| todo | Architecture ▸ Build (group) |  |
-| todo | Architecture ▸ Build ▸ Wall | `WALL` |
-| todo | Architecture ▸ Build ▸ Door | `DOOR` |
-| todo | Architecture ▸ Build ▸ Window | `WINDOW` |
-| todo | Architecture ▸ Build ▸ Opening | `OPENING` |
-| todo | Architecture ▸ Build ▸ Curtain Wall | `CURTAINWALL` |
-| todo | Architecture ▸ Build ▸ Column | `COLUMN` |
-| todo | Architecture ▸ Build ▸ Beam | `BEAM` |
-| todo | Architecture ▸ Build ▸ Slab | `SLAB` |
-| todo | Architecture ▸ Build ▸ Roof | `ROOF` |
-| todo | Architecture ▸ Build ▸ Ceiling | `CEILING` |
-| todo | Architecture ▸ Build ▸ Stair | `STAIR` |
-| todo | Architecture ▸ Build ▸ Railing | `RAILING` |
-| todo | Architecture ▸ Build+ (group) |  |
-| todo | Architecture ▸ Build+ ▸ Ramp | `RAMP` |
-| todo | Architecture ▸ Build+ ▸ Foundation | `FOUNDATION` |
-| todo | Architecture ▸ Build+ ▸ Slab Slope | `SLABSLOPE` |
-| todo | Architecture ▸ Build+ ▸ Curtain Grid | `CWGRID` |
-| todo | Architecture ▸ Build+ ▸ Niche | `NICHE` |
-| todo | Architecture ▸ Build+ ▸ Wall Sweep | `WALLSWEEP` |
-| todo | Architecture ▸ Room & Area (group) |  |
-| todo | Architecture ▸ Room & Area ▸ Room | `ROOM` |
-| todo | Architecture ▸ Room & Area ▸ Grid | `GRID` |
-| todo | Architecture ▸ Room & Area ▸ Room Separator | `ROOMSEPARATOR` |
-| todo | Architecture ▸ Room & Area ▸ Update Rooms | `ROOMUPDATE` |
-| todo | Architecture ▸ Room & Area ▸ Area Plan | `AREAPLAN` |
-| todo | Architecture ▸ Room & Area ▸ Room Bounding | `ROOMBOUNDING` |
-| todo | Architecture ▸ Documentation (group) |  |
-| todo | Architecture ▸ Documentation ▸ Tag | `TAG` |
-| todo | Architecture ▸ Documentation ▸ Tag All | `TAGALL` |
-| todo | Architecture ▸ Documentation ▸ Keynote | `KEYNOTE` |
-| todo | Architecture ▸ Documentation ▸ Marks | `MARKS` |
-| todo | Architecture ▸ Documentation ▸ Section | `SECTION` |
-| todo | Architecture ▸ Documentation ▸ Draw View | `VIEWDRAW` |
-| todo | Architecture ▸ Documentation ▸ Update Views | `VIEWUPDATE` |
-| todo | Architecture ▸ Documentation ▸ Interior Elev. | `INTERIORELEV` |
-| todo | Architecture ▸ Documentation ▸ Callout | `CALLOUT` |
-| todo | Architecture ▸ Documentation ▸ More (menu) | More BIM tools |
-| todo | Architecture ▸ Documentation ▸ More ▸ Phase | `PHASE` |
-| todo | Architecture ▸ Documentation ▸ More ▸ 3D Datums | `DATUMS3D` |
-| todo | Architecture ▸ Documentation ▸ More ▸ Wall Attach | `WALLATTACH` |
-| todo | Architecture ▸ Documentation ▸ More ▸ Walls by Lines | `WALLBYLINES` |
-| todo | Architecture ▸ Documentation ▸ More ▸ Wall Join | `WALLJOIN` |
-| todo | Architecture ▸ Documentation ▸ More ▸ Wall Top | `WALLTOP` |
-| todo | Architecture ▸ Documentation ▸ More ▸ Opening Types | `OPENINGTYPE` |
-| todo | Architecture ▸ Documentation ▸ More ▸ Copy to Level | `COPYTOLEVEL` |
-| todo | Architecture ▸ Documentation ▸ More ▸ Stair Check | `STAIRCHECK` |
-| todo | Architecture ▸ Model (group) |  |
-| todo | Architecture ▸ Model ▸ Component (menu) | Components are not available in this build / Place furniture and fixtures |
-| todo | Architecture ▸ Model ▸ Component ▸ Chair | `{r} Chair` |
-| todo | Architecture ▸ Model ▸ Component ▸ Table | `{r} Table` |
-| todo | Architecture ▸ Model ▸ Component ▸ Desk | `{r} Desk` |
-| todo | Architecture ▸ Model ▸ Component ▸ Sofa | `{r} Sofa` |
-| todo | Architecture ▸ Model ▸ Component ▸ Bed | `{r} Bed` |
-| todo | Architecture ▸ Model ▸ Component ▸ Wardrobe | `{r} Wardrobe` |
-| todo | Architecture ▸ Model ▸ Component ▸ Kitchen | `{r} Kitchen` |
-| todo | Architecture ▸ Model ▸ Component ▸ Sink | `{r} Sink` |
-| todo | Architecture ▸ Model ▸ Component ▸ WC | `{r} WC` |
-| todo | Architecture ▸ Model ▸ Component ▸ Bath | `{r} Bath` |
-| todo | Architecture ▸ Model ▸ Component ▸ Car | `{r} Car` |
-| todo | Architecture ▸ Model ▸ Component ▸ Component… | `{r}` |
-| todo | Architecture ▸ Model ▸ Quick Building | `BUILDING` |
-| todo | Architecture ▸ More (group) |  |
-| todo | Architecture ▸ More ▸ Systems (menu) | BIM data, structure, MEP and site tools |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Level | `LEVEL` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Schedule | `SCHEDULE` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Set Property | `SETPROP` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Properties | `PROPERTIES` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Color Fill Plan | `COLORFILL` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Room Finishes | `ROOMFINISH` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Opening Parts | `OPENINGPARTS` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Reflected Ceiling | `RCP` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Design Options | `DESIGNOPTION` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Worksets | `WORKSET` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Area Scheme | `AREASCHEME` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Update Associative | `BIMUPDATE` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Dormer | `DORMER` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Elevator | `ELEVATOR` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Family Editor | `FAMILY` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Floor Finish | `FLOORFINISH` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Model Group | `MODELGROUP` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Opening Trim | `OPENINGTRIM` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Profiles | `PROFILE` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Railing Type | `RAILINGTYPE` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Roof Edge | `ROOFEDGE` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Shaft | `SHAFT` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Skylight | `SKYLIGHT` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Slab Opening | `SLABOPENING` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Slab / Roof Type | `SLABTYPE` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Wall Join | `WALLJOINEDIT` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Wall Wrap | `WALLWRAP` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Light Data | `LIGHTDATA` |
-| todo | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ MEP Systems | `MEPSYSTEM` |
-| todo | Architecture ▸ More ▸ Systems ▸ Structure ▸ Beam System | `BEAMSYSTEM` |
-| todo | Architecture ▸ More ▸ Systems ▸ Structure ▸ Brace | `BRACE` |
-| todo | Architecture ▸ More ▸ Systems ▸ Structure ▸ Truss | `TRUSS` |
-| todo | Architecture ▸ More ▸ Systems ▸ Structure ▸ Steel Profile | `STEELPROFILE` |
-| todo | Architecture ▸ More ▸ Systems ▸ Structure ▸ Analytical Model | `ANALYTICALMODEL` |
-| todo | Architecture ▸ More ▸ Systems ▸ Structure ▸ Frame Analysis | `FRAMEANALYSIS` |
-| todo | Architecture ▸ More ▸ Systems ▸ MEP ▸ Duct | `DUCT` |
-| todo | Architecture ▸ More ▸ Systems ▸ MEP ▸ Pipe | `MEPPIPE` |
-| todo | Architecture ▸ More ▸ Systems ▸ MEP ▸ Cable Tray | `CABLETRAY` |
-| todo | Architecture ▸ More ▸ Systems ▸ MEP ▸ Conduit | `CONDUIT` |
-| todo | Architecture ▸ More ▸ Systems ▸ MEP ▸ Connectors | `MEPCONNECTORS` |
-| todo | Architecture ▸ More ▸ Systems ▸ Site ▸ Property Line | `PROPERTYLINE` |
-| todo | Architecture ▸ More ▸ Systems ▸ Site ▸ Subregion | `SUBREGION` |
-| todo | Architecture ▸ More ▸ Systems ▸ Site ▸ Site Path | `SITEPATH` |
-| todo | Architecture ▸ More ▸ Systems ▸ Site ▸ Parking | `PARKINGLOT` |
-| todo | Architecture ▸ More ▸ Systems ▸ Site ▸ Retaining Wall | `RETAININGWALL` |
-| todo | Architecture ▸ More ▸ Systems ▸ Site ▸ Import DEM | `DEMIMPORT` |
-| todo | Architecture ▸ Level (group) |  |
-| todo | Architecture ▸ Level ▸ Level (dropdown) |  |
-| todo | Architecture ▸ Level ▸ Levels | `@panel:Levels` |
-| todo | Tab Modeling | 7 groups |
-| todo | Modeling ▸ Solids (group) |  |
-| todo | Modeling ▸ Solids ▸ Box | `BOX` |
-| todo | Modeling ▸ Solids ▸ Extrude | `EXTRUDE` |
-| todo | Modeling ▸ Solids ▸ Cylinder | `CYLINDER` |
-| todo | Modeling ▸ Solids ▸ Cone | `CONE` |
-| todo | Modeling ▸ Solids ▸ Sphere | `SPHERE` |
-| todo | Modeling ▸ Solids ▸ Revolve | `REVOLVE` |
-| todo | Modeling ▸ Solid Editing (group) |  |
-| todo | Modeling ▸ Solid Editing ▸ Press/Pull | `PRESSPULL` |
-| todo | Modeling ▸ Solid Editing ▸ Loft | `LOFT` |
-| todo | Modeling ▸ Solid Editing ▸ Sweep | `SWEEP` |
-| todo | Modeling ▸ Solid Editing ▸ Pipe | `PIPE` |
-| todo | Modeling ▸ Solid Editing ▸ Shell | `SHELL` |
-| todo | Modeling ▸ Solid Editing ▸ Smooth Mesh | `MESHSMOOTH` |
-| todo | Modeling ▸ Booleans (group) |  |
-| todo | Modeling ▸ Booleans ▸ Union | `UNION` |
-| todo | Modeling ▸ Booleans ▸ Subtract | `SUBTRACT` |
-| todo | Modeling ▸ Booleans ▸ Intersect | `INTERSECT` |
-| todo | Modeling ▸ Booleans ▸ Slice | `SLICE` |
-| todo | Modeling ▸ Booleans ▸ Interfere | `INTERFERE` |
-| todo | Modeling ▸ 3D Operations (group) |  |
-| todo | Modeling ▸ 3D Operations ▸ 3D Mirror | `MIRROR3D` |
-| todo | Modeling ▸ 3D Operations ▸ 3D Rotate | `ROTATE3D` |
-| todo | Modeling ▸ 3D Operations ▸ 3D Array | `3DARRAY` |
-| todo | Modeling ▸ Site (group) |  |
-| todo | Modeling ▸ Site ▸ Topography | `TOPO` |
-| todo | Modeling ▸ Site ▸ Contours | `CONTOURS` |
-| todo | Modeling ▸ Site ▸ Building Pad | `BUILDINGPAD` |
-| todo | Modeling ▸ Surfaces (group) |  |
-| todo | Modeling ▸ Surfaces ▸ Surfaces (menu) | Ruled, tabulated, revolved and edge surfaces; mesh repair |
-| todo | Modeling ▸ Surfaces ▸ Surfaces ▸ Surfaces & Mesh ▸ Ruled Surface | `RULESURF` |
-| todo | Modeling ▸ Surfaces ▸ Surfaces ▸ Surfaces & Mesh ▸ Tabulated Surface | `TABSURF` |
-| todo | Modeling ▸ Surfaces ▸ Surfaces ▸ Surfaces & Mesh ▸ Revolved Surface | `REVSURF` |
-| todo | Modeling ▸ Surfaces ▸ Surfaces ▸ Surfaces & Mesh ▸ Edge Surface | `EDGESURF` |
-| todo | Modeling ▸ Surfaces ▸ Surfaces ▸ Surfaces & Mesh ▸ Fillet Edges | `FILLETEDGE` |
-| todo | Modeling ▸ Surfaces ▸ Surfaces ▸ Surfaces & Mesh ▸ Chamfer Edges | `CHAMFEREDGE` |
-| todo | Modeling ▸ Surfaces ▸ Surfaces ▸ Surfaces & Mesh ▸ Repair Mesh | `MESHREPAIR` |
-| todo | Modeling ▸ Surfaces ▸ Surfaces ▸ Surfaces & Mesh ▸ Decimate Mesh | `MESHDECIMATE` |
-| todo | Modeling ▸ Surfaces ▸ Surfaces ▸ Solid Features ▸ Press/Pull Face | `PRESSPULLFACE` |
-| todo | Modeling ▸ Surfaces ▸ Surfaces ▸ Solid Features ▸ Section Solids | `SECTIONSOLIDS` |
-| todo | Modeling ▸ Surfaces ▸ Surfaces ▸ Solid Features ▸ Record History | `SOLIDHIST` |
-| todo | Modeling ▸ Surfaces ▸ Surfaces ▸ Solid Features ▸ Feature History | `SOLIDHISTORY` |
-| todo | Modeling ▸ Visual Programming (group) |  |
-| todo | Modeling ▸ Visual Programming ▸ Node Editor | `NODEEDITOR` |
-| todo | Tab Analyze | 7 groups |
-| todo | Analyze ▸ Inquiry (group) |  |
-| todo | Analyze ▸ Inquiry ▸ Distance | `DIST` |
-| todo | Analyze ▸ Inquiry ▸ Area | `AREA` |
-| todo | Analyze ▸ Inquiry ▸ List | `LIST` |
-| todo | Analyze ▸ Inquiry ▸ ID Point | `ID` |
-| todo | Analyze ▸ Inquiry ▸ Mass Props | `MASSPROP` |
-| todo | Analyze ▸ Inquiry ▸ Count | `COUNT` |
-| todo | Analyze ▸ Quantities (group) |  |
-| todo | Analyze ▸ Quantities ▸ Takeoff | `TAKEOFF` |
-| todo | Analyze ▸ Quantities ▸ Cost Estimate | `COSTESTIMATE` |
-| todo | Analyze ▸ Quantities ▸ Unit Prices | `UNITPRICE` |
-| todo | Analyze ▸ Quantities ▸ Room Schedule | `ROOMSCHEDULE` |
-| todo | Analyze ▸ Coordination (group) |  |
-| todo | Analyze ▸ Coordination ▸ Clash Detect | `CLASHDETECT` |
-| todo | Analyze ▸ Coordination ▸ Check Model | `CHECKMODEL` |
-| todo | Analyze ▸ Coordination ▸ Sun Position | `SUNPOSITION` |
-| todo | Analyze ▸ Checks (group) |  |
-| todo | Analyze ▸ Checks ▸ Accessibility | `ACCESSIBILITY` |
-| todo | Analyze ▸ Checks ▸ Egress | `EGRESS` |
-| todo | Analyze ▸ Checks ▸ Energy Balance | `ENERGYBALANCE` |
-| todo | Analyze ▸ Checks ▸ Bill of Quantities | `BOQ` |
-| todo | Analyze ▸ Checks ▸ Takeoff by Phase | `TAKEOFFPHASE` |
-| todo | Analyze ▸ Checks ▸ Lighting Schedule | `LIGHTSCHEDULE` |
-| todo | Analyze ▸ Checks ▸ Fire Compartments | `FIRECOMPARTMENTS` |
-| todo | Analyze ▸ Checks ▸ Load Takedown | `LOADTAKEDOWN` |
-| todo | Analyze ▸ Checks ▸ Parking Check | `PARKINGCHECK` |
-| todo | Analyze ▸ Checks ▸ Rainwater | `RAINWATER` |
-| todo | Analyze ▸ Measure (group) |  |
-| todo | Analyze ▸ Measure ▸ Angle Between | `ANGLEBETWEEN` |
-| todo | Analyze ▸ Measure ▸ Distance to Object | `DISTTOOBJECT` |
-| todo | Analyze ▸ Measure ▸ Point Inside? | `POINTINSIDE` |
-| todo | Analyze ▸ Measure ▸ Total Length | `TLEN` |
-| todo | Analyze ▸ 3D Measure (group) |  |
-| todo | Analyze ▸ 3D Measure ▸ Measure 3D | `MEASURE3D` |
-| todo | Analyze ▸ Building Physics (group) |  |
-| todo | Analyze ▸ Building Physics ▸ More (menu) | Energy, daylight, acoustics, carbon and code checks |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Heat Loss | `HEATLOSS` |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ U-Value | `UVALUE` |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Daylight | `DAYLIGHT` |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Solar Radiation | `SOLARRADIATION` |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Sun Path | `SUNPATH` |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Isovist | `ISOVIST` |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Reverberation | `REVERB` |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Embodied Carbon | `CARBON` |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Level Areas | `LEVELAREAS` |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Code Check | `CODECHECK` |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Code Rules | `CODERULES` |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Standards Check | `STANDARDSCHECK` |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Validate IFC | `IFCVALIDATE` |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ IDS Check | `IDSCHECK` |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Calculator | `CAL` |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Measure Geometry | `MEASUREGEOM` |
-| todo | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Status | `STATUS` |
-| todo | Tab Collaborate | 4 groups |
-| todo | Collaborate ▸ Review (group) |  |
-| todo | Collaborate ▸ Review ▸ Markups | `MARKUP` |
-| todo | Collaborate ▸ Review ▸ Compare | `COMPARE` |
-| todo | Collaborate ▸ Review ▸ BCF Import | `BCFIN` |
-| todo | Collaborate ▸ Review ▸ BCF Export | `BCFOUT` |
-| todo | Collaborate ▸ Review ▸ Revision Stamp | `REVSTAMP` |
-| todo | Collaborate ▸ Versions & Issues (group) |  |
-| todo | Collaborate ▸ Versions & Issues ▸ Issue Tracker | `ISSUETRACKER` |
-| todo | Collaborate ▸ Versions & Issues ▸ Versions | `VERSIONS` |
-| todo | Collaborate ▸ Versions & Issues ▸ Merge Models | `MODELMERGE` |
-| todo | Collaborate ▸ Versions & Issues ▸ Office Standards | `STANDARDS` |
-| todo | Collaborate ▸ Versions & Issues ▸ Change Journal | `JOURNAL` |
-| todo | Collaborate ▸ Versions & Issues ▸ Recover File | `RECOVER` |
-| todo | Collaborate ▸ Versions & Issues ▸ Recovery Files | `RECOVERYFILES` |
-| todo | Collaborate ▸ Share (group) |  |
-| todo | Collaborate ▸ Share ▸ Share | `SHARE Both` |
-| todo | Collaborate ▸ Share ▸ eTransmit | `ETRANSMIT` |
-| todo | Collaborate ▸ Share ▸ Share… | `SHARE` |
-| todo | Collaborate ▸ Share ▸ Exchange Check | `EXCHANGECHECK` |
-| todo | Collaborate ▸ Share ▸ Batch Jobs | `BATCH` |
-| todo | Collaborate ▸ Share ▸ IFC Options | `IFCOPTIONS` |
-| todo | Collaborate ▸ Sheets (group) |  |
-| todo | Collaborate ▸ Sheets ▸ Revision Clouds | `REVCLOUDPANEL` |
-| todo | Tab View | 8 groups |
-| todo | View ▸ Workspace (group) |  |
-| todo | View ▸ Workspace ▸ 2D Plan | `@mode:2D` |
-| todo | View ▸ Workspace ▸ 3D Model | `@mode:3D` |
-| todo | View ▸ Workspace ▸ Split | `@mode:Split` |
-| todo | View ▸ Workspace ▸ Sheet | `@mode:Sheet` |
-| todo | View ▸ Navigate (group) |  |
-| todo | View ▸ Navigate ▸ Extents | `@zoom:extents` |
-| todo | View ▸ Navigate ▸ Window | `@zoom:window` |
-| todo | View ▸ Navigate ▸ Zoom In | `@zoom:in` |
-| todo | View ▸ Navigate ▸ Zoom Out | `@zoom:out` |
-| todo | View ▸ Visual Style (group) |  |
-| todo | View ▸ Visual Style ▸ {model.viewStyle} (menu) |  |
-| todo | View ▸ Visual Style ▸ {model.viewStyle} ▸ {VisualStyleDef.menuNames(model.doc)} |  |
-| todo | View ▸ Visual Style ▸ Applies to the 3D viewport (label) |  |
-| todo | View ▸ Views (group) |  |
-| todo | View ▸ Views ▸ Top | `TOPVIEW` |
-| todo | View ▸ Views ▸ Front | `FRONTVIEW` |
-| todo | View ▸ Views ▸ Right | `RIGHTVIEW` |
-| todo | View ▸ Views ▸ Back | `BACKVIEW` |
-| todo | View ▸ Views ▸ Left | `LEFTVIEW` |
-| todo | View ▸ Views ▸ Iso | `ISOVIEW` |
-| todo | View ▸ 3D Tools (group) |  |
-| todo | View ▸ 3D Tools ▸ Section Box | `SECTIONBOX` |
-| todo | View ▸ 3D Tools ▸ Sun Study | `SUNSTUDY` |
-| todo | View ▸ 3D Tools ▸ View Cube | `NAVVCUBE` |
-| todo | View ▸ 3D Tools ▸ Orbit Selection | `ORBITSELECTION` |
-| todo | View ▸ 3D Tools ▸ Save Camera | `SAVECAMERA` |
-| todo | View ▸ Presentation (group) |  |
-| todo | View ▸ Presentation ▸ Render | `RENDER` |
-| todo | View ▸ Presentation ▸ Walk | `WALK` |
-| todo | View ▸ Presentation ▸ Animate (menu) | Walkthrough path, sun study video, 360° panorama |
-| todo | View ▸ Presentation ▸ Animate ▸ Animation & Export ▸ Walkthrough Video | `WALKTHROUGHVIDEO` |
-| todo | View ▸ Presentation ▸ Animate ▸ Animation & Export ▸ Sun Study Video | `SUNSTUDYVIDEO` |
-| todo | View ▸ Presentation ▸ Animate ▸ Animation & Export ▸ 360° Panorama | `PANORAMA` |
-| todo | View ▸ Presentation ▸ Animate ▸ Animation & Export ▸ Section Plane | `SECTIONPLANE` |
-| todo | View ▸ Presentation ▸ Camera Paths | `CAMERAPATHEDIT` |
-| todo | View ▸ Presentation ▸ Render Queue | `RENDERQUEUE` |
-| todo | View ▸ Presentation ▸ Gizmo | `GIZMO3D` |
-| todo | View ▸ More (group) |  |
-| todo | View ▸ More ▸ View (menu) | Every view command |
-| todo | View ▸ More ▸ View ▸ View ▸ Zoom | `ZOOM` |
-| todo | View ▸ More ▸ View ▸ View ▸ Pan | `PAN` |
-| todo | View ▸ More ▸ View ▸ View ▸ Regenerate | `REGEN` |
-| todo | View ▸ More ▸ View ▸ View ▸ Named Views | `VIEW` |
-| todo | View ▸ More ▸ View ▸ View ▸ Layout | `LAYOUT` |
-| todo | View ▸ More ▸ View ▸ View ▸ Viewports | `MVIEW` |
-| todo | View ▸ More ▸ View ▸ View ▸ 2D Plan | `SHOW2D` |
-| todo | View ▸ More ▸ View ▸ View ▸ 3D Model | `SHOW3D` |
-| todo | View ▸ More ▸ View ▸ View ▸ Split View | `SPLIT` |
-| todo | View ▸ More ▸ View ▸ View ▸ Visual Style | `VSCURRENT` |
-| todo | View ▸ More ▸ View ▸ View ▸ Render | `RENDER` |
-| todo | View ▸ More ▸ View ▸ View ▸ Walk | `WALK` |
-| todo | View ▸ More ▸ View ▸ View ▸ View Cube | `NAVVCUBE` |
-| todo | View ▸ More ▸ View ▸ View ▸ Orbit Selection | `ORBITSELECTION` |
-| todo | View ▸ More ▸ View ▸ View ▸ Save Camera | `SAVECAMERA` |
-| todo | View ▸ More ▸ View ▸ View ▸ Cameras | `CAMERA` |
-| todo | View ▸ More ▸ View ▸ View ▸ Section Box | `SECTIONBOX` |
-| todo | View ▸ More ▸ View ▸ View ▸ Sun Study | `SUNSTUDY` |
-| todo | View ▸ More ▸ View ▸ View ▸ Top | `TOPVIEW` |
-| todo | View ▸ More ▸ View ▸ View ▸ Bottom | `BOTTOMVIEW` |
-| todo | View ▸ More ▸ View ▸ View ▸ Front | `FRONTVIEW` |
-| todo | View ▸ More ▸ View ▸ View ▸ Back | `BACKVIEW` |
-| todo | View ▸ More ▸ View ▸ View ▸ Left | `LEFTVIEW` |
-| todo | View ▸ More ▸ View ▸ View ▸ Right | `RIGHTVIEW` |
-| todo | View ▸ More ▸ View ▸ View ▸ SW Iso | `ISOVIEW` |
-| todo | View ▸ More ▸ View ▸ View ▸ SE Iso | `SEISO` |
-| todo | View ▸ More ▸ View ▸ View ▸ NE Iso | `NEISO` |
-| todo | View ▸ More ▸ View ▸ View ▸ NW Iso | `NWISO` |
-| todo | View ▸ More ▸ View ▸ View ▸ Workspace | `WSCURRENT` |
-| todo | View ▸ More ▸ View ▸ View ▸ Save Workspace | `WSSAVE` |
-| todo | View ▸ More ▸ View ▸ View ▸ Clean Screen On | `CLEANSCREENON` |
-| todo | View ▸ More ▸ View ▸ View ▸ Clean Screen Off | `CLEANSCREENOFF` |
-| todo | View ▸ More ▸ View ▸ View ▸ Float Panel | `FLOATPANEL` |
-| todo | View ▸ More ▸ View ▸ View ▸ History Panel | `HISTORYPANEL` |
-| todo | View ▸ More ▸ View ▸ View ▸ Tool Palettes | `TOOLPALETTES` |
-| todo | View ▸ More ▸ View ▸ View ▸ Close Tool Palettes | `TOOLPALETTESCLOSE` |
-| todo | View ▸ More ▸ View ▸ View ▸ Materials | `MATERIALS` |
-| todo | View ▸ More ▸ View ▸ View ▸ Material Library | `MATBROWSER` |
-| todo | View ▸ More ▸ View ▸ Views & Graphics ▸ Drafting View | `DRAFTINGVIEW` |
-| todo | View ▸ More ▸ View ▸ Views & Graphics ▸ Legend | `LEGEND` |
-| todo | View ▸ More ▸ View ▸ Views & Graphics ▸ View Graphics | `VIEWGRAPHICS` |
-| todo | View ▸ More ▸ View ▸ Views & Graphics ▸ View Templates | `VIEWTEMPLATE` |
-| todo | View ▸ Interface (group) |  |
-| todo | View ▸ Interface ▸ Workspace (menu) | Switch workspace (WSCURRENT) |
-| todo | View ▸ Interface ▸ Workspace ▸ {Workspaces.all} |  |
-| todo | View ▸ Interface ▸ Workspace ▸ Save Current Workspace… | `WSSAVE` |
-| todo | View ▸ Interface ▸ Clean Screen | `@cleanScreen` |
-| todo | Tab Output | 5 groups |
-| todo | Output ▸ Plot (group) |  |
-| todo | Output ▸ Plot ▸ Plot / Print | `PLOT` |
-| todo | Output ▸ Plot ▸ Preview | `PREVIEW` |
-| todo | Output ▸ Plot ▸ Print Setup | `PRINTSETUP` |
-| todo | Output ▸ Plot ▸ Page Setup | `PAGESETUP` |
-| todo | Output ▸ Plot ▸ Export PDF | `@export:pdf` |
-| todo | Output ▸ Plot ▸ Publish | `PUBLISH` |
-| todo | Output ▸ Sheets (group) |  |
-| todo | Output ▸ Sheets ▸ Title Block | `TITLEBLOCK` |
-| todo | Output ▸ Sheets ▸ Sheet Set | `@panel:Sheets` |
-| todo | Output ▸ Sheets ▸ View Titles | `VIEWTITLE {model.doc.layouts[li].name}` |
-| todo | Output ▸ Sheets ▸ Revision | `@panel:Sheets` |
-| todo | Output ▸ Sheets ▸ Sheet Index | `SHEETINDEX` |
-| todo | Output ▸ More (group) |  |
-| todo | Output ▸ More ▸ Output (menu) | Every output command, plot styles, batch publish |
-| todo | Output ▸ More ▸ Output ▸ Output ▸ Page Setup | `PAGESETUP` |
-| todo | Output ▸ More ▸ Output ▸ Output ▸ Plot Preview | `PREVIEW` |
-| todo | Output ▸ More ▸ Output ▸ Output ▸ Publish | `PUBLISH` |
-| todo | Output ▸ More ▸ Output ▸ Output ▸ Title Block | `TITLEBLOCK` |
-| todo | Output ▸ More ▸ Output ▸ Output ▸ Sheet Set | `SHEETSET` |
-| todo | Output ▸ More ▸ Output ▸ Output ▸ Sheet Index | `SHEETINDEX` |
-| todo | Output ▸ More ▸ Output ▸ Output ▸ Revision | `SHEETREVISION` |
-| todo | Output ▸ More ▸ Output ▸ Output ▸ Renumber Sheets | `SHEETRENUMBER` |
-| todo | Output ▸ More ▸ Output ▸ Output ▸ Editable View Titles | `SHEETVIEWTITLES` |
-| todo | Output ▸ More ▸ Output ▸ Output ▸ View Title | `VIEWTITLE` |
-| todo | Output ▸ More ▸ Output ▸ Output ▸ Lock Viewports | `VPLOCK` |
-| todo | Output ▸ More ▸ Output ▸ Plot Styles ▸ Plot Styles | `PLOTSTYLE` |
-| todo | Output ▸ More ▸ Output ▸ Plot Styles ▸ Batch Publish | `BATCHPUBLISH` |
-| todo | Output ▸ More ▸ Output ▸ Plot Styles ▸ Plot Log | `PLOTLOG` |
-| todo | Output ▸ Export (group) |  |
-| todo | Output ▸ Export ▸ DXF | `@export:dxf` |
-| todo | Output ▸ Export ▸ SVG | `@export:svg` |
-| todo | Output ▸ Export ▸ PNG | `@export:png` |
-| todo | Output ▸ Export ▸ OBJ | `@export:obj` |
-| todo | Output ▸ Export ▸ STL | `@export:stl` |
-| todo | Output ▸ Export ▸ GLB | `@export:glb` |
-| todo | Output ▸ Export ▸ IFC | `@export:ifc` |
-| todo | Output ▸ Schedules (group) |  |
+| done | Tab Home | 7 groups |
+| done | Home ▸ Draw (group) |  |
+| done | Home ▸ Draw ▸ Line | `LINE` |
+| done | Home ▸ Draw ▸ Polyline | `PLINE` |
+| done | Home ▸ Draw ▸ Circle | `CIRCLE` |
+| done | Home ▸ Draw ▸ Arc | `ARC` |
+| done | Home ▸ Draw ▸ Rectangle | `RECTANG` |
+| done | Home ▸ Draw ▸ Polygon | `POLYGON` |
+| done | Home ▸ Draw ▸ Ellipse | `ELLIPSE` |
+| done | Home ▸ Draw ▸ Spline | `SPLINE` |
+| done | Home ▸ Draw ▸ Hatch | `HATCH` |
+| done | Home ▸ Modify (group) |  |
+| done | Home ▸ Modify ▸ Move | `MOVE` |
+| done | Home ▸ Modify ▸ Copy | `COPY` |
+| done | Home ▸ Modify ▸ Rotate | `ROTATE` |
+| done | Home ▸ Modify ▸ Mirror | `MIRROR` |
+| done | Home ▸ Modify ▸ Scale | `SCALE` |
+| done | Home ▸ Modify ▸ Stretch | `STRETCH` |
+| done | Home ▸ Modify ▸ Trim | `TRIM` |
+| done | Home ▸ Modify ▸ Extend | `EXTEND` |
+| done | Home ▸ Modify ▸ Offset | `OFFSET` |
+| done | Home ▸ Modify ▸ Fillet | `FILLET` |
+| done | Home ▸ Modify ▸ Chamfer | `CHAMFER` |
+| done | Home ▸ Modify ▸ Array | `ARRAY` |
+| done | Home ▸ Modify ▸ Explode | `EXPLODE` |
+| done | Home ▸ Modify ▸ Erase | `ERASE` |
+| done | Home ▸ Modify ▸ Join | `JOIN` |
+| done | Home ▸ Modify ▸ Break | `BREAK` |
+| done | Home ▸ Layers (group) |  |
+| done | Home ▸ Layers ▸ Layer (dropdown) |  |
+| done | Home ▸ Layers ▸ Layer Properties | `@panel:Layers` |
+| done | Home ▸ Layers ▸ States | `LAYERSTATE` |
+| done | Home ▸ Properties (group) |  |
+| done | Home ▸ Properties ▸ Color (dropdown) |  |
+| done | Home ▸ Properties ▸ Linetype (dropdown) |  |
+| done | Home ▸ Properties ▸ Lineweight (dropdown) |  |
+| done | Home ▸ Selection (group) |  |
+| done | Home ▸ Selection ▸ Select All | `@selectAll` |
+| done | Home ▸ Selection ▸ Quick Select | `QSELECTDIALOG` |
+| done | Home ▸ Selection ▸ Match Props | `MATCHPROP` |
+| done | Home ▸ Selection ▸ Similar | `SELECTSIMILAR` |
+| done | Home ▸ Selection ▸ Properties | `@panel:Properties` |
+| done | Home ▸ Selection ▸ More (menu) | Selection tools: QSELECT, invert, by layer/type, chain, filter, named sets |
+| done | Home ▸ Selection ▸ More ▸ Quick Select | `QSELECT` |
+| done | Home ▸ Selection ▸ More ▸ Select Similar | `SELECTSIMILAR` |
+| done | Home ▸ Selection ▸ More ▸ Invert | `SELECTINVERT` |
+| done | Home ▸ Selection ▸ More ▸ By Layer | `SELECTLAYER` |
+| done | Home ▸ Selection ▸ More ▸ By Type | `SELECTTYPE` |
+| done | Home ▸ Selection ▸ More ▸ Chain | `SELECTCHAIN` |
+| done | Home ▸ Selection ▸ More ▸ Intersecting | `SELECTINTERSECTING` |
+| done | Home ▸ Selection ▸ More ▸ Filter | `FILTER` |
+| done | Home ▸ Selection ▸ More ▸ Named Sets | `SELSET` |
+| done | Home ▸ Groups (group) |  |
+| done | Home ▸ Groups ▸ Group | `GROUP` |
+| done | Home ▸ Groups ▸ Ungroup | `UNGROUP` |
+| done | Home ▸ Groups ▸ Isolate | `ISOLATEOBJECTS` |
+| done | Home ▸ Groups ▸ Hide | `HIDEOBJECTS` |
+| done | Home ▸ Groups ▸ End Isolation | `UNISOLATEOBJECTS` |
+| done | Home ▸ More (group) |  |
+| done | Home ▸ More ▸ Draw (menu) | More drawing and construction tools |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Ray | `RAY` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Construction Line | `XLINE` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Point | `POINT` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Point Style | `PTYPE` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Donut | `DONUT` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Region | `REGION` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Boundary | `BOUNDARY` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Revision Cloud | `REVCLOUD` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Wipeout | `WIPEOUT` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Sketch | `SKETCH` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Multiline | `MLINE` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Multiline Style | `MLSTYLE` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Double Line | `DLINE` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ 2D Solid | `SOLID` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Star | `STAR` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Polygon by Side | `POLYGONSS` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Snake Line | `SNAKE` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Parabola | `PARABOLA` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Hyperbola | `HYPERBOLA` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Centerline | `CENTERLINE` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Center Mark | `CENTERMARK` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Bounding Box | `BOUNDINGBOX` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Point Lattice | `POINTLATTICE` |
+| done | Home ▸ More ▸ Draw ▸ Draw More ▸ Points on Line | `POINTSLINE` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Parallel Line | `LINEPAR` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Perpendicular Line | `LINEPERP` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Line at Angle | `LINEANG` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Bisector | `LINEBISECT` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Horizontal/Vertical | `LINEHV` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Relative Line | `LINEREL` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Tangent Line | `LINETAN` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Tangent to 2 Circles | `LINETAN2` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Tangent Ortho | `LINETANORTHO` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Circle 2 Points + R | `CIRCLE2PR` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Circle Tan-Pt-Pt | `CIRCLETPP` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Circle Tan-Tan-Pt | `CIRCLETTP` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Circle Tan-Tan-Tan | `CIRCLETTT` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Incircle | `INCIRCLE` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Arc 2 Pts + Height | `ARC2PH` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Arc 2 Pts + Length | `ARC2PL` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Arc to Circle | `ARCTOCIRCLE` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Ellipse 4 Points | `ELLIPSE4P` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Ellipse Center 3P | `ELLIPSEC3P` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Ellipse by Foci | `ELLIPSEFOCI` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Multiple Offset | `OFFSETMULTI` |
+| done | Home ▸ More ▸ Draw ▸ Construction ▸ Cut by Line | `CUTBYLINE` |
+| done | Home ▸ More ▸ Modify (menu) | More modify, clipboard and selection tools |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Align | `ALIGN` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Align to Reference | `ALIGNREF` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Path Array | `ARRAYPATH` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Polar Array | `ARRAYPOLAR` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Break All | `BREAKALL` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Break at Point | `BREAKATPOINT` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Change Properties | `CHPROP` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Clip Polyline | `CLIPPOLY` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Convert to Polyline | `CONVERTTOPLINE` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Divide | `DIVIDE` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Measure | `MEASURE` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Draw Order | `DRAWORDER` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Text to Front | `TEXTTOFRONT` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Hatch to Back | `HATCHTOBACK` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Extend By | `EXTENDBY` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Lengthen | `LENGTHEN` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Line Gap | `LINEGAP` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Move + Rotate | `MOVEROTATE` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Rotate by Reference | `ROTATE2` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Nudge | `NUDGE` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Oops (Restore Erased) | `OOPS` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Overkill | `OVERKILL` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Edit Polyline | `PEDIT` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Polyline to Spline | `PLINETOSPLINE` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Reverse | `REVERSE` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Weld | `WELD` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Set ByLayer | `SETBYLAYER` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Paste to Points | `PASTETOPOINTS` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Region Union | `REGIONUNION` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Region Subtract | `REGIONSUBTRACT` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Region Intersect | `REGIONINTERSECT` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Edit Hatch | `HATCHEDIT` |
+| done | Home ▸ More ▸ Modify ▸ Modify More ▸ Hatch Boundary | `HATCHGENERATEBOUNDARY` |
+| done | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Copy | `COPYCLIP` |
+| done | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Cut | `CUTCLIP` |
+| done | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Copy with Base Point | `COPYBASE` |
+| done | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Paste | `PASTECLIP` |
+| done | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Paste as Block | `PASTEBLOCK` |
+| done | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Undo | `UNDO` |
+| done | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Redo | `REDO` |
+| done | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Select | `SELECT` |
+| done | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Select All | `SELECTALL` |
+| done | Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Quick Select… | `QSELECTDIALOG` |
+| done | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Match Properties | `MATCHPROP` |
+| done | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Blend Curves | `BLEND` |
+| done | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Ellipse in Parallelogram | `ELLIPSEQUAD` |
+| done | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Gradient | `GRADIENT` |
+| done | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Trace | `TRACE` |
+| done | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Flatten | `FLATTEN` |
+| done | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Hatch Origin | `HATCHSETORIGIN` |
+| done | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Rotate 90° | `ROTATE90` |
+| done | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Edit Spline | `SPLINEDIT` |
+| done | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Explode Text | `TXTEXP` |
+| done | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Change Space | `CHSPACE` |
+| done | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Deselect | `DESELECT` |
+| done | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Select Previous | `SELECTPREVIOUS` |
+| done | Home ▸ More ▸ Modify ▸ Drafting Extras ▸ Select Instances | `SELECTINSTANCES` |
+| done | Home ▸ More ▸ Layers (menu) | Layer tools (LAYISO, LAYFRZ, LAYMRG…) |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Layer Properties | `LAYER` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Layer States | `LAYERSTATE` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Layer Filter | `LAYERFILTER` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Layer Filter (cmd) | `LAYFILTER` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Change to Current | `LAYCUR` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Make Current | `LAYMCUR` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Delete Layer | `LAYDEL` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Merge Layers | `LAYMRG` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Freeze | `LAYFRZ` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Thaw All | `LAYTHW` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Off | `LAYOFF` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ All On | `LAYON` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Isolate | `LAYISO` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Unisolate | `LAYUNISO` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Lock | `LAYLCK` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Unlock | `LAYULK` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Layer Previous | `LAYERP` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Translate Layers | `LAYTRANS` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Layer Walk | `LAYWALK` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Viewport Layers | `VPLAYER` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Color | `COLOR` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Linetype | `LINETYPE` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Lineweight | `LWEIGHT` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Linetype Scale | `LTSCALE` |
+| done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Rename | `RENAME` |
+| partial | Tab Insert | 7 groups |
+| done | Insert ▸ Import (group) |  |
+| done | Insert ▸ Import ▸ Import File | `IMPORTFILE` |
+| done | Insert ▸ Import ▸ IFC | `IFCIMPORT` |
+| done | Insert ▸ Import ▸ SVG | `SVGIMPORT` |
+| done | Insert ▸ Import ▸ Mesh (OBJ/STL) | `MESHIMPORT` |
+| done | Insert ▸ Import ▸ GeoJSON | `GEOJSONIMPORT` |
+| done | Insert ▸ Import ▸ Points (CSV) | `POINTSIMPORT` |
+| done | Insert ▸ Block & Reference (group) |  |
+| done | Insert ▸ Block & Reference ▸ Insert Block | `INSERT` |
+| done | Insert ▸ Block & Reference ▸ Create Block | `BLOCK` |
+| done | Insert ▸ Block & Reference ▸ Xref | `XREF` |
+| done | Insert ▸ Block & Reference ▸ Image | `IMAGEATTACH` |
+| done | Insert ▸ Block & Reference ▸ Attribute | `ATTDEF` |
+| done | Insert ▸ Block & Reference ▸ Paste Special | `PASTEORIG` |
+| partial | Insert ▸ Content (group) |  |
+| done | Insert ▸ Content ▸ Tool Palettes | `@panel:Tools` |
+| done | Insert ▸ Content ▸ Materials | `MATBROWSER` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component (menu) | Components are not available in this build / Place furniture and fixtures |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Chair | `{r} Chair` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Table | `{r} Table` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Desk | `{r} Desk` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Sofa | `{r} Sofa` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Bed | `{r} Bed` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Wardrobe | `{r} Wardrobe` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Kitchen | `{r} Kitchen` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Sink | `{r} Sink` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ WC | `{r} WC` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Bath | `{r} Bath` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Car | `{r} Car` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Component… | `{r}` |
+| done | Insert ▸ Export (group) |  |
+| done | Insert ▸ Export ▸ GeoJSON | `GEOJSONEXPORT` |
+| done | Insert ▸ Export ▸ Points | `POINTSEXPORT` |
+| done | Insert ▸ Export ▸ 3MF | `EXPORT3MF` |
+| done | Insert ▸ Export ▸ USDZ | `USDEXPORT` |
+| done | Insert ▸ Export ▸ DXF R12 | `DXFR12OUT` |
+| partial | Insert ▸ More (group) |  |
+| partial | Insert ▸ More ▸ Blocks (menu) | Block and attribute tools |
+| partial: runs the command-line BLOCKLIBRARY instead of opening the Block Library window | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Block Library | `BLOCKLIBRARY` |
+| done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Write Block | `WBLOCK` |
+| done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Drawing Base | `BASE` |
+| done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Block Base Point | `BLOCKBASE` |
+| done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Replace Block | `BLOCKREPLACE` |
+| done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Count Blocks | `BCOUNT` |
+| done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Flip Block | `BFLIP` |
+| done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Visibility State | `BVSTATE` |
+| done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Edit Attributes | `ATTEDIT` |
+| done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Sync Attributes | `ATTSYNC` |
+| done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Attribute Manager | `BATTMAN` |
+| done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Extract Attributes | `ATTEXT` |
+| done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Data Extraction | `DATAEXTRACTION` |
+| done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Bind Xref | `XBIND` |
+| done | Insert ▸ More ▸ Blocks ▸ Dynamic Blocks ▸ Dynamic Parameter | `BPARAMETER` |
+| done | Insert ▸ More ▸ Blocks ▸ Dynamic Blocks ▸ Dynamic Value | `DYNPROP` |
+| done | Insert ▸ More ▸ Blocks ▸ Dynamic Blocks ▸ Reset Block | `RESETBLOCK` |
+| partial | Insert ▸ More ▸ Exchange (menu) | More import/export formats and file commands |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ DWG In | `DWGIN` |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ DWG Converter | `DWGCONVERTER` |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ STEP In | `STEPIN` |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ Shapefile | `SHPIMPORT` |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ OpenStreetMap | `OSMIMPORT` |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ CityJSON | `CITYJSONIMPORT` |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ Point Cloud | `POINTCLOUDIMPORT` |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ Excel In | `XLSXIN` |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ DWG Out | `DWGOUT` |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ STEP Out | `STEPOUT` |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ Collada | `DAEOUT` |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ PLY | `PLYOUT` |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ gbXML | `GBXMLOUT` |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ COBie | `COBIEOUT` |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ IFC ZIP | `IFCZIPOUT` |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ HPGL | `HPGLOUT` |
+| done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ Excel Out | `XLSXOUT` |
+| done | Insert ▸ More ▸ Exchange ▸ File ▸ New | `NEW` |
+| done | Insert ▸ More ▸ Exchange ▸ File ▸ Open | `OPEN` |
+| done | Insert ▸ More ▸ Exchange ▸ File ▸ Save | `SAVE` |
+| done | Insert ▸ More ▸ Exchange ▸ File ▸ Save As | `SAVEAS` |
+| done | Insert ▸ More ▸ Exchange ▸ File ▸ Close | `CLOSE` |
+| done | Insert ▸ More ▸ Exchange ▸ File ▸ Import | `IMPORT` |
+| done | Insert ▸ More ▸ Exchange ▸ File ▸ Export | `EXPORT` |
+| done | Insert ▸ More ▸ Exchange ▸ File ▸ Plot | `PLOT` |
+| todo: command DRAWINGRECOVERY is not registered in archi-engine | Insert ▸ More ▸ Exchange ▸ File ▸ Drawing Recovery | `DRAWINGRECOVERY` |
+| done | Insert ▸ More ▸ Exchange ▸ File ▸ Run Script | `SCRIPT` |
+| done | Insert ▸ More ▸ Exchange ▸ File ▸ Script Text | `SCRIPTTEXT` |
+| done | Insert ▸ More ▸ Exchange ▸ File ▸ Quit | `QUIT` |
+| done | Insert ▸ Images & Geo (group) |  |
+| done | Insert ▸ Images & Geo ▸ Import Image | `IMAGEIMPORT` |
+| done | Insert ▸ Images & Geo ▸ Scale Image | `IMAGESCALE` |
+| done | Insert ▸ Images & Geo ▸ KML / KMZ Out | `KMLOUT` |
+| done | Insert ▸ Images & Geo ▸ Layered SVG Out | `SVGLAYERSOUT` |
+| done | Insert ▸ Images & Geo ▸ Load .pat Patterns | `PATLOAD` |
+| done | Insert ▸ Library (group) |  |
+| done | Insert ▸ Library ▸ Block Library | `BLOCKLIBRARY` |
+| partial | Tab Annotate | 6 groups |
+| done | Annotate ▸ Text (group) |  |
+| done | Annotate ▸ Text ▸ Text | `TEXT` |
+| done | Annotate ▸ Text ▸ MText | `MTEXT` |
+| done | Annotate ▸ Dimensions (group) |  |
+| done | Annotate ▸ Dimensions ▸ Linear | `DIMLINEAR` |
+| done | Annotate ▸ Dimensions ▸ Aligned | `DIMALIGNED` |
+| done | Annotate ▸ Dimensions ▸ Angular | `DIMANGULAR` |
+| done | Annotate ▸ Dimensions ▸ Radius | `DIMRADIUS` |
+| done | Annotate ▸ Dimensions ▸ Diameter | `DIMDIAMETER` |
+| done | Annotate ▸ Leaders & Tables (group) |  |
+| done | Annotate ▸ Leaders & Tables ▸ Leader | `LEADER` |
+| done | Annotate ▸ Leaders & Tables ▸ Table | `TABLE` |
+| partial | Annotate ▸ More (group) |  |
+| done | Annotate ▸ More ▸ Dims (menu) | Baseline, continue, ordinate, QDIM, dimension editing |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Smart Dimension | `DIM` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Quick Dimension | `QDIM` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Baseline | `DIMBASELINE` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Continue | `DIMCONTINUE` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Arc Length | `DIMARC` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Ordinate | `DIMORDINATE` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Dimension Break | `DIMBREAK` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Dimension Space | `DIMSPACE` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Edit Dimension | `DIMEDIT` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Move Dim Text | `DIMTEDIT` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Dim Override | `DIMOVERRIDE` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Reassociate | `DIMREASSOCIATE` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Disassociate | `DIMDISASSOCIATE` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Regenerate Dims | `DIMREGEN` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Dimension Style | `DIMSTYLE` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Tolerance | `TOLERANCE` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Dimension Walls | `AUTODIMWALLS` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Spot Elevation | `SPOTELEV` |
+| done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Spot Slope | `SPOTSLOPE` |
+| partial | Annotate ▸ More ▸ Text (menu) | Text editing, spelling, fields, tables, symbols |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Edit Text | `TEXTEDIT` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Text Style | `TEXTSTYLE` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Find & Replace | `FIND` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Spelling | `SPELL` |
+| todo: command SPELLDIALOG is not registered in archi-engine | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Spelling Dialog | `SPELLDIALOG` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Field | `FIELD` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Update Fields | `UPDATEFIELD` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Justify Text | `JUSTIFYTEXT` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Scale Text | `SCALETEXT` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Text to MText | `TXT2MTXT` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Readable Text | `TEXTREADABLE` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Arc Text | `ARCTEXT` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Annotative | `ANNOTATIVE` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Scale List | `SCALELISTEDIT` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Leader Style | `MLEADERSTYLE` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Align Leaders | `MLEADERALIGN` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Collect Leaders | `MLEADERCOLLECT` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Edit Table | `TABLEEDIT` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Export Table | `TABLEEXPORT` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Link Table | `TABLELINK` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Update Data Links | `DATALINKUPDATE` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ North Arrow | `NORTHARROW` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Scale Bar | `SCALEBAR` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Break Line | `BREAKLINE` |
+| done | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Jogged Radius | `DIMJOGGED` |
+| done | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Jog Line | `DIMJOGLINE` |
+| done | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Ordinate Datum | `DIMREBASE` |
+| done | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Grid Dimensions | `AUTODIMGRIDS` |
+| done | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Object Scale | `OBJECTSCALE` |
+| done | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Spot Coordinate | `SPOTCOORD` |
+| done | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Text Frame | `TEXTFRAME` |
+| done | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Text Mask | `TEXTMASK` |
+| done | Annotate ▸ More ▸ Text ▸ Annotation Extras ▸ Remove Text Mask | `TEXTUNMASK` |
+| done | Annotate ▸ Parametric (group) |  |
+| done | Annotate ▸ Parametric ▸ Constrain (menu) | Geometric and dimensional constraints |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Geometric | `GEOMCONSTRAINT` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Auto Constrain | `AUTOCONSTRAIN` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Dimensional | `DIMCONSTRAINT` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Convert Dims | `DCCONVERT` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Parameters | `PARAMETERS` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ List Constraints | `CONSTRAINTLIST` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Delete Constraints | `DELCONSTRAINT` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Coincident | `GCCOINCIDENT` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Horizontal | `GCHORIZONTAL` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Vertical | `GCVERTICAL` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Parallel | `GCPARALLEL` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Perpendicular | `GCPERPENDICULAR` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Collinear | `GCCOLLINEAR` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Equal | `GCEQUAL` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Fix | `GCFIX` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Concentric | `GCCONCENTRIC` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Tangent | `GCTANGENT` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Symmetric | `GCSYMMETRIC` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Midpoint | `GCMIDPOINT` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Point on Curve | `GCPOINTONCURVE` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Linear (dim) | `DCLINEAR` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Horizontal (dim) | `DCHORIZONTAL` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Vertical (dim) | `DCVERTICAL` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Aligned (dim) | `DCALIGNED` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Angular (dim) | `DCANGULAR` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Radius (dim) | `DCRADIUS` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Diameter (dim) | `DCDIAMETER` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Ratio (dim) | `DCRATIO` |
+| done | Annotate ▸ Parametric ▸ Constrain ▸ Parametric ▸ Difference (dim) | `DCDIFFERENCE` |
+| done | Annotate ▸ Parametric ▸ Show Constraints | `CONSTRAINTBAR Toggle` |
+| done | Annotate ▸ Style (group) |  |
+| done | Annotate ▸ Style ▸ Dimension style (label) |  |
+| done | Annotate ▸ Style ▸ {model.doc.currentDimStyle} (menu) |  |
+| done | Annotate ▸ Style ▸ {model.doc.currentDimStyle} ▸ {model.doc.dimStyles} |  |
+| done | Annotate ▸ Style ▸ Text height: {fmt(model.editor.settings.textHeight, 2)} (label) |  |
+| partial | Tab Architecture | 7 groups |
+| done | Architecture ▸ Build (group) |  |
+| done | Architecture ▸ Build ▸ Wall | `WALL` |
+| done | Architecture ▸ Build ▸ Door | `DOOR` |
+| done | Architecture ▸ Build ▸ Window | `WINDOW` |
+| done | Architecture ▸ Build ▸ Opening | `OPENING` |
+| done | Architecture ▸ Build ▸ Curtain Wall | `CURTAINWALL` |
+| done | Architecture ▸ Build ▸ Column | `COLUMN` |
+| done | Architecture ▸ Build ▸ Beam | `BEAM` |
+| done | Architecture ▸ Build ▸ Slab | `SLAB` |
+| done | Architecture ▸ Build ▸ Roof | `ROOF` |
+| done | Architecture ▸ Build ▸ Ceiling | `CEILING` |
+| done | Architecture ▸ Build ▸ Stair | `STAIR` |
+| done | Architecture ▸ Build ▸ Railing | `RAILING` |
+| done | Architecture ▸ Build+ (group) |  |
+| done | Architecture ▸ Build+ ▸ Ramp | `RAMP` |
+| done | Architecture ▸ Build+ ▸ Foundation | `FOUNDATION` |
+| done | Architecture ▸ Build+ ▸ Slab Slope | `SLABSLOPE` |
+| done | Architecture ▸ Build+ ▸ Curtain Grid | `CWGRID` |
+| done | Architecture ▸ Build+ ▸ Niche | `NICHE` |
+| done | Architecture ▸ Build+ ▸ Wall Sweep | `WALLSWEEP` |
+| done | Architecture ▸ Room & Area (group) |  |
+| done | Architecture ▸ Room & Area ▸ Room | `ROOM` |
+| done | Architecture ▸ Room & Area ▸ Grid | `GRID` |
+| done | Architecture ▸ Room & Area ▸ Room Separator | `ROOMSEPARATOR` |
+| done | Architecture ▸ Room & Area ▸ Update Rooms | `ROOMUPDATE` |
+| done | Architecture ▸ Room & Area ▸ Area Plan | `AREAPLAN` |
+| done | Architecture ▸ Room & Area ▸ Room Bounding | `ROOMBOUNDING` |
+| done | Architecture ▸ Documentation (group) |  |
+| done | Architecture ▸ Documentation ▸ Tag | `TAG` |
+| done | Architecture ▸ Documentation ▸ Tag All | `TAGALL` |
+| done | Architecture ▸ Documentation ▸ Keynote | `KEYNOTE` |
+| done | Architecture ▸ Documentation ▸ Marks | `MARKS` |
+| done | Architecture ▸ Documentation ▸ Section | `SECTION` |
+| done | Architecture ▸ Documentation ▸ Draw View | `VIEWDRAW` |
+| done | Architecture ▸ Documentation ▸ Update Views | `VIEWUPDATE` |
+| done | Architecture ▸ Documentation ▸ Interior Elev. | `INTERIORELEV` |
+| done | Architecture ▸ Documentation ▸ Callout | `CALLOUT` |
+| done | Architecture ▸ Documentation ▸ More (menu) | More BIM tools |
+| done | Architecture ▸ Documentation ▸ More ▸ Phase | `PHASE` |
+| done | Architecture ▸ Documentation ▸ More ▸ 3D Datums | `DATUMS3D` |
+| done | Architecture ▸ Documentation ▸ More ▸ Wall Attach | `WALLATTACH` |
+| done | Architecture ▸ Documentation ▸ More ▸ Walls by Lines | `WALLBYLINES` |
+| done | Architecture ▸ Documentation ▸ More ▸ Wall Join | `WALLJOIN` |
+| done | Architecture ▸ Documentation ▸ More ▸ Wall Top | `WALLTOP` |
+| done | Architecture ▸ Documentation ▸ More ▸ Opening Types | `OPENINGTYPE` |
+| done | Architecture ▸ Documentation ▸ More ▸ Copy to Level | `COPYTOLEVEL` |
+| done | Architecture ▸ Documentation ▸ More ▸ Stair Check | `STAIRCHECK` |
+| partial | Architecture ▸ Model (group) |  |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component (menu) | Components are not available in this build / Place furniture and fixtures |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Chair | `{r} Chair` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Table | `{r} Table` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Desk | `{r} Desk` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Sofa | `{r} Sofa` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Bed | `{r} Bed` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Wardrobe | `{r} Wardrobe` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Kitchen | `{r} Kitchen` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Sink | `{r} Sink` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ WC | `{r} WC` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Bath | `{r} Bath` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Car | `{r} Car` |
+| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Component… | `{r}` |
+| done | Architecture ▸ Model ▸ Quick Building | `BUILDING` |
+| partial | Architecture ▸ More (group) |  |
+| partial | Architecture ▸ More ▸ Systems (menu) | BIM data, structure, MEP and site tools |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Level | `LEVEL` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Schedule | `SCHEDULE` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Set Property | `SETPROP` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Properties | `PROPERTIES` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Color Fill Plan | `COLORFILL` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Room Finishes | `ROOMFINISH` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Opening Parts | `OPENINGPARTS` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Reflected Ceiling | `RCP` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Design Options | `DESIGNOPTION` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Worksets | `WORKSET` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Area Scheme | `AREASCHEME` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Update Associative | `BIMUPDATE` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Dormer | `DORMER` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Elevator | `ELEVATOR` |
+| partial: runs the command-line FAMILY instead of opening the Family Editor window | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Family Editor | `FAMILY` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Floor Finish | `FLOORFINISH` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Model Group | `MODELGROUP` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Opening Trim | `OPENINGTRIM` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Profiles | `PROFILE` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Railing Type | `RAILINGTYPE` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Roof Edge | `ROOFEDGE` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Shaft | `SHAFT` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Skylight | `SKYLIGHT` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Slab Opening | `SLABOPENING` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Slab / Roof Type | `SLABTYPE` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Wall Join | `WALLJOINEDIT` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Wall Wrap | `WALLWRAP` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Light Data | `LIGHTDATA` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ MEP Systems | `MEPSYSTEM` |
+| done | Architecture ▸ More ▸ Systems ▸ Structure ▸ Beam System | `BEAMSYSTEM` |
+| done | Architecture ▸ More ▸ Systems ▸ Structure ▸ Brace | `BRACE` |
+| done | Architecture ▸ More ▸ Systems ▸ Structure ▸ Truss | `TRUSS` |
+| done | Architecture ▸ More ▸ Systems ▸ Structure ▸ Steel Profile | `STEELPROFILE` |
+| done | Architecture ▸ More ▸ Systems ▸ Structure ▸ Analytical Model | `ANALYTICALMODEL` |
+| done | Architecture ▸ More ▸ Systems ▸ Structure ▸ Frame Analysis | `FRAMEANALYSIS` |
+| done | Architecture ▸ More ▸ Systems ▸ MEP ▸ Duct | `DUCT` |
+| done | Architecture ▸ More ▸ Systems ▸ MEP ▸ Pipe | `MEPPIPE` |
+| done | Architecture ▸ More ▸ Systems ▸ MEP ▸ Cable Tray | `CABLETRAY` |
+| done | Architecture ▸ More ▸ Systems ▸ MEP ▸ Conduit | `CONDUIT` |
+| done | Architecture ▸ More ▸ Systems ▸ MEP ▸ Connectors | `MEPCONNECTORS` |
+| done | Architecture ▸ More ▸ Systems ▸ Site ▸ Property Line | `PROPERTYLINE` |
+| done | Architecture ▸ More ▸ Systems ▸ Site ▸ Subregion | `SUBREGION` |
+| done | Architecture ▸ More ▸ Systems ▸ Site ▸ Site Path | `SITEPATH` |
+| done | Architecture ▸ More ▸ Systems ▸ Site ▸ Parking | `PARKINGLOT` |
+| done | Architecture ▸ More ▸ Systems ▸ Site ▸ Retaining Wall | `RETAININGWALL` |
+| done | Architecture ▸ More ▸ Systems ▸ Site ▸ Import DEM | `DEMIMPORT` |
+| done | Architecture ▸ Level (group) |  |
+| done | Architecture ▸ Level ▸ Level (dropdown) |  |
+| done | Architecture ▸ Level ▸ Levels | `@panel:Levels` |
+| done | Tab Modeling | 7 groups |
+| done | Modeling ▸ Solids (group) |  |
+| done | Modeling ▸ Solids ▸ Box | `BOX` |
+| done | Modeling ▸ Solids ▸ Extrude | `EXTRUDE` |
+| done | Modeling ▸ Solids ▸ Cylinder | `CYLINDER` |
+| done | Modeling ▸ Solids ▸ Cone | `CONE` |
+| done | Modeling ▸ Solids ▸ Sphere | `SPHERE` |
+| done | Modeling ▸ Solids ▸ Revolve | `REVOLVE` |
+| done | Modeling ▸ Solid Editing (group) |  |
+| done | Modeling ▸ Solid Editing ▸ Press/Pull | `PRESSPULL` |
+| done | Modeling ▸ Solid Editing ▸ Loft | `LOFT` |
+| done | Modeling ▸ Solid Editing ▸ Sweep | `SWEEP` |
+| done | Modeling ▸ Solid Editing ▸ Pipe | `PIPE` |
+| done | Modeling ▸ Solid Editing ▸ Shell | `SHELL` |
+| done | Modeling ▸ Solid Editing ▸ Smooth Mesh | `MESHSMOOTH` |
+| done | Modeling ▸ Booleans (group) |  |
+| done | Modeling ▸ Booleans ▸ Union | `UNION` |
+| done | Modeling ▸ Booleans ▸ Subtract | `SUBTRACT` |
+| done | Modeling ▸ Booleans ▸ Intersect | `INTERSECT` |
+| done | Modeling ▸ Booleans ▸ Slice | `SLICE` |
+| done | Modeling ▸ Booleans ▸ Interfere | `INTERFERE` |
+| done | Modeling ▸ 3D Operations (group) |  |
+| done | Modeling ▸ 3D Operations ▸ 3D Mirror | `MIRROR3D` |
+| done | Modeling ▸ 3D Operations ▸ 3D Rotate | `ROTATE3D` |
+| done | Modeling ▸ 3D Operations ▸ 3D Array | `3DARRAY` |
+| done | Modeling ▸ Site (group) |  |
+| done | Modeling ▸ Site ▸ Topography | `TOPO` |
+| done | Modeling ▸ Site ▸ Contours | `CONTOURS` |
+| done | Modeling ▸ Site ▸ Building Pad | `BUILDINGPAD` |
+| done | Modeling ▸ Surfaces (group) |  |
+| done | Modeling ▸ Surfaces ▸ Surfaces (menu) | Ruled, tabulated, revolved and edge surfaces; mesh repair |
+| done | Modeling ▸ Surfaces ▸ Surfaces ▸ Surfaces & Mesh ▸ Ruled Surface | `RULESURF` |
+| done | Modeling ▸ Surfaces ▸ Surfaces ▸ Surfaces & Mesh ▸ Tabulated Surface | `TABSURF` |
+| done | Modeling ▸ Surfaces ▸ Surfaces ▸ Surfaces & Mesh ▸ Revolved Surface | `REVSURF` |
+| done | Modeling ▸ Surfaces ▸ Surfaces ▸ Surfaces & Mesh ▸ Edge Surface | `EDGESURF` |
+| done | Modeling ▸ Surfaces ▸ Surfaces ▸ Surfaces & Mesh ▸ Fillet Edges | `FILLETEDGE` |
+| done | Modeling ▸ Surfaces ▸ Surfaces ▸ Surfaces & Mesh ▸ Chamfer Edges | `CHAMFEREDGE` |
+| done | Modeling ▸ Surfaces ▸ Surfaces ▸ Surfaces & Mesh ▸ Repair Mesh | `MESHREPAIR` |
+| done | Modeling ▸ Surfaces ▸ Surfaces ▸ Surfaces & Mesh ▸ Decimate Mesh | `MESHDECIMATE` |
+| done | Modeling ▸ Surfaces ▸ Surfaces ▸ Solid Features ▸ Press/Pull Face | `PRESSPULLFACE` |
+| done | Modeling ▸ Surfaces ▸ Surfaces ▸ Solid Features ▸ Section Solids | `SECTIONSOLIDS` |
+| done | Modeling ▸ Surfaces ▸ Surfaces ▸ Solid Features ▸ Record History | `SOLIDHIST` |
+| done | Modeling ▸ Surfaces ▸ Surfaces ▸ Solid Features ▸ Feature History | `SOLIDHISTORY` |
+| done | Modeling ▸ Visual Programming (group) |  |
+| done | Modeling ▸ Visual Programming ▸ Node Editor | `NODEEDITOR` |
+| done | Tab Analyze | 7 groups |
+| done | Analyze ▸ Inquiry (group) |  |
+| done | Analyze ▸ Inquiry ▸ Distance | `DIST` |
+| done | Analyze ▸ Inquiry ▸ Area | `AREA` |
+| done | Analyze ▸ Inquiry ▸ List | `LIST` |
+| done | Analyze ▸ Inquiry ▸ ID Point | `ID` |
+| done | Analyze ▸ Inquiry ▸ Mass Props | `MASSPROP` |
+| done | Analyze ▸ Inquiry ▸ Count | `COUNT` |
+| done | Analyze ▸ Quantities (group) |  |
+| done | Analyze ▸ Quantities ▸ Takeoff | `TAKEOFF` |
+| done | Analyze ▸ Quantities ▸ Cost Estimate | `COSTESTIMATE` |
+| done | Analyze ▸ Quantities ▸ Unit Prices | `UNITPRICE` |
+| done | Analyze ▸ Quantities ▸ Room Schedule | `ROOMSCHEDULE` |
+| done | Analyze ▸ Coordination (group) |  |
+| done | Analyze ▸ Coordination ▸ Clash Detect | `CLASHDETECT` |
+| done | Analyze ▸ Coordination ▸ Check Model | `CHECKMODEL` |
+| done | Analyze ▸ Coordination ▸ Sun Position | `SUNPOSITION` |
+| done | Analyze ▸ Checks (group) |  |
+| done | Analyze ▸ Checks ▸ Accessibility | `ACCESSIBILITY` |
+| done | Analyze ▸ Checks ▸ Egress | `EGRESS` |
+| done | Analyze ▸ Checks ▸ Energy Balance | `ENERGYBALANCE` |
+| done | Analyze ▸ Checks ▸ Bill of Quantities | `BOQ` |
+| done | Analyze ▸ Checks ▸ Takeoff by Phase | `TAKEOFFPHASE` |
+| done | Analyze ▸ Checks ▸ Lighting Schedule | `LIGHTSCHEDULE` |
+| done | Analyze ▸ Checks ▸ Fire Compartments | `FIRECOMPARTMENTS` |
+| done | Analyze ▸ Checks ▸ Load Takedown | `LOADTAKEDOWN` |
+| done | Analyze ▸ Checks ▸ Parking Check | `PARKINGCHECK` |
+| done | Analyze ▸ Checks ▸ Rainwater | `RAINWATER` |
+| done | Analyze ▸ Measure (group) |  |
+| done | Analyze ▸ Measure ▸ Angle Between | `ANGLEBETWEEN` |
+| done | Analyze ▸ Measure ▸ Distance to Object | `DISTTOOBJECT` |
+| done | Analyze ▸ Measure ▸ Point Inside? | `POINTINSIDE` |
+| done | Analyze ▸ Measure ▸ Total Length | `TLEN` |
+| done | Analyze ▸ 3D Measure (group) |  |
+| done | Analyze ▸ 3D Measure ▸ Measure 3D | `MEASURE3D` |
+| done | Analyze ▸ Building Physics (group) |  |
+| done | Analyze ▸ Building Physics ▸ More (menu) | Energy, daylight, acoustics, carbon and code checks |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Heat Loss | `HEATLOSS` |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ U-Value | `UVALUE` |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Daylight | `DAYLIGHT` |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Solar Radiation | `SOLARRADIATION` |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Sun Path | `SUNPATH` |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Isovist | `ISOVIST` |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Reverberation | `REVERB` |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Embodied Carbon | `CARBON` |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Level Areas | `LEVELAREAS` |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Code Check | `CODECHECK` |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Code Rules | `CODERULES` |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Standards Check | `STANDARDSCHECK` |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Validate IFC | `IFCVALIDATE` |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ IDS Check | `IDSCHECK` |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Calculator | `CAL` |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Measure Geometry | `MEASUREGEOM` |
+| done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Status | `STATUS` |
+| partial | Tab Collaborate | 4 groups |
+| done | Collaborate ▸ Review (group) |  |
+| done | Collaborate ▸ Review ▸ Markups | `MARKUP` |
+| done | Collaborate ▸ Review ▸ Compare | `COMPARE` |
+| done | Collaborate ▸ Review ▸ BCF Import | `BCFIN` |
+| done | Collaborate ▸ Review ▸ BCF Export | `BCFOUT` |
+| done | Collaborate ▸ Review ▸ Revision Stamp | `REVSTAMP` |
+| done | Collaborate ▸ Versions & Issues (group) |  |
+| done | Collaborate ▸ Versions & Issues ▸ Issue Tracker | `ISSUETRACKER` |
+| done | Collaborate ▸ Versions & Issues ▸ Versions | `VERSIONS` |
+| done | Collaborate ▸ Versions & Issues ▸ Merge Models | `MODELMERGE` |
+| done | Collaborate ▸ Versions & Issues ▸ Office Standards | `STANDARDS` |
+| done | Collaborate ▸ Versions & Issues ▸ Change Journal | `JOURNAL` |
+| done | Collaborate ▸ Versions & Issues ▸ Recover File | `RECOVER` |
+| done | Collaborate ▸ Versions & Issues ▸ Recovery Files | `RECOVERYFILES` |
+| partial | Collaborate ▸ Share (group) |  |
+| todo: command SHARE is not registered in archi-engine | Collaborate ▸ Share ▸ Share | `SHARE Both` |
+| done | Collaborate ▸ Share ▸ eTransmit | `ETRANSMIT` |
+| todo: command SHARE is not registered in archi-engine | Collaborate ▸ Share ▸ Share… | `SHARE` |
+| done | Collaborate ▸ Share ▸ Exchange Check | `EXCHANGECHECK` |
+| done | Collaborate ▸ Share ▸ Batch Jobs | `BATCH` |
+| done | Collaborate ▸ Share ▸ IFC Options | `IFCOPTIONS` |
+| done | Collaborate ▸ Sheets (group) |  |
+| done | Collaborate ▸ Sheets ▸ Revision Clouds | `REVCLOUDPANEL` |
+| partial | Tab View | 8 groups |
+| done | View ▸ Workspace (group) |  |
+| done | View ▸ Workspace ▸ 2D Plan | `@mode:2D` |
+| done | View ▸ Workspace ▸ 3D Model | `@mode:3D` |
+| done | View ▸ Workspace ▸ Split | `@mode:Split` |
+| done | View ▸ Workspace ▸ Sheet | `@mode:Sheet` |
+| done | View ▸ Navigate (group) |  |
+| done | View ▸ Navigate ▸ Extents | `@zoom:extents` |
+| done | View ▸ Navigate ▸ Window | `@zoom:window` |
+| done | View ▸ Navigate ▸ Zoom In | `@zoom:in` |
+| done | View ▸ Navigate ▸ Zoom Out | `@zoom:out` |
+| done | View ▸ Visual Style (group) |  |
+| done | View ▸ Visual Style ▸ {model.viewStyle} (menu) |  |
+| done | View ▸ Visual Style ▸ {model.viewStyle} ▸ {VisualStyleDef.menuNames(model.doc)} |  |
+| done | View ▸ Visual Style ▸ Applies to the 3D viewport (label) |  |
+| done | View ▸ Views (group) |  |
+| done | View ▸ Views ▸ Top | `TOPVIEW` |
+| done | View ▸ Views ▸ Front | `FRONTVIEW` |
+| done | View ▸ Views ▸ Right | `RIGHTVIEW` |
+| done | View ▸ Views ▸ Back | `BACKVIEW` |
+| done | View ▸ Views ▸ Left | `LEFTVIEW` |
+| done | View ▸ Views ▸ Iso | `ISOVIEW` |
+| partial | View ▸ 3D Tools (group) |  |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D Tools ▸ Section Box | `SECTIONBOX` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D Tools ▸ Sun Study | `SUNSTUDY` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D Tools ▸ View Cube | `NAVVCUBE` |
+| done | View ▸ 3D Tools ▸ Orbit Selection | `ORBITSELECTION` |
+| done | View ▸ 3D Tools ▸ Save Camera | `SAVECAMERA` |
+| done | View ▸ Presentation (group) |  |
+| done | View ▸ Presentation ▸ Render | `RENDER` |
+| done | View ▸ Presentation ▸ Walk | `WALK` |
+| done | View ▸ Presentation ▸ Animate (menu) | Walkthrough path, sun study video, 360° panorama |
+| done | View ▸ Presentation ▸ Animate ▸ Animation & Export ▸ Walkthrough Video | `WALKTHROUGHVIDEO` |
+| done | View ▸ Presentation ▸ Animate ▸ Animation & Export ▸ Sun Study Video | `SUNSTUDYVIDEO` |
+| done | View ▸ Presentation ▸ Animate ▸ Animation & Export ▸ 360° Panorama | `PANORAMA` |
+| done | View ▸ Presentation ▸ Animate ▸ Animation & Export ▸ Section Plane | `SECTIONPLANE` |
+| done | View ▸ Presentation ▸ Camera Paths | `CAMERAPATHEDIT` |
+| done | View ▸ Presentation ▸ Render Queue | `RENDERQUEUE` |
+| done | View ▸ Presentation ▸ Gizmo | `GIZMO3D` |
+| partial | View ▸ More (group) |  |
+| partial | View ▸ More ▸ View (menu) | Every view command |
+| done | View ▸ More ▸ View ▸ View ▸ Zoom | `ZOOM` |
+| done | View ▸ More ▸ View ▸ View ▸ Pan | `PAN` |
+| done | View ▸ More ▸ View ▸ View ▸ Regenerate | `REGEN` |
+| done | View ▸ More ▸ View ▸ View ▸ Named Views | `VIEW` |
+| done | View ▸ More ▸ View ▸ View ▸ Layout | `LAYOUT` |
+| done | View ▸ More ▸ View ▸ View ▸ Viewports | `MVIEW` |
+| done | View ▸ More ▸ View ▸ View ▸ 2D Plan | `SHOW2D` |
+| done | View ▸ More ▸ View ▸ View ▸ 3D Model | `SHOW3D` |
+| done | View ▸ More ▸ View ▸ View ▸ Split View | `SPLIT` |
+| done | View ▸ More ▸ View ▸ View ▸ Visual Style | `VSCURRENT` |
+| done | View ▸ More ▸ View ▸ View ▸ Render | `RENDER` |
+| done | View ▸ More ▸ View ▸ View ▸ Walk | `WALK` |
+| done | View ▸ More ▸ View ▸ View ▸ View Cube | `NAVVCUBE` |
+| done | View ▸ More ▸ View ▸ View ▸ Orbit Selection | `ORBITSELECTION` |
+| done | View ▸ More ▸ View ▸ View ▸ Save Camera | `SAVECAMERA` |
+| done | View ▸ More ▸ View ▸ View ▸ Cameras | `CAMERA` |
+| done | View ▸ More ▸ View ▸ View ▸ Section Box | `SECTIONBOX` |
+| done | View ▸ More ▸ View ▸ View ▸ Sun Study | `SUNSTUDY` |
+| done | View ▸ More ▸ View ▸ View ▸ Top | `TOPVIEW` |
+| done | View ▸ More ▸ View ▸ View ▸ Bottom | `BOTTOMVIEW` |
+| done | View ▸ More ▸ View ▸ View ▸ Front | `FRONTVIEW` |
+| done | View ▸ More ▸ View ▸ View ▸ Back | `BACKVIEW` |
+| done | View ▸ More ▸ View ▸ View ▸ Left | `LEFTVIEW` |
+| done | View ▸ More ▸ View ▸ View ▸ Right | `RIGHTVIEW` |
+| done | View ▸ More ▸ View ▸ View ▸ SW Iso | `ISOVIEW` |
+| done | View ▸ More ▸ View ▸ View ▸ SE Iso | `SEISO` |
+| done | View ▸ More ▸ View ▸ View ▸ NE Iso | `NEISO` |
+| done | View ▸ More ▸ View ▸ View ▸ NW Iso | `NWISO` |
+| done | View ▸ More ▸ View ▸ View ▸ Workspace | `WSCURRENT` |
+| done | View ▸ More ▸ View ▸ View ▸ Save Workspace | `WSSAVE` |
+| todo: the shell has the feature but CLEANSCREENON is not registered, so the entry is disabled (map it to the shell action) | View ▸ More ▸ View ▸ View ▸ Clean Screen On | `CLEANSCREENON` |
+| todo: the shell has the feature but CLEANSCREENOFF is not registered, so the entry is disabled (map it to the shell action) | View ▸ More ▸ View ▸ View ▸ Clean Screen Off | `CLEANSCREENOFF` |
+| todo: command FLOATPANEL is not registered in archi-engine | View ▸ More ▸ View ▸ View ▸ Float Panel | `FLOATPANEL` |
+| todo: the shell has the feature but HISTORYPANEL is not registered, so the entry is disabled (map it to the shell action) | View ▸ More ▸ View ▸ View ▸ History Panel | `HISTORYPANEL` |
+| done | View ▸ More ▸ View ▸ View ▸ Tool Palettes | `TOOLPALETTES` |
+| done | View ▸ More ▸ View ▸ View ▸ Close Tool Palettes | `TOOLPALETTESCLOSE` |
+| done | View ▸ More ▸ View ▸ View ▸ Materials | `MATERIALS` |
+| done | View ▸ More ▸ View ▸ View ▸ Material Library | `MATBROWSER` |
+| done | View ▸ More ▸ View ▸ Views & Graphics ▸ Drafting View | `DRAFTINGVIEW` |
+| done | View ▸ More ▸ View ▸ Views & Graphics ▸ Legend | `LEGEND` |
+| done | View ▸ More ▸ View ▸ Views & Graphics ▸ View Graphics | `VIEWGRAPHICS` |
+| done | View ▸ More ▸ View ▸ Views & Graphics ▸ View Templates | `VIEWTEMPLATE` |
+| done | View ▸ Interface (group) |  |
+| done | View ▸ Interface ▸ Workspace (menu) | Switch workspace (WSCURRENT) |
+| done | View ▸ Interface ▸ Workspace ▸ {Workspaces.all} |  |
+| done | View ▸ Interface ▸ Workspace ▸ Save Current Workspace… | `WSSAVE` |
+| done | View ▸ Interface ▸ Clean Screen | `@cleanScreen` |
+| partial | Tab Output | 5 groups |
+| done | Output ▸ Plot (group) |  |
+| done | Output ▸ Plot ▸ Plot / Print | `PLOT` |
+| done | Output ▸ Plot ▸ Preview | `PREVIEW` |
+| done | Output ▸ Plot ▸ Print Setup | `PRINTSETUP` |
+| done | Output ▸ Plot ▸ Page Setup | `PAGESETUP` |
+| done | Output ▸ Plot ▸ Export PDF | `@export:pdf` |
+| done | Output ▸ Plot ▸ Publish | `PUBLISH` |
+| done | Output ▸ Sheets (group) |  |
+| done | Output ▸ Sheets ▸ Title Block | `TITLEBLOCK` |
+| done | Output ▸ Sheets ▸ Sheet Set | `@panel:Sheets` |
+| done | Output ▸ Sheets ▸ View Titles | `VIEWTITLE {model.doc.layouts[li].name}` |
+| done | Output ▸ Sheets ▸ Revision | `@panel:Sheets` |
+| done | Output ▸ Sheets ▸ Sheet Index | `SHEETINDEX` |
+| partial | Output ▸ More (group) |  |
+| partial | Output ▸ More ▸ Output (menu) | Every output command, plot styles, batch publish |
+| done | Output ▸ More ▸ Output ▸ Output ▸ Page Setup | `PAGESETUP` |
+| done | Output ▸ More ▸ Output ▸ Output ▸ Plot Preview | `PREVIEW` |
+| done | Output ▸ More ▸ Output ▸ Output ▸ Publish | `PUBLISH` |
+| done | Output ▸ More ▸ Output ▸ Output ▸ Title Block | `TITLEBLOCK` |
+| done | Output ▸ More ▸ Output ▸ Output ▸ Sheet Set | `SHEETSET` |
+| done | Output ▸ More ▸ Output ▸ Output ▸ Sheet Index | `SHEETINDEX` |
+| done | Output ▸ More ▸ Output ▸ Output ▸ Revision | `SHEETREVISION` |
+| todo: command SHEETRENUMBER is not registered in archi-engine | Output ▸ More ▸ Output ▸ Output ▸ Renumber Sheets | `SHEETRENUMBER` |
+| todo: command SHEETVIEWTITLES is not registered in archi-engine | Output ▸ More ▸ Output ▸ Output ▸ Editable View Titles | `SHEETVIEWTITLES` |
+| done | Output ▸ More ▸ Output ▸ Output ▸ View Title | `VIEWTITLE` |
+| done | Output ▸ More ▸ Output ▸ Output ▸ Lock Viewports | `VPLOCK` |
+| done | Output ▸ More ▸ Output ▸ Plot Styles ▸ Plot Styles | `PLOTSTYLE` |
+| done | Output ▸ More ▸ Output ▸ Plot Styles ▸ Batch Publish | `BATCHPUBLISH` |
+| done | Output ▸ More ▸ Output ▸ Plot Styles ▸ Plot Log | `PLOTLOG` |
+| partial | Output ▸ Export (group) |  |
+| done | Output ▸ Export ▸ DXF | `@export:dxf` |
+| done | Output ▸ Export ▸ SVG | `@export:svg` |
+| todo: engine file.export has no PNG writer | Output ▸ Export ▸ PNG | `@export:png` |
+| done | Output ▸ Export ▸ OBJ | `@export:obj` |
+| done | Output ▸ Export ▸ STL | `@export:stl` |
+| done | Output ▸ Export ▸ GLB | `@export:glb` |
+| done | Output ▸ Export ▸ IFC | `@export:ifc` |
+| partial | Output ▸ Schedules (group) |  |
 | todo | Output ▸ Schedules ▸ CSV (menu) | Export schedules as CSV |
-| todo | Output ▸ Schedules ▸ CSV ▸ Walls schedule (CSV)… | `@export:csv:walls` |
-| todo | Output ▸ Schedules ▸ CSV ▸ Doors schedule (CSV)… | `@export:csv:doors` |
-| todo | Output ▸ Schedules ▸ CSV ▸ Windows schedule (CSV)… | `@export:csv:windows` |
-| todo | Output ▸ Schedules ▸ CSV ▸ Rooms schedule (CSV)… | `@export:csv:rooms` |
-| todo | Output ▸ Schedules ▸ CSV ▸ Slabs schedule (CSV)… | `@export:csv:slabs` |
-| todo | Output ▸ Schedules ▸ CSV ▸ All schedule (CSV)… | `@export:csv:all` |
-| todo | Output ▸ Schedules ▸ View | `SCHEDULE` |
-| todo | Tab Manage | 5 groups |
-| todo | Manage ▸ Panels (group) |  |
-| todo | Manage ▸ Panels ▸ Layers | `@panel:Layers` |
-| todo | Manage ▸ Panels ▸ Browser | `@panel:Browser` |
-| todo | Manage ▸ Panels ▸ Tools | `@panel:Tools` |
-| todo | Manage ▸ Panels ▸ Materials | `@panel:Materials` |
-| todo | Manage ▸ Settings (group) |  |
-| todo | Manage ▸ Settings ▸ Units | `UNITS` |
-| todo | Manage ▸ Settings ▸ Drafting | `DSETTINGS` |
-| todo | Manage ▸ Settings ▸ Options | `OPTIONS` |
-| todo | Manage ▸ History (group) |  |
-| todo | Manage ▸ History ▸ History | `@panel:History` |
-| todo | Manage ▸ Cleanup (group) |  |
-| todo | Manage ▸ Cleanup ▸ Purge | `PURGE` |
-| todo | Manage ▸ Cleanup ▸ Audit | `AUDIT` |
-| todo | Manage ▸ More (group) |  |
-| todo | Manage ▸ More ▸ Settings (menu) | Settings and system variables |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ Options | `OPTIONS` |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ Units | `UNITS` |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ Drafting Settings | `DSETTINGS` |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ Limits | `LIMITS` |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ Isometric Drafting | `ISODRAFT` |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ Isoplane | `ISOPLANE` |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ UCS | `UCS` |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ Named UCS | `UCSMAN` |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ Snap | `SNAP` |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ Grid | `GRIDDISPLAY` |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ Ortho | `ORTHO` |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ Object Snap | `OSNAP` |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ Cursor Size | `CURSORSIZE` |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ Autosave Interval | `SAVETIME` |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ System Variable | `SETVAR` |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ Audit | `AUDIT` |
-| todo | Manage ▸ More ▸ Settings ▸ Settings ▸ Purge | `PURGE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ AUTOCONSTRAINANGLE | `AUTOCONSTRAINANGLE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ AUTOCONSTRAINDIST | `AUTOCONSTRAINDIST` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ AUTOSNAP | `AUTOSNAP` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ CANNOSCALE | `CANNOSCALE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ CECOLOR | `CECOLOR` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ CELTYPE | `CELTYPE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ CELWEIGHT | `CELWEIGHT` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ CENTEREXE | `CENTEREXE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ CETRANSPARENCY | `CETRANSPARENCY` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ CHAMFERA | `CHAMFERA` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ CHAMFERB | `CHAMFERB` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ CLAYER | `CLAYER` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ CLEVEL | `CLEVEL` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ CONSTRAINTINFER | `CONSTRAINTINFER` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ DELOBJ | `DELOBJ` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ DIMDLI | `DIMDLI` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ DIMLAYER | `DIMLAYER` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ DIMSCALE | `DIMSCALE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ DIMSTYLE | `DIMSTYLE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ DYNMODE | `DYNMODE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ FILLETRAD | `FILLETRAD` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ GRIDMODE | `GRIDMODE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ GRIDUNIT | `GRIDUNIT` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ HPANG | `HPANG` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ HPNAME | `HPNAME` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ HPSCALE | `HPSCALE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ INSBASE | `INSBASE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ INSUNITS | `INSUNITS` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ LTSCALE | `LTSCALE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ LUPREC | `LUPREC` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ LWDISPLAY | `LWDISPLAY` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ MIRRTEXT | `MIRRTEXT` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ OFFSETDIST | `OFFSETDIST` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ ORTHOMODE | `ORTHOMODE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ OSMODE | `OSMODE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ OTRACK | `OTRACK` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ PDMODE | `PDMODE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ PDSIZE | `PDSIZE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ PICKSTYLE | `PICKSTYLE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ PLINEWID | `PLINEWID` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ PLOTTRANSPARENCY | `PLOTTRANSPARENCY` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ POLARANG | `POLARANG` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ POLARMODE | `POLARMODE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ SELECTSIMILARMODE | `SELECTSIMILARMODE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ SNAPMODE | `SNAPMODE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ SNAPUNIT | `SNAPUNIT` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ TEXTLAYER | `TEXTLAYER` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ TEXTSIZE | `TEXTSIZE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ TEXTSTYLE | `TEXTSTYLE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ TRANSPARENCYDISPLAY | `TRANSPARENCYDISPLAY` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ TRIMMODE | `TRIMMODE` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ WALLHEIGHT | `WALLHEIGHT` |
-| todo | Manage ▸ More ▸ Settings ▸ System Variables ▸ WALLTHICKNESS | `WALLTHICKNESS` |
-| todo | Manage ▸ More ▸ Tools (menu) | Action recorder, aliases, scripting, help |
-| todo | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Record Action | `ACTRECORD` |
-| todo | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Stop Recording | `ACTSTOP` |
-| todo | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Play Action | `ACTPLAY` |
-| todo | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Action Manager | `ACTMANAGER` |
-| todo | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Record Script | `SCRIPTRECORD` |
-| todo | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Aliases | `ALIAS` |
-| todo | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Command History | `HISTORY` |
-| todo | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Script Console | `SCRIPTCONSOLE` |
-| todo | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Script Library | `SCRIPTLIBRARY` |
-| todo | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Node Editor | `NODEEDITOR` |
-| todo | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Agent Settings | `AGENTSETTINGS` |
-| todo | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Connect Claude | `CONNECTCLAUDE` |
-| todo | Manage ▸ More ▸ Tools ▸ Help ▸ Help | `HELP` |
-| todo | Manage ▸ More ▸ Tools ▸ Help ▸ Command List | `COMMANDS` |
-| todo | Manage ▸ More ▸ Tools ▸ Help ▸ Search Commands | `COMMANDSEARCH` |
-| todo | Manage ▸ More ▸ Tools ▸ Help ▸ About | `ABOUT` |
-| todo | Manage ▸ More ▸ Tools ▸ Help ▸ Self Test | `APPSELFTEST` |
-| todo | Manage ▸ More ▸ Tools ▸ Help ▸ Export Command Reference | `EXPORTCOMMANDS` |
-| todo | Tab Script | 3 groups |
-| todo | Script ▸ Scripting (group) |  |
-| todo | Script ▸ Scripting ▸ JS Console | `@scriptConsole` |
-| todo | Script ▸ Scripting ▸ Run Script | `@runScript` |
-| todo | Script ▸ Scripting ▸ Library (menu) | Run a script from the library (startup.js runs in every new window) |
-| todo | Script ▸ Scripting ▸ Library ▸ No scripts in the library yet |  |
-| todo | Script ▸ Scripting ▸ Library ▸ {scripts} |  |
-| todo | Script ▸ Scripting ▸ Library ▸ Open Script Library Folder | `@ui:ScriptLibrary.revealFolder` |
-| todo | Script ▸ Automation (group) |  |
-| todo | Script ▸ Automation ▸ Tools (menu) | Action recorder, script recorder, aliases, macros |
-| todo | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Record Action | `ACTRECORD` |
-| todo | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Stop Recording | `ACTSTOP` |
-| todo | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Play Action | `ACTPLAY` |
-| todo | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Action Manager | `ACTMANAGER` |
-| todo | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Record Script | `SCRIPTRECORD` |
-| todo | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Aliases | `ALIAS` |
-| todo | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Command History | `HISTORY` |
-| todo | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Script Console | `SCRIPTCONSOLE` |
-| todo | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Script Library | `SCRIPTLIBRARY` |
-| todo | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Node Editor | `NODEEDITOR` |
-| todo | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Agent Settings | `AGENTSETTINGS` |
-| todo | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Connect Claude | `CONNECTCLAUDE` |
-| todo | Script ▸ Automation ▸ Tools ▸ Script Control ▸ Plug-ins | `PLUGINS` |
-| todo | Script ▸ Automation ▸ Tools ▸ Script Control ▸ Script to JavaScript | `SCRIPT2JS` |
-| todo | Script ▸ Automation ▸ Tools ▸ Script Control ▸ Menu Macro | `MACRO` |
-| todo | Script ▸ Automation ▸ Tools ▸ Script Control ▸ Delay | `DELAY` |
-| todo | Script ▸ Automation ▸ Tools ▸ Script Control ▸ Resume Script | `RESUME` |
-| todo | Script ▸ AI Agents (group) |  |
-| todo | Script ▸ AI Agents ▸ Stop Server / Start Server | `@agent:toggle` |
-| todo | Script ▸ AI Agents ▸ Listening / Stopped (label) |  |
-| todo | Script ▸ AI Agents ▸ 127.0.0.1:{AgentServer.shared.port} (label) |  |
-| todo | Script ▸ AI Agents ▸ Copy token | `@ui:NSPasteboard.general.clearContents` |
-| todo | Script ▸ AI Agents ▸ Settings… | `AGENTSETTINGS` |
-| todo | Script ▸ AI Agents ▸ Connect Claude | `CONNECTCLAUDE` |
-| todo | Tab bar ▸ app icon (About) | `ABOUT` |
-| todo | Tab bar ▸ quick access toolbar | NEW, OPEN, SAVE, UNDO, REDO, PLOT (customizable: NEW, OPEN, SAVE, SAVEAS, UNDO, REDO, PLOT, PREVIEW, PUBLISH, MATCHPROP, QSELECTDIALOG, LAYER, RENDER, OPTIONS) |
-| todo | Tab bar ▸ Search commands (Ctrl+K) | `COMMANDSEARCH` |
-| todo | Tab bar ▸ Clean screen (Ctrl+0) | `@cleanScreen` |
-| todo | Tab bar ▸ Hide panels / Show panels | `@panels:toggle` |
-| todo | Tab bar ▸ Collapse the ribbon | `@ui:collapsed.toggle` |
+| todo: engine file.export does not accept csv:walls | Output ▸ Schedules ▸ CSV ▸ Walls schedule (CSV)… | `@export:csv:walls` |
+| todo: engine file.export does not accept csv:doors | Output ▸ Schedules ▸ CSV ▸ Doors schedule (CSV)… | `@export:csv:doors` |
+| todo: engine file.export does not accept csv:windows | Output ▸ Schedules ▸ CSV ▸ Windows schedule (CSV)… | `@export:csv:windows` |
+| todo: engine file.export does not accept csv:rooms | Output ▸ Schedules ▸ CSV ▸ Rooms schedule (CSV)… | `@export:csv:rooms` |
+| todo: engine file.export does not accept csv:slabs | Output ▸ Schedules ▸ CSV ▸ Slabs schedule (CSV)… | `@export:csv:slabs` |
+| todo: engine file.export does not accept csv:all | Output ▸ Schedules ▸ CSV ▸ All schedule (CSV)… | `@export:csv:all` |
+| done | Output ▸ Schedules ▸ View | `SCHEDULE` |
+| partial | Tab Manage | 5 groups |
+| done | Manage ▸ Panels (group) |  |
+| done | Manage ▸ Panels ▸ Layers | `@panel:Layers` |
+| done | Manage ▸ Panels ▸ Browser | `@panel:Browser` |
+| done | Manage ▸ Panels ▸ Tools | `@panel:Tools` |
+| done | Manage ▸ Panels ▸ Materials | `@panel:Materials` |
+| done | Manage ▸ Settings (group) |  |
+| done | Manage ▸ Settings ▸ Units | `UNITS` |
+| done | Manage ▸ Settings ▸ Drafting | `DSETTINGS` |
+| done | Manage ▸ Settings ▸ Options | `OPTIONS` |
+| done | Manage ▸ History (group) |  |
+| done | Manage ▸ History ▸ History | `@panel:History` |
+| done | Manage ▸ Cleanup (group) |  |
+| done | Manage ▸ Cleanup ▸ Purge | `PURGE` |
+| done | Manage ▸ Cleanup ▸ Audit | `AUDIT` |
+| partial | Manage ▸ More (group) |  |
+| done | Manage ▸ More ▸ Settings (menu) | Settings and system variables |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ Options | `OPTIONS` |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ Units | `UNITS` |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ Drafting Settings | `DSETTINGS` |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ Limits | `LIMITS` |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ Isometric Drafting | `ISODRAFT` |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ Isoplane | `ISOPLANE` |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ UCS | `UCS` |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ Named UCS | `UCSMAN` |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ Snap | `SNAP` |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ Grid | `GRIDDISPLAY` |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ Ortho | `ORTHO` |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ Object Snap | `OSNAP` |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ Cursor Size | `CURSORSIZE` |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ Autosave Interval | `SAVETIME` |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ System Variable | `SETVAR` |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ Audit | `AUDIT` |
+| done | Manage ▸ More ▸ Settings ▸ Settings ▸ Purge | `PURGE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ AUTOCONSTRAINANGLE | `AUTOCONSTRAINANGLE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ AUTOCONSTRAINDIST | `AUTOCONSTRAINDIST` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ AUTOSNAP | `AUTOSNAP` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ CANNOSCALE | `CANNOSCALE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ CECOLOR | `CECOLOR` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ CELTYPE | `CELTYPE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ CELWEIGHT | `CELWEIGHT` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ CENTEREXE | `CENTEREXE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ CETRANSPARENCY | `CETRANSPARENCY` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ CHAMFERA | `CHAMFERA` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ CHAMFERB | `CHAMFERB` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ CLAYER | `CLAYER` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ CLEVEL | `CLEVEL` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ CONSTRAINTINFER | `CONSTRAINTINFER` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ DELOBJ | `DELOBJ` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ DIMDLI | `DIMDLI` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ DIMLAYER | `DIMLAYER` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ DIMSCALE | `DIMSCALE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ DIMSTYLE | `DIMSTYLE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ DYNMODE | `DYNMODE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ FILLETRAD | `FILLETRAD` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ GRIDMODE | `GRIDMODE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ GRIDUNIT | `GRIDUNIT` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ HPANG | `HPANG` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ HPNAME | `HPNAME` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ HPSCALE | `HPSCALE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ INSBASE | `INSBASE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ INSUNITS | `INSUNITS` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ LTSCALE | `LTSCALE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ LUPREC | `LUPREC` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ LWDISPLAY | `LWDISPLAY` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ MIRRTEXT | `MIRRTEXT` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ OFFSETDIST | `OFFSETDIST` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ ORTHOMODE | `ORTHOMODE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ OSMODE | `OSMODE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ OTRACK | `OTRACK` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ PDMODE | `PDMODE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ PDSIZE | `PDSIZE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ PICKSTYLE | `PICKSTYLE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ PLINEWID | `PLINEWID` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ PLOTTRANSPARENCY | `PLOTTRANSPARENCY` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ POLARANG | `POLARANG` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ POLARMODE | `POLARMODE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ SELECTSIMILARMODE | `SELECTSIMILARMODE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ SNAPMODE | `SNAPMODE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ SNAPUNIT | `SNAPUNIT` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ TEXTLAYER | `TEXTLAYER` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ TEXTSIZE | `TEXTSIZE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ TEXTSTYLE | `TEXTSTYLE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ TRANSPARENCYDISPLAY | `TRANSPARENCYDISPLAY` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ TRIMMODE | `TRIMMODE` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ WALLHEIGHT | `WALLHEIGHT` |
+| done | Manage ▸ More ▸ Settings ▸ System Variables ▸ WALLTHICKNESS | `WALLTHICKNESS` |
+| partial | Manage ▸ More ▸ Tools (menu) | Action recorder, aliases, scripting, help |
+| done | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Record Action | `ACTRECORD` |
+| done | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Stop Recording | `ACTSTOP` |
+| done | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Play Action | `ACTPLAY` |
+| done | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Action Manager | `ACTMANAGER` |
+| done | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Record Script | `SCRIPTRECORD` |
+| done | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Aliases | `ALIAS` |
+| done | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Command History | `HISTORY` |
+| done | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Script Console | `SCRIPTCONSOLE` |
+| done | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Script Library | `SCRIPTLIBRARY` |
+| done | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Node Editor | `NODEEDITOR` |
+| done | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Agent Settings | `AGENTSETTINGS` |
+| done | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Connect Claude | `CONNECTCLAUDE` |
+| done | Manage ▸ More ▸ Tools ▸ Help ▸ Help | `HELP` |
+| done | Manage ▸ More ▸ Tools ▸ Help ▸ Command List | `COMMANDS` |
+| todo: the shell has the feature but COMMANDSEARCH is not registered, so the entry is disabled (map it to the shell action) | Manage ▸ More ▸ Tools ▸ Help ▸ Search Commands | `COMMANDSEARCH` |
+| todo: command ABOUT is not registered in archi-engine | Manage ▸ More ▸ Tools ▸ Help ▸ About | `ABOUT` |
+| todo: command APPSELFTEST is not registered in archi-engine | Manage ▸ More ▸ Tools ▸ Help ▸ Self Test | `APPSELFTEST` |
+| todo: command EXPORTCOMMANDS is not registered in archi-engine | Manage ▸ More ▸ Tools ▸ Help ▸ Export Command Reference | `EXPORTCOMMANDS` |
+| done | Tab Script | 3 groups |
+| done | Script ▸ Scripting (group) |  |
+| done | Script ▸ Scripting ▸ JS Console | `@scriptConsole` |
+| done | Script ▸ Scripting ▸ Run Script | `@runScript` |
+| done | Script ▸ Scripting ▸ Library (menu) | Run a script from the library (startup.js runs in every new window) |
+| done | Script ▸ Scripting ▸ Library ▸ No scripts in the library yet |  |
+| done | Script ▸ Scripting ▸ Library ▸ {scripts} |  |
+| done | Script ▸ Scripting ▸ Library ▸ Open Script Library Folder | `@ui:ScriptLibrary.revealFolder` |
+| done | Script ▸ Automation (group) |  |
+| done | Script ▸ Automation ▸ Tools (menu) | Action recorder, script recorder, aliases, macros |
+| done | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Record Action | `ACTRECORD` |
+| done | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Stop Recording | `ACTSTOP` |
+| done | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Play Action | `ACTPLAY` |
+| done | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Action Manager | `ACTMANAGER` |
+| done | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Record Script | `SCRIPTRECORD` |
+| done | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Aliases | `ALIAS` |
+| done | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Command History | `HISTORY` |
+| done | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Script Console | `SCRIPTCONSOLE` |
+| done | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Script Library | `SCRIPTLIBRARY` |
+| done | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Node Editor | `NODEEDITOR` |
+| done | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Agent Settings | `AGENTSETTINGS` |
+| done | Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Connect Claude | `CONNECTCLAUDE` |
+| done | Script ▸ Automation ▸ Tools ▸ Script Control ▸ Plug-ins | `PLUGINS` |
+| done | Script ▸ Automation ▸ Tools ▸ Script Control ▸ Script to JavaScript | `SCRIPT2JS` |
+| done | Script ▸ Automation ▸ Tools ▸ Script Control ▸ Menu Macro | `MACRO` |
+| done | Script ▸ Automation ▸ Tools ▸ Script Control ▸ Delay | `DELAY` |
+| done | Script ▸ Automation ▸ Tools ▸ Script Control ▸ Resume Script | `RESUME` |
+| done | Script ▸ AI Agents (group) |  |
+| done | Script ▸ AI Agents ▸ Stop Server / Start Server | `@agent:toggle` |
+| done | Script ▸ AI Agents ▸ Listening / Stopped (label) |  |
+| done | Script ▸ AI Agents ▸ 127.0.0.1:{AgentServer.shared.port} (label) |  |
+| done | Script ▸ AI Agents ▸ Copy token | `@ui:NSPasteboard.general.clearContents` |
+| done | Script ▸ AI Agents ▸ Settings… | `AGENTSETTINGS` |
+| done | Script ▸ AI Agents ▸ Connect Claude | `CONNECTCLAUDE` |
+| todo: runs ABOUT, which archi-engine does not register (no About window) | Tab bar ▸ app icon (About) | `ABOUT` |
+| done | Tab bar ▸ quick access toolbar | NEW, OPEN, SAVE, UNDO, REDO, PLOT (customizable: NEW, OPEN, SAVE, SAVEAS, UNDO, REDO, PLOT, PREVIEW, PUBLISH, MATCHPROP, QSELECTDIALOG, LAYER, RENDER, OPTIONS) |
+| done | Tab bar ▸ Search commands (Ctrl+K) | `COMMANDSEARCH` |
+| done | Tab bar ▸ Clean screen (Ctrl+0) | `@cleanScreen` |
+| done | Tab bar ▸ Hide panels / Show panels | `@panels:toggle` |
+| done | Tab bar ▸ Collapse the ribbon | `@ui:collapsed.toggle` |
 
 ## Contextual ribbon tabs (selection)
 
 | Status | Item | Command / detail |
 | --- | --- | --- |
-| todo | Selection Wall → tab "Modify Wall" | DOOR, WINDOW, OPENING, AUTODIMWALLS, OFFSET, PROPERTIES, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo | Selection Door → tab "Modify Door" | PROPERTIES, SETPROP, OPENINGPARTS, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo | Selection Window → tab "Modify Window" | PROPERTIES, SETPROP, OPENINGPARTS, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo | Selection Text → tab "Text Editor" | TEXTEDIT, TEXTSTYLE, JUSTIFYTEXT, SCALETEXT, SPELL, FIND, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo | Selection Hatch → tab "Hatch Editor" | HATCHEDIT, HATCHGENERATEBOUNDARY, HATCHTOBACK, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo | Selection Dimension → tab "Dimension" | DIMEDIT, DIMTEDIT, DIMSTYLE, DIMBREAK, DIMSPACE, DIMREASSOCIATE, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo | Selection Block Reference → tab "Block Reference" | ATTEDIT, BLOCKREPLACE, BCOUNT, EXPLODE, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo | Selection Polyline → tab "Polyline" | PEDIT, JOIN, REVERSE, EXPLODE, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo | Selection Table → tab "Table Cell" | TABLEEDIT, TABLEEXPORT, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo | Selection Room → tab "Modify Room" | ROOMFINISH, COLORFILL, PROPERTIES, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo | Selection (other) → tab "Modify (other)" | PROPERTIES, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| todo: no contextual (selection) ribbon tabs on Windows | Selection Wall → tab "Modify Wall" | DOOR, WINDOW, OPENING, AUTODIMWALLS, OFFSET, PROPERTIES, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| todo: no contextual (selection) ribbon tabs on Windows | Selection Door → tab "Modify Door" | PROPERTIES, SETPROP, OPENINGPARTS, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| todo: no contextual (selection) ribbon tabs on Windows | Selection Window → tab "Modify Window" | PROPERTIES, SETPROP, OPENINGPARTS, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| todo: no contextual (selection) ribbon tabs on Windows | Selection Text → tab "Text Editor" | TEXTEDIT, TEXTSTYLE, JUSTIFYTEXT, SCALETEXT, SPELL, FIND, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| todo: no contextual (selection) ribbon tabs on Windows | Selection Hatch → tab "Hatch Editor" | HATCHEDIT, HATCHGENERATEBOUNDARY, HATCHTOBACK, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| todo: no contextual (selection) ribbon tabs on Windows | Selection Dimension → tab "Dimension" | DIMEDIT, DIMTEDIT, DIMSTYLE, DIMBREAK, DIMSPACE, DIMREASSOCIATE, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| todo: no contextual (selection) ribbon tabs on Windows | Selection Block Reference → tab "Block Reference" | ATTEDIT, BLOCKREPLACE, BCOUNT, EXPLODE, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| todo: no contextual (selection) ribbon tabs on Windows | Selection Polyline → tab "Polyline" | PEDIT, JOIN, REVERSE, EXPLODE, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| todo: no contextual (selection) ribbon tabs on Windows | Selection Table → tab "Table Cell" | TABLEEDIT, TABLEEXPORT, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| todo: no contextual (selection) ribbon tabs on Windows | Selection Room → tab "Modify Room" | ROOMFINISH, COLORFILL, PROPERTIES, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| todo: no contextual (selection) ribbon tabs on Windows | Selection (other) → tab "Modify (other)" | PROPERTIES, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
 
 ## Menu bar
 
 | Status | Item | Command / detail |
 | --- | --- | --- |
-| todo | Menu Oanarina Archi Tool | 6 items |
-| todo | Oanarina Archi Tool ▸ About Oanarina Archi Tool | `ABOUT` |
-| todo | Oanarina Archi Tool ▸ Settings… | `OPTIONS` · Ctrl+, |
-| todo | Oanarina Archi Tool ▸ Agent Server… | `AGENTSETTINGS` |
-| todo | Oanarina Archi Tool ▸ Hide Oanarina Archi Tool | Ctrl+H · system |
-| todo | Oanarina Archi Tool ▸ Hide Others | Ctrl+Alt+H · system |
-| todo | Oanarina Archi Tool ▸ Quit Oanarina Archi Tool | Ctrl+Q · system |
-| todo | Menu File | 17 items |
-| todo | File ▸ New Drawing | `@newWindow:start` · Ctrl+N |
-| todo | File ▸ New from Template |  |
-| todo | File ▸ New from Template ▸ Metric Drawing (mm) | `@newWindow:blankMetric` |
-| todo | File ▸ New from Template ▸ Imperial Drawing (in) | `@newWindow:blankImperial` |
-| todo | File ▸ New from Template ▸ Building (levels, grid, sheets) | `@newWindow:building` |
-| todo | File ▸ New from Template ▸ {TemplateLibrary.all().filter() {…}} |  |
-| todo | File ▸ New from Template ▸ Save Drawing as Template… | `SAVEASTEMPLATE` |
-| todo | File ▸ New from Template ▸ Show Templates Folder | `@ui:FileManager.default.createDirectory` |
-| todo | File ▸ New from Template ▸ Sample House | `@newWindow:sample` |
-| todo | File ▸ Open… | `OPEN` · Ctrl+O |
-| todo | File ▸ Open Recent |  |
+| partial: no app menu on Windows (by convention); Settings is Edit ▸ Options, Quit is File ▸ Exit, About is under Help | Menu Oanarina Archi Tool | 6 items |
+| todo: Help ▸ About runs ABOUT, which archi-engine does not register | Oanarina Archi Tool ▸ About Oanarina Archi Tool | `ABOUT` |
+| done | Oanarina Archi Tool ▸ Settings… | `OPTIONS` · Ctrl+, |
+| partial: AGENTSETTINGS works (Settings ▸ Agents) but no Windows menu entry | Oanarina Archi Tool ▸ Agent Server… | `AGENTSETTINGS` |
+| n/a (macOS only) | Oanarina Archi Tool ▸ Hide Oanarina Archi Tool | Ctrl+H · system |
+| n/a (macOS only) | Oanarina Archi Tool ▸ Hide Others | Ctrl+Alt+H · system |
+| done | Oanarina Archi Tool ▸ Quit Oanarina Archi Tool | Ctrl+Q · system |
+| partial: hand-written Windows File menu: New/Open/Save/Import/Export/Page Setup/Print/Close/Exit only | Menu File | 17 items |
+| done | File ▸ New Drawing | `@newWindow:start` · Ctrl+N |
+| done | File ▸ New from Template |  |
+| done | File ▸ New from Template ▸ Metric Drawing (mm) | `@newWindow:blankMetric` |
+| done | File ▸ New from Template ▸ Imperial Drawing (in) | `@newWindow:blankImperial` |
+| done | File ▸ New from Template ▸ Building (levels, grid, sheets) | `@newWindow:building` |
+| done | File ▸ New from Template ▸ {TemplateLibrary.all().filter() {…}} |  |
+| done | File ▸ New from Template ▸ Save Drawing as Template… | `SAVEASTEMPLATE` |
+| done | File ▸ New from Template ▸ Show Templates Folder | `@ui:FileManager.default.createDirectory` |
+| done | File ▸ New from Template ▸ Sample House | `@newWindow:sample` |
+| done | File ▸ Open… | `OPEN` · Ctrl+O |
+| todo: no Open Recent submenu (recent files only on the start screen and the taskbar jump list) | File ▸ Open Recent |  |
 | todo | File ▸ Open Recent ▸ Clear Menu | `@ui:RecentFiles.clear` |
-| todo | File ▸ Close | `CLOSE` · Ctrl+W |
-| todo | File ▸ Save | `SAVE` · Ctrl+S |
-| todo | File ▸ Save As… | `SAVEAS` · Ctrl+Shift+S |
-| todo | File ▸ Import… | `IMPORT` · Ctrl+Shift+I |
-| todo | File ▸ Insert |  |
-| todo | File ▸ Insert ▸ Import File | `IMPORTFILE` |
-| todo | File ▸ Insert ▸ IFC | `IFCIMPORT` |
-| todo | File ▸ Insert ▸ SVG | `SVGIMPORT` |
-| todo | File ▸ Insert ▸ Mesh (OBJ/STL) | `MESHIMPORT` |
-| todo | File ▸ Insert ▸ GeoJSON | `GEOJSONIMPORT` |
-| todo | File ▸ Insert ▸ Points (CSV) | `POINTSIMPORT` |
-| todo | File ▸ Insert ▸ Insert Block | `INSERT` |
-| todo | File ▸ Insert ▸ Create Block | `BLOCK` |
-| todo | File ▸ Insert ▸ Xref | `XREF` |
-| todo | File ▸ Insert ▸ Image | `IMAGEATTACH` |
-| todo | File ▸ Insert ▸ Attribute | `ATTDEF` |
-| todo | File ▸ Insert ▸ Paste Special | `PASTEORIG` |
-| todo | File ▸ Export |  |
-| todo | File ▸ Export ▸ PDF… | `@export:pdf` |
-| todo | File ▸ Export ▸ DXF… | `@export:dxf` |
-| todo | File ▸ Export ▸ SVG… | `@export:svg` |
-| todo | File ▸ Export ▸ PNG (300 dpi)… | `@export:png` |
-| todo | File ▸ Export ▸ OBJ + MTL… | `@export:obj` |
-| todo | File ▸ Export ▸ STL… | `@export:stl` |
-| todo | File ▸ Export ▸ glTF Binary (GLB)… | `@export:glb` |
-| todo | File ▸ Export ▸ IFC4… | `@export:ifc` |
-| todo | File ▸ Export ▸ GeoJSON | `GEOJSONEXPORT` |
-| todo | File ▸ Export ▸ Points | `POINTSEXPORT` |
-| todo | File ▸ Export ▸ 3MF | `EXPORT3MF` |
-| todo | File ▸ Export ▸ USDZ | `USDEXPORT` |
-| todo | File ▸ Export ▸ DXF R12 | `DXFR12OUT` |
-| todo | File ▸ Export ▸ Schedules (CSV) |  |
-| todo | File ▸ Export ▸ Schedules (CSV) ▸ Walls… | `@export:csv:walls` |
-| todo | File ▸ Export ▸ Schedules (CSV) ▸ Doors… | `@export:csv:doors` |
-| todo | File ▸ Export ▸ Schedules (CSV) ▸ Windows… | `@export:csv:windows` |
-| todo | File ▸ Export ▸ Schedules (CSV) ▸ Rooms… | `@export:csv:rooms` |
-| todo | File ▸ Export ▸ Schedules (CSV) ▸ Slabs… | `@export:csv:slabs` |
-| todo | File ▸ Export ▸ Schedules (CSV) ▸ All… | `@export:csv:all` |
-| todo | File ▸ Page Setup… | `PAGESETUP` · Ctrl+Shift+P |
-| todo | File ▸ Plot Preview… | `PREVIEW` · Ctrl+Alt+Shift+P |
-| todo | File ▸ Plot / Print… | `PLOT` · Ctrl+P |
-| todo | File ▸ Publish All Sheets to PDF… | `PUBLISH` |
-| todo | File ▸ Batch Publish… | `BATCHPUBLISH` |
-| todo | File ▸ Plot Style Tables… | `PLOTSTYLE` |
-| todo | File ▸ Title Block… | `TITLEBLOCK` |
-| todo | Menu Edit | 12 items |
-| todo | Edit ▸ Undo | `UNDO` · Ctrl+Z |
-| todo | Edit ▸ Redo | `REDO` · Ctrl+Shift+Z |
-| todo | Edit ▸ Cut | `CUTCLIP` · Ctrl+X |
-| todo | Edit ▸ Copy | `COPYCLIP` · Ctrl+C |
-| todo | Edit ▸ Paste | `PASTECLIP` · Ctrl+V |
-| todo | Edit ▸ Delete | `ERASE` |
-| todo | Edit ▸ Select All | `@selectAll` · Ctrl+A |
-| todo | Edit ▸ Deselect All | `@deselectAll` · Ctrl+Shift+A |
-| todo | Edit ▸ Quick Select… | `QSELECTDIALOG` |
-| todo | Edit ▸ Selection Tools |  |
-| todo | Edit ▸ Selection Tools ▸ Quick Select | `QSELECT` |
-| todo | Edit ▸ Selection Tools ▸ Select Similar | `SELECTSIMILAR` |
-| todo | Edit ▸ Selection Tools ▸ Invert | `SELECTINVERT` |
-| todo | Edit ▸ Selection Tools ▸ By Layer | `SELECTLAYER` |
-| todo | Edit ▸ Selection Tools ▸ By Type | `SELECTTYPE` |
-| todo | Edit ▸ Selection Tools ▸ Chain | `SELECTCHAIN` |
-| todo | Edit ▸ Selection Tools ▸ Intersecting | `SELECTINTERSECTING` |
-| todo | Edit ▸ Selection Tools ▸ Filter | `FILTER` |
-| todo | Edit ▸ Selection Tools ▸ Named Sets | `SELSET` |
-| todo | Edit ▸ Groups & Isolation |  |
-| todo | Edit ▸ Groups & Isolation ▸ Group | `GROUP` |
-| todo | Edit ▸ Groups & Isolation ▸ Ungroup | `UNGROUP` |
-| todo | Edit ▸ Groups & Isolation ▸ Isolate | `ISOLATEOBJECTS` |
-| todo | Edit ▸ Groups & Isolation ▸ Hide | `HIDEOBJECTS` |
-| todo | Edit ▸ Groups & Isolation ▸ End Isolation | `UNISOLATEOBJECTS` |
-| todo | Edit ▸ Match Properties | `MATCHPROP` |
-| todo | Menu View | 28 items |
-| todo | View ▸ Workspace |  |
-| todo | View ▸ Workspace ▸ 2D Plan |  |
-| todo | View ▸ Workspace ▸ 3D Model |  |
-| todo | View ▸ Workspace ▸ Split |  |
-| todo | View ▸ Workspace ▸ Sheet |  |
-| todo | View ▸ 2D Plan | `@mode:2D` · Ctrl+Alt+1 |
-| todo | View ▸ 3D Model | `@mode:3D` · Ctrl+Alt+2 |
-| todo | View ▸ Split View | `@mode:Split` · Ctrl+Alt+3 |
-| todo | View ▸ Sheets | `@mode:Sheet` · Ctrl+Alt+4 |
-| todo | View ▸ Zoom Extents | `@zoom:extents` · Ctrl+0 |
-| todo | View ▸ Zoom In | `@zoom:in` · Ctrl+= |
-| todo | View ▸ Zoom Out | `@zoom:out` · Ctrl+- |
-| todo | View ▸ Zoom Window | `@zoom:window` |
-| todo | View ▸ Visual Style |  |
-| todo | View ▸ Visual Style ▸ Wireframe | `VSCURRENT Wireframe` |
-| todo | View ▸ Visual Style ▸ Hidden Line | `VSCURRENT Hidden Line` |
-| todo | View ▸ Visual Style ▸ Shaded | `VSCURRENT Shaded` |
-| todo | View ▸ Visual Style ▸ Shaded with Edges | `VSCURRENT Shaded with Edges` |
-| todo | View ▸ Visual Style ▸ Conceptual | `VSCURRENT Conceptual` |
-| todo | View ▸ Visual Style ▸ Realistic | `VSCURRENT Realistic` |
-| todo | View ▸ Visual Style ▸ X-Ray | `VSCURRENT X-Ray` |
-| todo | View ▸ Visual Style ▸ Sketchy | `VSCURRENT Sketchy` |
-| todo | View ▸ 3D View |  |
-| todo | View ▸ 3D View ▸ Top | `TOPVIEW` |
-| todo | View ▸ 3D View ▸ Front | `FRONTVIEW` |
-| todo | View ▸ 3D View ▸ Right | `RIGHTVIEW` |
-| todo | View ▸ 3D View ▸ Back | `BACKVIEW` |
-| todo | View ▸ 3D View ▸ Left | `LEFTVIEW` |
-| todo | View ▸ 3D View ▸ Iso | `ISOVIEW` |
-| todo | View ▸ Hide Panels | `@panels:toggle` · Ctrl+Alt+P |
-| todo | View ▸ Layers Panel | `@panel:Layers` |
-| todo | View ▸ Properties Panel | `@panel:Properties` |
-| todo | View ▸ Levels Panel | `@panel:Levels` |
-| todo | View ▸ Project Browser | `@panel:Browser` |
-| todo | View ▸ Materials Panel | `@panel:Materials` |
-| todo | View ▸ History Panel | `@panel:History` |
-| todo | View ▸ Sheet Set Manager | `@panel:Sheets` |
-| todo | View ▸ Tool Palettes | `@panel:Tools` |
-| todo | View ▸ Float Panel |  |
-| todo | View ▸ Float Panel ▸ Properties | `FLOATPANEL Properties` |
-| todo | View ▸ Float Panel ▸ Layers | `FLOATPANEL Layers` |
-| todo | View ▸ Float Panel ▸ Levels | `FLOATPANEL Levels` |
-| todo | View ▸ Float Panel ▸ Browser | `FLOATPANEL Browser` |
-| todo | View ▸ Float Panel ▸ Materials | `FLOATPANEL Materials` |
-| todo | View ▸ Float Panel ▸ Tools | `FLOATPANEL Tools` |
-| todo | View ▸ Float Panel ▸ Sheets | `FLOATPANEL Sheets` |
-| todo | View ▸ Float Panel ▸ History | `FLOATPANEL History` |
-| todo | View ▸ Float Panel ▸ Selection | `FLOATPANEL Selection` |
-| todo | View ▸ Float Panel ▸ Navigator | `FLOATPANEL Navigator` |
-| todo | View ▸ Float Panel ▸ Alerts | `FLOATPANEL Alerts` |
-| todo | View ▸ Float Panel ▸ Quick Props | `FLOATPANEL Quick Props` |
-| todo | View ▸ Float Panel ▸ Inspector | `FLOATPANEL Inspector` |
-| todo | View ▸ Float Panel ▸ Content | `FLOATPANEL Content` |
-| todo | View ▸ Material Library… | `MATBROWSER` |
-| todo | View ▸ Layer States… | `LAYERSTATE` |
-| todo | View ▸ Workspace |  |
-| todo | View ▸ Workspace ▸ {Workspaces.all} |  |
-| todo | View ▸ Workspace ▸ Save Current Workspace… | `WSSAVE` |
-| todo | View ▸ Clean Screen | `@cleanScreen` |
-| todo | View ▸ 3D Tools |  |
-| todo | View ▸ 3D Tools ▸ View Cube | `NAVVCUBE` |
-| todo | View ▸ 3D Tools ▸ Section Box | `SECTIONBOX` |
-| todo | View ▸ 3D Tools ▸ Sun Study | `SUNSTUDY` |
-| todo | View ▸ 3D Tools ▸ Orbit Around Selection | `ORBITSELECTION` |
-| todo | View ▸ 3D Tools ▸ Save Camera… | `SAVECAMERA` |
-| todo | View ▸ Show Script Console | `@scriptConsole` · Ctrl+Alt+J |
-| todo | View ▸ Enter Full Screen | Ctrl+F · system |
-| todo | Menu Draw | 9 items |
-| todo | Draw ▸ Line | `LINE` |
-| todo | Draw ▸ Polyline | `PLINE` |
-| todo | Draw ▸ Circle | `CIRCLE` |
-| todo | Draw ▸ Arc | `ARC` |
-| todo | Draw ▸ Rectangle | `RECTANG` |
-| todo | Draw ▸ Polygon | `POLYGON` |
-| todo | Draw ▸ Ellipse | `ELLIPSE` |
-| todo | Draw ▸ Spline | `SPLINE` |
-| todo | Draw ▸ Hatch | `HATCH` |
-| todo | Menu Modify | 16 items |
-| todo | Modify ▸ Move | `MOVE` |
-| todo | Modify ▸ Copy | `COPY` |
-| todo | Modify ▸ Rotate | `ROTATE` |
-| todo | Modify ▸ Mirror | `MIRROR` |
-| todo | Modify ▸ Scale | `SCALE` |
-| todo | Modify ▸ Stretch | `STRETCH` |
-| todo | Modify ▸ Trim | `TRIM` |
-| todo | Modify ▸ Extend | `EXTEND` |
-| todo | Modify ▸ Offset | `OFFSET` |
-| todo | Modify ▸ Fillet | `FILLET` |
-| todo | Modify ▸ Chamfer | `CHAMFER` |
-| todo | Modify ▸ Array | `ARRAY` |
-| todo | Modify ▸ Explode | `EXPLODE` |
-| todo | Modify ▸ Erase | `ERASE` |
-| todo | Modify ▸ Join | `JOIN` |
-| todo | Modify ▸ Break | `BREAK` |
-| todo | Menu Annotate | 9 items |
-| todo | Annotate ▸ Text | `TEXT` |
-| todo | Annotate ▸ MText | `MTEXT` |
-| todo | Annotate ▸ Linear | `DIMLINEAR` |
-| todo | Annotate ▸ Aligned | `DIMALIGNED` |
-| todo | Annotate ▸ Angular | `DIMANGULAR` |
-| todo | Annotate ▸ Radius | `DIMRADIUS` |
-| todo | Annotate ▸ Diameter | `DIMDIAMETER` |
-| todo | Annotate ▸ Leader | `LEADER` |
-| todo | Annotate ▸ Table | `TABLE` |
-| todo | Menu Architecture | 19 items |
-| todo | Architecture ▸ Wall | `WALL` |
-| todo | Architecture ▸ Door | `DOOR` |
-| todo | Architecture ▸ Window | `WINDOW` |
-| todo | Architecture ▸ Opening | `OPENING` |
-| todo | Architecture ▸ Curtain Wall | `CURTAINWALL` |
-| todo | Architecture ▸ Column | `COLUMN` |
-| todo | Architecture ▸ Beam | `BEAM` |
-| todo | Architecture ▸ Slab | `SLAB` |
-| todo | Architecture ▸ Roof | `ROOF` |
-| todo | Architecture ▸ Ceiling | `CEILING` |
-| todo | Architecture ▸ Stair | `STAIR` |
-| todo | Architecture ▸ Railing | `RAILING` |
-| todo | Architecture ▸ Room | `ROOM` |
-| todo | Architecture ▸ Grid | `GRID` |
-| todo | Architecture ▸ Component | `COMPONENT` |
-| todo | Architecture ▸ Quick Building | `BUILDING` |
-| todo | Architecture ▸ More Building Tools |  |
-| todo | Architecture ▸ More Building Tools ▸ Ramp | `RAMP` |
-| todo | Architecture ▸ More Building Tools ▸ Foundation | `FOUNDATION` |
-| todo | Architecture ▸ More Building Tools ▸ Slab Slope | `SLABSLOPE` |
-| todo | Architecture ▸ More Building Tools ▸ Curtain Grid | `CWGRID` |
-| todo | Architecture ▸ More Building Tools ▸ Niche | `NICHE` |
-| todo | Architecture ▸ More Building Tools ▸ Wall Sweep | `WALLSWEEP` |
-| todo | Architecture ▸ More Building Tools ▸ Walls by Lines | `WALLBYLINES` |
-| todo | Architecture ▸ More Building Tools ▸ Wall Join | `WALLJOIN` |
-| todo | Architecture ▸ More Building Tools ▸ Wall Top | `WALLTOP` |
-| todo | Architecture ▸ More Building Tools ▸ Opening Types | `OPENINGTYPE` |
-| todo | Architecture ▸ More Building Tools ▸ Copy to Level | `COPYTOLEVEL` |
-| todo | Architecture ▸ More Building Tools ▸ Stair Check | `STAIRCHECK` |
-| todo | Architecture ▸ Rooms & Areas |  |
-| todo | Architecture ▸ Rooms & Areas ▸ Room Separator | `ROOMSEPARATOR` |
-| todo | Architecture ▸ Rooms & Areas ▸ Update Rooms | `ROOMUPDATE` |
-| todo | Architecture ▸ Rooms & Areas ▸ Area Plan | `AREAPLAN` |
-| todo | Architecture ▸ Rooms & Areas ▸ Room Bounding | `ROOMBOUNDING` |
-| todo | Architecture ▸ Documentation |  |
-| todo | Architecture ▸ Documentation ▸ Tag | `TAG` |
-| todo | Architecture ▸ Documentation ▸ Tag All | `TAGALL` |
-| todo | Architecture ▸ Documentation ▸ Keynote | `KEYNOTE` |
-| todo | Architecture ▸ Documentation ▸ Marks | `MARKS` |
-| todo | Architecture ▸ Documentation ▸ Section | `SECTION` |
-| todo | Architecture ▸ Documentation ▸ Draw View | `VIEWDRAW` |
-| todo | Architecture ▸ Documentation ▸ Update Views | `VIEWUPDATE` |
-| todo | Architecture ▸ Documentation ▸ Interior Elev. | `INTERIORELEV` |
-| todo | Architecture ▸ Documentation ▸ Callout | `CALLOUT` |
-| todo | Architecture ▸ Documentation ▸ Phase | `PHASE` |
-| todo | Architecture ▸ Documentation ▸ 3D Datums | `DATUMS3D` |
-| todo | Architecture ▸ Documentation ▸ Wall Attach | `WALLATTACH` |
-| todo | Menu Model | 29 items |
-| todo | Model ▸ Box | `BOX` |
-| todo | Model ▸ Cylinder | `CYLINDER` |
-| todo | Model ▸ Cone | `CONE` |
-| todo | Model ▸ Sphere | `SPHERE` |
-| todo | Model ▸ Extrude | `EXTRUDE` |
-| todo | Model ▸ Revolve | `REVOLVE` |
-| todo | Model ▸ Press/Pull | `PRESSPULL` |
-| todo | Model ▸ Loft | `LOFT` |
-| todo | Model ▸ Sweep | `SWEEP` |
-| todo | Model ▸ Pipe | `PIPE` |
-| todo | Model ▸ Shell | `SHELL` |
-| todo | Model ▸ Smooth Mesh | `MESHSMOOTH` |
-| todo | Model ▸ Union | `UNION` |
-| todo | Model ▸ Subtract | `SUBTRACT` |
-| todo | Model ▸ Intersect | `INTERSECT` |
-| todo | Model ▸ Slice | `SLICE` |
-| todo | Model ▸ Interfere | `INTERFERE` |
-| todo | Model ▸ 3D Mirror | `MIRROR3D` |
-| todo | Model ▸ 3D Rotate | `ROTATE3D` |
-| todo | Model ▸ 3D Array | `3DARRAY` |
-| todo | Model ▸ Topography | `TOPO` |
-| todo | Model ▸ Contours | `CONTOURS` |
-| todo | Model ▸ Building Pad | `BUILDINGPAD` |
-| todo | Model ▸ Node Editor… | `NODEEDITOR` |
-| todo | Menu Analyze | 16 items |
-| todo | Analyze ▸ Distance | `DIST` |
-| todo | Analyze ▸ Area | `AREA` |
-| todo | Analyze ▸ List | `LIST` |
-| todo | Analyze ▸ ID Point | `ID` |
-| todo | Analyze ▸ Mass Props | `MASSPROP` |
-| todo | Analyze ▸ Count | `COUNT` |
-| todo | Analyze ▸ Takeoff | `TAKEOFF` |
-| todo | Analyze ▸ Cost Estimate | `COSTESTIMATE` |
-| todo | Analyze ▸ Unit Prices | `UNITPRICE` |
-| todo | Analyze ▸ Room Schedule | `ROOMSCHEDULE` |
-| todo | Analyze ▸ Clash Detect | `CLASHDETECT` |
-| todo | Analyze ▸ Check Model | `CHECKMODEL` |
-| todo | Analyze ▸ Sun Position | `SUNPOSITION` |
-| todo | Menu Tools | 73 items |
-| todo | Tools ▸ Draw More |  |
-| todo | Tools ▸ Draw More ▸ Ray | `RAY` |
-| todo | Tools ▸ Draw More ▸ Construction Line | `XLINE` |
-| todo | Tools ▸ Draw More ▸ Point | `POINT` |
-| todo | Tools ▸ Draw More ▸ Point Style | `PTYPE` |
-| todo | Tools ▸ Draw More ▸ Donut | `DONUT` |
-| todo | Tools ▸ Draw More ▸ Region | `REGION` |
-| todo | Tools ▸ Draw More ▸ Boundary | `BOUNDARY` |
-| todo | Tools ▸ Draw More ▸ Revision Cloud | `REVCLOUD` |
-| todo | Tools ▸ Draw More ▸ Wipeout | `WIPEOUT` |
-| todo | Tools ▸ Draw More ▸ Sketch | `SKETCH` |
-| todo | Tools ▸ Draw More ▸ Multiline | `MLINE` |
-| todo | Tools ▸ Draw More ▸ Multiline Style | `MLSTYLE` |
-| todo | Tools ▸ Draw More ▸ Double Line | `DLINE` |
-| todo | Tools ▸ Draw More ▸ 2D Solid | `SOLID` |
-| todo | Tools ▸ Draw More ▸ Star | `STAR` |
-| todo | Tools ▸ Draw More ▸ Polygon by Side | `POLYGONSS` |
-| todo | Tools ▸ Draw More ▸ Snake Line | `SNAKE` |
-| todo | Tools ▸ Draw More ▸ Parabola | `PARABOLA` |
-| todo | Tools ▸ Draw More ▸ Hyperbola | `HYPERBOLA` |
-| todo | Tools ▸ Draw More ▸ Centerline | `CENTERLINE` |
-| todo | Tools ▸ Draw More ▸ Center Mark | `CENTERMARK` |
-| todo | Tools ▸ Draw More ▸ Bounding Box | `BOUNDINGBOX` |
-| todo | Tools ▸ Draw More ▸ Point Lattice | `POINTLATTICE` |
-| todo | Tools ▸ Draw More ▸ Points on Line | `POINTSLINE` |
-| todo | Tools ▸ Construction |  |
-| todo | Tools ▸ Construction ▸ Parallel Line | `LINEPAR` |
-| todo | Tools ▸ Construction ▸ Perpendicular Line | `LINEPERP` |
-| todo | Tools ▸ Construction ▸ Line at Angle | `LINEANG` |
-| todo | Tools ▸ Construction ▸ Bisector | `LINEBISECT` |
-| todo | Tools ▸ Construction ▸ Horizontal/Vertical | `LINEHV` |
-| todo | Tools ▸ Construction ▸ Relative Line | `LINEREL` |
-| todo | Tools ▸ Construction ▸ Tangent Line | `LINETAN` |
-| todo | Tools ▸ Construction ▸ Tangent to 2 Circles | `LINETAN2` |
-| todo | Tools ▸ Construction ▸ Tangent Ortho | `LINETANORTHO` |
-| todo | Tools ▸ Construction ▸ Circle 2 Points + R | `CIRCLE2PR` |
-| todo | Tools ▸ Construction ▸ Circle Tan-Pt-Pt | `CIRCLETPP` |
-| todo | Tools ▸ Construction ▸ Circle Tan-Tan-Pt | `CIRCLETTP` |
-| todo | Tools ▸ Construction ▸ Circle Tan-Tan-Tan | `CIRCLETTT` |
-| todo | Tools ▸ Construction ▸ Incircle | `INCIRCLE` |
-| todo | Tools ▸ Construction ▸ Arc 2 Pts + Height | `ARC2PH` |
-| todo | Tools ▸ Construction ▸ Arc 2 Pts + Length | `ARC2PL` |
-| todo | Tools ▸ Construction ▸ Arc to Circle | `ARCTOCIRCLE` |
-| todo | Tools ▸ Construction ▸ Ellipse 4 Points | `ELLIPSE4P` |
-| todo | Tools ▸ Construction ▸ Ellipse Center 3P | `ELLIPSEC3P` |
-| todo | Tools ▸ Construction ▸ Ellipse by Foci | `ELLIPSEFOCI` |
-| todo | Tools ▸ Construction ▸ Multiple Offset | `OFFSETMULTI` |
-| todo | Tools ▸ Construction ▸ Cut by Line | `CUTBYLINE` |
-| todo | Tools ▸ Modify More |  |
-| todo | Tools ▸ Modify More ▸ Align | `ALIGN` |
-| todo | Tools ▸ Modify More ▸ Align to Reference | `ALIGNREF` |
-| todo | Tools ▸ Modify More ▸ Path Array | `ARRAYPATH` |
-| todo | Tools ▸ Modify More ▸ Polar Array | `ARRAYPOLAR` |
-| todo | Tools ▸ Modify More ▸ Break All | `BREAKALL` |
-| todo | Tools ▸ Modify More ▸ Break at Point | `BREAKATPOINT` |
-| todo | Tools ▸ Modify More ▸ Change Properties | `CHPROP` |
-| todo | Tools ▸ Modify More ▸ Clip Polyline | `CLIPPOLY` |
-| todo | Tools ▸ Modify More ▸ Convert to Polyline | `CONVERTTOPLINE` |
-| todo | Tools ▸ Modify More ▸ Divide | `DIVIDE` |
-| todo | Tools ▸ Modify More ▸ Measure | `MEASURE` |
-| todo | Tools ▸ Modify More ▸ Draw Order | `DRAWORDER` |
-| todo | Tools ▸ Modify More ▸ Text to Front | `TEXTTOFRONT` |
-| todo | Tools ▸ Modify More ▸ Hatch to Back | `HATCHTOBACK` |
-| todo | Tools ▸ Modify More ▸ Extend By | `EXTENDBY` |
-| todo | Tools ▸ Modify More ▸ Lengthen | `LENGTHEN` |
-| todo | Tools ▸ Modify More ▸ Line Gap | `LINEGAP` |
-| todo | Tools ▸ Modify More ▸ Move + Rotate | `MOVEROTATE` |
-| todo | Tools ▸ Modify More ▸ Rotate by Reference | `ROTATE2` |
-| todo | Tools ▸ Modify More ▸ Nudge | `NUDGE` |
-| todo | Tools ▸ Modify More ▸ Oops (Restore Erased) | `OOPS` |
-| todo | Tools ▸ Modify More ▸ Overkill | `OVERKILL` |
-| todo | Tools ▸ Modify More ▸ Edit Polyline | `PEDIT` |
-| todo | Tools ▸ Modify More ▸ Polyline to Spline | `PLINETOSPLINE` |
-| todo | Tools ▸ Modify More ▸ Reverse | `REVERSE` |
-| todo | Tools ▸ Modify More ▸ Weld | `WELD` |
-| todo | Tools ▸ Modify More ▸ Set ByLayer | `SETBYLAYER` |
-| todo | Tools ▸ Modify More ▸ Paste to Points | `PASTETOPOINTS` |
-| todo | Tools ▸ Modify More ▸ Region Union | `REGIONUNION` |
-| todo | Tools ▸ Modify More ▸ Region Subtract | `REGIONSUBTRACT` |
-| todo | Tools ▸ Modify More ▸ Region Intersect | `REGIONINTERSECT` |
-| todo | Tools ▸ Modify More ▸ Edit Hatch | `HATCHEDIT` |
-| todo | Tools ▸ Modify More ▸ Hatch Boundary | `HATCHGENERATEBOUNDARY` |
-| todo | Tools ▸ Clipboard & Selection |  |
-| todo | Tools ▸ Clipboard & Selection ▸ Copy | `COPYCLIP` |
-| todo | Tools ▸ Clipboard & Selection ▸ Cut | `CUTCLIP` |
-| todo | Tools ▸ Clipboard & Selection ▸ Copy with Base Point | `COPYBASE` |
-| todo | Tools ▸ Clipboard & Selection ▸ Paste | `PASTECLIP` |
-| todo | Tools ▸ Clipboard & Selection ▸ Paste as Block | `PASTEBLOCK` |
-| todo | Tools ▸ Clipboard & Selection ▸ Undo | `UNDO` |
-| todo | Tools ▸ Clipboard & Selection ▸ Redo | `REDO` |
-| todo | Tools ▸ Clipboard & Selection ▸ Select | `SELECT` |
-| todo | Tools ▸ Clipboard & Selection ▸ Select All | `SELECTALL` |
-| todo | Tools ▸ Clipboard & Selection ▸ Quick Select… | `QSELECTDIALOG` |
-| todo | Tools ▸ Dimensions More |  |
-| todo | Tools ▸ Dimensions More ▸ Smart Dimension | `DIM` |
-| todo | Tools ▸ Dimensions More ▸ Quick Dimension | `QDIM` |
-| todo | Tools ▸ Dimensions More ▸ Baseline | `DIMBASELINE` |
-| todo | Tools ▸ Dimensions More ▸ Continue | `DIMCONTINUE` |
-| todo | Tools ▸ Dimensions More ▸ Arc Length | `DIMARC` |
-| todo | Tools ▸ Dimensions More ▸ Ordinate | `DIMORDINATE` |
-| todo | Tools ▸ Dimensions More ▸ Dimension Break | `DIMBREAK` |
-| todo | Tools ▸ Dimensions More ▸ Dimension Space | `DIMSPACE` |
-| todo | Tools ▸ Dimensions More ▸ Edit Dimension | `DIMEDIT` |
-| todo | Tools ▸ Dimensions More ▸ Move Dim Text | `DIMTEDIT` |
-| todo | Tools ▸ Dimensions More ▸ Dim Override | `DIMOVERRIDE` |
-| todo | Tools ▸ Dimensions More ▸ Reassociate | `DIMREASSOCIATE` |
-| todo | Tools ▸ Dimensions More ▸ Disassociate | `DIMDISASSOCIATE` |
-| todo | Tools ▸ Dimensions More ▸ Regenerate Dims | `DIMREGEN` |
-| todo | Tools ▸ Dimensions More ▸ Dimension Style | `DIMSTYLE` |
-| todo | Tools ▸ Dimensions More ▸ Tolerance | `TOLERANCE` |
-| todo | Tools ▸ Dimensions More ▸ Dimension Walls | `AUTODIMWALLS` |
-| todo | Tools ▸ Dimensions More ▸ Spot Elevation | `SPOTELEV` |
-| todo | Tools ▸ Dimensions More ▸ Spot Slope | `SPOTSLOPE` |
-| todo | Tools ▸ Text & Tables |  |
-| todo | Tools ▸ Text & Tables ▸ Edit Text | `TEXTEDIT` |
-| todo | Tools ▸ Text & Tables ▸ Text Style | `TEXTSTYLE` |
-| todo | Tools ▸ Text & Tables ▸ Find & Replace | `FIND` |
-| todo | Tools ▸ Text & Tables ▸ Spelling | `SPELL` |
-| todo | Tools ▸ Text & Tables ▸ Spelling Dialog | `SPELLDIALOG` |
-| todo | Tools ▸ Text & Tables ▸ Field | `FIELD` |
-| todo | Tools ▸ Text & Tables ▸ Update Fields | `UPDATEFIELD` |
-| todo | Tools ▸ Text & Tables ▸ Justify Text | `JUSTIFYTEXT` |
-| todo | Tools ▸ Text & Tables ▸ Scale Text | `SCALETEXT` |
-| todo | Tools ▸ Text & Tables ▸ Text to MText | `TXT2MTXT` |
-| todo | Tools ▸ Text & Tables ▸ Readable Text | `TEXTREADABLE` |
-| todo | Tools ▸ Text & Tables ▸ Arc Text | `ARCTEXT` |
-| todo | Tools ▸ Text & Tables ▸ Annotative | `ANNOTATIVE` |
-| todo | Tools ▸ Text & Tables ▸ Scale List | `SCALELISTEDIT` |
-| todo | Tools ▸ Text & Tables ▸ Leader Style | `MLEADERSTYLE` |
-| todo | Tools ▸ Text & Tables ▸ Align Leaders | `MLEADERALIGN` |
-| todo | Tools ▸ Text & Tables ▸ Collect Leaders | `MLEADERCOLLECT` |
-| todo | Tools ▸ Text & Tables ▸ Edit Table | `TABLEEDIT` |
-| todo | Tools ▸ Text & Tables ▸ Export Table | `TABLEEXPORT` |
-| todo | Tools ▸ Text & Tables ▸ Link Table | `TABLELINK` |
-| todo | Tools ▸ Text & Tables ▸ Update Data Links | `DATALINKUPDATE` |
-| todo | Tools ▸ Text & Tables ▸ North Arrow | `NORTHARROW` |
-| todo | Tools ▸ Text & Tables ▸ Scale Bar | `SCALEBAR` |
-| todo | Tools ▸ Text & Tables ▸ Break Line | `BREAKLINE` |
-| todo | Tools ▸ Parametric |  |
-| todo | Tools ▸ Parametric ▸ Geometric | `GEOMCONSTRAINT` |
-| todo | Tools ▸ Parametric ▸ Auto Constrain | `AUTOCONSTRAIN` |
-| todo | Tools ▸ Parametric ▸ Dimensional | `DIMCONSTRAINT` |
-| todo | Tools ▸ Parametric ▸ Convert Dims | `DCCONVERT` |
-| todo | Tools ▸ Parametric ▸ Parameters | `PARAMETERS` |
-| todo | Tools ▸ Parametric ▸ List Constraints | `CONSTRAINTLIST` |
-| todo | Tools ▸ Parametric ▸ Delete Constraints | `DELCONSTRAINT` |
-| todo | Tools ▸ Parametric ▸ Coincident | `GCCOINCIDENT` |
-| todo | Tools ▸ Parametric ▸ Horizontal | `GCHORIZONTAL` |
-| todo | Tools ▸ Parametric ▸ Vertical | `GCVERTICAL` |
-| todo | Tools ▸ Parametric ▸ Parallel | `GCPARALLEL` |
-| todo | Tools ▸ Parametric ▸ Perpendicular | `GCPERPENDICULAR` |
-| todo | Tools ▸ Parametric ▸ Collinear | `GCCOLLINEAR` |
-| todo | Tools ▸ Parametric ▸ Equal | `GCEQUAL` |
-| todo | Tools ▸ Parametric ▸ Fix | `GCFIX` |
-| todo | Tools ▸ Parametric ▸ Concentric | `GCCONCENTRIC` |
-| todo | Tools ▸ Parametric ▸ Tangent | `GCTANGENT` |
-| todo | Tools ▸ Parametric ▸ Symmetric | `GCSYMMETRIC` |
-| todo | Tools ▸ Parametric ▸ Midpoint | `GCMIDPOINT` |
-| todo | Tools ▸ Parametric ▸ Point on Curve | `GCPOINTONCURVE` |
-| todo | Tools ▸ Parametric ▸ Linear (dim) | `DCLINEAR` |
-| todo | Tools ▸ Parametric ▸ Horizontal (dim) | `DCHORIZONTAL` |
-| todo | Tools ▸ Parametric ▸ Vertical (dim) | `DCVERTICAL` |
-| todo | Tools ▸ Parametric ▸ Aligned (dim) | `DCALIGNED` |
-| todo | Tools ▸ Parametric ▸ Angular (dim) | `DCANGULAR` |
-| todo | Tools ▸ Parametric ▸ Radius (dim) | `DCRADIUS` |
-| todo | Tools ▸ Parametric ▸ Diameter (dim) | `DCDIAMETER` |
-| todo | Tools ▸ Parametric ▸ Ratio (dim) | `DCRATIO` |
-| todo | Tools ▸ Parametric ▸ Difference (dim) | `DCDIFFERENCE` |
-| todo | Tools ▸ Blocks & Attributes |  |
-| todo | Tools ▸ Blocks & Attributes ▸ Block Library | `BLOCKLIBRARY` |
-| todo | Tools ▸ Blocks & Attributes ▸ Write Block | `WBLOCK` |
-| todo | Tools ▸ Blocks & Attributes ▸ Drawing Base | `BASE` |
-| todo | Tools ▸ Blocks & Attributes ▸ Block Base Point | `BLOCKBASE` |
-| todo | Tools ▸ Blocks & Attributes ▸ Replace Block | `BLOCKREPLACE` |
-| todo | Tools ▸ Blocks & Attributes ▸ Count Blocks | `BCOUNT` |
-| todo | Tools ▸ Blocks & Attributes ▸ Flip Block | `BFLIP` |
-| todo | Tools ▸ Blocks & Attributes ▸ Visibility State | `BVSTATE` |
-| todo | Tools ▸ Blocks & Attributes ▸ Edit Attributes | `ATTEDIT` |
-| todo | Tools ▸ Blocks & Attributes ▸ Sync Attributes | `ATTSYNC` |
-| todo | Tools ▸ Blocks & Attributes ▸ Attribute Manager | `BATTMAN` |
-| todo | Tools ▸ Blocks & Attributes ▸ Extract Attributes | `ATTEXT` |
-| todo | Tools ▸ Blocks & Attributes ▸ Data Extraction | `DATAEXTRACTION` |
-| todo | Tools ▸ Blocks & Attributes ▸ Bind Xref | `XBIND` |
-| todo | Tools ▸ Layers |  |
-| todo | Tools ▸ Layers ▸ Layer Properties | `LAYER` |
-| todo | Tools ▸ Layers ▸ Layer States | `LAYERSTATE` |
-| todo | Tools ▸ Layers ▸ Layer Filter | `LAYERFILTER` |
-| todo | Tools ▸ Layers ▸ Layer Filter (cmd) | `LAYFILTER` |
-| todo | Tools ▸ Layers ▸ Change to Current | `LAYCUR` |
-| todo | Tools ▸ Layers ▸ Make Current | `LAYMCUR` |
-| todo | Tools ▸ Layers ▸ Delete Layer | `LAYDEL` |
-| todo | Tools ▸ Layers ▸ Merge Layers | `LAYMRG` |
-| todo | Tools ▸ Layers ▸ Freeze | `LAYFRZ` |
-| todo | Tools ▸ Layers ▸ Thaw All | `LAYTHW` |
-| todo | Tools ▸ Layers ▸ Off | `LAYOFF` |
-| todo | Tools ▸ Layers ▸ All On | `LAYON` |
-| todo | Tools ▸ Layers ▸ Isolate | `LAYISO` |
-| todo | Tools ▸ Layers ▸ Unisolate | `LAYUNISO` |
-| todo | Tools ▸ Layers ▸ Lock | `LAYLCK` |
-| todo | Tools ▸ Layers ▸ Unlock | `LAYULK` |
-| todo | Tools ▸ Layers ▸ Layer Previous | `LAYERP` |
-| todo | Tools ▸ Layers ▸ Translate Layers | `LAYTRANS` |
-| todo | Tools ▸ Layers ▸ Layer Walk | `LAYWALK` |
-| todo | Tools ▸ Layers ▸ Viewport Layers | `VPLAYER` |
-| todo | Tools ▸ Layers ▸ Color | `COLOR` |
-| todo | Tools ▸ Layers ▸ Linetype | `LINETYPE` |
-| todo | Tools ▸ Layers ▸ Lineweight | `LWEIGHT` |
-| todo | Tools ▸ Layers ▸ Linetype Scale | `LTSCALE` |
-| todo | Tools ▸ Layers ▸ Rename | `RENAME` |
-| todo | Tools ▸ BIM Data |  |
-| todo | Tools ▸ BIM Data ▸ Level | `LEVEL` |
-| todo | Tools ▸ BIM Data ▸ Schedule | `SCHEDULE` |
-| todo | Tools ▸ BIM Data ▸ Set Property | `SETPROP` |
-| todo | Tools ▸ BIM Data ▸ Properties | `PROPERTIES` |
-| todo | Tools ▸ BIM Data ▸ Color Fill Plan | `COLORFILL` |
-| todo | Tools ▸ BIM Data ▸ Room Finishes | `ROOMFINISH` |
-| todo | Tools ▸ BIM Data ▸ Opening Parts | `OPENINGPARTS` |
-| todo | Tools ▸ BIM Data ▸ Reflected Ceiling | `RCP` |
-| todo | Tools ▸ BIM Data ▸ Design Options | `DESIGNOPTION` |
-| todo | Tools ▸ BIM Data ▸ Worksets | `WORKSET` |
-| todo | Tools ▸ Structure |  |
-| todo | Tools ▸ Structure ▸ Beam System | `BEAMSYSTEM` |
-| todo | Tools ▸ Structure ▸ Brace | `BRACE` |
-| todo | Tools ▸ Structure ▸ Truss | `TRUSS` |
-| todo | Tools ▸ Structure ▸ Steel Profile | `STEELPROFILE` |
-| todo | Tools ▸ Structure ▸ Analytical Model | `ANALYTICALMODEL` |
-| todo | Tools ▸ Structure ▸ Frame Analysis | `FRAMEANALYSIS` |
-| todo | Tools ▸ MEP |  |
-| todo | Tools ▸ MEP ▸ Duct | `DUCT` |
-| todo | Tools ▸ MEP ▸ Pipe | `MEPPIPE` |
-| todo | Tools ▸ MEP ▸ Cable Tray | `CABLETRAY` |
-| todo | Tools ▸ MEP ▸ Conduit | `CONDUIT` |
-| todo | Tools ▸ MEP ▸ Connectors | `MEPCONNECTORS` |
-| todo | Tools ▸ Site More |  |
-| todo | Tools ▸ Site More ▸ Property Line | `PROPERTYLINE` |
-| todo | Tools ▸ Site More ▸ Subregion | `SUBREGION` |
-| todo | Tools ▸ Site More ▸ Site Path | `SITEPATH` |
-| todo | Tools ▸ Site More ▸ Parking | `PARKINGLOT` |
-| todo | Tools ▸ Site More ▸ Retaining Wall | `RETAININGWALL` |
-| todo | Tools ▸ Site More ▸ Import DEM | `DEMIMPORT` |
-| todo | Tools ▸ Surfaces & Mesh |  |
-| todo | Tools ▸ Surfaces & Mesh ▸ Ruled Surface | `RULESURF` |
-| todo | Tools ▸ Surfaces & Mesh ▸ Tabulated Surface | `TABSURF` |
-| todo | Tools ▸ Surfaces & Mesh ▸ Revolved Surface | `REVSURF` |
-| todo | Tools ▸ Surfaces & Mesh ▸ Edge Surface | `EDGESURF` |
-| todo | Tools ▸ Surfaces & Mesh ▸ Fillet Edges | `FILLETEDGE` |
-| todo | Tools ▸ Surfaces & Mesh ▸ Chamfer Edges | `CHAMFEREDGE` |
-| todo | Tools ▸ Surfaces & Mesh ▸ Repair Mesh | `MESHREPAIR` |
-| todo | Tools ▸ Surfaces & Mesh ▸ Decimate Mesh | `MESHDECIMATE` |
-| todo | Tools ▸ Analysis |  |
-| todo | Tools ▸ Analysis ▸ Heat Loss | `HEATLOSS` |
-| todo | Tools ▸ Analysis ▸ U-Value | `UVALUE` |
-| todo | Tools ▸ Analysis ▸ Daylight | `DAYLIGHT` |
-| todo | Tools ▸ Analysis ▸ Solar Radiation | `SOLARRADIATION` |
-| todo | Tools ▸ Analysis ▸ Sun Path | `SUNPATH` |
-| todo | Tools ▸ Analysis ▸ Isovist | `ISOVIST` |
-| todo | Tools ▸ Analysis ▸ Reverberation | `REVERB` |
-| todo | Tools ▸ Analysis ▸ Embodied Carbon | `CARBON` |
-| todo | Tools ▸ Analysis ▸ Level Areas | `LEVELAREAS` |
-| todo | Tools ▸ Analysis ▸ Code Check | `CODECHECK` |
-| todo | Tools ▸ Analysis ▸ Code Rules | `CODERULES` |
-| todo | Tools ▸ Analysis ▸ Standards Check | `STANDARDSCHECK` |
-| todo | Tools ▸ Analysis ▸ Validate IFC | `IFCVALIDATE` |
-| todo | Tools ▸ Analysis ▸ IDS Check | `IDSCHECK` |
-| todo | Tools ▸ Analysis ▸ Calculator | `CAL` |
-| todo | Tools ▸ Analysis ▸ Measure Geometry | `MEASUREGEOM` |
-| todo | Tools ▸ Analysis ▸ Status | `STATUS` |
-| todo | Tools ▸ Exchange |  |
-| todo | Tools ▸ Exchange ▸ DWG In | `DWGIN` |
-| todo | Tools ▸ Exchange ▸ DWG Converter | `DWGCONVERTER` |
-| todo | Tools ▸ Exchange ▸ STEP In | `STEPIN` |
-| todo | Tools ▸ Exchange ▸ Shapefile | `SHPIMPORT` |
-| todo | Tools ▸ Exchange ▸ OpenStreetMap | `OSMIMPORT` |
-| todo | Tools ▸ Exchange ▸ CityJSON | `CITYJSONIMPORT` |
-| todo | Tools ▸ Exchange ▸ Point Cloud | `POINTCLOUDIMPORT` |
-| todo | Tools ▸ Exchange ▸ Excel In | `XLSXIN` |
-| todo | Tools ▸ Exchange ▸ DWG Out | `DWGOUT` |
-| todo | Tools ▸ Exchange ▸ STEP Out | `STEPOUT` |
-| todo | Tools ▸ Exchange ▸ Collada | `DAEOUT` |
-| todo | Tools ▸ Exchange ▸ PLY | `PLYOUT` |
-| todo | Tools ▸ Exchange ▸ gbXML | `GBXMLOUT` |
-| todo | Tools ▸ Exchange ▸ COBie | `COBIEOUT` |
-| todo | Tools ▸ Exchange ▸ IFC ZIP | `IFCZIPOUT` |
-| todo | Tools ▸ Exchange ▸ HPGL | `HPGLOUT` |
-| todo | Tools ▸ Exchange ▸ Excel Out | `XLSXOUT` |
-| todo | Tools ▸ File |  |
-| todo | Tools ▸ File ▸ New | `NEW` |
-| todo | Tools ▸ File ▸ Open | `OPEN` |
-| todo | Tools ▸ File ▸ Save | `SAVE` |
-| todo | Tools ▸ File ▸ Save As | `SAVEAS` |
-| todo | Tools ▸ File ▸ Close | `CLOSE` |
-| todo | Tools ▸ File ▸ Import | `IMPORT` |
-| todo | Tools ▸ File ▸ Export | `EXPORT` |
-| todo | Tools ▸ File ▸ Plot | `PLOT` |
-| todo | Tools ▸ File ▸ Drawing Recovery | `DRAWINGRECOVERY` |
-| todo | Tools ▸ File ▸ Run Script | `SCRIPT` |
-| todo | Tools ▸ File ▸ Script Text | `SCRIPTTEXT` |
-| todo | Tools ▸ File ▸ Quit | `QUIT` |
-| todo | Tools ▸ Tools & Scripting |  |
-| todo | Tools ▸ Tools & Scripting ▸ Record Action | `ACTRECORD` |
-| todo | Tools ▸ Tools & Scripting ▸ Stop Recording | `ACTSTOP` |
-| todo | Tools ▸ Tools & Scripting ▸ Play Action | `ACTPLAY` |
-| todo | Tools ▸ Tools & Scripting ▸ Action Manager | `ACTMANAGER` |
-| todo | Tools ▸ Tools & Scripting ▸ Record Script | `SCRIPTRECORD` |
-| todo | Tools ▸ Tools & Scripting ▸ Aliases | `ALIAS` |
-| todo | Tools ▸ Tools & Scripting ▸ Command History | `HISTORY` |
-| todo | Tools ▸ Tools & Scripting ▸ Script Console | `SCRIPTCONSOLE` |
-| todo | Tools ▸ Tools & Scripting ▸ Script Library | `SCRIPTLIBRARY` |
-| todo | Tools ▸ Tools & Scripting ▸ Node Editor | `NODEEDITOR` |
-| todo | Tools ▸ Tools & Scripting ▸ Agent Settings | `AGENTSETTINGS` |
-| todo | Tools ▸ Tools & Scripting ▸ Connect Claude | `CONNECTCLAUDE` |
-| todo | Tools ▸ Settings |  |
-| todo | Tools ▸ Settings ▸ Options | `OPTIONS` |
-| todo | Tools ▸ Settings ▸ Units | `UNITS` |
-| todo | Tools ▸ Settings ▸ Drafting Settings | `DSETTINGS` |
-| todo | Tools ▸ Settings ▸ Limits | `LIMITS` |
-| todo | Tools ▸ Settings ▸ Isometric Drafting | `ISODRAFT` |
-| todo | Tools ▸ Settings ▸ Isoplane | `ISOPLANE` |
-| todo | Tools ▸ Settings ▸ UCS | `UCS` |
-| todo | Tools ▸ Settings ▸ Named UCS | `UCSMAN` |
-| todo | Tools ▸ Settings ▸ Snap | `SNAP` |
-| todo | Tools ▸ Settings ▸ Grid | `GRIDDISPLAY` |
-| todo | Tools ▸ Settings ▸ Ortho | `ORTHO` |
-| todo | Tools ▸ Settings ▸ Object Snap | `OSNAP` |
-| todo | Tools ▸ Settings ▸ Cursor Size | `CURSORSIZE` |
-| todo | Tools ▸ Settings ▸ Autosave Interval | `SAVETIME` |
-| todo | Tools ▸ Settings ▸ System Variable | `SETVAR` |
-| todo | Tools ▸ Settings ▸ Audit | `AUDIT` |
-| todo | Tools ▸ Settings ▸ Purge | `PURGE` |
-| todo | Tools ▸ View |  |
-| todo | Tools ▸ View ▸ Zoom | `ZOOM` |
-| todo | Tools ▸ View ▸ Pan | `PAN` |
-| todo | Tools ▸ View ▸ Regenerate | `REGEN` |
-| todo | Tools ▸ View ▸ Named Views | `VIEW` |
-| todo | Tools ▸ View ▸ Layout | `LAYOUT` |
-| todo | Tools ▸ View ▸ Viewports | `MVIEW` |
-| todo | Tools ▸ View ▸ 2D Plan | `SHOW2D` |
-| todo | Tools ▸ View ▸ 3D Model | `SHOW3D` |
-| todo | Tools ▸ View ▸ Split View | `SPLIT` |
-| todo | Tools ▸ View ▸ Visual Style | `VSCURRENT` |
-| todo | Tools ▸ View ▸ Render | `RENDER` |
-| todo | Tools ▸ View ▸ Walk | `WALK` |
-| todo | Tools ▸ View ▸ View Cube | `NAVVCUBE` |
-| todo | Tools ▸ View ▸ Orbit Selection | `ORBITSELECTION` |
-| todo | Tools ▸ View ▸ Save Camera | `SAVECAMERA` |
-| todo | Tools ▸ View ▸ Cameras | `CAMERA` |
-| todo | Tools ▸ View ▸ Section Box | `SECTIONBOX` |
-| todo | Tools ▸ View ▸ Sun Study | `SUNSTUDY` |
-| todo | Tools ▸ View ▸ Top | `TOPVIEW` |
-| todo | Tools ▸ View ▸ Bottom | `BOTTOMVIEW` |
-| todo | Tools ▸ View ▸ Front | `FRONTVIEW` |
-| todo | Tools ▸ View ▸ Back | `BACKVIEW` |
-| todo | Tools ▸ View ▸ Left | `LEFTVIEW` |
-| todo | Tools ▸ View ▸ Right | `RIGHTVIEW` |
-| todo | Tools ▸ View ▸ SW Iso | `ISOVIEW` |
-| todo | Tools ▸ View ▸ SE Iso | `SEISO` |
-| todo | Tools ▸ View ▸ NE Iso | `NEISO` |
-| todo | Tools ▸ View ▸ NW Iso | `NWISO` |
-| todo | Tools ▸ View ▸ Workspace | `WSCURRENT` |
-| todo | Tools ▸ View ▸ Save Workspace | `WSSAVE` |
-| todo | Tools ▸ View ▸ Clean Screen On | `CLEANSCREENON` |
-| todo | Tools ▸ View ▸ Clean Screen Off | `CLEANSCREENOFF` |
-| todo | Tools ▸ View ▸ Float Panel | `FLOATPANEL` |
-| todo | Tools ▸ View ▸ History Panel | `HISTORYPANEL` |
-| todo | Tools ▸ View ▸ Tool Palettes | `TOOLPALETTES` |
-| todo | Tools ▸ View ▸ Close Tool Palettes | `TOOLPALETTESCLOSE` |
-| todo | Tools ▸ View ▸ Materials | `MATERIALS` |
-| todo | Tools ▸ View ▸ Material Library | `MATBROWSER` |
-| todo | Tools ▸ Output |  |
-| todo | Tools ▸ Output ▸ Page Setup | `PAGESETUP` |
-| todo | Tools ▸ Output ▸ Plot Preview | `PREVIEW` |
-| todo | Tools ▸ Output ▸ Publish | `PUBLISH` |
-| todo | Tools ▸ Output ▸ Title Block | `TITLEBLOCK` |
-| todo | Tools ▸ Output ▸ Sheet Set | `SHEETSET` |
-| todo | Tools ▸ Output ▸ Sheet Index | `SHEETINDEX` |
-| todo | Tools ▸ Output ▸ Revision | `SHEETREVISION` |
-| todo | Tools ▸ Output ▸ Renumber Sheets | `SHEETRENUMBER` |
-| todo | Tools ▸ Output ▸ Editable View Titles | `SHEETVIEWTITLES` |
-| todo | Tools ▸ Output ▸ View Title | `VIEWTITLE` |
-| todo | Tools ▸ Output ▸ Lock Viewports | `VPLOCK` |
-| todo | Tools ▸ Animation & Export |  |
-| todo | Tools ▸ Animation & Export ▸ Walkthrough Video | `WALKTHROUGHVIDEO` |
-| todo | Tools ▸ Animation & Export ▸ Sun Study Video | `SUNSTUDYVIDEO` |
-| todo | Tools ▸ Animation & Export ▸ 360° Panorama | `PANORAMA` |
-| todo | Tools ▸ Animation & Export ▸ Section Plane | `SECTIONPLANE` |
-| todo | Tools ▸ Plot Styles |  |
-| todo | Tools ▸ Plot Styles ▸ Plot Styles | `PLOTSTYLE` |
-| todo | Tools ▸ Plot Styles ▸ Batch Publish | `BATCHPUBLISH` |
-| todo | Tools ▸ Plot Styles ▸ Plot Log | `PLOTLOG` |
-| todo | Tools ▸ Start & Templates |  |
-| todo | Tools ▸ Start & Templates ▸ Start Screen | `STARTSCREEN` |
-| todo | Tools ▸ Start & Templates ▸ New from Template | `NEWFROMTEMPLATE` |
-| todo | Tools ▸ Start & Templates ▸ Save as Template | `SAVEASTEMPLATE` |
-| todo | Tools ▸ Start & Templates ▸ Theme | `THEME` |
-| todo | Tools ▸ Start & Templates ▸ Constraint Bar | `CONSTRAINTBAR` |
-| todo | Tools ▸ Help |  |
-| todo | Tools ▸ Help ▸ Help | `HELP` |
-| todo | Tools ▸ Help ▸ Command List | `COMMANDS` |
-| todo | Tools ▸ Help ▸ Search Commands | `COMMANDSEARCH` |
-| todo | Tools ▸ Help ▸ About | `ABOUT` |
-| todo | Tools ▸ Help ▸ Self Test | `APPSELFTEST` |
-| todo | Tools ▸ Help ▸ Export Command Reference | `EXPORTCOMMANDS` |
-| todo | Tools ▸ Review & Markup |  |
-| todo | Tools ▸ Review & Markup ▸ Markups | `MARKUP` |
-| todo | Tools ▸ Review & Markup ▸ Compare Drawings | `COMPARE` |
-| todo | Tools ▸ Review & Markup ▸ BCF Import | `BCFIN` |
-| todo | Tools ▸ Review & Markup ▸ BCF Export | `BCFOUT` |
-| todo | Tools ▸ Review & Markup ▸ Revision Stamp | `REVSTAMP` |
-| todo | Tools ▸ Versions & Issues |  |
-| todo | Tools ▸ Versions & Issues ▸ Issue Tracker | `ISSUETRACKER` |
-| todo | Tools ▸ Versions & Issues ▸ Versions | `VERSIONS` |
-| todo | Tools ▸ Versions & Issues ▸ Merge Models | `MODELMERGE` |
-| todo | Tools ▸ Versions & Issues ▸ Office Standards | `STANDARDS` |
-| todo | Tools ▸ Versions & Issues ▸ Change Journal | `JOURNAL` |
-| todo | Tools ▸ Versions & Issues ▸ Recover File | `RECOVER` |
-| todo | Tools ▸ Versions & Issues ▸ Recovery Files | `RECOVERYFILES` |
-| todo | Tools ▸ Inquiry Extras |  |
-| todo | Tools ▸ Inquiry Extras ▸ Angle Between | `ANGLEBETWEEN` |
-| todo | Tools ▸ Inquiry Extras ▸ Distance to Object | `DISTTOOBJECT` |
-| todo | Tools ▸ Inquiry Extras ▸ Point Inside? | `POINTINSIDE` |
-| todo | Tools ▸ Inquiry Extras ▸ Total Length | `TLEN` |
-| todo | Tools ▸ Sharing & Exchange |  |
-| todo | Tools ▸ Sharing & Exchange ▸ eTransmit | `ETRANSMIT` |
-| todo | Tools ▸ Sharing & Exchange ▸ Share… | `SHARE` |
-| todo | Tools ▸ Sharing & Exchange ▸ Exchange Check | `EXCHANGECHECK` |
-| todo | Tools ▸ Sharing & Exchange ▸ Batch Jobs | `BATCH` |
-| todo | Tools ▸ Sharing & Exchange ▸ IFC Options | `IFCOPTIONS` |
-| todo | Tools ▸ Checks & Quantities |  |
-| todo | Tools ▸ Checks & Quantities ▸ Accessibility | `ACCESSIBILITY` |
-| todo | Tools ▸ Checks & Quantities ▸ Egress | `EGRESS` |
-| todo | Tools ▸ Checks & Quantities ▸ Energy Balance | `ENERGYBALANCE` |
-| todo | Tools ▸ Checks & Quantities ▸ Bill of Quantities | `BOQ` |
-| todo | Tools ▸ Checks & Quantities ▸ Takeoff by Phase | `TAKEOFFPHASE` |
-| todo | Tools ▸ Checks & Quantities ▸ Lighting Schedule | `LIGHTSCHEDULE` |
-| todo | Tools ▸ Checks & Quantities ▸ Fire Compartments | `FIRECOMPARTMENTS` |
-| todo | Tools ▸ Checks & Quantities ▸ Load Takedown | `LOADTAKEDOWN` |
-| todo | Tools ▸ Checks & Quantities ▸ Parking Check | `PARKINGCHECK` |
-| todo | Tools ▸ Checks & Quantities ▸ Rainwater | `RAINWATER` |
-| todo | Tools ▸ Images & Geo |  |
-| todo | Tools ▸ Images & Geo ▸ Import Image | `IMAGEIMPORT` |
-| todo | Tools ▸ Images & Geo ▸ Scale Image | `IMAGESCALE` |
-| todo | Tools ▸ Images & Geo ▸ KML / KMZ Out | `KMLOUT` |
-| todo | Tools ▸ Images & Geo ▸ Layered SVG Out | `SVGLAYERSOUT` |
-| todo | Tools ▸ Images & Geo ▸ Load .pat Patterns | `PATLOAD` |
-| todo | Tools ▸ Drafting Extras |  |
-| todo | Tools ▸ Drafting Extras ▸ Match Properties | `MATCHPROP` |
-| todo | Tools ▸ Drafting Extras ▸ Blend Curves | `BLEND` |
-| todo | Tools ▸ Drafting Extras ▸ Ellipse in Parallelogram | `ELLIPSEQUAD` |
-| todo | Tools ▸ Drafting Extras ▸ Gradient | `GRADIENT` |
-| todo | Tools ▸ Drafting Extras ▸ Trace | `TRACE` |
-| todo | Tools ▸ Drafting Extras ▸ Flatten | `FLATTEN` |
-| todo | Tools ▸ Drafting Extras ▸ Hatch Origin | `HATCHSETORIGIN` |
-| todo | Tools ▸ Drafting Extras ▸ Rotate 90° | `ROTATE90` |
-| todo | Tools ▸ Drafting Extras ▸ Edit Spline | `SPLINEDIT` |
-| todo | Tools ▸ Drafting Extras ▸ Explode Text | `TXTEXP` |
-| todo | Tools ▸ Drafting Extras ▸ Change Space | `CHSPACE` |
-| todo | Tools ▸ Drafting Extras ▸ Deselect | `DESELECT` |
-| todo | Tools ▸ Drafting Extras ▸ Select Previous | `SELECTPREVIOUS` |
-| todo | Tools ▸ Drafting Extras ▸ Select Instances | `SELECTINSTANCES` |
-| todo | Tools ▸ Annotation Extras |  |
-| todo | Tools ▸ Annotation Extras ▸ Jogged Radius | `DIMJOGGED` |
-| todo | Tools ▸ Annotation Extras ▸ Jog Line | `DIMJOGLINE` |
-| todo | Tools ▸ Annotation Extras ▸ Ordinate Datum | `DIMREBASE` |
-| todo | Tools ▸ Annotation Extras ▸ Grid Dimensions | `AUTODIMGRIDS` |
-| todo | Tools ▸ Annotation Extras ▸ Object Scale | `OBJECTSCALE` |
-| todo | Tools ▸ Annotation Extras ▸ Spot Coordinate | `SPOTCOORD` |
-| todo | Tools ▸ Annotation Extras ▸ Text Frame | `TEXTFRAME` |
-| todo | Tools ▸ Annotation Extras ▸ Text Mask | `TEXTMASK` |
-| todo | Tools ▸ Annotation Extras ▸ Remove Text Mask | `TEXTUNMASK` |
-| todo | Tools ▸ Dynamic Blocks |  |
-| todo | Tools ▸ Dynamic Blocks ▸ Dynamic Parameter | `BPARAMETER` |
-| todo | Tools ▸ Dynamic Blocks ▸ Dynamic Value | `DYNPROP` |
-| todo | Tools ▸ Dynamic Blocks ▸ Reset Block | `RESETBLOCK` |
-| todo | Tools ▸ BIM Authoring |  |
-| todo | Tools ▸ BIM Authoring ▸ Area Scheme | `AREASCHEME` |
-| todo | Tools ▸ BIM Authoring ▸ Update Associative | `BIMUPDATE` |
-| todo | Tools ▸ BIM Authoring ▸ Dormer | `DORMER` |
-| todo | Tools ▸ BIM Authoring ▸ Elevator | `ELEVATOR` |
-| todo | Tools ▸ BIM Authoring ▸ Family Editor | `FAMILY` |
-| todo | Tools ▸ BIM Authoring ▸ Floor Finish | `FLOORFINISH` |
-| todo | Tools ▸ BIM Authoring ▸ Model Group | `MODELGROUP` |
-| todo | Tools ▸ BIM Authoring ▸ Opening Trim | `OPENINGTRIM` |
-| todo | Tools ▸ BIM Authoring ▸ Profiles | `PROFILE` |
-| todo | Tools ▸ BIM Authoring ▸ Railing Type | `RAILINGTYPE` |
-| todo | Tools ▸ BIM Authoring ▸ Roof Edge | `ROOFEDGE` |
-| todo | Tools ▸ BIM Authoring ▸ Shaft | `SHAFT` |
-| todo | Tools ▸ BIM Authoring ▸ Skylight | `SKYLIGHT` |
-| todo | Tools ▸ BIM Authoring ▸ Slab Opening | `SLABOPENING` |
-| todo | Tools ▸ BIM Authoring ▸ Slab / Roof Type | `SLABTYPE` |
-| todo | Tools ▸ BIM Authoring ▸ Wall Join | `WALLJOINEDIT` |
-| todo | Tools ▸ BIM Authoring ▸ Wall Wrap | `WALLWRAP` |
-| todo | Tools ▸ BIM Authoring ▸ Light Data | `LIGHTDATA` |
-| todo | Tools ▸ BIM Authoring ▸ MEP Systems | `MEPSYSTEM` |
-| todo | Tools ▸ Views & Graphics |  |
-| todo | Tools ▸ Views & Graphics ▸ Drafting View | `DRAFTINGVIEW` |
-| todo | Tools ▸ Views & Graphics ▸ Legend | `LEGEND` |
-| todo | Tools ▸ Views & Graphics ▸ View Graphics | `VIEWGRAPHICS` |
-| todo | Tools ▸ Views & Graphics ▸ View Templates | `VIEWTEMPLATE` |
-| todo | Tools ▸ Solid Features |  |
-| todo | Tools ▸ Solid Features ▸ Press/Pull Face | `PRESSPULLFACE` |
-| todo | Tools ▸ Solid Features ▸ Section Solids | `SECTIONSOLIDS` |
-| todo | Tools ▸ Solid Features ▸ Record History | `SOLIDHIST` |
-| todo | Tools ▸ Solid Features ▸ Feature History | `SOLIDHISTORY` |
-| todo | Tools ▸ Script Control |  |
-| todo | Tools ▸ Script Control ▸ Plug-ins | `PLUGINS` |
-| todo | Tools ▸ Script Control ▸ Script to JavaScript | `SCRIPT2JS` |
-| todo | Tools ▸ Script Control ▸ Menu Macro | `MACRO` |
-| todo | Tools ▸ Script Control ▸ Delay | `DELAY` |
-| todo | Tools ▸ Script Control ▸ Resume Script | `RESUME` |
-| todo | Tools ▸ Review Panels |  |
-| todo | Tools ▸ Review Panels ▸ Markup Panel | `MARKUPPANEL` |
-| todo | Tools ▸ Review Panels ▸ Compare Overlay | `COMPAREPANEL` |
-| todo | Tools ▸ Review Panels ▸ Revision Clouds | `REVCLOUDPANEL` |
-| todo | Tools ▸ Review Panels ▸ Block Palette | `BLOCKPALETTE` |
-| todo | Tools ▸ 3D, Render & Print |  |
-| todo | Tools ▸ 3D, Render & Print ▸ Measure 3D | `MEASURE3D` |
-| todo | Tools ▸ 3D, Render & Print ▸ 3D Gizmo | `GIZMO3D` |
-| todo | Tools ▸ 3D, Render & Print ▸ Camera Paths | `CAMERAPATHEDIT` |
-| todo | Tools ▸ 3D, Render & Print ▸ Render Queue | `RENDERQUEUE` |
-| todo | Tools ▸ 3D, Render & Print ▸ Clipping Plane | `CLIPPLANES` |
-| todo | Tools ▸ 3D, Render & Print ▸ Print Setup | `PRINTSETUP` |
-| todo | Tools ▸ Families, Views & Panels |  |
-| todo | Tools ▸ Families, Views & Panels ▸ Family Editor Panel | `FAMILYPANEL` |
-| todo | Tools ▸ Families, Views & Panels ▸ Move Up/Down (Z) | `MOVEZ` |
-| todo | Tools ▸ Families, Views & Panels ▸ Levels in 3D | `LEVELVIEW3D` |
-| todo | Tools ▸ Families, Views & Panels ▸ Field of View | `FOV` |
-| todo | Tools ▸ Families, Views & Panels ▸ Save 3D View Image | `VIEWIMAGE` |
-| todo | Tools ▸ Families, Views & Panels ▸ Sheet to Image | `SHEETIMAGE` |
-| todo | Tools ▸ Families, Views & Panels ▸ Selection Info | `SELECTIONINFO` |
-| todo | Tools ▸ Families, Views & Panels ▸ Notifications | `NOTIFICATIONS` |
-| todo | Tools ▸ Families, Views & Panels ▸ Navigator | `NAVIGATOR` |
-| todo | Tools ▸ Families, Views & Panels ▸ What's New | `WHATSNEW` |
-| todo | Tools ▸ 3D Primitives & Solid Tools |  |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Wedge | `WEDGE` |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Torus | `TORUS` |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Pyramid | `PYRAMID` |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Prism | `PRISM` |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Polyhedron | `POLYHEDRON` |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Polysolid | `POLYSOLID` |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Helix | `HELIX` |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Planar Surface | `PLANESURF` |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Thicken | `THICKEN` |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Convex Hull | `HULL` |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Separate Solids | `SEPARATE` |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Check Solid | `SOLIDCHECK` |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Section Object | `SECTIONOBJECT` |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Mesh Primitive | `MESH` |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Convert to Mesh | `CONVTOMESH` |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Convert to Solid | `CONVTOSOLID` |
-| todo | Tools ▸ 3D Primitives & Solid Tools ▸ Linear Extrude | `LINEAREXTRUDE` |
-| todo | Tools ▸ Annotation & Data |  |
-| todo | Tools ▸ Annotation & Data ▸ Alternate Units | `DIMALTUNITS` |
-| todo | Tools ▸ Annotation & Data ▸ Dimension Tolerance | `DIMTOLERANCE` |
-| todo | Tools ▸ Annotation & Data ▸ Inspection Dimension | `DIMINSPECT` |
-| todo | Tools ▸ Annotation & Data ▸ Text Columns | `MTEXTCOLUMNS` |
-| todo | Tools ▸ Annotation & Data ▸ Text List | `TEXTLIST` |
-| todo | Tools ▸ Annotation & Data ▸ Color Books | `COLORBOOK` |
-| todo | Tools ▸ Annotation & Data ▸ Layer Description | `LAYDESC` |
-| todo | Tools ▸ Annotation & Data ▸ Block Table | `BTABLE` |
-| todo | Tools ▸ Annotation & Data ▸ Clip Xref | `XCLIP` |
-| todo | Tools ▸ BIM Grids, Zones & Data |  |
-| todo | Tools ▸ BIM Grids, Zones & Data ▸ Grid System | `GRIDSYSTEM` |
-| todo | Tools ▸ BIM Grids, Zones & Data ▸ Radial Grid | `RADIALGRID` |
-| todo | Tools ▸ BIM Grids, Zones & Data ▸ Zone | `ZONE` |
-| todo | Tools ▸ BIM Grids, Zones & Data ▸ Escalator | `ESCALATOR` |
-| todo | Tools ▸ BIM Grids, Zones & Data ▸ Split Wall | `SPLITWALL` |
-| todo | Tools ▸ BIM Grids, Zones & Data ▸ Flip Wall | `WALLFLIP` |
-| todo | Tools ▸ BIM Grids, Zones & Data ▸ Flip Opening | `OPENINGFLIP` |
-| todo | Tools ▸ BIM Grids, Zones & Data ▸ Classify | `CLASSIFY` |
-| todo | Tools ▸ BIM Grids, Zones & Data ▸ Property Sets | `PSET` |
-| todo | Tools ▸ BIM Grids, Zones & Data ▸ Global Parameters | `GLOBALPARAM` |
-| todo | Tools ▸ BIM Grids, Zones & Data ▸ Auto Stack | `AUTOSTACK` |
-| todo | Tools ▸ BIM Grids, Zones & Data ▸ Relative Zero | `RELZERO` |
-| todo | Tools ▸ BIM Grids, Zones & Data ▸ Roof by Shape | `ROOFSHAPE` |
-| todo | Tools ▸ BIM Grids, Zones & Data ▸ View Range | `VIEWRANGE` |
-| todo | Tools ▸ BIM Grids, Zones & Data ▸ Geolocation | `GEOLOCATION` |
-| todo | Tools ▸ BIM Grids, Zones & Data ▸ Underlay | `UNDERLAY` |
-| todo | Tools ▸ Arrays, Macros & Monitor |  |
-| todo | Tools ▸ Arrays, Macros & Monitor ▸ Array (Dialog) | `ARRAYCLASSIC` |
-| todo | Tools ▸ Arrays, Macros & Monitor ▸ Edit Array | `ARRAYEDIT` |
-| todo | Tools ▸ Arrays, Macros & Monitor ▸ Macro Button | `MACROBUTTON` |
-| todo | Tools ▸ Arrays, Macros & Monitor ▸ Variable Monitor | `SYSVARMONITOR` |
-| todo | Tools ▸ Temporary Visibility |  |
-| todo | Tools ▸ Temporary Visibility ▸ Temporary Hide | `TEMPHIDE` |
-| todo | Tools ▸ Temporary Visibility ▸ Temporary Isolate | `TEMPISOLATE` |
-| todo | Tools ▸ Temporary Visibility ▸ Reveal Hidden | `REVEALHIDDEN` |
-| todo | Tools ▸ Import, Export & Collaboration |  |
-| todo | Tools ▸ Import, Export & Collaboration ▸ Import PDF | `PDFIMPORT` |
-| todo | Tools ▸ Import, Export & Collaboration ▸ PDF Markups | `PDFMARKUPS` |
-| todo | Tools ▸ Import, Export & Collaboration ▸ Import DWFx | `DWFIMPORT` |
-| todo | Tools ▸ Import, Export & Collaboration ▸ Import DGN | `DGNIMPORT` |
-| todo | Tools ▸ Import, Export & Collaboration ▸ Export DGN | `DGNEXPORT` |
-| todo | Tools ▸ Import, Export & Collaboration ▸ IFC Class Mapping | `IFCMAP` |
-| todo | Tools ▸ Import, Export & Collaboration ▸ Laser Export | `LASEREXPORT` |
-| todo | Tools ▸ Import, Export & Collaboration ▸ Share View | `SHAREVIEW` |
-| todo | Tools ▸ Import, Export & Collaboration ▸ Point Cloud View | `POINTCLOUDVIEW` |
-| todo | Tools ▸ Import, Export & Collaboration ▸ Point Cloud Plane | `PCPLANE` |
-| todo | Tools ▸ Import, Export & Collaboration ▸ Scan to BIM | `SCANTOBIM` |
-| todo | Tools ▸ Import, Export & Collaboration ▸ Central Model | `CENTRAL` |
-| todo | Tools ▸ Import, Export & Collaboration ▸ Git Version | `GITVERSION` |
-| todo | Tools ▸ Import, Export & Collaboration ▸ Trace Review | `TRACEREVIEW` |
-| todo | Tools ▸ Analysis & Design Assist |  |
-| todo | Tools ▸ Analysis & Design Assist ▸ Structural Loads | `STRUCTLOAD` |
-| todo | Tools ▸ Analysis & Design Assist ▸ Structural Supports | `STRUCTSUPPORT` |
-| todo | Tools ▸ Analysis & Design Assist ▸ Thermal Bridges | `THERMALBRIDGES` |
-| todo | Tools ▸ Analysis & Design Assist ▸ EnergyPlus Export | `ENERGYPLUS` |
-| todo | Tools ▸ Analysis & Design Assist ▸ Work Schedule (4D) | `WORKSCHEDULE` |
-| todo | Tools ▸ Analysis & Design Assist ▸ Auto-Dimension Plan | `AUTODIMPLAN` |
-| todo | Tools ▸ Analysis & Design Assist ▸ Auto-Name Rooms | `AUTONAMEROOMS` |
-| todo | Tools ▸ Analysis & Design Assist ▸ Generate Plan | `PLANGEN` |
-| todo | Tools ▸ Analysis & Design Assist ▸ QA Assistant | `QAASSIST` |
-| todo | Tools ▸ Analysis & Design Assist ▸ Ask (Natural Language) | `ASK` |
-| todo | Tools ▸ Analysis & Design Assist ▸ AutoLISP | `LISP` |
-| todo | Tools ▸ Analysis & Design Assist ▸ Load LISP File | `LISPLOAD` |
-| todo | Tools ▸ Navigation & Sheets |  |
-| todo | Tools ▸ Navigation & Sheets ▸ File Tabs | `FILETAB` |
-| todo | Tools ▸ Navigation & Sheets ▸ Hide File Tabs | `FILETABCLOSE` |
-| todo | Tools ▸ Navigation & Sheets ▸ Model/Layout Tabs | `LAYOUTTABS` |
-| todo | Tools ▸ Navigation & Sheets ▸ Quick Properties | `QUICKPROPS` |
-| todo | Tools ▸ Navigation & Sheets ▸ Inspector | `INSPECT` |
-| todo | Tools ▸ Navigation & Sheets ▸ Design Center | `ADCENTER` |
-| todo | Tools ▸ Navigation & Sheets ▸ Help Browser | `HELPWINDOW` |
-| todo | Tools ▸ Navigation & Sheets ▸ Tutorials | `TUTORIALS` |
-| todo | Tools ▸ Navigation & Sheets ▸ Sample House | `SAMPLEHOUSE` |
-| todo | Tools ▸ Navigation & Sheets ▸ Select Wall Chain | `SELECTWALLCHAIN` |
-| todo | Tools ▸ Navigation & Sheets ▸ Twist View | `DVIEW` |
-| todo | Tools ▸ Navigation & Sheets ▸ Perspective | `PERSPECTIVE` |
-| todo | Tools ▸ Navigation & Sheets ▸ Maximise Viewport | `VPMAX` |
-| todo | Tools ▸ Navigation & Sheets ▸ Restore Viewport | `VPMIN` |
-| todo | Tools ▸ Navigation & Sheets ▸ Clip Viewport | `VPCLIP` |
-| todo | Tools ▸ Navigation & Sheets ▸ Polygonal Viewport | `MVIEWPOLY` |
-| todo | Tools ▸ Navigation & Sheets ▸ Align Viewports | `MVSETUP` |
-| todo | Tools ▸ Navigation & Sheets ▸ Sheet Guide Grid | `SHEETGRID` |
-| todo | Tools ▸ Navigation & Sheets ▸ Placeholder Sheet | `SHEETPLACEHOLDER` |
-| todo | Tools ▸ Navigation & Sheets ▸ Custom Fields | `SHEETFIELD` |
-| todo | Tools ▸ Navigation & Sheets ▸ Import Page Setup | `PSETUPIN` |
-| todo | Tools ▸ Navigation & Sheets ▸ Lineweight Display Scale | `LWDISPLAYSCALE` |
-| todo | Tools ▸ Navigation & Sheets ▸ Visual Styles Manager | `VISUALSTYLES` |
-| todo | Tools ▸ Navigation & Sheets ▸ Tiled Views | `TILEDVIEWS` |
-| todo | Tools ▸ Navigation & Sheets ▸ Plot Area | `PLOTAREA` |
-| todo | Tools ▸ Navigation & Sheets ▸ Sheet to SVG | `SHEETSVG` |
-| todo | Tools ▸ Navigation & Sheets ▸ Named Plot Styles | `PLOTSTYLENAME` |
-| todo | Tools ▸ Navigation & Sheets ▸ Export Settings | `EXPORTSETTINGS` |
-| todo | Tools ▸ Navigation & Sheets ▸ Window Tabs | `WINDOWTABS` |
-| todo | Tools ▸ Navigation & Sheets ▸ Full Screen | `FULLSCREEN` |
-| todo | Tools ▸ Navigation & Sheets ▸ Import Settings | `IMPORTSETTINGS` |
-| todo | Tools ▸ File Tools & Exchange |  |
-| todo | Tools ▸ File Tools & Exchange ▸ Save a Copy | `SAVECOPY` |
-| todo | Tools ▸ File Tools & Exchange ▸ Round-trip Check | `SAVECHECK` |
-| todo | Tools ▸ File Tools & Exchange ▸ Upgrade File | `UPGRADEFILE` |
-| todo | Tools ▸ File Tools & Exchange ▸ File Metadata | `FILEMETADATA` |
-| todo | Tools ▸ File Tools & Exchange ▸ Save as Template File | `TEMPLATEOUT` |
-| todo | Tools ▸ File Tools & Exchange ▸ New from Template File | `TEMPLATEIN` |
-| todo | Tools ▸ File Tools & Exchange ▸ Import Dropped File | `DROPIMPORT` |
-| todo | Tools ▸ File Tools & Exchange ▸ Attach PDF | `PDFATTACH` |
-| todo | Tools ▸ File Tools & Exchange ▸ PDF Underlays | `PDFUNDERLAYS` |
-| todo | Tools ▸ File Tools & Exchange ▸ BREP In | `BREPIN` |
-| todo | Tools ▸ File Tools & Exchange ▸ BREP Out | `BREPOUT` |
-| todo | Tools ▸ File Tools & Exchange ▸ E57 Scan In | `E57IN` |
-| todo | Tools ▸ File Tools & Exchange ▸ E57 Scan Out | `E57OUT` |
-| todo | Tools ▸ Analysis & Generative |  |
-| todo | Tools ▸ Analysis & Generative ▸ Annual Daylight (sDA/ASE) | `DAYLIGHTANNUAL` |
-| todo | Tools ▸ Analysis & Generative ▸ Wind Study Export (CFD) | `CFDEXPORT` |
-| todo | Tools ▸ Analysis & Generative ▸ Wind Results | `WINDRESULTS` |
-| todo | Tools ▸ Analysis & Generative ▸ Generative Layout | `GENDESIGN` |
-| todo | Tools ▸ Analysis & Generative ▸ Sketch to Walls | `SKETCHTOWALLS` |
-| todo | Tools ▸ Analysis & Generative ▸ Editing Time | `TIME` |
-| todo | Tools ▸ Analysis & Generative ▸ Co-editing | `COEDIT` |
-| todo | Tools ▸ Analysis & Generative ▸ BCF Server | `BCFSERVER` |
-| todo | Tools ▸ Analysis & Generative ▸ Resolve Conflicts | `RESOLVECONFLICTS` |
-| todo | Tools ▸ Analysis & Generative ▸ Clash Manager | `CLASHMANAGE` |
-| todo | Tools ▸ BIM Types & Parameters |  |
-| todo | Tools ▸ BIM Types & Parameters ▸ Assembly | `ASSEMBLY` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Parts | `PARTS` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Stacked Wall | `STACKEDWALL` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Rectangular Walls | `WALLRECT` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Polygon Walls | `WALLPOLYGON` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Storefront | `STOREFRONT` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Stair Types | `STAIRTYPE` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Railing Types | `RAILTYPEDEF` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Story Settings | `STORY` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Structural Column | `STRUCTCOLUMN` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Structural Usage | `STRUCTURAL` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Expression | `EXPRESSION` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Family Equality Lock | `FAMILYLOCK` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Parameter ↔ Cell | `PARAMCELL` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Reporting Parameter | `REPORTPARAM` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Transfer Standards | `TRANSFERSTANDARDS` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Roof by Extrusion | `ROOFEXTRUSION` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Roof Shape Points | `ROOFSHAPEPOINTS` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Slab Edge | `SLABEDGE` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Stair by Sketch | `STAIRSKETCH` |
-| todo | Tools ▸ BIM Types & Parameters ▸ Type Image | `TYPEIMAGE` |
-| todo | Tools ▸ Detailing & Tags |  |
-| todo | Tools ▸ Detailing & Tags ▸ Detail Component | `DETAILCOMPONENT` |
-| todo | Tools ▸ Detailing & Tags ▸ Repeating Detail | `REPEATDETAIL` |
-| todo | Tools ▸ Detailing & Tags ▸ Insulation | `INSULATION` |
-| todo | Tools ▸ Detailing & Tags ▸ Filled Region | `FILLEDREGION` |
-| todo | Tools ▸ Detailing & Tags ▸ Masking Region | `MASKINGREGION` |
-| todo | Tools ▸ Detailing & Tags ▸ Hatch Type (Model/Drafting) | `HATCHTYPE` |
-| todo | Tools ▸ Detailing & Tags ▸ Detail Mark | `DETAILMARK` |
-| todo | Tools ▸ Detailing & Tags ▸ Elevation Mark | `ELEVATIONMARK` |
-| todo | Tools ▸ Detailing & Tags ▸ Section Symbol | `SECTIONSYMBOL` |
-| todo | Tools ▸ Detailing & Tags ▸ Material Tag | `MATERIALTAG` |
-| todo | Tools ▸ Detailing & Tags ▸ Revision Clouds | `REVCLOUDLIST` |
-| todo | Tools ▸ Detailing & Tags ▸ Schedule Cell Highlight | `SCHEDULECELLS` |
-| todo | Tools ▸ Detailing & Tags ▸ Table Style | `TABLESTYLE` |
-| todo | Tools ▸ Views & Coordinates |  |
-| todo | Tools ▸ Views & Coordinates ▸ Plan (UCS) | `PLAN` |
-| todo | Tools ▸ Views & Coordinates ▸ Plan Orientation | `PLANORIENT` |
-| todo | Tools ▸ Views & Coordinates ▸ Project Views | `PROJECTVIEW` |
-| todo | Tools ▸ Views & Coordinates ▸ Axonometric View | `AXONVIEW` |
-| todo | Tools ▸ Views & Coordinates ▸ Camera Object | `CAMERAVIEW` |
-| todo | Tools ▸ Views & Coordinates ▸ View Crop | `VIEWCROP` |
-| todo | Tools ▸ Views & Coordinates ▸ Scope Box | `SCOPEBOX` |
-| todo | Tools ▸ Views & Coordinates ▸ Matchlines | `MATCHLINE` |
-| todo | Tools ▸ Views & Coordinates ▸ Linework Override | `LINEWORK` |
-| todo | Tools ▸ Views & Coordinates ▸ UCS Icon | `UCSICON` |
-| todo | Tools ▸ Views & Coordinates ▸ Axis Lock | `AXISLOCK` |
-| todo | Tools ▸ Views & Coordinates ▸ View Section Box | `VIEWSECTIONBOX` |
-| todo | Tools ▸ Views & Coordinates ▸ Double-Click Edit | `DBLCLKEDIT` |
-| todo | Tools ▸ Views & Coordinates ▸ Reference Plane | `RP` |
-| todo | Tools ▸ Views & Coordinates ▸ Project Base Point | `PROJECTBASEPOINT` |
-| todo | Tools ▸ Views & Coordinates ▸ Survey Point | `SURVEYPOINT` |
-| todo | Tools ▸ Views & Coordinates ▸ True North | `TRUENORTH` |
-| todo | Tools ▸ Mesh & Procedural 3D |  |
-| todo | Tools ▸ Mesh & Procedural 3D ▸ 3D Align | `3DALIGN` |
-| todo | Tools ▸ Mesh & Procedural 3D ▸ Extrude Mesh Face | `MESHEXTRUDE` |
-| todo | Tools ▸ Mesh & Procedural 3D ▸ Mesh Sections | `MESHSECTION` |
-| todo | Tools ▸ Mesh & Procedural 3D ▸ Minkowski Sum | `MINKOWSKI` |
-| todo | Tools ▸ Mesh & Procedural 3D ▸ OpenSCAD Script | `SCAD` |
-| todo | Tools ▸ Mesh & Procedural 3D ▸ OpenSCAD File | `SCADFILE` |
-| todo | Tools ▸ Mesh & Procedural 3D ▸ Spring | `SPRING` |
-| todo | Tools ▸ Mesh & Procedural 3D ▸ CV Surface | `SURFCV` |
-| todo | Tools ▸ Mesh & Procedural 3D ▸ 3D Text | `TEXT3D` |
-| todo | Tools ▸ Mesh & Procedural 3D ▸ Unfold Mesh | `UNFOLD` |
-| todo | Tools ▸ Mesh & Procedural 3D ▸ Wireframe Lattice | `WIREFRAME` |
-| todo | Tools ▸ Block & Reference Editing |  |
-| todo | Tools ▸ Block & Reference Editing ▸ Block Editor | `BEDIT` |
-| todo | Tools ▸ Block & Reference Editing ▸ Save Block | `BSAVE` |
-| todo | Tools ▸ Block & Reference Editing ▸ Close Block Editor | `BCLOSE` |
-| todo | Tools ▸ Block & Reference Editing ▸ Edit Reference | `REFEDIT` |
-| todo | Tools ▸ Block & Reference Editing ▸ Reference Working Set | `REFSET` |
-| todo | Tools ▸ Block & Reference Editing ▸ Close Reference | `REFCLOSE` |
-| todo | Tools ▸ Block & Reference Editing ▸ Install Bundled Library | `LIBRARYINSTALL` |
-| todo | Tools ▸ Block & Reference Editing ▸ Layer Notification | `LAYERNOTIFY` |
-| todo | Tools ▸ Block & Reference Editing ▸ Reconcile Layers | `LAYRECONCILE` |
-| todo | Tools ▸ Exchange Options |  |
-| todo | Tools ▸ Exchange Options ▸ DXF Output Version | `DXFOUTVERSION` |
-| todo | Tools ▸ Exchange Options ▸ ifcXML Out | `IFCXMLOUT` |
-| todo | Tools ▸ Navigate, Light & Publish |  |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Arrange Windows | `SYSWINDOWS` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Fly | `FLY` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Look Around | `LOOKAROUND` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Position Camera | `POSITIONCAMERA` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Two-Point Perspective | `TWOPOINT` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Steering Wheel | `NAVSWHEEL` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Lights | `LIGHT` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Fog | `FOG` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Emissive Material | `MATEMISSIVE` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Texture Mapping | `MATMAPPING` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Billboard | `BILLBOARD` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Export PDF | `EXPORTPDF` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Shade Plot | `SHADEPLOT` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Title Block Design | `TITLEBLOCKDESIGN` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Web Viewer Export | `WEBVIEWEREXPORT` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Render to File (Passes, Region, 8K) | `RENDERTOFILE` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Stereo 360° Panorama | `STEREOPANORAMA` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Construction Sequence (4D) | `PHASEANIMATION` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Hyperlink | `HYPERLINK` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ AI Assistant | `ASSISTANT` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Graph Player | `GRAPHPLAYER` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Render Prompt | `RENDERPROMPT` |
-| todo | Tools ▸ Navigate, Light & Publish ▸ Radial Menu | `RADIALMENU` |
-| todo | Tools ▸ Studies, Signatures & Publishing |  |
-| todo | Tools ▸ Studies, Signatures & Publishing ▸ Radiance Daylight | `DAYLIGHTRADIANCE` |
-| todo | Tools ▸ Studies, Signatures & Publishing ▸ Shadow Diagram | `SHADOWDIAGRAM` |
-| todo | Tools ▸ Studies, Signatures & Publishing ▸ Colour-Blind Check | `COLORBLINDCHECK` |
-| todo | Tools ▸ Studies, Signatures & Publishing ▸ Memory Report | `MEMORYREPORT` |
-| todo | Tools ▸ Studies, Signatures & Publishing ▸ Survey Linework | `SURVEYLINES` |
-| todo | Tools ▸ Studies, Signatures & Publishing ▸ LAZ Converter | `LAZCONVERTER` |
-| todo | Tools ▸ Studies, Signatures & Publishing ▸ Presentation Out | `PRESENTOUT` |
-| todo | Tools ▸ Studies, Signatures & Publishing ▸ Documentation Site | `DOCSITE` |
-| todo | Tools ▸ Studies, Signatures & Publishing ▸ Signing Key | `SIGNKEY` |
-| todo | Tools ▸ Studies, Signatures & Publishing ▸ Sign File | `SIGNFILE` |
-| todo | Tools ▸ Studies, Signatures & Publishing ▸ Verify Signature | `VERIFYSIGNATURE` |
-| todo | Tools ▸ Studies, Signatures & Publishing ▸ Trust Signer | `TRUSTSIGNER` |
-| todo | Tools ▸ Feature Modelling |  |
-| todo | Tools ▸ Feature Modelling ▸ Pocket | `POCKET` |
-| todo | Tools ▸ Feature Modelling ▸ Hole | `HOLE` |
-| todo | Tools ▸ Feature Modelling ▸ Groove | `GROOVE` |
-| todo | Tools ▸ Feature Modelling ▸ Revolution | `REVOLUTION` |
-| todo | Tools ▸ Feature Modelling ▸ Follow Me | `FOLLOWME` |
-| todo | Tools ▸ Feature Modelling ▸ Sweep along 3D Path | `SWEEP3D` |
-| todo | Tools ▸ Feature Modelling ▸ Pattern Feature | `PATTERNFEATURE` |
-| todo | Tools ▸ Feature Modelling ▸ Mirror Feature | `MIRRORFEATURE` |
-| todo | Tools ▸ Feature Modelling ▸ Split Solid | `SPLITSOLID` |
-| todo | Tools ▸ Feature Modelling ▸ General Fuse | `GFUSE` |
-| todo | Tools ▸ Feature Modelling ▸ Solid Edit | `SOLIDEDIT` |
-| todo | Tools ▸ Feature Modelling ▸ Offset Solid | `OFFSETSOLID` |
-| todo | Tools ▸ Feature Modelling ▸ CSG Tree | `CSGTREE` |
-| todo | Tools ▸ Feature Modelling ▸ Soften Edges | `SOFTEN` |
-| todo | Tools ▸ Feature Modelling ▸ Paint Bucket | `PAINT` |
-| todo | Tools ▸ Feature Modelling ▸ Tape Measure | `TAPEMEASURE` |
-| todo | Tools ▸ Feature Modelling ▸ 3D Object Snap | `3DOSNAP` |
-| todo | Tools ▸ Feature Modelling ▸ Dynamic UCS | `DUCS` |
-| todo | Tools ▸ Feature Modelling ▸ Shape Binder | `SHAPEBINDER` |
-| todo | Tools ▸ Feature Modelling ▸ Scale XYZ | `SCALE3D` |
-| todo | Tools ▸ Feature Modelling ▸ Intersect Faces | `INTERSECTFACES` |
-| todo | Tools ▸ Feature Modelling ▸ Project Geometry | `PROJECTGEOMETRY` |
-| todo | Tools ▸ Feature Modelling ▸ Scripted Object | `SCADOBJECT` |
-| todo | Tools ▸ Feature Modelling ▸ Graphic Display Options | `GRAPHICDISPLAY` |
-| todo | Tools ▸ Freeform Surfaces |  |
-| todo | Tools ▸ Freeform Surfaces ▸ Patch Surface | `SURFPATCH` |
-| todo | Tools ▸ Freeform Surfaces ▸ Network Surface | `SURFNETWORK` |
-| todo | Tools ▸ Freeform Surfaces ▸ Sculpt to Solid | `SURFSCULPT` |
-| todo | Tools ▸ Freeform Surfaces ▸ Offset Surface | `SURFOFFSET` |
-| todo | Tools ▸ Freeform Surfaces ▸ Extend Surface | `SURFEXTEND` |
-| todo | Tools ▸ Freeform Surfaces ▸ Trim Surface | `SURFTRIM` |
-| todo | Tools ▸ BIM Graphics & Systems |  |
-| todo | Tools ▸ BIM Graphics & Systems ▸ Line Styles | `LINESTYLES` |
-| todo | Tools ▸ BIM Graphics & Systems ▸ Lineweight by Scale | `LWTABLE` |
-| todo | Tools ▸ BIM Graphics & Systems ▸ Pen Sets | `PENSETS` |
-| todo | Tools ▸ BIM Graphics & Systems ▸ Graphic Filters | `GFILTERS` |
-| todo | Tools ▸ BIM Graphics & Systems ▸ Equality Dimension | `EQDIM` |
-| todo | Tools ▸ BIM Graphics & Systems ▸ Curtain System | `CURTAINSYSTEM` |
-| todo | Tools ▸ BIM Graphics & Systems ▸ In-Place Model | `INPLACE` |
-| todo | Tools ▸ BIM Graphics & Systems ▸ Graded Region | `GRADEDREGION` |
-| todo | Tools ▸ BIM Graphics & Systems ▸ Electrical Circuits | `CIRCUIT` |
-| todo | Tools ▸ BIM Graphics & Systems ▸ Panel Schedule | `PANELSCHEDULE` |
-| todo | Tools ▸ BIM Graphics & Systems ▸ Room Data Sheets | `ROOMDATASHEET` |
-| todo | Tools ▸ Render, Materials & Environment |  |
-| todo | Tools ▸ Render, Materials & Environment ▸ Path Tracer | `PATHTRACE` |
-| todo | Tools ▸ Render, Materials & Environment ▸ Light Mix | `LIGHTMIX` |
-| todo | Tools ▸ Render, Materials & Environment ▸ PBR Maps | `MATMAPS` |
-| todo | Tools ▸ Render, Materials & Environment ▸ Material Assets | `MATASSET` |
-| todo | Tools ▸ Render, Materials & Environment ▸ Procedural Material | `PROCMATERIAL` |
-| todo | Tools ▸ Render, Materials & Environment ▸ Material from Photo | `MATFROMIMAGE` |
-| todo | Tools ▸ Render, Materials & Environment ▸ Weather | `WEATHER` |
-| todo | Tools ▸ Render, Materials & Environment ▸ Season | `SEASON` |
-| todo | Tools ▸ Render, Materials & Environment ▸ Water | `WATER` |
-| todo | Tools ▸ Render, Materials & Environment ▸ Scatter Plants | `SCATTER` |
-| todo | Tools ▸ Render, Materials & Environment ▸ Animate Objects | `ANIMATE` |
-| todo | Tools ▸ Render, Materials & Environment ▸ SpaceMouse | `SPACEMOUSE` |
-| todo | Tools ▸ Render, Materials & Environment ▸ Customize Ribbon | `CUI` |
-| todo | Tools ▸ Render, Materials & Environment ▸ Node Packages | `NODEPACKAGE` |
-| todo | Tools ▸ Render, Materials & Environment ▸ Graphic Styles | `GRAPHICSTYLES` |
-| todo | Tools ▸ Render, Materials & Environment ▸ Redraw | `REDRAW` |
-| todo | Tools ▸ Render, Materials & Environment ▸ AR Quick Look | `ARQUICKLOOK` |
-| todo | Tools ▸ Render, Materials & Environment ▸ Command Line Options | `CMDLINEOPTIONS` |
-| todo | Tools ▸ Render, Materials & Environment ▸ Customizer Panel | `CUSTOMIZERPANEL` |
-| todo | Tools ▸ Components & Surfaces |  |
-| todo | Tools ▸ Components & Surfaces ▸ Make Component | `MAKECOMPONENT` |
-| todo | Tools ▸ Components & Surfaces ▸ Make Group | `MAKEGROUP` |
-| todo | Tools ▸ Components & Surfaces ▸ Make Unique | `MAKEUNIQUE` |
-| todo | Tools ▸ Components & Surfaces ▸ Component to BIM | `COMPONENTTOBIM` |
-| todo | Tools ▸ Components & Surfaces ▸ Outliner | `OUTLINER` |
-| todo | Tools ▸ Components & Surfaces ▸ Outliner Window | `OUTLINERPANEL` |
-| todo | Tools ▸ Components & Surfaces ▸ Datum Plane/Axis/Point | `DATUM` |
-| todo | Tools ▸ Components & Surfaces ▸ Sub-object Edit | `SUBOBJECT` |
-| todo | Tools ▸ Components & Surfaces ▸ Imprint | `IMPRINT` |
-| todo | Tools ▸ Components & Surfaces ▸ Offset Face | `OFFSETFACE` |
-| todo | Tools ▸ Components & Surfaces ▸ Blend Surface | `SURFBLEND` |
-| todo | Tools ▸ Components & Surfaces ▸ Surface Analysis | `SURFANALYSIS` |
-| todo | Tools ▸ Components & Surfaces ▸ Sandbox Terrain | `SANDBOX` |
-| todo | Tools ▸ Images, Links & Structure |  |
-| todo | Tools ▸ Images, Links & Structure ▸ Clip Image | `IMAGECLIP` |
-| todo | Tools ▸ Images, Links & Structure ▸ Adjust Image | `IMAGEADJUST` |
-| todo | Tools ▸ Images, Links & Structure ▸ Image Frame | `IMAGEFRAME` |
-| todo | Tools ▸ Images, Links & Structure ▸ Link Model | `RVTLINK` |
-| todo | Tools ▸ Images, Links & Structure ▸ Copy/Monitor | `COPYMONITOR` |
-| todo | Tools ▸ Images, Links & Structure ▸ Tag Label | `TAGLABEL` |
-| todo | Tools ▸ Images, Links & Structure ▸ Material Hatch | `MATHATCH` |
-| todo | Tools ▸ Images, Links & Structure ▸ Material Patterns | `MATPATTERN` |
-| todo | Tools ▸ Images, Links & Structure ▸ Rebar | `REBAR` |
-| todo | Tools ▸ Images, Links & Structure ▸ Steel Connection | `STEELCONNECTION` |
+| done | File ▸ Close | `CLOSE` · Ctrl+W |
+| done | File ▸ Save | `SAVE` · Ctrl+S |
+| done | File ▸ Save As… | `SAVEAS` · Ctrl+Shift+S |
+| done | File ▸ Import… | `IMPORT` · Ctrl+Shift+I |
+| partial: no File ▸ Insert submenu on Windows; the commands work from the Insert ribbon tab | File ▸ Insert |  |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Import File | `IMPORTFILE` |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ IFC | `IFCIMPORT` |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ SVG | `SVGIMPORT` |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Mesh (OBJ/STL) | `MESHIMPORT` |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ GeoJSON | `GEOJSONIMPORT` |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Points (CSV) | `POINTSIMPORT` |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Insert Block | `INSERT` |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Create Block | `BLOCK` |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Xref | `XREF` |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Image | `IMAGEATTACH` |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Attribute | `ATTDEF` |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Paste Special | `PASTEORIG` |
+| partial: PDF/DXF/SVG/IFC/OBJ/STL/GLB only; PNG fails and GeoJSON, Points, 3MF, USDZ, DXF R12, Schedules are missing | File ▸ Export |  |
+| done | File ▸ Export ▸ PDF… | `@export:pdf` |
+| done | File ▸ Export ▸ DXF… | `@export:dxf` |
+| done | File ▸ Export ▸ SVG… | `@export:svg` |
+| todo: Windows File ▸ Export ▸ PNG calls file.export png, which the engine rejects (no raster writer) | File ▸ Export ▸ PNG (300 dpi)… | `@export:png` |
+| done | File ▸ Export ▸ OBJ + MTL… | `@export:obj` |
+| done | File ▸ Export ▸ STL… | `@export:stl` |
+| done | File ▸ Export ▸ glTF Binary (GLB)… | `@export:glb` |
+| done | File ▸ Export ▸ IFC4… | `@export:ifc` |
+| partial: command works from the ribbon / command line; the Windows File ▸ Export menu has no entry | File ▸ Export ▸ GeoJSON | `GEOJSONEXPORT` |
+| partial: command works from the ribbon / command line; the Windows File ▸ Export menu has no entry | File ▸ Export ▸ Points | `POINTSEXPORT` |
+| partial: command works from the ribbon / command line; the Windows File ▸ Export menu has no entry | File ▸ Export ▸ 3MF | `EXPORT3MF` |
+| partial: command works from the ribbon / command line; the Windows File ▸ Export menu has no entry | File ▸ Export ▸ USDZ | `USDEXPORT` |
+| partial: command works from the ribbon / command line; the Windows File ▸ Export menu has no entry | File ▸ Export ▸ DXF R12 | `DXFR12OUT` |
+| todo: @export:csv:<kind> is not accepted by engine file.export and the submenu is missing | File ▸ Export ▸ Schedules (CSV) |  |
+| todo: engine file.export does not accept csv:<kind> | File ▸ Export ▸ Schedules (CSV) ▸ Walls… | `@export:csv:walls` |
+| todo: engine file.export does not accept csv:<kind> | File ▸ Export ▸ Schedules (CSV) ▸ Doors… | `@export:csv:doors` |
+| todo: engine file.export does not accept csv:<kind> | File ▸ Export ▸ Schedules (CSV) ▸ Windows… | `@export:csv:windows` |
+| todo: engine file.export does not accept csv:<kind> | File ▸ Export ▸ Schedules (CSV) ▸ Rooms… | `@export:csv:rooms` |
+| todo: engine file.export does not accept csv:<kind> | File ▸ Export ▸ Schedules (CSV) ▸ Slabs… | `@export:csv:slabs` |
+| todo: engine file.export does not accept csv:<kind> | File ▸ Export ▸ Schedules (CSV) ▸ All… | `@export:csv:all` |
+| done | File ▸ Page Setup… | `PAGESETUP` · Ctrl+Shift+P |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Plot Preview… | `PREVIEW` · Ctrl+Alt+Shift+P |
+| done | File ▸ Plot / Print… | `PLOT` · Ctrl+P |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Publish All Sheets to PDF… | `PUBLISH` |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Batch Publish… | `BATCHPUBLISH` |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Plot Style Tables… | `PLOTSTYLE` |
+| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Title Block… | `TITLEBLOCK` |
+| partial: hand-written Windows Edit menu lacks Deselect All, Selection Tools, Groups & Isolation, Match Properties | Menu Edit | 12 items |
+| done | Edit ▸ Undo | `UNDO` · Ctrl+Z |
+| done | Edit ▸ Redo | `REDO` · Ctrl+Shift+Z |
+| done | Edit ▸ Cut | `CUTCLIP` · Ctrl+X |
+| done | Edit ▸ Copy | `COPYCLIP` · Ctrl+C |
+| done | Edit ▸ Paste | `PASTECLIP` · Ctrl+V |
+| done | Edit ▸ Delete | `ERASE` |
+| done | Edit ▸ Select All | `@selectAll` · Ctrl+A |
+| partial: no menu entry; Ctrl+Shift+A selects all instead (main.ts ignores Shift) | Edit ▸ Deselect All | `@deselectAll` · Ctrl+Shift+A |
+| done | Edit ▸ Quick Select… | `QSELECTDIALOG` |
+| partial: submenu missing; the commands work from the ribbon | Edit ▸ Selection Tools |  |
+| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ Quick Select | `QSELECT` |
+| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ Select Similar | `SELECTSIMILAR` |
+| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ Invert | `SELECTINVERT` |
+| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ By Layer | `SELECTLAYER` |
+| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ By Type | `SELECTTYPE` |
+| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ Chain | `SELECTCHAIN` |
+| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ Intersecting | `SELECTINTERSECTING` |
+| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ Filter | `FILTER` |
+| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ Named Sets | `SELSET` |
+| partial: submenu missing; the commands work from the ribbon | Edit ▸ Groups & Isolation |  |
+| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Groups & Isolation ▸ Group | `GROUP` |
+| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Groups & Isolation ▸ Ungroup | `UNGROUP` |
+| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Groups & Isolation ▸ Isolate | `ISOLATEOBJECTS` |
+| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Groups & Isolation ▸ Hide | `HIDEOBJECTS` |
+| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Groups & Isolation ▸ End Isolation | `UNISOLATEOBJECTS` |
+| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Match Properties | `MATCHPROP` |
+| partial: hand-written Windows View menu: modes, Workspace, Layer States, zoom, panels, Clean Screen, Command Search only | Menu View | 28 items |
+| done | View ▸ Workspace |  |
+| done | View ▸ Workspace ▸ 2D Plan |  |
+| done | View ▸ Workspace ▸ 3D Model |  |
+| done | View ▸ Workspace ▸ Split |  |
+| done | View ▸ Workspace ▸ Sheet |  |
+| done | View ▸ 2D Plan | `@mode:2D` · Ctrl+Alt+1 |
+| done | View ▸ 3D Model | `@mode:3D` · Ctrl+Alt+2 |
+| done | View ▸ Split View | `@mode:Split` · Ctrl+Alt+3 |
+| done | View ▸ Sheets | `@mode:Sheet` · Ctrl+Alt+4 |
+| done | View ▸ Zoom Extents | `@zoom:extents` · Ctrl+0 |
+| done | View ▸ Zoom In | `@zoom:in` · Ctrl+= |
+| done | View ▸ Zoom Out | `@zoom:out` · Ctrl+- |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Zoom Window | `@zoom:window` |
+| partial: submenu missing; the ribbon visual-style drop-down works | View ▸ Visual Style |  |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Visual Style ▸ Wireframe | `VSCURRENT Wireframe` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Visual Style ▸ Hidden Line | `VSCURRENT Hidden Line` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Visual Style ▸ Shaded | `VSCURRENT Shaded` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Visual Style ▸ Shaded with Edges | `VSCURRENT Shaded with Edges` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Visual Style ▸ Conceptual | `VSCURRENT Conceptual` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Visual Style ▸ Realistic | `VSCURRENT Realistic` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Visual Style ▸ X-Ray | `VSCURRENT X-Ray` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Visual Style ▸ Sketchy | `VSCURRENT Sketchy` |
+| partial: submenu missing; the view commands work from the ribbon and view cube | View ▸ 3D View |  |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D View ▸ Top | `TOPVIEW` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D View ▸ Front | `FRONTVIEW` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D View ▸ Right | `RIGHTVIEW` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D View ▸ Back | `BACKVIEW` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D View ▸ Left | `LEFTVIEW` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D View ▸ Iso | `ISOVIEW` |
+| done | View ▸ Hide Panels | `@panels:toggle` · Ctrl+Alt+P |
+| partial: no View-menu entry; the panel opens from its panel tab / ribbon | View ▸ Layers Panel | `@panel:Layers` |
+| partial: no View-menu entry; the panel opens from its panel tab / ribbon | View ▸ Properties Panel | `@panel:Properties` |
+| partial: no View-menu entry; the panel opens from its panel tab / ribbon | View ▸ Levels Panel | `@panel:Levels` |
+| partial: no View-menu entry; the panel opens from its panel tab / ribbon | View ▸ Project Browser | `@panel:Browser` |
+| partial: no View-menu entry; the panel opens from its panel tab / ribbon | View ▸ Materials Panel | `@panel:Materials` |
+| partial: no View-menu entry; the panel opens from its panel tab / ribbon | View ▸ History Panel | `@panel:History` |
+| partial: no View-menu entry; the panel opens from its panel tab / ribbon | View ▸ Sheet Set Manager | `@panel:Sheets` |
+| partial: no View-menu entry; the panel opens from its panel tab / ribbon | View ▸ Tool Palettes | `@panel:Tools` |
+| todo: FLOATPANEL (floating panel windows) not ported | View ▸ Float Panel |  |
+| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Properties | `FLOATPANEL Properties` |
+| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Layers | `FLOATPANEL Layers` |
+| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Levels | `FLOATPANEL Levels` |
+| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Browser | `FLOATPANEL Browser` |
+| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Materials | `FLOATPANEL Materials` |
+| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Tools | `FLOATPANEL Tools` |
+| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Sheets | `FLOATPANEL Sheets` |
+| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ History | `FLOATPANEL History` |
+| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Selection | `FLOATPANEL Selection` |
+| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Navigator | `FLOATPANEL Navigator` |
+| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Alerts | `FLOATPANEL Alerts` |
+| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Quick Props | `FLOATPANEL Quick Props` |
+| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Inspector | `FLOATPANEL Inspector` |
+| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Content | `FLOATPANEL Content` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Material Library… | `MATBROWSER` |
+| done | View ▸ Layer States… | `LAYERSTATE` |
+| done | View ▸ Workspace |  |
+| done | View ▸ Workspace ▸ {Workspaces.all} |  |
+| done | View ▸ Workspace ▸ Save Current Workspace… | `WSSAVE` |
+| done | View ▸ Clean Screen | `@cleanScreen` |
+| partial: submenu missing; the commands work from the View ribbon tab | View ▸ 3D Tools |  |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D Tools ▸ View Cube | `NAVVCUBE` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D Tools ▸ Section Box | `SECTIONBOX` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D Tools ▸ Sun Study | `SUNSTUDY` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D Tools ▸ Orbit Around Selection | `ORBITSELECTION` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D Tools ▸ Save Camera… | `SAVECAMERA` |
+| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Show Script Console | `@scriptConsole` · Ctrl+Alt+J |
+| n/a (macOS system item) | View ▸ Enter Full Screen | Ctrl+F · system |
+| done | Menu Draw | 9 items |
+| done | Draw ▸ Line | `LINE` |
+| done | Draw ▸ Polyline | `PLINE` |
+| done | Draw ▸ Circle | `CIRCLE` |
+| done | Draw ▸ Arc | `ARC` |
+| done | Draw ▸ Rectangle | `RECTANG` |
+| done | Draw ▸ Polygon | `POLYGON` |
+| done | Draw ▸ Ellipse | `ELLIPSE` |
+| done | Draw ▸ Spline | `SPLINE` |
+| done | Draw ▸ Hatch | `HATCH` |
+| done | Menu Modify | 16 items |
+| done | Modify ▸ Move | `MOVE` |
+| done | Modify ▸ Copy | `COPY` |
+| done | Modify ▸ Rotate | `ROTATE` |
+| done | Modify ▸ Mirror | `MIRROR` |
+| done | Modify ▸ Scale | `SCALE` |
+| done | Modify ▸ Stretch | `STRETCH` |
+| done | Modify ▸ Trim | `TRIM` |
+| done | Modify ▸ Extend | `EXTEND` |
+| done | Modify ▸ Offset | `OFFSET` |
+| done | Modify ▸ Fillet | `FILLET` |
+| done | Modify ▸ Chamfer | `CHAMFER` |
+| done | Modify ▸ Array | `ARRAY` |
+| done | Modify ▸ Explode | `EXPLODE` |
+| done | Modify ▸ Erase | `ERASE` |
+| done | Modify ▸ Join | `JOIN` |
+| done | Modify ▸ Break | `BREAK` |
+| done | Menu Annotate | 9 items |
+| done | Annotate ▸ Text | `TEXT` |
+| done | Annotate ▸ MText | `MTEXT` |
+| done | Annotate ▸ Linear | `DIMLINEAR` |
+| done | Annotate ▸ Aligned | `DIMALIGNED` |
+| done | Annotate ▸ Angular | `DIMANGULAR` |
+| done | Annotate ▸ Radius | `DIMRADIUS` |
+| done | Annotate ▸ Diameter | `DIMDIAMETER` |
+| done | Annotate ▸ Leader | `LEADER` |
+| done | Annotate ▸ Table | `TABLE` |
+| done | Menu Architecture | 19 items |
+| done | Architecture ▸ Wall | `WALL` |
+| done | Architecture ▸ Door | `DOOR` |
+| done | Architecture ▸ Window | `WINDOW` |
+| done | Architecture ▸ Opening | `OPENING` |
+| done | Architecture ▸ Curtain Wall | `CURTAINWALL` |
+| done | Architecture ▸ Column | `COLUMN` |
+| done | Architecture ▸ Beam | `BEAM` |
+| done | Architecture ▸ Slab | `SLAB` |
+| done | Architecture ▸ Roof | `ROOF` |
+| done | Architecture ▸ Ceiling | `CEILING` |
+| done | Architecture ▸ Stair | `STAIR` |
+| done | Architecture ▸ Railing | `RAILING` |
+| done | Architecture ▸ Room | `ROOM` |
+| done | Architecture ▸ Grid | `GRID` |
+| done | Architecture ▸ Component | `COMPONENT` |
+| done | Architecture ▸ Quick Building | `BUILDING` |
+| done | Architecture ▸ More Building Tools |  |
+| done | Architecture ▸ More Building Tools ▸ Ramp | `RAMP` |
+| done | Architecture ▸ More Building Tools ▸ Foundation | `FOUNDATION` |
+| done | Architecture ▸ More Building Tools ▸ Slab Slope | `SLABSLOPE` |
+| done | Architecture ▸ More Building Tools ▸ Curtain Grid | `CWGRID` |
+| done | Architecture ▸ More Building Tools ▸ Niche | `NICHE` |
+| done | Architecture ▸ More Building Tools ▸ Wall Sweep | `WALLSWEEP` |
+| done | Architecture ▸ More Building Tools ▸ Walls by Lines | `WALLBYLINES` |
+| done | Architecture ▸ More Building Tools ▸ Wall Join | `WALLJOIN` |
+| done | Architecture ▸ More Building Tools ▸ Wall Top | `WALLTOP` |
+| done | Architecture ▸ More Building Tools ▸ Opening Types | `OPENINGTYPE` |
+| done | Architecture ▸ More Building Tools ▸ Copy to Level | `COPYTOLEVEL` |
+| done | Architecture ▸ More Building Tools ▸ Stair Check | `STAIRCHECK` |
+| done | Architecture ▸ Rooms & Areas |  |
+| done | Architecture ▸ Rooms & Areas ▸ Room Separator | `ROOMSEPARATOR` |
+| done | Architecture ▸ Rooms & Areas ▸ Update Rooms | `ROOMUPDATE` |
+| done | Architecture ▸ Rooms & Areas ▸ Area Plan | `AREAPLAN` |
+| done | Architecture ▸ Rooms & Areas ▸ Room Bounding | `ROOMBOUNDING` |
+| done | Architecture ▸ Documentation |  |
+| done | Architecture ▸ Documentation ▸ Tag | `TAG` |
+| done | Architecture ▸ Documentation ▸ Tag All | `TAGALL` |
+| done | Architecture ▸ Documentation ▸ Keynote | `KEYNOTE` |
+| done | Architecture ▸ Documentation ▸ Marks | `MARKS` |
+| done | Architecture ▸ Documentation ▸ Section | `SECTION` |
+| done | Architecture ▸ Documentation ▸ Draw View | `VIEWDRAW` |
+| done | Architecture ▸ Documentation ▸ Update Views | `VIEWUPDATE` |
+| done | Architecture ▸ Documentation ▸ Interior Elev. | `INTERIORELEV` |
+| done | Architecture ▸ Documentation ▸ Callout | `CALLOUT` |
+| done | Architecture ▸ Documentation ▸ Phase | `PHASE` |
+| done | Architecture ▸ Documentation ▸ 3D Datums | `DATUMS3D` |
+| done | Architecture ▸ Documentation ▸ Wall Attach | `WALLATTACH` |
+| done | Menu Model | 29 items |
+| done | Model ▸ Box | `BOX` |
+| done | Model ▸ Cylinder | `CYLINDER` |
+| done | Model ▸ Cone | `CONE` |
+| done | Model ▸ Sphere | `SPHERE` |
+| done | Model ▸ Extrude | `EXTRUDE` |
+| done | Model ▸ Revolve | `REVOLVE` |
+| done | Model ▸ Press/Pull | `PRESSPULL` |
+| done | Model ▸ Loft | `LOFT` |
+| done | Model ▸ Sweep | `SWEEP` |
+| done | Model ▸ Pipe | `PIPE` |
+| done | Model ▸ Shell | `SHELL` |
+| done | Model ▸ Smooth Mesh | `MESHSMOOTH` |
+| done | Model ▸ Union | `UNION` |
+| done | Model ▸ Subtract | `SUBTRACT` |
+| done | Model ▸ Intersect | `INTERSECT` |
+| done | Model ▸ Slice | `SLICE` |
+| done | Model ▸ Interfere | `INTERFERE` |
+| done | Model ▸ 3D Mirror | `MIRROR3D` |
+| done | Model ▸ 3D Rotate | `ROTATE3D` |
+| done | Model ▸ 3D Array | `3DARRAY` |
+| done | Model ▸ Topography | `TOPO` |
+| done | Model ▸ Contours | `CONTOURS` |
+| done | Model ▸ Building Pad | `BUILDINGPAD` |
+| done | Model ▸ Node Editor… | `NODEEDITOR` |
+| done | Menu Analyze | 16 items |
+| done | Analyze ▸ Distance | `DIST` |
+| done | Analyze ▸ Area | `AREA` |
+| done | Analyze ▸ List | `LIST` |
+| done | Analyze ▸ ID Point | `ID` |
+| done | Analyze ▸ Mass Props | `MASSPROP` |
+| done | Analyze ▸ Count | `COUNT` |
+| done | Analyze ▸ Takeoff | `TAKEOFF` |
+| done | Analyze ▸ Cost Estimate | `COSTESTIMATE` |
+| done | Analyze ▸ Unit Prices | `UNITPRICE` |
+| done | Analyze ▸ Room Schedule | `ROOMSCHEDULE` |
+| done | Analyze ▸ Clash Detect | `CLASHDETECT` |
+| done | Analyze ▸ Check Model | `CHECKMODEL` |
+| done | Analyze ▸ Sun Position | `SUNPOSITION` |
+| partial | Menu Tools | 73 items |
+| done | Tools ▸ Draw More |  |
+| done | Tools ▸ Draw More ▸ Ray | `RAY` |
+| done | Tools ▸ Draw More ▸ Construction Line | `XLINE` |
+| done | Tools ▸ Draw More ▸ Point | `POINT` |
+| done | Tools ▸ Draw More ▸ Point Style | `PTYPE` |
+| done | Tools ▸ Draw More ▸ Donut | `DONUT` |
+| done | Tools ▸ Draw More ▸ Region | `REGION` |
+| done | Tools ▸ Draw More ▸ Boundary | `BOUNDARY` |
+| done | Tools ▸ Draw More ▸ Revision Cloud | `REVCLOUD` |
+| done | Tools ▸ Draw More ▸ Wipeout | `WIPEOUT` |
+| done | Tools ▸ Draw More ▸ Sketch | `SKETCH` |
+| done | Tools ▸ Draw More ▸ Multiline | `MLINE` |
+| done | Tools ▸ Draw More ▸ Multiline Style | `MLSTYLE` |
+| done | Tools ▸ Draw More ▸ Double Line | `DLINE` |
+| done | Tools ▸ Draw More ▸ 2D Solid | `SOLID` |
+| done | Tools ▸ Draw More ▸ Star | `STAR` |
+| done | Tools ▸ Draw More ▸ Polygon by Side | `POLYGONSS` |
+| done | Tools ▸ Draw More ▸ Snake Line | `SNAKE` |
+| done | Tools ▸ Draw More ▸ Parabola | `PARABOLA` |
+| done | Tools ▸ Draw More ▸ Hyperbola | `HYPERBOLA` |
+| done | Tools ▸ Draw More ▸ Centerline | `CENTERLINE` |
+| done | Tools ▸ Draw More ▸ Center Mark | `CENTERMARK` |
+| done | Tools ▸ Draw More ▸ Bounding Box | `BOUNDINGBOX` |
+| done | Tools ▸ Draw More ▸ Point Lattice | `POINTLATTICE` |
+| done | Tools ▸ Draw More ▸ Points on Line | `POINTSLINE` |
+| done | Tools ▸ Construction |  |
+| done | Tools ▸ Construction ▸ Parallel Line | `LINEPAR` |
+| done | Tools ▸ Construction ▸ Perpendicular Line | `LINEPERP` |
+| done | Tools ▸ Construction ▸ Line at Angle | `LINEANG` |
+| done | Tools ▸ Construction ▸ Bisector | `LINEBISECT` |
+| done | Tools ▸ Construction ▸ Horizontal/Vertical | `LINEHV` |
+| done | Tools ▸ Construction ▸ Relative Line | `LINEREL` |
+| done | Tools ▸ Construction ▸ Tangent Line | `LINETAN` |
+| done | Tools ▸ Construction ▸ Tangent to 2 Circles | `LINETAN2` |
+| done | Tools ▸ Construction ▸ Tangent Ortho | `LINETANORTHO` |
+| done | Tools ▸ Construction ▸ Circle 2 Points + R | `CIRCLE2PR` |
+| done | Tools ▸ Construction ▸ Circle Tan-Pt-Pt | `CIRCLETPP` |
+| done | Tools ▸ Construction ▸ Circle Tan-Tan-Pt | `CIRCLETTP` |
+| done | Tools ▸ Construction ▸ Circle Tan-Tan-Tan | `CIRCLETTT` |
+| done | Tools ▸ Construction ▸ Incircle | `INCIRCLE` |
+| done | Tools ▸ Construction ▸ Arc 2 Pts + Height | `ARC2PH` |
+| done | Tools ▸ Construction ▸ Arc 2 Pts + Length | `ARC2PL` |
+| done | Tools ▸ Construction ▸ Arc to Circle | `ARCTOCIRCLE` |
+| done | Tools ▸ Construction ▸ Ellipse 4 Points | `ELLIPSE4P` |
+| done | Tools ▸ Construction ▸ Ellipse Center 3P | `ELLIPSEC3P` |
+| done | Tools ▸ Construction ▸ Ellipse by Foci | `ELLIPSEFOCI` |
+| done | Tools ▸ Construction ▸ Multiple Offset | `OFFSETMULTI` |
+| done | Tools ▸ Construction ▸ Cut by Line | `CUTBYLINE` |
+| done | Tools ▸ Modify More |  |
+| done | Tools ▸ Modify More ▸ Align | `ALIGN` |
+| done | Tools ▸ Modify More ▸ Align to Reference | `ALIGNREF` |
+| done | Tools ▸ Modify More ▸ Path Array | `ARRAYPATH` |
+| done | Tools ▸ Modify More ▸ Polar Array | `ARRAYPOLAR` |
+| done | Tools ▸ Modify More ▸ Break All | `BREAKALL` |
+| done | Tools ▸ Modify More ▸ Break at Point | `BREAKATPOINT` |
+| done | Tools ▸ Modify More ▸ Change Properties | `CHPROP` |
+| done | Tools ▸ Modify More ▸ Clip Polyline | `CLIPPOLY` |
+| done | Tools ▸ Modify More ▸ Convert to Polyline | `CONVERTTOPLINE` |
+| done | Tools ▸ Modify More ▸ Divide | `DIVIDE` |
+| done | Tools ▸ Modify More ▸ Measure | `MEASURE` |
+| done | Tools ▸ Modify More ▸ Draw Order | `DRAWORDER` |
+| done | Tools ▸ Modify More ▸ Text to Front | `TEXTTOFRONT` |
+| done | Tools ▸ Modify More ▸ Hatch to Back | `HATCHTOBACK` |
+| done | Tools ▸ Modify More ▸ Extend By | `EXTENDBY` |
+| done | Tools ▸ Modify More ▸ Lengthen | `LENGTHEN` |
+| done | Tools ▸ Modify More ▸ Line Gap | `LINEGAP` |
+| done | Tools ▸ Modify More ▸ Move + Rotate | `MOVEROTATE` |
+| done | Tools ▸ Modify More ▸ Rotate by Reference | `ROTATE2` |
+| done | Tools ▸ Modify More ▸ Nudge | `NUDGE` |
+| done | Tools ▸ Modify More ▸ Oops (Restore Erased) | `OOPS` |
+| done | Tools ▸ Modify More ▸ Overkill | `OVERKILL` |
+| done | Tools ▸ Modify More ▸ Edit Polyline | `PEDIT` |
+| done | Tools ▸ Modify More ▸ Polyline to Spline | `PLINETOSPLINE` |
+| done | Tools ▸ Modify More ▸ Reverse | `REVERSE` |
+| done | Tools ▸ Modify More ▸ Weld | `WELD` |
+| done | Tools ▸ Modify More ▸ Set ByLayer | `SETBYLAYER` |
+| done | Tools ▸ Modify More ▸ Paste to Points | `PASTETOPOINTS` |
+| done | Tools ▸ Modify More ▸ Region Union | `REGIONUNION` |
+| done | Tools ▸ Modify More ▸ Region Subtract | `REGIONSUBTRACT` |
+| done | Tools ▸ Modify More ▸ Region Intersect | `REGIONINTERSECT` |
+| done | Tools ▸ Modify More ▸ Edit Hatch | `HATCHEDIT` |
+| done | Tools ▸ Modify More ▸ Hatch Boundary | `HATCHGENERATEBOUNDARY` |
+| done | Tools ▸ Clipboard & Selection |  |
+| done | Tools ▸ Clipboard & Selection ▸ Copy | `COPYCLIP` |
+| done | Tools ▸ Clipboard & Selection ▸ Cut | `CUTCLIP` |
+| done | Tools ▸ Clipboard & Selection ▸ Copy with Base Point | `COPYBASE` |
+| done | Tools ▸ Clipboard & Selection ▸ Paste | `PASTECLIP` |
+| done | Tools ▸ Clipboard & Selection ▸ Paste as Block | `PASTEBLOCK` |
+| done | Tools ▸ Clipboard & Selection ▸ Undo | `UNDO` |
+| done | Tools ▸ Clipboard & Selection ▸ Redo | `REDO` |
+| done | Tools ▸ Clipboard & Selection ▸ Select | `SELECT` |
+| done | Tools ▸ Clipboard & Selection ▸ Select All | `SELECTALL` |
+| done | Tools ▸ Clipboard & Selection ▸ Quick Select… | `QSELECTDIALOG` |
+| done | Tools ▸ Dimensions More |  |
+| done | Tools ▸ Dimensions More ▸ Smart Dimension | `DIM` |
+| done | Tools ▸ Dimensions More ▸ Quick Dimension | `QDIM` |
+| done | Tools ▸ Dimensions More ▸ Baseline | `DIMBASELINE` |
+| done | Tools ▸ Dimensions More ▸ Continue | `DIMCONTINUE` |
+| done | Tools ▸ Dimensions More ▸ Arc Length | `DIMARC` |
+| done | Tools ▸ Dimensions More ▸ Ordinate | `DIMORDINATE` |
+| done | Tools ▸ Dimensions More ▸ Dimension Break | `DIMBREAK` |
+| done | Tools ▸ Dimensions More ▸ Dimension Space | `DIMSPACE` |
+| done | Tools ▸ Dimensions More ▸ Edit Dimension | `DIMEDIT` |
+| done | Tools ▸ Dimensions More ▸ Move Dim Text | `DIMTEDIT` |
+| done | Tools ▸ Dimensions More ▸ Dim Override | `DIMOVERRIDE` |
+| done | Tools ▸ Dimensions More ▸ Reassociate | `DIMREASSOCIATE` |
+| done | Tools ▸ Dimensions More ▸ Disassociate | `DIMDISASSOCIATE` |
+| done | Tools ▸ Dimensions More ▸ Regenerate Dims | `DIMREGEN` |
+| done | Tools ▸ Dimensions More ▸ Dimension Style | `DIMSTYLE` |
+| done | Tools ▸ Dimensions More ▸ Tolerance | `TOLERANCE` |
+| done | Tools ▸ Dimensions More ▸ Dimension Walls | `AUTODIMWALLS` |
+| done | Tools ▸ Dimensions More ▸ Spot Elevation | `SPOTELEV` |
+| done | Tools ▸ Dimensions More ▸ Spot Slope | `SPOTSLOPE` |
+| partial | Tools ▸ Text & Tables |  |
+| done | Tools ▸ Text & Tables ▸ Edit Text | `TEXTEDIT` |
+| done | Tools ▸ Text & Tables ▸ Text Style | `TEXTSTYLE` |
+| done | Tools ▸ Text & Tables ▸ Find & Replace | `FIND` |
+| done | Tools ▸ Text & Tables ▸ Spelling | `SPELL` |
+| todo: command SPELLDIALOG is not registered in archi-engine | Tools ▸ Text & Tables ▸ Spelling Dialog | `SPELLDIALOG` |
+| done | Tools ▸ Text & Tables ▸ Field | `FIELD` |
+| done | Tools ▸ Text & Tables ▸ Update Fields | `UPDATEFIELD` |
+| done | Tools ▸ Text & Tables ▸ Justify Text | `JUSTIFYTEXT` |
+| done | Tools ▸ Text & Tables ▸ Scale Text | `SCALETEXT` |
+| done | Tools ▸ Text & Tables ▸ Text to MText | `TXT2MTXT` |
+| done | Tools ▸ Text & Tables ▸ Readable Text | `TEXTREADABLE` |
+| done | Tools ▸ Text & Tables ▸ Arc Text | `ARCTEXT` |
+| done | Tools ▸ Text & Tables ▸ Annotative | `ANNOTATIVE` |
+| done | Tools ▸ Text & Tables ▸ Scale List | `SCALELISTEDIT` |
+| done | Tools ▸ Text & Tables ▸ Leader Style | `MLEADERSTYLE` |
+| done | Tools ▸ Text & Tables ▸ Align Leaders | `MLEADERALIGN` |
+| done | Tools ▸ Text & Tables ▸ Collect Leaders | `MLEADERCOLLECT` |
+| done | Tools ▸ Text & Tables ▸ Edit Table | `TABLEEDIT` |
+| done | Tools ▸ Text & Tables ▸ Export Table | `TABLEEXPORT` |
+| done | Tools ▸ Text & Tables ▸ Link Table | `TABLELINK` |
+| done | Tools ▸ Text & Tables ▸ Update Data Links | `DATALINKUPDATE` |
+| done | Tools ▸ Text & Tables ▸ North Arrow | `NORTHARROW` |
+| done | Tools ▸ Text & Tables ▸ Scale Bar | `SCALEBAR` |
+| done | Tools ▸ Text & Tables ▸ Break Line | `BREAKLINE` |
+| done | Tools ▸ Parametric |  |
+| done | Tools ▸ Parametric ▸ Geometric | `GEOMCONSTRAINT` |
+| done | Tools ▸ Parametric ▸ Auto Constrain | `AUTOCONSTRAIN` |
+| done | Tools ▸ Parametric ▸ Dimensional | `DIMCONSTRAINT` |
+| done | Tools ▸ Parametric ▸ Convert Dims | `DCCONVERT` |
+| done | Tools ▸ Parametric ▸ Parameters | `PARAMETERS` |
+| done | Tools ▸ Parametric ▸ List Constraints | `CONSTRAINTLIST` |
+| done | Tools ▸ Parametric ▸ Delete Constraints | `DELCONSTRAINT` |
+| done | Tools ▸ Parametric ▸ Coincident | `GCCOINCIDENT` |
+| done | Tools ▸ Parametric ▸ Horizontal | `GCHORIZONTAL` |
+| done | Tools ▸ Parametric ▸ Vertical | `GCVERTICAL` |
+| done | Tools ▸ Parametric ▸ Parallel | `GCPARALLEL` |
+| done | Tools ▸ Parametric ▸ Perpendicular | `GCPERPENDICULAR` |
+| done | Tools ▸ Parametric ▸ Collinear | `GCCOLLINEAR` |
+| done | Tools ▸ Parametric ▸ Equal | `GCEQUAL` |
+| done | Tools ▸ Parametric ▸ Fix | `GCFIX` |
+| done | Tools ▸ Parametric ▸ Concentric | `GCCONCENTRIC` |
+| done | Tools ▸ Parametric ▸ Tangent | `GCTANGENT` |
+| done | Tools ▸ Parametric ▸ Symmetric | `GCSYMMETRIC` |
+| done | Tools ▸ Parametric ▸ Midpoint | `GCMIDPOINT` |
+| done | Tools ▸ Parametric ▸ Point on Curve | `GCPOINTONCURVE` |
+| done | Tools ▸ Parametric ▸ Linear (dim) | `DCLINEAR` |
+| done | Tools ▸ Parametric ▸ Horizontal (dim) | `DCHORIZONTAL` |
+| done | Tools ▸ Parametric ▸ Vertical (dim) | `DCVERTICAL` |
+| done | Tools ▸ Parametric ▸ Aligned (dim) | `DCALIGNED` |
+| done | Tools ▸ Parametric ▸ Angular (dim) | `DCANGULAR` |
+| done | Tools ▸ Parametric ▸ Radius (dim) | `DCRADIUS` |
+| done | Tools ▸ Parametric ▸ Diameter (dim) | `DCDIAMETER` |
+| done | Tools ▸ Parametric ▸ Ratio (dim) | `DCRATIO` |
+| done | Tools ▸ Parametric ▸ Difference (dim) | `DCDIFFERENCE` |
+| partial | Tools ▸ Blocks & Attributes |  |
+| partial: runs the command-line BLOCKLIBRARY instead of opening the Block Library window | Tools ▸ Blocks & Attributes ▸ Block Library | `BLOCKLIBRARY` |
+| done | Tools ▸ Blocks & Attributes ▸ Write Block | `WBLOCK` |
+| done | Tools ▸ Blocks & Attributes ▸ Drawing Base | `BASE` |
+| done | Tools ▸ Blocks & Attributes ▸ Block Base Point | `BLOCKBASE` |
+| done | Tools ▸ Blocks & Attributes ▸ Replace Block | `BLOCKREPLACE` |
+| done | Tools ▸ Blocks & Attributes ▸ Count Blocks | `BCOUNT` |
+| done | Tools ▸ Blocks & Attributes ▸ Flip Block | `BFLIP` |
+| done | Tools ▸ Blocks & Attributes ▸ Visibility State | `BVSTATE` |
+| done | Tools ▸ Blocks & Attributes ▸ Edit Attributes | `ATTEDIT` |
+| done | Tools ▸ Blocks & Attributes ▸ Sync Attributes | `ATTSYNC` |
+| done | Tools ▸ Blocks & Attributes ▸ Attribute Manager | `BATTMAN` |
+| done | Tools ▸ Blocks & Attributes ▸ Extract Attributes | `ATTEXT` |
+| done | Tools ▸ Blocks & Attributes ▸ Data Extraction | `DATAEXTRACTION` |
+| done | Tools ▸ Blocks & Attributes ▸ Bind Xref | `XBIND` |
+| done | Tools ▸ Layers |  |
+| done | Tools ▸ Layers ▸ Layer Properties | `LAYER` |
+| done | Tools ▸ Layers ▸ Layer States | `LAYERSTATE` |
+| done | Tools ▸ Layers ▸ Layer Filter | `LAYERFILTER` |
+| done | Tools ▸ Layers ▸ Layer Filter (cmd) | `LAYFILTER` |
+| done | Tools ▸ Layers ▸ Change to Current | `LAYCUR` |
+| done | Tools ▸ Layers ▸ Make Current | `LAYMCUR` |
+| done | Tools ▸ Layers ▸ Delete Layer | `LAYDEL` |
+| done | Tools ▸ Layers ▸ Merge Layers | `LAYMRG` |
+| done | Tools ▸ Layers ▸ Freeze | `LAYFRZ` |
+| done | Tools ▸ Layers ▸ Thaw All | `LAYTHW` |
+| done | Tools ▸ Layers ▸ Off | `LAYOFF` |
+| done | Tools ▸ Layers ▸ All On | `LAYON` |
+| done | Tools ▸ Layers ▸ Isolate | `LAYISO` |
+| done | Tools ▸ Layers ▸ Unisolate | `LAYUNISO` |
+| done | Tools ▸ Layers ▸ Lock | `LAYLCK` |
+| done | Tools ▸ Layers ▸ Unlock | `LAYULK` |
+| done | Tools ▸ Layers ▸ Layer Previous | `LAYERP` |
+| done | Tools ▸ Layers ▸ Translate Layers | `LAYTRANS` |
+| done | Tools ▸ Layers ▸ Layer Walk | `LAYWALK` |
+| done | Tools ▸ Layers ▸ Viewport Layers | `VPLAYER` |
+| done | Tools ▸ Layers ▸ Color | `COLOR` |
+| done | Tools ▸ Layers ▸ Linetype | `LINETYPE` |
+| done | Tools ▸ Layers ▸ Lineweight | `LWEIGHT` |
+| done | Tools ▸ Layers ▸ Linetype Scale | `LTSCALE` |
+| done | Tools ▸ Layers ▸ Rename | `RENAME` |
+| done | Tools ▸ BIM Data |  |
+| done | Tools ▸ BIM Data ▸ Level | `LEVEL` |
+| done | Tools ▸ BIM Data ▸ Schedule | `SCHEDULE` |
+| done | Tools ▸ BIM Data ▸ Set Property | `SETPROP` |
+| done | Tools ▸ BIM Data ▸ Properties | `PROPERTIES` |
+| done | Tools ▸ BIM Data ▸ Color Fill Plan | `COLORFILL` |
+| done | Tools ▸ BIM Data ▸ Room Finishes | `ROOMFINISH` |
+| done | Tools ▸ BIM Data ▸ Opening Parts | `OPENINGPARTS` |
+| done | Tools ▸ BIM Data ▸ Reflected Ceiling | `RCP` |
+| done | Tools ▸ BIM Data ▸ Design Options | `DESIGNOPTION` |
+| done | Tools ▸ BIM Data ▸ Worksets | `WORKSET` |
+| done | Tools ▸ Structure |  |
+| done | Tools ▸ Structure ▸ Beam System | `BEAMSYSTEM` |
+| done | Tools ▸ Structure ▸ Brace | `BRACE` |
+| done | Tools ▸ Structure ▸ Truss | `TRUSS` |
+| done | Tools ▸ Structure ▸ Steel Profile | `STEELPROFILE` |
+| done | Tools ▸ Structure ▸ Analytical Model | `ANALYTICALMODEL` |
+| done | Tools ▸ Structure ▸ Frame Analysis | `FRAMEANALYSIS` |
+| done | Tools ▸ MEP |  |
+| done | Tools ▸ MEP ▸ Duct | `DUCT` |
+| done | Tools ▸ MEP ▸ Pipe | `MEPPIPE` |
+| done | Tools ▸ MEP ▸ Cable Tray | `CABLETRAY` |
+| done | Tools ▸ MEP ▸ Conduit | `CONDUIT` |
+| done | Tools ▸ MEP ▸ Connectors | `MEPCONNECTORS` |
+| done | Tools ▸ Site More |  |
+| done | Tools ▸ Site More ▸ Property Line | `PROPERTYLINE` |
+| done | Tools ▸ Site More ▸ Subregion | `SUBREGION` |
+| done | Tools ▸ Site More ▸ Site Path | `SITEPATH` |
+| done | Tools ▸ Site More ▸ Parking | `PARKINGLOT` |
+| done | Tools ▸ Site More ▸ Retaining Wall | `RETAININGWALL` |
+| done | Tools ▸ Site More ▸ Import DEM | `DEMIMPORT` |
+| done | Tools ▸ Surfaces & Mesh |  |
+| done | Tools ▸ Surfaces & Mesh ▸ Ruled Surface | `RULESURF` |
+| done | Tools ▸ Surfaces & Mesh ▸ Tabulated Surface | `TABSURF` |
+| done | Tools ▸ Surfaces & Mesh ▸ Revolved Surface | `REVSURF` |
+| done | Tools ▸ Surfaces & Mesh ▸ Edge Surface | `EDGESURF` |
+| done | Tools ▸ Surfaces & Mesh ▸ Fillet Edges | `FILLETEDGE` |
+| done | Tools ▸ Surfaces & Mesh ▸ Chamfer Edges | `CHAMFEREDGE` |
+| done | Tools ▸ Surfaces & Mesh ▸ Repair Mesh | `MESHREPAIR` |
+| done | Tools ▸ Surfaces & Mesh ▸ Decimate Mesh | `MESHDECIMATE` |
+| done | Tools ▸ Analysis |  |
+| done | Tools ▸ Analysis ▸ Heat Loss | `HEATLOSS` |
+| done | Tools ▸ Analysis ▸ U-Value | `UVALUE` |
+| done | Tools ▸ Analysis ▸ Daylight | `DAYLIGHT` |
+| done | Tools ▸ Analysis ▸ Solar Radiation | `SOLARRADIATION` |
+| done | Tools ▸ Analysis ▸ Sun Path | `SUNPATH` |
+| done | Tools ▸ Analysis ▸ Isovist | `ISOVIST` |
+| done | Tools ▸ Analysis ▸ Reverberation | `REVERB` |
+| done | Tools ▸ Analysis ▸ Embodied Carbon | `CARBON` |
+| done | Tools ▸ Analysis ▸ Level Areas | `LEVELAREAS` |
+| done | Tools ▸ Analysis ▸ Code Check | `CODECHECK` |
+| done | Tools ▸ Analysis ▸ Code Rules | `CODERULES` |
+| done | Tools ▸ Analysis ▸ Standards Check | `STANDARDSCHECK` |
+| done | Tools ▸ Analysis ▸ Validate IFC | `IFCVALIDATE` |
+| done | Tools ▸ Analysis ▸ IDS Check | `IDSCHECK` |
+| done | Tools ▸ Analysis ▸ Calculator | `CAL` |
+| done | Tools ▸ Analysis ▸ Measure Geometry | `MEASUREGEOM` |
+| done | Tools ▸ Analysis ▸ Status | `STATUS` |
+| done | Tools ▸ Exchange |  |
+| done | Tools ▸ Exchange ▸ DWG In | `DWGIN` |
+| done | Tools ▸ Exchange ▸ DWG Converter | `DWGCONVERTER` |
+| done | Tools ▸ Exchange ▸ STEP In | `STEPIN` |
+| done | Tools ▸ Exchange ▸ Shapefile | `SHPIMPORT` |
+| done | Tools ▸ Exchange ▸ OpenStreetMap | `OSMIMPORT` |
+| done | Tools ▸ Exchange ▸ CityJSON | `CITYJSONIMPORT` |
+| done | Tools ▸ Exchange ▸ Point Cloud | `POINTCLOUDIMPORT` |
+| done | Tools ▸ Exchange ▸ Excel In | `XLSXIN` |
+| done | Tools ▸ Exchange ▸ DWG Out | `DWGOUT` |
+| done | Tools ▸ Exchange ▸ STEP Out | `STEPOUT` |
+| done | Tools ▸ Exchange ▸ Collada | `DAEOUT` |
+| done | Tools ▸ Exchange ▸ PLY | `PLYOUT` |
+| done | Tools ▸ Exchange ▸ gbXML | `GBXMLOUT` |
+| done | Tools ▸ Exchange ▸ COBie | `COBIEOUT` |
+| done | Tools ▸ Exchange ▸ IFC ZIP | `IFCZIPOUT` |
+| done | Tools ▸ Exchange ▸ HPGL | `HPGLOUT` |
+| done | Tools ▸ Exchange ▸ Excel Out | `XLSXOUT` |
+| partial | Tools ▸ File |  |
+| done | Tools ▸ File ▸ New | `NEW` |
+| done | Tools ▸ File ▸ Open | `OPEN` |
+| done | Tools ▸ File ▸ Save | `SAVE` |
+| done | Tools ▸ File ▸ Save As | `SAVEAS` |
+| done | Tools ▸ File ▸ Close | `CLOSE` |
+| done | Tools ▸ File ▸ Import | `IMPORT` |
+| done | Tools ▸ File ▸ Export | `EXPORT` |
+| done | Tools ▸ File ▸ Plot | `PLOT` |
+| todo: command DRAWINGRECOVERY is not registered in archi-engine | Tools ▸ File ▸ Drawing Recovery | `DRAWINGRECOVERY` |
+| done | Tools ▸ File ▸ Run Script | `SCRIPT` |
+| done | Tools ▸ File ▸ Script Text | `SCRIPTTEXT` |
+| done | Tools ▸ File ▸ Quit | `QUIT` |
+| done | Tools ▸ Tools & Scripting |  |
+| done | Tools ▸ Tools & Scripting ▸ Record Action | `ACTRECORD` |
+| done | Tools ▸ Tools & Scripting ▸ Stop Recording | `ACTSTOP` |
+| done | Tools ▸ Tools & Scripting ▸ Play Action | `ACTPLAY` |
+| done | Tools ▸ Tools & Scripting ▸ Action Manager | `ACTMANAGER` |
+| done | Tools ▸ Tools & Scripting ▸ Record Script | `SCRIPTRECORD` |
+| done | Tools ▸ Tools & Scripting ▸ Aliases | `ALIAS` |
+| done | Tools ▸ Tools & Scripting ▸ Command History | `HISTORY` |
+| done | Tools ▸ Tools & Scripting ▸ Script Console | `SCRIPTCONSOLE` |
+| done | Tools ▸ Tools & Scripting ▸ Script Library | `SCRIPTLIBRARY` |
+| done | Tools ▸ Tools & Scripting ▸ Node Editor | `NODEEDITOR` |
+| done | Tools ▸ Tools & Scripting ▸ Agent Settings | `AGENTSETTINGS` |
+| done | Tools ▸ Tools & Scripting ▸ Connect Claude | `CONNECTCLAUDE` |
+| done | Tools ▸ Settings |  |
+| done | Tools ▸ Settings ▸ Options | `OPTIONS` |
+| done | Tools ▸ Settings ▸ Units | `UNITS` |
+| done | Tools ▸ Settings ▸ Drafting Settings | `DSETTINGS` |
+| done | Tools ▸ Settings ▸ Limits | `LIMITS` |
+| done | Tools ▸ Settings ▸ Isometric Drafting | `ISODRAFT` |
+| done | Tools ▸ Settings ▸ Isoplane | `ISOPLANE` |
+| done | Tools ▸ Settings ▸ UCS | `UCS` |
+| done | Tools ▸ Settings ▸ Named UCS | `UCSMAN` |
+| done | Tools ▸ Settings ▸ Snap | `SNAP` |
+| done | Tools ▸ Settings ▸ Grid | `GRIDDISPLAY` |
+| done | Tools ▸ Settings ▸ Ortho | `ORTHO` |
+| done | Tools ▸ Settings ▸ Object Snap | `OSNAP` |
+| done | Tools ▸ Settings ▸ Cursor Size | `CURSORSIZE` |
+| done | Tools ▸ Settings ▸ Autosave Interval | `SAVETIME` |
+| done | Tools ▸ Settings ▸ System Variable | `SETVAR` |
+| done | Tools ▸ Settings ▸ Audit | `AUDIT` |
+| done | Tools ▸ Settings ▸ Purge | `PURGE` |
+| partial | Tools ▸ View |  |
+| done | Tools ▸ View ▸ Zoom | `ZOOM` |
+| done | Tools ▸ View ▸ Pan | `PAN` |
+| done | Tools ▸ View ▸ Regenerate | `REGEN` |
+| done | Tools ▸ View ▸ Named Views | `VIEW` |
+| done | Tools ▸ View ▸ Layout | `LAYOUT` |
+| done | Tools ▸ View ▸ Viewports | `MVIEW` |
+| done | Tools ▸ View ▸ 2D Plan | `SHOW2D` |
+| done | Tools ▸ View ▸ 3D Model | `SHOW3D` |
+| done | Tools ▸ View ▸ Split View | `SPLIT` |
+| done | Tools ▸ View ▸ Visual Style | `VSCURRENT` |
+| done | Tools ▸ View ▸ Render | `RENDER` |
+| done | Tools ▸ View ▸ Walk | `WALK` |
+| done | Tools ▸ View ▸ View Cube | `NAVVCUBE` |
+| done | Tools ▸ View ▸ Orbit Selection | `ORBITSELECTION` |
+| done | Tools ▸ View ▸ Save Camera | `SAVECAMERA` |
+| done | Tools ▸ View ▸ Cameras | `CAMERA` |
+| done | Tools ▸ View ▸ Section Box | `SECTIONBOX` |
+| done | Tools ▸ View ▸ Sun Study | `SUNSTUDY` |
+| done | Tools ▸ View ▸ Top | `TOPVIEW` |
+| done | Tools ▸ View ▸ Bottom | `BOTTOMVIEW` |
+| done | Tools ▸ View ▸ Front | `FRONTVIEW` |
+| done | Tools ▸ View ▸ Back | `BACKVIEW` |
+| done | Tools ▸ View ▸ Left | `LEFTVIEW` |
+| done | Tools ▸ View ▸ Right | `RIGHTVIEW` |
+| done | Tools ▸ View ▸ SW Iso | `ISOVIEW` |
+| done | Tools ▸ View ▸ SE Iso | `SEISO` |
+| done | Tools ▸ View ▸ NE Iso | `NEISO` |
+| done | Tools ▸ View ▸ NW Iso | `NWISO` |
+| done | Tools ▸ View ▸ Workspace | `WSCURRENT` |
+| done | Tools ▸ View ▸ Save Workspace | `WSSAVE` |
+| todo: command CLEANSCREENON is not registered in archi-engine | Tools ▸ View ▸ Clean Screen On | `CLEANSCREENON` |
+| todo: command CLEANSCREENOFF is not registered in archi-engine | Tools ▸ View ▸ Clean Screen Off | `CLEANSCREENOFF` |
+| todo: command FLOATPANEL is not registered in archi-engine | Tools ▸ View ▸ Float Panel | `FLOATPANEL` |
+| todo: command HISTORYPANEL is not registered in archi-engine | Tools ▸ View ▸ History Panel | `HISTORYPANEL` |
+| done | Tools ▸ View ▸ Tool Palettes | `TOOLPALETTES` |
+| done | Tools ▸ View ▸ Close Tool Palettes | `TOOLPALETTESCLOSE` |
+| done | Tools ▸ View ▸ Materials | `MATERIALS` |
+| done | Tools ▸ View ▸ Material Library | `MATBROWSER` |
+| partial | Tools ▸ Output |  |
+| done | Tools ▸ Output ▸ Page Setup | `PAGESETUP` |
+| done | Tools ▸ Output ▸ Plot Preview | `PREVIEW` |
+| done | Tools ▸ Output ▸ Publish | `PUBLISH` |
+| done | Tools ▸ Output ▸ Title Block | `TITLEBLOCK` |
+| done | Tools ▸ Output ▸ Sheet Set | `SHEETSET` |
+| done | Tools ▸ Output ▸ Sheet Index | `SHEETINDEX` |
+| done | Tools ▸ Output ▸ Revision | `SHEETREVISION` |
+| todo: command SHEETRENUMBER is not registered in archi-engine | Tools ▸ Output ▸ Renumber Sheets | `SHEETRENUMBER` |
+| todo: command SHEETVIEWTITLES is not registered in archi-engine | Tools ▸ Output ▸ Editable View Titles | `SHEETVIEWTITLES` |
+| done | Tools ▸ Output ▸ View Title | `VIEWTITLE` |
+| done | Tools ▸ Output ▸ Lock Viewports | `VPLOCK` |
+| done | Tools ▸ Animation & Export |  |
+| done | Tools ▸ Animation & Export ▸ Walkthrough Video | `WALKTHROUGHVIDEO` |
+| done | Tools ▸ Animation & Export ▸ Sun Study Video | `SUNSTUDYVIDEO` |
+| done | Tools ▸ Animation & Export ▸ 360° Panorama | `PANORAMA` |
+| done | Tools ▸ Animation & Export ▸ Section Plane | `SECTIONPLANE` |
+| done | Tools ▸ Plot Styles |  |
+| done | Tools ▸ Plot Styles ▸ Plot Styles | `PLOTSTYLE` |
+| done | Tools ▸ Plot Styles ▸ Batch Publish | `BATCHPUBLISH` |
+| done | Tools ▸ Plot Styles ▸ Plot Log | `PLOTLOG` |
+| partial | Tools ▸ Start & Templates |  |
+| todo: command STARTSCREEN is not registered in archi-engine | Tools ▸ Start & Templates ▸ Start Screen | `STARTSCREEN` |
+| done | Tools ▸ Start & Templates ▸ New from Template | `NEWFROMTEMPLATE` |
+| done | Tools ▸ Start & Templates ▸ Save as Template | `SAVEASTEMPLATE` |
+| done | Tools ▸ Start & Templates ▸ Theme | `THEME` |
+| done | Tools ▸ Start & Templates ▸ Constraint Bar | `CONSTRAINTBAR` |
+| partial | Tools ▸ Help |  |
+| done | Tools ▸ Help ▸ Help | `HELP` |
+| done | Tools ▸ Help ▸ Command List | `COMMANDS` |
+| todo: command COMMANDSEARCH is not registered in archi-engine | Tools ▸ Help ▸ Search Commands | `COMMANDSEARCH` |
+| todo: command ABOUT is not registered in archi-engine | Tools ▸ Help ▸ About | `ABOUT` |
+| todo: command APPSELFTEST is not registered in archi-engine | Tools ▸ Help ▸ Self Test | `APPSELFTEST` |
+| todo: command EXPORTCOMMANDS is not registered in archi-engine | Tools ▸ Help ▸ Export Command Reference | `EXPORTCOMMANDS` |
+| done | Tools ▸ Review & Markup |  |
+| done | Tools ▸ Review & Markup ▸ Markups | `MARKUP` |
+| done | Tools ▸ Review & Markup ▸ Compare Drawings | `COMPARE` |
+| done | Tools ▸ Review & Markup ▸ BCF Import | `BCFIN` |
+| done | Tools ▸ Review & Markup ▸ BCF Export | `BCFOUT` |
+| done | Tools ▸ Review & Markup ▸ Revision Stamp | `REVSTAMP` |
+| done | Tools ▸ Versions & Issues |  |
+| done | Tools ▸ Versions & Issues ▸ Issue Tracker | `ISSUETRACKER` |
+| done | Tools ▸ Versions & Issues ▸ Versions | `VERSIONS` |
+| done | Tools ▸ Versions & Issues ▸ Merge Models | `MODELMERGE` |
+| done | Tools ▸ Versions & Issues ▸ Office Standards | `STANDARDS` |
+| done | Tools ▸ Versions & Issues ▸ Change Journal | `JOURNAL` |
+| done | Tools ▸ Versions & Issues ▸ Recover File | `RECOVER` |
+| done | Tools ▸ Versions & Issues ▸ Recovery Files | `RECOVERYFILES` |
+| done | Tools ▸ Inquiry Extras |  |
+| done | Tools ▸ Inquiry Extras ▸ Angle Between | `ANGLEBETWEEN` |
+| done | Tools ▸ Inquiry Extras ▸ Distance to Object | `DISTTOOBJECT` |
+| done | Tools ▸ Inquiry Extras ▸ Point Inside? | `POINTINSIDE` |
+| done | Tools ▸ Inquiry Extras ▸ Total Length | `TLEN` |
+| partial | Tools ▸ Sharing & Exchange |  |
+| done | Tools ▸ Sharing & Exchange ▸ eTransmit | `ETRANSMIT` |
+| todo: command SHARE is not registered in archi-engine | Tools ▸ Sharing & Exchange ▸ Share… | `SHARE` |
+| done | Tools ▸ Sharing & Exchange ▸ Exchange Check | `EXCHANGECHECK` |
+| done | Tools ▸ Sharing & Exchange ▸ Batch Jobs | `BATCH` |
+| done | Tools ▸ Sharing & Exchange ▸ IFC Options | `IFCOPTIONS` |
+| done | Tools ▸ Checks & Quantities |  |
+| done | Tools ▸ Checks & Quantities ▸ Accessibility | `ACCESSIBILITY` |
+| done | Tools ▸ Checks & Quantities ▸ Egress | `EGRESS` |
+| done | Tools ▸ Checks & Quantities ▸ Energy Balance | `ENERGYBALANCE` |
+| done | Tools ▸ Checks & Quantities ▸ Bill of Quantities | `BOQ` |
+| done | Tools ▸ Checks & Quantities ▸ Takeoff by Phase | `TAKEOFFPHASE` |
+| done | Tools ▸ Checks & Quantities ▸ Lighting Schedule | `LIGHTSCHEDULE` |
+| done | Tools ▸ Checks & Quantities ▸ Fire Compartments | `FIRECOMPARTMENTS` |
+| done | Tools ▸ Checks & Quantities ▸ Load Takedown | `LOADTAKEDOWN` |
+| done | Tools ▸ Checks & Quantities ▸ Parking Check | `PARKINGCHECK` |
+| done | Tools ▸ Checks & Quantities ▸ Rainwater | `RAINWATER` |
+| done | Tools ▸ Images & Geo |  |
+| done | Tools ▸ Images & Geo ▸ Import Image | `IMAGEIMPORT` |
+| done | Tools ▸ Images & Geo ▸ Scale Image | `IMAGESCALE` |
+| done | Tools ▸ Images & Geo ▸ KML / KMZ Out | `KMLOUT` |
+| done | Tools ▸ Images & Geo ▸ Layered SVG Out | `SVGLAYERSOUT` |
+| done | Tools ▸ Images & Geo ▸ Load .pat Patterns | `PATLOAD` |
+| done | Tools ▸ Drafting Extras |  |
+| done | Tools ▸ Drafting Extras ▸ Match Properties | `MATCHPROP` |
+| done | Tools ▸ Drafting Extras ▸ Blend Curves | `BLEND` |
+| done | Tools ▸ Drafting Extras ▸ Ellipse in Parallelogram | `ELLIPSEQUAD` |
+| done | Tools ▸ Drafting Extras ▸ Gradient | `GRADIENT` |
+| done | Tools ▸ Drafting Extras ▸ Trace | `TRACE` |
+| done | Tools ▸ Drafting Extras ▸ Flatten | `FLATTEN` |
+| done | Tools ▸ Drafting Extras ▸ Hatch Origin | `HATCHSETORIGIN` |
+| done | Tools ▸ Drafting Extras ▸ Rotate 90° | `ROTATE90` |
+| done | Tools ▸ Drafting Extras ▸ Edit Spline | `SPLINEDIT` |
+| done | Tools ▸ Drafting Extras ▸ Explode Text | `TXTEXP` |
+| done | Tools ▸ Drafting Extras ▸ Change Space | `CHSPACE` |
+| done | Tools ▸ Drafting Extras ▸ Deselect | `DESELECT` |
+| done | Tools ▸ Drafting Extras ▸ Select Previous | `SELECTPREVIOUS` |
+| done | Tools ▸ Drafting Extras ▸ Select Instances | `SELECTINSTANCES` |
+| done | Tools ▸ Annotation Extras |  |
+| done | Tools ▸ Annotation Extras ▸ Jogged Radius | `DIMJOGGED` |
+| done | Tools ▸ Annotation Extras ▸ Jog Line | `DIMJOGLINE` |
+| done | Tools ▸ Annotation Extras ▸ Ordinate Datum | `DIMREBASE` |
+| done | Tools ▸ Annotation Extras ▸ Grid Dimensions | `AUTODIMGRIDS` |
+| done | Tools ▸ Annotation Extras ▸ Object Scale | `OBJECTSCALE` |
+| done | Tools ▸ Annotation Extras ▸ Spot Coordinate | `SPOTCOORD` |
+| done | Tools ▸ Annotation Extras ▸ Text Frame | `TEXTFRAME` |
+| done | Tools ▸ Annotation Extras ▸ Text Mask | `TEXTMASK` |
+| done | Tools ▸ Annotation Extras ▸ Remove Text Mask | `TEXTUNMASK` |
+| done | Tools ▸ Dynamic Blocks |  |
+| done | Tools ▸ Dynamic Blocks ▸ Dynamic Parameter | `BPARAMETER` |
+| done | Tools ▸ Dynamic Blocks ▸ Dynamic Value | `DYNPROP` |
+| done | Tools ▸ Dynamic Blocks ▸ Reset Block | `RESETBLOCK` |
+| partial | Tools ▸ BIM Authoring |  |
+| done | Tools ▸ BIM Authoring ▸ Area Scheme | `AREASCHEME` |
+| done | Tools ▸ BIM Authoring ▸ Update Associative | `BIMUPDATE` |
+| done | Tools ▸ BIM Authoring ▸ Dormer | `DORMER` |
+| done | Tools ▸ BIM Authoring ▸ Elevator | `ELEVATOR` |
+| partial: runs the command-line FAMILY instead of opening the Family Editor window | Tools ▸ BIM Authoring ▸ Family Editor | `FAMILY` |
+| done | Tools ▸ BIM Authoring ▸ Floor Finish | `FLOORFINISH` |
+| done | Tools ▸ BIM Authoring ▸ Model Group | `MODELGROUP` |
+| done | Tools ▸ BIM Authoring ▸ Opening Trim | `OPENINGTRIM` |
+| done | Tools ▸ BIM Authoring ▸ Profiles | `PROFILE` |
+| done | Tools ▸ BIM Authoring ▸ Railing Type | `RAILINGTYPE` |
+| done | Tools ▸ BIM Authoring ▸ Roof Edge | `ROOFEDGE` |
+| done | Tools ▸ BIM Authoring ▸ Shaft | `SHAFT` |
+| done | Tools ▸ BIM Authoring ▸ Skylight | `SKYLIGHT` |
+| done | Tools ▸ BIM Authoring ▸ Slab Opening | `SLABOPENING` |
+| done | Tools ▸ BIM Authoring ▸ Slab / Roof Type | `SLABTYPE` |
+| done | Tools ▸ BIM Authoring ▸ Wall Join | `WALLJOINEDIT` |
+| done | Tools ▸ BIM Authoring ▸ Wall Wrap | `WALLWRAP` |
+| done | Tools ▸ BIM Authoring ▸ Light Data | `LIGHTDATA` |
+| done | Tools ▸ BIM Authoring ▸ MEP Systems | `MEPSYSTEM` |
+| done | Tools ▸ Views & Graphics |  |
+| done | Tools ▸ Views & Graphics ▸ Drafting View | `DRAFTINGVIEW` |
+| done | Tools ▸ Views & Graphics ▸ Legend | `LEGEND` |
+| done | Tools ▸ Views & Graphics ▸ View Graphics | `VIEWGRAPHICS` |
+| done | Tools ▸ Views & Graphics ▸ View Templates | `VIEWTEMPLATE` |
+| done | Tools ▸ Solid Features |  |
+| done | Tools ▸ Solid Features ▸ Press/Pull Face | `PRESSPULLFACE` |
+| done | Tools ▸ Solid Features ▸ Section Solids | `SECTIONSOLIDS` |
+| done | Tools ▸ Solid Features ▸ Record History | `SOLIDHIST` |
+| done | Tools ▸ Solid Features ▸ Feature History | `SOLIDHISTORY` |
+| done | Tools ▸ Script Control |  |
+| done | Tools ▸ Script Control ▸ Plug-ins | `PLUGINS` |
+| done | Tools ▸ Script Control ▸ Script to JavaScript | `SCRIPT2JS` |
+| done | Tools ▸ Script Control ▸ Menu Macro | `MACRO` |
+| done | Tools ▸ Script Control ▸ Delay | `DELAY` |
+| done | Tools ▸ Script Control ▸ Resume Script | `RESUME` |
+| done | Tools ▸ Review Panels |  |
+| done | Tools ▸ Review Panels ▸ Markup Panel | `MARKUPPANEL` |
+| done | Tools ▸ Review Panels ▸ Compare Overlay | `COMPAREPANEL` |
+| done | Tools ▸ Review Panels ▸ Revision Clouds | `REVCLOUDPANEL` |
+| done | Tools ▸ Review Panels ▸ Block Palette | `BLOCKPALETTE` |
+| done | Tools ▸ 3D, Render & Print |  |
+| done | Tools ▸ 3D, Render & Print ▸ Measure 3D | `MEASURE3D` |
+| done | Tools ▸ 3D, Render & Print ▸ 3D Gizmo | `GIZMO3D` |
+| done | Tools ▸ 3D, Render & Print ▸ Camera Paths | `CAMERAPATHEDIT` |
+| done | Tools ▸ 3D, Render & Print ▸ Render Queue | `RENDERQUEUE` |
+| done | Tools ▸ 3D, Render & Print ▸ Clipping Plane | `CLIPPLANES` |
+| done | Tools ▸ 3D, Render & Print ▸ Print Setup | `PRINTSETUP` |
+| partial | Tools ▸ Families, Views & Panels |  |
+| done | Tools ▸ Families, Views & Panels ▸ Family Editor Panel | `FAMILYPANEL` |
+| done | Tools ▸ Families, Views & Panels ▸ Move Up/Down (Z) | `MOVEZ` |
+| done | Tools ▸ Families, Views & Panels ▸ Levels in 3D | `LEVELVIEW3D` |
+| done | Tools ▸ Families, Views & Panels ▸ Field of View | `FOV` |
+| done | Tools ▸ Families, Views & Panels ▸ Save 3D View Image | `VIEWIMAGE` |
+| todo: command SHEETIMAGE is not registered in archi-engine | Tools ▸ Families, Views & Panels ▸ Sheet to Image | `SHEETIMAGE` |
+| todo: command SELECTIONINFO is not registered in archi-engine | Tools ▸ Families, Views & Panels ▸ Selection Info | `SELECTIONINFO` |
+| todo: command NOTIFICATIONS is not registered in archi-engine | Tools ▸ Families, Views & Panels ▸ Notifications | `NOTIFICATIONS` |
+| todo: command NAVIGATOR is not registered in archi-engine | Tools ▸ Families, Views & Panels ▸ Navigator | `NAVIGATOR` |
+| todo: command WHATSNEW is not registered in archi-engine | Tools ▸ Families, Views & Panels ▸ What's New | `WHATSNEW` |
+| done | Tools ▸ 3D Primitives & Solid Tools |  |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Wedge | `WEDGE` |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Torus | `TORUS` |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Pyramid | `PYRAMID` |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Prism | `PRISM` |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Polyhedron | `POLYHEDRON` |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Polysolid | `POLYSOLID` |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Helix | `HELIX` |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Planar Surface | `PLANESURF` |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Thicken | `THICKEN` |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Convex Hull | `HULL` |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Separate Solids | `SEPARATE` |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Check Solid | `SOLIDCHECK` |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Section Object | `SECTIONOBJECT` |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Mesh Primitive | `MESH` |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Convert to Mesh | `CONVTOMESH` |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Convert to Solid | `CONVTOSOLID` |
+| done | Tools ▸ 3D Primitives & Solid Tools ▸ Linear Extrude | `LINEAREXTRUDE` |
+| done | Tools ▸ Annotation & Data |  |
+| done | Tools ▸ Annotation & Data ▸ Alternate Units | `DIMALTUNITS` |
+| done | Tools ▸ Annotation & Data ▸ Dimension Tolerance | `DIMTOLERANCE` |
+| done | Tools ▸ Annotation & Data ▸ Inspection Dimension | `DIMINSPECT` |
+| done | Tools ▸ Annotation & Data ▸ Text Columns | `MTEXTCOLUMNS` |
+| done | Tools ▸ Annotation & Data ▸ Text List | `TEXTLIST` |
+| done | Tools ▸ Annotation & Data ▸ Color Books | `COLORBOOK` |
+| done | Tools ▸ Annotation & Data ▸ Layer Description | `LAYDESC` |
+| done | Tools ▸ Annotation & Data ▸ Block Table | `BTABLE` |
+| done | Tools ▸ Annotation & Data ▸ Clip Xref | `XCLIP` |
+| done | Tools ▸ BIM Grids, Zones & Data |  |
+| done | Tools ▸ BIM Grids, Zones & Data ▸ Grid System | `GRIDSYSTEM` |
+| done | Tools ▸ BIM Grids, Zones & Data ▸ Radial Grid | `RADIALGRID` |
+| done | Tools ▸ BIM Grids, Zones & Data ▸ Zone | `ZONE` |
+| done | Tools ▸ BIM Grids, Zones & Data ▸ Escalator | `ESCALATOR` |
+| done | Tools ▸ BIM Grids, Zones & Data ▸ Split Wall | `SPLITWALL` |
+| done | Tools ▸ BIM Grids, Zones & Data ▸ Flip Wall | `WALLFLIP` |
+| done | Tools ▸ BIM Grids, Zones & Data ▸ Flip Opening | `OPENINGFLIP` |
+| done | Tools ▸ BIM Grids, Zones & Data ▸ Classify | `CLASSIFY` |
+| done | Tools ▸ BIM Grids, Zones & Data ▸ Property Sets | `PSET` |
+| done | Tools ▸ BIM Grids, Zones & Data ▸ Global Parameters | `GLOBALPARAM` |
+| done | Tools ▸ BIM Grids, Zones & Data ▸ Auto Stack | `AUTOSTACK` |
+| done | Tools ▸ BIM Grids, Zones & Data ▸ Relative Zero | `RELZERO` |
+| done | Tools ▸ BIM Grids, Zones & Data ▸ Roof by Shape | `ROOFSHAPE` |
+| done | Tools ▸ BIM Grids, Zones & Data ▸ View Range | `VIEWRANGE` |
+| done | Tools ▸ BIM Grids, Zones & Data ▸ Geolocation | `GEOLOCATION` |
+| done | Tools ▸ BIM Grids, Zones & Data ▸ Underlay | `UNDERLAY` |
+| done | Tools ▸ Arrays, Macros & Monitor |  |
+| done | Tools ▸ Arrays, Macros & Monitor ▸ Array (Dialog) | `ARRAYCLASSIC` |
+| done | Tools ▸ Arrays, Macros & Monitor ▸ Edit Array | `ARRAYEDIT` |
+| done | Tools ▸ Arrays, Macros & Monitor ▸ Macro Button | `MACROBUTTON` |
+| done | Tools ▸ Arrays, Macros & Monitor ▸ Variable Monitor | `SYSVARMONITOR` |
+| done | Tools ▸ Temporary Visibility |  |
+| done | Tools ▸ Temporary Visibility ▸ Temporary Hide | `TEMPHIDE` |
+| done | Tools ▸ Temporary Visibility ▸ Temporary Isolate | `TEMPISOLATE` |
+| done | Tools ▸ Temporary Visibility ▸ Reveal Hidden | `REVEALHIDDEN` |
+| done | Tools ▸ Import, Export & Collaboration |  |
+| done | Tools ▸ Import, Export & Collaboration ▸ Import PDF | `PDFIMPORT` |
+| done | Tools ▸ Import, Export & Collaboration ▸ PDF Markups | `PDFMARKUPS` |
+| done | Tools ▸ Import, Export & Collaboration ▸ Import DWFx | `DWFIMPORT` |
+| done | Tools ▸ Import, Export & Collaboration ▸ Import DGN | `DGNIMPORT` |
+| done | Tools ▸ Import, Export & Collaboration ▸ Export DGN | `DGNEXPORT` |
+| done | Tools ▸ Import, Export & Collaboration ▸ IFC Class Mapping | `IFCMAP` |
+| done | Tools ▸ Import, Export & Collaboration ▸ Laser Export | `LASEREXPORT` |
+| done | Tools ▸ Import, Export & Collaboration ▸ Share View | `SHAREVIEW` |
+| done | Tools ▸ Import, Export & Collaboration ▸ Point Cloud View | `POINTCLOUDVIEW` |
+| done | Tools ▸ Import, Export & Collaboration ▸ Point Cloud Plane | `PCPLANE` |
+| done | Tools ▸ Import, Export & Collaboration ▸ Scan to BIM | `SCANTOBIM` |
+| done | Tools ▸ Import, Export & Collaboration ▸ Central Model | `CENTRAL` |
+| done | Tools ▸ Import, Export & Collaboration ▸ Git Version | `GITVERSION` |
+| done | Tools ▸ Import, Export & Collaboration ▸ Trace Review | `TRACEREVIEW` |
+| done | Tools ▸ Analysis & Design Assist |  |
+| done | Tools ▸ Analysis & Design Assist ▸ Structural Loads | `STRUCTLOAD` |
+| done | Tools ▸ Analysis & Design Assist ▸ Structural Supports | `STRUCTSUPPORT` |
+| done | Tools ▸ Analysis & Design Assist ▸ Thermal Bridges | `THERMALBRIDGES` |
+| done | Tools ▸ Analysis & Design Assist ▸ EnergyPlus Export | `ENERGYPLUS` |
+| done | Tools ▸ Analysis & Design Assist ▸ Work Schedule (4D) | `WORKSCHEDULE` |
+| done | Tools ▸ Analysis & Design Assist ▸ Auto-Dimension Plan | `AUTODIMPLAN` |
+| done | Tools ▸ Analysis & Design Assist ▸ Auto-Name Rooms | `AUTONAMEROOMS` |
+| done | Tools ▸ Analysis & Design Assist ▸ Generate Plan | `PLANGEN` |
+| done | Tools ▸ Analysis & Design Assist ▸ QA Assistant | `QAASSIST` |
+| done | Tools ▸ Analysis & Design Assist ▸ Ask (Natural Language) | `ASK` |
+| done | Tools ▸ Analysis & Design Assist ▸ AutoLISP | `LISP` |
+| done | Tools ▸ Analysis & Design Assist ▸ Load LISP File | `LISPLOAD` |
+| partial | Tools ▸ Navigation & Sheets |  |
+| todo: command FILETAB is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ File Tabs | `FILETAB` |
+| todo: command FILETABCLOSE is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Hide File Tabs | `FILETABCLOSE` |
+| todo: command LAYOUTTABS is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Model/Layout Tabs | `LAYOUTTABS` |
+| todo: command QUICKPROPS is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Quick Properties | `QUICKPROPS` |
+| todo: command INSPECT is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Inspector | `INSPECT` |
+| todo: command ADCENTER is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Design Center | `ADCENTER` |
+| todo: command HELPWINDOW is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Help Browser | `HELPWINDOW` |
+| done | Tools ▸ Navigation & Sheets ▸ Tutorials | `TUTORIALS` |
+| todo: command SAMPLEHOUSE is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Sample House | `SAMPLEHOUSE` |
+| todo: command SELECTWALLCHAIN is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Select Wall Chain | `SELECTWALLCHAIN` |
+| todo: command DVIEW is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Twist View | `DVIEW` |
+| todo: command PERSPECTIVE is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Perspective | `PERSPECTIVE` |
+| done | Tools ▸ Navigation & Sheets ▸ Maximise Viewport | `VPMAX` |
+| done | Tools ▸ Navigation & Sheets ▸ Restore Viewport | `VPMIN` |
+| done | Tools ▸ Navigation & Sheets ▸ Clip Viewport | `VPCLIP` |
+| todo: command MVIEWPOLY is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Polygonal Viewport | `MVIEWPOLY` |
+| todo: command MVSETUP is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Align Viewports | `MVSETUP` |
+| todo: command SHEETGRID is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Sheet Guide Grid | `SHEETGRID` |
+| todo: command SHEETPLACEHOLDER is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Placeholder Sheet | `SHEETPLACEHOLDER` |
+| todo: command SHEETFIELD is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Custom Fields | `SHEETFIELD` |
+| todo: command PSETUPIN is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Import Page Setup | `PSETUPIN` |
+| todo: command LWDISPLAYSCALE is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Lineweight Display Scale | `LWDISPLAYSCALE` |
+| todo: command VISUALSTYLES is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Visual Styles Manager | `VISUALSTYLES` |
+| todo: command TILEDVIEWS is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Tiled Views | `TILEDVIEWS` |
+| done | Tools ▸ Navigation & Sheets ▸ Plot Area | `PLOTAREA` |
+| done | Tools ▸ Navigation & Sheets ▸ Sheet to SVG | `SHEETSVG` |
+| done | Tools ▸ Navigation & Sheets ▸ Named Plot Styles | `PLOTSTYLENAME` |
+| todo: command EXPORTSETTINGS is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Export Settings | `EXPORTSETTINGS` |
+| todo: command WINDOWTABS is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Window Tabs | `WINDOWTABS` |
+| todo: command FULLSCREEN is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Full Screen | `FULLSCREEN` |
+| todo: command IMPORTSETTINGS is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Import Settings | `IMPORTSETTINGS` |
+| done | Tools ▸ File Tools & Exchange |  |
+| done | Tools ▸ File Tools & Exchange ▸ Save a Copy | `SAVECOPY` |
+| done | Tools ▸ File Tools & Exchange ▸ Round-trip Check | `SAVECHECK` |
+| done | Tools ▸ File Tools & Exchange ▸ Upgrade File | `UPGRADEFILE` |
+| done | Tools ▸ File Tools & Exchange ▸ File Metadata | `FILEMETADATA` |
+| done | Tools ▸ File Tools & Exchange ▸ Save as Template File | `TEMPLATEOUT` |
+| done | Tools ▸ File Tools & Exchange ▸ New from Template File | `TEMPLATEIN` |
+| done | Tools ▸ File Tools & Exchange ▸ Import Dropped File | `DROPIMPORT` |
+| done | Tools ▸ File Tools & Exchange ▸ Attach PDF | `PDFATTACH` |
+| done | Tools ▸ File Tools & Exchange ▸ PDF Underlays | `PDFUNDERLAYS` |
+| done | Tools ▸ File Tools & Exchange ▸ BREP In | `BREPIN` |
+| done | Tools ▸ File Tools & Exchange ▸ BREP Out | `BREPOUT` |
+| done | Tools ▸ File Tools & Exchange ▸ E57 Scan In | `E57IN` |
+| done | Tools ▸ File Tools & Exchange ▸ E57 Scan Out | `E57OUT` |
+| done | Tools ▸ Analysis & Generative |  |
+| done | Tools ▸ Analysis & Generative ▸ Annual Daylight (sDA/ASE) | `DAYLIGHTANNUAL` |
+| done | Tools ▸ Analysis & Generative ▸ Wind Study Export (CFD) | `CFDEXPORT` |
+| done | Tools ▸ Analysis & Generative ▸ Wind Results | `WINDRESULTS` |
+| done | Tools ▸ Analysis & Generative ▸ Generative Layout | `GENDESIGN` |
+| done | Tools ▸ Analysis & Generative ▸ Sketch to Walls | `SKETCHTOWALLS` |
+| done | Tools ▸ Analysis & Generative ▸ Editing Time | `TIME` |
+| done | Tools ▸ Analysis & Generative ▸ Co-editing | `COEDIT` |
+| done | Tools ▸ Analysis & Generative ▸ BCF Server | `BCFSERVER` |
+| done | Tools ▸ Analysis & Generative ▸ Resolve Conflicts | `RESOLVECONFLICTS` |
+| done | Tools ▸ Analysis & Generative ▸ Clash Manager | `CLASHMANAGE` |
+| done | Tools ▸ BIM Types & Parameters |  |
+| done | Tools ▸ BIM Types & Parameters ▸ Assembly | `ASSEMBLY` |
+| done | Tools ▸ BIM Types & Parameters ▸ Parts | `PARTS` |
+| done | Tools ▸ BIM Types & Parameters ▸ Stacked Wall | `STACKEDWALL` |
+| done | Tools ▸ BIM Types & Parameters ▸ Rectangular Walls | `WALLRECT` |
+| done | Tools ▸ BIM Types & Parameters ▸ Polygon Walls | `WALLPOLYGON` |
+| done | Tools ▸ BIM Types & Parameters ▸ Storefront | `STOREFRONT` |
+| done | Tools ▸ BIM Types & Parameters ▸ Stair Types | `STAIRTYPE` |
+| done | Tools ▸ BIM Types & Parameters ▸ Railing Types | `RAILTYPEDEF` |
+| done | Tools ▸ BIM Types & Parameters ▸ Story Settings | `STORY` |
+| done | Tools ▸ BIM Types & Parameters ▸ Structural Column | `STRUCTCOLUMN` |
+| done | Tools ▸ BIM Types & Parameters ▸ Structural Usage | `STRUCTURAL` |
+| done | Tools ▸ BIM Types & Parameters ▸ Expression | `EXPRESSION` |
+| done | Tools ▸ BIM Types & Parameters ▸ Family Equality Lock | `FAMILYLOCK` |
+| done | Tools ▸ BIM Types & Parameters ▸ Parameter ↔ Cell | `PARAMCELL` |
+| done | Tools ▸ BIM Types & Parameters ▸ Reporting Parameter | `REPORTPARAM` |
+| done | Tools ▸ BIM Types & Parameters ▸ Transfer Standards | `TRANSFERSTANDARDS` |
+| done | Tools ▸ BIM Types & Parameters ▸ Roof by Extrusion | `ROOFEXTRUSION` |
+| done | Tools ▸ BIM Types & Parameters ▸ Roof Shape Points | `ROOFSHAPEPOINTS` |
+| done | Tools ▸ BIM Types & Parameters ▸ Slab Edge | `SLABEDGE` |
+| done | Tools ▸ BIM Types & Parameters ▸ Stair by Sketch | `STAIRSKETCH` |
+| done | Tools ▸ BIM Types & Parameters ▸ Type Image | `TYPEIMAGE` |
+| done | Tools ▸ Detailing & Tags |  |
+| done | Tools ▸ Detailing & Tags ▸ Detail Component | `DETAILCOMPONENT` |
+| done | Tools ▸ Detailing & Tags ▸ Repeating Detail | `REPEATDETAIL` |
+| done | Tools ▸ Detailing & Tags ▸ Insulation | `INSULATION` |
+| done | Tools ▸ Detailing & Tags ▸ Filled Region | `FILLEDREGION` |
+| done | Tools ▸ Detailing & Tags ▸ Masking Region | `MASKINGREGION` |
+| done | Tools ▸ Detailing & Tags ▸ Hatch Type (Model/Drafting) | `HATCHTYPE` |
+| done | Tools ▸ Detailing & Tags ▸ Detail Mark | `DETAILMARK` |
+| done | Tools ▸ Detailing & Tags ▸ Elevation Mark | `ELEVATIONMARK` |
+| done | Tools ▸ Detailing & Tags ▸ Section Symbol | `SECTIONSYMBOL` |
+| done | Tools ▸ Detailing & Tags ▸ Material Tag | `MATERIALTAG` |
+| done | Tools ▸ Detailing & Tags ▸ Revision Clouds | `REVCLOUDLIST` |
+| done | Tools ▸ Detailing & Tags ▸ Schedule Cell Highlight | `SCHEDULECELLS` |
+| done | Tools ▸ Detailing & Tags ▸ Table Style | `TABLESTYLE` |
+| done | Tools ▸ Views & Coordinates |  |
+| done | Tools ▸ Views & Coordinates ▸ Plan (UCS) | `PLAN` |
+| done | Tools ▸ Views & Coordinates ▸ Plan Orientation | `PLANORIENT` |
+| done | Tools ▸ Views & Coordinates ▸ Project Views | `PROJECTVIEW` |
+| done | Tools ▸ Views & Coordinates ▸ Axonometric View | `AXONVIEW` |
+| done | Tools ▸ Views & Coordinates ▸ Camera Object | `CAMERAVIEW` |
+| done | Tools ▸ Views & Coordinates ▸ View Crop | `VIEWCROP` |
+| done | Tools ▸ Views & Coordinates ▸ Scope Box | `SCOPEBOX` |
+| done | Tools ▸ Views & Coordinates ▸ Matchlines | `MATCHLINE` |
+| done | Tools ▸ Views & Coordinates ▸ Linework Override | `LINEWORK` |
+| done | Tools ▸ Views & Coordinates ▸ UCS Icon | `UCSICON` |
+| done | Tools ▸ Views & Coordinates ▸ Axis Lock | `AXISLOCK` |
+| done | Tools ▸ Views & Coordinates ▸ View Section Box | `VIEWSECTIONBOX` |
+| done | Tools ▸ Views & Coordinates ▸ Double-Click Edit | `DBLCLKEDIT` |
+| done | Tools ▸ Views & Coordinates ▸ Reference Plane | `RP` |
+| done | Tools ▸ Views & Coordinates ▸ Project Base Point | `PROJECTBASEPOINT` |
+| done | Tools ▸ Views & Coordinates ▸ Survey Point | `SURVEYPOINT` |
+| done | Tools ▸ Views & Coordinates ▸ True North | `TRUENORTH` |
+| done | Tools ▸ Mesh & Procedural 3D |  |
+| done | Tools ▸ Mesh & Procedural 3D ▸ 3D Align | `3DALIGN` |
+| done | Tools ▸ Mesh & Procedural 3D ▸ Extrude Mesh Face | `MESHEXTRUDE` |
+| done | Tools ▸ Mesh & Procedural 3D ▸ Mesh Sections | `MESHSECTION` |
+| done | Tools ▸ Mesh & Procedural 3D ▸ Minkowski Sum | `MINKOWSKI` |
+| done | Tools ▸ Mesh & Procedural 3D ▸ OpenSCAD Script | `SCAD` |
+| done | Tools ▸ Mesh & Procedural 3D ▸ OpenSCAD File | `SCADFILE` |
+| done | Tools ▸ Mesh & Procedural 3D ▸ Spring | `SPRING` |
+| done | Tools ▸ Mesh & Procedural 3D ▸ CV Surface | `SURFCV` |
+| done | Tools ▸ Mesh & Procedural 3D ▸ 3D Text | `TEXT3D` |
+| done | Tools ▸ Mesh & Procedural 3D ▸ Unfold Mesh | `UNFOLD` |
+| done | Tools ▸ Mesh & Procedural 3D ▸ Wireframe Lattice | `WIREFRAME` |
+| done | Tools ▸ Block & Reference Editing |  |
+| done | Tools ▸ Block & Reference Editing ▸ Block Editor | `BEDIT` |
+| done | Tools ▸ Block & Reference Editing ▸ Save Block | `BSAVE` |
+| done | Tools ▸ Block & Reference Editing ▸ Close Block Editor | `BCLOSE` |
+| done | Tools ▸ Block & Reference Editing ▸ Edit Reference | `REFEDIT` |
+| done | Tools ▸ Block & Reference Editing ▸ Reference Working Set | `REFSET` |
+| done | Tools ▸ Block & Reference Editing ▸ Close Reference | `REFCLOSE` |
+| done | Tools ▸ Block & Reference Editing ▸ Install Bundled Library | `LIBRARYINSTALL` |
+| done | Tools ▸ Block & Reference Editing ▸ Layer Notification | `LAYERNOTIFY` |
+| done | Tools ▸ Block & Reference Editing ▸ Reconcile Layers | `LAYRECONCILE` |
+| done | Tools ▸ Exchange Options |  |
+| done | Tools ▸ Exchange Options ▸ DXF Output Version | `DXFOUTVERSION` |
+| done | Tools ▸ Exchange Options ▸ ifcXML Out | `IFCXMLOUT` |
+| partial | Tools ▸ Navigate, Light & Publish |  |
+| todo: command SYSWINDOWS is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Arrange Windows | `SYSWINDOWS` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Fly | `FLY` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Look Around | `LOOKAROUND` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Position Camera | `POSITIONCAMERA` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Two-Point Perspective | `TWOPOINT` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Steering Wheel | `NAVSWHEEL` |
+| todo: command LIGHT is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Lights | `LIGHT` |
+| todo: command FOG is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Fog | `FOG` |
+| todo: command MATEMISSIVE is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Emissive Material | `MATEMISSIVE` |
+| todo: command MATMAPPING is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Texture Mapping | `MATMAPPING` |
+| todo: command BILLBOARD is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Billboard | `BILLBOARD` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Export PDF | `EXPORTPDF` |
+| partial: SHADEPLOT Rendered falls back to As Displayed for engine-only plots | Tools ▸ Navigate, Light & Publish ▸ Shade Plot | `SHADEPLOT` |
+| todo: command TITLEBLOCKDESIGN is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Title Block Design | `TITLEBLOCKDESIGN` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Web Viewer Export | `WEBVIEWEREXPORT` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Render to File (Passes, Region, 8K) | `RENDERTOFILE` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Stereo 360° Panorama | `STEREOPANORAMA` |
+| todo: command PHASEANIMATION is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Construction Sequence (4D) | `PHASEANIMATION` |
+| todo: command HYPERLINK is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Hyperlink | `HYPERLINK` |
+| todo: command ASSISTANT is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ AI Assistant | `ASSISTANT` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Graph Player | `GRAPHPLAYER` |
+| todo: command RENDERPROMPT is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Render Prompt | `RENDERPROMPT` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Radial Menu | `RADIALMENU` |
+| done | Tools ▸ Studies, Signatures & Publishing |  |
+| done | Tools ▸ Studies, Signatures & Publishing ▸ Radiance Daylight | `DAYLIGHTRADIANCE` |
+| done | Tools ▸ Studies, Signatures & Publishing ▸ Shadow Diagram | `SHADOWDIAGRAM` |
+| done | Tools ▸ Studies, Signatures & Publishing ▸ Colour-Blind Check | `COLORBLINDCHECK` |
+| done | Tools ▸ Studies, Signatures & Publishing ▸ Memory Report | `MEMORYREPORT` |
+| done | Tools ▸ Studies, Signatures & Publishing ▸ Survey Linework | `SURVEYLINES` |
+| done | Tools ▸ Studies, Signatures & Publishing ▸ LAZ Converter | `LAZCONVERTER` |
+| done | Tools ▸ Studies, Signatures & Publishing ▸ Presentation Out | `PRESENTOUT` |
+| done | Tools ▸ Studies, Signatures & Publishing ▸ Documentation Site | `DOCSITE` |
+| done | Tools ▸ Studies, Signatures & Publishing ▸ Signing Key | `SIGNKEY` |
+| done | Tools ▸ Studies, Signatures & Publishing ▸ Sign File | `SIGNFILE` |
+| done | Tools ▸ Studies, Signatures & Publishing ▸ Verify Signature | `VERIFYSIGNATURE` |
+| done | Tools ▸ Studies, Signatures & Publishing ▸ Trust Signer | `TRUSTSIGNER` |
+| done | Tools ▸ Feature Modelling |  |
+| done | Tools ▸ Feature Modelling ▸ Pocket | `POCKET` |
+| done | Tools ▸ Feature Modelling ▸ Hole | `HOLE` |
+| done | Tools ▸ Feature Modelling ▸ Groove | `GROOVE` |
+| done | Tools ▸ Feature Modelling ▸ Revolution | `REVOLUTION` |
+| done | Tools ▸ Feature Modelling ▸ Follow Me | `FOLLOWME` |
+| done | Tools ▸ Feature Modelling ▸ Sweep along 3D Path | `SWEEP3D` |
+| done | Tools ▸ Feature Modelling ▸ Pattern Feature | `PATTERNFEATURE` |
+| done | Tools ▸ Feature Modelling ▸ Mirror Feature | `MIRRORFEATURE` |
+| done | Tools ▸ Feature Modelling ▸ Split Solid | `SPLITSOLID` |
+| done | Tools ▸ Feature Modelling ▸ General Fuse | `GFUSE` |
+| done | Tools ▸ Feature Modelling ▸ Solid Edit | `SOLIDEDIT` |
+| done | Tools ▸ Feature Modelling ▸ Offset Solid | `OFFSETSOLID` |
+| done | Tools ▸ Feature Modelling ▸ CSG Tree | `CSGTREE` |
+| done | Tools ▸ Feature Modelling ▸ Soften Edges | `SOFTEN` |
+| done | Tools ▸ Feature Modelling ▸ Paint Bucket | `PAINT` |
+| done | Tools ▸ Feature Modelling ▸ Tape Measure | `TAPEMEASURE` |
+| done | Tools ▸ Feature Modelling ▸ 3D Object Snap | `3DOSNAP` |
+| done | Tools ▸ Feature Modelling ▸ Dynamic UCS | `DUCS` |
+| done | Tools ▸ Feature Modelling ▸ Shape Binder | `SHAPEBINDER` |
+| done | Tools ▸ Feature Modelling ▸ Scale XYZ | `SCALE3D` |
+| done | Tools ▸ Feature Modelling ▸ Intersect Faces | `INTERSECTFACES` |
+| done | Tools ▸ Feature Modelling ▸ Project Geometry | `PROJECTGEOMETRY` |
+| done | Tools ▸ Feature Modelling ▸ Scripted Object | `SCADOBJECT` |
+| done | Tools ▸ Feature Modelling ▸ Graphic Display Options | `GRAPHICDISPLAY` |
+| done | Tools ▸ Freeform Surfaces |  |
+| done | Tools ▸ Freeform Surfaces ▸ Patch Surface | `SURFPATCH` |
+| done | Tools ▸ Freeform Surfaces ▸ Network Surface | `SURFNETWORK` |
+| done | Tools ▸ Freeform Surfaces ▸ Sculpt to Solid | `SURFSCULPT` |
+| done | Tools ▸ Freeform Surfaces ▸ Offset Surface | `SURFOFFSET` |
+| done | Tools ▸ Freeform Surfaces ▸ Extend Surface | `SURFEXTEND` |
+| done | Tools ▸ Freeform Surfaces ▸ Trim Surface | `SURFTRIM` |
+| done | Tools ▸ BIM Graphics & Systems |  |
+| done | Tools ▸ BIM Graphics & Systems ▸ Line Styles | `LINESTYLES` |
+| done | Tools ▸ BIM Graphics & Systems ▸ Lineweight by Scale | `LWTABLE` |
+| done | Tools ▸ BIM Graphics & Systems ▸ Pen Sets | `PENSETS` |
+| done | Tools ▸ BIM Graphics & Systems ▸ Graphic Filters | `GFILTERS` |
+| done | Tools ▸ BIM Graphics & Systems ▸ Equality Dimension | `EQDIM` |
+| done | Tools ▸ BIM Graphics & Systems ▸ Curtain System | `CURTAINSYSTEM` |
+| done | Tools ▸ BIM Graphics & Systems ▸ In-Place Model | `INPLACE` |
+| done | Tools ▸ BIM Graphics & Systems ▸ Graded Region | `GRADEDREGION` |
+| done | Tools ▸ BIM Graphics & Systems ▸ Electrical Circuits | `CIRCUIT` |
+| done | Tools ▸ BIM Graphics & Systems ▸ Panel Schedule | `PANELSCHEDULE` |
+| done | Tools ▸ BIM Graphics & Systems ▸ Room Data Sheets | `ROOMDATASHEET` |
+| partial | Tools ▸ Render, Materials & Environment |  |
+| done | Tools ▸ Render, Materials & Environment ▸ Path Tracer | `PATHTRACE` |
+| done | Tools ▸ Render, Materials & Environment ▸ Light Mix | `LIGHTMIX` |
+| todo: command MATMAPS is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ PBR Maps | `MATMAPS` |
+| todo: command MATASSET is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ Material Assets | `MATASSET` |
+| todo: command PROCMATERIAL is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ Procedural Material | `PROCMATERIAL` |
+| todo: command MATFROMIMAGE is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ Material from Photo | `MATFROMIMAGE` |
+| done | Tools ▸ Render, Materials & Environment ▸ Weather | `WEATHER` |
+| done | Tools ▸ Render, Materials & Environment ▸ Season | `SEASON` |
+| todo: command WATER is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ Water | `WATER` |
+| todo: command SCATTER is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ Scatter Plants | `SCATTER` |
+| done | Tools ▸ Render, Materials & Environment ▸ Animate Objects | `ANIMATE` |
+| todo: command SPACEMOUSE is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ SpaceMouse | `SPACEMOUSE` |
+| done | Tools ▸ Render, Materials & Environment ▸ Customize Ribbon | `CUI` |
+| todo: command NODEPACKAGE is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ Node Packages | `NODEPACKAGE` |
+| todo: command GRAPHICSTYLES is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ Graphic Styles | `GRAPHICSTYLES` |
+| done | Tools ▸ Render, Materials & Environment ▸ Redraw | `REDRAW` |
+| todo: command ARQUICKLOOK is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ AR Quick Look | `ARQUICKLOOK` |
+| todo: command CMDLINEOPTIONS is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ Command Line Options | `CMDLINEOPTIONS` |
+| done | Tools ▸ Render, Materials & Environment ▸ Customizer Panel | `CUSTOMIZERPANEL` |
+| partial | Tools ▸ Components & Surfaces |  |
+| done | Tools ▸ Components & Surfaces ▸ Make Component | `MAKECOMPONENT` |
+| done | Tools ▸ Components & Surfaces ▸ Make Group | `MAKEGROUP` |
+| done | Tools ▸ Components & Surfaces ▸ Make Unique | `MAKEUNIQUE` |
+| done | Tools ▸ Components & Surfaces ▸ Component to BIM | `COMPONENTTOBIM` |
+| done | Tools ▸ Components & Surfaces ▸ Outliner | `OUTLINER` |
+| todo: command OUTLINERPANEL is not registered in archi-engine | Tools ▸ Components & Surfaces ▸ Outliner Window | `OUTLINERPANEL` |
+| done | Tools ▸ Components & Surfaces ▸ Datum Plane/Axis/Point | `DATUM` |
+| done | Tools ▸ Components & Surfaces ▸ Sub-object Edit | `SUBOBJECT` |
+| done | Tools ▸ Components & Surfaces ▸ Imprint | `IMPRINT` |
+| done | Tools ▸ Components & Surfaces ▸ Offset Face | `OFFSETFACE` |
+| done | Tools ▸ Components & Surfaces ▸ Blend Surface | `SURFBLEND` |
+| done | Tools ▸ Components & Surfaces ▸ Surface Analysis | `SURFANALYSIS` |
+| done | Tools ▸ Components & Surfaces ▸ Sandbox Terrain | `SANDBOX` |
+| done | Tools ▸ Images, Links & Structure |  |
+| done | Tools ▸ Images, Links & Structure ▸ Clip Image | `IMAGECLIP` |
+| done | Tools ▸ Images, Links & Structure ▸ Adjust Image | `IMAGEADJUST` |
+| done | Tools ▸ Images, Links & Structure ▸ Image Frame | `IMAGEFRAME` |
+| done | Tools ▸ Images, Links & Structure ▸ Link Model | `RVTLINK` |
+| done | Tools ▸ Images, Links & Structure ▸ Copy/Monitor | `COPYMONITOR` |
+| done | Tools ▸ Images, Links & Structure ▸ Tag Label | `TAGLABEL` |
+| done | Tools ▸ Images, Links & Structure ▸ Material Hatch | `MATHATCH` |
+| done | Tools ▸ Images, Links & Structure ▸ Material Patterns | `MATPATTERN` |
+| done | Tools ▸ Images, Links & Structure ▸ Rebar | `REBAR` |
+| done | Tools ▸ Images, Links & Structure ▸ Steel Connection | `STEELCONNECTION` |
 | todo | Tools ▸ Files, Clipboard & Access |  |
-| todo | Tools ▸ Files, Clipboard & Access ▸ Browse Versions | `FILEVERSIONS` |
-| todo | Tools ▸ Files, Clipboard & Access ▸ File Preview & Spotlight | `FILEPREVIEW` |
-| todo | Tools ▸ Files, Clipboard & Access ▸ Paste from Other App | `PASTESPECIAL` |
-| todo | Tools ▸ Files, Clipboard & Access ▸ Copy as Picture | `COPYPICTURE` |
-| todo | Tools ▸ Files, Clipboard & Access ▸ Zoom to Paper Scale | `ZOOMXP` |
-| todo | Tools ▸ Files, Clipboard & Access ▸ Describe Drawing | `SPEAKDRAWING` |
-| todo | Tools ▸ Files, Clipboard & Access ▸ Keyboard Navigation | `KEYBOARDNAV` |
-| todo | Tools ▸ Files, Clipboard & Access ▸ Play Mechanism | `MECHANISMPLAY` |
-| todo | Tools ▸ Files, Clipboard & Access ▸ Language | `LANGUAGE` |
-| todo | Tools ▸ Adaptive, Corners & Roofs |  |
-| todo | Tools ▸ Adaptive, Corners & Roofs ▸ Adaptive Component | `ADAPTIVE` |
-| todo | Tools ▸ Adaptive, Corners & Roofs ▸ bSDD Lookup | `BSDD` |
-| todo | Tools ▸ Adaptive, Corners & Roofs ▸ Corner Window | `CORNERWINDOW` |
-| todo | Tools ▸ Adaptive, Corners & Roofs ▸ Roof Join | `ROOFJOIN` |
-| todo | Tools ▸ Adaptive, Corners & Roofs ▸ Mechanism Simulation | `MECHANISM` |
-| todo | Tools ▸ Adaptive, Corners & Roofs ▸ Scripted Component | `SCRIPTCOMPONENT` |
-| todo | Tools ▸ Adaptive, Corners & Roofs ▸ Sketch Environment | `SKETCHPAD` |
-| todo | Tools ▸ Adaptive, Corners & Roofs ▸ Sketch Plane | `SKETCHPLANE` |
-| todo | Tools ▸ Styles, Patterns & Occlusion |  |
-| todo | Tools ▸ Styles, Patterns & Occlusion ▸ Object Styles… | `OBJECTSTYLESDIALOG` |
-| todo | Tools ▸ Styles, Patterns & Occlusion ▸ Object Styles (command) | `OBJECTSTYLES` |
-| todo | Tools ▸ Styles, Patterns & Occlusion ▸ Text Styles… | `TEXTSTYLEDIALOG` |
-| todo | Tools ▸ Styles, Patterns & Occlusion ▸ Image Adjust… | `IMAGEADJUSTDIALOG` |
-| todo | Tools ▸ Styles, Patterns & Occlusion ▸ Ambient Occlusion… | `AODIALOG` |
-| todo | Tools ▸ Styles, Patterns & Occlusion ▸ Ambient Occlusion (command) | `AMBIENTOCCLUSION` |
-| todo | Tools ▸ Styles, Patterns & Occlusion ▸ Crash Reports | `CRASHREPORTS` |
-| todo | Tools ▸ Styles, Patterns & Occlusion ▸ VR Headset View | `VRVIEW` |
-| todo | Tools ▸ Styles, Patterns & Occlusion ▸ Edit Text In Place | `TEXTEDITINPLACE` |
-| todo | Tools ▸ Styles, Patterns & Occlusion ▸ Material Fill Patterns… | `MATPATTERNDIALOG` |
-| todo | Tools ▸ Styles, Patterns & Occlusion ▸ Floor Pattern | `FLOORPATTERN` |
-| todo | Tools ▸ Exchange More |  |
-| todo | Tools ▸ Exchange More ▸ Rhino 3DM In | `RHINOIN` |
-| todo | Tools ▸ Exchange More ▸ Rhino 3DM Out | `RHINOOUT` |
-| todo | Tools ▸ Tutorial Videos |  |
-| todo | Tools ▸ Tutorial Videos ▸ Record Tutorial Videos | `TUTORIALRECORD Record` |
-| todo | Tools ▸ Tutorial Videos ▸ Check Tutorial Scripts | `TUTORIALRECORD Check` |
-| todo | Tools ▸ Tutorial Videos ▸ List Tutorials | `TUTORIALRECORD List` |
-| todo | Tools ▸ Photographic Render |  |
-| todo | Tools ▸ Photographic Render ▸ Lighting Preset | `RENDERPRESET` |
-| todo | Tools ▸ Photographic Render ▸ Golden Hour Look | `RENDERPRESET Goldenhour` |
-| todo | Tools ▸ Photographic Render ▸ Night Look | `RENDERPRESET Night` |
-| todo | Tools ▸ Photographic Render ▸ Render to PNG | `RENDERSAVE` |
-| todo | Tools ▸ System Variables |  |
-| todo | Tools ▸ System Variables ▸ AUTOCONSTRAINANGLE | `AUTOCONSTRAINANGLE` |
-| todo | Tools ▸ System Variables ▸ AUTOCONSTRAINDIST | `AUTOCONSTRAINDIST` |
-| todo | Tools ▸ System Variables ▸ AUTOSNAP | `AUTOSNAP` |
-| todo | Tools ▸ System Variables ▸ CANNOSCALE | `CANNOSCALE` |
-| todo | Tools ▸ System Variables ▸ CECOLOR | `CECOLOR` |
-| todo | Tools ▸ System Variables ▸ CELTYPE | `CELTYPE` |
-| todo | Tools ▸ System Variables ▸ CELWEIGHT | `CELWEIGHT` |
-| todo | Tools ▸ System Variables ▸ CENTEREXE | `CENTEREXE` |
-| todo | Tools ▸ System Variables ▸ CETRANSPARENCY | `CETRANSPARENCY` |
-| todo | Tools ▸ System Variables ▸ CHAMFERA | `CHAMFERA` |
-| todo | Tools ▸ System Variables ▸ CHAMFERB | `CHAMFERB` |
-| todo | Tools ▸ System Variables ▸ CLAYER | `CLAYER` |
-| todo | Tools ▸ System Variables ▸ CLEVEL | `CLEVEL` |
-| todo | Tools ▸ System Variables ▸ CONSTRAINTINFER | `CONSTRAINTINFER` |
-| todo | Tools ▸ System Variables ▸ DELOBJ | `DELOBJ` |
-| todo | Tools ▸ System Variables ▸ DIMDLI | `DIMDLI` |
-| todo | Tools ▸ System Variables ▸ DIMLAYER | `DIMLAYER` |
-| todo | Tools ▸ System Variables ▸ DIMSCALE | `DIMSCALE` |
-| todo | Tools ▸ System Variables ▸ DIMSTYLE | `DIMSTYLE` |
-| todo | Tools ▸ System Variables ▸ DYNMODE | `DYNMODE` |
-| todo | Tools ▸ System Variables ▸ FILLETRAD | `FILLETRAD` |
-| todo | Tools ▸ System Variables ▸ GRIDMODE | `GRIDMODE` |
-| todo | Tools ▸ System Variables ▸ GRIDUNIT | `GRIDUNIT` |
-| todo | Tools ▸ System Variables ▸ HPANG | `HPANG` |
-| todo | Tools ▸ System Variables ▸ HPNAME | `HPNAME` |
-| todo | Tools ▸ System Variables ▸ HPSCALE | `HPSCALE` |
-| todo | Tools ▸ System Variables ▸ INSBASE | `INSBASE` |
-| todo | Tools ▸ System Variables ▸ INSUNITS | `INSUNITS` |
-| todo | Tools ▸ System Variables ▸ LTSCALE | `LTSCALE` |
-| todo | Tools ▸ System Variables ▸ LUPREC | `LUPREC` |
-| todo | Tools ▸ System Variables ▸ LWDISPLAY | `LWDISPLAY` |
-| todo | Tools ▸ System Variables ▸ MIRRTEXT | `MIRRTEXT` |
-| todo | Tools ▸ System Variables ▸ OFFSETDIST | `OFFSETDIST` |
-| todo | Tools ▸ System Variables ▸ ORTHOMODE | `ORTHOMODE` |
-| todo | Tools ▸ System Variables ▸ OSMODE | `OSMODE` |
-| todo | Tools ▸ System Variables ▸ OTRACK | `OTRACK` |
-| todo | Tools ▸ System Variables ▸ PDMODE | `PDMODE` |
-| todo | Tools ▸ System Variables ▸ PDSIZE | `PDSIZE` |
-| todo | Tools ▸ System Variables ▸ PICKSTYLE | `PICKSTYLE` |
-| todo | Tools ▸ System Variables ▸ PLINEWID | `PLINEWID` |
-| todo | Tools ▸ System Variables ▸ PLOTTRANSPARENCY | `PLOTTRANSPARENCY` |
-| todo | Tools ▸ System Variables ▸ POLARANG | `POLARANG` |
-| todo | Tools ▸ System Variables ▸ POLARMODE | `POLARMODE` |
-| todo | Tools ▸ System Variables ▸ SELECTSIMILARMODE | `SELECTSIMILARMODE` |
-| todo | Tools ▸ System Variables ▸ SNAPMODE | `SNAPMODE` |
-| todo | Tools ▸ System Variables ▸ SNAPUNIT | `SNAPUNIT` |
-| todo | Tools ▸ System Variables ▸ TEXTLAYER | `TEXTLAYER` |
-| todo | Tools ▸ System Variables ▸ TEXTSIZE | `TEXTSIZE` |
-| todo | Tools ▸ System Variables ▸ TEXTSTYLE | `TEXTSTYLE` |
-| todo | Tools ▸ System Variables ▸ TRANSPARENCYDISPLAY | `TRANSPARENCYDISPLAY` |
-| todo | Tools ▸ System Variables ▸ TRIMMODE | `TRIMMODE` |
-| todo | Tools ▸ System Variables ▸ WALLHEIGHT | `WALLHEIGHT` |
-| todo | Tools ▸ System Variables ▸ WALLTHICKNESS | `WALLTHICKNESS` |
+| todo: command FILEVERSIONS is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ Browse Versions | `FILEVERSIONS` |
+| todo: command FILEPREVIEW is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ File Preview & Spotlight | `FILEPREVIEW` |
+| todo: command PASTESPECIAL is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ Paste from Other App | `PASTESPECIAL` |
+| todo: command COPYPICTURE is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ Copy as Picture | `COPYPICTURE` |
+| todo: command ZOOMXP is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ Zoom to Paper Scale | `ZOOMXP` |
+| todo: command SPEAKDRAWING is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ Describe Drawing | `SPEAKDRAWING` |
+| todo: command KEYBOARDNAV is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ Keyboard Navigation | `KEYBOARDNAV` |
+| todo: command MECHANISMPLAY is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ Play Mechanism | `MECHANISMPLAY` |
+| todo: command LANGUAGE is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ Language | `LANGUAGE` |
+| done | Tools ▸ Adaptive, Corners & Roofs |  |
+| done | Tools ▸ Adaptive, Corners & Roofs ▸ Adaptive Component | `ADAPTIVE` |
+| done | Tools ▸ Adaptive, Corners & Roofs ▸ bSDD Lookup | `BSDD` |
+| done | Tools ▸ Adaptive, Corners & Roofs ▸ Corner Window | `CORNERWINDOW` |
+| done | Tools ▸ Adaptive, Corners & Roofs ▸ Roof Join | `ROOFJOIN` |
+| done | Tools ▸ Adaptive, Corners & Roofs ▸ Mechanism Simulation | `MECHANISM` |
+| done | Tools ▸ Adaptive, Corners & Roofs ▸ Scripted Component | `SCRIPTCOMPONENT` |
+| done | Tools ▸ Adaptive, Corners & Roofs ▸ Sketch Environment | `SKETCHPAD` |
+| done | Tools ▸ Adaptive, Corners & Roofs ▸ Sketch Plane | `SKETCHPLANE` |
+| partial | Tools ▸ Styles, Patterns & Occlusion |  |
+| todo: command OBJECTSTYLESDIALOG is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ Object Styles… | `OBJECTSTYLESDIALOG` |
+| done | Tools ▸ Styles, Patterns & Occlusion ▸ Object Styles (command) | `OBJECTSTYLES` |
+| todo: command TEXTSTYLEDIALOG is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ Text Styles… | `TEXTSTYLEDIALOG` |
+| todo: command IMAGEADJUSTDIALOG is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ Image Adjust… | `IMAGEADJUSTDIALOG` |
+| todo: command AODIALOG is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ Ambient Occlusion… | `AODIALOG` |
+| done | Tools ▸ Styles, Patterns & Occlusion ▸ Ambient Occlusion (command) | `AMBIENTOCCLUSION` |
+| todo: command CRASHREPORTS is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ Crash Reports | `CRASHREPORTS` |
+| todo: command VRVIEW is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ VR Headset View | `VRVIEW` |
+| todo: command TEXTEDITINPLACE is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ Edit Text In Place | `TEXTEDITINPLACE` |
+| todo: command MATPATTERNDIALOG is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ Material Fill Patterns… | `MATPATTERNDIALOG` |
+| done | Tools ▸ Styles, Patterns & Occlusion ▸ Floor Pattern | `FLOORPATTERN` |
+| done | Tools ▸ Exchange More |  |
+| done | Tools ▸ Exchange More ▸ Rhino 3DM In | `RHINOIN` |
+| done | Tools ▸ Exchange More ▸ Rhino 3DM Out | `RHINOOUT` |
+| partial | Tools ▸ Tutorial Videos |  |
+| partial: recording is Mac-only; Windows opens the website tutorials | Tools ▸ Tutorial Videos ▸ Record Tutorial Videos | `TUTORIALRECORD Record` |
+| partial: only checks that the commands exist | Tools ▸ Tutorial Videos ▸ Check Tutorial Scripts | `TUTORIALRECORD Check` |
+| done | Tools ▸ Tutorial Videos ▸ List Tutorials | `TUTORIALRECORD List` |
+| done | Tools ▸ Photographic Render |  |
+| done | Tools ▸ Photographic Render ▸ Lighting Preset | `RENDERPRESET` |
+| done | Tools ▸ Photographic Render ▸ Golden Hour Look | `RENDERPRESET Goldenhour` |
+| done | Tools ▸ Photographic Render ▸ Night Look | `RENDERPRESET Night` |
+| done | Tools ▸ Photographic Render ▸ Render to PNG | `RENDERSAVE` |
+| done | Tools ▸ System Variables |  |
+| done | Tools ▸ System Variables ▸ AUTOCONSTRAINANGLE | `AUTOCONSTRAINANGLE` |
+| done | Tools ▸ System Variables ▸ AUTOCONSTRAINDIST | `AUTOCONSTRAINDIST` |
+| done | Tools ▸ System Variables ▸ AUTOSNAP | `AUTOSNAP` |
+| done | Tools ▸ System Variables ▸ CANNOSCALE | `CANNOSCALE` |
+| done | Tools ▸ System Variables ▸ CECOLOR | `CECOLOR` |
+| done | Tools ▸ System Variables ▸ CELTYPE | `CELTYPE` |
+| done | Tools ▸ System Variables ▸ CELWEIGHT | `CELWEIGHT` |
+| done | Tools ▸ System Variables ▸ CENTEREXE | `CENTEREXE` |
+| done | Tools ▸ System Variables ▸ CETRANSPARENCY | `CETRANSPARENCY` |
+| done | Tools ▸ System Variables ▸ CHAMFERA | `CHAMFERA` |
+| done | Tools ▸ System Variables ▸ CHAMFERB | `CHAMFERB` |
+| done | Tools ▸ System Variables ▸ CLAYER | `CLAYER` |
+| done | Tools ▸ System Variables ▸ CLEVEL | `CLEVEL` |
+| done | Tools ▸ System Variables ▸ CONSTRAINTINFER | `CONSTRAINTINFER` |
+| done | Tools ▸ System Variables ▸ DELOBJ | `DELOBJ` |
+| done | Tools ▸ System Variables ▸ DIMDLI | `DIMDLI` |
+| done | Tools ▸ System Variables ▸ DIMLAYER | `DIMLAYER` |
+| done | Tools ▸ System Variables ▸ DIMSCALE | `DIMSCALE` |
+| done | Tools ▸ System Variables ▸ DIMSTYLE | `DIMSTYLE` |
+| done | Tools ▸ System Variables ▸ DYNMODE | `DYNMODE` |
+| done | Tools ▸ System Variables ▸ FILLETRAD | `FILLETRAD` |
+| done | Tools ▸ System Variables ▸ GRIDMODE | `GRIDMODE` |
+| done | Tools ▸ System Variables ▸ GRIDUNIT | `GRIDUNIT` |
+| done | Tools ▸ System Variables ▸ HPANG | `HPANG` |
+| done | Tools ▸ System Variables ▸ HPNAME | `HPNAME` |
+| done | Tools ▸ System Variables ▸ HPSCALE | `HPSCALE` |
+| done | Tools ▸ System Variables ▸ INSBASE | `INSBASE` |
+| done | Tools ▸ System Variables ▸ INSUNITS | `INSUNITS` |
+| done | Tools ▸ System Variables ▸ LTSCALE | `LTSCALE` |
+| done | Tools ▸ System Variables ▸ LUPREC | `LUPREC` |
+| done | Tools ▸ System Variables ▸ LWDISPLAY | `LWDISPLAY` |
+| done | Tools ▸ System Variables ▸ MIRRTEXT | `MIRRTEXT` |
+| done | Tools ▸ System Variables ▸ OFFSETDIST | `OFFSETDIST` |
+| done | Tools ▸ System Variables ▸ ORTHOMODE | `ORTHOMODE` |
+| done | Tools ▸ System Variables ▸ OSMODE | `OSMODE` |
+| done | Tools ▸ System Variables ▸ OTRACK | `OTRACK` |
+| done | Tools ▸ System Variables ▸ PDMODE | `PDMODE` |
+| done | Tools ▸ System Variables ▸ PDSIZE | `PDSIZE` |
+| done | Tools ▸ System Variables ▸ PICKSTYLE | `PICKSTYLE` |
+| done | Tools ▸ System Variables ▸ PLINEWID | `PLINEWID` |
+| done | Tools ▸ System Variables ▸ PLOTTRANSPARENCY | `PLOTTRANSPARENCY` |
+| done | Tools ▸ System Variables ▸ POLARANG | `POLARANG` |
+| done | Tools ▸ System Variables ▸ POLARMODE | `POLARMODE` |
+| done | Tools ▸ System Variables ▸ SELECTSIMILARMODE | `SELECTSIMILARMODE` |
+| done | Tools ▸ System Variables ▸ SNAPMODE | `SNAPMODE` |
+| done | Tools ▸ System Variables ▸ SNAPUNIT | `SNAPUNIT` |
+| done | Tools ▸ System Variables ▸ TEXTLAYER | `TEXTLAYER` |
+| done | Tools ▸ System Variables ▸ TEXTSIZE | `TEXTSIZE` |
+| done | Tools ▸ System Variables ▸ TEXTSTYLE | `TEXTSTYLE` |
+| done | Tools ▸ System Variables ▸ TRANSPARENCYDISPLAY | `TRANSPARENCYDISPLAY` |
+| done | Tools ▸ System Variables ▸ TRIMMODE | `TRIMMODE` |
+| done | Tools ▸ System Variables ▸ WALLHEIGHT | `WALLHEIGHT` |
+| done | Tools ▸ System Variables ▸ WALLTHICKNESS | `WALLTHICKNESS` |
 | todo | Tools ▸ All Commands |  |
-| todo | Tools ▸ All Commands ▸ {groups} |  |
-| todo | Menu Window | 3 items |
-| todo | Window ▸ Minimize | Ctrl+M · system |
-| todo | Window ▸ Zoom | system |
-| todo | Window ▸ Bring All to Front | system |
-| todo | Menu Help | 13 items |
-| todo | Help ▸ Oanarina Archi Tool Help (F1) | `HELP` |
-| todo | Help ▸ Tutorials | `HELP` |
-| todo | Help ▸ Open Sample House | `@ui:WindowRouter.open` |
-| todo | Help ▸ Search Commands… | `COMMANDSEARCH` · Ctrl+K |
-| todo | Help ▸ Command Reference | `@ui:window:command-reference` · Ctrl+Shift+/ |
-| todo | Help ▸ User Guide | `@openURL` |
-| todo | Help ▸ Keyboard Shortcuts | `@ui:window:keyboard-shortcuts` |
-| todo | Help ▸ Start Screen | `STARTSCREEN` |
-| todo | Help ▸ Check Command Coverage | `APPSELFTEST` |
-| todo | Help ▸ Export Command Reference… | `EXPORTCOMMANDS` |
-| todo | Help ▸ Customize Shortcuts… | `@ui:window:PreferencesWindow.shortcuts` |
-| todo | Help ▸ Connect Claude… | `CONNECTCLAUDE` |
-| todo | Help ▸ Oana Rinaldi Website | `@openURL` |
+| todo: run-time list not filled on Windows | Tools ▸ All Commands ▸ {groups} |  |
+| done | Menu Window | 3 items |
+| done | Window ▸ Minimize | Ctrl+M · system |
+| done | Window ▸ Zoom | system |
+| n/a (macOS only) | Window ▸ Bring All to Front | system |
+| partial: hand-written Windows Help menu | Menu Help | 13 items |
+| partial: F1 opens the online guide, not the running command's page; Help ▸ Command Help runs HELP | Help ▸ Oanarina Archi Tool Help (F1) | `HELP` |
+| partial: command works from the ribbon / command line; the Windows Help menu has no entry | Help ▸ Tutorials | `HELP` |
+| partial: not in the Help menu; File ▸ New from Template ▸ Sample House and the start screen open it | Help ▸ Open Sample House | `@ui:WindowRouter.open` |
+| done | Help ▸ Search Commands… | `COMMANDSEARCH` · Ctrl+K |
+| partial: runs COMMANDREFERENCE on the command line; no Command Reference window | Help ▸ Command Reference | `@ui:window:command-reference` · Ctrl+Shift+/ |
+| done | Help ▸ User Guide | `@openURL` |
+| done | Help ▸ Keyboard Shortcuts | `@ui:window:keyboard-shortcuts` |
+| done | Help ▸ Start Screen | `STARTSCREEN` |
+| todo: APPSELFTEST not ported | Help ▸ Check Command Coverage | `APPSELFTEST` |
+| todo: EXPORTCOMMANDS not ported | Help ▸ Export Command Reference… | `EXPORTCOMMANDS` |
+| done | Help ▸ Customize Shortcuts… | `@ui:window:PreferencesWindow.shortcuts` |
+| partial: command works from the ribbon / command line; the Windows Help menu has no entry | Help ▸ Connect Claude… | `CONNECTCLAUDE` |
+| done | Help ▸ Oana Rinaldi Website | `@openURL` |
 
 ## Tool palettes
 
 | Status | Item | Command / detail |
 | --- | --- | --- |
-| todo | Palette Draw |  |
-| todo | Draw ▸ Line | `LINE` |
-| todo | Draw ▸ Polyline | `PLINE` |
-| todo | Draw ▸ Circle | `CIRCLE` |
-| todo | Draw ▸ Arc | `ARC` |
-| todo | Draw ▸ Rectangle | `RECTANG` |
-| todo | Draw ▸ Polygon | `POLYGON` |
-| todo | Draw ▸ Ellipse | `ELLIPSE` |
-| todo | Draw ▸ Spline | `SPLINE` |
-| todo | Draw ▸ Hatch | `HATCH` |
-| todo | Palette Modify |  |
-| todo | Modify ▸ Move | `MOVE` |
-| todo | Modify ▸ Copy | `COPY` |
-| todo | Modify ▸ Rotate | `ROTATE` |
-| todo | Modify ▸ Mirror | `MIRROR` |
-| todo | Modify ▸ Scale | `SCALE` |
-| todo | Modify ▸ Stretch | `STRETCH` |
-| todo | Modify ▸ Trim | `TRIM` |
-| todo | Modify ▸ Extend | `EXTEND` |
-| todo | Modify ▸ Offset | `OFFSET` |
-| todo | Modify ▸ Fillet | `FILLET` |
-| todo | Modify ▸ Chamfer | `CHAMFER` |
-| todo | Modify ▸ Array | `ARRAY` |
-| todo | Modify ▸ Explode | `EXPLODE` |
-| todo | Modify ▸ Erase | `ERASE` |
-| todo | Modify ▸ Join | `JOIN` |
-| todo | Modify ▸ Break | `BREAK` |
-| todo | Palette Annotate |  |
-| todo | Annotate ▸ Text | `TEXT` |
-| todo | Annotate ▸ MText | `MTEXT` |
-| todo | Annotate ▸ Linear | `DIMLINEAR` |
-| todo | Annotate ▸ Aligned | `DIMALIGNED` |
-| todo | Annotate ▸ Angular | `DIMANGULAR` |
-| todo | Annotate ▸ Radius | `DIMRADIUS` |
-| todo | Annotate ▸ Diameter | `DIMDIAMETER` |
-| todo | Annotate ▸ Leader | `LEADER` |
-| todo | Annotate ▸ Table | `TABLE` |
-| todo | Palette Build |  |
-| todo | Build ▸ Wall | `WALL` |
-| todo | Build ▸ Door | `DOOR` |
-| todo | Build ▸ Window | `WINDOW` |
-| todo | Build ▸ Opening | `OPENING` |
-| todo | Build ▸ Curtain Wall | `CURTAINWALL` |
-| todo | Build ▸ Column | `COLUMN` |
-| todo | Build ▸ Beam | `BEAM` |
-| todo | Build ▸ Slab | `SLAB` |
-| todo | Build ▸ Roof | `ROOF` |
-| todo | Build ▸ Ceiling | `CEILING` |
-| todo | Build ▸ Stair | `STAIR` |
-| todo | Build ▸ Railing | `RAILING` |
-| todo | Build ▸ Room | `ROOM` |
-| todo | Build ▸ Grid | `GRID` |
-| todo | Build ▸ Component | `COMPONENT` |
-| todo | Build ▸ Quick Building | `BUILDING` |
-| todo | Palette Blocks | blocks of the drawing (doc.blocks, thumbnails, click-to-place, drag onto the drawing) |
-| todo | Palette Components | ComponentLibrary.families (thumbnails, click-to-place, Space rotates 90°) |
-| todo | Palette My Tools | WALL, DOOR, WINDOW, ROOM, DIMLINEAR, HATCH |
+| done | Palette Draw |  |
+| done | Draw ▸ Line | `LINE` |
+| done | Draw ▸ Polyline | `PLINE` |
+| done | Draw ▸ Circle | `CIRCLE` |
+| done | Draw ▸ Arc | `ARC` |
+| done | Draw ▸ Rectangle | `RECTANG` |
+| done | Draw ▸ Polygon | `POLYGON` |
+| done | Draw ▸ Ellipse | `ELLIPSE` |
+| done | Draw ▸ Spline | `SPLINE` |
+| done | Draw ▸ Hatch | `HATCH` |
+| done | Palette Modify |  |
+| done | Modify ▸ Move | `MOVE` |
+| done | Modify ▸ Copy | `COPY` |
+| done | Modify ▸ Rotate | `ROTATE` |
+| done | Modify ▸ Mirror | `MIRROR` |
+| done | Modify ▸ Scale | `SCALE` |
+| done | Modify ▸ Stretch | `STRETCH` |
+| done | Modify ▸ Trim | `TRIM` |
+| done | Modify ▸ Extend | `EXTEND` |
+| done | Modify ▸ Offset | `OFFSET` |
+| done | Modify ▸ Fillet | `FILLET` |
+| done | Modify ▸ Chamfer | `CHAMFER` |
+| done | Modify ▸ Array | `ARRAY` |
+| done | Modify ▸ Explode | `EXPLODE` |
+| done | Modify ▸ Erase | `ERASE` |
+| done | Modify ▸ Join | `JOIN` |
+| done | Modify ▸ Break | `BREAK` |
+| done | Palette Annotate |  |
+| done | Annotate ▸ Text | `TEXT` |
+| done | Annotate ▸ MText | `MTEXT` |
+| done | Annotate ▸ Linear | `DIMLINEAR` |
+| done | Annotate ▸ Aligned | `DIMALIGNED` |
+| done | Annotate ▸ Angular | `DIMANGULAR` |
+| done | Annotate ▸ Radius | `DIMRADIUS` |
+| done | Annotate ▸ Diameter | `DIMDIAMETER` |
+| done | Annotate ▸ Leader | `LEADER` |
+| done | Annotate ▸ Table | `TABLE` |
+| done | Palette Build |  |
+| done | Build ▸ Wall | `WALL` |
+| done | Build ▸ Door | `DOOR` |
+| done | Build ▸ Window | `WINDOW` |
+| done | Build ▸ Opening | `OPENING` |
+| done | Build ▸ Curtain Wall | `CURTAINWALL` |
+| done | Build ▸ Column | `COLUMN` |
+| done | Build ▸ Beam | `BEAM` |
+| done | Build ▸ Slab | `SLAB` |
+| done | Build ▸ Roof | `ROOF` |
+| done | Build ▸ Ceiling | `CEILING` |
+| done | Build ▸ Stair | `STAIR` |
+| done | Build ▸ Railing | `RAILING` |
+| done | Build ▸ Room | `ROOM` |
+| done | Build ▸ Grid | `GRID` |
+| done | Build ▸ Component | `COMPONENT` |
+| done | Build ▸ Quick Building | `BUILDING` |
+| done | Palette Blocks | blocks of the drawing (doc.blocks, thumbnails, click-to-place, drag onto the drawing) |
+| done | Palette Components | ComponentLibrary.families (thumbnails, click-to-place, Space rotates 90°) |
+| done | Palette My Tools | WALL, DOOR, WINDOW, ROOM, DIMLINEAR, HATCH |
 
 ## Panels
 
 | Status | Item | Command / detail |
 | --- | --- | --- |
-| todo | Panel Properties (PropertiesPanel) | sections: Project, Drawing, General, Geometry & Parameters |
-| todo | Properties ▸ Menu {"\(types.count) objects (" + counts.sorted() {…}.map() {…}.joined(separator: ", ") + ")"} |  |
-| todo | Properties ▸ Button Clear selection | `@deselectAll` |
-| todo | Properties ▸ Button Quick Select… | `QSELECTDIALOG` |
-| todo | Properties ▸ Button Match properties from the first selected object (MATCHPROP) | `MATCHPROP` |
-| todo | Properties ▸ Button Select similar objects (SELECTSIMILAR) | `SELECTSIMILAR` |
-| todo | Properties ▸ Button Invert the selection (SELECTINVERT) | `SELECTINVERT` |
-| todo | Properties ▸ Button Zoom to the selection |  |
-| todo | Panel Layers (LayersPanel) | sections:  |
-| todo | Layers ▸ Button New |  |
-| todo | Layers ▸ Button Delete |  |
-| todo | Layers ▸ Button Current |  |
-| todo | Layers ▸ Button Layer tree grouped by name prefix (A-, S-, xref\|) |  |
-| todo | Layers ▸ Button Layer States Manager (LAYERSTATE) | `LAYERSTATE` |
-| todo | Layers ▸ TextField Filter: name, A-*, ~*TEXT* | filter.pattern |
-| todo | Layers ▸ Menu  |  |
-| todo | Layers ▸ Button  | (repeated) |
-| todo | Layers ▸ contextMenu  | (repeated) |
-| todo | Layers ▸ Button Current layer / Make current | (repeated) |
-| todo | Layers ▸ Menu  | (repeated) |
-| todo | Layers ▸ Menu {layer.linetype} | (repeated) |
-| todo | Layers ▸ Menu %.2f | (repeated) |
-| todo | Layers ▸ Menu {Int((Transparency.fraction(layer: layer) * 100).rounded())} | (repeated) |
-| todo | Panel Levels (LevelsPanel) | sections:  |
-| todo | Levels ▸ Button Add Level |  |
-| todo | Levels ▸ Button Make current | (repeated) |
-| todo | Levels ▸ TextField  | text (repeated) |
-| todo | Levels ▸ Button Delete level | (repeated) |
-| todo | Panel Browser (ProjectBrowserPanel) | sections:  |
-| todo | Browser ▸ Button Floor Plans |  |
-| todo | Browser ▸ Button 3D Views |  |
-| todo | Browser ▸ Button Project Views |  |
-| todo | Browser ▸ Button Elevations & Sections |  |
-| todo | Browser ▸ Button Sheets |  |
-| todo | Browser ▸ Button Schedules |  |
-| todo | Browser ▸ Button Families |  |
-| todo | Browser ▸ Button Groups |  |
-| todo | Browser ▸ Button Links |  |
-| todo | Panel Materials (MaterialsPanel) | sections: Identity, graphics & physical |
-| todo | Materials ▸ Button New |  |
-| todo | Materials ▸ Button Duplicate |  |
-| todo | Materials ▸ Button Delete |  |
-| todo | Materials ▸ Button Assign the material to the selected building elements |  |
-| todo | Materials ▸ TextField Name | name |
-| todo | Materials ▸ ColorPicker  | Binding(get: {…}, set: {…}) |
-| todo | Materials ▸ Slider  | Binding(get: {…}, set: {…}) |
-| todo | Materials ▸ Button Choose… |  |
-| todo | Materials ▸ Button Remove the texture |  |
-| todo | Materials ▸ TextField  | Binding(get: {…}, set: {…}) |
-| todo | Materials ▸ Slider  | Binding(get: {…}, set: {…}) |
-| todo | Materials ▸ Picker  | Binding(get: {…}, set: {…}) |
-| todo | Materials ▸ Button Path Trace | `PATHTRACE` |
-| todo | Materials ▸ Button Procedural… | `PROCMATERIAL` |
-| todo | Materials ▸ Button From Photo… |  |
-| todo | Panel Tools (ToolPalettePanel) | sections:  |
-| todo | Tools ▸ Button {t} | (repeated) |
-| todo | Tools ▸ Blocks ▸ ShapeTile {n} | (repeated) |
-| todo | Tools ▸ Components ▸ ShapeTile {f.name} | (repeated) |
-| todo | Tools ▸ My Tools ▸ contextMenu  | (repeated) |
-| todo | Tools ▸ contextMenu  | (repeated) |
-| todo | Tools ▸ TextField Add command (e.g. OFFSET) | newCommand |
-| todo | Tools ▸ Button Add |  |
-| todo | Panel Sheets (SheetSetPanel) | sections: NUMBERING |
-| todo | Sheets ▸ Menu New |  |
-| todo | Sheets ▸ Button Duplicate the selected sheet |  |
-| todo | Sheets ▸ Button Move the sheet up in the set |  |
-| todo | Sheets ▸ Button Move the sheet down in the set |  |
-| todo | Sheets ▸ Button Delete the selected sheet |  |
-| todo | Sheets ▸ contextMenu  | (repeated) |
-| todo | Sheets ▸ TextField Name | nameText (repeated) |
-| todo | Sheets ▸ TextField Prefix | prefix |
-| todo | Sheets ▸ TextField Start | start |
-| todo | Sheets ▸ Button Renumber All |  |
-| todo | Sheets ▸ Button Sheet Index Here | `SHEETINDEX` |
-| todo | Sheets ▸ Button View Titles |  |
-| todo | Sheets ▸ Button Delete this revision | (repeated) |
-| todo | Sheets ▸ TextField Description | revDescription |
-| todo | Sheets ▸ TextField By | revBy |
-| todo | Sheets ▸ Button Add |  |
-| todo | Panel History (HistoryPanel) | sections:  |
-| todo | History ▸ Picker  | page |
-| todo | History ▸ Button 0 |  |
-| todo | History ▸ Button {index} | (repeated) |
-| todo | History ▸ Button {index} | (repeated) |
-| todo | History ▸ Button {c} | `{c}`  (repeated) |
-| todo | History ▸ Button Copy Log |  |
-| todo | Panel Selection (SelectionInfoPanel) | sections:  |
-| todo | Selection ▸ Button Only | (repeated) |
-| todo | Selection ▸ Button Remove | (repeated) |
-| todo | Selection ▸ Button Zoom to Selection |  |
-| todo | Selection ▸ Button Clear | `@deselectAll` |
-| todo | Panel Navigator (NavigatorPanel) | sections:  |
-| todo | Panel Alerts (NotificationsPanel) | sections:  |
+| partial | Panel Properties (PropertiesPanel) | sections: Project, Drawing, General, Geometry & Parameters |
+| partial: type summary shown, not a per-type filter menu | Properties ▸ Menu {"\(types.count) objects (" + counts.sorted() {…}.map() {…}.joined(separator: ", ") + ")"} |  |
+| done | Properties ▸ Button Clear selection | `@deselectAll` |
+| done | Properties ▸ Button Quick Select… | `QSELECTDIALOG` |
+| done | Properties ▸ Button Match properties from the first selected object (MATCHPROP) | `MATCHPROP` |
+| done | Properties ▸ Button Select similar objects (SELECTSIMILAR) | `SELECTSIMILAR` |
+| done | Properties ▸ Button Invert the selection (SELECTINVERT) | `SELECTINVERT` |
+| done | Properties ▸ Button Zoom to the selection |  |
+| done | Panel Layers (LayersPanel) | sections:  |
+| done | Layers ▸ Button New |  |
+| done | Layers ▸ Button Delete |  |
+| done | Layers ▸ Button Current |  |
+| done | Layers ▸ Button Layer tree grouped by name prefix (A-, S-, xref\|) |  |
+| done | Layers ▸ Button Layer States Manager (LAYERSTATE) | `LAYERSTATE` |
+| done | Layers ▸ TextField Filter: name, A-*, ~*TEXT* | filter.pattern |
+| done | Layers ▸ Menu  |  |
+| done | Layers ▸ Button  | (repeated) |
+| done | Layers ▸ contextMenu  | (repeated) |
+| done | Layers ▸ Button Current layer / Make current | (repeated) |
+| done | Layers ▸ Menu  | (repeated) |
+| done | Layers ▸ Menu {layer.linetype} | (repeated) |
+| done | Layers ▸ Menu %.2f | (repeated) |
+| done | Layers ▸ Menu {Int((Transparency.fraction(layer: layer) * 100).rounded())} | (repeated) |
+| done | Panel Levels (LevelsPanel) | sections:  |
+| done | Levels ▸ Button Add Level |  |
+| done | Levels ▸ Button Make current | (repeated) |
+| done | Levels ▸ TextField  | text (repeated) |
+| done | Levels ▸ Button Delete level | (repeated) |
+| partial: only Floor Plans, 3D Views (Front/Aerial/Corner) and Sheets | Panel Browser (ProjectBrowserPanel) | sections:  |
+| done | Browser ▸ Button Floor Plans |  |
+| done | Browser ▸ Button 3D Views |  |
+| todo: label not found in panels.ts | Browser ▸ Button Project Views |  |
+| todo: label not found in panels.ts | Browser ▸ Button Elevations & Sections |  |
+| done | Browser ▸ Button Sheets |  |
+| todo: label not found in panels.ts | Browser ▸ Button Schedules |  |
+| todo: label not found in panels.ts | Browser ▸ Button Families |  |
+| done | Browser ▸ Button Groups |  |
+| todo: label not found in panels.ts | Browser ▸ Button Links |  |
+| partial | Panel Materials (MaterialsPanel) | sections: Identity, graphics & physical |
+| done | Materials ▸ Button New |  |
+| done | Materials ▸ Button Duplicate |  |
+| done | Materials ▸ Button Delete |  |
+| done | Materials ▸ Button Assign the material to the selected building elements |  |
+| done | Materials ▸ TextField Name | name |
+| done | Materials ▸ ColorPicker  | Binding(get: {…}, set: {…}) |
+| done | Materials ▸ Slider  | Binding(get: {…}, set: {…}) |
+| done | Materials ▸ Button Choose… |  |
+| done | Materials ▸ Button Remove the texture |  |
+| done | Materials ▸ TextField  | Binding(get: {…}, set: {…}) |
+| done | Materials ▸ Slider  | Binding(get: {…}, set: {…}) |
+| done | Materials ▸ Picker  | Binding(get: {…}, set: {…}) |
+| done | Materials ▸ Button Path Trace | `PATHTRACE` |
+| partial: command PROCMATERIAL is not registered in archi-engine | Materials ▸ Button Procedural… | `PROCMATERIAL` |
+| done | Materials ▸ Button From Photo… |  |
+| done | Panel Tools (ToolPalettePanel) | sections:  |
+| done | Tools ▸ Button {t} | (repeated) |
+| done | Tools ▸ Blocks ▸ ShapeTile {n} | (repeated) |
+| done | Tools ▸ Components ▸ ShapeTile {f.name} | (repeated) |
+| done | Tools ▸ My Tools ▸ contextMenu  | (repeated) |
+| done | Tools ▸ contextMenu  | (repeated) |
+| done | Tools ▸ TextField Add command (e.g. OFFSET) | newCommand |
+| done | Tools ▸ Button Add |  |
+| done | Panel Sheets (SheetSetPanel) | sections: NUMBERING |
+| done | Sheets ▸ Menu New |  |
+| done | Sheets ▸ Button Duplicate the selected sheet |  |
+| done | Sheets ▸ Button Move the sheet up in the set |  |
+| done | Sheets ▸ Button Move the sheet down in the set |  |
+| done | Sheets ▸ Button Delete the selected sheet |  |
+| done | Sheets ▸ contextMenu  | (repeated) |
+| done | Sheets ▸ TextField Name | nameText (repeated) |
+| done | Sheets ▸ TextField Prefix | prefix |
+| done | Sheets ▸ TextField Start | start |
+| done | Sheets ▸ Button Renumber All |  |
+| done | Sheets ▸ Button Sheet Index Here | `SHEETINDEX` |
+| done | Sheets ▸ Button View Titles |  |
+| done | Sheets ▸ Button Delete this revision | (repeated) |
+| done | Sheets ▸ TextField Description | revDescription |
+| done | Sheets ▸ TextField By | revBy |
+| done | Sheets ▸ Button Add |  |
+| partial: undo list, redo and command history; no page picker, Copy Log or numbered undo steps | Panel History (HistoryPanel) | sections:  |
+| partial | History ▸ Picker  | page |
+| partial | History ▸ Button 0 |  |
+| partial | History ▸ Button {index} | (repeated) |
+| partial | History ▸ Button {index} | (repeated) |
+| done | History ▸ Button {c} | `{c}`  (repeated) |
+| todo: label not found in panels.ts | History ▸ Button Copy Log |  |
+| partial: summary and type counts only; no Only / Remove / Zoom buttons | Panel Selection (SelectionInfoPanel) | sections:  |
+| done | Selection ▸ Button Only | (repeated) |
+| todo: label not found in panels.ts | Selection ▸ Button Remove | (repeated) |
+| todo: label not found in panels.ts | Selection ▸ Button Zoom to Selection |  |
+| done | Selection ▸ Button Clear | `@deselectAll` |
+| todo: placeholder text only | Panel Navigator (NavigatorPanel) | sections:  |
+| todo: placeholder 'No alerts.' only | Panel Alerts (NotificationsPanel) | sections:  |
 | todo | Alerts ▸ Toggle Info | showInfo |
 | todo | Alerts ▸ Button Restore dismissed |  |
 | todo | Alerts ▸ Button Dismiss |  |
-| todo | Panel Quick Props (QuickPropertiesView) | sections:  |
-| todo | Quick Props ▸ Button Dock in the panels (Quick Props tab) | `@panel:Quick Props` |
-| todo | Quick Props ▸ Button Float in a window | `FLOATPANEL` |
-| todo | Quick Props ▸ Button Hide Quick Properties (QP) | `QUICKPROPS` |
-| todo | Quick Props ▸ TextField  | text (repeated) |
-| todo | Panel Inspector (InspectorPanel) | sections:  |
-| todo | Inspector ▸ Button Copy | (repeated) |
-| todo | Panel Content (DesignCenterPanel) | sections:  |
+| partial: shows the Properties panel; no floating Quick Properties window | Panel Quick Props (QuickPropertiesView) | sections:  |
+| todo: label not found in panels.ts | Quick Props ▸ Button Dock in the panels (Quick Props tab) | `@panel:Quick Props` |
+| todo: label not found in panels.ts | Quick Props ▸ Button Float in a window | `FLOATPANEL` |
+| todo: label not found in panels.ts | Quick Props ▸ Button Hide Quick Properties (QP) | `QUICKPROPS` |
+| partial | Quick Props ▸ TextField  | text (repeated) |
+| partial: shows the Properties panel; no raw inspector / Copy | Panel Inspector (InspectorPanel) | sections:  |
+| todo: label not found in panels.ts | Inspector ▸ Button Copy | (repeated) |
+| todo: shows the static tool list, not the DesignCenter content browser | Panel Content (DesignCenterPanel) | sections:  |
 | todo | Content ▸ Menu Choose Drawing |  |
 | todo | Content ▸ Picker  | kind |
 | todo | Content ▸ Button Add to Drawing |  |
@@ -2432,91 +2432,91 @@ Items not `todo`: 0
 
 | Status | Item | Command / detail |
 | --- | --- | --- |
-| todo | UnitsSheet (sheet UnitsSheet) | `UNITS` |
-| todo | UnitsSheet ▸ Picker Type | lin |
-| todo | UnitsSheet ▸ Stepper Precision: 2 decimals | lprec |
-| todo | UnitsSheet ▸ Picker Type | ang |
-| todo | UnitsSheet ▸ Stepper Precision: 0 | aprec |
-| todo | UnitsSheet ▸ Picker Insertion units | units |
-| todo | DraftingSettingsSheet (sheet DraftingSettingsSheet) | `DSETTINGS` |
-| todo | DraftingSettingsSheet ▸ Toggle Grid display (F7) | s.showGrid |
-| todo | DraftingSettingsSheet ▸ Toggle Grid snap (F9) | s.gridSnap |
-| todo | DraftingSettingsSheet ▸ TextField  | s.gridSpacing |
-| todo | DraftingSettingsSheet ▸ Toggle Ortho (F8) | s.ortho |
-| todo | DraftingSettingsSheet ▸ Toggle Polar tracking (F10) | s.polarTracking |
-| todo | DraftingSettingsSheet ▸ Picker Increment | s.polarIncrement |
-| todo | DraftingSettingsSheet ▸ Toggle Dynamic input (F12) | s.dynamicInput |
-| todo | DraftingSettingsSheet ▸ Toggle Show lineweights | s.lineweightDisplay |
-| todo | DraftingSettingsSheet ▸ TextField  | s.textHeight |
-| todo | DraftingSettingsSheet ▸ TextField  | s.wallThickness |
-| todo | DraftingSettingsSheet ▸ TextField  | s.wallHeight |
-| todo | DraftingSettingsSheet ▸ Toggle Object snap (F3) | s.objectSnap |
-| todo | DraftingSettingsSheet ▸ Toggle {k.rawValue.capitalized} | Binding(get: {…}, set: {…}) |
-| todo | DraftingSettingsSheet ▸ Button Select All |  |
-| todo | DraftingSettingsSheet ▸ Button Clear All |  |
-| todo | ScheduleSheet (sheet ScheduleSheet) | `SCHEDULE` |
+| done | UnitsSheet (sheet UnitsSheet) | `UNITS` |
+| done | UnitsSheet ▸ Picker Type | lin |
+| done | UnitsSheet ▸ Stepper Precision: 2 decimals | lprec |
+| done | UnitsSheet ▸ Picker Type | ang |
+| done | UnitsSheet ▸ Stepper Precision: 0 | aprec |
+| done | UnitsSheet ▸ Picker Insertion units | units |
+| done | DraftingSettingsSheet (sheet DraftingSettingsSheet) | `DSETTINGS` |
+| done | DraftingSettingsSheet ▸ Toggle Grid display (F7) | s.showGrid |
+| done | DraftingSettingsSheet ▸ Toggle Grid snap (F9) | s.gridSnap |
+| done | DraftingSettingsSheet ▸ TextField  | s.gridSpacing |
+| done | DraftingSettingsSheet ▸ Toggle Ortho (F8) | s.ortho |
+| done | DraftingSettingsSheet ▸ Toggle Polar tracking (F10) | s.polarTracking |
+| done | DraftingSettingsSheet ▸ Picker Increment | s.polarIncrement |
+| done | DraftingSettingsSheet ▸ Toggle Dynamic input (F12) | s.dynamicInput |
+| done | DraftingSettingsSheet ▸ Toggle Show lineweights | s.lineweightDisplay |
+| done | DraftingSettingsSheet ▸ TextField  | s.textHeight |
+| done | DraftingSettingsSheet ▸ TextField  | s.wallThickness |
+| done | DraftingSettingsSheet ▸ TextField  | s.wallHeight |
+| done | DraftingSettingsSheet ▸ Toggle Object snap (F3) | s.objectSnap |
+| done | DraftingSettingsSheet ▸ Toggle {k.rawValue.capitalized} | Binding(get: {…}, set: {…}) |
+| done | DraftingSettingsSheet ▸ Button Select All |  |
+| done | DraftingSettingsSheet ▸ Button Clear All |  |
+| todo: SCHEDULE has no schedule sheet on Windows | ScheduleSheet (sheet ScheduleSheet) | `SCHEDULE` |
 | todo | ScheduleSheet ▸ Picker Schedule | kind |
 | todo | ScheduleSheet ▸ Button Export CSV… | `@export:csv:{kind}` |
-| todo | CommandReferenceView (sheet CommandReferenceView) | `COMMANDS` |
-| todo | CommandReferenceView ▸ TextField Search commands, aliases, descriptions | query |
-| todo | CommandReferenceView ▸ Button Done |  |
-| todo | ShortcutsView (sheet ShortcutsView) |  |
-| todo | ShortcutsView ▸ Button Done |  |
-| todo | QuickSelectSheet (sheet QuickSelectSheet) | `QSELECTDIALOG` |
-| todo | QuickSelectSheet ▸ Picker  | scope |
-| todo | QuickSelectSheet ▸ Picker  | type |
-| todo | QuickSelectSheet ▸ Picker  | property |
-| todo | QuickSelectSheet ▸ Picker  | op |
-| todo | QuickSelectSheet ▸ TextField Value (wildcards * ? allowed for text) | value |
-| todo | QuickSelectSheet ▸ Menu  |  |
-| todo | QuickSelectSheet ▸ Picker  | mode |
-| todo | QuickSelectSheet ▸ Button Cancel |  |
-| todo | QuickSelectSheet ▸ Button Select |  |
-| todo | LayerStatesSheet (sheet LayerStatesSheet) | `LAYERSTATE` |
-| todo | LayerStatesSheet ▸ Button Restore |  |
-| todo | LayerStatesSheet ▸ Button Update |  |
-| todo | LayerStatesSheet ▸ Button Delete |  |
-| todo | LayerStatesSheet ▸ TextField Rename | renaming |
-| todo | LayerStatesSheet ▸ TextField New state name | newName |
-| todo | LayerStatesSheet ▸ Button Save Current Layers |  |
-| todo | LayerStatesSheet ▸ Button Close |  |
-| todo | PageSetupSheet (sheet PageSetupSheet) | `PAGESETUP` |
-| todo | PageSetupSheet ▸ Picker Paper | paper |
-| todo | PageSetupSheet ▸ Picker Orientation | portrait |
-| todo | PageSetupSheet ▸ Picker Plot style | setup.colorMode |
-| todo | PageSetupSheet ▸ Picker Plot style table | Binding(get: {…}, set: {…}) |
-| todo | PageSetupSheet ▸ Picker Named plot styles | Binding(get: {…}, set: {…}) |
-| todo | PageSetupSheet ▸ Slider  | setup.lineweightScale |
-| todo | PageSetupSheet ▸ Toggle Plot stamp | setup.plotStamp |
-| todo | PageSetupSheet ▸ TextField {project}  ·  {sheet}  ·  plotted {date} {time}  ·  Oanarina Archi Tool | Binding(get: {…}, set: {…}) |
-| todo | PageSetupSheet ▸ Picker Paper | setup.modelPaper |
-| todo | PageSetupSheet ▸ Picker Orientation | setup.modelPortrait |
-| todo | PageSetupSheet ▸ Picker Plot area | setup.plotArea |
-| todo | PageSetupSheet ▸ Toggle Exact fit (not rounded to a standard scale) | setup.exactFit |
-| todo | PageSetupSheet ▸ Picker Scale | scaleText |
-| todo | PageSetupSheet ▸ Button Preview… | `PREVIEW` |
-| todo | PageSetupSheet ▸ Button Cancel |  |
-| todo | PageSetupSheet ▸ Button OK |  |
-| todo | TitleBlockSheet (sheet TitleBlockSheet) | `TITLEBLOCK` |
-| todo | TitleBlockSheet ▸ TextField  | b |
-| todo | TitleBlockSheet ▸ Button Choose… |  |
-| todo | TitleBlockSheet ▸ Button Remove |  |
-| todo | TitleBlockSheet ▸ TextField project value | b |
-| todo | TitleBlockSheet ▸ TextField same as project | b |
-| todo | TitleBlockSheet ▸ TextField New field label | newLabel |
-| todo | TitleBlockSheet ▸ Button Add |  |
-| todo | TitleBlockSheet ▸ TextField {defaultValue(k)} | b |
-| todo | TitleBlockSheet ▸ Toggle All | Binding(get: {…}, set: {…}) |
-| todo | TitleBlockSheet ▸ Button Cancel |  |
-| todo | TitleBlockSheet ▸ Button OK |  |
-| todo | ConnectClaudeSheet (sheet ConnectClaudeSheet) | `CONNECTCLAUDE` |
-| todo | ConnectClaudeSheet ▸ Button Done |  |
-| todo | ConnectClaudeSheet ▸ Button Copy |  |
-| todo | SaveCameraSheet (sheet SaveCameraSheet) | `SAVECAMERA` |
-| todo | SaveCameraSheet ▸ TextField Camera name | name |
-| todo | SaveCameraSheet ▸ Button Cancel |  |
-| todo | SaveCameraSheet ▸ Button Save |  |
-| todo | SpellingSheet (sheet SpellingSheet) | `SPELLDIALOG` |
+| partial: Help ▸ Command Reference runs COMMANDREFERENCE on the command line; no searchable window | CommandReferenceView (sheet CommandReferenceView) | `COMMANDS` |
+| todo: label not found in shortcuts.ts | CommandReferenceView ▸ TextField Search commands, aliases, descriptions | query |
+| done | CommandReferenceView ▸ Button Done |  |
+| done | ShortcutsView (sheet ShortcutsView) |  |
+| done | ShortcutsView ▸ Button Done |  |
+| done | QuickSelectSheet (sheet QuickSelectSheet) | `QSELECTDIALOG` |
+| done | QuickSelectSheet ▸ Picker  | scope |
+| done | QuickSelectSheet ▸ Picker  | type |
+| done | QuickSelectSheet ▸ Picker  | property |
+| done | QuickSelectSheet ▸ Picker  | op |
+| done | QuickSelectSheet ▸ TextField Value (wildcards * ? allowed for text) | value |
+| done | QuickSelectSheet ▸ Menu  |  |
+| done | QuickSelectSheet ▸ Picker  | mode |
+| done | QuickSelectSheet ▸ Button Cancel |  |
+| done | QuickSelectSheet ▸ Button Select |  |
+| done | LayerStatesSheet (sheet LayerStatesSheet) | `LAYERSTATE` |
+| done | LayerStatesSheet ▸ Button Restore |  |
+| done | LayerStatesSheet ▸ Button Update |  |
+| done | LayerStatesSheet ▸ Button Delete |  |
+| done | LayerStatesSheet ▸ TextField Rename | renaming |
+| done | LayerStatesSheet ▸ TextField New state name | newName |
+| done | LayerStatesSheet ▸ Button Save Current Layers |  |
+| done | LayerStatesSheet ▸ Button Close |  |
+| done | PageSetupSheet (sheet PageSetupSheet) | `PAGESETUP` |
+| done | PageSetupSheet ▸ Picker Paper | paper |
+| done | PageSetupSheet ▸ Picker Orientation | portrait |
+| done | PageSetupSheet ▸ Picker Plot style | setup.colorMode |
+| done | PageSetupSheet ▸ Picker Plot style table | Binding(get: {…}, set: {…}) |
+| done | PageSetupSheet ▸ Picker Named plot styles | Binding(get: {…}, set: {…}) |
+| done | PageSetupSheet ▸ Slider  | setup.lineweightScale |
+| done | PageSetupSheet ▸ Toggle Plot stamp | setup.plotStamp |
+| done | PageSetupSheet ▸ TextField {project}  ·  {sheet}  ·  plotted {date} {time}  ·  Oanarina Archi Tool | Binding(get: {…}, set: {…}) |
+| done | PageSetupSheet ▸ Picker Paper | setup.modelPaper |
+| done | PageSetupSheet ▸ Picker Orientation | setup.modelPortrait |
+| done | PageSetupSheet ▸ Picker Plot area | setup.plotArea |
+| done | PageSetupSheet ▸ Toggle Exact fit (not rounded to a standard scale) | setup.exactFit |
+| done | PageSetupSheet ▸ Picker Scale | scaleText |
+| done | PageSetupSheet ▸ Button Preview… | `PREVIEW` |
+| done | PageSetupSheet ▸ Button Cancel |  |
+| done | PageSetupSheet ▸ Button OK |  |
+| done | TitleBlockSheet (sheet TitleBlockSheet) | `TITLEBLOCK` |
+| done | TitleBlockSheet ▸ TextField  | b |
+| done | TitleBlockSheet ▸ Button Choose… |  |
+| done | TitleBlockSheet ▸ Button Remove |  |
+| done | TitleBlockSheet ▸ TextField project value | b |
+| done | TitleBlockSheet ▸ TextField same as project | b |
+| done | TitleBlockSheet ▸ TextField New field label | newLabel |
+| done | TitleBlockSheet ▸ Button Add |  |
+| done | TitleBlockSheet ▸ TextField {defaultValue(k)} | b |
+| done | TitleBlockSheet ▸ Toggle All | Binding(get: {…}, set: {…}) |
+| done | TitleBlockSheet ▸ Button Cancel |  |
+| done | TitleBlockSheet ▸ Button OK |  |
+| done | ConnectClaudeSheet (sheet ConnectClaudeSheet) | `CONNECTCLAUDE` |
+| done | ConnectClaudeSheet ▸ Button Done |  |
+| done | ConnectClaudeSheet ▸ Button Copy |  |
+| done | SaveCameraSheet (sheet SaveCameraSheet) | `SAVECAMERA` |
+| done | SaveCameraSheet ▸ TextField Camera name | name |
+| done | SaveCameraSheet ▸ Button Cancel |  |
+| done | SaveCameraSheet ▸ Button Save |  |
+| todo: SPELLDIALOG not ported | SpellingSheet (sheet SpellingSheet) | `SPELLDIALOG` |
 | todo | SpellingSheet ▸ Button Zoom To |  |
 | todo | SpellingSheet ▸ TextField  | replacement |
 | todo | SpellingSheet ▸ Button {s} |  |
@@ -2526,28 +2526,28 @@ Items not `todo`: 0
 | todo | SpellingSheet ▸ Button Ignore All |  |
 | todo | SpellingSheet ▸ Button Add to Dictionary |  |
 | todo | SpellingSheet ▸ Button Done |  |
-| todo | PlotStyleSheet (sheet PlotStyleSheet) | `PLOTSTYLE` |
-| todo | PlotStyleSheet ▸ Picker  | Binding(get: {…}, set: {…}) |
-| todo | PlotStyleSheet ▸ Button New Copy |  |
-| todo | PlotStyleSheet ▸ TextField  | table.name |
-| todo | PlotStyleSheet ▸ Toggle All 255 colours | showAll |
-| todo | PlotStyleSheet ▸ Toggle Object | Binding(get: {…}, set: {…}) |
-| todo | PlotStyleSheet ▸ Picker  | Binding(get: {…}, set: {…}) |
-| todo | PlotStyleSheet ▸ Slider  | Binding(get: {…}, set: {…}) |
-| todo | PlotStyleSheet ▸ Button Close |  |
-| todo | PlotStyleSheet ▸ Button Save in Drawing |  |
-| todo | BatchPublishSheet (sheet BatchPublishSheet) | `BATCHPUBLISH` |
-| todo | BatchPublishSheet ▸ Toggle  | Binding(get: {…}, set: {…}) |
-| todo | BatchPublishSheet ▸ Toggle PDF bookmarks (sheet number — name) | bookmarks |
-| todo | BatchPublishSheet ▸ Toggle Refresh the sheet index table on the first sheet | index |
-| todo | BatchPublishSheet ▸ Button All |  |
-| todo | BatchPublishSheet ▸ Button None |  |
-| todo | BatchPublishSheet ▸ Button Cancel |  |
-| todo | BatchPublishSheet ▸ Button Publish… |  |
-| todo | About (window AboutView) | `ABOUT` |
+| done | PlotStyleSheet (sheet PlotStyleSheet) | `PLOTSTYLE` |
+| done | PlotStyleSheet ▸ Picker  | Binding(get: {…}, set: {…}) |
+| done | PlotStyleSheet ▸ Button New Copy |  |
+| done | PlotStyleSheet ▸ TextField  | table.name |
+| done | PlotStyleSheet ▸ Toggle All 255 colours | showAll |
+| done | PlotStyleSheet ▸ Toggle Object | Binding(get: {…}, set: {…}) |
+| done | PlotStyleSheet ▸ Picker  | Binding(get: {…}, set: {…}) |
+| done | PlotStyleSheet ▸ Slider  | Binding(get: {…}, set: {…}) |
+| done | PlotStyleSheet ▸ Button Close |  |
+| done | PlotStyleSheet ▸ Button Save in Drawing |  |
+| done | BatchPublishSheet (sheet BatchPublishSheet) | `BATCHPUBLISH` |
+| done | BatchPublishSheet ▸ Toggle  | Binding(get: {…}, set: {…}) |
+| done | BatchPublishSheet ▸ Toggle PDF bookmarks (sheet number — name) | bookmarks |
+| done | BatchPublishSheet ▸ Toggle Refresh the sheet index table on the first sheet | index |
+| done | BatchPublishSheet ▸ Button All |  |
+| done | BatchPublishSheet ▸ Button None |  |
+| done | BatchPublishSheet ▸ Button Cancel |  |
+| done | BatchPublishSheet ▸ Button Publish… |  |
+| todo: ABOUT is not registered in archi-engine and the shell has no About window | About (window AboutView) | `ABOUT` |
 | todo | About ▸ Button View License | `@openURL` |
 | todo | About ▸ Link www.oanarinaldi.com |  |
-| todo | Assistant (window AssistantPanel) | `ASSISTANT` |
+| todo: ASSISTANT (AI assistant window) not ported | Assistant (window AssistantPanel) | `ASSISTANT` |
 | todo | Assistant ▸ Button Provider, model and key |  |
 | todo | Assistant ▸ Picker Provider | session.config.provider |
 | todo | Assistant ▸ TextField Model | session.config.model |
@@ -2559,76 +2559,76 @@ Items not `todo`: 0
 | todo | Assistant ▸ Button Apply |  |
 | todo | Assistant ▸ TextField Ask or describe a change (e.g. “add a 5 m wall from 0,0 to the east”) | input |
 | todo | Assistant ▸ Button [paperplane.fill] |  |
-| todo | BlockLibrary (window BlockLibraryView) | `BLOCKPALETTE` |
-| todo | BlockLibrary ▸ Menu Choose a folder |  |
-| todo | BlockLibrary ▸ Button Add a library folder of .archi / .dxf drawings |  |
-| todo | BlockLibrary ▸ Button Rescan the folder |  |
-| todo | BlockLibrary ▸ Picker  | scope |
-| todo | BlockLibrary ▸ TextField Search blocks, files and folders | query |
-| todo | BlockLibrary ▸ Button Choose Folder… |  |
-| todo | BlockLibrary ▸ contextMenu  |  |
-| todo | CUI (window CUIView) | `CUI` |
-| todo | CUI ▸ Button Import… |  |
-| todo | CUI ▸ Button Export… |  |
-| todo | CUI ▸ Button Reset |  |
-| todo | CUI ▸ Button New panel |  |
-| todo | CUI ▸ Button Delete panel |  |
-| todo | CUI ▸ Button Move panel left |  |
-| todo | CUI ▸ Button Move panel right |  |
-| todo | CUI ▸ TextField Title | Binding(get: {…}, set: {…}) |
-| todo | CUI ▸ Picker Tab | Binding(get: {…}, set: {…}) |
-| todo | CUI ▸ Button Move up |  |
-| todo | CUI ▸ Button Move down |  |
-| todo | CUI ▸ Button Remove |  |
-| todo | CUI ▸ TextField Command (e.g. ZOOM E) | newCommand |
-| todo | CUI ▸ Button Add |  |
-| todo | CUI ▸ TextField Panel title (e.g. Selection) | hideTitle |
-| todo | CUI ▸ Button Hide |  |
-| todo | CUI ▸ Button {t} ✕ |  |
-| todo | CameraPath (window CameraPathEditor) | `CAMERAPATHEDIT` |
-| todo | CameraPath ▸ Picker Path | Binding(get: {…}, set: {…}) |
-| todo | CameraPath ▸ Button New |  |
-| todo | CameraPath ▸ Button Delete |  |
-| todo | CameraPath ▸ Button Add Current View |  |
-| todo | CameraPath ▸ Menu Add Saved Camera |  |
-| todo | CameraPath ▸ Button Even Timing |  |
-| todo | CameraPath ▸ TextField s | Binding(get: {…}, set: {…}) |
-| todo | CameraPath ▸ Button Show this key in the 3D view |  |
-| todo | CameraPath ▸ Button Delete the key |  |
-| todo | CameraPath ▸ Button [play.fill] |  |
-| todo | CameraPath ▸ Slider  | Binding(get: {…}, set: {…}) |
-| todo | CameraPath ▸ Stepper FPS {p.fps} | Binding(get: {…}, set: {…}) |
-| todo | CameraPath ▸ Button Export Video… |  |
-| todo | CameraPath ▸ Button Queue Frames |  |
-| todo | Compare (window ComparePanel) | `COMPAREPANEL` |
-| todo | Compare ▸ Button Compare With… |  |
-| todo | Compare ▸ Button Clear |  |
-| todo | Compare ▸ Toggle Overlay | Binding(get: {…}, set: {…}) |
-| todo | Compare ▸ Toggle  | Binding(get: {…}, set: {…}) |
-| todo | Compare ▸ Button Save Overlay Drawing… |  |
-| todo | Compare ▸ Button Export CSV… |  |
-| todo | Customizer (window CustomizerView) | `CUSTOMIZERPANEL` |
-| todo | FamilyEditor (window FamilyEditorPanel) | `FAMILYPANEL` |
-| todo | FamilyEditor ▸ Button {f.name} |  |
-| todo | FamilyEditor ▸ Menu New from Template |  |
-| todo | FamilyEditor ▸ TextField Name | Binding(get: {…}, set: {…}) |
-| todo | FamilyEditor ▸ Picker  | Binding(get: {…}, set: {…}) |
-| todo | FamilyEditor ▸ Button Revert |  |
-| todo | FamilyEditor ▸ Button Apply |  |
-| todo | FamilyEditor ▸ Menu  |  |
-| todo | FamilyEditor ▸ TextField Description | Binding(get: {…}, set: {…}) |
-| todo | FamilyEditor ▸ Picker  | tab |
-| todo | FamilyEditor ▸ Forms ▸ Menu Add Form |  |
-| todo | FamilyEditor ▸ Planes & Profiles ▸ Button Add Profile |  |
-| todo | FamilyEditor ▸ Menu Add Parameter |  |
-| todo | FamilyEditor ▸ Picker Type | Binding(get: {…}, set: {…}) |
-| todo | FamilyEditor ▸ Button Reset Flex |  |
-| todo | GraphPlayer (window GraphPlayerView) | `GRAPHPLAYER` |
-| todo | GraphPlayer ▸ Picker Graph | graphName |
-| todo | GraphPlayer ▸ Slider  | Binding(get: {…}, set: {…}) |
-| todo | GraphPlayer ▸ Button Reset |  |
-| todo | GraphPlayer ▸ Button Run |  |
-| todo | GraphicStyles (window GraphicStylesView) | `GRAPHICSTYLES` |
+| done | BlockLibrary (window BlockLibraryView) | `BLOCKPALETTE` |
+| done | BlockLibrary ▸ Menu Choose a folder |  |
+| done | BlockLibrary ▸ Button Add a library folder of .archi / .dxf drawings |  |
+| done | BlockLibrary ▸ Button Rescan the folder |  |
+| done | BlockLibrary ▸ Picker  | scope |
+| done | BlockLibrary ▸ TextField Search blocks, files and folders | query |
+| done | BlockLibrary ▸ Button Choose Folder… |  |
+| done | BlockLibrary ▸ contextMenu  |  |
+| done | CUI (window CUIView) | `CUI` |
+| done | CUI ▸ Button Import… |  |
+| done | CUI ▸ Button Export… |  |
+| done | CUI ▸ Button Reset |  |
+| done | CUI ▸ Button New panel |  |
+| done | CUI ▸ Button Delete panel |  |
+| done | CUI ▸ Button Move panel left |  |
+| done | CUI ▸ Button Move panel right |  |
+| done | CUI ▸ TextField Title | Binding(get: {…}, set: {…}) |
+| done | CUI ▸ Picker Tab | Binding(get: {…}, set: {…}) |
+| done | CUI ▸ Button Move up |  |
+| done | CUI ▸ Button Move down |  |
+| done | CUI ▸ Button Remove |  |
+| done | CUI ▸ TextField Command (e.g. ZOOM E) | newCommand |
+| done | CUI ▸ Button Add |  |
+| done | CUI ▸ TextField Panel title (e.g. Selection) | hideTitle |
+| done | CUI ▸ Button Hide |  |
+| done | CUI ▸ Button {t} ✕ |  |
+| done | CameraPath (window CameraPathEditor) | `CAMERAPATHEDIT` |
+| done | CameraPath ▸ Picker Path | Binding(get: {…}, set: {…}) |
+| done | CameraPath ▸ Button New |  |
+| done | CameraPath ▸ Button Delete |  |
+| done | CameraPath ▸ Button Add Current View |  |
+| done | CameraPath ▸ Menu Add Saved Camera |  |
+| done | CameraPath ▸ Button Even Timing |  |
+| done | CameraPath ▸ TextField s | Binding(get: {…}, set: {…}) |
+| done | CameraPath ▸ Button Show this key in the 3D view |  |
+| done | CameraPath ▸ Button Delete the key |  |
+| done | CameraPath ▸ Button [play.fill] |  |
+| done | CameraPath ▸ Slider  | Binding(get: {…}, set: {…}) |
+| done | CameraPath ▸ Stepper FPS {p.fps} | Binding(get: {…}, set: {…}) |
+| done | CameraPath ▸ Button Export Video… |  |
+| done | CameraPath ▸ Button Queue Frames |  |
+| done | Compare (window ComparePanel) | `COMPAREPANEL` |
+| done | Compare ▸ Button Compare With… |  |
+| done | Compare ▸ Button Clear |  |
+| done | Compare ▸ Toggle Overlay | Binding(get: {…}, set: {…}) |
+| done | Compare ▸ Toggle  | Binding(get: {…}, set: {…}) |
+| done | Compare ▸ Button Save Overlay Drawing… |  |
+| done | Compare ▸ Button Export CSV… |  |
+| done | Customizer (window CustomizerView) | `CUSTOMIZERPANEL` |
+| done | FamilyEditor (window FamilyEditorPanel) | `FAMILYPANEL` |
+| done | FamilyEditor ▸ Button {f.name} |  |
+| done | FamilyEditor ▸ Menu New from Template |  |
+| done | FamilyEditor ▸ TextField Name | Binding(get: {…}, set: {…}) |
+| done | FamilyEditor ▸ Picker  | Binding(get: {…}, set: {…}) |
+| done | FamilyEditor ▸ Button Revert |  |
+| done | FamilyEditor ▸ Button Apply |  |
+| done | FamilyEditor ▸ Menu  |  |
+| done | FamilyEditor ▸ TextField Description | Binding(get: {…}, set: {…}) |
+| done | FamilyEditor ▸ Picker  | tab |
+| done | FamilyEditor ▸ Forms ▸ Menu Add Form |  |
+| done | FamilyEditor ▸ Planes & Profiles ▸ Button Add Profile |  |
+| done | FamilyEditor ▸ Menu Add Parameter |  |
+| done | FamilyEditor ▸ Picker Type | Binding(get: {…}, set: {…}) |
+| done | FamilyEditor ▸ Button Reset Flex |  |
+| done | GraphPlayer (window GraphPlayerView) | `GRAPHPLAYER` |
+| done | GraphPlayer ▸ Picker Graph | graphName |
+| done | GraphPlayer ▸ Slider  | Binding(get: {…}, set: {…}) |
+| done | GraphPlayer ▸ Button Reset |  |
+| done | GraphPlayer ▸ Button Run |  |
+| todo: GRAPHICSTYLES (line styles, pens, graphic override rules) not ported | GraphicStyles (window GraphicStylesView) | `GRAPHICSTYLES` |
 | todo | GraphicStyles ▸ Picker  | page |
 | todo | GraphicStyles ▸ 0 ▸ TextField New line style name | newStyle |
 | todo | GraphicStyles ▸ 0 ▸ Button Add |  |
@@ -2654,344 +2654,344 @@ Items not `todo`: 0
 | todo | GraphicStyles ▸ Toggle Halftone | Binding(get: {…}, set: {…}) |
 | todo | GraphicStyles ▸ Toggle Hide | Binding(get: {…}, set: {…}) |
 | todo | GraphicStyles ▸ Button Add Rule |  |
-| todo | Markup (window MarkupPanel) | `MARKUPPANEL` |
-| todo | Markup ▸ Picker  | filter |
-| todo | Markup ▸ TextField Search comments, authors, replies | query |
-| todo | Markup ▸ TextField Reply… | reply |
-| todo | Markup ▸ Button Reply |  |
-| todo | Markup ▸ Button Reopen / Resolve |  |
-| todo | Markup ▸ Button Zoom To |  |
-| todo | Markup ▸ Button Select Linked |  |
-| todo | Markup ▸ Button Delete |  |
-| todo | Markup ▸ Button New… |  |
-| todo | Markup ▸ TextField Title (optional) | newTitle |
-| todo | Markup ▸ TextField Comment | newComment |
-| todo | Markup ▸ Button Around Selection |  |
-| todo | Markup ▸ Button Draw Cloud… | `MARKUP Add` |
-| todo | Markup ▸ Button Export BCF… | `BCFOUT` |
-| todo | Markup ▸ Button Import BCF… | `BCFIN` |
-| todo | MaterialLibrary (window MaterialLibraryBrowser) | `MATBROWSER` |
-| todo | MaterialLibrary ▸ Button {c} |  |
-| todo | MaterialLibrary ▸ TextField Search materials | query |
-| todo | MaterialLibrary ▸ Button Add to Drawing |  |
-| todo | MaterialLibrary ▸ Button Assign to Selection |  |
-| todo | NodeEditor (window NodeEditorView) | `NODEEDITOR` |
-| todo | NodeEditor ▸ Menu Add Node |  |
-| todo | NodeEditor ▸ Button Sample |  |
-| todo | NodeEditor ▸ Button Group |  |
-| todo | NodeEditor ▸ Button Comment |  |
-| todo | NodeEditor ▸ Button Clear |  |
-| todo | NodeEditor ▸ Menu Graphs |  |
-| todo | NodeEditor ▸ Menu Packages |  |
-| todo | NodeEditor ▸ Toggle Live | live |
-| todo | NodeEditor ▸ Button Bake to Drawing |  |
-| todo | NodeEditor ▸ Button Save Graph |  |
-| todo | NodeEditor ▸ TextField Comment | comment.text |
-| todo | NodeEditor ▸ Picker  | previewMode |
-| todo | Outliner (window OutlinerView) | `OUTLINERPANEL` |
+| done | Markup (window MarkupPanel) | `MARKUPPANEL` |
+| done | Markup ▸ Picker  | filter |
+| done | Markup ▸ TextField Search comments, authors, replies | query |
+| done | Markup ▸ TextField Reply… | reply |
+| done | Markup ▸ Button Reply |  |
+| done | Markup ▸ Button Reopen / Resolve |  |
+| done | Markup ▸ Button Zoom To |  |
+| done | Markup ▸ Button Select Linked |  |
+| done | Markup ▸ Button Delete |  |
+| done | Markup ▸ Button New… |  |
+| done | Markup ▸ TextField Title (optional) | newTitle |
+| done | Markup ▸ TextField Comment | newComment |
+| done | Markup ▸ Button Around Selection |  |
+| done | Markup ▸ Button Draw Cloud… | `MARKUP Add` |
+| done | Markup ▸ Button Export BCF… | `BCFOUT` |
+| done | Markup ▸ Button Import BCF… | `BCFIN` |
+| done | MaterialLibrary (window MaterialLibraryBrowser) | `MATBROWSER` |
+| done | MaterialLibrary ▸ Button {c} |  |
+| done | MaterialLibrary ▸ TextField Search materials | query |
+| done | MaterialLibrary ▸ Button Add to Drawing |  |
+| done | MaterialLibrary ▸ Button Assign to Selection |  |
+| done | NodeEditor (window NodeEditorView) | `NODEEDITOR` |
+| done | NodeEditor ▸ Menu Add Node |  |
+| done | NodeEditor ▸ Button Sample |  |
+| done | NodeEditor ▸ Button Group |  |
+| done | NodeEditor ▸ Button Comment |  |
+| done | NodeEditor ▸ Button Clear |  |
+| done | NodeEditor ▸ Menu Graphs |  |
+| done | NodeEditor ▸ Menu Packages |  |
+| done | NodeEditor ▸ Toggle Live | live |
+| done | NodeEditor ▸ Button Bake to Drawing |  |
+| done | NodeEditor ▸ Button Save Graph |  |
+| done | NodeEditor ▸ TextField Comment | comment.text |
+| done | NodeEditor ▸ Picker  | previewMode |
+| todo: OUTLINERPANEL not ported | Outliner (window OutlinerView) | `OUTLINERPANEL` |
 | todo | Outliner ▸ TextField Filter by name | filter |
-| todo | PathTrace (window PathTraceView) | `PATHTRACE` |
-| todo | PathTrace ▸ Button Stop / Render |  |
-| todo | PathTrace ▸ Button Save… |  |
-| todo | PathTrace ▸ Picker Size | Binding(get: {…}, set: {…}) |
-| todo | PathTrace ▸ Stepper Samples: {c.target} | c.target |
-| todo | PathTrace ▸ Toggle Denoise | Binding(get: {…}, set: {…}) |
-| todo | PathTrace ▸ Slider  | Binding(get: {…}, set: {…}) |
-| todo | PathTrace ▸ Slider  | Binding(get: {…}, set: {…}) |
-| todo | PathTrace ▸ Button Reset Mix |  |
-| todo | PlotPreview (window PlotPreviewView) | `PREVIEW` |
-| todo | PlotPreview ▸ Picker What | what |
-| todo | PlotPreview ▸ Picker Plot style | setup.colorMode |
-| todo | PlotPreview ▸ Picker Plot style table | Binding(get: {…}, set: {…}) |
-| todo | PlotPreview ▸ Picker Named plot styles | Binding(get: {…}, set: {…}) |
-| todo | PlotPreview ▸ Slider  | setup.lineweightScale |
-| todo | PlotPreview ▸ Toggle Plot stamp | setup.plotStamp |
-| todo | PlotPreview ▸ TextField {project}  ·  {sheet}  ·  plotted {date} {time}  ·  Oanarina Archi Tool | Binding(get: {…}, set: {…}) |
-| todo | PlotPreview ▸ Picker Paper | setup.modelPaper |
-| todo | PlotPreview ▸ Picker Orientation | setup.modelPortrait |
-| todo | PlotPreview ▸ Picker Plot area | setup.plotArea |
-| todo | PlotPreview ▸ Toggle Exact fit (not rounded to a standard scale) | setup.exactFit |
-| todo | PlotPreview ▸ Picker Scale | scaleText |
-| todo | PlotPreview ▸ Button Save as Default |  |
-| todo | PlotPreview ▸ Button Close |  |
-| todo | PlotPreview ▸ Button Save PDF… |  |
-| todo | PlotPreview ▸ Button Print… |  |
-| todo | Preferences (window PreferencesView) | `OPTIONS` |
-| todo | Preferences ▸ Button {t.rawValue} |  |
-| todo | Preferences ▸ Button Reset to Defaults |  |
-| todo | Preferences ▸ general ▸ Toggle Autosave | Binding(get: {…}, set: {…}) |
-| todo | Preferences ▸ general ▸ Stepper every {prefs.autosaveMinutes} min / off | prefs.autosaveMinutes |
-| todo | Preferences ▸ general ▸ Button Show Recovery Folder |  |
-| todo | Preferences ▸ general ▸ Stepper Remember {prefs.recentLimit} documents | prefs.recentLimit |
-| todo | Preferences ▸ general ▸ Button Clear Recent Documents |  |
-| todo | Preferences ▸ general ▸ Picker Default units | prefs.defaultUnits |
-| todo | Preferences ▸ general ▸ Toggle Run startup.js from the script library in every new window | prefs.runStartupScript |
-| todo | Preferences ▸ general ▸ Button Open Script Library |  |
-| todo | Preferences ▸ drafting ▸ Toggle Show grid | prefs.draft.showGrid |
-| todo | Preferences ▸ drafting ▸ Toggle Grid snap | prefs.draft.gridSnap |
-| todo | Preferences ▸ drafting ▸ TextField  | prefs.draft.gridSpacing |
-| todo | Preferences ▸ drafting ▸ Toggle Ortho | prefs.draft.ortho |
-| todo | Preferences ▸ drafting ▸ Toggle Polar tracking | prefs.draft.polarTracking |
-| todo | Preferences ▸ drafting ▸ Picker Polar increment | prefs.draft.polarIncrement |
-| todo | Preferences ▸ drafting ▸ Toggle Dynamic input | prefs.draft.dynamicInput |
-| todo | Preferences ▸ drafting ▸ Toggle Show lineweights | prefs.draft.lineweightDisplay |
-| todo | Preferences ▸ drafting ▸ Toggle Object snap on | prefs.draft.objectSnap |
-| todo | Preferences ▸ drafting ▸ Button Apply to Open Drawings |  |
-| todo | Preferences ▸ display ▸ Picker Interface | prefs.theme |
-| todo | Preferences ▸ display ▸ ColorPicker Custom | Binding(get: {…}, set: {…}) |
-| todo | Preferences ▸ display ▸ Slider  | Binding(get: {…}, set: {…}) |
-| todo | Preferences ▸ shortcuts ▸ Button Press keys… (Esc cancels) / Record Shortcut |  |
-| todo | Preferences ▸ shortcuts ▸ TextField Command (e.g. WALL or ZOOM E) | commandText |
-| todo | Preferences ▸ shortcuts ▸ Button Assign |  |
-| todo | Preferences ▸ shortcuts ▸ TextField Search commands to assign | search |
-| todo | Preferences ▸ shortcuts ▸ Button Export… |  |
-| todo | Preferences ▸ shortcuts ▸ Button Import… |  |
-| todo | Preferences ▸ toolbar ▸ TextField Command name (e.g. MATCHPROP) | newCommand |
-| todo | Preferences ▸ toolbar ▸ Button Add |  |
-| todo | Preferences ▸ toolbar ▸ Menu Browse |  |
-| todo | Preferences ▸ toolbar ▸ Button Restore Default |  |
-| todo | PrintSetup (window PrintSetupView) | `PRINTSETUP` |
-| todo | PrintSetup ▸ Picker Printer | o.printer |
-| todo | PrintSetup ▸ Picker Paper | o.paper |
-| todo | PrintSetup ▸ Picker Tray | o.tray |
-| todo | PrintSetup ▸ Picker Media | o.mediaType |
-| todo | PrintSetup ▸ Picker Paper size | Binding(get: {…}, set: {…}) |
-| todo | PrintSetup ▸ TextField mm | Binding(get: {…}, set: {…}) |
-| todo | PrintSetup ▸ Menu Common |  |
-| todo | PrintSetup ▸ Picker Scale | o.scaling |
-| todo | PrintSetup ▸ Slider  | o.percent |
-| todo | PrintSetup ▸ Stepper Copies: {o.copies} | o.copies |
-| todo | PrintSetup ▸ Toggle Show the system print dialog | o.showSystemDialog |
-| todo | PrintSetup ▸ Button Print |  |
-| todo | RenderQueue (window RenderQueueView) | `RENDERQUEUE` |
-| todo | RenderQueue ▸ Picker Preset | preset |
-| todo | RenderQueue ▸ Picker Size | size |
-| todo | RenderQueue ▸ Button Add Current View |  |
-| todo | RenderQueue ▸ Button Add Saved Cameras |  |
-| todo | RenderQueue ▸ Button Folder… |  |
-| todo | RenderQueue ▸ Button [xmark] |  |
-| todo | RenderQueue ▸ Button Stop After Current / Render {queue.pendingCount} Job(s) |  |
-| todo | RenderQueue ▸ Button Clear Finished |  |
-| todo | RenderQueue ▸ contextMenu  |  |
-| todo | RevisionCloud (window RevisionCloudPanel) | `REVCLOUDPANEL` |
-| todo | RevisionCloud ▸ Picker Sheet | sheet |
-| todo | RevisionCloud ▸ TextField A | code |
-| todo | RevisionCloud ▸ Menu Sheet revisions |  |
-| todo | RevisionCloud ▸ TextField Note | note |
-| todo | RevisionCloud ▸ Picker Around | target |
-| todo | RevisionCloud ▸ TextField  | b |
-| todo | RevisionCloud ▸ Button Add Revision Cloud |  |
-| todo | RevisionCloud ▸ Button Open the sheet |  |
-| todo | RevisionCloud ▸ Button Delete the cloud and its tag |  |
-| todo | Versions (window VersionsBrowser) | `FILEVERSIONS` |
+| done | PathTrace (window PathTraceView) | `PATHTRACE` |
+| done | PathTrace ▸ Button Stop / Render |  |
+| done | PathTrace ▸ Button Save… |  |
+| done | PathTrace ▸ Picker Size | Binding(get: {…}, set: {…}) |
+| done | PathTrace ▸ Stepper Samples: {c.target} | c.target |
+| done | PathTrace ▸ Toggle Denoise | Binding(get: {…}, set: {…}) |
+| done | PathTrace ▸ Slider  | Binding(get: {…}, set: {…}) |
+| done | PathTrace ▸ Slider  | Binding(get: {…}, set: {…}) |
+| done | PathTrace ▸ Button Reset Mix |  |
+| done | PlotPreview (window PlotPreviewView) | `PREVIEW` |
+| done | PlotPreview ▸ Picker What | what |
+| done | PlotPreview ▸ Picker Plot style | setup.colorMode |
+| done | PlotPreview ▸ Picker Plot style table | Binding(get: {…}, set: {…}) |
+| done | PlotPreview ▸ Picker Named plot styles | Binding(get: {…}, set: {…}) |
+| done | PlotPreview ▸ Slider  | setup.lineweightScale |
+| done | PlotPreview ▸ Toggle Plot stamp | setup.plotStamp |
+| done | PlotPreview ▸ TextField {project}  ·  {sheet}  ·  plotted {date} {time}  ·  Oanarina Archi Tool | Binding(get: {…}, set: {…}) |
+| done | PlotPreview ▸ Picker Paper | setup.modelPaper |
+| done | PlotPreview ▸ Picker Orientation | setup.modelPortrait |
+| done | PlotPreview ▸ Picker Plot area | setup.plotArea |
+| done | PlotPreview ▸ Toggle Exact fit (not rounded to a standard scale) | setup.exactFit |
+| done | PlotPreview ▸ Picker Scale | scaleText |
+| done | PlotPreview ▸ Button Save as Default |  |
+| done | PlotPreview ▸ Button Close |  |
+| done | PlotPreview ▸ Button Save PDF… |  |
+| done | PlotPreview ▸ Button Print… |  |
+| partial | Preferences (window PreferencesView) | `OPTIONS` |
+| done | Preferences ▸ Button {t.rawValue} |  |
+| done | Preferences ▸ Button Reset to Defaults |  |
+| done | Preferences ▸ general ▸ Toggle Autosave | Binding(get: {…}, set: {…}) |
+| done | Preferences ▸ general ▸ Stepper every {prefs.autosaveMinutes} min / off | prefs.autosaveMinutes |
+| done | Preferences ▸ general ▸ Button Show Recovery Folder |  |
+| done | Preferences ▸ general ▸ Stepper Remember {prefs.recentLimit} documents | prefs.recentLimit |
+| done | Preferences ▸ general ▸ Button Clear Recent Documents |  |
+| done | Preferences ▸ general ▸ Picker Default units | prefs.defaultUnits |
+| partial: startup.js runs with a reduced archi API (not partb runScriptFile) | Preferences ▸ general ▸ Toggle Run startup.js from the script library in every new window | prefs.runStartupScript |
+| done | Preferences ▸ general ▸ Button Open Script Library |  |
+| done | Preferences ▸ drafting ▸ Toggle Show grid | prefs.draft.showGrid |
+| done | Preferences ▸ drafting ▸ Toggle Grid snap | prefs.draft.gridSnap |
+| done | Preferences ▸ drafting ▸ TextField  | prefs.draft.gridSpacing |
+| done | Preferences ▸ drafting ▸ Toggle Ortho | prefs.draft.ortho |
+| done | Preferences ▸ drafting ▸ Toggle Polar tracking | prefs.draft.polarTracking |
+| done | Preferences ▸ drafting ▸ Picker Polar increment | prefs.draft.polarIncrement |
+| done | Preferences ▸ drafting ▸ Toggle Dynamic input | prefs.draft.dynamicInput |
+| done | Preferences ▸ drafting ▸ Toggle Show lineweights | prefs.draft.lineweightDisplay |
+| done | Preferences ▸ drafting ▸ Toggle Object snap on | prefs.draft.objectSnap |
+| done | Preferences ▸ drafting ▸ Button Apply to Open Drawings |  |
+| done | Preferences ▸ display ▸ Picker Interface | prefs.theme |
+| done | Preferences ▸ display ▸ ColorPicker Custom | Binding(get: {…}, set: {…}) |
+| done | Preferences ▸ display ▸ Slider  | Binding(get: {…}, set: {…}) |
+| done | Preferences ▸ shortcuts ▸ Button Press keys… (Esc cancels) / Record Shortcut |  |
+| done | Preferences ▸ shortcuts ▸ TextField Command (e.g. WALL or ZOOM E) | commandText |
+| done | Preferences ▸ shortcuts ▸ Button Assign |  |
+| done | Preferences ▸ shortcuts ▸ TextField Search commands to assign | search |
+| done | Preferences ▸ shortcuts ▸ Button Export… |  |
+| done | Preferences ▸ shortcuts ▸ Button Import… |  |
+| done | Preferences ▸ toolbar ▸ TextField Command name (e.g. MATCHPROP) | newCommand |
+| done | Preferences ▸ toolbar ▸ Button Add |  |
+| done | Preferences ▸ toolbar ▸ Menu Browse |  |
+| done | Preferences ▸ toolbar ▸ Button Restore Default |  |
+| partial | PrintSetup (window PrintSetupView) | `PRINTSETUP` |
+| done | PrintSetup ▸ Picker Printer | o.printer |
+| done | PrintSetup ▸ Picker Paper | o.paper |
+| partial: placeholder list (Electron cannot list trays) | PrintSetup ▸ Picker Tray | o.tray |
+| partial: placeholder list (Electron cannot list media types) | PrintSetup ▸ Picker Media | o.mediaType |
+| done | PrintSetup ▸ Picker Paper size | Binding(get: {…}, set: {…}) |
+| done | PrintSetup ▸ TextField mm | Binding(get: {…}, set: {…}) |
+| done | PrintSetup ▸ Menu Common |  |
+| done | PrintSetup ▸ Picker Scale | o.scaling |
+| done | PrintSetup ▸ Slider  | o.percent |
+| done | PrintSetup ▸ Stepper Copies: {o.copies} | o.copies |
+| done | PrintSetup ▸ Toggle Show the system print dialog | o.showSystemDialog |
+| done | PrintSetup ▸ Button Print |  |
+| done | RenderQueue (window RenderQueueView) | `RENDERQUEUE` |
+| done | RenderQueue ▸ Picker Preset | preset |
+| done | RenderQueue ▸ Picker Size | size |
+| done | RenderQueue ▸ Button Add Current View |  |
+| done | RenderQueue ▸ Button Add Saved Cameras |  |
+| done | RenderQueue ▸ Button Folder… |  |
+| done | RenderQueue ▸ Button [xmark] |  |
+| done | RenderQueue ▸ Button Stop After Current / Render {queue.pendingCount} Job(s) |  |
+| done | RenderQueue ▸ Button Clear Finished |  |
+| done | RenderQueue ▸ contextMenu  |  |
+| done | RevisionCloud (window RevisionCloudPanel) | `REVCLOUDPANEL` |
+| done | RevisionCloud ▸ Picker Sheet | sheet |
+| done | RevisionCloud ▸ TextField A | code |
+| done | RevisionCloud ▸ Menu Sheet revisions |  |
+| done | RevisionCloud ▸ TextField Note | note |
+| done | RevisionCloud ▸ Picker Around | target |
+| done | RevisionCloud ▸ TextField  | b |
+| done | RevisionCloud ▸ Button Add Revision Cloud |  |
+| done | RevisionCloud ▸ Button Open the sheet |  |
+| done | RevisionCloud ▸ Button Delete the cloud and its tag |  |
+| todo: FILEVERSIONS not ported | Versions (window VersionsBrowser) | `FILEVERSIONS` |
 | todo | Versions ▸ Button Open Copy |  |
 | todo | Versions ▸ Button Restore… |  |
 | todo | Versions ▸ Button Save Version Now |  |
-| todo | Start Screen (window StartView) | `STARTSCREEN` |
-| todo | Start Screen ▸ StartTile New Drawing |  |
-| todo | Start Screen ▸ StartTile Open… |  |
-| todo | Start Screen ▸ StartTile Build Sample House |  |
-| todo | Start Screen ▸ Button Folder |  |
-| todo | Start Screen ▸ Button Open Template… |  |
-| todo | Start Screen ▸ Button Clear |  |
-| todo | Start Screen ▸ contextMenu  |  |
-| todo | Command Search (window CommandSearchPalette) | `COMMANDSEARCH` |
-| todo | Command Search ▸ TextField Search commands (e.g. wal, hatch, plot)… | query |
-| todo | Command Search ▸ Button {c.name} |  |
+| done | Start Screen (window StartView) | `STARTSCREEN` |
+| done | Start Screen ▸ StartTile New Drawing |  |
+| done | Start Screen ▸ StartTile Open… |  |
+| done | Start Screen ▸ StartTile Build Sample House |  |
+| done | Start Screen ▸ Button Folder |  |
+| done | Start Screen ▸ Button Open Template… |  |
+| done | Start Screen ▸ Button Clear |  |
+| done | Start Screen ▸ contextMenu  |  |
+| done | Command Search (window CommandSearchPalette) | `COMMANDSEARCH` |
+| done | Command Search ▸ TextField Search commands (e.g. wal, hatch, plot)… | query |
+| done | Command Search ▸ Button {c.name} |  |
 
 ## Status bar
 
 | Status | Item | Command / detail |
 | --- | --- | --- |
-| todo | view CoordinateReadout |   |
-| todo | menu ucsIndicator |   |
-| todo | view MacroButtonBar |   |
-| todo | toggle GRID | F7  |
-| todo | toggle SNAP | F9  |
-| todo | toggle ORTHO | F8  |
-| todo | toggle POLAR | F10  |
-| todo | toggle OTRACK | F11  |
-| todo | toggle OSNAP | F3  |
-| todo | toggle DYN | F12  |
-| todo | toggle LWT |   |
-| todo | dropdown Level |   |
-| todo | dropdown Layer |   |
-| todo | label {sel} selected |   |
-| todo | view ProgressStatusView |   |
-| todo | menu isolateMenu |   |
-| todo | view AnnotationScaleMenu |   |
-| todo | button slider.horizontal.below.rectangle |  Quick Properties (QP) {model.showQuickProperties ? "on" : "off"} |
-| todo | menu {model.doc.units.abbreviation} |  Drawing units |
-| todo | view ZoomReadout |   |
-| todo | button agentIndicator |   |
+| done | view CoordinateReadout |   |
+| done | menu ucsIndicator |   |
+| todo: macro buttons not in the Windows status bar | view MacroButtonBar |   |
+| done | toggle GRID | F7  |
+| done | toggle SNAP | F9  |
+| done | toggle ORTHO | F8  |
+| done | toggle POLAR | F10  |
+| done | toggle OTRACK | F11  |
+| done | toggle OSNAP | F3  |
+| done | toggle DYN | F12  |
+| done | toggle LWT |   |
+| done | dropdown Level |   |
+| done | dropdown Layer |   |
+| done | label {sel} selected |   |
+| todo: no progress indicator for long commands | view ProgressStatusView |   |
+| done | menu isolateMenu |   |
+| done | view AnnotationScaleMenu |   |
+| partial: opens the Quick Props tab; tooltip does not follow the on/off state | button slider.horizontal.below.rectangle |  Quick Properties (QP) {model.showQuickProperties ? "on" : "off"} |
+| done | menu {model.doc.units.abbreviation} |  Drawing units |
+| done | view ZoomReadout |   |
+| partial: static 'Agent: off' label; runs AGENTSERVER but does not show the server state | button agentIndicator |   |
 
 ## Keyboard shortcuts (Windows keys; Mac in brackets)
 
 | Status | Item | Command / detail |
 | --- | --- | --- |
-| todo | Ctrl+, [⌘,] Oanarina Archi Tool ▸ Settings… | Settings: no Windows standard; place Options… under Tools/Edit menu as well (AutoCAD: OPTIONS) → Ctrl+, |
-| todo | Ctrl+H [⌘H] Oanarina Archi Tool ▸ Hide Oanarina Archi Tool | Hide app has no Windows equivalent: drop |
-| todo | Ctrl+Alt+H [⌥⌘H] Oanarina Archi Tool ▸ Hide Others | Hide others has no Windows equivalent: drop |
-| todo | Ctrl+Q [⌘Q] Oanarina Archi Tool ▸ Quit Oanarina Archi Tool | Quit → File ▸ Exit (Alt+F4); Ctrl+Q is not a Windows convention → Alt+F4 |
-| todo | Ctrl+N [⌘N] File ▸ New Drawing |  |
-| todo | Ctrl+O [⌘O] File ▸ Open… |  |
-| todo | Ctrl+W [⌘W] File ▸ Close | Close: Windows also uses Ctrl+F4 for documents; add Ctrl+F4 as alias → Ctrl+W |
-| todo | Ctrl+S [⌘S] File ▸ Save |  |
-| todo | Ctrl+Shift+S [⇧⌘S] File ▸ Save As… |  |
-| todo | Ctrl+Shift+I [⇧⌘I] File ▸ Import… |  |
-| todo | Ctrl+Shift+P [⇧⌘P] File ▸ Page Setup… |  |
-| todo | Ctrl+Alt+Shift+P [⌥⇧⌘P] File ▸ Plot Preview… | Ctrl+Alt = AltGr → Ctrl+Alt+Shift+P |
-| todo | Ctrl+P [⌘P] File ▸ Plot / Print… |  |
-| todo | Ctrl+Z [⌘Z] Edit ▸ Undo |  |
-| todo | Ctrl+Shift+Z [⇧⌘Z] Edit ▸ Redo | Redo: Windows convention is Ctrl+Y; keep Ctrl+Shift+Z as a second binding → Ctrl+Y |
-| todo | Ctrl+X [⌘X] Edit ▸ Cut |  |
-| todo | Ctrl+C [⌘C] Edit ▸ Copy |  |
-| todo | Ctrl+V [⌘V] Edit ▸ Paste |  |
-| todo | Ctrl+A [⌘A] Edit ▸ Select All |  |
-| todo | Ctrl+Shift+A [⇧⌘A] Edit ▸ Deselect All |  |
-| todo | Ctrl+Alt+1 [⌥⌘1] View ▸ 2D Plan | Ctrl+Alt+digit = AltGr+digit on European layouts (types characters such as ~ or ¡) → Ctrl+Alt+1 |
-| todo | Ctrl+Alt+2 [⌥⌘2] View ▸ 3D Model | Ctrl+Alt = AltGr → Ctrl+Alt+2 |
-| todo | Ctrl+Alt+3 [⌥⌘3] View ▸ Split View | Ctrl+Alt = AltGr → Ctrl+Alt+3 |
-| todo | Ctrl+Alt+4 [⌥⌘4] View ▸ Sheets | Ctrl+Alt = AltGr → Ctrl+Alt+4 |
-| todo | Ctrl+0 [⌘0] View ▸ Zoom Extents | See ⌃0: Ctrl+0 is Clean Screen on Windows; same Windows keys as: clean screen → (none) |
-| todo | Ctrl+= [⌘=] View ▸ Zoom In |  |
-| todo | Ctrl+- [⌘-] View ▸ Zoom Out |  |
-| todo | Ctrl+Alt+P [⌥⌘P] View ▸ Hide Panels | Ctrl+Alt equals AltGr on many European keyboards (may type a character); consider Ctrl+Shift+F2-style alternatives → Ctrl+Alt+P |
-| todo | Ctrl+Alt+J [⌥⌘J] View ▸ Show Script Console | Ctrl+Alt = AltGr on European layouts → Ctrl+Alt+J |
-| todo | Ctrl+F [⌃⌘F] View ▸ Enter Full Screen | Full screen is F11 on Windows but F11 is Object snap tracking (AutoCAD); keep F11 for OTRACK, full screen via View menu only → F11? |
-| todo | Ctrl+M [⌘M] Window ▸ Minimize | Minimize → window button / Win+Down; do not bind Ctrl+M |
-| todo | Ctrl+K [⌘K] Help ▸ Search Commands… |  |
-| todo | Ctrl+Shift+/ [⇧⌘/] Help ▸ Command Reference | Ctrl+? on US layouts; fine → Ctrl+Shift+/ |
-| todo | Type anywhere [Type anywhere] Start a command on the command line |  |
-| todo | Enter / Space [Enter / Space] Finish input · repeat the last command |  |
-| todo | Esc [Esc] Cancel the command · clear the selection |  |
-| todo | Right-click [Right-click] Enter while a command runs · context menu when idle |  |
-| todo | Tab [Tab] Accept autocomplete |  |
-| todo | ↑ / ↓ [↑ / ↓] Command history / suggestions |  |
-| todo | F1 [F1] Help for the running command | Windows help key: matches the Mac (context help) → F1 |
-| todo | F2 [F2] Command history panel |  |
-| todo | F3 [F3] Object snap on/off |  |
-| todo | F7 [F7] Grid display |  |
-| todo | F8 [F8] Ortho mode |  |
-| todo | F9 [F9] Grid snap |  |
-| todo | F10 [F10] Polar tracking | F10 activates the menu bar on Windows (and in Electron): the shell must preventDefault so F10 toggles POLAR as on the Mac → F10 |
-| todo | F11 [F11] Object snap tracking |  |
-| todo | F12 [F12] Dynamic input | Electron/Chromium opens DevTools on F12 in debug builds: disable in release so F12 toggles DYN → F12 |
-| todo | Scroll wheel / pinch [Scroll wheel / pinch] Zoom about the cursor |  |
-| todo | Two-finger scroll [Two-finger scroll] Pan |  |
-| todo | Middle-drag · Space+drag [Middle-drag · Space+drag] Pan |  |
-| todo | Double middle-click [Double middle-click] Zoom extents |  |
-| todo | Ctrl+0 [⌘0] Zoom extents | See ⌃0: Ctrl+0 is Clean Screen on Windows; same Windows keys as: clean screen → (none) |
-| todo | Ctrl+= / Ctrl+- [⌘= / ⌘-] Zoom in / out |  |
-| todo | Drag left → right [Drag left → right] Window selection (fully inside) |  |
-| todo | Drag right → left [Drag right → left] Crossing selection (touching) |  |
-| todo | Shift-click [Shift-click] Toggle an object in the selection |  |
-| todo | Click a grip [Click a grip] Stretch the object (wall ends move joined walls) |  |
-| todo | Double-click text [Double-click text] Edit text |  |
-| todo | Del [Delete] Erase the selection | Mac Delete (backspace) erases the selection; on Windows use Del (and Backspace) → Del |
-| todo | Ctrl+Z / Ctrl+Shift+Z [⌘Z / ⇧⌘Z] Undo / Redo |  |
-| todo | Ctrl+C / Ctrl+X / Ctrl+V [⌘C / ⌘X / ⌘V] Copy / Cut / Paste objects (paste at cursor) |  |
-| todo | Ctrl+A [⌘A] Select all |  |
-| todo | Ctrl+Alt+1 … Ctrl+Alt+4 [⌥⌘1 … ⌥⌘4] 2D · 3D · Split · Sheets |  |
-| todo | Ctrl+Alt+P [⌥⌘P] Show / hide panels | Ctrl+Alt equals AltGr on many European keyboards (may type a character); consider Ctrl+Shift+F2-style alternatives → Ctrl+Alt+P |
-| todo | Ctrl+Alt+J [⌥⌘J] Script console | Ctrl+Alt = AltGr on European layouts → Ctrl+Alt+J |
-| todo | Ctrl+N / Ctrl+O / Ctrl+S / Ctrl+Shift+S [⌘N / ⌘O / ⌘S / ⇧⌘S] New · Open · Save · Save As |  |
-| todo | Ctrl+P [⌘P] Plot / Print |  |
-| todo | Ctrl+Shift+P [⇧⌘P] Page setup |  |
-| todo | Ctrl+Alt+Shift+P [⌥⇧⌘P] Plot preview | Ctrl+Alt = AltGr → Ctrl+Alt+Shift+P |
-| todo | Ctrl+K [⌘K] Search commands |  |
-| todo | Ctrl+0 [⌃0] Clean screen | Clean screen ⌃0 and zoom extents ⌘0 both become Ctrl+0: AutoCAD for Windows uses Ctrl+0 for Clean Screen; give Zoom Extents no Ctrl binding (double middle-click, Z E); same Windows keys as: zoom extents → Ctrl+0 |
-| todo | Ctrl+, [⌘,] Settings (custom shortcuts, colors, autosave…) | Settings: no Windows standard; place Options… under Tools/Edit menu as well (AutoCAD: OPTIONS) → Ctrl+, |
-| todo | Ctrl+Shift+/ [⇧⌘/] Command reference | Ctrl+? on US layouts; fine → Ctrl+Shift+/ |
-| todo | F7 [F7] Toggle GRID |  |
-| todo | F9 [F9] Toggle SNAP |  |
-| todo | F8 [F8] Toggle ORTHO |  |
-| todo | F10 [F10] Toggle POLAR | F10 activates the menu bar on Windows (and in Electron): the shell must preventDefault so F10 toggles POLAR as on the Mac → F10 |
-| todo | F11 [F11] Toggle OTRACK |  |
-| todo | F3 [F3] Toggle OSNAP |  |
-| todo | F12 [F12] Toggle DYN | Electron/Chromium opens DevTools on F12 in debug builds: disable in release so F12 toggles DYN → F12 |
-| todo | Ctrl+K [] Search commands (Ctrl+K) |  |
-| todo | Ctrl+0 [] Clean screen (Ctrl+0) |  |
+| done | Ctrl+, [⌘,] Oanarina Archi Tool ▸ Settings… | Settings: no Windows standard; place Options… under Tools/Edit menu as well (AutoCAD: OPTIONS) → Ctrl+, |
+| n/a (macOS only) | Ctrl+H [⌘H] Oanarina Archi Tool ▸ Hide Oanarina Archi Tool | Hide app has no Windows equivalent: drop |
+| n/a (macOS only) | Ctrl+Alt+H [⌥⌘H] Oanarina Archi Tool ▸ Hide Others | Hide others has no Windows equivalent: drop |
+| done | Ctrl+Q [⌘Q] Oanarina Archi Tool ▸ Quit Oanarina Archi Tool | Quit → File ▸ Exit (Alt+F4); Ctrl+Q is not a Windows convention → Alt+F4 |
+| done | Ctrl+N [⌘N] File ▸ New Drawing |  |
+| done | Ctrl+O [⌘O] File ▸ Open… |  |
+| done | Ctrl+W [⌘W] File ▸ Close | Close: Windows also uses Ctrl+F4 for documents; add Ctrl+F4 as alias → Ctrl+W |
+| done | Ctrl+S [⌘S] File ▸ Save |  |
+| done | Ctrl+Shift+S [⇧⌘S] File ▸ Save As… |  |
+| todo: not bound on Windows | Ctrl+Shift+I [⇧⌘I] File ▸ Import… |  |
+| done | Ctrl+Shift+P [⇧⌘P] File ▸ Page Setup… |  |
+| todo: bug: main.ts maps any Ctrl+P combination to PLOT | Ctrl+Alt+Shift+P [⌥⇧⌘P] File ▸ Plot Preview… | Ctrl+Alt = AltGr → Ctrl+Alt+Shift+P |
+| done | Ctrl+P [⌘P] File ▸ Plot / Print… |  |
+| done | Ctrl+Z [⌘Z] Edit ▸ Undo |  |
+| done | Ctrl+Shift+Z [⇧⌘Z] Edit ▸ Redo | Redo: Windows convention is Ctrl+Y; keep Ctrl+Shift+Z as a second binding → Ctrl+Y |
+| done | Ctrl+X [⌘X] Edit ▸ Cut |  |
+| done | Ctrl+C [⌘C] Edit ▸ Copy |  |
+| done | Ctrl+V [⌘V] Edit ▸ Paste |  |
+| done | Ctrl+A [⌘A] Edit ▸ Select All |  |
+| todo: bug: Ctrl+Shift+A selects all (main.ts ignores Shift) | Ctrl+Shift+A [⇧⌘A] Edit ▸ Deselect All |  |
+| todo: not bound | Ctrl+Alt+1 [⌥⌘1] View ▸ 2D Plan | Ctrl+Alt+digit = AltGr+digit on European layouts (types characters such as ~ or ¡) → Ctrl+Alt+1 |
+| todo: not bound | Ctrl+Alt+2 [⌥⌘2] View ▸ 3D Model | Ctrl+Alt = AltGr → Ctrl+Alt+2 |
+| todo: not bound | Ctrl+Alt+3 [⌥⌘3] View ▸ Split View | Ctrl+Alt = AltGr → Ctrl+Alt+3 |
+| todo: not bound | Ctrl+Alt+4 [⌥⌘4] View ▸ Sheets | Ctrl+Alt = AltGr → Ctrl+Alt+4 |
+| partial: Ctrl+0 toggles Clean Screen on Windows (the Mac binds both) | Ctrl+0 [⌘0] View ▸ Zoom Extents | See ⌃0: Ctrl+0 is Clean Screen on Windows; same Windows keys as: clean screen → (none) |
+| done | Ctrl+= [⌘=] View ▸ Zoom In |  |
+| done | Ctrl+- [⌘-] View ▸ Zoom Out |  |
+| todo: bug: runs PLOT (main.ts ignores Alt) | Ctrl+Alt+P [⌥⌘P] View ▸ Hide Panels | Ctrl+Alt equals AltGr on many European keyboards (may type a character); consider Ctrl+Shift+F2-style alternatives → Ctrl+Alt+P |
+| todo: not bound | Ctrl+Alt+J [⌥⌘J] View ▸ Show Script Console | Ctrl+Alt = AltGr on European layouts → Ctrl+Alt+J |
+| n/a (macOS system item) | Ctrl+F [⌃⌘F] View ▸ Enter Full Screen | Full screen is F11 on Windows but F11 is Object snap tracking (AutoCAD); keep F11 for OTRACK, full screen via View menu only → F11? |
+| n/a (Windows uses Win+Down) | Ctrl+M [⌘M] Window ▸ Minimize | Minimize → window button / Win+Down; do not bind Ctrl+M |
+| done | Ctrl+K [⌘K] Help ▸ Search Commands… |  |
+| todo: not bound | Ctrl+Shift+/ [⇧⌘/] Help ▸ Command Reference | Ctrl+? on US layouts; fine → Ctrl+Shift+/ |
+| done | Type anywhere [Type anywhere] Start a command on the command line |  |
+| done | Enter / Space [Enter / Space] Finish input · repeat the last command |  |
+| done | Esc [Esc] Cancel the command · clear the selection |  |
+| done | Right-click [Right-click] Enter while a command runs · context menu when idle |  |
+| done | Tab [Tab] Accept autocomplete |  |
+| done | ↑ / ↓ [↑ / ↓] Command history / suggestions |  |
+| partial: F1 opens the guide, not the running command's section | F1 [F1] Help for the running command | Windows help key: matches the Mac (context help) → F1 |
+| todo: F2 is swallowed (main.ts) and opens nothing | F2 [F2] Command history panel |  |
+| done | F3 [F3] Object snap on/off |  |
+| done | F7 [F7] Grid display |  |
+| done | F8 [F8] Ortho mode |  |
+| done | F9 [F9] Grid snap |  |
+| done | F10 [F10] Polar tracking | F10 activates the menu bar on Windows (and in Electron): the shell must preventDefault so F10 toggles POLAR as on the Mac → F10 |
+| done | F11 [F11] Object snap tracking |  |
+| done | F12 [F12] Dynamic input | Electron/Chromium opens DevTools on F12 in debug builds: disable in release so F12 toggles DYN → F12 |
+| done | Scroll wheel / pinch [Scroll wheel / pinch] Zoom about the cursor |  |
+| done | Two-finger scroll [Two-finger scroll] Pan |  |
+| done | Middle-drag · Space+drag [Middle-drag · Space+drag] Pan |  |
+| done | Double middle-click [Double middle-click] Zoom extents |  |
+| partial: Ctrl+0 is Clean Screen on Windows | Ctrl+0 [⌘0] Zoom extents | See ⌃0: Ctrl+0 is Clean Screen on Windows; same Windows keys as: clean screen → (none) |
+| done | Ctrl+= / Ctrl+- [⌘= / ⌘-] Zoom in / out |  |
+| done | Drag left → right [Drag left → right] Window selection (fully inside) |  |
+| done | Drag right → left [Drag right → left] Crossing selection (touching) |  |
+| done | Shift-click [Shift-click] Toggle an object in the selection |  |
+| done | Click a grip [Click a grip] Stretch the object (wall ends move joined walls) |  |
+| done | Double-click text [Double-click text] Edit text |  |
+| done | Del [Delete] Erase the selection | Mac Delete (backspace) erases the selection; on Windows use Del (and Backspace) → Del |
+| done | Ctrl+Z / Ctrl+Shift+Z [⌘Z / ⇧⌘Z] Undo / Redo |  |
+| done | Ctrl+C / Ctrl+X / Ctrl+V [⌘C / ⌘X / ⌘V] Copy / Cut / Paste objects (paste at cursor) |  |
+| done | Ctrl+A [⌘A] Select all |  |
+| todo: not bound | Ctrl+Alt+1 … Ctrl+Alt+4 [⌥⌘1 … ⌥⌘4] 2D · 3D · Split · Sheets |  |
+| todo: bug: runs PLOT | Ctrl+Alt+P [⌥⌘P] Show / hide panels | Ctrl+Alt equals AltGr on many European keyboards (may type a character); consider Ctrl+Shift+F2-style alternatives → Ctrl+Alt+P |
+| todo: not bound | Ctrl+Alt+J [⌥⌘J] Script console | Ctrl+Alt = AltGr on European layouts → Ctrl+Alt+J |
+| done | Ctrl+N / Ctrl+O / Ctrl+S / Ctrl+Shift+S [⌘N / ⌘O / ⌘S / ⇧⌘S] New · Open · Save · Save As |  |
+| done | Ctrl+P [⌘P] Plot / Print |  |
+| done | Ctrl+Shift+P [⇧⌘P] Page setup |  |
+| todo: bug: runs PLOT | Ctrl+Alt+Shift+P [⌥⇧⌘P] Plot preview | Ctrl+Alt = AltGr → Ctrl+Alt+Shift+P |
+| done | Ctrl+K [⌘K] Search commands |  |
+| done | Ctrl+0 [⌃0] Clean screen | Clean screen ⌃0 and zoom extents ⌘0 both become Ctrl+0: AutoCAD for Windows uses Ctrl+0 for Clean Screen; give Zoom Extents no Ctrl binding (double middle-click, Z E); same Windows keys as: zoom extents → Ctrl+0 |
+| done | Ctrl+, [⌘,] Settings (custom shortcuts, colors, autosave…) | Settings: no Windows standard; place Options… under Tools/Edit menu as well (AutoCAD: OPTIONS) → Ctrl+, |
+| todo: not bound | Ctrl+Shift+/ [⇧⌘/] Command reference | Ctrl+? on US layouts; fine → Ctrl+Shift+/ |
+| done | F7 [F7] Toggle GRID |  |
+| done | F9 [F9] Toggle SNAP |  |
+| done | F8 [F8] Toggle ORTHO |  |
+| done | F10 [F10] Toggle POLAR | F10 activates the menu bar on Windows (and in Electron): the shell must preventDefault so F10 toggles POLAR as on the Mac → F10 |
+| done | F11 [F11] Toggle OTRACK |  |
+| done | F3 [F3] Toggle OSNAP |  |
+| done | F12 [F12] Toggle DYN | Electron/Chromium opens DevTools on F12 in debug builds: disable in release so F12 toggles DYN → F12 |
+| done | Ctrl+K [] Search commands (Ctrl+K) |  |
+| done | Ctrl+0 [] Clean screen (Ctrl+0) |  |
 
 ## Rendering and 3D
 
 | Status | Item | Command / detail |
 | --- | --- | --- |
-| todo | Lighting preset Daylight | sky=daylight, sunAltitude=46, sunAzimuth=222, sunColor=[1.0, 0.955, 0.89], sunIntensity=3300, shadowRadius=2.5, shadowAlpha=0.94, envIntensity=1.05 … |
-| todo | Lighting preset Golden hour | sky=golden, sunAltitude=11, sunAzimuth=228, sunColor=[1.0, 0.66, 0.38], sunIntensity=3400, shadowRadius=5, shadowAlpha=0.9, envIntensity=0.95 … |
-| todo | Lighting preset Overcast | sky=overcast, sunAltitude=58, sunAzimuth=200, sunColor=[0.93, 0.96, 1.0], sunIntensity=420, shadowRadius=22, shadowAlpha=0.7, envIntensity=1.55 … |
-| todo | Lighting preset Night | sky=night, sunAltitude=38, sunAzimuth=135, sunColor=[0.62, 0.72, 1.0], sunIntensity=70, shadowRadius=6, shadowAlpha=0.85, envIntensity=1.0 … |
-| todo | Visual style Wireframe |  |
-| todo | Visual style Hidden Line |  |
-| todo | Visual style Shaded |  |
-| todo | Visual style Shaded with Edges |  |
-| todo | Visual style Conceptual |  |
-| todo | Visual style Realistic |  |
-| todo | Visual style X-Ray |  |
-| todo | Visual style Sketchy |  |
-| todo | Photographic render (RENDER) with presets, supersampling, PNG output |  |
-| todo | Walk mode (WASD + mouse) |  |
-| todo | Section box |  |
-| todo | Sun study (animated sun and shadows) |  |
-| todo | View cube |  |
-| todo | 3D gizmo (move/rotate) |  |
-| todo | Camera paths and walkthrough video |  |
-| todo | Render queue |  |
-| todo | 360° panorama |  |
-| todo | Measure 3D |  |
-| todo | Split view (plan + 3D) |  |
+| partial: within ~5 levels of the Mac, but lawn/meadow render darker (view3d calib) | Lighting preset Daylight | sky=daylight, sunAltitude=46, sunAzimuth=222, sunColor=[1.0, 0.955, 0.89], sunIntensity=3300, shadowRadius=2.5, shadowAlpha=0.94, envIntensity=1.05 … |
+| partial: lawn and paving darker than the Mac (mean diff 5.7-9.4) | Lighting preset Golden hour | sky=golden, sunAltitude=11, sunAzimuth=228, sunColor=[1.0, 0.66, 0.38], sunIntensity=3400, shadowRadius=5, shadowAlpha=0.9, envIntensity=0.95 … |
+| partial: within ~5 levels of the Mac, but lawn/meadow render darker (view3d calib) | Lighting preset Overcast | sky=overcast, sunAltitude=58, sunAzimuth=200, sunColor=[0.93, 0.96, 1.0], sunIntensity=420, shadowRadius=22, shadowAlpha=0.7, envIntensity=1.55 … |
+| partial: about 25% darker than the Mac; bollard light pools too wide | Lighting preset Night | sky=night, sunAltitude=38, sunAzimuth=135, sunColor=[0.62, 0.72, 1.0], sunIntensity=70, shadowRadius=6, shadowAlpha=0.85, envIntensity=1.0 … |
+| done | Visual style Wireframe |  |
+| done | Visual style Hidden Line |  |
+| done | Visual style Shaded |  |
+| done | Visual style Shaded with Edges |  |
+| done | Visual style Conceptual |  |
+| done | Visual style Realistic |  |
+| done | Visual style X-Ray |  |
+| done | Visual style Sketchy |  |
+| partial: no clay mode, depth of field or HDRI environment in the WebGL renderer | Photographic render (RENDER) with presets, supersampling, PNG output |  |
+| done | Walk mode (WASD + mouse) |  |
+| done | Section box |  |
+| done | Sun study (animated sun and shadows) |  |
+| done | View cube |  |
+| done | 3D gizmo (move/rotate) |  |
+| done | Camera paths and walkthrough video |  |
+| done | Render queue |  |
+| partial: rendered with the photographic look, not the Mac panorama renderer | 360° panorama |  |
+| done | Measure 3D |  |
+| done | Split view (plan + 3D) |  |
 
 ## Theme
 
 | Status | Item | Command / detail |
 | --- | --- | --- |
-| todo | Color canvas | dark #1E1F22 · light #1E1F22 |
-| todo | Color panel | dark #26272B · light #F2F2F4 |
-| todo | Color ribbon | dark #2F3035 · light #E9E9EC |
-| todo | Color ribbonTabBar | dark #232428 · light #DADADF |
-| todo | Color field | dark #1B1C1F · light #FFFFFF |
-| todo | Color hover | dark rgba(255,255,255,0.07) · light rgba(0,0,0,0.07) |
-| todo | Color pressed | dark rgba(255,255,255,0.12) · light rgba(0,0,0,0.12) |
-| todo | Color separator | dark rgba(255,255,255,0.09) · light rgba(0,0,0,0.12) |
-| todo | Color text | dark #E6E6E6 · light #1D1D20 |
-| todo | Color textDim | dark #9A9BA1 · light #5E5F66 |
-| todo | Color textFaint | dark #6B6C72 · light #9A9BA1 |
-| todo | Color accent | dark #F5C518 · light #F5C518 |
-| todo | Color accentText | dark #1E1F22 · light #1E1F22 |
-| todo | Color danger | dark #E5534B · light #E5534B |
-| todo | Color windowBlue | dark #4073F2 · light #4073F2 |
-| todo | Color crossingGreen | dark #40CC66 · light #40CC66 |
-| todo | Color nsAccent | dark #F5C518 · light #F5C518 |
-| todo | Font font | 11.0 pt regular  |
-| todo | Font fontSmall | 10.0 pt regular  |
-| todo | Font fontBold | 11.0 pt semibold  |
-| todo | Font mono | 11.0 pt regular monospaced |
-| todo | Size ribbonHeight | 90 |
-| todo | Size ribbonTabBarHeight | 26 |
-| todo | Size ribbonTabFontSize | 11 |
-| todo | Size ribbonTabPaddingX | 10 |
-| todo | Size ribbonActiveTabUnderline | 2 |
-| todo | Size largeButtonWidth | 50 |
-| todo | Size largeButtonHeight | 58 |
-| todo | Size largeButtonIconSize | 19 |
-| todo | Size largeButtonLabelSize | 10 |
-| todo | Size smallButtonHeight | 20 |
-| todo | Size smallButtonMinWidth | 70 |
-| todo | Size smallButtonFontSize | 11 |
-| todo | Size ribbonGroupTitleSize | 9.5 |
-| todo | Size buttonCornerRadius | 4 |
-| todo | Size statusBarHeight | 24 |
-| todo | Size statusToggleFontSize | 9.5 |
-| todo | Size statusToggleHeight | 16 |
-| todo | Size panelTabHeight | 36 |
-| todo | Size panelTabIconSize | 12 |
-| todo | Size panelTabLabelSize | 8.5 |
-| todo | Size panelTabColumns | 6 |
-| todo | Size panelHeaderFontSize | 9.5 |
-| todo | Size iconButtonWidth | 22 |
-| todo | Size iconButtonHeight | 20 |
-| todo | Size toolTileHeight | 54 |
-| todo | Size toolTileMinWidth | 84 |
-| todo | Size preferencesSidebarWidth | 170 |
-| todo | Size mainWindow.panelWidth | 300 |
-| todo | Size mainWindow.width | 300 |
+| done | Color canvas | dark #1E1F22 · light #1E1F22 |
+| done | Color panel | dark #26272B · light #F2F2F4 |
+| done | Color ribbon | dark #2F3035 · light #E9E9EC |
+| done | Color ribbonTabBar | dark #232428 · light #DADADF |
+| done | Color field | dark #1B1C1F · light #FFFFFF |
+| done | Color hover | dark rgba(255,255,255,0.07) · light rgba(0,0,0,0.07) |
+| done | Color pressed | dark rgba(255,255,255,0.12) · light rgba(0,0,0,0.12) |
+| done | Color separator | dark rgba(255,255,255,0.09) · light rgba(0,0,0,0.12) |
+| done | Color text | dark #E6E6E6 · light #1D1D20 |
+| done | Color textDim | dark #9A9BA1 · light #5E5F66 |
+| done | Color textFaint | dark #6B6C72 · light #9A9BA1 |
+| done | Color accent | dark #F5C518 · light #F5C518 |
+| done | Color accentText | dark #1E1F22 · light #1E1F22 |
+| done | Color danger | dark #E5534B · light #E5534B |
+| partial: window-selection blue is #4D80FF in plan-canvas.ts (Mac #4073F2) | Color windowBlue | dark #4073F2 · light #4073F2 |
+| done | Color crossingGreen | dark #40CC66 · light #40CC66 |
+| done | Color nsAccent | dark #F5C518 · light #F5C518 |
+| done | Font font | 11.0 pt regular  |
+| done | Font fontSmall | 10.0 pt regular  |
+| done | Font fontBold | 11.0 pt semibold  |
+| done | Font mono | 11.0 pt regular monospaced |
+| done | Size ribbonHeight | 90 |
+| done | Size ribbonTabBarHeight | 26 |
+| done | Size ribbonTabFontSize | 11 |
+| done | Size ribbonTabPaddingX | 10 |
+| done | Size ribbonActiveTabUnderline | 2 |
+| done | Size largeButtonWidth | 50 |
+| done | Size largeButtonHeight | 58 |
+| done | Size largeButtonIconSize | 19 |
+| done | Size largeButtonLabelSize | 10 |
+| done | Size smallButtonHeight | 20 |
+| done | Size smallButtonMinWidth | 70 |
+| done | Size smallButtonFontSize | 11 |
+| done | Size ribbonGroupTitleSize | 9.5 |
+| done | Size buttonCornerRadius | 4 |
+| done | Size statusBarHeight | 24 |
+| done | Size statusToggleFontSize | 9.5 |
+| done | Size statusToggleHeight | 16 |
+| done | Size panelTabHeight | 36 |
+| done | Size panelTabIconSize | 12 |
+| done | Size panelTabLabelSize | 8.5 |
+| done | Size panelTabColumns | 6 |
+| done | Size panelHeaderFontSize | 9.5 |
+| done | Size iconButtonWidth | 22 |
+| done | Size iconButtonHeight | 20 |
+| done | Size toolTileHeight | 54 |
+| done | Size toolTileMinWidth | 84 |
+| done | Size preferencesSidebarWidth | 170 |
+| done | Size mainWindow.panelWidth | 300 |
+| done | Size mainWindow.width | 300 |

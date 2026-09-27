@@ -1,0 +1,1 @@
+{"request":{"jsonrpc":"2.0","id":3002,"method":"view3d.setVariable","params":{"name":"SECTIONPLANE","value":"on;0,0,950;0,0,1"}},"response":{"jsonrpc":"2.0","id":3002,"result":{"name":"SECTIONPLANE","value":"on;0,0,950;0,0,1","changed":true}},"notifications":[{"jsonrpc":"2.0","method":"changed","params":{"what":["document"]}}]}

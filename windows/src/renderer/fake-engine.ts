@@ -7,6 +7,8 @@
 import { snapPoint, type Notification, type PromptState } from "../shared/protocol";
 import type { Engine } from "./engine";
 import { decodeDrawList, pick as pickEntry, Entry } from "./canvas/drawitems";
+import { fakeDialogCall } from "./dialogs/fake-dialogs";
+import { fakeOutputCall } from "./output/fake-output";
 
 type Raw = { id: string | null; layer?: string; items: any[] };
 const PREVIEW = "#DBE0EB";
@@ -100,6 +102,10 @@ export class FakeEngine implements Engine {
 
   async call(method: string, params: any = {}): Promise<any> {
     await this.ready;
+    const outp = fakeOutputCall(this as any, method, params);
+    if (outp !== undefined) return outp;
+    const dlg = fakeDialogCall(this as any, method, params);
+    if (dlg !== undefined) return dlg;
     switch (method) {
       case "engine.hello": return this.hello;
       case "doc.new": {
@@ -180,6 +186,9 @@ export class FakeEngine implements Engine {
         return rec?.response?.result ?? { meshes: [], lights: [], sun: { azimuth: 228, altitude: 11 } };
       }
       case "engine.log": return { lines: [] };
+      // 3D view (view3d.info / sectionCaps / transform replay the recording): camera reports and image writes.
+      case "view3d.setCamera": return { ok: true };
+      case "view3d.saveImage": this.log(`Image saved (fixture mode, not written): ${params.path ?? ""}`); return { path: params.path, bytes: 0 };
     }
     const r = this.rec(method);
     if (r) return JSON.parse(JSON.stringify(r.result));

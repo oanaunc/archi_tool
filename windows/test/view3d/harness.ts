@@ -1,7 +1,7 @@
 // Oanarina Archi Tool for Windows — GPL-3.0-or-later
 // Test page for the 3D view: loads the Cedar House meshes fixture and exposes window.harness for Playwright
 // (windows/test/view3d/run.mjs, ui.mjs) to render each lighting preset from the saved cameras and to drive the interactive view.
-import { View3D } from "../../src/renderer/view3d";
+import { View3D, EngineBridge, Effects } from "../../src/renderer/view3d";
 
 declare global { interface Window { harness: any } }
 
@@ -13,13 +13,19 @@ async function main() {
   const doc = await json("/windows/test/view3d/fixtures/cedar-document.json");
   const raw = await json(meshesURL);
   const meshes = raw.response?.result ?? raw.result ?? raw;
+  // Full detail: the engine's binary buffer file (model.meshes {"binary": …}), e.g. view3d-meshes-lod0.bin.
+  const binURL = q.get("bin");
+  const tLoad = performance.now();
+  const bin = binURL ? await (await fetch(binURL)).arrayBuffer() : undefined;
   const presets = await json("/windows/test/fixtures/engine/render-presets.json").catch(() => json("/build/engine-fixtures/render-presets.json")).catch(() => []);
   const host = document.getElementById("host")!;
   const view = new View3D(host, {
     resolveAsset: (p: string) => "/assets/demo/" + p,
     materialMaps: doc.materialMaps,
   });
-  view.setModel(meshes);
+  view.setModel(meshes, bin);
+  (window as any).loadInfo = { ms: performance.now() - tLoad, bytes: bin?.byteLength ?? 0, meshes: view.scene.meshes.length,
+    triangles: view.scene.meshes.reduce((n, m) => n + m.count / 3, 0) };
   view.setCameras(doc.cameras);
   view.setStyle(q.get("style") ?? "Realistic");
   const settingsFor = (name: string) => {
@@ -29,6 +35,8 @@ async function main() {
   view.setRenderSettings(settingsFor(q.get("preset") ?? "Daylight"), true);
   window.harness = {
     view,
+    EngineBridge,
+    Effects,
     frame() { const t0 = performance.now(); (view as any).drawNow(); const px = new Uint8Array(4); view.gl.readPixels(0, 0, 1, 1, view.gl.RGBA, view.gl.UNSIGNED_BYTE, px); return performance.now() - t0; },
     camera: () => view.getCamera(),
     applyCamera(name: string) { view.applyNamedCamera(name, false); (view as any).drawNow(); },

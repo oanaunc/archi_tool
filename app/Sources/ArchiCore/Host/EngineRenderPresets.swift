@@ -139,5 +139,10 @@ extension EngineSession {
     public static func registerPortableAppCommands(_ registry: CommandRegistry = .shared) {
         registry.ensureBuiltins()
         for c in [EngineRenderPresets.command] where registry.lookup(c.name) == nil { registry.register(c) }
+        // Settings, Quick Select, layer states and filters, workspaces, ribbon customisation, page setup, templates.
+        for c in EngineUICommands.all where registry.lookup(c.name) == nil { registry.register(c) }
+        for c in EngineUICommands.overrides { registry.register(c) }
+        // 3D view: section box / plane, cameras, gizmo, measure, levels, navigation, weather, animation, panoramas.
+        for c in EngineView3DCommands.all where registry.lookup(c.name) == nil { registry.register(c) }
     }
 }

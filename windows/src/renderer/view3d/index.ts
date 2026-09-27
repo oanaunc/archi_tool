@@ -1,7 +1,10 @@
 // Oanarina Archi Tool for Windows — GPL-3.0-or-later
 // 3D view and photographic renderer of the Windows shell (WebGL 2, no dependencies). See README.md in this folder.
-export { View3D } from "./view3d";
-export type { View3DOptions, RenderRequest, NavMode } from "./view3d";
+export { View3D, encodeImage } from "./view3d";
+export type { View3DOptions, RenderRequest, NavMode, View3DInfo } from "./view3d";
+export { View3DExtras } from "./extras";
+export type { ExtrasHost, TransformRequest } from "./extras";
+export * as Effects from "./effects";
 export { Renderer, UNIT } from "./renderer";
 export type { FrameOptions, SectionBox, SectionPlane } from "./renderer";
 export { SceneModel } from "./scene";

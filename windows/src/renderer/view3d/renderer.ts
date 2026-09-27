@@ -7,7 +7,8 @@ import { GL, Program, Target, target, msTarget, depthTarget, disposeTarget, text
 import * as S from "./shaders";
 import { SceneModel, MeshGPU } from "./scene";
 import { Look, VisualStyle, styleEdges, SKETCH_PAPER, ACCENT, sunDirection } from "./look";
-import { V3, M4, mul, invert, lookAt, ortho, linearRGB, kelvin, norm, sub, len, toLinear } from "./math";
+import { V3, M4, mul, invert, lookAt, ortho, linearRGB, kelvin, norm, sub, len, toLinear, ident, hex } from "./math";
+import { Weather, isVegetation, seasonTint, isWater } from "./effects";
 import { CameraState, viewMatrix, projMatrix, zRange } from "./camera";
 import { skyPixels, irradianceSH, horizonColor, toSK, groundTexture, gridTexture, GROUND_TILE_METRES } from "./sky";
 
@@ -33,9 +34,27 @@ export interface FrameOptions {
   northAngle?: number;
   /** Overrides: sun direction (towards the sun, model axes) for sun studies; ambient occlusion from the drawing. */
   sunOverride?: V3 | null;
+  /** Sun study light (applySun): intensity (SceneKit / 1000) and sRGB colour, with `sunOverride`. */
+  sunLight?: { intensity: number; color: V3 } | null;
   aoOverride?: { intensity: number; radius: number } | null;
   background?: "sky" | "white" | "transparent";
+  /** WEATHER of the drawing (snow cover, wet surfaces, season tint, haze, rain / snow particles). */
+  weather?: Weather | null;
+  /** FOG of the drawing (FogSettings): distances in model mm. */
+  fog?: { on: boolean; start: number; end: number; color: string; density: number } | null;
+  /** Water materials (MATWATER); null = the material named "Water". */
+  water?: Set<string> | null;
+  /** Seconds, for water waves and falling rain / snow. */
+  time?: number;
+  /** Draw precipitation particles (viewport; renders freeze them at `time`). */
+  particles?: boolean;
+  /** Hide the ground plane (transparent image export). */
+  hideGround?: boolean;
+  /** Keep the previous frame's sun shadow map (panorama faces: same sun, same scene). */
+  reuseShadow?: boolean;
 }
+
+const IDENT = ident();
 
 interface EnvState { key: string; tex: WebGLTexture; sh: Float32Array; maxLod: number; width: number }
 
@@ -64,6 +83,7 @@ export class Renderer {
   private emptyVAO: WebGLVertexArrayObject;
   private whiteTex: WebGLTexture;
   private shadowT: Target | null = null;
+  private lastShadow: { key: string; mat: M4 } | null = null;
   private targets: { key: string; ms: Target | null; hdr: Target; ao: Target; ao2: Target; b1: Target; b2: Target; ldr: Target } | null = null;
   readonly maxSamples: number;
   readonly maxSize: number;
@@ -75,6 +95,12 @@ export class Renderer {
   /** Placed lights and fixtures: lumens / 1000 × LIGHT_SCALE, SceneKit attenuation, measured on the Mac renders. */
   static LIGHT_SCALE = 180;
   static ENV_SCALE = 1.0;
+  /** SceneKit's SSAO darkens the ambient / image-based diffuse light, not the sun (measured on the Mac renders). */
+  static AO_INDIRECT = true;
+  /** Multiplier of normal-map strength (calibration probe). */
+  static NORMAL_SCALE = 1;
+  /** Slope-scaled shadow bias covers soft-shadow kernels up to this radius in texels (measured on the Mac renders). */
+  static SLOPE_TEXELS = 5;
   /** Diffuse share of the image-based light (SceneKit lightingEnvironment), measured on the Mac renders. */
   static ENV_DIFFUSE = 1.0;
 
@@ -111,6 +137,12 @@ export class Renderer {
   // MARK: style set-up (Scene3DBuilder.configureEnvironment + applyCameraEffects + BeautyLighting)
 
   private setup(o: FrameOptions): StyleSetup {
+    const s0 = this.setupStyle(o);
+    if (o.sunOverride && o.sunLight && s0.sunI > 0) { s0.sunI = o.sunLight.intensity; s0.sunColor = linearRGB(o.sunLight.color); s0.shadows = s0.drawFaces && s0.mode !== 3 ? true : s0.shadows; }
+    return s0;
+  }
+
+  private setupStyle(o: FrameOptions): StyleSetup {
     const st = o.style, look = o.look, preset = o.explicitPreset;
     const warm = linearRGB([1, 0.97, 0.92]);
     const dark: [V3, V3] = [[0.2, 0.215, 0.24], [0.09, 0.095, 0.105]];
@@ -221,8 +253,8 @@ export class Renderer {
     const hw = Math.max(1, w >> 1), hh = Math.max(1, h >> 1);
     this.targets = {
       key,
-      ms: msaa && this.maxSamples > 1 ? msTarget(gl, w, h, this.maxSamples) : null,
-      hdr: target(gl, w, h, { hdr: true, depth: true }),
+      ms: msaa && this.maxSamples > 1 ? msTarget(gl, w, h, this.maxSamples, true) : null,
+      hdr: target(gl, w, h, { hdr: true, depth: true, mrt: true }),
       ao: target(gl, hw, hh, { hdr: false }), ao2: target(gl, hw, hh, { hdr: false }),
       b1: target(gl, hw, hh, { hdr: true }), b2: target(gl, hw, hh, { hdr: true }),
       ldr: target(gl, w, h, { hdr: false }),
@@ -265,7 +297,10 @@ export class Renderer {
     // Shadow map (sun, orthographic over the scene sphere)
     const final = o.quality === "final";
     let shadowMat: M4 | null = null;
-    if (s.shadows && s.drawFaces && !scene.empty && s.sunI > 0) {
+    const shadowKey = `${sun.join(",")}|${radius}|${center.join(",")}|${final}`;
+    if (o.reuseShadow && this.lastShadow && this.lastShadow.key === shadowKey && this.shadowT) {
+      shadowMat = this.lastShadow.mat;
+    } else if (s.shadows && s.drawFaces && !scene.empty && s.sunI > 0) {
       const size = Math.min(this.maxSize, final ? 8192 : 4096);
       if (!this.shadowT || this.shadowT.width !== size) { disposeTarget(gl, this.shadowT); this.shadowT = depthTarget(gl, size); }
       const r = radius * 1.05;
@@ -280,19 +315,19 @@ export class Renderer {
       gl.disable(gl.CULL_FACE); gl.disable(gl.BLEND);
       gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(1.5, 2.0);
       const p = this.shadow.use();
-      p.m4("uViewProj", shadowMat).f("uUnit", UNIT);
+      p.m4("uViewProj", shadowMat).f("uUnit", UNIT).m4("uModel", IDENT);
       for (const m of scene.meshes) {
-        if (m.transparent) continue;
+        if (m.transparent || m.hidden) continue;
         const tex = m.foliage ? scene.texturesFor(m.mat, false) : null;
         p.f("uFoliage", m.foliage ? 1 : 0).f("uUVScale", 1000 / Math.max(m.mat.textureScale, 1));
         const cut = m.foliage && !!tex?.albedo;
         p.i("uCutout", cut ? 1 : 0).tex("uAlbedo", 0, cut ? tex!.albedo! : this.whiteTex);
         const mult = multiplyTint(m.mat.color);
         p.v3("uMultiply", mult);
-        gl.bindVertexArray(m.vao);
-        gl.drawElements(gl.TRIANGLES, m.count, gl.UNSIGNED_INT, 0);
+        this.drawTriangles(p, m);
       }
       gl.disable(gl.POLYGON_OFFSET_FILL);
+      this.lastShadow = { key: shadowKey, mat: shadowMat };
     }
 
     // Scene into the HDR target
@@ -300,8 +335,13 @@ export class Renderer {
     const sceneFB = T.ms ?? T.hdr;
     gl.bindFramebuffer(gl.FRAMEBUFFER, sceneFB.fb);
     gl.viewport(0, 0, W, H);
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    // Only the mesh passes write the indirect-light attachment.
+    const onlyColor = () => gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.NONE]);
+    const bothColors = () => gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
+    onlyColor();
 
     // Background: HDR sky (Realistic) or the style's gradient.
     gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
@@ -318,14 +358,16 @@ export class Renderer {
     }
 
     gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.depthMask(true);
+    bothColors();
     const p = this.mesh.use();
-    p.m4("uViewProj", viewProj).f("uUnit", UNIT);
+    p.m4("uViewProj", viewProj).f("uUnit", UNIT).m4("uModel", IDENT);
     p.v3("uCamPos", o.camera.eye).v3("uViewDir", norm(sub(o.camera.target, o.camera.eye))).i("uOrtho", o.camera.ortho ? 1 : 0);
     p.v3("uSunDir", sun);
     const sunScale = s.mode === 0 ? Renderer.SUN_SCALE : 1;
     p.v3("uSunColor", s.sunColor.map((c) => c * s.sunI * sunScale));
     p.i("uShadows", shadowMat ? 1 : 0).f("uShadowAlpha", s.shadowAlpha).f("uShadowRadius", s.shadowRadius * (this.shadowT ? this.shadowT.width / 4096 : 1))
-      .i("uShadowSamples", final ? 32 : 12).f("uShadowBias", 0.0004).f("uShadowTexel", (radius * 2.1) / (this.shadowT?.width ?? 4096));
+      .i("uShadowSamples", final ? 32 : 12).f("uShadowBias", 0.0004).f("uShadowTexel", (radius * 2.1) / (this.shadowT?.width ?? 4096))
+      .f("uShadowRange", radius * 1.05 * 5).f("uSlopeTexels", Renderer.SLOPE_TEXELS);
     if (shadowMat) p.m4("uShadowMat", shadowMat).tex("uShadowMap", 5, this.shadowT!.depth!);
     else p.tex("uShadowMap", 5, this.whiteTex);
     p.i("uHasEnv", s.env && env ? 1 : 0).f("uEnvIntensity", s.envIntensity * Renderer.ENV_SCALE).f("uEnvMaxLod", env ? env.maxLod : 0);
@@ -334,6 +376,15 @@ export class Renderer {
     p.v3("uAmbient", s.ambient);
     const fogOn = s.fog;
     p.f("uFog", Math.max(40, radius * 3), Math.max(450, radius * 20), 1.6, fogOn ? 1 : 0).v3("uFogColor", fogColor);
+    // FogSettings (FOG) replaces the preset haze; weather haze when no explicit fog is set (not in line styles).
+    const lineStyle = o.style === "Hidden Line" || o.style === "Wireframe";
+    if (o.fog?.on) p.f("uFog", o.fog.start * UNIT, Math.max(o.fog.end, o.fog.start + 1) * UNIT, o.fog.density, 1).v3("uFogColor", linearRGB(hex(o.fog.color, [0.78, 0.8, 0.84])));
+    else if (o.weather?.fogDistance && !lineStyle) {
+      const d = o.weather.fogDistance;
+      p.f("uFog", d * 0.1, d, 1, 1).v3("uFogColor", linearRGB(o.weather.kind === "Snow" ? [0.9, 0.9, 0.9] : [0.75, 0.75, 0.75]));
+    }
+    const wx = ["Realistic", "Shaded", "Shaded with Edges"].includes(o.style) ? o.weather : null;
+    p.f("uSnow", wx?.snow ?? 0).f("uWet", wx?.wetness ?? 0).f("uTime", o.time ?? 0).i("uWater", 0);
     // Section box / plane (world metres)
     const box = o.sectionBox?.on ? o.sectionBox : null;
     const clipMin = box ? [box.min[0] * UNIT, box.min[1] * UNIT, box.min[2] * UNIT, 0] : [0, 0, 0, 0];
@@ -348,13 +399,13 @@ export class Renderer {
     p.v3("uHighlight", [0, 0, 0]);
 
     // Ground plane (drawn first, like renderingOrder −10), without the section clipping.
-    if (!scene.empty || true) {
+    if (!o.hideGround) {
       const z = scene.empty ? 0 : scene.min[2] - 3;
       const c = scene.empty ? [0, 0] : [(scene.min[0] + scene.max[0]) / 2, (scene.min[1] + scene.max[1]) / 2];
       const half = (groundSize / UNIT) / 2;
       const tile = s.groundKind === "meadow" ? GROUND_TILE_METRES * 1000 : 5000;
       this.updateGround(c[0] - half, c[1] - half, c[0] + half, c[1] + half, z, tile);
-      p.f("uClipMax", 0, 0, 0, 0).f("uPlaneN", 0, 0, 0, 0);
+      p.f("uClipMax", 0, 0, 0, 0).f("uPlaneN", 0, 0, 0, 0).f("uSnow", 0).f("uWet", 0);
       p.i("uMode", s.groundMode).v3("uColor", [1, 1, 1]).f("uOpacity", s.groundOpacity);
       p.i("uHasTex", 1).tex("uAlbedo", 0, this.groundTexture(s)).v3("uMultiply", [1, 1, 1]);
       p.i("uHasNormal", 0).i("uHasRough", 0).f("uRoughness", s.groundKind === "meadow" ? 0.95 : 1).f("uMetalness", 0);
@@ -365,14 +416,25 @@ export class Renderer {
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       gl.disable(gl.BLEND);
       p.f("uClipMin", ...clipMin).f("uClipMax", ...clipMax).f("uPlaneP", ...planeP).f("uPlaneN", ...planeN);
+      p.f("uSnow", wx?.snow ?? 0).f("uWet", wx?.wetness ?? 0);
     }
 
     const sel = o.selection ?? new Set<string>();
     if (s.drawFaces) {
       const opaque: MeshGPU[] = [], trans: MeshGPU[] = [];
       const xray = o.style === "X-Ray";
-      for (const m of scene.meshes) (xray || this.isTransparent(m, o) ? trans : opaque).push(m);
+      for (const m of scene.meshes) if (!m.hidden) (xray || this.isTransparent(m, o) ? trans : opaque).push(m);
       for (const m of opaque) this.drawMesh(p, scene, m, o, s, sel);
+      // Section plane caps (constant dark red, SectionPlane.capsName).
+      if (scene.capVAO && o.sectionPlane?.on && o.style !== "Wireframe") {
+        p.m4("uModel", IDENT).f("uPlaneN", 0, 0, 0, 0);
+        p.i("uMode", 3).v3("uColor", linearRGB(scene.capColor)).f("uOpacity", 1).i("uHasTex", 0).i("uHasNormal", 0).i("uHasRough", 0)
+          .v3("uEmissive", [0, 0, 0]).i("uCutout", 0).f("uFoliage", 0).v3("uHighlight", [0, 0, 0]).f("uSnow", 0).f("uWet", 0).i("uWater", 0)
+          .tex("uAlbedo", 0, this.whiteTex).tex("uNormalMap", 1, this.whiteTex).tex("uRoughMap", 2, this.whiteTex);
+        gl.bindVertexArray(scene.capVAO);
+        gl.drawArrays(gl.TRIANGLES, 0, scene.capCount);
+        p.f("uPlaneN", ...planeN).f("uSnow", wx?.snow ?? 0).f("uWet", wx?.wetness ?? 0);
+      }
       // Transparent surfaces back to front.
       const eyeMM = o.camera.eye.map((v) => v / UNIT) as V3;
       trans.sort((a, b) => dist2(b, eyeMM) - dist2(a, eyeMM));
@@ -385,17 +447,27 @@ export class Renderer {
     }
 
     // Edges
+    onlyColor();
     const e = styleEdges(o.style);
     if (e.show) this.drawEdges(scene, o, viewProj, e, sel, clipMin, clipMax, planeP, planeN);
     else if (sel.size) this.drawEdges(scene, o, viewProj, { show: true, color: ACCENT, alpha: 1, depthTest: true }, sel, clipMin, clipMax, planeP, planeN, true);
     if (box) this.drawBox(box, viewProj);
+    if (o.particles !== false && o.weather?.particles && !lineStyle && o.style !== "X-Ray") this.drawParticles(scene, o, viewProj);
 
     // Resolve MSAA
     if (T.ms) {
       gl.bindFramebuffer(gl.READ_FRAMEBUFFER, T.ms.fb);
       gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, T.hdr.fb);
+      gl.readBuffer(gl.COLOR_ATTACHMENT0);
+      gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.NONE]);
       gl.blitFramebuffer(0, 0, W, H, 0, 0, W, H, gl.COLOR_BUFFER_BIT, gl.LINEAR);
+      gl.readBuffer(gl.COLOR_ATTACHMENT1);
+      gl.drawBuffers([gl.NONE, gl.COLOR_ATTACHMENT1]);
+      gl.blitFramebuffer(0, 0, W, H, 0, 0, W, H, gl.COLOR_BUFFER_BIT, gl.LINEAR);
+      gl.readBuffer(gl.COLOR_ATTACHMENT0);
+      gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
       gl.blitFramebuffer(0, 0, W, H, 0, 0, W, H, gl.DEPTH_BUFFER_BIT, gl.NEAREST);
+      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
     }
     gl.disable(gl.DEPTH_TEST); gl.depthMask(false);
     gl.bindVertexArray(this.emptyVAO);
@@ -429,6 +501,7 @@ export class Renderer {
     gl.viewport(0, 0, W, H);
     const c = this.composite.use();
     c.tex("uHDR", 0, T.hdr.color!).tex("uDepth", 1, T.hdr.depth!).tex("uAO", 2, T.ao.color!).tex("uBloom", 3, T.b1.color!);
+    c.i("uAOIndirect", Renderer.AO_INDIRECT ? 1 : 0).tex("uIndirect", 4, T.hdr.color2!);
     c.i("uHasAO", aoOn ? 1 : 0).f("uAOIntensity", s.ao).f("uExposure", s.exposure).f("uSceneScale", s.hdr ? Renderer.SCENE_SCALE : 1).i("uHasBloom", bloomOn ? 1 : 0).f("uBloomIntensity", s.bloom);
     c.i("uToneMap", s.hdr ? 1 : 0).f("uWhite", s.white).f("uSaturation", s.saturation).f("uContrast", s.contrast)
       .f("uVignette", s.vignette).f("uVignettePower", s.vignettePower);
@@ -504,7 +577,9 @@ export class Renderer {
     const gl = this.gl;
     const mat = m.mat, st = o.style, look = o.look;
     const t = Math.min(Math.max(1 - mat.opacity, 0), 0.95);
-    const colorS = mat.color;
+    let colorS = mat.color;
+    // Season tint of untextured vegetation (WeatherSettings.apply).
+    if (o.weather && o.weather.season !== "Summer" && !mat.texture && isVegetation(mat.name)) colorS = seasonTint(colorS, o.weather.season);
     let color = linearRGB(colorS);
     let opacity = 1, rough = Math.min(Math.max(mat.roughness, 0.02), 1), metal = Math.min(Math.max(mat.metalness, 0), 1);
     let emissive: V3 = [0, 0, 0];
@@ -543,15 +618,78 @@ export class Renderer {
     if (st === "X-Ray") mode = 2;
     p.i("uMode", mode).v3("uColor", color).f("uOpacity", opacity);
     p.i("uHasTex", useTex ? 1 : 0).tex("uAlbedo", 0, useTex ? tex!.albedo! : this.whiteTex).v3("uMultiply", multiplyTint(colorS));
-    p.i("uHasNormal", useNormal ? 1 : 0).tex("uNormalMap", 1, useNormal ? (tex!.normal ?? tex!.derived)! : this.whiteTex).f("uNormalStrength", normalStrength);
+    p.i("uHasNormal", useNormal ? 1 : 0).tex("uNormalMap", 1, useNormal ? (tex!.normal ?? tex!.derived)! : this.whiteTex).f("uNormalStrength", normalStrength * Renderer.NORMAL_SCALE);
     p.i("uHasRough", useRough ? 1 : 0).tex("uRoughMap", 2, useRough ? tex!.rough! : this.whiteTex);
     p.f("uRoughness", rough).f("uMetalness", metal).f("uSpecular", spec).f("uShininess", shin);
     p.v3("uEmissive", emissive).i("uCutout", cutout ? 1 : 0);
     p.f("uFoliage", st === "Realistic" && m.foliage ? 1 : 0).f("uUVScale", 1000 / Math.max(mat.textureScale, 1));
     const hl = m.id != null && sel.has(m.id);
     p.v3("uHighlight", hl ? linearRGB(ACCENT).map((v) => v * 0.55) : [0, 0, 0]);
+    p.i("uWater", ["Realistic", "Shaded", "Shaded with Edges"].includes(st) && isWater(mat.name, o.water ?? null) ? 1 : 0);
+    this.drawTriangles(p, m);
+  }
+
+  /** Draws a mesh with its transform, or part by part (door frame and leaves). */
+  private drawTriangles(p: Program, m: MeshGPU) {
+    const gl = this.gl;
     gl.bindVertexArray(m.vao);
-    gl.drawElements(gl.TRIANGLES, m.count, gl.UNSIGNED_INT, 0);
+    if (m.parts) {
+      for (const part of m.parts) {
+        if (!part.count) continue;
+        p.m4("uModel", part.xf ?? m.xf ?? IDENT);
+        gl.drawElements(gl.TRIANGLES, part.count, gl.UNSIGNED_INT, part.start * 4);
+      }
+    } else {
+      p.m4("uModel", m.xf ?? IDENT);
+      gl.drawElements(gl.TRIANGLES, m.count, gl.UNSIGNED_INT, 0);
+    }
+    if (m.xf || m.parts) p.m4("uModel", IDENT);
+  }
+
+  // Rain streaks and snow flakes (WeatherSettings.node: SCNParticleSystem over the model), deterministic in time.
+  private particleBuf: WebGLBuffer | null = null;
+  private particleVAO: WebGLVertexArrayObject | null = null;
+  private drawParticles(scene: SceneModel, o: FrameOptions, viewProj: M4) {
+    const gl = this.gl, w = o.weather!, pp = w.particles!;
+    if (w.intensity <= 0 || pp.birthRatePerM2 <= 0) return;
+    const r = Math.max(scene.radius * UNIT, 5);
+    const c = scene.center.map((v) => v * UNIT);
+    const area = 4 * r * r;
+    const n = Math.min(Math.floor(Math.min(pp.birthRatePerM2 * area, 20000) * Math.min(pp.life, 3)), 30000);
+    if (n <= 0) return;
+    const top = scene.min[2] * UNIT + r * 1.2 + 10, fall = r * 1.2 + 10;
+    const rain = w.kind === "Rain";
+    const t = o.time ?? 0;
+    const data = new Float32Array(n * (rain ? 6 : 3));
+    let seed = 1234567;
+    const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+    for (let i = 0; i < n; i++) {
+      const x = c[0] + (rnd() * 2 - 1) * r, y = c[1] + (rnd() * 2 - 1) * r;
+      const speed = pp.speed * (1 + (rnd() * 2 - 1) * 0.15);
+      const drift = rain ? 0 : Math.sin(t * 0.7 + i) * 0.3;
+      const z = top - ((rnd() * fall + t * speed) % fall);
+      const mm = 1 / UNIT;
+      if (rain) {
+        const l = Math.min(pp.size * pp.stretch * speed * 0.5, 0.6);
+        data.set([x * mm, y * mm, z * mm, x * mm, y * mm, (z + l) * mm], i * 6);
+      } else data.set([(x + drift) * mm, y * mm, z * mm], i * 3);
+    }
+    if (!this.particleBuf) { this.particleBuf = gl.createBuffer(); this.particleVAO = gl.createVertexArray(); }
+    gl.bindVertexArray(this.particleVAO);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    const q = this.line.use();
+    const px = Math.max(1.5, (pp.size * o.height) / Math.max(1, 2 * Math.tan((o.camera.fov * Math.PI) / 360) * Math.max(len(sub(o.camera.eye, o.camera.target)), 1)));
+    q.m4("uViewProj", viewProj).m4("uModel", IDENT).f("uUnit", UNIT).f("uPointSize", Math.min(px * 3, 12)).i("uRound", rain ? 0 : 1)
+      .f("uClipMax", 0, 0, 0, 0).f("uPlaneN", 0, 0, 0, 0);
+    q.f("uColor", ...(rain ? [0.85, 0.85, 0.85, 0.55] : [1, 1, 1, 0.95]) as [number, number, number, number]);
+    gl.enable(gl.DEPTH_TEST); gl.depthMask(false);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.drawArrays(rain ? gl.LINES : gl.POINTS, 0, rain ? n * 2 : n);
+    gl.disable(gl.BLEND); gl.depthMask(true);
+    q.i("uRound", 0);
   }
 
   private drawEdges(scene: SceneModel, o: FrameOptions, viewProj: M4, e: { show?: boolean; color: V3; alpha: number; depthTest: boolean },
@@ -562,20 +700,36 @@ export class Renderer {
     const vao = sketch ? scene.sketchVAO : scene.edgeVAO;
     if (!vao) return;
     const p = this.line.use();
-    p.m4("uViewProj", viewProj).f("uUnit", UNIT).f("uClipMin", ...clipMin).f("uClipMax", ...clipMax).f("uPlaneP", ...planeP).f("uPlaneN", ...planeN);
+    p.m4("uViewProj", viewProj).m4("uModel", IDENT).f("uUnit", UNIT).f("uPointSize", 1).i("uRound", 0)
+      .f("uClipMin", ...clipMin).f("uClipMax", ...clipMax).f("uPlaneP", ...planeP).f("uPlaneN", ...planeN);
     if (e.depthTest) gl.enable(gl.DEPTH_TEST); else gl.disable(gl.DEPTH_TEST);
     gl.depthMask(false);
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.bindVertexArray(vao);
     const range = (m: MeshGPU) => (sketch ? scene.sketchRanges[scene.meshes.indexOf(m)] : { start: m.edgeStart, count: m.edgeCount });
+    // Edges of one mesh with its transform(s); door leaves use their part ranges (sketch strokes keep the whole mesh).
+    const drawOne = (m: MeshGPU) => {
+      if (m.hidden) return;
+      if (m.parts && !sketch) {
+        for (const part of m.parts) if (part.edgeCount) { p.m4("uModel", part.xf ?? m.xf ?? IDENT); gl.drawArrays(gl.LINES, part.edgeStart, part.edgeCount); }
+      } else {
+        const r = range(m);
+        if (!r || !r.count) return;
+        p.m4("uModel", m.xf ?? IDENT);
+        gl.drawArrays(gl.LINES, r.start, r.count);
+      }
+      p.m4("uModel", IDENT);
+    };
+    const perMesh = scene.anyTransformed;
     if (!onlySelected) {
       p.f("uColor", ...linearRGB(e.color), e.alpha);
-      if (sketch) gl.drawArrays(gl.LINES, 0, scene.sketchRanges.reduce((a, r) => Math.max(a, r.start + r.count), 0));
+      if (perMesh) for (const m of scene.meshes) drawOne(m);
+      else if (sketch) gl.drawArrays(gl.LINES, 0, scene.sketchRanges.reduce((a, r) => Math.max(a, r.start + r.count), 0));
       else gl.drawArrays(gl.LINES, 0, scene.edgeCount);
     }
     if (sel.size) {
       p.f("uColor", ...linearRGB(ACCENT), 1);
-      for (const m of scene.meshes) if (m.id != null && sel.has(m.id)) { const r = range(m); if (r && r.count) gl.drawArrays(gl.LINES, r.start, r.count); }
+      for (const m of scene.meshes) if (m.id != null && sel.has(m.id)) drawOne(m);
     }
     gl.disable(gl.BLEND); gl.depthMask(true); gl.enable(gl.DEPTH_TEST);
   }
@@ -589,7 +743,7 @@ export class Renderer {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.boxBuf);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
     const p = this.line.use();
-    p.m4("uViewProj", viewProj).f("uUnit", UNIT).f("uColor", ...linearRGB(ACCENT), 1).f("uClipMax", 0, 0, 0, 0).f("uPlaneN", 0, 0, 0, 0);
+    p.m4("uViewProj", viewProj).m4("uModel", IDENT).f("uUnit", UNIT).f("uColor", ...linearRGB(ACCENT), 1).f("uClipMax", 0, 0, 0, 0).f("uPlaneN", 0, 0, 0, 0);
     gl.enable(gl.DEPTH_TEST); gl.depthMask(false);
     gl.bindVertexArray(this.boxVAO);
     gl.drawArrays(gl.LINES, 0, idx.length);

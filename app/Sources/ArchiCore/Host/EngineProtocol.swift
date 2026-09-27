@@ -30,7 +30,7 @@ public enum EngineProtocol {
         "model.meshes", "render.settings", "render.preset",
         "panel.layers", "panel.levels", "panel.properties", "panel.materials", "panel.sheets", "panel.history", "panel.set",
         "edit.undo", "edit.redo", "sysvar.get", "sysvar.set", "file.export", "file.import", "engine.log",
-    ]
+    ] + EngineDialogMethods.all + EngineToolMethods.all + EngineCanvasMethods.all + EngineView3DMethods.all + EngineOutputMethods.all
 
     public static func response(id: EngineJSON, result: EngineJSON) -> String {
         var o = EngineObject()

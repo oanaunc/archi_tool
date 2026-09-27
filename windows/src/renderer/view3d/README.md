@@ -1,7 +1,8 @@
 # 3D view and photographic renderer (Windows shell)
 
 WebGL 2 port of the Mac 3D viewport and renderer (`ArchiApp/Viewport3DView.swift`, `Viewport3DExtras.swift`,
-`Navigation3DPlus.swift`, `RenderController.swift`, `BeautyLighting.swift`, `BeautyRender.swift`, `SketchyStyle.swift`).
+`Viewport3DTools.swift`, `Studio3D.swift`, `Navigation3DPlus.swift`, `SceneExtras.swift`, `SceneEffects.swift`,
+`StereoPanorama.swift`, `RenderController.swift`, `BeautyLighting.swift`, `BeautyRender.swift`, `SketchyStyle.swift`).
 No dependencies: three.js could not be installed here (npm registry blocked), and a small renderer written for this
 job reproduces SceneKit's behaviour more closely than three.js's defaults would.
 
@@ -13,13 +14,22 @@ const view = new View3D(container, {
   resolveAsset: (p) => archi.fileUrl(join(drawingFolder, p)),   // "textures/cedar.jpg" → file URL
   icon: (sf, size) => icon(sf, size),                            // the shell's SF Symbol → Lucide icons
 });
-const bridge = new EngineBridge(view, engine, { print: (t) => app.print(t), savePNG });
-await bridge.load();              // model.meshes + render.settings (+ view3d.info when the engine has it)
+const bridge = new EngineBridge(view, engine, {
+  print: (t) => app.print(t),
+  readBinary: (p) => fetch(archi.fileUrl(p)).then((r) => r.arrayBuffer()),   // model.meshes {"binary": true}
+  chooseSavePath: (s) => archi.saveFileDialog({ defaultPath: s }),            // panoramas / VIEWIMAGE without a path
+});
+await bridge.load();              // model.meshes (one temporary .bin, full detail) + render.settings + view3d.info
 // RENDERSAVE: await bridge.renderSave("Goldenhour Front 1920 1080 out.png")
 ```
 
-`EngineBridge` reloads on `changed` notifications, syncs the selection both ways (`select.get` / `select.set`) and
-handles the `archi:host` events the shell re-dispatches (`setViewStyle`, `setView`, `walkthrough`, `render`).
+`EngineBridge` reloads on `changed` notifications (3D view variables it set itself only refresh `view3d.info`), syncs the
+selection both ways (`select.get` / `select.set`), reports the camera (`view3d.setCamera`), stores SECTIONBOX /
+SECTIONPLANE / PERSPECTIVE / SUNSTUDY / VSCURRENT (`view3d.setVariable`), fetches the section caps
+(`view3d.sectionCaps`), commits gizmo drags (`view3d.transform`), saves and deletes cameras, and handles the `host`
+actions of 3D commands (`setViewStyle`, `setView`, `walkthrough`, `render` and `{"action":"view3d","op":…}`: gizmo,
+measure, levels, sectionBoxPanel, sunStudy, orbitSelection, camera, fov, navigate, positionCamera, twoPoint, wheel,
+animate, animationFrame, panorama, viewImage). Images are written by the engine (`view3d.saveImage`).
 
 ## What is replicated
 
@@ -45,10 +55,28 @@ handles the `archi:host` events the shell re-dispatches (`setViewStyle`, `setVie
   2048-wide sky.
 
 Calibration constants (`Renderer.SCENE_SCALE`, `SUN_SCALE`, `ENV_DIFFUSE`, `LIGHT_SCALE`) map SceneKit's units to
-this shader; they were measured against the Mac renders in `build/renders` (see `windows/test/view3d`).
+this shader; they were measured against the Mac renders in `build/renders` (see `windows/test/view3d`). SSAO darkens
+only the indirect light (`AO_INDIRECT`, a second colour attachment of the scene pass), and the sun shadow uses a
+slope-scaled bias over the soft-shadow kernel (`SLOPE_TEXELS`) so grazing sun (golden hour) does not self-shadow the
+ground. `node windows/test/view3d/calib.mjs '[{"name":"x","statics":{"SUN_SCALE":0.9}}]' --full` prints region means
+(limestone, cedar, sky, paving, grass) next to the Mac's for each preset; `run.mjs --full` compares the full-detail
+model (`build/engine-fixtures/view3d-meshes-lod0.bin`, written by `./scripts/q.sh engine`).
+
+- **Tools** (`extras.ts`, `effects.ts`): the bottom tool bar (ruler + Off / Move / Rotate / Scale), the gizmo drawn over the
+  model (X/Y/Z arrows in the macOS system colours, purple ring, white scale handle) with the Mac drag maths (axis delta
+  from the projected axis, screen sweep, Shift snaps 15° / 0.1, grid snap) and a live preview; 3D measuring (accent
+  markers, "Distance · ΔX · ΔY · ΔZ · plan"); levels in 3D (isolate, explode by 1.5 / 3 / 6 m) and field of view; the
+  saved-cameras menu with the Save Camera sheet and Delete; the clipping plane panel (Horizontal / Along X / Along Y,
+  Flip, Level, Remove) with red cap faces; the sun study panel (day, time, play, Mar 21 … Dec 21, NOAA sun at the site);
+  the steering wheel (Zoom, Pan, Orbit, Rewind, Center, Walk, Up/Down, Look); door leaves split from the frame and swung
+  about their hinge, object animations played in a loop; weather (snow cover on up-facing faces, wet surfaces, haze,
+  rain streaks and snow flakes), seasons (vegetation tint), water waves; two-point perspective; VIEWIMAGE (current
+  style, transparent PNG / JPEG / TIFF) and PANORAMA / STEREOPANORAMA (cube faces → equirectangular, omni-directional
+  stereo over-under).
 
 ## Tests
 
 `node windows/test/view3d/run.mjs` renders every preset from the saved cameras and writes side-by-side comparisons;
 `node windows/test/view3d/ui.mjs` drives the interactive view (styles, orbit, pan, zoom, view cube, picking, section
-box, walk, render to PNG). Both run in headless Chromium (SwiftShader is enough).
+box, walk, render to PNG); `node windows/test/view3d/tools.mjs` checks the tools above and the bridge's view3d actions.
+All run in headless Chromium (SwiftShader is enough).

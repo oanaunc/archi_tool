@@ -2,6 +2,9 @@
 // Exposes the engine RPC and a few native services to the renderer as window.archi.
 import { contextBridge, ipcRenderer } from "electron";
 import type { ArchiBridge } from "../shared/protocol";
+import "./partb";
+import "./output";
+import "./canvas";
 
 const bridge: ArchiBridge = {
   async rpc(method, params) {
@@ -25,6 +28,16 @@ const bridge: ArchiBridge = {
   initialRequest: () => ipcRenderer.invoke("window:request"),
   openExternal: (url) => ipcRenderer.invoke("shell:openExternal", url),
   setTitle: (t) => ipcRenderer.send("window:title", t),
+  nativeCaptions: process.platform === "win32",
+  setTheme: (theme) => { ipcRenderer.send("window:theme", theme); void ipcRenderer.invoke("settings:set", "theme", theme); },
   fileUrl: (p) => "archi-file://" + encodeURIComponent(p),
+  // Settings and dialogs (src/main/settings-ipc.ts).
+  paths: () => ipcRenderer.invoke("settings:paths"),
+  setSetting: (key, value) => ipcRenderer.invoke("settings:set", key, value),
+  revealPath: (p) => ipcRenderer.invoke("shell:revealPath", p),
+  chooseFolder: (opts) => ipcRenderer.invoke("dialog:folder", opts),
+  readTextFile: (p) => ipcRenderer.invoke("fs:readText", p),
+  writeTextFile: (p, text) => ipcRenderer.invoke("fs:writeText", p, text),
+  removeFile: (p) => ipcRenderer.invoke("fs:remove", p),
 };
 contextBridge.exposeInMainWorld("archi", bridge);

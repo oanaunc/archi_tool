@@ -1,0 +1,1 @@
+{"request":{"jsonrpc":"2.0","id":3007,"method":"view3d.transform","params":{"op":"move","axis":0,"amount":250,"ids":[21]}},"response":{"jsonrpc":"2.0","id":3007,"result":{"changed":1,"message":"Moved 1 object(s) by 250 along X."}},"notifications":[{"jsonrpc":"2.0","method":"log","params":{"text":"Moved 1 object(s) by 250 along X."}}]}

@@ -1,0 +1,55 @@
+/* Oanarina Archi Tool for Windows — GPL-3.0-or-later
+   2D canvas overlays: the right-drag marking menu (RadialMenu.swift), the in-place text editor (AppRound12TextEditor.swift),
+   temporary-dimension value fields and the tool palettes panel (ToolPalette.swift). Sizes in CSS px = Mac points. */
+
+/* Marking menu: dark disc (white 0.12, 88 %), 80×34 items with 9 pt corners, accent when highlighted. */
+.radial-menu { position: absolute; z-index: 40; pointer-events: none; font: 500 9.5px var(--ui); }
+.radial-menu .rm-bg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: 50%; background: rgba(31,31,31,0.88); }
+.radial-menu .rm-dead { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid rgba(128,128,128,0.8); }
+.radial-menu .rm-item { position: absolute; width: 80px; height: 34px; border-radius: 9px; background: rgb(61,61,61); color: rgb(235,235,235); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+.radial-menu .rm-item .icon { width: 12px; height: 12px; }
+.radial-menu .rm-item.on { background: var(--accent); color: rgb(26,26,26); }
+.radial-menu .rm-cmd { position: absolute; left: 0; right: 0; top: calc(50% + 18px); text-align: center; font: 700 10px var(--ui); color: var(--accent); }
+
+/* In-place text editor: panel colour at 96 %, 1 pt accent border, 4 pt corners, 30 pt toolbar. */
+.text-editor { position: absolute; z-index: 50; background: rgba(38,39,43,0.96); border: 1px solid var(--accent); border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; }
+.text-editor .te-bar { height: 30px; flex: none; display: flex; align-items: center; gap: 4px; padding: 3px 4px; }
+.text-editor .te-btn { width: 28px; height: 22px; border: 1px solid var(--sep); border-radius: 4px; font-size: 12px; color: var(--text); }
+.text-editor .te-btn:hover { background: var(--hover); }
+.text-editor .te-btn.on { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+.text-editor .te-font { width: 150px; height: 22px; background: var(--field); color: var(--text); border: 1px solid var(--sep); border-radius: 4px; font-size: 11px; }
+.text-editor .te-height { width: 60px; height: 22px; background: var(--field); color: var(--text); border: 1px solid var(--sep); border-radius: 4px; padding: 0 5px; font-size: 11px; outline: none; }
+.text-editor .te-color { width: 34px; height: 22px; padding: 0 2px; background: var(--field); border: 1px solid var(--sep); border-radius: 4px; }
+.text-editor .te-color::-webkit-color-swatch-wrapper { padding: 2px; }
+.text-editor .te-color::-webkit-color-swatch { border: 0; border-radius: 2px; }
+.text-editor .te-bylayer { display: flex; align-items: center; gap: 3px; color: var(--text); font-size: 11px; }
+.text-editor .te-ok, .text-editor .te-cancel { height: 22px; padding: 0 8px; border: 1px solid var(--sep); border-radius: 4px; font-size: 11px; color: var(--text); }
+.text-editor .te-ok { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+.text-editor .te-cancel:hover { background: var(--hover); }
+.text-editor .te-text { flex: 1; margin: 2px; resize: none; border: 0; outline: none; background: transparent; color: var(--text); line-height: 1.3; padding: 4px 6px; user-select: text; }
+
+/* Temporary dimension value being typed. */
+.tempdim-edit { position: absolute; z-index: 45; width: 80px; height: 22px; background: var(--field); color: var(--text); border: 1px solid rgba(110,170,255,0.9); border-radius: 3px; padding: 0 5px; font: 11px var(--mono); outline: none; user-select: text; }
+
+/* Tool palettes (ToolPalettePanel): tabs as 22 pt pills, tiles 54 pt high and at least 84 pt wide, 6 pt corners. */
+.tool-palette { display: flex; flex-direction: column; min-height: 100%; }
+.tool-palette .tp-tabbar { overflow-x: auto; flex: none; }
+.tool-palette .tp-tabs { display: flex; gap: 2px; padding: 6px; }
+.tool-palette .tp-tab { height: 22px; padding: 0 8px; border-radius: 4px; font-size: 10.5px; color: var(--text); white-space: nowrap; }
+.tool-palette .tp-tab.sel { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+.tool-palette .tp-tab:hover:not(.sel) { background: var(--hover); }
+.tool-palette .tp-scroll { flex: 1; overflow-y: auto; }
+.tool-palette .tp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; padding: 8px; }
+.tool-palette .tp-tile, .tool-palette .tp-shape { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; height: 54px; border-radius: 6px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--sep); color: var(--text); min-width: 0; }
+.tool-palette .tp-shape { height: 62px; gap: 3px; padding: 0 3px; }
+.tool-palette .tp-tile:hover:not(.disabled), .tool-palette .tp-shape:hover { background: var(--hover); border-color: rgba(245,197,24,0.6); }
+.tool-palette .tp-tile.disabled { color: var(--faint); }
+.tool-palette .tp-ico { height: 22px; display: flex; align-items: center; }
+.tool-palette .tp-title { font-size: 10px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tool-palette .tp-shape .tp-title { font-size: 9.5px; }
+.tool-palette .tp-empty { grid-column: 1 / -1; color: var(--dim); font-size: 10px; line-height: 1.4; }
+.tool-palette .tp-add { display: flex; gap: 4px; padding: 8px; }
+.tool-palette .tp-add .flatbtn { flex: none; }
+.tool-palette .tp-hint { color: var(--faint); font-size: 10px; padding: 6px; }
+.tool-palette .shake { border-color: var(--danger) !important; }

@@ -42,6 +42,8 @@ export class App {
   commandInput = "";
   private listeners = new Map<Evt, Set<() => void>>();
   private commandIndex = new Map<string, CommandInfo>();
+  /** Hooks set by the dialogs (dialogs/index.ts): host notifications, "@ui:" targets, new-drawing preferences. */
+  uiHooks: { host?(p: any): boolean; ui?(ref: string): boolean; newTemplate?(t: string): string; afterNew?(t: string): Promise<void> | void } = {};
   /** Hooks set by the canvas. */
   canvas: { zoomExtents(): void; zoomBy(f: number): void; zoomWindow(): void; focus(): void; refresh(): void } | null = null;
 
@@ -132,6 +134,7 @@ export class App {
   }
   /** `host` notifications: a command asks the UI for a dialog, a zoom, a view mode or a panel (docs/ENGINE-PROTOCOL.md). */
   private async host(p: any) {
+    if (this.uiHooks.host?.(p)) return;
     switch (p.action) {
       case "open": return this.open();
       case "saveAs": return this.save(true);
@@ -203,8 +206,9 @@ export class App {
   // ---- files ----
   closeStart() { this.showStart = false; this.emit("start"); }
   async newDocument(template = "metric") {
-    const i = await this.tryCallLogged("doc.new", { template });
-    if (i) this.info = i;
+    const kind = this.uiHooks.newTemplate?.(template) ?? template;
+    const i = await this.tryCallLogged("doc.new", { template: kind });
+    if (i) { this.info = i; await this.uiHooks.afterNew?.(template); }
     this.mode = "2D"; this.closeStart();
     await this.refresh(["all"]);
     this.canvas?.zoomExtents();
@@ -290,7 +294,7 @@ export class App {
       case "deselectAll": await this.tryCall("select.set", { ids: [] }); await this.refresh(["selection"]); break;
       case "openURL": if (/^https:\/\//.test(v)) { if (this.engine.native) await this.engine.native.openExternal(v); else window.open(v, "_blank"); } break;
       case "view": await this.runCommand(`${v.toUpperCase()}VIEW`); break;
-      case "ui": this.print(`${a.slice(4)} is part of the Mac interface and is not in the Windows app yet.`); break;
+      case "ui": if (this.uiHooks.ui?.(a.slice(4))) break; this.print(`${a.slice(4)} is part of the Mac interface and is not in the Windows app yet.`); break;
       default: await this.runCommand(k.toUpperCase());
     }
   }

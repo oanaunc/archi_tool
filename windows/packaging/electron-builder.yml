@@ -1,8 +1,17 @@
 # Oanarina Archi Tool — electron-builder configuration for the Windows installer (used by .github/workflows/windows-app.yml).
-# Run from windows/:  npx electron-builder --win --x64 --config packaging/electron-builder.yml --publish never
-# Inputs: dist/ (npm run build), resources/engine/ (archi-engine.exe + Swift runtime DLLs),
+# Run from windows/:  node packaging/sync-version.mjs && npm run build && python packaging/make-ico.py .. packaging/build/icon.ico
+#                     npx electron-builder --win --x64 --config packaging/electron-builder.yml --publish never
+# Inputs: dist/ (npm run build), resources/engine/ (archi-engine.exe + Swift runtime DLLs, collect-dlls.py),
 #         ../assets/demo (Cedar House, Nordic House, textures), packaging/build/icon.ico (make-ico.py).
-appId: com.oanarinaldi.architool
+# Version: package.json "version", written from app/Info.plist CFBundleShortVersionString by packaging/sync-version.mjs
+# (the Windows file version gets CFBundleVersion as its fourth number, -c.buildVersion in the workflow).
+#
+# Installer (NSIS, assisted): per-user install into %LOCALAPPDATA%\Programs\oanarina-archi-tool without administrator
+# rights (installer.nsh forces the current-user mode, no UAC prompt), Start menu and desktop shortcuts, file
+# associations .archi / .dxf / .ifc (HKCU\Software\Classes), the Cedar House and Nordic House samples, and an
+# uninstaller registered in Settings ▸ Apps (HKCU ...\Uninstall). Unsigned until a code-signing certificate is set up
+# (windows/README.md "Code signing": CSC_LINK / CSC_KEY_PASSWORD or WIN_CSC_LINK / WIN_CSC_KEY_PASSWORD).
+appId: com.oanarina.architool            # = Mac CFBundleIdentifier and APP_ID in src/main/main.ts (AppUserModelID)
 productName: Oanarina Archi Tool
 copyright: Copyright © 2026 Oana Rinaldi. GPL-3.0-or-later.
 directories:
@@ -32,21 +41,37 @@ win:
   target:
     - target: nsis
   executableName: Oanarina Archi Tool
+  legalTrademarks: Oanarina Archi Tool
+  requestedExecutionLevel: asInvoker
+  signExts: [".exe"]                  # with a certificate (CSC_LINK) archi-engine.exe is signed too
+  # Double-clicking these opens them in the app (src/main/main.ts requestFromArgs); "Open with" lists the app too.
   fileAssociations:
     - ext: archi
-      name: Oanarina Archi Tool project
+      name: Oanarina.ArchiTool.Project
       description: Oanarina Archi Tool project
-      icon: packaging/build/icon.ico
+      icon: icon.ico                   # packaging/build/icon.ico (relative to buildResources)
+    - ext: dxf
+      name: Oanarina.ArchiTool.DXF
+      description: DXF drawing
+      icon: icon.ico                   # packaging/build/icon.ico (relative to buildResources)
+    - ext: ifc
+      name: Oanarina.ArchiTool.IFC
+      description: IFC building model
+      icon: icon.ico                   # packaging/build/icon.ico (relative to buildResources)
 nsis:
   artifactName: Oanarina-Archi-Tool-Setup-${version}.${ext}
   oneClick: false
   perMachine: false
+  allowElevation: false
   allowToChangeInstallationDirectory: true
-  createDesktopShortcut: true
+  include: packaging/installer.nsh
+  createDesktopShortcut: always
   createStartMenuShortcut: true
+  menuCategory: false
   shortcutName: Oanarina Archi Tool
-  uninstallDisplayName: Oanarina Archi Tool
+  uninstallDisplayName: Oanarina Archi Tool ${version}
   installerIcon: packaging/build/icon.ico
   uninstallerIcon: packaging/build/icon.ico
+  runAfterFinish: true
   deleteAppDataOnUninstall: false
 publish: null

@@ -7,6 +7,8 @@ import { icon } from "../icons";
 import { showMenu, help, MenuItem } from "./menu";
 import ui from "../data/ui.generated.json";
 import * as dd from "./dropdowns";
+import { prefs } from "../prefs";
+import { customRibbonPanels, isHiddenRibbonPanel, dynamicMenu, openUI, openSettings } from "../dialogs";
 
 export interface RItem {
   title: string; symbol?: string; command?: string; args?: string; names?: string[]; size?: "large" | "small"; rows?: number;
@@ -21,6 +23,13 @@ const QA_SYMBOL: Record<string, string> = { NEW: "doc.badge.plus", OPEN: "folder
   REDO: "arrow.uturn.forward", PLOT: "printer", PREVIEW: "eye", PUBLISH: "doc.on.doc", MATCHPROP: "paintbrush.pointed", QSELECTDIALOG: "line.3.horizontal.decrease.circle",
   LAYER: "square.3.layers.3d", RENDER: "camera.aperture", OPTIONS: "gearshape" };
 
+/** Ribbon title of a command (CommandCatalog.title): the first catalogue item that runs it. */
+export function ribbonTitle(name: string): string | undefined {
+  const n = name.toUpperCase();
+  const walk = (items: any[]): string | undefined => { for (const it of items ?? []) { if (it?.command && String(it.command).toUpperCase() === n && it.title && !/\{/.test(it.title)) return it.title; for (const s of it?.sections ?? []) { const r = walk(s.items); if (r) return r; } } return undefined; };
+  for (const t of RIBBON) for (const g of t.groups) { const r = walk(g.items); if (r) return r; }
+  return undefined;
+}
 export function commandLine(it: RItem) { return it.command ? (it.args ? `${it.command} ${it.args}` : it.command) : ""; }
 export function resolveCommand(app: App, it: RItem): string | null {
   if (!it.command) return null;
@@ -53,7 +62,7 @@ export class Ribbon {
     help(logo, "About Oanarina Archi Tool");
     logo.addEventListener("click", () => app.runCommand("ABOUT"));
     this.tabsEl.append(logo);
-    for (const n of QUICK_ACCESS) {
+    for (const n of prefs.quickAccess) {
       const def = app.lookup(n);
       const b = h("button", { class: "iconbtn" }, icon(QA_SYMBOL[n] ?? "terminal", 14, 1.7));
       help(b, def ? `${def.name} — ${def.summary}` : n);
@@ -63,10 +72,10 @@ export class Ribbon {
     const more = h("button", { class: "iconbtn small-chevron" }, icon("chevron.down", 9, 2));
     help(more, "Customize the quick access toolbar");
     more.addEventListener("click", () => showMenu(["NEW", "OPEN", "SAVE", "SAVEAS", "UNDO", "REDO", "PLOT", "PREVIEW", "PUBLISH", "MATCHPROP", "QSELECTDIALOG", "LAYER", "RENDER", "OPTIONS"]
-      .map((n) => ({ title: n, checked: QUICK_ACCESS.includes(n), action: () => { const i = QUICK_ACCESS.indexOf(n); if (i >= 0) QUICK_ACCESS.splice(i, 1); else QUICK_ACCESS.push(n); this.renderTabs(); } }) as MenuItem)
-      .concat([{ separator: true }, { title: "More Commands…", action: () => app.runCommand("OPTIONS") }]), more));
+      .map((n) => ({ title: n, checked: prefs.quickAccess.includes(n), action: () => { const q = prefs.quickAccess; const i = q.indexOf(n); if (i >= 0) q.splice(i, 1); else q.push(n); prefs.set("quickAccess", q); } }) as MenuItem)
+      .concat([{ separator: true }, { title: "More Commands…", action: () => openSettings("Toolbar") }]), more));
     this.tabsEl.append(more, h("div", { class: "vsep", style: { height: "14px", alignSelf: "center", margin: "0 4px" } }));
-    for (const t of RIBBON) {
+    for (const t of RIBBON.filter((x) => !prefs.hiddenRibbonTabs.includes(x.tab) || x.tab === app.ribbonTab)) {
       const b = h("button", { class: "tab" + (t.tab === app.ribbonTab ? " sel" : ""), text: t.tab });
       b.addEventListener("click", () => { app.setUI("ribbonTab", t.tab); if (app.ribbonCollapsed) app.setUI("ribbonCollapsed", false); });
       this.tabsEl.append(b);
@@ -89,7 +98,8 @@ export class Ribbon {
     clear(this.body);
     this.buttons = [];
     const tab = RIBBON.find((t) => t.tab === this.app.ribbonTab) ?? RIBBON[0];
-    for (const g of tab.groups) this.body.append(this.group(g));
+    for (const g of tab.groups) if (!isHiddenRibbonPanel(g.name)) this.body.append(this.group(g));
+    for (const g of customRibbonPanels(tab.tab, ribbonTitle)) this.body.append(this.group(g as RGroup));
     this.updateStates();
   }
 
@@ -163,8 +173,9 @@ export class Ribbon {
       const resolved = resolveCommand(app, it);
       const def = resolved && !resolved.startsWith("@") ? app.lookup(resolved.split(" ")[0]) : null;
       help(b, it.help || (def ? `${it.title} — ${def.summary}  [${def.name}${def.aliases?.length ? ", " + def.aliases.join(", ") : ""}]` : resolved ? it.title : `${it.title} is not available in this build`));
-      (b as HTMLButtonElement).disabled = !resolved;
-      b.addEventListener("click", () => { if (resolved) app.runCommand(resolved.startsWith("@") ? resolved : it.args ? `${resolved} ${it.args}` : resolved); });
+      const uiTarget = (it as any).ui as string | undefined;
+      (b as HTMLButtonElement).disabled = !resolved && !uiTarget;
+      b.addEventListener("click", () => { if (uiTarget && openUI(uiTarget)) return; if (resolved) app.runCommand(resolved.startsWith("@") ? resolved : it.args ? `${resolved} ${it.args}` : resolved); });
     }
     this.buttons.push({ el: b, it });
     return b;
@@ -177,6 +188,7 @@ export class Ribbon {
       else if (out.length) out.push({ separator: true });
       for (const x of s.items as any[]) {
         if (x.separator) { out.push({ separator: true }); continue; }
+        if (x.dynamic) { const d = dynamicMenu(String(x.dynamic)); if (d) out.push(...d); continue; }
         if (x.dynamic || x.kind === "label" || !x.title || /\{[^}]+\}/.test(x.title)) continue; // run-time lists (dim styles, recent …)
         const r = resolveCommand(this.app, x);
         out.push({ title: x.title, symbol: x.symbol, disabled: !r, action: () => r && this.app.runCommand(r.startsWith("@") ? r : x.args ? `${r} ${x.args}` : r) });

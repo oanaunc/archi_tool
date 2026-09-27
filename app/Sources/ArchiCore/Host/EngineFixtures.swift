@@ -8,6 +8,7 @@ extension EngineSession {
     @discardableResult
     public static func writeFixtures(to dir: URL, sample: URL) async throws -> [String] {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        registerPortableAppCommands()
         let sink = NotificationSink()
         let s = EngineSession(emit: { sink.lines.append($0) })
         s.baseDirectory = sample.deletingLastPathComponent()
@@ -98,9 +99,24 @@ extension EngineSession {
         seq.append(try await exchange("input.key", params([("key", .string("Enter"))])))
         seq.append(try await exchange("edit.undo", .object([])))
         try save("line-sequence.json", .array(seq))
+        // Dialogs (EngineDialogs.swift) and a portable UI command asking the shell for a dialog (host notification).
+        try save("units-get.json", try await exchange("units.get", .object([])))
+        try save("drafting-get.json", try await exchange("drafting.get", .object([])))
+        try save("qselect-options.json", try await exchange("qselect.options", .object([])))
+        try save("qselect-run.json", try await exchange("qselect.run", params([("type", .string("wall"))])))
+        try save("layerstate-list.json", try await exchange("layerstate.list", .object([])))
+        try save("layerfilter-list.json", try await exchange("layerfilter.list", .object([])))
+        try save("pagesetup-model.json", try await exchange("pagesetup.get", .object([])))
+        if !s.editor.doc.layouts.isEmpty { try save("pagesetup-sheet.json", try await exchange("pagesetup.get", params([("layout", .int(0))]))) }
+        try save("templates-list.json", try await exchange("templates.list", .object([])))
+        try save("command-options.json", try await exchange("command.run", params([("line", .string("OPTIONS Drafting"))])))
         // Keyboard helpers and errors.
         try save("command-complete.json", try await exchange("command.complete", params([("prefix", .string("WA"))])))
         try save("error-unknown-method.json", try await exchange("no.such.method", .object([])))
+        written += try await writeToolFixtures(to: dir, sample: sample)
+        written += try await writeView3DFixtures(to: dir, sample: sample)
+        written += try await writeCanvasFixtures(to: dir, sample: sample)
+        written += try await writeOutputFixtures(to: dir, sample: sample)
         try save("index.json", EngineJSON.strings(written))
         return written
     }

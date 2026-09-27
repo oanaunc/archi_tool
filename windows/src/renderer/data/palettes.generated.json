@@ -1,0 +1,378 @@
+{
+ "source": "docs/windows-parity.json palettes (ToolPalette.swift)",
+ "palettes": [
+  {
+   "name": "Draw",
+   "kind": "commands",
+   "items": [
+    {
+     "title": "Line",
+     "symbol": "line.diagonal",
+     "command": "LINE"
+    },
+    {
+     "title": "Polyline",
+     "symbol": "point.topleft.down.curvedto.point.bottomright.up",
+     "command": "PLINE",
+     "names": [
+      "PLINE",
+      "POLYLINE"
+     ]
+    },
+    {
+     "title": "Circle",
+     "symbol": "circle",
+     "command": "CIRCLE"
+    },
+    {
+     "title": "Arc",
+     "symbol": "rainbow",
+     "command": "ARC"
+    },
+    {
+     "title": "Rectangle",
+     "symbol": "rectangle",
+     "command": "RECTANG",
+     "names": [
+      "RECTANG",
+      "RECTANGLE",
+      "REC"
+     ]
+    },
+    {
+     "title": "Polygon",
+     "symbol": "hexagon",
+     "command": "POLYGON"
+    },
+    {
+     "title": "Ellipse",
+     "symbol": "oval",
+     "command": "ELLIPSE"
+    },
+    {
+     "title": "Spline",
+     "symbol": "scribble.variable",
+     "command": "SPLINE"
+    },
+    {
+     "title": "Hatch",
+     "symbol": "square.grid.3x3.fill",
+     "command": "HATCH",
+     "names": [
+      "HATCH",
+      "BHATCH"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Modify",
+   "kind": "commands",
+   "items": [
+    {
+     "title": "Move",
+     "symbol": "arrow.up.and.down.and.arrow.left.and.right",
+     "command": "MOVE"
+    },
+    {
+     "title": "Copy",
+     "symbol": "plus.square.on.square",
+     "command": "COPY"
+    },
+    {
+     "title": "Rotate",
+     "symbol": "arrow.clockwise",
+     "command": "ROTATE"
+    },
+    {
+     "title": "Mirror",
+     "symbol": "arrow.left.and.right.righttriangle.left.righttriangle.right",
+     "command": "MIRROR"
+    },
+    {
+     "title": "Scale",
+     "symbol": "arrow.up.left.and.arrow.down.right",
+     "command": "SCALE"
+    },
+    {
+     "title": "Stretch",
+     "symbol": "arrow.left.and.right",
+     "command": "STRETCH"
+    },
+    {
+     "title": "Trim",
+     "symbol": "scissors",
+     "command": "TRIM"
+    },
+    {
+     "title": "Extend",
+     "symbol": "arrow.right.to.line",
+     "command": "EXTEND"
+    },
+    {
+     "title": "Offset",
+     "symbol": "square.on.square.dashed",
+     "command": "OFFSET"
+    },
+    {
+     "title": "Fillet",
+     "symbol": "arrow.turn.up.right",
+     "command": "FILLET"
+    },
+    {
+     "title": "Chamfer",
+     "symbol": "triangle.lefthalf.filled",
+     "command": "CHAMFER"
+    },
+    {
+     "title": "Array",
+     "symbol": "square.grid.3x3",
+     "command": "ARRAY",
+     "names": [
+      "ARRAY",
+      "ARRAYRECT"
+     ]
+    },
+    {
+     "title": "Explode",
+     "symbol": "burst",
+     "command": "EXPLODE"
+    },
+    {
+     "title": "Erase",
+     "symbol": "eraser",
+     "command": "ERASE"
+    },
+    {
+     "title": "Join",
+     "symbol": "link",
+     "command": "JOIN"
+    },
+    {
+     "title": "Break",
+     "symbol": "minus.square",
+     "command": "BREAK"
+    }
+   ]
+  },
+  {
+   "name": "Annotate",
+   "kind": "commands",
+   "items": [
+    {
+     "title": "Text",
+     "symbol": "textformat",
+     "command": "TEXT",
+     "names": [
+      "TEXT",
+      "DTEXT"
+     ]
+    },
+    {
+     "title": "MText",
+     "symbol": "text.alignleft",
+     "command": "MTEXT"
+    },
+    {
+     "title": "Linear",
+     "symbol": "ruler",
+     "command": "DIMLINEAR",
+     "names": [
+      "DIMLINEAR",
+      "DLI"
+     ]
+    },
+    {
+     "title": "Aligned",
+     "symbol": "arrow.up.right",
+     "command": "DIMALIGNED",
+     "names": [
+      "DIMALIGNED",
+      "DAL"
+     ]
+    },
+    {
+     "title": "Angular",
+     "symbol": "angle",
+     "command": "DIMANGULAR",
+     "names": [
+      "DIMANGULAR",
+      "DAN"
+     ]
+    },
+    {
+     "title": "Radius",
+     "symbol": "circle.and.line.horizontal",
+     "command": "DIMRADIUS",
+     "names": [
+      "DIMRADIUS",
+      "DRA"
+     ]
+    },
+    {
+     "title": "Diameter",
+     "symbol": "circle.circle",
+     "command": "DIMDIAMETER",
+     "names": [
+      "DIMDIAMETER",
+      "DDI"
+     ]
+    },
+    {
+     "title": "Leader",
+     "symbol": "text.bubble",
+     "command": "LEADER",
+     "names": [
+      "LEADER",
+      "MLEADER",
+      "QLEADER"
+     ]
+    },
+    {
+     "title": "Table",
+     "symbol": "tablecells",
+     "command": "TABLE"
+    }
+   ]
+  },
+  {
+   "name": "Build",
+   "kind": "commands",
+   "items": [
+    {
+     "title": "Wall",
+     "symbol": "rectangle.split.2x1",
+     "command": "WALL"
+    },
+    {
+     "title": "Door",
+     "symbol": "door.left.hand.open",
+     "command": "DOOR"
+    },
+    {
+     "title": "Window",
+     "symbol": "window.vertical.closed",
+     "command": "WINDOW"
+    },
+    {
+     "title": "Opening",
+     "symbol": "rectangle.dashed",
+     "command": "OPENING",
+     "names": [
+      "OPENING",
+      "WALLOPENING"
+     ]
+    },
+    {
+     "title": "Curtain Wall",
+     "symbol": "square.grid.4x3.fill",
+     "command": "CURTAINWALL",
+     "names": [
+      "CURTAINWALL",
+      "CWALL"
+     ]
+    },
+    {
+     "title": "Column",
+     "symbol": "cylinder",
+     "command": "COLUMN"
+    },
+    {
+     "title": "Beam",
+     "symbol": "minus.rectangle",
+     "command": "BEAM"
+    },
+    {
+     "title": "Slab",
+     "symbol": "square.3.layers.3d.bottom.filled",
+     "command": "SLAB",
+     "names": [
+      "SLAB",
+      "FLOOR"
+     ]
+    },
+    {
+     "title": "Roof",
+     "symbol": "house",
+     "command": "ROOF"
+    },
+    {
+     "title": "Ceiling",
+     "symbol": "square.3.layers.3d.top.filled",
+     "command": "CEILING"
+    },
+    {
+     "title": "Stair",
+     "symbol": "stairs",
+     "command": "STAIR",
+     "names": [
+      "STAIR",
+      "STAIRS"
+     ]
+    },
+    {
+     "title": "Railing",
+     "symbol": "line.3.horizontal",
+     "command": "RAILING"
+    },
+    {
+     "title": "Room",
+     "symbol": "square.dashed.inset.filled",
+     "command": "ROOM",
+     "names": [
+      "ROOM",
+      "SPACE"
+     ]
+    },
+    {
+     "title": "Grid",
+     "symbol": "grid",
+     "command": "GRID",
+     "names": [
+      "GRID",
+      "GRIDLINE"
+     ]
+    },
+    {
+     "title": "Component",
+     "symbol": "sofa",
+     "command": "COMPONENT",
+     "names": [
+      "COMPONENT",
+      "FURNITURE"
+     ]
+    },
+    {
+     "title": "Quick Building",
+     "symbol": "building.2",
+     "command": "BUILDING",
+     "names": [
+      "QUICKBUILDING",
+      "QBUILD",
+      "BUILDING"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Blocks",
+   "kind": "blocks"
+  },
+  {
+   "name": "Components",
+   "kind": "components"
+  },
+  {
+   "name": "My Tools",
+   "kind": "custom",
+   "default": [
+    "WALL",
+    "DOOR",
+    "WINDOW",
+    "ROOM",
+    "DIMLINEAR",
+    "HATCH"
+   ]
+  }
+ ]
+}

@@ -30,7 +30,7 @@ public final class EngineSession {
     private var flushScheduled = false
     private var inputHistory: [String] = []
     private var historyIndex: Int?
-    private var drawCache: (count: Int, options: DrawOptions, entries: [DrawEntry])?
+    var drawCache: (count: Int, options: DrawOptions, entries: [DrawEntry])?
 
     public init(editor: Editor? = nil, emit: @escaping (String) -> Void = { _ in }) {
         self.editor = editor ?? Editor()
@@ -53,7 +53,7 @@ public final class EngineSession {
         emit(EngineProtocol.notification("log", o.json))
     }
 
-    private func markChanged(_ what: String) {
+    func markChanged(_ what: String) {
         if !changed.contains(what) { changed.append(what) }
         guard !flushScheduled else { return }
         flushScheduled = true
@@ -75,7 +75,7 @@ public final class EngineSession {
         if what.contains("prompt") { emit(EngineProtocol.notification("prompt", promptObject().json)) }
     }
 
-    private func hostNotify(_ action: String, _ extra: EngineObject = EngineObject()) {
+    func hostNotify(_ action: String, _ extra: EngineObject = EngineObject()) {
         var o = EngineObject()
         o.set("action", action)
         for f in extra.fields { o.set(f.key, f.value) }
@@ -155,7 +155,13 @@ public final class EngineSession {
         case "sysvar.set": return try sysvarSet(params)
         case "file.export": return try fileExport(params)
         case "file.import": return try fileImport(params)
-        default: throw EngineError(EngineError.methodNotFound, "Method not found: " + method)
+        case let m where EngineDialogMethods.all.contains(m): return try await dialogCall(m, params)
+        case let m where EngineView3DMethods.all.contains(m): return try await view3dCall(m, params)
+        default:
+            if let r = try await callCanvas(method, params) { return r }
+            if let r = try await callOutput(method, params) { return r }
+            if let r = try await callUI(method, params) { return r }
+            throw EngineError(EngineError.methodNotFound, "Method not found: " + method)
         }
     }
 
@@ -410,10 +416,19 @@ public final class EngineSession {
             case .newDocument:
                 editor.replaceDocument(ArchiDocument(), url: nil)
             case .export(let format, let p):
-                if let p { try DocumentIO.write(editor.doc, to: url(p), format: format, level: editor.doc.currentLevel); editor.print("Exported " + url(p).path) }
+                if let p, format.lowercased() == "pdf" {
+                    // EXPORT <file.pdf>: the plot of the shown sheet or the current level, as FileController.export does on the Mac.
+                    var o = EngineObject()
+                    o.set("path", p); o.set("quiet", true)
+                    if let li = activeSheetIndex { o.set("layout", li) } else { o.set("what", "model") }
+                    _ = try plotPDF(o.json)
+                    editor.print("Exported PDF to " + url(p).path)
+                }
+                else if let p { try DocumentIO.write(editor.doc, to: url(p), format: format, level: editor.doc.currentLevel); editor.print("Exported " + url(p).path) }
                 else { var o = EngineObject(); o.set("format", format); hostNotify("export", o) }
             case .plot(let p):
-                if let p { try DocumentIO.write(editor.doc, to: url(p), format: "pdf", level: editor.doc.currentLevel); editor.print("Plotted " + url(p).path) }
+                // Same plot as the Plot dialog and the Mac PLOT <file>: the shown sheet (CTAB) or the current level (EngineOutput.swift).
+                if let p { try plotToFile(p) }
                 else { hostNotify("plot") }
             case .importFile(let p):
                 if let p { _ = try importFile(url(p), format: nil, offset: .zero) } else { hostNotify("import") }
@@ -430,7 +445,7 @@ public final class EngineSession {
             case .render: hostNotify("render")
             case .walkthrough: hostNotify("walkthrough")
             case .showPanel(let n): var o = EngineObject(); o.set("panel", n); hostNotify("showPanel", o)
-            case .setViewStyle(let s): var o = EngineObject(); o.set("style", s); hostNotify("setViewStyle", o)
+            case .setViewStyle(let s): view3dStyleChanged(s); var o = EngineObject(); o.set("style", s); hostNotify("setViewStyle", o)
             case .setView(let s): var o = EngineObject(); o.set("view", s); hostNotify("setView", o)
             }
         } catch {
@@ -559,6 +574,7 @@ public final class EngineSession {
         let wantsPick = editor.isIdle || (req.map { !$0.kinds.isDisjoint(with: [.selection, .entity]) && !$0.kinds.contains(.point) } ?? false)
         let hover = wantsPick ? editor.pick(at: raw, tolerance: editor.pickTolerance) : nil
         o.set("hover", hover.map { EngineJSON.int($0) } ?? .null)
+        canvasCursorExtras(&o, point: r.point)
         return o.json
     }
 
@@ -698,6 +714,7 @@ public final class EngineSession {
         updatePixels(p)
         let visible = rect(p["rect"])
         if let lay = p["layout"], !lay.isNull { return try sheetDrawList(lay, visible: visible) }
+        if let v = visible { EngineSession.lastDisplayBoxes[ObjectIdentifier(self)] = v }
         let opts = try drawOptions(p)
         let es = entries(opts)
         var items: [EngineJSON] = []
@@ -789,7 +806,7 @@ public final class EngineSession {
         let lod = max(0, p["lod"]?.intValue ?? 0)
         var elementLevel: [EntityID: Int] = [:]
         for el in doc.elements { elementLevel[el.id] = el.level }
-        let binaryPath = p["binary"]?.stringValue
+        let binaryPath = view3dBinaryPath(p["binary"])
         let sink: EngineBinarySink? = binaryPath == nil ? nil : EngineBinarySink()
         var out: [EngineJSON] = []
         var box = BBox3.empty
@@ -803,7 +820,7 @@ public final class EngineSession {
                 mesh = lg.levels[min(lod, lg.levels.count - 1)]
             }
             for q in mesh.positions { box.add(q) }
-            out.append(EngineMeshJSON.group(g, mesh: mesh, doc: doc, sink: sink))
+            out.append(EngineMeshJSON.group(g, mesh: mesh, doc: doc, sink: sink, level: g.id.flatMap { elementLevel[$0] }))
         }
         let look = EngineRenderPresets.look(EngineRenderPresets.current(doc))
         var sun = EngineObject()
@@ -823,6 +840,7 @@ public final class EngineSession {
             try sink.data.write(to: u, options: .atomic)
             o.set("binary", u.path)
             o.set("binaryLength", sink.data.count)
+            o.set("layout", EngineMeshJSON.binaryLayout)
         }
         return o.json
     }

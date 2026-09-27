@@ -1,31 +1,31 @@
 // Oanarina Archi Tool — GPL-3.0-or-later
-import SwiftUI
-import ArchiCore
+import Foundation
 
 /// Linear and angular unit display (APP-049), AutoCAD style: LUNITS 1 scientific, 2 decimal, 3 engineering,
 /// 4 architectural, 5 fractional with LUPREC; AUNITS 0 decimal degrees, 1 deg/min/sec, 2 grads, 3 radians,
 /// 4 surveyor's units with AUPREC. Engineering, architectural and fractional values are in inches (drawings in
 /// millimetres, centimetres or metres are converted), feet shown with ' and inches with ".
-enum UnitFormat {
-    enum Linear: Int, CaseIterable { case scientific = 1, decimal = 2, engineering = 3, architectural = 4, fractional = 5
-        var title: String { ["Scientific", "Decimal", "Engineering", "Architectural", "Fractional"][rawValue - 1] }
+/// Portable (ArchiCore): the Mac status bar and Units dialog and the Windows Units dialog (units.get) use it.
+public enum UnitFormat {
+    public enum Linear: Int, CaseIterable { case scientific = 1, decimal = 2, engineering = 3, architectural = 4, fractional = 5
+        public var title: String { ["Scientific", "Decimal", "Engineering", "Architectural", "Fractional"][rawValue - 1] }
     }
-    enum Angular: Int, CaseIterable { case degrees = 0, dms = 1, grads = 2, radians = 3, surveyor = 4
-        var title: String { ["Decimal degrees", "Deg/Min/Sec", "Grads", "Radians", "Surveyor's units"][rawValue] }
+    public enum Angular: Int, CaseIterable { case degrees = 0, dms = 1, grads = 2, radians = 3, surveyor = 4
+        public var title: String { ["Decimal degrees", "Deg/Min/Sec", "Grads", "Radians", "Surveyor's units"][rawValue] }
     }
 
-    static func linearType(_ doc: ArchiDocument) -> Linear { doc.variable("LUNITS").flatMap(Int.init).flatMap(Linear.init) ?? .decimal }
-    static func linearPrecision(_ doc: ArchiDocument) -> Int { min(max(doc.variable("LUPREC").flatMap(Int.init) ?? 2, 0), 8) }
-    static func angularType(_ doc: ArchiDocument) -> Angular { doc.variable("AUNITS").flatMap(Int.init).flatMap(Angular.init) ?? .degrees }
-    static func angularPrecision(_ doc: ArchiDocument) -> Int { min(max(doc.variable("AUPREC").flatMap(Int.init) ?? 0, 0), 8) }
+    public static func linearType(_ doc: ArchiDocument) -> Linear { doc.variable("LUNITS").flatMap(Int.init).flatMap(Linear.init) ?? .decimal }
+    public static func linearPrecision(_ doc: ArchiDocument) -> Int { min(max(doc.variable("LUPREC").flatMap(Int.init) ?? 2, 0), 8) }
+    public static func angularType(_ doc: ArchiDocument) -> Angular { doc.variable("AUNITS").flatMap(Int.init).flatMap(Angular.init) ?? .degrees }
+    public static func angularPrecision(_ doc: ArchiDocument) -> Int { min(max(doc.variable("AUPREC").flatMap(Int.init) ?? 0, 0), 8) }
 
-    static func linear(_ v: Double, doc: ArchiDocument) -> String { linear(v, units: doc.units, type: linearType(doc), precision: linearPrecision(doc)) }
-    static func angle(_ radians: Double, doc: ArchiDocument) -> String { angle(radians, type: angularType(doc), precision: angularPrecision(doc)) }
+    public static func linear(_ v: Double, doc: ArchiDocument) -> String { linear(v, units: doc.units, type: linearType(doc), precision: linearPrecision(doc)) }
+    public static func angle(_ radians: Double, doc: ArchiDocument) -> String { angle(radians, type: angularType(doc), precision: angularPrecision(doc)) }
 
     /// Inches in one drawing unit (engineering / architectural / fractional).
-    static func inchesPerUnit(_ u: Units) -> Double { u == .inches ? 1 : (u == .feet ? 12 : u.mm / 25.4) }
+    public static func inchesPerUnit(_ u: Units) -> Double { u == .inches ? 1 : (u == .feet ? 12 : u.mm / 25.4) }
 
-    static func linear(_ v: Double, units: Units, type: Linear, precision p: Int) -> String {
+    public static func linear(_ v: Double, units: Units, type: Linear, precision p: Int) -> String {
         guard v.isFinite else { return "—" }
         switch type {
         case .scientific: return String(format: "%.\(p)E", v)
@@ -54,7 +54,7 @@ enum UnitFormat {
         }
     }
 
-    static func angle(_ r: Double, type: Angular, precision p: Int) -> String {
+    public static func angle(_ r: Double, type: Angular, precision p: Int) -> String {
         let deg = r * 180 / .pi
         switch type {
         case .degrees: return String(format: "%.\(p)f", deg) + "°"
@@ -70,7 +70,10 @@ enum UnitFormat {
         case .surveyor:
             // Bearing from north or south towards east or west (0° = east, counter-clockwise).
             var b = (90 - deg).truncatingRemainder(dividingBy: 360); if b < 0 { b += 360 }
-            let (ns, ew, ang): (String, String, Double) = b <= 90 ? ("N", "E", b) : b <= 180 ? ("S", "E", 180 - b) : b <= 270 ? ("S", "W", b - 180) : ("N", "W", 360 - b)
+            var ns = "N", ew = "E", ang = b
+            if b > 270 { ns = "N"; ew = "W"; ang = 360 - b }
+            else if b > 180 { ns = "S"; ew = "W"; ang = b - 180 }
+            else if b > 90 { ns = "S"; ew = "E"; ang = 180 - b }
             if abs(ang) < 1e-9 { return ns == "N" ? "N" : "S" }
             if abs(ang - 90) < 1e-9 { return ew }
             return "\(ns) \(angle(ang * .pi / 180, type: .dms, precision: max(p, 1))) \(ew)"

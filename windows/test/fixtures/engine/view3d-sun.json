@@ -1,0 +1,1 @@
+{"request":{"jsonrpc":"2.0","id":3005,"method":"view3d.sun","params":{"day":172,"hour":15}},"response":{"jsonrpc":"2.0","id":3005,"result":{"day":172,"hour":15,"altitude":48.768378,"azimuth":249.250801,"aboveHorizon":true,"direction":[-0.616355,-0.233506,0.752051],"text":"Altitude 48.8°, azimuth 249.3° · site 47.6°, -122.3°"}},"notifications":[]}

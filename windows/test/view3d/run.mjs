@@ -1,7 +1,7 @@
 // Oanarina Archi Tool for Windows — GPL-3.0-or-later
 // Renders the Cedar House fixture (build/engine-fixtures/meshes-all-lod2.json) with every lighting preset from the
 // saved cameras and writes PNGs plus side-by-side comparisons with the Mac renders (build/renders) to test-results/3d.
-//   node windows/test/view3d/run.mjs [--size 1200x675] [--ss 2] [--only front-daylight,corner-night]
+//   node windows/test/view3d/run.mjs [--size 1200x675] [--ss 2] [--only front-daylight,corner-night] [--full]
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
@@ -14,7 +14,9 @@ const jobs = [["Front", "Daylight"], ["Corner", "Daylight"], ["Aerial", "Dayligh
   ["Front", "Overcast"], ["Corner", "Overcast"], ["Front", "Night"], ["Corner", "Night"]];
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
-const { page, close } = await openHarness();
+// --full: the full-detail model (build/engine-fixtures/view3d-meshes-lod0.json + .bin, written by ./scripts/q.sh engine).
+const full = process.argv.includes("--full");
+const { page, close } = await openHarness(full ? "?meshes=/build/engine-fixtures/view3d-meshes-lod0.json&bin=/build/engine-fixtures/view3d-meshes-lod0.bin" : "");
 const out = [];
 for (const [cam, preset] of jobs) {
   const name = `cedar-house-${slug(cam)}-${slug(preset)}`;

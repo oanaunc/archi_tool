@@ -37,6 +37,12 @@ export function color(c: any, fallback = "#ffffff", alpha?: number): string {
 
 /** Decodes one DrawItem in any of the encodings the engine may use: {type:"stroke",…}, {kind:…} or Swift's {"stroke":{…}}. */
 export function decodeItem(raw: any): Item | null {
+  const it = decodeItem0(raw);
+  // Sheet viewport contents carry their viewport frame as "clip" (view.drawList with a layout).
+  if (it && Array.isArray(raw?.clip) && raw.clip.length === 4) (it as any).clip = raw.clip.map(Number);
+  return it;
+}
+function decodeItem0(raw: any): Item | null {
   if (!raw || typeof raw !== "object") return null;
   let type: string = raw.type ?? raw.kind;
   let v = raw;
@@ -109,9 +115,15 @@ export interface Params { lineweights: boolean; lwScale: number; minWidth: numbe
 export const defaultParams: Params = { lineweights: true, lwScale: 3.2, minWidth: 0.5, maxWidth: 8 };
 export function lineWidth(p: Params, lw: number) { return p.lineweights ? Math.min(p.maxWidth, Math.max(p.minWidth, lw * p.lwScale)) : p.minWidth; }
 
-/** Applies the world→screen transform (y up) to the context. */
+/** Applies the world→screen transform (y up) to the context, including the display twist (VIEWTWIST, radians). */
 export function applyView(ctx: CanvasRenderingContext2D, v: View, dpr: number) {
-  ctx.setTransform(dpr * v.scale, 0, 0, -dpr * v.scale, dpr * (v.w / 2 - v.cx * v.scale), dpr * (v.h / 2 + v.cy * v.scale));
+  const t = v.twist ?? 0;
+  if (!t) { ctx.setTransform(dpr * v.scale, 0, 0, -dpr * v.scale, dpr * (v.w / 2 - v.cx * v.scale), dpr * (v.h / 2 + v.cy * v.scale)); return; }
+  const c = Math.cos(t) * v.scale * dpr, s = Math.sin(t) * v.scale * dpr;
+  // screen = centre + [c -s; -s -c]·(p − view centre)  (rotate by t in y-up space, then flip y).
+  const a = c, b = -s, cc = -s, d = -c;
+  const e = dpr * (v.w / 2) - (a * v.cx + cc * v.cy), f = dpr * (v.h / 2) - (b * v.cx + d * v.cy);
+  ctx.setTransform(a, b, cc, d, e, f);
 }
 
 const CAP = 0.717; // Helvetica/Arial cap height per em: TextGeom.height is the cap height.

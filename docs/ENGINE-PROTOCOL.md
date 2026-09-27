@@ -164,8 +164,9 @@ Buffers are little-endian base64: `positions`/`normals` Float32 xyz, `indices` U
 `camera.up = (0,0,1)`). `level` = id/name/`"all"` (default all); with a level only BIM elements on it are sent.
 `lod` 0 = full detail, 1 and 2 = coarser (MeshLOD 30 % / 8 % of the triangles). `opacity` = 1 − material transparency,
 `emissive` appears for MATEMIT materials. `texture` paths are relative to the drawing (the Cedar House textures are in
-`assets/demo/textures`). The Cedar House trees are ~1.1 M triangles (~160 MB as base64): pass `"binary":"<file>"` to
-get every buffer written to that file, each buffer then described as `{"offset":N,"length":bytes}`.
+`assets/demo/textures`). The Cedar House trees are ~1.1 M triangles (~160 MB as base64): pass `"binary":"<file>"` (or
+`true` for a temporary file the engine picks) to get every buffer written to that file, each buffer then described as
+`{"offset":N,"length":bytes}`, plus `"binary"`, `"binaryLength"` and `"layout"` in the result. BIM meshes carry `"level"`.
 
 ### render.settings `{}` · render.preset `{name}`
 The photographic presets of the Mac Realistic view (`ArchiApp/BeautyLighting.swift`), same values:
@@ -211,6 +212,205 @@ Import merges the file into the drawing as one undo step → `{summary, entityId
 ### engine.log `{limit?}` → `{"lines":[…]}`
 The last command-history lines (for a new window attaching to a running engine).
 
+### Dialogs (Host/EngineDialogs.swift): the Mac sheets that edit the drawing
+Same fields, defaults, validation and undo labels as the Mac (`UnitsSheet`, `DraftingSettingsSheet`, `QuickSelectSheet`,
+`LayerStatesSheet`, the Layers panel, `PageSetupSheet`, `TemplateLibrary`).
+- `units.get {units?, lunits?, luprec?, aunits?, auprec?}` → `{units, lunits, luprec, aunits, auprec, unitList:[{value,title,abbreviation,mm}],
+  linearTypes, angularTypes, linearPrecisionLabel, angularPrecisionLabel, sample, note}`; the params preview other values
+  (live sample, e.g. `"Sample: 3'-6 1/2\"  ·  45°"`) without changing the drawing.
+- `units.set {units, lunits 1–5, luprec 0–8, aunits 0–4, auprec 0–8}` → units.get; one "Units" undo step when anything changed.
+- `drafting.get {}` → the session's DraftSettings `{showGrid, gridSnap, gridSpacing, ortho, polarTracking, polarIncrement, dynamicInput,
+  lineweightDisplay, textHeight, wallThickness, wallHeight, objectSnap, snapModes, snapKinds, polarIncrements, units}`;
+  `drafting.set {…any of those}` (positive numbers, known snap names) → drafting.get.
+- `drafting.defaults {units?, draft:{…}}`: Settings ▸ Drafting defaults for a new or open drawing (AppPreferences.draftDefaults: grid
+  spacing given in mm is converted for metric drawings, polar tracking off with ortho); `units` (Settings ▸ General ▸ Default units)
+  relabels a new blank drawing and scales the text/wall defaults like AppModel.newDocument.
+- `qselect.options {}` → `{types:[{value,title}], properties, operators, layers, selectionCount, scope}`;
+  `qselect.run {scope 0 current level | 1 selection, type, property, op, value, apply?, mode New|Append|Exclude}` → `{count}` (live
+  count) or, with `apply`, `{count, selected, ids}` and the history line `QSELECT <type> <criterion> → n matched; m selected.`
+- `layerstate.list` → `{states:[{name, layers, date (ISO), description, currentLayer}]}`; `layerstate.save|restore|delete {name}`,
+  `layerstate.rename {name, newName}` → `{states, selected?, changed?}` (undo steps "Save/Restore/Delete/Rename Layer State").
+- `layerfilter.list` → `{filters:[{name, filter}]}` (document variables `LAYERFILTER:<NAME>`, "#on #used #unlocked A-*");
+  `layerfilter.save {name, filter}`, `layerfilter.delete {name}`.
+- `layers.group {group, key: visible|frozen|locked, value}` → `{changed}`: layer-tree bulk toggle ("Layer Group <name>"; group = name
+  prefix before - _ or space, "xref|", "(Standard)"); the current layer is never frozen.
+- `pagesetup.get {layout?}` (sheet index or name; absent = model) → `{isSheet, layout, title, paper?, portrait?, papers:[{name,width,height,
+  label,modelLabel}], setup:{colorMode, lineweightScale, plotStamp, stampText?, modelPaper, modelPortrait, modelScale?, plotStyleTable?,
+  namedStyleTable?, plotArea, plotWindow?, exactFit}, scaleText, colorModes, plotAreas, tables, namedTables, scales, stampTemplate, stampFields}`.
+  `pagesetup.set {layout?, setup:{…}, scaleText?, paper?, portrait?}`: one "Page Setup" undo step; stored as the Mac PageSetup JSON in
+  `PAGESETUP:<SHEET>` / `PAGESETUP:*MODEL*` (removed when default); a sheet also gets its paper ("A1 portrait" swaps the sides).
+- `templates.list {folder?, recent?}` → `{folder, templates:[{id, name, subtitle, symbol, recent?}]}`: `builtin:metric`,
+  `builtin:metricArchitectural`, `builtin:imperial`, `builtin:building`, the .archi/.architemplate files of the folder, then the
+  recent template files that still exist ("Recent · <folder>"). `templates.new {id}` → doc info (new untitled drawing);
+  `templates.save {name, folder?}` → `{path}` (`<name>.architemplate`).
+- `ui.prefs {values:{…}}` → every stored value: application settings the portable UI commands use as prompt defaults
+  (`cursorSize`, `autosaveMinutes`, `theme`, `templatesFolder`, `workspaces` "a|b", `workspace`, `cui` JSON, `quickAccess` "A,B").
+
+### Portable UI commands (Host/EngineUICommands.swift) and their `host` actions
+archi-engine registers portable versions of the Mac UI-layer commands with the same names, aliases, prompts and messages:
+`OPTIONS` (`OP`, `PREFERENCES`, `SETTINGS`, `CONFIG`; page keyword), `AGENTSETTINGS`, `CURSORSIZE`, `SAVETIME`, `THEME`,
+`QSELECTDIALOG`, `LAYERSTATE` (adds the default `Dialog` option to the core command), `LAYERFILTER`, `WSCURRENT`, `WSSAVE`, `CUI`
+(Dialog/Add/Remove/Hide/Show/List/Export/Import/Reset), `PAGESETUP`, `NEWFROMTEMPLATE`, `SAVEASTEMPLATE`. Where the Mac opens a
+window they send a `host` notification the shell answers with its dialogs:
+- `{"action":"dialog","dialog":"options","tab":"Drafting"}` — also `quickSelect`, `layerStates`, `pageSetup`, `cui`;
+- `{"action":"preference","key":"cursorSize"|"autosaveMinutes"|"theme","value":…}`;
+- `{"action":"workspace","name":…}`, `{"action":"workspaceSave","name":…}`;
+- `{"action":"cui","op":"set","data":{format:"oanarina-archi-cui",…},"quickAccess"?:[…]}`;
+- `{"action":"layerFilter","filter":"#on A-*"}` ("" clears); `{"action":"newWindow","kind":"template","path":<template id>}`.
+`showPanel` names that are dialogs on the Mac (`Units`, `Drafting Settings` from UNITS / DSETTINGS) open the same dialogs.
+
+### Tool windows (Host/EngineToolDialogs.swift, EngineScripting.swift, EngineMCP.swift): part B of the Windows port
+Methods behind the Mac tool windows. Edits are one undo step each (the label is given below) and send `changed`.
+- `script.call {fn, args}` — the `archi` API of the script console, plugins and agents: `run(lines)`, `doc`, `summary`,
+  `entities(filter?)`, `elements(filter?)`, `get(id)`, `add(obj|[obj])`, `addElement(obj)`, `update(id, patch)`, `remove(ids)`,
+  `select(ids)`, `selection`, `setVar`, `getVar`, `layers`, `levels`, `wall`/`door`/`window`/`opening`/`slab`/`room`/`column`,
+  `undo`, `redo`, `commands`, `evaluateGraph(graph)`, `bakeGraph(graph)`, `registerCommand(name, fnName, opts, source, script)`.
+  Objects use the `.archi` JSON of entities and elements (ScriptJSON). A script error is `-32000` with the message.
+- `agent.call {method, params}` · `agent.methods {}` — the agent server's JSON-RPC methods (`list_methods`, `run_command`,
+  `get_document`, `get_document_summary`, `list_entities`, `list_elements`, `add_entity`, `add_element`, `update_entity`,
+  `delete`, `select`, `get_selection`, `export`, `list_commands`, `undo`, `redo`, resources, prompts, `list_tools`,
+  `call_tool`). `eval_js` and `screenshot` answer `-32601` "answered by the shell": the shell runs them (script worker,
+  plan PNG). `archi-engine <file.archi> --mcp` serves the same tools as an MCP server over stdio (Claude Desktop / Code).
+- `graph.get` · `graph.evaluate {graph, preview?:"plan"|"3D", kinds?, script?}` · `graph.bake {graph, label?, store?}` ·
+  `graph.save {name, graph}` · `graph.load {name}` · `graph.delete {name}` · `graph.script {graph}` — node editor and graph
+  player (NodeGraph evaluation is portable, ArchiCore/Script/NodeGraph.swift); evaluate returns the draw list / meshes
+  of the result without changing the drawing, bake adds it ("Bake Graph").
+- `library.scan {folder, recursive?}` · `library.preview {file, block?}` (draw list + bounds) ·
+  `library.insert {file, block?, x, y}` · `blocks.list` — Block Library.
+- `doc.edit {label, ops:[…], merge?}` with ops `setVariable {name, value}`, `setInfo`, `setTitleBlock`, `setMaterial`,
+  `addMaterial`, `removeMaterial`, `renameMaterial {name, to}`, `assignMaterial {ids, material}` · `doc.variables {prefix|prefixes}` ·
+  `material.list` (materials with uses, maps, render assets, bump; patterns; library folder) — Materials panel and editor.
+- `sheetset.get` · `sheetset.edit {op, …}` (`new`, `duplicate`, `move {index, by}`, `delete`, `rename`, `renumber {start}`,
+  `index`, `viewTitles`, `addRevision {code, description, date}`, `deleteRevision`) · `titleblock.get {layout}` ·
+  `titleblock.apply {layout, fields, info, logo?, applyToAll?, sheetCustom, projectCustom}` — Sheet Set Manager, Title Block.
+- `markup.list` · `markup.edit {op: reply|status|remove|addAroundSelection, id?, text?, resolved?, title?, comment?}` ·
+  `compare.run {path}` (added/removed/modified shapes with polylines, colours, counts, layers, CSV) ·
+  `compare.save {path, out}` · `revcloud.list` · `revcloud.add {layout, code, note, viewport? | rect:[x,y,w,h]}` ·
+  `revcloud.remove {id}` — Markups, Compare Drawings, Revision Clouds.
+- `family.list` · `family.get {name}` · `family.template {template}` · `family.evaluate {draft, original?, type?, flex?, preview?}`
+  (problems, resolved values, preview meshes and bounds) · `family.apply {draft, original?}` · `family.delete {name}` —
+  Family Editor. `customizer.get` · `customizer.set {id, name, value}` — Customizer of the selected scripted object.
+
+Portable commands (Host/EngineToolCommands.swift) with the Mac names and aliases ask the shell with `host` notifications:
+`BLOCKPALETTE` → `{"action":"dialog","dialog":"blockLibrary"}`, `MATBROWSER` → `materialLibrary`, `TITLEBLOCK` →
+`titleBlock {layout}`, `MARKUPPANEL` → `markups`, `COMPAREPANEL` → `compare`, `REVCLOUDPANEL` → `revisionClouds`,
+`FAMILYPANEL` → `familyEditor {family}`, `CUSTOMIZERPANEL` → `customizer`, `NODEEDITOR` → `nodeEditor`, `GRAPHPLAYER` →
+`graphPlayer`, `CONNECTCLAUDE` → `connectClaude`; `MATERIALS` and `SHEETSET` → `showPanel`; `SCRIPTCONSOLE` →
+`{"action":"scriptConsole"}` (show/hide), `SCRIPTLIBRARY` → `scriptLibrary`, `TUTORIALRECORD` / `TUTORIALS` →
+`{"action":"tutorials","mode":"List"|"Check"|"Record"|"Open"}` (Windows opens the tutorial videos on the website).
+Plugin commands registered by scripts send `{"action":"runScript","source","function","plugin","script"}` and
+`changed {"what":["commands"]}`. `SHEETINDEX` and `SHEETREVISION` run in the engine.
+
+### Canvas (Host/EngineCanvas.swift, EngineCanvasCommands.swift): the 2D canvas of the Windows shell
+Methods behind the parts of the Mac `PlanCanvasView` (CanvasView.swift) and `SheetCanvasNSView` (SheetView.swift) that read or
+edit the drawing. Edits are one undo step each with the Mac label; `input.cursor` also returns `tracking`
+(`{points, lines:[{from,to}]}` of object snap tracking, or null), `dynamic` (dynamic-input fields `{length?, angle?, x, y,
+relative, onFace}`) and, on a dynamic-UCS face, `ducs` (`[{from, to, color}]` axes at the crosshair).
+- `canvas.state {}` → `{ucs:{origin, angle, world}, ucsIcon:{on, atOrigin}, twist (VIEWTWIST degrees), isometric, isoPlane, ducs,
+  doubleClickEditing, grips, gripObjectLimit, selectionPreview, dynamicInput, dynMode, lastCommand, canUndo, canRedo, undoLabel,
+  redoLabel, currentSheet, radialContext ("Drafting"|"Objects"|"Building elements"), maximizedViewport?}`.
+- `canvas.view {center, scale, rect?, radialMenu?}`: the shell's plan view (VPMIN keeps its centre; pick apertures).
+- `grips.actions {id, index}` → `[{action, title, immediate}]` multi-functional grip menu (empty for one option).
+- `grips.preview {id, index, x, y, mode?, action?, turns?, reference?, snap?=true}` → `{point, origin, snap, reference, items}`:
+  the resolved drag point (core grip stretch snaps, else running snaps / grid / ortho from the grip) and preview draw items.
+- `grips.edit {id, index, x, y, mode?, action?, copy?, turns?, reference?, snap?=false}` → `{changed, grips}` ("Grip Edit",
+  "Grip Edit + Rotate", "Grip Move Copy", "Add Vertex" …; joined wall ends follow). `grips.typed {id, index, mode, value, x, y,
+  copy?}`: a value typed while the grip is hot (distance, degrees, factor).
+- `select.lasso {points, remove?, crossing?}` (world points; clockwise = window, counter-clockwise = crossing; answers a
+  selection prompt) → selection + `mode`, `found`. `select.modify {remove?, add?}` (selection cycling swaps one object),
+  `pick.candidates {x, y, tolerance?}` → `{ids, types}` (canvas pick first), `select.chain {id | x,y}` → selection + `chain`
+  (Tab: joined walls), `select.nudge {dx, dy, big?}` → `{moved, step, hint}` ("Nudge", arrow keys).
+- `canvas.doubleClick {id}` → `{action: "textEditor" (text, content, singleLine, styleFont, format, color) | "textDialog"
+  (content, multiline, message; leaders and dimensions) | "properties", command}`; `text.edit {id, content, height?, font?,
+  bold?, italic?, underline?, color?}` ("Edit Text").
+- `tempdims.get {id?}` → `[{id, index, reference, from, to, value, text, direction}]` of the single selected element;
+  `tempdims.set {id, index, value}` ("Temporary Dimension").
+- `flips.get {pixelsPerUnit?}` → `[{id, kind: facing|hand|wall, point, direction}]`; `flips.apply {id, kind}` ("Flip …").
+- `palette.items {}` → `{blocks:[{name, item, shapes}], components:[{id, name, category, size, item, shapes}]}` (line
+  thumbnails); `place.preview {item, x, y, turns?}` → `{items, degrees}`; `place.drop {item, x, y, turns?, hit?}` — items
+  `archi-block:<name>`, `archi-component:<id>`, `archi-command:<line>` (runs it, returns `prompt`), `archi-material:<name>`
+  (assigned to the element under the point), `archi-libblock:<file>␟<block>` ("Insert …", "Place …", "Assign Material").
+- `file.drop {paths, x, y}` → `{open, scripts, unsupported, ids}`: drawings and scripts are returned for the shell to open /
+  run; images, PDFs and exchange formats are imported at the drop point ("Drop <file>").
+- `sheet.viewports {layout?}` → `{layout, index, paper, grid, viewports:[{index, rect, scale, ratioText, view, level, title,
+  locked, clip?, modelWindow}]}`; `sheet.viewport {layout?, index, op: move {origin} | remove | lock | unlock | scale {ratio} |
+  removeClip | clip {points} | center {center}}` ("Move Viewport", "Remove Viewport", "Lock Viewport" …; locked viewports refuse
+  changes with -32000).
+Portable commands with the Mac names: `VPLOCK`, `VPCLIP`, `VPMAX` (host `{"action":"maximizeViewport","layout","viewport","rect",
+"level"}`), `VPMIN` (`{"action":"restoreViewport","layout","viewport"}`), `TOOLPALETTES` (`showPanel` Tools), `TOOLPALETTESCLOSE`
+(`{"action":"hidePanel","panel":"Tools"}`), `RADIALMENU` (`{"action":"preference","key":"radialMenu","value"}`).
+Fixtures: `canvas-*.json` (state, palette items, pick candidates, temporary dimensions, flips, chain, lasso, grips of a
+polyline with its menu / previews / edit, placement, sheet viewports, a cursor sequence).
+
+### 3D view (Host/EngineView3D.swift, EngineView3DCommands.swift)
+The document data the Mac 3D viewport reads besides the meshes, the section caps, the gizmo commits and the portable
+3D commands. Coordinates are model millimetres, Z up (the space of `model.meshes`).
+- `view3d.info {}` → `{"cameras":[{"name":"Front","eye":[x,y,z],"target":[x,y,z],"fov":45,"orthographic":false},…],
+  "currentCamera", "variables":{SECTIONBOX,SECTIONPLANE,PERSPECTIVE,RENDERPRESET,SUNSTUDY,WEATHER,OBJANIM,FOG…},
+  "sectionBox":{on,min,max}|null, "sectionPlane":{on,point,normal}|null, "perspective":true, "visualStyle":"Shaded with Edges",
+  "renderPreset":"Golden hour"|null, "materialMaps":{"CEDAR":{"normal":"textures/cedar_n.jpg","roughness":…,"normalStrength":1,
+  "texture":"textures/cedar.jpg","textureScale":1200},…}, "water":[material names], "weather":{kind,intensity,season,snowCover,
+  wetness,snow,fogDistance,particles:{birthRatePerM2,speed,size,life,stretch}|null}, "fog":{on,start,end,color,density},
+  "animations":[OBJANIM entries + for doors "leafIndex" and "leaf":{hinge,sign,s0,s1,origin,dir,normal,wallHalf}],
+  "northAngle", "units", "unitMM", "levels":[{id,name,elevation,height}] (by elevation), "currentLevel",
+  "levelView":{isolate,explodeGap}, "gizmo":"Off|Move|Rotate|Scale", "measure":false, "site":{latitude,longitude,day,hour}}`.
+  `visualStyle` is what the engine last asked the shell for (VSCURRENT, RENDER, RENDERPRESET) or `view3d.setVariable VSCURRENT`.
+- `view3d.setVariable {name, value|null}` → `{name, value, changed}`: SECTIONBOX, SECTIONPLANE, PERSPECTIVE (0/1), SUNSTUDY
+  ("day,hour"), RENDERPRESET, WEATHER, OBJANIM — validated, one undo step with the Mac control's label ("Section Box",
+  "Clipping Plane", "Projection", "Sun Study" …); `VSCURRENT` only records the shell's visual style (not in the drawing).
+- `view3d.setCamera {eye, target, fov?, orthographic?}` — the shell reports its camera (debounced) so SAVECAMERA, FOV and
+  PANORAMA/STEREOPANORAMA `Camera` work in the engine.
+- `view3d.saveCamera {name, eye?, target?, fov?, orthographic?}` / `view3d.deleteCamera {name}` → the saved cameras
+  (undo "Save Camera" / "Delete Camera"; the camera menu's Save Current Camera… sheet and Delete submenu).
+- `view3d.sectionCaps {point?, normal?}` (default the drawing's SECTIONPLANE when on) → `{"positions":base64 Float32 triangles,
+  "triangleCount", "normal", "color":"#8c1f1a"}`: cut outlines of every mesh with the plane, triangulated (holes even-odd),
+  0.5 mm inside the kept side (ArchiApp SectionCap / updateCaps).
+- `view3d.transform {op, amount, axis?, pivot?, ids?}` → `{changed, message}`: the gizmo's commit on the selection (or `ids`):
+  `move` (axis 0 = X, 1 = Y) and `movez` (axis 3: base/top offsets, sills, solids) in drawing units, `rotate` (radians about Z
+  through `pivot`), `scale` (uniform in plan about `pivot`); undo labels "Move (3D gizmo)", "Move Z (3D gizmo)",
+  "Rotate (3D gizmo)", "Scale (3D gizmo)" and the Mac messages ("Moved 1 object(s) by 250 along X.").
+- `view3d.sun {day, hour}` → `{altitude, azimuth, direction, aboveHorizon, text}` (sun study at the site, NOAA calculator).
+- `view3d.saveImage {path, data}` → `{path, bytes}`: writes base64 image data the shell rendered (panoramas, VIEWIMAGE,
+  RENDERSAVE, ANIMATE Frame).
+- `model.meshes` additions: each BIM mesh carries its `level`; `"binary": true` writes the buffers to a fresh temporary
+  file (`archi-engine-<pid>-meshes-<n>.bin`, the previous one of the session is removed) and the result adds
+  `"binary":path, "binaryLength", "layout":{"byteOrder":"little-endian","alignment":4,"units":…,"buffers":{…}}`. Full-detail
+  Cedar House is one ~70 MB file instead of ~160 MB of base64 in the JSON line.
+
+Portable 3D commands (same prompts, keywords and messages as the Mac) and their `host` actions
+`{"action":"view3d","op":…}`: `GIZMO3D` → `gizmo {mode}`, `MEASURE3D` → `measure {on}`, `LEVELVIEW3D` → `levels {isolate,
+explodeGap (mm)}`, `SECTIONBOX Panel` → `sectionBoxPanel` (On/Off/Selection/Level/Reset edit SECTIONBOX), `SECTIONPLANE`
+(Horizontal/Vertical/Flip/Off edit SECTIONPLANE), `CLIPPLANES` → `clipPlanePanel`, `SUNSTUDY` → `sunStudy`, `ORBITSELECTION` → `orbitSelection {ids}`,
+`SAVECAMERA` (engine), `CAMERA` → `camera {name, camera}`, `FOV` → `fov {fov}`, `FLY` / `LOOKAROUND` → `navigate {mode}`,
+`POSITIONCAMERA` → `positionCamera {camera, mode:"look"}`, `TWOPOINT` → `twoPoint {on}` (the shell prints the lens shift),
+`NAVSWHEEL` → `wheel {on}`, `WEATHER` / `SEASON` (engine, WEATHER variable), `MOVEZ` (engine), `ANIMATE` Door/Rotate/Move/
+List/Delete/Clear (engine, OBJANIM) and Play/Stop → `animate {play}`, Frame → `animationFrame {time, path, samples}`,
+`PANORAMA` / `STEREOPANORAMA` → `panorama {eye, width, stereo, ipd (mm), path|null, suggested}`, `VIEWIMAGE` →
+`viewImage {width, height, format, transparent, path|null, suggested}`. Each also sends `show3D`.
+
+### Output (Host/EngineOutput.swift, EngineOutputCommands.swift, EnginePlot.swift, EnginePDF.swift, EnginePathTracer.swift, EngineWebViewer.swift): plotting, publishing and rendering
+
+The engine writes every PDF itself (Foundation only: plot style tables, lineweights, layers as optional content groups, bookmarks, Flate and DCT images), so the Windows shell only shows pages, prints SVG pages through Electron and encodes images/videos from the WebGL renderer.
+
+Plotting:
+- `plot.info {}` → `{what:[{value,title}], default, sheets:[{index,name,number,paper,style,placeholder,bookmark}], title, documentName, sheetNote, suggestedModel, suggestedAll}`. `value` is `"model"`, `"sheet:<i>"` or `"all"`; `default` is the active sheet (CTAB) or model.
+- `plot.preview {what?|layout?, setup?, level?, svg?=true, svgFiles?=false}` → `{pdf, bytes, pageCount, pages:[{name,width,height,svg|svgPath}], title, ratio, status}`. `setup` overrides the page setup for this plot (same keys as `PAGESETUP` JSON: paper, orientation, area, scale, style, table, named, lineweightScale, stamp…). Pages are true-size (mm); viewports are clipped. Large drawings: pass `svgFiles:true` and read `svgPath` (the engine deletes the files on the next preview).
+- `plot.pdf {path, what?|layout?, setup?, layered?=false, fromPreview?=false, quiet?}` → `{path, bytes, pages}`; `fromPreview` copies the file of the last preview. Each plot is added to the plot log.
+- `plot.publish {path, layouts?=[all non-placeholder], bookmarks?=true, index?=false, quiet?}` → `{path, bytes, pages}` (multi-sheet PDF with outline).
+- `plot.sheetSVG {path, all?|layout?}` → `{paths}` · `plot.shadePlotImage {layout, index, path}` (the shell's rendered image for a viewport with SHADEPLOT Rendered).
+- `plotstyle.list {}` → `{tables:[{name,builtIn,pens:[{index,color,width,screen}]}], named}` · `plotstyle.save {table}` (stores a copy in the drawing) · `plotstyle.named {}` · `plotlog.get {limit?}` → `{rows}` · `plotlog.clear {}`.
+
+Rendering:
+- `render.window {}` → Render window state (presets from `render.presets`, output sizes, the look, sun, camera list, saved cameras). `render.queueName {name, folder?}` → a free file name for a queue job.
+- `render.pass {pass, width, height, path?}` → data passes (depth, normal, object id, material id, AO) computed in the engine; `image` data URL when no `path`.
+- `camerapath.list {}` · `camerapath.set {paths}` (CAMERAPATHS) · `camerapath.frames {path|label, fps, cameras?, seconds?}` → Catmull-Rom cameras per frame. `render.sunFrames {day, fromHour, toHour, fps, seconds}` → sun directions for a sun study.
+- `pathtrace.start {width?, height?, samples?, camera?|cameraName?, environment?, day?, hour?, clay?, ground?, lod?, mix?, denoise?, ev?, sync?}` → `{triangles, lights, textures, width, height, target, status}`; runs on a background thread. `pathtrace.status {image?=true, mix?, denoise?, ev?}` → `{running, samples, target, seconds, status, image}` · `pathtrace.stop` · `pathtrace.save {path}` · `pathtrace.mix {sun, sky, artificial}` (light mixer without re-rendering).
+- `webviewer.export {path}` → a stand-alone HTML 3D viewer of the model (WEBVIEWEREXPORT).
+
+Commands and `host` notifications: PLOT sends `{action:"plot"}` (the shell opens the print dialog; `PLOT <file>` writes the PDF in the engine). PREVIEW, PRINTSETUP, BATCHPUBLISH, PLOTSTYLE, RENDERQUEUE, CAMERAPATHEDIT and PATHTRACE send `{action:"dialog", dialog:"plotPreview"|"printSetup"|"batchPublish"|"plotStyles"|"renderQueue"|"cameraPaths"|"pathTrace"}`; RENDER sends `{action:"render"}` (Render window). Operations the engine cannot finish alone send `{action:"output", op:…}`: `publish` (PUBLISH without a file name), `sheetSVG`, `openFile`, `lightMix`, `renderSave` (RENDERSAVE), `renderToFile` (RENDERTOFILE: the shell renders beauty with WebGL, the engine writes data passes), `video` (WALKTHROUGHVIDEO / SUNSTUDYVIDEO / turntable: MP4 via WebCodecs in the shell) and `shadePlotRender`. PLOTSTYLENAME, PLOTAREA, SHADEPLOT, PLOTLOG and EXPORTPDF finish in the engine. `file.export {format:"pdf"}` plots the active sheet or the model.
+
+Fixtures: `output-plot-info`, `output-preview-sheet` (Cedar House A-102), `output-preview-model`, `output-plotstyle-list`, `output-command-preview`, `output-render-window`, `output-camerapath-list`, `output-camerapath-frames`, `output-sun-frames`, `output-command-renderqueue`, `output-command-rendersave`.
+
 ## A complete LINE exchange (from `build/engine-fixtures/line-sequence.json`)
 
 ```
@@ -240,10 +440,12 @@ The last command-history lines (for a new window attaching to a running engine).
 `hello`, `doc-open`, `doc-info`, `drawlist-cedar` (current level on its extents at 0.05 px/mm), `drawlist-level-1`,
 `drawlist-sheet` (a plan viewport at 1:200 on Sheet 1), `meshes-all-lod2`, `meshes-level-0`, `render-settings`,
 `render-presets`, `panel-*`, `select-set`, `panel-properties-wall`, `grips-get`, `sysvar-get`, `line-sequence`,
-`command-complete`, `error-unknown-method`, and `index.json`.
+`command-complete`, `error-unknown-method`, the 3D view exchanges `view3d-info`, `view3d-info-animated` (door leaves),
+`view3d-setvariable`, `view3d-caps`, `view3d-camera`, `view3d-sun`, `view3d-transform`, `view3d-meshes-binary` (path and
+layout only), and `index.json`.
 
 ## Not in the engine (the shell or the Mac UI layer does it)
 
 Commands the Mac defines in its UI layer (ArchiApp: views, dialogs, render window, plotting through Core Graphics,
-scripting console) are not in the engine's registry; `RENDERPRESET` has a portable version registered by
-archi-engine. The script console's `archi` API runs in the shell's JavaScript and calls this protocol.
+scripting console) are not in the engine's registry; `RENDERPRESET` and the tool-window commands above have portable
+versions registered by archi-engine. The script console's `archi` API runs in the shell's JavaScript and calls this protocol.

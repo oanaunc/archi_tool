@@ -18,6 +18,22 @@ public final class EngineBinarySink {
 }
 
 public enum EngineMeshJSON {
+    /// How the buffers of a binary transfer are laid out (model.meshes {"binary": …} → "layout").
+    public static var binaryLayout: EngineJSON {
+        var b = EngineObject()
+        b.set("positions", "float32 x,y,z per vertex")
+        b.set("normals", "float32 x,y,z per vertex")
+        b.set("uvs", "float32 u,v per vertex")
+        b.set("indices", "uint32, 3 per triangle")
+        b.set("edges", "float32 x0,y0,z0,x1,y1,z1 per segment")
+        var o = EngineObject()
+        o.set("byteOrder", "little-endian")
+        o.set("alignment", 4)
+        o.set("units", "model millimetres, Z up")
+        o.set("buffers", b.json)
+        o.set("reference", "each buffer field is {offset, length} in bytes from the start of the file")
+        return o.json
+    }
     static func bytes(_ floats: [Float]) -> Data {
         let a = floats.map { $0.bitPattern.littleEndian }
         return a.withUnsafeBytes { buf in buf.baseAddress.map { Data(bytes: $0, count: buf.count) } ?? Data() }
@@ -76,10 +92,11 @@ public enum EngineMeshJSON {
     }
 
     /// One mesh group with its material resolved against the document.
-    public static func group(_ g: MeshGroup, mesh: Mesh, doc: ArchiDocument, sink: EngineBinarySink? = nil) -> EngineJSON {
+    public static func group(_ g: MeshGroup, mesh: Mesh, doc: ArchiDocument, sink: EngineBinarySink? = nil, level: Int? = nil) -> EngineJSON {
         var o = EngineObject()
         if let id = g.id { o.set("id", id) } else { o.set("id", EngineJSON.null) }
         o.set("kind", g.kind)
+        if let level { o.set("level", level) }
         o.set("material", g.material)
         let mat = doc.materials.first { $0.name == g.material }
         let color = mat?.color ?? RGBA(0.8, 0.8, 0.8)

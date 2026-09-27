@@ -1,7 +1,7 @@
 {
   "name": "oanarina-archi-tool",
   "productName": "Oanarina Archi Tool",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Oanarina Archi Tool for Windows: Electron shell around the archi-engine (ArchiCore).",
   "license": "GPL-3.0-or-later",
   "author": "Oana Rinaldi",
@@ -15,14 +15,19 @@
     "start": "npm run build && electron .",
     "web": "node tools/gen-ui-data.mjs && node build.mjs --web",
     "test:ui": "node tools/gen-ui-data.mjs && node build.mjs --web && node test/ui-snapshots.mjs",
-    "test:rpc": "node test/rpc-smoke.mjs"
+    "test:rpc": "node test/rpc-smoke.mjs",
+    "test:icons": "node test/icons.mjs",
+    "test:win": "node tools/gen-ui-data.mjs && node build.mjs --web && node test/windows-conventions.mjs && node packaging/smoke-electron.mjs --web test-results/smoke-web",
+    "version:sync": "node packaging/sync-version.mjs",
+    "dist": "node packaging/sync-version.mjs && npm run build && python packaging/make-ico.py .. packaging/build/icon.ico && electron-builder --win --x64 --config packaging/electron-builder.yml --publish never"
   },
   "devDependencies": {
     "electron": "^33.2.0",
     "esbuild": "^0.24.0",
     "typescript": "^5.6.3",
     "playwright-core": "^1.48.0",
-    "@types/node": "^22.9.0"
+    "@types/node": "^22.9.0",
+    "electron-builder": "25.1.8"
   },
   "dependencies": {
     "lucide": "^0.460.0"

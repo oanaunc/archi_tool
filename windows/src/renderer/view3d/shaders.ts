@@ -25,6 +25,7 @@ layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aUV;
 uniform mat4 uViewProj;
+uniform mat4 uModel;          // model-mm transform of the mesh (gizmo preview, exploded levels, animations)
 uniform float uFoliage;
 uniform float uUVScale;
 uniform float uUnit;
@@ -34,8 +35,9 @@ out vec2 vUV;
 void main() {
   vec3 p = aPos;
   if (uFoliage > 0.5) p = foliageLumps(p, aNormal);
+  p = (uModel * vec4(p, 1.0)).xyz;
   vWorld = p * uUnit;
-  vNormal = aNormal;
+  vNormal = mat3(uModel) * aNormal;
   vUV = aUV * uUVScale;
   gl_Position = uViewProj * vec4(vWorld, 1.0);
 }
@@ -45,7 +47,9 @@ export const meshFS = header + `
 in vec3 vWorld;
 in vec3 vNormal;
 in vec2 vUV;
-out vec4 outColor;
+layout(location = 0) out vec4 outColor;
+// Indirect light (image-based diffuse + ambient) on its own: SceneKit's SSAO darkens only that part.
+layout(location = 1) out vec4 outIndirect;
 
 uniform int uMode;            // 0 physically based, 1 Blinn, 2 Lambert, 3 constant (unlit)
 uniform vec3 uColor;          // linear base colour
@@ -78,6 +82,8 @@ uniform float uShadowRadius;  // in shadow-map texels
 uniform float uShadowAlpha;
 uniform float uShadowTexel;
 uniform float uShadowBias;
+uniform float uShadowRange;   // depth range of the sun's orthographic shadow camera (m)
+uniform float uSlopeTexels;   // largest filter radius (texels) the slope bias covers
 uniform int uShadowSamples;
 
 uniform vec3 uSH[9];
@@ -102,6 +108,10 @@ uniform vec4 uClipMax;
 uniform vec4 uPlaneP;         // section plane (w = on)
 uniform vec4 uPlaneN;
 uniform vec3 uHighlight;      // selection emission
+uniform float uSnow;          // snow cover on up-facing faces (WEATHER)
+uniform float uWet;           // rain wetness
+uniform int uWater;           // animated water waves (WaterSurface)
+uniform float uTime;
 
 const float PI = 3.14159265359;
 
@@ -133,12 +143,16 @@ mat3 cotangentFrame(vec3 N, vec3 p, vec2 uv) {
 
 float hash12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 
-float sunShadow(vec3 wp, vec3 n) {
+float sunShadow(vec3 wp, vec3 n, float cosL) {
   if (uShadows == 0) return 1.0;
   vec4 sp = uShadowMat * vec4(wp + n * uShadowTexel * 1.5, 1.0);
   vec3 s = sp.xyz / sp.w * 0.5 + 0.5;
   if (s.x <= 0.0 || s.x >= 1.0 || s.y <= 0.0 || s.y >= 1.0 || s.z >= 1.0) return 1.0;
-  float bias = uShadowBias;
+  // Slope-scaled bias over the filter footprint: a surface lit at a grazing angle (low sun on the ground) must not
+  // shadow itself inside the soft-shadow kernel (the Mac renders show clean pavement at golden hour).
+  float tanL = sqrt(max(1.0 - cosL * cosL, 0.0)) / max(cosL, 0.05);
+  float footprint = (clamp(uShadowRadius, 0.75, uSlopeTexels) + 1.0) * uShadowTexel;
+  float bias = uShadowBias + min(footprint * tanL / max(uShadowRange, 1e-3), 0.02);
   float r = max(uShadowRadius, 0.75) / float(textureSize(uShadowMap, 0).x);
   float a0 = hash12(gl_FragCoord.xy) * 6.2831853;
   float lit = 0.0;
@@ -171,6 +185,7 @@ vec3 envBRDF(vec3 F0, float rough, float NdV) {
 }
 
 void main() {
+  outIndirect = vec4(0.0);
   if (uClipMax.w > 0.5 && (any(lessThan(vWorld, uClipMin.xyz)) || any(greaterThan(vWorld, uClipMax.xyz)))) discard;
   if (uPlaneN.w > 0.5 && dot(vWorld - uPlaneP.xyz, uPlaneN.xyz) > 0.0) discard;
 
@@ -191,6 +206,21 @@ void main() {
   vec3 N = normalize(vNormal);
   vec3 V = uOrtho == 1 ? -uViewDir : normalize(uCamPos - vWorld);
   if (!gl_FrontFacing) N = -N;
+  // Weather (WeatherSettings.shaderModifier): snow on faces whose normal points up, rain darkens and adds gloss.
+  float wetRough = 1.0, snowCover = 0.0;
+  if (uSnow > 0.0 || uWet > 0.0) {
+    snowCover = uSnow * smoothstep(0.45, 0.85, N.z);
+    albedo = mix(albedo * (1.0 - 0.3 * uWet), vec3(0.93, 0.94, 0.96), snowCover);
+    wetRough = 1.0 - 0.65 * uWet;
+  }
+  // Water (WaterSurface.shaderModifier): travelling waves on up-facing faces, SceneKit world (x, z = −y) metres.
+  if (uWater == 1 && N.z > 0.5) {
+    vec3 wp = vec3(vWorld.x, vWorld.z, -vWorld.y);
+    float t = uTime;
+    float gx = cos(wp.x * 6.98 + wp.z * 2.09 + t * 1.1) * 0.5 + cos(wp.x * 7.2 - wp.z * 7.2 + t * 2.3) * 0.3 + cos(wp.x * 2.3 + wp.z * 10.3 + t * 3.1) * 0.2;
+    float gz = cos(-wp.x * 4.1 + wp.z * 10.3 + t * 1.7) * 0.5 + cos(wp.x * 7.2 + wp.z * 7.2 + t * 2.3) * 0.3 + cos(wp.x * 9.9 - wp.z * 2.2 + t * 2.7) * 0.2;
+    N = normalize(vec3(-gx * 0.12, gz * 0.12, 1.0));
+  }
   if (uHasNormal == 1) {
     vec3 m = texture(uNormalMap, vUV).xyz * 2.0 - 1.0;
     m.y = -m.y;
@@ -206,15 +236,17 @@ void main() {
   vec3 Ng = normalize(vNormal) * (gl_FrontFacing ? 1.0 : -1.0);
   float NgL = dot(Ng, L);
   float vis = 1.0;
-  if (uShadows == 1) vis = NgL > 0.0 ? sunShadow(vWorld, Ng) * smoothstep(0.0, 0.08, NgL) : 0.0;
+  if (uShadows == 1) vis = NgL > 0.0 ? sunShadow(vWorld, Ng, NgL) * smoothstep(0.0, 0.08, NgL) : 0.0;
   float shadowK = 1.0 - uShadowAlpha * (1.0 - vis);
   const float lightK = 1.0;
   vec3 color;
   vec3 lamps = vec3(0.0);   // placed lights: not darkened by the sun's deferred shadow
+  vec3 indirect = vec3(0.0);
 
   if (uMode == 0) {
     float rough = uRoughness;
     if (uHasRough == 1) rough = texture(uRoughMap, vUV).g;
+    rough = mix(rough * wetRough, 0.75, snowCover);
     rough = clamp(rough, 0.03, 1.0);
     float a = rough * rough;
     float metal = clamp(uMetalness, 0.0, 1.0);
@@ -257,6 +289,7 @@ void main() {
       specEnv = env * envBRDF(F0, rough, NdV) * uEnvIntensity;
     }
     color = Lo + amb + specEnv;
+    indirect = amb;
     lamps = Lamp;
     // Transparent dielectrics keep their reflection when their base colour fades.
     if (alpha < 1.0) {
@@ -272,16 +305,20 @@ void main() {
       spc = vec3(uSpecular) * pow(max(dot(N, H), 0.0), uShininess) * uSunColor * lightK;
     }
     color = amb + dif + spc;
+    indirect = amb;
   }
   color += uEmissive;
   color = color * shadowK + lamps + uHighlight;
+  indirect *= shadowK;
 
   if (uFog.w > 0.5) {
     float d = length(vWorld - uCamPos);
     float f = pow(clamp((d - uFog.x) / max(uFog.y - uFog.x, 1e-3), 0.0, 1.0), uFog.z);
     color = mix(color, uFogColor, f);
+    indirect *= 1.0 - f;
   }
   outColor = vec4(color, alpha);
+  outIndirect = vec4(indirect, alpha);
 }
 `;
 
@@ -290,6 +327,7 @@ layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aUV;
 uniform mat4 uViewProj;
+uniform mat4 uModel;
 uniform float uFoliage;
 uniform float uUVScale;
 uniform float uUnit;
@@ -297,6 +335,7 @@ out vec2 vUV;
 void main() {
   vec3 p = aPos;
   if (uFoliage > 0.5) p = foliageLumps(p, aNormal);
+  p = (uModel * vec4(p, 1.0)).xyz;
   vUV = aUV * uUVScale;
   gl_Position = uViewProj * vec4(p * uUnit, 1.0);
 }
@@ -317,9 +356,11 @@ void main() {
 export const lineVS = header + `
 layout(location = 0) in vec3 aPos;
 uniform mat4 uViewProj;
+uniform mat4 uModel;
 uniform float uUnit;
+uniform float uPointSize;
 out vec3 vWorld;
-void main() { vWorld = aPos * uUnit; gl_Position = uViewProj * vec4(vWorld, 1.0); }
+void main() { vWorld = (uModel * vec4(aPos, 1.0)).xyz * uUnit; gl_Position = uViewProj * vec4(vWorld, 1.0); gl_PointSize = uPointSize; }
 `;
 
 export const lineFS = header + `
@@ -329,11 +370,14 @@ uniform vec4 uClipMin;
 uniform vec4 uClipMax;
 uniform vec4 uPlaneP;
 uniform vec4 uPlaneN;
+uniform int uRound;           // 1 = round point sprites (snow)
 out vec4 o;
 void main() {
   if (uClipMax.w > 0.5 && (any(lessThan(vWorld, uClipMin.xyz)) || any(greaterThan(vWorld, uClipMax.xyz)))) discard;
   if (uPlaneN.w > 0.5 && dot(vWorld - uPlaneP.xyz, uPlaneN.xyz) > 0.0) discard;
-  o = uColor;
+  float a = 1.0;
+  if (uRound == 1) { vec2 q = gl_PointCoord * 2.0 - 1.0; float r = dot(q, q); if (r > 1.0) discard; a = 1.0 - r * r; }
+  o = vec4(uColor.rgb, uColor.a * a);
 }
 `;
 
@@ -473,6 +517,8 @@ uniform float uVignette;
 uniform float uVignettePower;
 uniform int uHasBloom;
 uniform int uHasAO;
+uniform int uAOIndirect;       // 1: the AO darkens the indirect light only (uIndirect), 0: the whole pixel
+uniform sampler2D uIndirect;
 out vec4 o;
 vec3 toSRGB(vec3 c) {
   c = clamp(c, 0.0, 1.0);
@@ -482,7 +528,9 @@ void main() {
   vec3 c = texture(uHDR, vUV).rgb;
   if (uHasAO == 1 && texture(uDepth, vUV).r < 1.0) {
     float ao = texture(uAO, vUV).r;
-    c *= clamp(1.0 - uAOIntensity * (1.0 - ao), 0.0, 1.0);
+    float k = clamp(uAOIntensity * (1.0 - ao), 0.0, 1.0);
+    if (uAOIndirect == 1) c = max(c - texture(uIndirect, vUV).rgb * k, 0.0);
+    else c *= 1.0 - k;
   }
   c *= exp2(uExposure) * uSceneScale;
   if (uHasBloom == 1) c += texture(uBloom, vUV).rgb * uBloomIntensity;

@@ -5,6 +5,8 @@ import { h, clear } from "../dom";
 import { icon } from "../icons";
 import { help, showMenu } from "./menu";
 import { paintThumbnail } from "../canvas/thumbnail";
+import { prefs } from "../prefs";
+import { listTemplates, newFromTemplate, openTemplateFile, revealTemplatesFolder } from "../dialogs";
 
 const TEMPLATES = [
   { id: "metric", name: "Metric", subtitle: "Millimetres, standard layers", symbol: "square.and.pencil" },
@@ -36,21 +38,21 @@ export class StartScreen {
       h("div", { class: "brand" }, h("img", { src: "assets/app-icon.png", alt: "" }), h("div", {}, h("div", { class: "n", text: "Oanarina Archi Tool" }), h("div", { class: "s", text: "Drafting and building design for Windows" }))),
       h("div", { class: "sec", text: "START", style: { paddingTop: "4px" } }),
       h("div", { class: "tiles" },
-        tile("square.and.pencil", "New Drawing", "Metric · millimeters", () => app.newDocument("metric")),
+        tile("square.and.pencil", "New Drawing", ["inches", "feet"].includes(prefs.get("defaultUnits")) ? "Imperial" : `Metric · ${prefs.get("defaultUnits")}`, () => app.newDocument("metric")),
         tile("folder", "Open…", ".archi projects and DXF drawings", () => app.open()),
         tile("house.lodge", "Build Sample House", "Watch a house being drawn by commands", () => app.buildSampleHouse())),
       h("div", { class: "tip" }, icon("keyboard", 12), h("span", { text: "Tip: just start typing — LINE, WALL, DOOR, ROOM… Space or Enter repeats the last command." })));
     const right = h("div", { class: "right" });
     const hdr = (title: string, ...trailing: HTMLElement[]) => h("div", { class: "shdr" }, h("span", { class: "sec", text: title }), ...trailing);
     const folderBtn = h("button", { class: "flatbtn", text: "Folder" }); help(folderBtn, "Put .archi files here to use them as templates (or SAVEASTEMPLATE)");
-    folderBtn.addEventListener("click", () => app.runCommand("TEMPLATEFOLDER"));
+    folderBtn.addEventListener("click", () => void revealTemplatesFolder());
     const openT = h("button", { class: "flatbtn", text: "Open Template…" }); help(openT, "Start a new drawing from any .architemplate file");
-    openT.addEventListener("click", async () => { const p = await app.engine.native?.openFileDialog({ title: "Open Template", filters: [{ name: "Templates", extensions: ["architemplate", "archi"] }] }); if (p) app.newDocument(p); });
+    openT.addEventListener("click", () => void openTemplateFile());
     right.append(hdr("TEMPLATES", folderBtn, openT));
     const tg = h("div", { class: "grid t" });
-    for (const t of TEMPLATES) {
+    for (const t of await listTemplates()) {
       const c = h("button", { class: "card2" }, h("div", { class: "thumb" }, icon(t.symbol, 24, 1.6)), h("div", { class: "n", text: t.name }), h("div", { class: "d", text: t.subtitle }));
-      c.addEventListener("click", () => app.newDocument(t.id));
+      c.addEventListener("click", () => void newFromTemplate(t.id, true));
       tg.append(c);
     }
     right.append(tg, hdr("SAMPLE PROJECTS"));

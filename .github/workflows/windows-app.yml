@@ -1,8 +1,13 @@
 # Builds the Windows app of Oanarina Archi Tool: archi-engine.exe (Swift, ArchiCore) with its Swift runtime DLLs,
-# the Electron shell in windows/, the NSIS installer "Oanarina-Archi-Tool-Setup-<version>.exe", and a smoke test
-# of the installed app (Playwright for Electron: start screen, Cedar House 2D plan, 3D Golden hour).
-# The installer is a workflow artifact; logs and screenshots (not the installer) are force-pushed to the branch
-# ci-windows-app, so they can be read with plain git (bridge action "winapp-fetch").
+# the Electron shell in windows/, the NSIS installer "Oanarina-Archi-Tool-Setup-<version>.exe" (version from
+# app/Info.plist), installs it per-user, checks the installation (shortcuts, file associations, uninstall entry),
+# smoke-tests the installed app (Playwright for Electron: start screen, Cedar House 2D, 3D Golden hour, LINE,
+# save/reopen, PDF plot) and uninstalls it again.
+# Every step writes its own log to winapp-logs/ as it runs; the last steps run even when an earlier step failed or the
+# run was cancelled: logs, screenshots and summary.txt are uploaded as the artifact "winapp-logs" and force-pushed to the
+# branch ci-windows-app (bridge action "winapp-fetch"). The installer itself is a separate workflow artifact.
+# When windows/package-lock.json is missing, the lockfile npm generated is published with the logs (package-lock.json)
+# so it can be committed.
 name: Windows app
 on:
   push:
@@ -19,10 +24,13 @@ permissions:
 concurrency:
   group: windows-app-${{ github.ref }}
   cancel-in-progress: true
+env:
+  LOGS: ${{ github.workspace }}/winapp-logs
+  ELECTRON_BUILDER: electron-builder@25.1.8
 jobs:
   winapp:
     runs-on: windows-latest
-    timeout-minutes: 120
+    timeout-minutes: 150
     defaults:
       run:
         shell: bash
@@ -31,14 +39,19 @@ jobs:
 
       - name: Check inputs
         id: inputs
+        timeout-minutes: 5
         run: |
-          mkdir -p winapp-logs
+          mkdir -p "$LOGS"
+          {
           missing=0
           need() { if [ ! -e "$1" ]; then echo "::error title=Missing input::$1 is missing ($2)"; missing=1; else echo "ok  $1"; fi; }
           need app/Package.swift "Swift package"
+          need app/Info.plist "Mac app version (CFBundleShortVersionString) used for the Windows version"
           need app/Sources/archi-engine "archi-engine executable target, written by the engine engineer"
           need windows/package.json "Electron shell, written by the shell engineer"
           need windows/packaging/electron-builder.yml "installer configuration"
+          need windows/packaging/installer.nsh "installer additions (per-user install)"
+          need windows/packaging/sync-version.mjs "version from app/Info.plist"
           need windows/packaging/collect-dlls.py "Swift runtime DLL collector"
           need windows/packaging/make-ico.py "icon converter"
           need windows/packaging/smoke-electron.mjs "packaged-app smoke test"
@@ -49,155 +62,357 @@ jobs:
             echo "::error title=Missing input::app/Package.swift declares no archi-engine executable product"; missing=1; fi
           if [ -f windows/package.json ] && ! node -e 'process.exit(require("./windows/package.json").scripts?.build ? 0 : 1)'; then
             echo "::error title=Missing input::windows/package.json has no \"build\" script"; missing=1; fi
+          [ -f windows/package-lock.json ] || echo "::warning title=No lockfile::windows/package-lock.json is missing; npm install will generate one (published as package-lock.json with the logs; commit it)"
           exit $missing
+          } 2>&1 | tee "$LOGS/01-inputs.log"
+
+      - name: Version from app/Info.plist
+        id: version
+        timeout-minutes: 2
+        run: |
+          set -o pipefail
+          node windows/packaging/sync-version.mjs 2>&1 | tee "$LOGS/02-version.log"
+          grep -E '^(version|build)=' "$LOGS/02-version.log" >> "$GITHUB_OUTPUT"
 
       - name: Install Swift 6.1.2
+        id: swift
+        timeout-minutes: 20
         uses: compnerd/gha-setup-swift@main
         with:
           swift-version: swift-6.1.2-release
           swift-build: 6.1.2-RELEASE
 
       - uses: actions/setup-python@v6
+        id: python
+        timeout-minutes: 5
         with:
           python-version: "3.12"
       - uses: actions/setup-node@v5
+        id: node
+        timeout-minutes: 5
         with:
           node-version: "22"
-      - name: Python tools (pefile, Pillow)
-        run: python -m pip install --disable-pip-version-check -q pefile pillow
+
+      - name: Toolchain and Python tools (pefile, Pillow)
+        id: tools
+        if: always() && steps.inputs.outcome == 'success'
+        timeout-minutes: 5
+        run: |
+          set -o pipefail
+          {
+          echo "swift:  $(swift --version 2>&1 | head -1)"
+          echo "node:   $(node --version 2>&1)   npm $(npm --version 2>&1)"
+          echo "python: $(python --version 2>&1)"
+          echo "swiftCore.dll: $(where.exe swiftCore.dll 2>/dev/null | tr -d '\r' | head -1)"
+          python -m pip install --disable-pip-version-check -q pefile pillow
+          python -c "import pefile, PIL; print('pefile', pefile.__version__, 'Pillow', PIL.__version__)"
+          } 2>&1 | tee "$LOGS/03-toolchain.log"
 
       - name: Build archi-engine (release) and collect the Swift runtime DLLs
         id: engine
+        timeout-minutes: 60
         run: |
           set -o pipefail
-          log="$GITHUB_WORKSPACE/winapp-logs/engine-build.log"
+          {
           cd app
-          swift --version 2>&1 | tee "$log"
-          if ! swift build -c release --product archi-engine 2>&1 | tee -a "$log"; then
-            echo "::error title=archi-engine build failed::swift build -c release --product archi-engine failed (engine-build.log on branch ci-windows-app)"; exit 1; fi
+          swift build -c release --product archi-engine \
+            || { echo "::error title=archi-engine build failed::swift build -c release --product archi-engine failed (04-engine-build.log)"; exit 1; }
           bin="$(swift build -c release --product archi-engine --show-bin-path | tr -d '\r')"
           exe="$bin/archi-engine.exe"
           [ -f "$exe" ] || { echo "::error title=archi-engine missing::the build produced no $exe"; exit 1; }
           rt="$(where.exe swiftCore.dll 2>/dev/null | tr -d '\r' | head -1)"
           [ -n "$rt" ] || { echo "::error title=Swift runtime not found::swiftCore.dll is not on PATH (gha-setup-swift)"; exit 1; }
-          echo "Swift runtime: $(dirname "$rt")" | tee -a "$log"
+          echo "Swift runtime: $(dirname "$rt")"
           cd ..
           find windows/resources/engine -type f ! -name README.txt -delete 2>/dev/null || true
-          python windows/packaging/collect-dlls.py "$exe" windows/resources/engine --search "$(dirname "$rt")" 2>&1 | tee winapp-logs/engine-dlls.txt
-          ls -la windows/resources/engine | tee -a winapp-logs/engine-dlls.txt
+          python windows/packaging/collect-dlls.py "$exe" windows/resources/engine --search "$(dirname "$rt")" \
+            || { echo "::error title=DLL collection failed::collect-dlls.py could not find every DLL archi-engine.exe needs (04-engine-build.log)"; exit 1; }
+          ls -la windows/resources/engine
+          } 2>&1 | tee "$LOGS/04-engine-build.log"
 
-      - name: Check archi-engine.exe runs without the Swift toolchain
+      - name: Verify archi-engine.exe runs with only the bundled DLLs
         id: enginecheck
+        timeout-minutes: 10
+        shell: pwsh
         run: |
-          set -o pipefail
-          cd windows/resources/engine
-          out="$GITHUB_WORKSPACE/winapp-logs/engine-hello.txt"
-          # Only Windows' own folders on PATH: every other DLL must come from resources/engine.
-          timeout 30 env PATH="/c/Windows/System32:/c/Windows" ./archi-engine.exe --version 2>&1 | tee "$out" \
-            || { echo "::error title=archi-engine does not start::archi-engine.exe --version failed with only System32 on PATH (a DLL is missing, see engine-dlls.txt)"; exit 1; }
-          printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"engine.hello","params":{}}' \
-            | timeout 60 env PATH="/c/Windows/System32:/c/Windows" ./archi-engine.exe --cwd . > hello.jsonl 2>> "$out" || true
-          head -c 600 hello.jsonl | tee -a "$out"; echo
-          grep -q '"result"' hello.jsonl \
-            || { rm -f hello.jsonl; echo "::error title=engine.hello failed::archi-engine.exe gave no engine.hello result (engine-hello.txt)"; exit 1; }
-          rm -f hello.jsonl
+          $ErrorActionPreference = "Stop"
+          Start-Transcript -Path "$env:LOGS/05-engine-dlls.log" | Out-Null
+          try {
+            # A copy of resources/engine in a folder of its own, PATH reduced to Windows' folders: every non-system DLL
+            # must come from the bundle (no Swift toolchain, no build folder, no VC++ redistributable from PATH).
+            $iso = Join-Path $env:RUNNER_TEMP "engine-isolated"
+            Remove-Item -Recurse -Force $iso -ErrorAction SilentlyContinue
+            Copy-Item -Recurse "windows/resources/engine" $iso
+            Get-ChildItem $iso | Format-Table Name, Length -AutoSize | Out-String | Write-Host
+            $sys = "$env:SystemRoot\System32;$env:SystemRoot"
+            $psi = New-Object System.Diagnostics.ProcessStartInfo (Join-Path $iso "archi-engine.exe")
+            $psi.UseShellExecute = $false; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true; $psi.RedirectStandardInput = $true
+            $psi.WorkingDirectory = $iso; $psi.EnvironmentVariables["PATH"] = $sys
+            $psi.Arguments = "--version"
+            $p = [Diagnostics.Process]::Start($psi)
+            if (-not $p.WaitForExit(30000)) { $p.Kill(); throw "archi-engine.exe --version did not finish in 30 s" }
+            $ver = $p.StandardOutput.ReadToEnd().Trim(); $err = $p.StandardError.ReadToEnd().Trim()
+            Write-Host "--version (exit $($p.ExitCode)): $ver $err"
+            if ($p.ExitCode -ne 0 -or $ver -notmatch '^archi-engine ') {
+              # 0xC0000135 = STATUS_DLL_NOT_FOUND
+              Write-Host "::error title=archi-engine does not start::archi-engine.exe --version failed with only the bundled DLLs (exit $($p.ExitCode); 0xC0000135 = a DLL is missing, see 04-engine-build.log)"
+              exit 1
+            }
+            # JSON-RPC session: engine.hello, then list the DLLs the running process loaded.
+            $psi.Arguments = "--cwd ."
+            $p = [Diagnostics.Process]::Start($psi)
+            $p.StandardInput.WriteLine('{"jsonrpc":"2.0","id":1,"method":"engine.hello","params":{}}'); $p.StandardInput.Flush()
+            $hello = $null; $deadline = (Get-Date).AddSeconds(60)
+            while (-not $hello -and (Get-Date) -lt $deadline) {
+              $t = $p.StandardOutput.ReadLineAsync()
+              if (-not $t.Wait(60000) -or $null -eq $t.Result) { break }
+              if ($t.Result -match '"id"\s*:\s*1' -and $t.Result -match '"result"') { $hello = $t.Result }
+            }
+            $mods = @($p.Modules | ForEach-Object { $_.FileName })
+            $p.StandardInput.Close(); if (-not $p.WaitForExit(10000)) { $p.Kill() }
+            Write-Host "engine.hello: $(if ($hello) { $hello.Substring(0, [Math]::Min(400, $hello.Length)) } else { '<none>' })"
+            Write-Host "loaded modules:"; $mods | Sort-Object | ForEach-Object { Write-Host "  $_" }
+            $outside = @($mods | Where-Object { -not ($_.StartsWith($iso, 'OrdinalIgnoreCase') -or $_.StartsWith($env:SystemRoot, 'OrdinalIgnoreCase')) })
+            if (-not $hello) { Write-Host "::error title=engine.hello failed::archi-engine.exe gave no engine.hello result with only the bundled DLLs (05-engine-dlls.log)"; exit 1 }
+            if ($outside.Count) { Write-Host "::error title=DLL loaded from outside the bundle::$($outside -join ', ')"; exit 1 }
+            Write-Host "OK: archi-engine.exe runs from the bundle alone ($((Get-ChildItem $iso -Filter *.dll).Count) bundled DLLs)"
+          } finally { Stop-Transcript | Out-Null }
 
       - name: Build the Electron shell
         id: shell
+        if: always() && steps.inputs.outcome == 'success'
+        timeout-minutes: 25
         working-directory: windows
         run: |
           set -o pipefail
-          log="$GITHUB_WORKSPACE/winapp-logs/shell-build.log"
-          if [ -f package-lock.json ]; then npm ci --no-audit --no-fund 2>&1 | tee "$log"
-          else echo "::warning title=No lockfile::windows/package-lock.json is missing; using npm install (commit the lockfile for reproducible builds)"
-               npm install --no-audit --no-fund 2>&1 | tee "$log"; fi \
-            || { echo "::error title=npm install failed::see shell-build.log"; exit 1; }
-          npm run build 2>&1 | tee -a "$log" || { echo "::error title=Shell build failed::npm run build failed in windows/ (shell-build.log)"; exit 1; }
+          {
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --no-fund || { echo "::error title=npm ci failed::see 06-shell-build.log (lockfile out of date with package.json? run npm install and commit package-lock.json)"; exit 1; }
+          else
+            npm install --no-audit --no-fund || { echo "::error title=npm install failed::see 06-shell-build.log"; exit 1; }
+            cp package-lock.json "$LOGS/package-lock.json"
+            echo "::warning title=Lockfile generated::windows/package-lock.json was generated by npm install; it is in the logs (ci-windows-app branch / winapp-logs artifact): commit it"
+          fi
+          npm ls --depth=0 || true
+          npm run build || { echo "::error title=Shell build failed::npm run build failed in windows/ (06-shell-build.log)"; exit 1; }
           for f in dist/main/main.js dist/preload/preload.js dist/renderer/index.html; do
             [ -f "$f" ] || { echo "::error title=Shell build incomplete::windows/$f was not produced by npm run build"; exit 1; }; done
           node -e 'require("playwright-core")' || { echo "::error title=playwright-core missing::add playwright-core to windows/package.json devDependencies (smoke test)"; exit 1; }
+          } 2>&1 | tee "$LOGS/06-shell-build.log"
 
-      - name: App icon (.icns to .ico)
-        id: icon
-        run: python windows/packaging/make-ico.py . windows/packaging/build/icon.ico 2>&1 | tee winapp-logs/icon.log
-
-      - name: Package the NSIS installer
-        id: package
+      - name: Icons (every SF Symbol mapped to a Lucide glyph)
+        id: icons
+        if: always() && steps.shell.outcome == 'success'
+        timeout-minutes: 5
         working-directory: windows
         run: |
           set -o pipefail
-          log="$GITHUB_WORKSPACE/winapp-logs/package.log"
-          ver="$(node -p 'require("./package.json").version')"
-          echo "version=$ver" >> "$GITHUB_OUTPUT"
+          { node tools/gen-ui-data.mjs && node test/icons.mjs; } 2>&1 | tee "$LOGS/07-icons.log" \
+            || { echo "::error title=Icon fallback::a symbol has no Lucide mapping (07-icons.log, tools/sf-to-lucide.mjs)"; exit 1; }
+
+      - name: App icon (.icns to .ico)
+        id: icon
+        if: always() && steps.tools.outcome == 'success'
+        timeout-minutes: 5
+        run: |
+          set -o pipefail
+          python windows/packaging/make-ico.py . windows/packaging/build/icon.ico 2>&1 | tee "$LOGS/08-icon.log"
+
+      - name: Package the NSIS installer
+        id: package
+        timeout-minutes: 30
+        working-directory: windows
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD: ${{ steps.version.outputs.build }}
+          # Code signing (windows/README.md "Code signing"): empty until the repository secrets exist, then electron-builder
+          # signs the app, archi-engine.exe, the uninstaller and the installer.
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        run: |
+          set -o pipefail
+          {
+          echo "version $VERSION (file version $BUILD)"
           rm -rf out out-arm64
-          npx --yes electron-builder@25.1.8 --win --x64 --config packaging/electron-builder.yml --publish never 2>&1 | tee "$log" \
-            || { echo "::error title=electron-builder failed::x64 installer (package.log)"; exit 1; }
-          inst="out/Oanarina-Archi-Tool-Setup-$ver.exe"
-          [ -f "$inst" ] || { echo "::error title=Installer missing::$inst was not produced (package.log)"; ls -la out; exit 1; }
+          npx --yes "$ELECTRON_BUILDER" --win --x64 --config packaging/electron-builder.yml --publish never "-c.buildVersion=$BUILD" \
+            || { echo "::error title=electron-builder failed::x64 installer (09-package.log)"; exit 1; }
+          inst="out/Oanarina-Archi-Tool-Setup-$VERSION.exe"
+          [ -f "$inst" ] || { echo "::error title=Installer missing::$inst was not produced (09-package.log)"; ls -la out; exit 1; }
           [ -f "out/win-unpacked/resources/engine/archi-engine.exe" ] || { echo "::error title=Engine not bundled::resources/engine/archi-engine.exe is missing in the package"; exit 1; }
           [ -f "out/win-unpacked/resources/samples/Cedar House.archi" ] || { echo "::error title=Sample not bundled::resources/samples/Cedar House.archi is missing in the package"; exit 1; }
+          if ! diff <(cd resources/engine && ls | grep -v README.txt | sort) <(cd out/win-unpacked/resources/engine && ls | sort); then
+            echo "::error title=Engine DLLs not packaged::out/win-unpacked/resources/engine differs from resources/engine"; exit 1; fi
           if [ "${{ inputs.arm64 }}" = "true" ]; then
-            npx --yes electron-builder@25.1.8 --win --arm64 --config packaging/electron-builder.yml --publish never \
-              -c.directories.output=out-arm64 '-c.nsis.artifactName=Oanarina-Archi-Tool-Setup-${version}-arm64.${ext}' 2>&1 | tee -a "$log" \
-              || { echo "::error title=electron-builder failed::arm64 installer (package.log)"; exit 1; }
+            npx --yes "$ELECTRON_BUILDER" --win --arm64 --config packaging/electron-builder.yml --publish never "-c.buildVersion=$BUILD" \
+              -c.directories.output=out-arm64 '-c.nsis.artifactName=Oanarina-Archi-Tool-Setup-${version}-arm64.${ext}' \
+              || { echo "::error title=electron-builder failed::arm64 installer (09-package.log)"; exit 1; }
           fi
-          { echo "installers:"; for f in out/*.exe out-arm64/*.exe; do [ -f "$f" ] && echo "  $f  $(stat -c %s "$f") bytes  sha256 $(sha256sum "$f" | cut -d' ' -f1)"; done
-            echo "packaged resources:"; (cd out/win-unpacked && find resources -maxdepth 2 | sort); } | tee "$GITHUB_WORKSPACE/winapp-logs/installer.txt"
+          echo "installers:"; for f in out/*.exe out-arm64/*.exe; do [ -f "$f" ] && echo "  $f  $(stat -c %s "$f") bytes  sha256 $(sha256sum "$f" | cut -d' ' -f1)"; done
+          echo "packaged resources:"; (cd out/win-unpacked && find resources -maxdepth 2 | sort)
+          } 2>&1 | tee "$LOGS/09-package.log"
 
       - name: Upload the installer
+        id: upload
         uses: actions/upload-artifact@v5
         with:
-          name: Oanarina-Archi-Tool-Windows-${{ steps.package.outputs.version }}
+          name: Oanarina-Archi-Tool-Windows-${{ steps.version.outputs.version }}
           path: |
             windows/out/Oanarina-Archi-Tool-Setup-*.exe
             windows/out-arm64/Oanarina-Archi-Tool-Setup-*.exe
           if-no-files-found: error
           retention-days: 30
+          overwrite: true
+
+      - name: Install per-user and check the installation
+        id: install
+        timeout-minutes: 10
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          Start-Transcript -Path "$env:LOGS/10-install.log" | Out-Null
+          $fail = 0
+          function Check($name, $ok, $detail = "") { if ($ok) { Write-Host "PASS  $name  $detail" } else { Write-Host "::error title=Installer check failed::$name $detail"; $script:fail = 1 } }
+          try {
+            $inst = Resolve-Path "windows/out/Oanarina-Archi-Tool-Setup-$env:VERSION.exe"
+            Write-Host "silent install (per-user, no elevation): $inst"
+            $p = Start-Process -FilePath $inst -ArgumentList "/S" -Wait -PassThru
+            Check "installer exit code 0" ($p.ExitCode -eq 0) "exit $($p.ExitCode)"
+            $dir = Join-Path $env:LOCALAPPDATA "Programs\oanarina-archi-tool"
+            $exe = Join-Path $dir "Oanarina Archi Tool.exe"
+            Check "installed per-user in %LOCALAPPDATA%\Programs" (Test-Path $exe) $exe
+            Check "uninstaller present" (Test-Path (Join-Path $dir "Uninstall Oanarina Archi Tool.exe"))
+            Check "Cedar House sample installed" (Test-Path (Join-Path $dir "resources\samples\Cedar House.archi"))
+            Check "archi-engine installed" (Test-Path (Join-Path $dir "resources\engine\archi-engine.exe"))
+            if (Test-Path $exe) { $v = (Get-Item $exe).VersionInfo; Check "product version = app/Info.plist" ($v.ProductVersion -like "$env:VERSION*") "product $($v.ProductVersion) file $($v.FileVersion)" }
+            $start = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Oanarina Archi Tool.lnk"
+            Check "Start menu shortcut" (Test-Path $start) $start
+            $desk = Join-Path ([Environment]::GetFolderPath("Desktop")) "Oanarina Archi Tool.lnk"
+            Check "desktop shortcut" (Test-Path $desk) $desk
+            foreach ($ext in ".archi", ".dxf", ".ifc") {
+              $prog = (Get-ItemProperty -Path "HKCU:\Software\Classes\$ext" -ErrorAction SilentlyContinue).'(default)'
+              $cmd = if ($prog) { (Get-ItemProperty -Path "HKCU:\Software\Classes\$prog\shell\open\command" -ErrorAction SilentlyContinue).'(default)' } else { $null }
+              Check "file association $ext opens the app" ($cmd -and $cmd -like "*Oanarina Archi Tool.exe*") "$prog -> $cmd"
+            }
+            $un = Get-ChildItem "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall" | ForEach-Object { Get-ItemProperty $_.PSPath } | Where-Object { $_.DisplayName -like "Oanarina Archi Tool*" }
+            Check "uninstall entry in Settings > Apps (per-user)" ($un) "$($un.DisplayName) $($un.DisplayVersion)"
+            $hklm = Get-ChildItem "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall" -ErrorAction SilentlyContinue | ForEach-Object { Get-ItemProperty $_.PSPath } | Where-Object { $_.DisplayName -like "Oanarina Archi Tool*" }
+            Check "no per-machine (admin) install" (-not $hklm)
+          } catch { Write-Host "::error title=Installer check failed::$_"; $fail = 1 } finally { Stop-Transcript | Out-Null }
+          exit $fail
 
       - name: Screen resolution 1920x1080 for the screenshots (best effort)
         continue-on-error: true
+        timeout-minutes: 2
         shell: pwsh
         run: Set-DisplayResolution -Width 1920 -Height 1080 -Force
 
       - name: Smoke test the installed app (Playwright for Electron)
         id: smoke
+        if: always() && steps.package.outcome == 'success'
+        timeout-minutes: 20
         working-directory: windows
         run: |
           set -o pipefail
-          log="$GITHUB_WORKSPACE/winapp-logs/smoke.log"
-          inst="$(cygpath -w "out/Oanarina-Archi-Tool-Setup-${{ steps.package.outputs.version }}.exe")"
-          echo "silent install: $inst" | tee "$log"
-          powershell -NoProfile -Command "\$p = Start-Process -FilePath '$inst' -ArgumentList '/S' -Wait -PassThru; exit \$p.ExitCode" 2>&1 | tee -a "$log" \
-            || echo "::warning title=Silent install failed::the NSIS installer returned an error; testing out/win-unpacked instead"
+          {
           exe="$(cygpath -u "$LOCALAPPDATA")/Programs/oanarina-archi-tool/Oanarina Archi Tool.exe"
           if [ ! -f "$exe" ]; then
-            echo "::warning title=Installed app not found::$exe is missing; testing out/win-unpacked instead" | tee -a "$log"
+            echo "::warning title=Installed app not found::$exe is missing; testing out/win-unpacked instead"
             exe="$PWD/out/win-unpacked/Oanarina Archi Tool.exe"
           fi
-          echo "app: $exe" | tee -a "$log"
-          node packaging/smoke-electron.mjs "$exe" "$GITHUB_WORKSPACE/winapp-logs/screenshots" 2>&1 | tee -a "$log" \
-            || { echo "::error title=Smoke test failed::the packaged app did not show the start screen or open Cedar House (smoke.log, screenshots/app.log)"; exit 1; }
+          echo "app: $exe"
+          timeout 900 node packaging/smoke-electron.mjs "$exe" "$LOGS/screenshots" \
+            || { echo "::error title=Smoke test failed::a required check failed (11-smoke.log, screenshots/results.json, screenshots/app.log)"; exit 1; }
+          } 2>&1 | tee "$LOGS/11-smoke.log"
+
+      - name: Uninstall
+        id: uninstall
+        if: always() && steps.install.outcome != 'skipped'
+        timeout-minutes: 5
+        shell: pwsh
+        run: |
+          Start-Transcript -Path "$env:LOGS/12-uninstall.log" | Out-Null
+          $fail = 0
+          try {
+            Get-Process "Oanarina Archi Tool", "archi-engine" -ErrorAction SilentlyContinue | Stop-Process -Force
+            $dir = Join-Path $env:LOCALAPPDATA "Programs\oanarina-archi-tool"
+            $un = Join-Path $dir "Uninstall Oanarina Archi Tool.exe"
+            if (-not (Test-Path $un)) { Write-Host "::warning title=Uninstall skipped::$un not found"; exit 0 }
+            Start-Process -FilePath $un -ArgumentList "/S" -Wait | Out-Null
+            # The uninstaller re-launches itself from %TEMP%; wait for the files to go.
+            for ($i = 0; $i -lt 60 -and (Test-Path (Join-Path $dir "Oanarina Archi Tool.exe")); $i++) { Start-Sleep -Seconds 1 }
+            $left = @()
+            if (Test-Path (Join-Path $dir "Oanarina Archi Tool.exe")) { $left += "app files" }
+            if (Test-Path (Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Oanarina Archi Tool.lnk")) { $left += "Start menu shortcut" }
+            if (Test-Path (Join-Path ([Environment]::GetFolderPath("Desktop")) "Oanarina Archi Tool.lnk")) { $left += "desktop shortcut" }
+            if (Get-ChildItem "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall" | ForEach-Object { Get-ItemProperty $_.PSPath } | Where-Object { $_.DisplayName -like "Oanarina Archi Tool*" }) { $left += "uninstall entry" }
+            if ($left.Count) { Write-Host "::error title=Uninstall incomplete::left behind: $($left -join ', ')"; $fail = 1 } else { Write-Host "PASS  uninstaller removed the app, shortcuts and the uninstall entry" }
+          } catch { Write-Host "::error title=Uninstall failed::$_"; $fail = 1 } finally { Stop-Transcript | Out-Null }
+          exit $fail
+
+      - name: Shell tests in Chromium (fixture engine)
+        id: shelltests
+        if: always() && steps.shell.outcome == 'success'
+        timeout-minutes: 30
+        working-directory: windows
+        run: |
+          set -o pipefail
+          {
+          npx playwright-core install chromium || { echo "::error title=Chromium download failed::see 13-shell-tests.log"; exit 1; }
+          node build.mjs --web || { echo "::error title=Web build failed::see 13-shell-tests.log"; exit 1; }
+          fail=0
+          for t in ui-snapshots dialogs partb-tools canvas output windows-conventions; do
+            echo "===== test/$t.mjs"
+            timeout 900 node "test/$t.mjs" || { echo "::error title=Shell test failed::test/$t.mjs (13-shell-tests.log)"; fail=1; }
+          done
+          exit $fail
+          } 2>&1 | tee "$LOGS/13-shell-tests.log"
+
+      - name: Summary
+        if: always()
+        timeout-minutes: 3
+        run: |
+          mkdir -p "$LOGS"; cd "$LOGS"
+          {
+            echo "commit ${GITHUB_SHA} · run ${GITHUB_RUN_ID} (attempt ${GITHUB_RUN_ATTEMPT}) · version ${{ steps.version.outputs.version }} · job ${{ job.status }}"
+            echo "inputs ${{ steps.inputs.outcome }} · version ${{ steps.version.outcome }} · swift ${{ steps.swift.outcome }} · python ${{ steps.python.outcome }} · node ${{ steps.node.outcome }} · tools ${{ steps.tools.outcome }}"
+            echo "engine ${{ steps.engine.outcome }} · engine-dlls ${{ steps.enginecheck.outcome }} · shell ${{ steps.shell.outcome }} · icons ${{ steps.icons.outcome }} · icon ${{ steps.icon.outcome }} · package ${{ steps.package.outcome }} · upload ${{ steps.upload.outcome }}"
+            echo "install ${{ steps.install.outcome }} · smoke ${{ steps.smoke.outcome }} · uninstall ${{ steps.uninstall.outcome }} · shell-tests ${{ steps.shelltests.outcome }}"
+            for f in 04-engine-build.log 06-shell-build.log 09-package.log; do
+              [ -f "$f" ] && { echo "=== $f"; sed 's/\x1b\[[0-9;]*m//g' "$f" | grep -E "error:|error |ERR!|⨯|Error:|failed|::error|Build complete|target=" | head -60; }
+            done
+            [ -f 04-engine-build.log ] && { echo "=== bundled DLLs"; grep -E "^bundled:|collect-dlls:" 04-engine-build.log; }
+            [ -f 05-engine-dlls.log ] && { echo "=== engine"; grep -E "^--version|^engine.hello|^OK:|::error" 05-engine-dlls.log | cut -c1-400; }
+            [ -f 07-icons.log ] && { echo "=== icons"; grep -E "icons|FAIL|PASS" 07-icons.log | cut -c1-600; }
+            [ -f 09-package.log ] && { echo "=== installer"; grep -E "^version|Setup-.*bytes" 09-package.log; }
+            [ -f 10-install.log ] && { echo "=== install"; grep -E "PASS|::error" 10-install.log; }
+            [ -f 11-smoke.log ] && { echo "=== smoke"; grep -E "PASS|FAIL|SKIP|smoke:|app:" 11-smoke.log; }
+            [ -f 12-uninstall.log ] && { echo "=== uninstall"; grep -E "PASS|::error|::warning" 12-uninstall.log; }
+            [ -f package-lock.json ] && echo "=== package-lock.json generated (commit it as windows/package-lock.json)"
+            [ -d screenshots ] && { echo "=== screenshots"; ls screenshots; }
+            true
+          } > summary.txt 2>&1
+          cat summary.txt
+          cat summary.txt >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Upload logs and screenshots
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: winapp-logs
+          path: winapp-logs
+          if-no-files-found: warn
+          retention-days: 14
+          overwrite: true
 
       - name: Publish logs and screenshots to ci-windows-app
         if: always()
+        timeout-minutes: 5
         run: |
-          mkdir -p /tmp/winapp && cd /tmp/winapp
-          cp -r "$GITHUB_WORKSPACE/winapp-logs/." . 2>/dev/null || echo "no logs" > none.txt
+          rm -rf /tmp/winapp && mkdir -p /tmp/winapp && cd /tmp/winapp
+          cp -r "$LOGS/." . 2>/dev/null || echo "no logs" > none.txt
           find . -name '*.exe' -delete
-          {
-            echo "commit ${GITHUB_SHA} · run ${GITHUB_RUN_ID} · version ${{ steps.package.outputs.version }}"
-            echo "inputs ${{ steps.inputs.outcome }} · engine ${{ steps.engine.outcome }} · engine-check ${{ steps.enginecheck.outcome }} · shell ${{ steps.shell.outcome }} · icon ${{ steps.icon.outcome }} · package ${{ steps.package.outcome }} · smoke ${{ steps.smoke.outcome }}"
-            for f in engine-build.log shell-build.log package.log; do
-              [ -f "$f" ] && { echo "=== $f"; sed 's/\x1b\[[0-9;]*m//g' "$f" | grep -E "error:|error |ERR!|⨯|Error:|failed|Build complete|target=" | head -60; }
-            done
-            [ -f engine-dlls.txt ] && { echo "=== bundled DLLs"; grep -E "^bundled:|collect-dlls:" engine-dlls.txt; }
-            [ -f engine-hello.txt ] && { echo "=== engine"; head -c 400 engine-hello.txt; echo; }
-            [ -f installer.txt ] && { echo "=== installer"; head -5 installer.txt; }
-            [ -f smoke.log ] && { echo "=== smoke"; grep -E "PASS|FAIL|app:" smoke.log; }
-            [ -d screenshots ] && { echo "=== screenshots"; ls screenshots; }
-            true
-          } > summary.txt
           git init -q . && git checkout -q -b ci-windows-app
           git -c user.name=ci -c user.email=ci@users.noreply.github.com add -A
-          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "Windows app ${GITHUB_SHA::12} package ${{ steps.package.outcome }} smoke ${{ steps.smoke.outcome }}"
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "Windows app ${GITHUB_SHA::12} package ${{ steps.package.outcome }} install ${{ steps.install.outcome }} smoke ${{ steps.smoke.outcome }} (${{ job.status }})"
           git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-windows-app

@@ -1,0 +1,1 @@
+{"request":{"jsonrpc":"2.0","id":3004,"method":"view3d.setCamera","params":{"eye":[-12000,-18000,9000],"target":[11000,1000,3933.044257],"fov":45}},"response":{"jsonrpc":"2.0","id":3004,"result":{"ok":true}},"notifications":[]}

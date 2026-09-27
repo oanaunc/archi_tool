@@ -1,0 +1,1 @@
+{"request":{"jsonrpc":"2.0","id":1009,"method":"markup.list","params":{}},"response":{"jsonrpc":"2.0","id":1009,"result":{"markups":[],"author":"Oana Rinaldi"}},"notifications":[]}

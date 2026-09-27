@@ -7,6 +7,8 @@ import { icon } from "../icons";
 import { showMenu, MenuItem, closeMenus } from "./menu";
 import ui from "../data/ui.generated.json";
 import { RIBBON } from "./ribbon";
+import { openGuide, GUIDE_URL } from "./windows-conventions";
+import { openSettings, openShortcutsReference, openPageSetupForView, openLayerStates, newFromTemplateMenu, workspaceMenu, dynamicMenu, openUI } from "../dialogs";
 
 const SVGNS = "http://www.w3.org/2000/svg";
 function glyph(d: string) {
@@ -52,40 +54,42 @@ export class TitleBar {
     const conv = (items: any[]): MenuItem[] => items.flatMap((it): MenuItem[] => {
       if (it.separator) return [{ separator: true }];
       if (it.header !== undefined && !it.title) return [{ header: String(it.header) }];
-      if (it.dynamic) return [];
+      if (it.dynamic) return dynamicMenu(String(it.dynamic)) ?? [];
       if (it.system) {
-        if (/^Quit/.test(it.title ?? "")) return [{ title: "Exit", shortcut: "Alt+F4", action: () => app.engine.native?.windowControl("close") }];
+        if (/^Quit/.test(it.title ?? "")) return [{ title: "Exit", shortcut: "Alt+F4", action: () => app.engine.native?.windowControl("quit") }];
         return [];
       }
       const sub = it.submenu ?? it.items;
       let c: string | undefined = it.command;
-      if (c === "@openURL") c = /guide/i.test(it.title ?? "") ? "@openURL:https://github.com/oanaunc/archi_tool/blob/main/docs/USER-GUIDE.md" : "@openURL:https://www.oanarinaldi.com";
+      if (c === "@openURL") c = /guide/i.test(it.title ?? "") ? `@openURL:${GUIDE_URL}` : "@openURL:https://www.oanarinaldi.com";
       return [{
         title: it.title, symbol: it.symbol, shortcut: it.shortcut?.replace(/⌘/g, "Ctrl+").replace(/⇧/g, "Shift+").replace(/⌥/g, "Alt+"),
         submenu: Array.isArray(sub) ? conv(sub) : undefined,
-        disabled: !!c && !c.startsWith("@") && !app.has(c.split(" ")[0]),
-        action: c && !Array.isArray(sub) ? run(it.args ? `${c} ${it.args}` : c) : undefined,
+        disabled: !!c && !c.startsWith("@") && !app.has(c.split(" ")[0]) && !it.ui,
+        action: it.ui && !Array.isArray(sub) ? () => { if (!openUI(String(it.ui)) && c) void app.runCommand(it.args ? `${c} ${it.args}` : c); } : c && !Array.isArray(sub) ? run(it.args ? `${c} ${it.args}` : c) : undefined,
       }];
     });
     const file: MenuItem[] = [
       { title: "New Window", shortcut: "Ctrl+N", action: () => app.engine.native ? app.engine.native.newWindow({ kind: "start" }) : app.newDocument() },
-      { title: "New Drawing", action: () => app.newDocument("metric") }, { title: "Open…", shortcut: "Ctrl+O", action: () => app.open() },
+      { title: "New Drawing", action: () => app.newDocument("metric") }, { title: "New from Template", submenu: newFromTemplateMenu() }, { title: "Open…", shortcut: "Ctrl+O", action: () => app.open() },
       { title: "Start Screen", action: () => { app.showStart = true; app.emit("start"); } }, { separator: true },
       { title: "Save", shortcut: "Ctrl+S", action: () => app.save() }, { title: "Save As…", shortcut: "Ctrl+Shift+S", action: () => app.save(true) }, { separator: true },
       { title: "Import…", action: async () => { const p = await app.engine.native?.openFileDialog({ title: "Import" }); if (p) app.call("file.import", { path: p }).then(() => app.refresh(["all"])); } },
       { title: "Export", submenu: ["pdf", "dxf", "svg", "ifc", "obj", "stl", "glb", "png"].map((f) => ({ title: f.toUpperCase() + "…", action: () => app.exportAs(f) })) }, { separator: true },
-      { title: "Page Setup…", action: run("PAGESETUP") }, { title: "Print…", shortcut: "Ctrl+P", action: run("PLOT") }, { separator: true },
-      { title: "Close Window", shortcut: "Ctrl+W", action: () => app.engine.native?.windowControl("close") }];
+      { title: "Page Setup…", shortcut: "Ctrl+Shift+P", action: () => void openPageSetupForView() }, { title: "Print…", shortcut: "Ctrl+P", action: run("PLOT") }, { separator: true },
+      { title: "Close Window", shortcut: "Ctrl+W", action: () => app.engine.native?.windowControl("close") }, { separator: true },
+      { title: "Exit", shortcut: "Alt+F4", action: () => app.engine.native?.windowControl("close") }];
     const edit: MenuItem[] = [{ title: "Undo", shortcut: "Ctrl+Z", action: () => app.undo() }, { title: "Redo", shortcut: "Ctrl+Y", action: () => app.redo() }, { separator: true },
       { title: "Cut", shortcut: "Ctrl+X", action: run("CUTCLIP") }, { title: "Copy", shortcut: "Ctrl+C", action: run("COPYCLIP") }, { title: "Paste", shortcut: "Ctrl+V", action: run("PASTECLIP") },
       { title: "Erase", shortcut: "Del", action: run("ERASE") }, { separator: true }, { title: "Select All", shortcut: "Ctrl+A", action: () => app.selectAll() },
-      { title: "Quick Select…", action: run("QSELECTDIALOG") }, { separator: true }, { title: "Find and Replace…", action: run("FIND") }, { title: "Options…", shortcut: "Ctrl+,", action: run("OPTIONS") }];
+      { title: "Quick Select…", action: run("QSELECTDIALOG") }, { separator: true }, { title: "Find and Replace…", action: run("FIND") }, { title: "Options…", shortcut: "Ctrl+,", action: () => openSettings() }];
     const view: MenuItem[] = [...(["2D", "3D", "Split", "Sheet"] as const).map((m) => ({ title: { "2D": "2D Plan", "3D": "3D Model", Split: "Split", Sheet: "Sheet" }[m], checked: app.mode === m, action: () => app.setUI("mode", m) })),
+      { separator: true }, { title: "Workspace", submenu: workspaceMenu() }, { title: "Layer States…", action: () => void openLayerStates() },
       { separator: true }, { title: "Zoom Extents", action: () => app.canvas?.zoomExtents() }, { title: "Zoom In", shortcut: "Ctrl+=", action: () => app.canvas?.zoomBy(1.5) }, { title: "Zoom Out", shortcut: "Ctrl+-", action: () => app.canvas?.zoomBy(1 / 1.5) },
       { separator: true }, { title: app.showPanels ? "Hide Panels" : "Show Panels", action: () => app.setUI("showPanels", !app.showPanels) },
       { title: "Clean Screen", shortcut: "Ctrl+0", checked: app.cleanScreen, action: () => app.action("@cleanScreen") }, { title: "Command Search…", shortcut: "Ctrl+K", action: () => document.dispatchEvent(new CustomEvent("archi:commandSearch")) }];
     const cats = fromParity.length ? fromParity.filter((m) => !["File", "Edit", "View", "Window", "Help", "Oanarina Archi Tool"].includes(m.menu ?? m.title)).map((m) => ({ title: m.menu ?? m.title, items: conv(m.items ?? []) })) : [];
-    const help: MenuItem[] = [{ title: "Command Reference", action: run("COMMANDREFERENCE") }, { title: "Keyboard Shortcuts", action: run("SHORTCUTS") }, { title: "User Guide", action: run("HELP") }, { separator: true },
+    const help: MenuItem[] = [{ title: "Command Reference", action: run("COMMANDREFERENCE") }, { title: "Keyboard Shortcuts", action: () => openShortcutsReference() }, { title: "Customize Shortcuts…", action: () => openSettings("Shortcuts") }, { title: "User Guide", shortcut: "F1", action: () => openGuide(app) }, { title: "Command Help", action: run("HELP") }, { separator: true },
       { title: "Oanarina Archi Tool Website", action: () => app.engine.native?.openExternal("https://www.oanarinaldi.com/archi-tool.html") }, { title: "About Oanarina Archi Tool", action: run("ABOUT") }];
     const out = [{ title: "File", items: file }, { title: "Edit", items: edit }, { title: "View", items: view }, ...cats];
     if (!cats.length) for (const t of RIBBON.filter((t) => ["Insert", "Annotate", "Architecture", "Modeling"].includes(t.tab))) out.push({ title: t.tab, items: t.groups.flatMap((g, i) => [...(i ? [{ separator: true } as MenuItem] : []), ...g.items.filter((x) => x.command && !x.command.startsWith("@") && x.kind !== "dropdown").map((x) => ({ title: x.title, symbol: x.symbol, action: run(x.args ? `${x.command} ${x.args}` : x.command!) }))]) });

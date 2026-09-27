@@ -9,7 +9,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-import { lucideFor } from "./sf-to-lucide.mjs";
+import { explicit, lucideFor } from "./sf-to-lucide.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
@@ -64,55 +64,91 @@ const chrome = ["doc.badge.plus", "folder", "square.and.arrow.down", "square.and
   "clock.arrow.circlepath", "square.grid.3x3.square", "rectangle.stack", "info.square", "map", "bell.badge", "slider.horizontal.below.rectangle", "list.bullet.rectangle",
   "books.vertical.circle", "square.and.pencil", "house.lodge", "keyboard", "clock", "star.fill", "house", "lifepreserver", "cursorarrow.rays", "eye.slash", "lock", "lock.open",
   "snowflake", "sun.max", "scope", "arrow.left.arrow.right.square", "square.on.square.intersection.dashed", "plus", "minus", "square.grid.3x3", "terminal", "checkmark",
-  "line.3.horizontal", "lineweight", "trash", "plus.circle", "pencil", "arrow.down.right.and.arrow.up-left", "cube", "square", "rectangle.split.2x1", "doc.richtext", "ellipsis"];
+  "line.3.horizontal", "lineweight", "trash", "plus.circle", "pencil", "arrow.down.right.and.arrow.up.left", "cube", "square", "rectangle.split.2x1", "doc.richtext", "ellipsis",
+  // Dialogs (src/renderer/dialogs): Settings, Customize Ribbon, Layers panel, pickers.
+  "chevron.up.chevron.down", "menubar.rectangle", "arrow.up", "arrow.down", "minus.circle", "line.3.horizontal.decrease.circle.fill", "checkmark.circle",
+  "checkmark.circle.fill", "lock.fill", "pencil.line", "antenna.radiowaves.left.and.right", "pencil.and.ruler", "doc.badge.gearshape", "ruler", "ruler.fill",
+  "printer.dotmatrix", "circle", "folder.badge.plus", "doc.badge.arrow.up", "folder.fill", "plus.magnifyingglass", "eraser", "line.diagonal", "wand.and.rays", "textformat"];
 const syms = new Set(chrome);
 (function walk(o) {
   if (Array.isArray(o)) o.forEach(walk);
   else if (o && typeof o === "object") { if (typeof o.symbol === "string" && o.symbol) syms.add(o.symbol); Object.values(o).forEach(walk); }
 })(ui);
+// Tool palettes (palettes.generated.json) and every literal icon("…") call in the renderer also need a glyph.
+const palettesPath = path.join(dataDir, "palettes.generated.json");
+if (fs.existsSync(palettesPath)) (function walk(o) {
+  if (Array.isArray(o)) o.forEach(walk);
+  else if (o && typeof o === "object") { if (typeof o.symbol === "string" && o.symbol) syms.add(o.symbol); Object.values(o).forEach(walk); }
+})(JSON.parse(fs.readFileSync(palettesPath, "utf8")));
+(function scan(dir) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) scan(p);
+    else if (e.name.endsWith(".ts")) for (const m of fs.readFileSync(p, "utf8").matchAll(/\bicon\(\s*["'`]([a-z0-9]+(?:\.[a-z0-9]+)*)["'`]/g)) syms.add(m[1]);
+  }
+})(path.join(root, "src"));
 
+// Icon source, in order: the lucide package (npm, ISC) by its exported PascalCase name, its per-icon ES module files,
+// then react-icons' copy of Lucide (REACT_ICONS_LU or ~/.npm-global), then the previously generated set.
 const require = createRequire(import.meta.url);
-function kebab(n) { return n.replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/([A-Z])([A-Z][a-z])/g, "$1-$2").replace(/([a-zA-Z])(\d)/g, "$1-$2").toLowerCase(); }
-let loader = null;
+const kebabs = (n) => {
+  const a = n.replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/([A-Z])([A-Z][a-z])/g, "$1-$2").toLowerCase();
+  return [...new Set([a, a.replace(/([a-z])(\d)/g, "$1-$2"), a.replace(/(\d)-x-(\d)/g, "$1x$2"), a.replace(/([a-z])(\d)/g, "$1-$2").replace(/(\d)-x-(\d)/g, "$1x$2")])];
+};
+const clean = (nodes) => {
+  if (!Array.isArray(nodes)) return null;
+  if (nodes[0] === "svg") nodes = nodes[2];
+  return nodes.map(([tag, attrs]) => [tag, Object.fromEntries(Object.entries(attrs || {}).filter(([k]) => k !== "key"))]);
+};
+const loaders = [];
+let iconSource = "";
 try {
   const lucideDir = path.dirname(require.resolve("lucide/package.json"));
-  loader = (name) => {
-    const f = path.join(lucideDir, "dist/esm/icons", kebab(name) + ".js");
-    if (!fs.existsSync(f)) return null;
-    const txt = fs.readFileSync(f, "utf8");
-    const m = txt.match(/=\s*(\[[\s\S]*\]);/);
-    if (!m) return null;
-    // Newer lucide files reference their own helpers (e.g. defaultAttributes) inside the array: fall back if it cannot be evaluated.
-    let nodes;
-    try { nodes = Function(`return ${m[1]}`)(); } catch { return null; }
-    if (nodes[0] === "svg") nodes = nodes[2];
-    return nodes.map(([tag, attrs]) => [tag, Object.fromEntries(Object.entries(attrs).filter(([k]) => k !== "key"))]);
-  };
+  // lucide's `icons` holds the current names; renamed icons stay exported under their old names on the module itself.
+  let exported = null;
+  try { const mod = require("lucide"); exported = new Proxy({}, { get: (_t, n) => mod.icons?.[n] ?? mod[n] }); } catch {}
+  const version = JSON.parse(fs.readFileSync(path.join(lucideDir, "package.json"), "utf8")).version;
+  iconSource = `lucide ${version}`;
+  loaders.push((name) => {
+    if (exported && Array.isArray(exported[name])) return clean(exported[name]);
+    for (const k of kebabs(name)) {
+      const f = path.join(lucideDir, "dist/esm/icons", k + ".js");
+      if (!fs.existsSync(f)) continue;
+      const m = fs.readFileSync(f, "utf8").match(/=\s*(\[[\s\S]*\]);/);
+      // Newer lucide files reference their own helpers (e.g. defaultAttributes) inside the array: skip what cannot be evaluated.
+      if (m) { try { return clean(Function(`return ${m[1]}`)()); } catch { continue; } }
+    }
+    return null;
+  });
 } catch {}
-if (!loader) {
-  const candidates = [process.env.REACT_ICONS_LU, path.join(process.env.HOME || "", ".npm-global/lib/node_modules/react-icons/lu/index.js")].filter(Boolean);
+{
+  const candidates = [process.env.REACT_ICONS_LU, path.join(process.env.HOME || process.env.USERPROFILE || "", ".npm-global/lib/node_modules/react-icons/lu/index.js")].filter(Boolean);
   const f = candidates.find((c) => fs.existsSync(c));
   if (f) {
     const txt = fs.readFileSync(f, "utf8");
-    loader = (name) => {
+    iconSource ||= "react-icons/lu (Lucide)";
+    loaders.push((name) => {
       const m = txt.match(new RegExp(`function Lu${name} \\(props\\) \\{\\s*return GenIcon\\((\\{.*?\\})\\)\\(props\\)`));
-      if (!m) return null;
-      const tree = JSON.parse(m[1]);
-      return tree.child.map((c) => [c.tag, c.attr]);
-    };
+      return m ? JSON.parse(m[1]).child.map((c) => [c.tag, c.attr]) : null;
+    });
   }
 }
+const load = (name) => { for (const l of loaders) { const n = l(name); if (n && n.length) return n; } return null; };
 const iconsPath = path.join(dataDir, "icons.generated.json");
 const previous = fs.existsSync(iconsPath) ? JSON.parse(fs.readFileSync(iconsPath, "utf8")).icons : {};
 const icons = {};
-const missing = [];
+const missing = [];   // Lucide name not found in any source (kept the previous glyph when there was one)
+const unmapped = [];  // SF Symbol with no explicit entry in tools/sf-to-lucide.mjs (prefix rule or generic fallback)
 for (const sf of [...syms].sort()) {
+  if (!explicit[sf]) unmapped.push(sf);
   const name = lucideFor(sf);
-  let nodes = loader ? loader(name) : null;
-  if (!nodes && previous[sf]) nodes = previous[sf].nodes;
-  if (!nodes && loader) { missing.push(sf + "->" + name); nodes = loader("SquareTerminal"); }
-  if (!nodes) { missing.push(sf); continue; }
+  let nodes = load(name);
+  if (!nodes && previous[sf]?.lucide === name) nodes = previous[sf].nodes;
+  if (!nodes) { missing.push(sf + "->" + name); nodes = previous[sf]?.nodes || load("SquareTerminal"); }
+  if (!nodes) continue;
   icons[sf] = { lucide: name, nodes };
 }
 fs.writeFileSync(iconsPath, JSON.stringify({ licence: "Icons: Lucide (https://lucide.dev), ISC licence. Mapped from the Mac app's SF Symbol names.", icons }));
-console.log(`ui data from ${source}: ${ui.ribbon.length} tabs; ${Object.keys(icons).length} icons${missing.length ? `, missing ${missing.length}: ${missing.slice(0, 10).join(" ")}` : ""}${loader ? "" : " (no icon source: kept previous)"}`);
+console.log(`ui data from ${source}: ${ui.ribbon.length} tabs; ${Object.keys(icons).length} icons from ${iconSource || "the previous icons.generated.json (no lucide installed)"}` +
+  `${missing.length ? `; MISSING ${missing.length}: ${missing.join(" ")}` : ""}${unmapped.length ? `; UNMAPPED ${unmapped.length}: ${unmapped.join(" ")}` : ""}`);
+if (process.argv.includes("--strict") && (missing.length || unmapped.length)) process.exit(1);

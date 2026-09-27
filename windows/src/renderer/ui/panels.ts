@@ -2,6 +2,7 @@
 // Docked panel stack on the right (PanelsView.swift): 14 tabs in a 6-column icon grid, float / hide buttons, and the
 // panel contents from the engine (panel.<name>): Properties, Layers, Levels, Browser, Materials, Tools, Sheets, History…
 import type { App } from "../app";
+import { renderLayersPanel } from "../dialogs";
 import { h, clear } from "../dom";
 import { icon } from "../icons";
 import { help, showMenu } from "./menu";
@@ -70,7 +71,7 @@ export class Panels {
     const scroll = this.body.scrollTop;
     clear(this.body);
     if (tab === "Properties" || tab === "Quick Props" || tab === "Inspector") this.properties(data);
-    else if (tab === "Layers") this.layers(data);
+    else if (tab === "Layers") renderLayersPanel(this.body, data, (k, v) => this.set("layers", k, v));
     else if (tab === "Levels") this.levels(data);
     else if (tab === "Materials" && data) this.materials(data);
     else if (tab === "Sheets" && data) this.sheets(data);

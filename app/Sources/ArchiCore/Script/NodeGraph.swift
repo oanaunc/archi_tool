@@ -1,23 +1,23 @@
 // Oanarina Archi Tool — GPL-3.0-or-later
 // Visual programming graph (in the spirit of Sverchok / Dynamo): typed nodes connected by links, evaluated
-// deterministically in dependency order with list broadcasting. Pure value types (Foundation + ArchiCore only).
+// deterministically in dependency order with list broadcasting. Pure value types (Foundation only), shared by the Mac
+// node editor and graph player and by archi-engine (graph.* methods of the Windows shell).
 import Foundation
-import ArchiCore
 
-enum NodePortType: String, Codable { case number, point, geometry, element }
+public enum NodePortType: String, Codable { case number, point, geometry, element }
 
 /// The data flowing along a link: always a list (single values are one-element lists).
-enum NodeValue: Equatable {
+public enum NodeValue: Equatable {
     case numbers([Double])
     case points([Vec3])
     case geometry([Geometry])
     /// Building elements (walls, slabs, roofs) made by BIM nodes; baked as elements.
     case elements([BIMGeometry])
 
-    var count: Int {
+    public var count: Int {
         switch self { case .numbers(let a): return a.count; case .points(let a): return a.count; case .geometry(let a): return a.count; case .elements(let a): return a.count }
     }
-    var summary: String {
+    public var summary: String {
         switch self {
         case .numbers(let a): return a.count == 1 ? fmt(a[0], 3) : "\(a.count) numbers"
         case .points(let a): return a.count == 1 ? "(\(fmt(a[0].x, 1)), \(fmt(a[0].y, 1)), \(fmt(a[0].z, 1)))" : "\(a.count) points"
@@ -27,14 +27,19 @@ enum NodeValue: Equatable {
     }
 }
 
-enum NodeKind: String, Codable, CaseIterable, Identifiable {
+public enum NodeKind: String, Codable, CaseIterable, Identifiable {
     case number, range, series, point, line, circle, rectangle, polygon, polyline, extrude, move, rotate, array, polarArray, merge
     case random, loft, boolean, wall, slab, roof
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    struct Port { let name: String; let type: NodePortType; let defaultValue: Double }
+    public struct Port {
+        public let name: String
+        public let type: NodePortType
+        public let defaultValue: Double
+        public init(name: String, type: NodePortType, defaultValue: Double) { self.name = name; self.type = type; self.defaultValue = defaultValue }
+    }
 
-    var title: String {
+    public var title: String {
         switch self {
         case .number: return "Number"
         case .range: return "Range"
@@ -59,7 +64,7 @@ enum NodeKind: String, Codable, CaseIterable, Identifiable {
         case .roof: return "Roof"
         }
     }
-    var category: String {
+    public var category: String {
         switch self {
         case .number, .range, .series, .random: return "Numbers"
         case .point, .line, .circle, .rectangle, .polygon, .polyline: return "Geometry"
@@ -68,7 +73,7 @@ enum NodeKind: String, Codable, CaseIterable, Identifiable {
         case .move, .rotate, .array, .polarArray, .merge: return "Transform"
         }
     }
-    var output: NodePortType {
+    public var output: NodePortType {
         switch self {
         case .number, .range, .series, .random: return .number
         case .point: return .point
@@ -76,7 +81,7 @@ enum NodeKind: String, Codable, CaseIterable, Identifiable {
         default: return .geometry
         }
     }
-    var inputs: [Port] {
+    public var inputs: [Port] {
         switch self {
         case .number: return []
         case .range: return [Port(name: "start", type: .number, defaultValue: 0), Port(name: "stop", type: .number, defaultValue: 10000), Port(name: "count", type: .number, defaultValue: 5)]
@@ -111,37 +116,42 @@ enum NodeKind: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-struct GraphNode: Codable, Identifiable, Hashable {
-    var id: Int
-    var kind: NodeKind
-    var x: Double
-    var y: Double
+public struct GraphNode: Codable, Identifiable, Hashable {
+    public var id: Int
+    public var kind: NodeKind
+    public var x: Double
+    public var y: Double
     /// Values of unconnected number inputs (and "value"/"min"/"max" of a Number node); point inputs use "<name>.x/.y/.z".
-    var params: [String: Double] = [:]
+    public var params: [String: Double] = [:]
 
-    func param(_ key: String, _ fallback: Double) -> Double { params[key] ?? fallback }
+    public init(id: Int, kind: NodeKind, x: Double, y: Double, params: [String: Double] = [:]) { self.id = id; self.kind = kind; self.x = x; self.y = y; self.params = params }
+
+    public func param(_ key: String, _ fallback: Double) -> Double { params[key] ?? fallback }
 }
 
-struct GraphLink: Codable, Hashable {
-    var from: Int
-    var to: Int
-    var port: String
+public struct GraphLink: Codable, Hashable {
+    public var from: Int
+    public var to: Int
+    public var port: String
+    public init(from: Int, to: Int, port: String) { self.from = from; self.to = to; self.port = port }
 }
 
-struct NodeGraph: Codable, Equatable {
-    var nodes: [GraphNode] = []
-    var links: [GraphLink] = []
-    var nextID = 1
+public struct NodeGraph: Codable, Equatable {
+    public var nodes: [GraphNode] = []
+    public var links: [GraphLink] = []
+    public var nextID = 1
     /// Frames grouping nodes (members are the nodes whose centre lies inside) and free comments.
-    var groups: [NodeFrame] = []
-    var comments: [NodeComment] = []
+    public var groups: [NodeFrame] = []
+    public var comments: [NodeComment] = []
 
-    static let variableKey = "NODEGRAPH"
+    public static let variableKey = "NODEGRAPH"
+
+    public init() {}
 
     // MARK: Editing
 
     @discardableResult
-    mutating func add(_ kind: NodeKind, x: Double, y: Double) -> Int {
+    public mutating func add(_ kind: NodeKind, x: Double, y: Double) -> Int {
         var n = GraphNode(id: nextID, kind: kind, x: x, y: y)
         if kind == .number { n.params = ["value": 1000, "min": 0, "max": 10000] }
         nodes.append(n)
@@ -149,18 +159,18 @@ struct NodeGraph: Codable, Equatable {
         return n.id
     }
 
-    mutating func remove(_ id: Int) {
+    public mutating func remove(_ id: Int) {
         nodes.removeAll { $0.id == id }
         comments.removeAll { $0.id == id }
         groups.removeAll { $0.id == id }
         links.removeAll { $0.from == id || $0.to == id }
     }
 
-    func node(_ id: Int) -> GraphNode? { nodes.first { $0.id == id } }
+    public func node(_ id: Int) -> GraphNode? { nodes.first { $0.id == id } }
 
     /// Connects an output to an input (replacing the input's link). Refuses type mismatches and cycles.
     @discardableResult
-    mutating func connect(from: Int, to: Int, port: String) -> Bool {
+    public mutating func connect(from: Int, to: Int, port: String) -> Bool {
         guard from != to, let a = node(from), let b = node(to), let p = b.kind.inputs.first(where: { $0.name == port }) else { return false }
         guard NodeGraph.compatible(a.kind.output, p.type) else { return false }
         if depends(from, on: to) { return false }
@@ -169,12 +179,12 @@ struct NodeGraph: Codable, Equatable {
         return true
     }
 
-    mutating func disconnect(to: Int, port: String) { links.removeAll { $0.to == to && $0.port == port } }
+    public mutating func disconnect(to: Int, port: String) { links.removeAll { $0.to == to && $0.port == port } }
 
-    static func compatible(_ out: NodePortType, _ input: NodePortType) -> Bool { out == input }
+    public static func compatible(_ out: NodePortType, _ input: NodePortType) -> Bool { out == input }
 
     /// True when `a` (transitively) takes input from `b`.
-    func depends(_ a: Int, on b: Int) -> Bool {
+    public func depends(_ a: Int, on b: Int) -> Bool {
         var stack = [a], seen: Set<Int> = []
         while let n = stack.popLast() {
             if n == b { return true }
@@ -185,24 +195,25 @@ struct NodeGraph: Codable, Equatable {
     }
 
     /// Geometry and element nodes whose output feeds nothing: their results are previewed and baked.
-    var outputNodes: [Int] {
+    public var outputNodes: [Int] {
         let used = Set(links.map(\.from))
         return nodes.filter { ($0.kind.output == .geometry || $0.kind.output == .element) && !used.contains($0.id) }.map(\.id)
     }
 
     // MARK: Evaluation
 
-    struct Evaluation {
-        var values: [Int: NodeValue] = [:]
-        var errors: [Int: String] = [:]
+    public struct Evaluation {
+        public var values: [Int: NodeValue] = [:]
+        public var errors: [Int: String] = [:]
         /// Geometry of the output nodes, in node order.
-        var output: [Geometry] = []
+        public var output: [Geometry] = []
         /// Building elements of the output nodes, in node order.
-        var elementOutput: [BIMGeometry] = []
+        public var elementOutput: [BIMGeometry] = []
+        public init() {}
     }
 
     /// Nodes in dependency order (inputs first). Nodes on a cycle are left out.
-    var order: [Int] {
+    public var order: [Int] {
         var result: [Int] = [], state: [Int: Int] = [:]   // 1 visiting, 2 done
         func visit(_ n: Int) -> Bool {
             if state[n] == 2 { return true }
@@ -215,9 +226,9 @@ struct NodeGraph: Codable, Equatable {
         return result
     }
 
-    static let maxItems = 20_000
+    public static let maxItems = 20_000
 
-    func evaluate() -> Evaluation {
+    public func evaluate() -> Evaluation {
         var ev = Evaluation()
         for id in order {
             guard let n = node(id) else { continue }
@@ -232,7 +243,7 @@ struct NodeGraph: Codable, Equatable {
         return ev
     }
 
-    struct NodeError: Error { let message: String }
+    public struct NodeError: Error { public let message: String; public init(message: String) { self.message = message } }
 
     private func input(_ n: GraphNode, _ p: NodeKind.Port, _ values: [Int: NodeValue]) throws -> NodeValue? {
         if let l = links.first(where: { $0.to == n.id && $0.port == p.name }) {
@@ -262,8 +273,8 @@ struct NodeGraph: Codable, Equatable {
     }
 
     /// Longest-list broadcasting: item i of each list, repeating the last item of shorter lists.
-    static func pick<T>(_ a: [T], _ i: Int) -> T? { a.isEmpty ? nil : a[min(i, a.count - 1)] }
-    static func broadcastCount(_ counts: [Int]) -> Int { counts.contains(0) ? 0 : (counts.max() ?? 0) }
+    public static func pick<T>(_ a: [T], _ i: Int) -> T? { a.isEmpty ? nil : a[min(i, a.count - 1)] }
+    public static func broadcastCount(_ counts: [Int]) -> Int { counts.contains(0) ? 0 : (counts.max() ?? 0) }
 
     private func compute(_ n: GraphNode, _ v: [Int: NodeValue]) throws -> NodeValue {
         func cap(_ c: Int) throws -> Int {
@@ -372,7 +383,7 @@ struct NodeGraph: Codable, Equatable {
             let c = try cap(Int((try numbers(n, "count", v).first ?? 0).rounded()))
             guard c >= 1 else { throw NodeError(message: "Count must be at least 1.") }
             let lo = try numbers(n, "min", v).first ?? 0, hi = try numbers(n, "max", v).first ?? 1
-            var rng = SeededRandom(seed: UInt64(bitPattern: Int64((try numbers(n, "seed", v).first ?? 1).rounded())))
+            var rng = NodeGraphRandom(seed: UInt64(bitPattern: Int64((try numbers(n, "seed", v).first ?? 1).rounded())))
             return .numbers((0..<c).map { _ in lo + (hi - lo) * rng.unit() })
         case .loft:
             let bs = try geometry(n, "bottom", v), ts = try geometry(n, "top", v)
@@ -432,7 +443,7 @@ struct NodeGraph: Codable, Equatable {
     }
 
     /// Straight segments of a curve (lines, polylines and the chords of arcs/circles are used as wall paths).
-    static func segments(_ g: Geometry) -> [(Vec2, Vec2)] {
+    public static func segments(_ g: Geometry) -> [(Vec2, Vec2)] {
         switch g {
         case .line(let l): return [(l.a, l.b)]
         case .polyline(let p):
@@ -446,10 +457,10 @@ struct NodeGraph: Codable, Equatable {
         }
     }
 
-    static func solid(_ g: Geometry) -> SolidGeom? { if case .solid(let s) = g { return s }; return nil }
+    public static func solid(_ g: Geometry) -> SolidGeom? { if case .solid(let s) = g { return s }; return nil }
 
     /// Resamples a closed loop to `count` points evenly spaced along its perimeter (counter-clockwise, starting nearest `start`).
-    static func resample(_ loop0: [Vec2], count: Int, start: Vec2? = nil) -> [Vec2] {
+    public static func resample(_ loop0: [Vec2], count: Int, start: Vec2? = nil) -> [Vec2] {
         var loop = loop0
         if GeometryOps.signedArea(loop) < 0 { loop.reverse() }
         if let s = start, let k = loop.indices.min(by: { loop[$0].distance(to: s) < loop[$1].distance(to: s) }) { loop = Array(loop[k...] + loop[..<k]) }
@@ -470,7 +481,7 @@ struct NodeGraph: Codable, Equatable {
     }
 
     /// Closed solid between two closed profiles at heights z0 and z1 (ruled sides, flat caps).
-    static func loft(_ a: [Vec2], _ b: [Vec2], z0: Double, z1: Double) -> SolidGeom? {
+    public static func loft(_ a: [Vec2], _ b: [Vec2], z0: Double, z1: Double) -> SolidGeom? {
         guard a.count >= 3, b.count >= 3, abs(z1 - z0) > 1e-9 else { return nil }
         let count = min(256, max(a.count, b.count) * 4)
         var ra = resample(a, count: count), rb = resample(b, count: count, start: nil)
@@ -498,7 +509,7 @@ struct NodeGraph: Codable, Equatable {
     }
 
     /// Closed boundary of a profile curve, or nil.
-    static func profile(_ g: Geometry) -> [Vec2]? {
+    public static func profile(_ g: Geometry) -> [Vec2]? {
         switch g {
         case .circle(let c): return (0..<48).map { c.center + Vec2(cos(Double($0) / 48 * 2 * .pi), sin(Double($0) / 48 * 2 * .pi)) * c.radius }
         case .polyline(let p):
@@ -513,36 +524,36 @@ struct NodeGraph: Codable, Equatable {
 
     // MARK: Persistence (document variable, JSON)
 
-    static func load(_ doc: ArchiDocument) -> NodeGraph? {
+    public static func load(_ doc: ArchiDocument) -> NodeGraph? {
         guard let s = doc.variables[variableKey], let d = s.data(using: .utf8) else { return nil }
         return try? JSONDecoder().decode(NodeGraph.self, from: d)
     }
-    func store(in doc: inout ArchiDocument) {
+    public func store(in doc: inout ArchiDocument) {
         let e = JSONEncoder(); e.outputFormatting = .sortedKeys
         if let d = try? e.encode(self), let s = String(data: d, encoding: .utf8) { doc.variables[NodeGraph.variableKey] = s }
     }
 
     /// Named graphs ("NODEGRAPH:<name>" document variables), sorted.
-    static func names(_ doc: ArchiDocument) -> [String] {
+    public static func names(_ doc: ArchiDocument) -> [String] {
         doc.variables.keys.filter { $0.hasPrefix(variableKey + ":") }.map { String($0.dropFirst(variableKey.count + 1)) }.sorted()
     }
-    static func load(_ doc: ArchiDocument, name: String) -> NodeGraph? {
+    public static func load(_ doc: ArchiDocument, name: String) -> NodeGraph? {
         guard let s = doc.variables[variableKey + ":" + name] else { return nil }
         return try? JSONDecoder().decode(NodeGraph.self, from: Data(s.utf8))
     }
     /// Stores the graph under a name (and as the current graph).
-    func store(in doc: inout ArchiDocument, name: String) {
+    public func store(in doc: inout ArchiDocument, name: String) {
         store(in: &doc)
         doc.variables[NodeGraph.variableKey + ":" + name] = doc.variables[NodeGraph.variableKey]
     }
-    static func delete(_ name: String, in doc: inout ArchiDocument) { doc.variables[variableKey + ":" + name] = nil }
-    func json() throws -> Data {
+    public static func delete(_ name: String, in doc: inout ArchiDocument) { doc.variables[variableKey + ":" + name] = nil }
+    public func json() throws -> Data {
         let e = JSONEncoder(); e.outputFormatting = [.sortedKeys, .prettyPrinted]
         return try e.encode(self)
     }
 
     /// A starter graph: a row of columns (polygon → extrude → array).
-    static var sample: NodeGraph {
+    public static var sample: NodeGraph {
         var g = NodeGraph()
         let h = g.add(.number, x: 20, y: 40); g.nodes[0].params = ["value": 3000, "min": 500, "max": 12000]
         let p = g.add(.polygon, x: 20, y: 150)
@@ -557,9 +568,9 @@ struct NodeGraph: Codable, Equatable {
 }
 
 /// Bakes graph output into the drawing: previously baked objects (tagged with the graph prop) are replaced.
-enum NodeGraphBake {
-    static let tag = "nodeGraph"
-    static func bake(_ geometry: [Geometry], elements: [BIMGeometry] = [], into doc: inout ArchiDocument, layer: String = "NODES") -> [EntityID] {
+public enum NodeGraphBake {
+    public static let tag = "nodeGraph"
+    public static func bake(_ geometry: [Geometry], elements: [BIMGeometry] = [], into doc: inout ArchiDocument, layer: String = "NODES") -> [EntityID] {
         doc.entities.removeAll { $0.props[tag] != nil }
         doc.elements.removeAll { $0.props[tag] != nil }
         guard !geometry.isEmpty || !elements.isEmpty else { return [] }
@@ -572,35 +583,39 @@ enum NodeGraphBake {
         }
         return ids
     }
-    static func bakedCount(_ doc: ArchiDocument) -> Int { doc.entities.filter { $0.props[tag] != nil }.count + doc.elements.filter { $0.props[tag] != nil }.count }
+    public static func bakedCount(_ doc: ArchiDocument) -> Int { doc.entities.filter { $0.props[tag] != nil }.count + doc.elements.filter { $0.props[tag] != nil }.count }
 }
 
 
 // MARK: - Groups and comments
 
 /// A titled frame on the node canvas; it groups the nodes inside it and moves them with it.
-struct NodeFrame: Codable, Hashable, Identifiable {
-    var id: Int
-    var title: String
-    var x: Double, y: Double, width: Double, height: Double
-    var color: Int = 0
-    func contains(_ n: GraphNode) -> Bool {
-        let cx = n.x + Double(NodeLayout.width) / 2, cy = n.y + 20
+public struct NodeFrame: Codable, Hashable, Identifiable {
+    public var id: Int
+    public var title: String
+    public var x: Double, y: Double, width: Double, height: Double
+    public var color: Int = 0
+    public init(id: Int, title: String, x: Double, y: Double, width: Double, height: Double, color: Int = 0) {
+        self.id = id; self.title = title; self.x = x; self.y = y; self.width = width; self.height = height; self.color = color
+    }
+    public func contains(_ n: GraphNode) -> Bool {
+        let cx = n.x + NodeGraphMetrics.width / 2, cy = n.y + 20
         return cx >= x && cx <= x + width && cy >= y && cy <= y + height
     }
 }
 
 /// A sticky note on the node canvas.
-struct NodeComment: Codable, Hashable, Identifiable {
-    var id: Int
-    var text: String
-    var x: Double, y: Double
-    var width: Double = 200
+public struct NodeComment: Codable, Hashable, Identifiable {
+    public var id: Int
+    public var text: String
+    public var x: Double, y: Double
+    public var width: Double = 200
+    public init(id: Int, text: String, x: Double, y: Double, width: Double = 200) { self.id = id; self.text = text; self.x = x; self.y = y; self.width = width }
 }
 
 extension NodeGraph {
     /// Graphs saved before groups and comments existed still decode.
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         nodes = try c.decodeIfPresent([GraphNode].self, forKey: .nodes) ?? []
         links = try c.decodeIfPresent([GraphLink].self, forKey: .links) ?? []
@@ -610,16 +625,16 @@ extension NodeGraph {
     }
 
     /// Node ids inside a group frame.
-    func members(of g: NodeFrame) -> [Int] { nodes.filter { g.contains($0) }.map(\.id) }
+    public func members(of g: NodeFrame) -> [Int] { nodes.filter { g.contains($0) }.map(\.id) }
 
     /// A frame around the given nodes (or an empty frame at x, y). Returns its id.
     @discardableResult
-    mutating func addGroup(title: String, around ids: [Int] = [], x: Double = 40, y: Double = 40) -> Int {
+    public mutating func addGroup(title: String, around ids: [Int] = [], x: Double = 40, y: Double = 40) -> Int {
         let ns = nodes.filter { ids.contains($0.id) }
         var f = NodeFrame(id: nextID, title: title, x: x, y: y, width: 360, height: 220)
         if !ns.isEmpty {
             let x0 = ns.map(\.x).min()!, y0 = ns.map(\.y).min()!
-            let x1 = ns.map { $0.x + Double(NodeLayout.width) }.max()!, y1 = ns.map { $0.y + Double(NodeLayout.height($0.kind)) }.max()!
+            let x1 = ns.map { $0.x + NodeGraphMetrics.width }.max()!, y1 = ns.map { $0.y + NodeGraphMetrics.height($0.kind) }.max()!
             f = NodeFrame(id: nextID, title: title, x: max(0, x0 - 20), y: max(0, y0 - 36), width: x1 - x0 + 40, height: y1 - y0 + 56)
         }
         groups.append(f); nextID += 1
@@ -627,7 +642,7 @@ extension NodeGraph {
     }
 
     /// Moves a group frame and the nodes inside it.
-    mutating func moveGroup(_ id: Int, dx: Double, dy: Double) {
+    public mutating func moveGroup(_ id: Int, dx: Double, dy: Double) {
         guard let gi = groups.firstIndex(where: { $0.id == id }) else { return }
         let inside = Set(members(of: groups[gi]))
         groups[gi].x += dx; groups[gi].y += dy
@@ -635,13 +650,13 @@ extension NodeGraph {
     }
 
     @discardableResult
-    mutating func addComment(_ text: String, x: Double, y: Double) -> Int {
+    public mutating func addComment(_ text: String, x: Double, y: Double) -> Int {
         comments.append(NodeComment(id: nextID, text: text, x: x, y: y)); nextID += 1
         return nextID - 1
     }
 
     /// Parameter name of a Number node in exported scripts: its group title or comment-free fallback.
-    func parameterName(_ n: GraphNode) -> String {
+    public func parameterName(_ n: GraphNode) -> String {
         let g = groups.first { $0.contains(n) }
         let base = (g?.title.isEmpty == false ? g!.title : "number") + "_\(n.id)"
         return base.replacingOccurrences(of: "[^A-Za-z0-9_]", with: "_", options: .regularExpression)
@@ -650,8 +665,8 @@ extension NodeGraph {
 
 /// Export of a graph as a JavaScript program for the script console: the Number nodes become named parameters at the
 /// top; the script evaluates the graph with them (archi.evaluateGraph) and bakes the result (archi.bakeGraph).
-enum NodeGraphScript {
-    static func javascript(_ g: NodeGraph, name: String = "graph") -> String {
+public enum NodeGraphScript {
+    public static func javascript(_ g: NodeGraph, name: String = "graph") -> String {
         let numbers = g.nodes.filter { $0.kind == .number }
         var out = "// Node graph \"\(name)\" exported by Oanarina Archi Tool.\n// Edit the parameters and run the script (⌘↩) to rebuild the geometry.\n\n"
         out += "const params = {\n"
@@ -669,4 +684,29 @@ enum NodeGraphScript {
         out += "console.log(\"Baked \" + baked.length + \" object(s): \" + result.objects + \" geometry, \" + result.elements + \" elements.\");\n"
         return out
     }
+}
+
+
+/// Node sizes on the editor canvas (group frames use them to find their members; the Mac NodeLayout matches).
+public enum NodeGraphMetrics {
+    public static let width = 188.0
+    public static let header = 24.0
+    public static let row = 26.0
+    /// Approximate drawn height of a node (header, input rows, number slider, footer).
+    public static func height(_ k: NodeKind) -> Double { header + row * Double(k.inputs.count) + (k == .number ? 52 : 0) + 22 }
+}
+
+/// Deterministic SplitMix64 generator for the Random node (same sequence as the Mac app's SeededRandom).
+public struct NodeGraphRandom {
+    private var state: UInt64
+    public init(seed: UInt64) { state = seed &+ 0x9E3779B97F4A7C15 }
+    public mutating func next() -> UInt64 {
+        state = state &+ 0x9E3779B97F4A7C15
+        var z = state
+        z = (z ^ (z >> 30)) &* 0xBF58476D1CE4E5B9
+        z = (z ^ (z >> 27)) &* 0x94D049BB133111EB
+        return z ^ (z >> 31)
+    }
+    /// Uniform in [0, 1).
+    public mutating func unit() -> Double { Double(next() >> 11) / Double(UInt64(1) << 53) }
 }

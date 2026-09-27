@@ -69,8 +69,8 @@ run_action() {
       cd "$ROOT" && os="$(tr -cd 'a-z' < build/ci-os.txt 2>/dev/null)"; git show "origin/ci-log-${os:-windows}:full.log" 2>/dev/null | tail -300 ;;
     slow-exprs)    # expressions that take >150 ms to type-check (the Windows/Linux compilers are slower and give up)
       cd "$ROOT/app" && rm -rf "$ROOT/build/slowscan" && swift build --build-tests --scratch-path "$ROOT/build/slowscan" \
-        -Xswiftc -Xfrontend -Xswiftc -warn-long-expression-type-checking=30 > "$ROOT/build/slowscan.log" 2>&1; cat "$ROOT/build/slowscan.log" \
-        | grep -E "warning: expression took|error:" | sed -E "s|^$ROOT/app/||" | sort -u > "$ROOT/build/slow-exprs.txt"; wc -l "$ROOT/build/slow-exprs.txt" ;;
+        -Xswiftc -Xfrontend -Xswiftc -warn-long-expression-type-checking=30 > "$ROOT/build/slowscan.log" 2>&1; sed 's/\x1b\[[0-9;]*m//g' "$ROOT/build/slowscan.log" \
+        | grep -E "^/.*(warning: expression took|error:)" | sed -E "s|^$ROOT/app/||" | sort -u > "$ROOT/build/slow-exprs.txt"; wc -l "$ROOT/build/slow-exprs.txt" ;;
     engine)        # archi-engine (portable JSON-RPC engine for the Windows shell): build it, replay the tracked request file
                    # scripts/engine-smoke.jsonl (copied to build/engine-smoke.jsonl) into build/engine-smoke.out.jsonl, and
                    # record the shell fixtures in build/engine-fixtures (Cedar House)

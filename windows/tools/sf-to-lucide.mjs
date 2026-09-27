@@ -1,6 +1,10 @@
 // SF Symbols (Apple-only) -> closest Lucide icon (ISC licence). Explicit entries first, then prefix rules.
 // Keys are SF Symbol names used by the Mac app; values are Lucide component names (PascalCase).
 export const explicit = {
+  "checkmark": "Check", "chevron.up.chevron.down": "ChevronsUpDown", "menubar.rectangle": "PanelTop", "arrow.up": "ArrowUp", "arrow.down": "ArrowDown",
+  "minus.circle": "CircleMinus", "line.3.horizontal.decrease.circle.fill": "ListFilter", "checkmark.circle.fill": "CircleCheck", "lock.fill": "Lock",
+  "folder.badge.plus": "FolderPlus", "doc.badge.arrow.up": "FileUp", "folder.fill": "Folder", "antenna.radiowaves.left.and.right": "RadioTower",
+  "pencil.and.ruler": "PencilRuler", "doc.badge.gearshape": "FileCog", "printer.dotmatrix": "PrinterCheck",
   "line.diagonal": "Slash", "point.topleft.down.curvedto.point.bottomright.up": "Spline", "circle": "Circle", "rainbow": "Rainbow",
   "rectangle": "RectangleHorizontal", "hexagon": "Hexagon", "oval": "Circle", "oval.portrait": "Egg", "scribble.variable": "PenTool", "scribble": "Signature",
   "square.grid.3x3.fill": "Grid3X3", "arrow.up.and.down.and.arrow.left.and.right": "Move", "plus.square.on.square": "Copy",
@@ -84,6 +88,15 @@ export const explicit = {
   "textformat.alt": "CaseSensitive", "thermometer": "Thermometer", "thermometer.medium": "Thermometer", "timer": "Timer", "tornado": "Tornado", "triangle": "Triangle", "triangle.fill": "Triangle",
   "triangle.bottomhalf.filled": "Triangle", "triangle.righthalf.filled": "TriangleRight", "video.badge.plus": "Video", "visionpro": "Glasses", "water.waves": "Waves", "waveform": "AudioWaveform",
   "waveform.path": "AudioLines", "waveform.path.ecg": "Activity", "wind": "Wind", "square.split.diagonal.fill": "SquareSlash", "grid.circle": "Grid3X3", "dot.square": "SquareDot",
+  // Symbols added for the Windows build (27 Sep 2026): every symbol in src/renderer/data and every icon("…") call has an entry.
+  "1.magnifyingglass": "ScanSearch", "align.horizontal.center": "AlignHorizontalJustifyCenter", "aqi.high": "Radar", "arrow.up.doc": "FileUp",
+  "arrow.up.left.and.arrow.down.right.square": "Maximize", "camera.macro": "Sprout", "circle.lefthalf.filled.righthalf.striped.horizontal": "Blend",
+  "doc.badge.ellipsis": "FileQuestion", "doc.text.magnifyingglass": "FileSearch", "drop.triangle": "Droplets", "eyeglasses": "Glasses",
+  "graduationcap": "GraduationCap", "ladybug": "Bug", "macwindow.stack": "PanelsTopLeft", "moon.stars": "MoonStar", "paintpalette.fill": "Palette",
+  "person.2.wave.2": "UsersRound", "photo.artframe": "FileImage", "photo.on.rectangle.angled": "Images", "rectangle.topthird.inset.filled": "PanelTop",
+  "rotate.right": "RotateCwSquare", "sidebar.left": "PanelLeft", "speaker.wave.2": "Volume2", "sun.max.circle": "SunMedium", "sunset": "Sunset",
+  "tray.and.arrow.down": "Inbox", "wind.circle": "Wind", "play.fill": "Play", "pause.fill": "Pause", "hourglass": "Hourglass",
+  "exclamationmark.triangle.fill": "TriangleAlert", "stop.fill": "Square", "moon": "Moon", "questionmark": "CircleHelp",
 };
 const prefixRules = [
   ["arrow.", "ArrowRight"], ["circle", "Circle"], ["square.stack", "Layers"], ["square.grid", "Grid3X3"], ["square", "Square"], ["rectangle", "RectangleHorizontal"],

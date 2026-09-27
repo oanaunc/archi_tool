@@ -4,7 +4,7 @@
 // material looks of Scene3DBuilder.material / BeautyLighting.enhance.
 
 import { GL, imageTexture } from "./gl";
-import { V3, hex } from "./math";
+import { V3, M4, hex, invert, transform } from "./math";
 
 // MARK: protocol types (model.meshes)
 
@@ -13,6 +13,8 @@ export type Buffer64 = string | { offset: number; length: number };
 export interface EngineMesh {
   id: number | string | null;
   kind: string;
+  /** Level id of a BIM element (isolate / explode levels in 3D). */
+  level?: number | null;
   material: string;
   color: string;
   opacity: number;
@@ -49,6 +51,8 @@ export interface MeshesResult {
   units?: string;
   bounds?: [V3, V3] | null;
   binary?: string;
+  binaryLength?: number;
+  layout?: unknown;
 }
 
 /** PBR maps of a material (MATMAPS:<NAME> on the Mac: JSON with normal, roughness, metallic, ao, normalStrength). */
@@ -126,6 +130,15 @@ export interface MeshGPU {
   transparent: boolean;
   foliage: boolean;
   buffers: WebGLBuffer[];
+  level: number | null;
+  /** Element buffer (re-uploaded when a door is split into frame and leaves). */
+  ib: WebGLBuffer;
+  /** Model-mm transform (gizmo preview, exploded levels, object animation); null = identity. */
+  xf: M4 | null;
+  /** Hidden (level isolated, animation not started …). */
+  hidden: boolean;
+  /** Index ranges drawn with their own transform (door frame and leaves); null = the whole mesh with `xf`. */
+  parts: { start: number; count: number; xf: M4 | null; edgeStart: number; edgeCount: number }[] | null;
 }
 
 export interface Textures {
@@ -224,6 +237,15 @@ export class SceneModel {
   min: V3 = [0, 0, 0]; max: V3 = [0, 0, 0]; empty = true;
   edgeVAO: WebGLVertexArrayObject | null = null;
   edgeCount = 0;
+  private edgeBuf: WebGLBuffer | null = null;
+  private edgeData: Float32Array | null = null;
+  /** Section plane cap faces (view3d.sectionCaps), model mm. */
+  capVAO: WebGLVertexArrayObject | null = null;
+  capCount = 0;
+  capColor: V3 = [0.55, 0.12, 0.1];
+  private capBufs: WebGLBuffer[] = [];
+  /** Any mesh transformed or hidden (the renderer then draws edges mesh by mesh). */
+  get anyTransformed(): boolean { return this.meshes.some((m) => m.xf || m.hidden || m.parts); }
   sketchVAO: WebGLVertexArrayObject | null = null;
   sketchRanges: { start: number; count: number }[] = [];
   private edgeBuffers: WebGLBuffer[] = [];
@@ -273,7 +295,7 @@ export class SceneModel {
       attr(0, pos, 3);
       attr(1, nor, 3);
       if (hasUV) attr(2, uv!, 2); else { gl.disableVertexAttribArray(2); gl.vertexAttrib2f(2, 0, 0); }
-      const ib = gl.createBuffer()!; buffers.push(ib);
+      const ib = gl.createBuffer()!; buffers.push(ib);  // kept as MeshGPU.ib
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
       gl.bindVertexArray(null);
@@ -299,6 +321,7 @@ export class SceneModel {
         index, id: m.id == null ? null : String(m.id), kind: m.kind, mat, vao, count: idx.length, hasUV,
         positions: pos, indices: idx, min: mn, max: mx, edgeStart, edgeCount, rawEdges: raw, buffers,
         transparent: (1 - (m.opacity ?? 1)) > 0.3 || (m.opacity ?? 1) < 1, foliage: isFoliage(m.material),
+        level: m.level ?? null, ib, xf: null, hidden: false, parts: null,
       });
     });
     if (edgeTotal > 0) {
@@ -306,6 +329,8 @@ export class SceneModel {
       let o = 0;
       for (const p of edgeParts) { all.set(p, o); o += p.length; }
       this.edgeVAO = this.lineVAO(all);
+      this.edgeData = all;
+      this.edgeBuf = this.edgeBuffers[this.edgeBuffers.length - 1];
       this.edgeCount = edgeTotal;
     }
     this.lights = result.lights ?? [];
@@ -411,6 +436,69 @@ export class SceneModel {
     if (this.edgeVAO) gl.deleteVertexArray(this.edgeVAO);
     if (this.sketchVAO) gl.deleteVertexArray(this.sketchVAO);
     this.meshes = []; this.edgeBuffers = []; this.edgeVAO = null; this.sketchVAO = null; this.edgeCount = 0;
+    this.edgeBuf = null; this.edgeData = null;
+    this.setCaps(null);
+  }
+
+  /** Section caps: triangle positions (model mm) facing `normal`, drawn in the cap colour. */
+  setCaps(positions: Float32Array | null, normal: V3 = [0, 0, 1], color?: V3) {
+    const gl = this.gl;
+    for (const b of this.capBufs) gl.deleteBuffer(b);
+    if (this.capVAO) gl.deleteVertexArray(this.capVAO);
+    this.capBufs = []; this.capVAO = null; this.capCount = 0;
+    if (color) this.capColor = color;
+    if (!positions || positions.length < 9) return;
+    const n = positions.length / 3;
+    const nor = new Float32Array(positions.length);
+    for (let i = 0; i < n; i++) nor.set(normal, i * 3);
+    const vao = gl.createVertexArray()!;
+    gl.bindVertexArray(vao);
+    for (const [loc, data] of [[0, positions], [1, nor]] as [number, Float32Array][]) {
+      const b = gl.createBuffer()!; this.capBufs.push(b);
+      gl.bindBuffer(gl.ARRAY_BUFFER, b);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, 3, gl.FLOAT, false, 0, 0);
+    }
+    gl.disableVertexAttribArray(2); gl.vertexAttrib2f(2, 0, 0);
+    gl.bindVertexArray(null);
+    this.capVAO = vao; this.capCount = n;
+  }
+
+  /**
+   * Reorders a mesh's triangles and edge segments into parts (door frame + leaves, ObjectAnimations.splitDoor) so each
+   * part can be drawn with its own transform. `edgeOrder` gives the part of every edge segment.
+   */
+  splitMesh(m: MeshGPU, indices: Uint32Array, ranges: { start: number; count: number }[], segmentPart: (a: V3, b: V3) => number) {
+    const gl = this.gl;
+    gl.bindVertexArray(m.vao);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, m.ib);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+    gl.bindVertexArray(null);
+    m.indices = indices;
+    const edgeRanges = ranges.map(() => ({ start: m.edgeStart, count: 0 }));
+    if (this.edgeData && this.edgeBuf && m.edgeCount > 0) {
+      const seg = this.edgeData.subarray(m.edgeStart * 3, (m.edgeStart + m.edgeCount) * 3);
+      const buckets: number[][] = ranges.map(() => []);
+      for (let i = 0; i + 5 < seg.length; i += 6) {
+        const k = Math.min(Math.max(segmentPart([seg[i], seg[i + 1], seg[i + 2]], [seg[i + 3], seg[i + 4], seg[i + 5]]), 0), ranges.length - 1);
+        for (let j = 0; j < 6; j++) buckets[k].push(seg[i + j]);
+      }
+      const out = new Float32Array(seg.length);
+      let o = 0;
+      buckets.forEach((b, k) => { out.set(b, o); edgeRanges[k] = { start: m.edgeStart + o / 3, count: b.length / 3 }; o += b.length; });
+      seg.set(out);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.edgeBuf);
+      gl.bufferSubData(gl.ARRAY_BUFFER, m.edgeStart * 12, out);
+      if (m.rawEdges && m.rawEdges.length === out.length) m.rawEdges.set(out);
+      this.sketchVAO && this.disposeSketch();
+    }
+    m.parts = ranges.map((r, k) => ({ start: r.start, count: r.count, xf: null, edgeStart: edgeRanges[k].start, edgeCount: edgeRanges[k].count }));
+  }
+
+  private disposeSketch() {
+    if (this.sketchVAO) this.gl.deleteVertexArray(this.sketchVAO);
+    this.sketchVAO = null;
   }
 
   // MARK: ray casts (picking and walk collisions), model millimetres
@@ -421,6 +509,25 @@ export class SceneModel {
     let best = Infinity, bestMesh: MeshGPU | null = null;
     for (const m of this.meshes) {
       if (filter && !filter(m)) continue;
+      if (m.hidden) continue;
+      if (m.xf) {
+        // Ray in the mesh's own coordinates (transformed meshes: gizmo preview, exploded levels).
+        const inv = invert(m.xf);
+        const la = transform(inv, a), lb = transform(inv, b);
+        const h = this.hitMesh(m, [la[0], la[1], la[2]], [lb[0], lb[1], lb[2]], best);
+        if (h < best) { best = h; bestMesh = m; }
+        continue;
+      }
+      const h = this.hitMesh(m, a, b, best);
+      if (h < best) { best = h; bestMesh = m; }
+    }
+    return bestMesh ? { t: best, mesh: bestMesh } : null;
+  }
+
+  private hitMesh(m: MeshGPU, a: V3, b: V3, bestSoFar: number): number {
+    const d: V3 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+    let best = bestSoFar;
+    {
       let t0 = 0, t1 = Math.min(best, 1), miss = false;
       for (let k = 0; k < 3; k++) {
         const o = a[k], dd = d[k], lo = m.min[k] - 1, hi = m.max[k] + 1;
@@ -430,7 +537,7 @@ export class SceneModel {
         t0 = Math.max(t0, ta); t1 = Math.min(t1, tb);
         if (t0 > t1) { miss = true; break; }
       }
-      if (miss) continue;
+      if (miss) return best;
       const P = m.positions, I = m.indices;
       for (let i = 0; i + 2 < I.length; i += 3) {
         const i0 = I[i] * 3, i1 = I[i + 1] * 3, i2 = I[i + 2] * 3;
@@ -447,10 +554,10 @@ export class SceneModel {
         const v = f * (d[0] * qx + d[1] * qy + d[2] * qz);
         if (v < 0 || u + v > 1) continue;
         const t = f * (e2x * qx + e2y * qy + e2z * qz);
-        if (t >= 0 && t <= 1 && t < best) { best = t; bestMesh = m; }
+        if (t >= 0 && t <= 1 && t < best) { best = t; }
       }
     }
-    return bestMesh ? { t: best, mesh: bestMesh } : null;
+    return best;
   }
 }
 

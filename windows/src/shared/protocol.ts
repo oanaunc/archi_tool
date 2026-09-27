@@ -38,7 +38,7 @@ export interface ArchiBridge {
   rpc(method: string, params?: unknown): Promise<any>;
   onNotify(cb: (n: Notification) => void): void;
   platform: string;
-  windowControl(action: "minimize" | "maximize" | "close" | "isMaximized"): Promise<boolean>;
+  windowControl(action: "minimize" | "maximize" | "close" | "isMaximized" | "quit"): Promise<boolean>;
   onWindowState(cb: (s: { maximized: boolean; focused: boolean }) => void): void;
   openFileDialog(opts: { title?: string; filters?: { name: string; extensions: string[] }[] }): Promise<string | null>;
   saveFileDialog(opts: { title?: string; defaultPath?: string; filters?: { name: string; extensions: string[] }[] }): Promise<string | null>;
@@ -50,5 +50,17 @@ export interface ArchiBridge {
   initialRequest(): Promise<{ kind: string; path?: string } | null>;
   openExternal(url: string): Promise<void>;
   setTitle(title: string): void;
+  /** Windows: the title bar uses the native caption buttons (titleBarOverlay); the shell hides its own. */
+  nativeCaptions?: boolean;
+  /** Settings ▸ Appearance changed: native dialogs, scroll bars and the caption buttons follow the theme. */
+  setTheme?(theme: "dark" | "light"): void;
   fileUrl(path: string): string;
+  // Settings and dialogs (src/main/settings-ipc.ts): standard folders, reveal/choose folders, text files.
+  paths?(): Promise<{ userData: string; documents: string; home: string; desktop: string; templates: string; scripts: string; recovery: string }>;
+  setSetting?(key: string, value: unknown): Promise<void>;
+  revealPath?(path: string): Promise<void>;
+  chooseFolder?(opts: { title?: string; defaultPath?: string }): Promise<string | null>;
+  readTextFile?(path: string): Promise<string | null>;
+  writeTextFile?(path: string, text: string): Promise<boolean>;
+  removeFile?(path: string): Promise<void>;
 }

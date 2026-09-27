@@ -17,6 +17,10 @@ await esbuild.build({ ...common, entryPoints: ["src/main/main.ts"], outfile: "di
 await esbuild.build({ ...common, entryPoints: ["src/preload/preload.ts"], outfile: "dist/preload/preload.js", platform: "node", format: "cjs", external: ["electron"] });
 await esbuild.build({ ...common, entryPoints: ["src/renderer/main.ts"], outfile: "dist/renderer/renderer.js", platform: "browser", format: "iife", loader: { ".json": "json" } });
 
+// Script console worker: a Node worker thread in the main process, a Web Worker for the browser build.
+await esbuild.build({ ...common, entryPoints: ["src/shared/script-worker.ts"], outfile: "dist/main/script-worker.js", platform: "node", format: "cjs" });
+await esbuild.build({ ...common, entryPoints: ["src/shared/script-worker.ts"], outfile: "dist/renderer/script-worker.js", platform: "browser", format: "iife", external: ["node:worker_threads"] });
+
 const copy = (from, to) => { if (fs.existsSync(from)) fs.cpSync(from, to, { recursive: true }); };
 copy(path.join(root, "src/renderer/index.html"), path.join(dist, "renderer/index.html"));
 copy(path.join(root, "resources/assets"), path.join(dist, "renderer/assets"));

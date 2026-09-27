@@ -57,8 +57,10 @@ export class Program {
 export interface Target {
   fb: WebGLFramebuffer; width: number; height: number;
   color?: WebGLTexture; depth?: WebGLTexture;
+  /** Second colour attachment (the indirect light of the scene pass). */
+  color2?: WebGLTexture;
   /** Multisampled render buffers (resolved into `color` / `depth` of `resolve`). */
-  msColor?: WebGLRenderbuffer; msDepth?: WebGLRenderbuffer;
+  msColor?: WebGLRenderbuffer; msDepth?: WebGLRenderbuffer; msColor2?: WebGLRenderbuffer;
 }
 
 export function texture2D(gl: GL, w: number, h: number, internal: number, format: number, type: number,
@@ -75,7 +77,7 @@ export function texture2D(gl: GL, w: number, h: number, internal: number, format
 }
 
 /** Colour target (RGBA16F by default) with an optional depth texture. */
-export function target(gl: GL, w: number, h: number, opts: { hdr?: boolean; depth?: boolean; filter?: number } = {}): Target {
+export function target(gl: GL, w: number, h: number, opts: { hdr?: boolean; depth?: boolean; filter?: number; mrt?: boolean } = {}): Target {
   const fb = gl.createFramebuffer()!;
   gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
   const hdr = opts.hdr ?? true;
@@ -86,12 +88,18 @@ export function target(gl: GL, w: number, h: number, opts: { hdr?: boolean; dept
     depth = texture2D(gl, w, h, gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null, gl.NEAREST);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, depth, 0);
   }
+  let color2: WebGLTexture | undefined;
+  if (opts.mrt) {
+    color2 = texture2D(gl, w, h, gl.RGBA16F, gl.RGBA, gl.HALF_FLOAT, null, opts.filter ?? gl.LINEAR);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, color2, 0);
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
+  }
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  return { fb, width: w, height: h, color, depth };
+  return { fb, width: w, height: h, color, depth, color2 };
 }
 
 /** Multisampled HDR colour + depth render buffers. */
-export function msTarget(gl: GL, w: number, h: number, samples: number): Target {
+export function msTarget(gl: GL, w: number, h: number, samples: number, mrt = false): Target {
   const fb = gl.createFramebuffer()!;
   gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
   const msColor = gl.createRenderbuffer()!;
@@ -102,8 +110,16 @@ export function msTarget(gl: GL, w: number, h: number, samples: number): Target 
   gl.bindRenderbuffer(gl.RENDERBUFFER, msDepth);
   gl.renderbufferStorageMultisample(gl.RENDERBUFFER, samples, gl.DEPTH_COMPONENT24, w, h);
   gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, msDepth);
+  let msColor2: WebGLRenderbuffer | undefined;
+  if (mrt) {
+    msColor2 = gl.createRenderbuffer()!;
+    gl.bindRenderbuffer(gl.RENDERBUFFER, msColor2);
+    gl.renderbufferStorageMultisample(gl.RENDERBUFFER, samples, gl.RGBA16F, w, h);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.RENDERBUFFER, msColor2);
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
+  }
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  return { fb, width: w, height: h, msColor, msDepth };
+  return { fb, width: w, height: h, msColor, msDepth, msColor2 };
 }
 
 export function depthTarget(gl: GL, size: number): Target {
@@ -120,6 +136,8 @@ export function depthTarget(gl: GL, size: number): Target {
 export function disposeTarget(gl: GL, t: Target | null | undefined) {
   if (!t) return;
   if (t.color) gl.deleteTexture(t.color);
+  if (t.color2) gl.deleteTexture(t.color2);
+  if (t.msColor2) gl.deleteRenderbuffer(t.msColor2);
   if (t.depth) gl.deleteTexture(t.depth);
   if (t.msColor) gl.deleteRenderbuffer(t.msColor);
   if (t.msDepth) gl.deleteRenderbuffer(t.msDepth);
