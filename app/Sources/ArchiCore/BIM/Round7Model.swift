@@ -13,8 +13,10 @@ public enum StoreySettings {
         switch doc.variable("LEVELELEVBASE")?.lowercased() {
         case "survey", "absolute": return l.elevation + doc.info.elevation
         case "relative":
-            let ref = doc.levels.first { $0.name.caseInsensitiveCompare(doc.variable("LEVELELEVREF") ?? "") == .orderedSame }?.elevation
-                ?? doc.levels.map(\.elevation).min() ?? 0
+            let refName: String = doc.variable("LEVELELEVREF") ?? ""
+            let named: Double? = doc.levels.first { $0.name.caseInsensitiveCompare(refName) == .orderedSame }?.elevation
+            let lowest: Double = doc.levels.map(\.elevation).min() ?? 0
+            let ref: Double = named ?? lowest
             return l.elevation - ref
         default: return l.elevation
         }

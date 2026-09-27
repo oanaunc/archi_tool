@@ -318,7 +318,9 @@ public struct NodeGraph: Codable, Equatable {
             return .geometry((0..<c).compactMap { i in
                 let o = NodeGraph.pick(cs, i)!.xy, w = abs(NodeGraph.pick(ws, i)!) / 2, h = abs(NodeGraph.pick(hs, i)!) / 2
                 guard w > 1e-9, h > 1e-9 else { return nil }
-                return .polyline(PolylineGeom(points: [o + Vec2(-w, -h), o + Vec2(w, -h), o + Vec2(w, h), o + Vec2(-w, h)], closed: true))
+                let corners: [Vec2] = [Vec2(-w, -h), Vec2(w, -h), Vec2(w, h), Vec2(-w, h)]
+                let pts: [Vec2] = corners.map { (d: Vec2) -> Vec2 in o + d }
+                return .polyline(PolylineGeom(points: pts, closed: true))
             })
         case .polygon:
             let cs = try points(n, "center", v), rs = try numbers(n, "radius", v), ss = try numbers(n, "sides", v)
@@ -326,7 +328,13 @@ public struct NodeGraph: Codable, Equatable {
             return .geometry((0..<c).compactMap { i in
                 let o = NodeGraph.pick(cs, i)!.xy, r = NodeGraph.pick(rs, i)!, k = max(3, min(256, Int(NodeGraph.pick(ss, i)!.rounded())))
                 guard r > 1e-9 else { return nil }
-                return .polyline(PolylineGeom(points: (0..<k).map { o + Vec2(cos(2 * .pi * Double($0) / Double(k) + .pi / 2), sin(2 * .pi * Double($0) / Double(k) + .pi / 2)) * r }, closed: true))
+                var pts: [Vec2] = []
+                for j in 0..<k {
+                    let a: Double = 2 * Double.pi * Double(j) / Double(k) + Double.pi / 2
+                    let d: Vec2 = Vec2(cos(a), sin(a)) * r
+                    pts.append(o + d)
+                }
+                return .polyline(PolylineGeom(points: pts, closed: true))
             })
         case .polyline:
             let pts = try points(n, "points", v).map(\.xy)

@@ -485,7 +485,10 @@ enum EngineOutputCommands {
             let s = try session(ed)
             let k = try await ed.getKeyword("Path trace [Window/File]", ["Window", "File"], defaultValue: "Window") ?? "Window"
             if k == "Window" { try dialog(ed, "pathTrace", [("start", .bool(true))]); return }
-            let def = (ed.fileURL?.deletingPathExtension().path ?? (NSHomeDirectory() + "/Desktop/" + (ed.doc.info.name.isEmpty ? "Drawing" : ed.doc.info.name))) + " path traced.png"
+            let docName: String = ed.doc.info.name.isEmpty ? "Drawing" : ed.doc.info.name
+            let desktopBase: String = NSHomeDirectory() + "/Desktop/" + docName
+            let base: String = ed.fileURL?.deletingPathExtension().path ?? desktopBase
+            let def: String = base + " path traced.png"
             var p = (try await text(ed, "Image file", def) as NSString).expandingTildeInPath
             if (p as NSString).pathExtension.isEmpty { p += ".png" }
             let w = Int(try await number(ed, "Width (px)", 1280)), h = Int(try await number(ed, "Height (px)", 720))

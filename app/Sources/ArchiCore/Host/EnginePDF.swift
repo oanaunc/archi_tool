@@ -449,7 +449,10 @@ public enum EnginePDF {
             }
             if !images.isEmpty { res += " /XObject << " + images.map { "/" + $0.0 + " " + String($0.1) + " 0 R" }.joined(separator: " ") + " >>" }
             let p = reserve()
-            var pageDict = "<< /Type /Page /Parent " + String(pagesObj) + " 0 R /MediaBox [0 0 " + num(page.width) + " " + num(page.height) + "] /Contents " + String(stream) + " 0 R /Resources << " + res + " >>"
+            var pageDict: String = "<< /Type /Page /Parent " + String(pagesObj) + " 0 R"
+            pageDict += " /MediaBox [0 0 " + num(page.width) + " " + num(page.height) + "]"
+            pageDict += " /Contents " + String(stream) + " 0 R"
+            pageDict += " /Resources << " + res + " >>"
             if !annots.isEmpty { pageDict += " /Annots [" + annots.map { String($0) + " 0 R" }.joined(separator: " ") + "]" }
             set(p, pageDict + " >>")
             pageRefs.append(p)
