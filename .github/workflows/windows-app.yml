@@ -315,7 +315,36 @@ jobs:
         continue-on-error: true
         timeout-minutes: 2
         shell: pwsh
-        run: Set-DisplayResolution -Width 1920 -Height 1080 -Force
+        run: |
+          # Hosted runners start at 1024x768, which clamps the app window (smoke screenshots at 1024x720). The Windows
+          # Server image has no Set-DisplayResolution, so ChangeDisplaySettings is called directly (user32).
+          Add-Type -TypeDefinition @"
+          using System; using System.Runtime.InteropServices;
+          public static class Res {
+            [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+            public struct DEVMODE {
+              [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string dmDeviceName;
+              public short dmSpecVersion, dmDriverVersion, dmSize, dmDriverExtra; public int dmFields;
+              public int dmPositionX, dmPositionY, dmDisplayOrientation, dmDisplayFixedOutput;
+              public short dmColor, dmDuplex, dmYResolution, dmTTOption, dmCollate;
+              [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string dmFormName;
+              public short dmLogPixels; public int dmBitsPerPel, dmPelsWidth, dmPelsHeight, dmDisplayFlags, dmDisplayFrequency;
+              public int dmICMMethod, dmICMIntent, dmMediaType, dmDitherType, dmReserved1, dmReserved2, dmPanningWidth, dmPanningHeight;
+            }
+            [DllImport("user32.dll")] public static extern bool EnumDisplaySettings(string d, int m, ref DEVMODE dm);
+            [DllImport("user32.dll")] public static extern int ChangeDisplaySettings(ref DEVMODE dm, int flags);
+            public static string Set(int w, int h) {
+              var dm = new DEVMODE(); dm.dmSize = (short)Marshal.SizeOf(typeof(DEVMODE));
+              if (!EnumDisplaySettings(null, -1, ref dm)) return "EnumDisplaySettings failed";
+              string before = dm.dmPelsWidth + "x" + dm.dmPelsHeight;
+              dm.dmPelsWidth = w; dm.dmPelsHeight = h; dm.dmFields = 0x80000 | 0x100000;
+              return before + " -> " + w + "x" + h + ": ChangeDisplaySettings " + ChangeDisplaySettings(ref dm, 1);
+            }
+          }
+          "@
+          Write-Host ([Res]::Set(1920, 1080))
+          Add-Type -AssemblyName System.Windows.Forms
+          Write-Host "screen now: $([System.Windows.Forms.Screen]::PrimaryScreen.Bounds)"
 
       - name: Smoke test the installed app (Playwright for Electron)
         id: smoke
