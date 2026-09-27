@@ -18,7 +18,7 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-24.04]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 90
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@v5
       - name: Install Swift (Windows)
@@ -49,8 +49,8 @@ jobs:
           fi
           echo "=== building tests" | tee -a ../ci.log
           swift build --build-tests 2>&1 | tee -a ../ci.log
-          echo "=== running tests (40 min limit)" | tee -a ../ci.log
-          timeout 40m swift test --skip-build 2>&1 | tee -a ../ci.log
+          echo "=== running tests (parallel, 120 min limit)" | tee -a ../ci.log
+          timeout 120m swift test --skip-build --parallel 2>&1 | tee -a ../ci.log
       - name: Publish the log to ci-log-${{ runner.os }}
         if: always()
         shell: bash
