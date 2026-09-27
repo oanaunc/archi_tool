@@ -165,7 +165,10 @@ public enum IOCommands {
                 var ids: [EntityID] = []
                 for e in r.entities { ids.append(ed.doc.add(e)) }
                 ed.selection = Set(ids)
-                ed.print("Imported \(r.entities.filter { if case .point = $0.geometry { return true }; return false }.count) points\(r.skipped > 0 ? " (\(r.skipped) rows skipped)" : "").")
+                var pointCount = 0
+                for e in r.entities { if case .point = e.geometry { pointCount += 1 } }
+                let skippedNote: String = r.skipped > 0 ? " (\(r.skipped) rows skipped)" : ""
+                ed.print("Imported \(pointCount) points\(skippedNote).")
             } catch let e as CommandError { throw e }
             catch { throw CommandError.invalid("Cannot import: \(error.localizedDescription)") }
         }

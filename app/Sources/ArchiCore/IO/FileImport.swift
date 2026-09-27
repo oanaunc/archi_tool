@@ -129,7 +129,9 @@ public enum FileImport {
             return (entityDoc(r.entities, native: true), "\(r.entities.count) of \(r.total) E57 points")
         case "brep":
             let ents = try BREPImporter.entities(try readText(url), unitMM: reference.units.mm)
-            return (entityDoc(ents, native: true), "\(ents.count) BREP shapes (\(ents.reduce(0) { if case .solid(let s) = $1.geometry { return $0 + s.meshTriangles.count / 3 }; return $0 }) triangles)")
+            var triangles = 0
+            for e in ents { if case .solid(let s) = e.geometry { triangles += s.meshTriangles.count / 3 } }
+            return (entityDoc(ents, native: true), "\(ents.count) BREP shapes (\(triangles) triangles)")
         case "architemplate":
             return (try ArchiTemplate.decode(Data(contentsOf: url)).document, "template")
         case "3dm":
@@ -193,7 +195,9 @@ public enum FileImport {
             return (d, "\(r.entities.count) USD meshes, \(r.materials.count) materials")
         case "stl":
             let ents = try MeshImporter.stl(try Data(contentsOf: url))
-            return (entityDoc(ents), "STL mesh (\(ents.first.map { if case .solid(let s) = $0.geometry { return s.meshTriangles.count / 3 }; return 0 } ?? 0) triangles)")
+            var triangles = 0
+            if let first = ents.first, case .solid(let s) = first.geometry { triangles = s.meshTriangles.count / 3 }
+            return (entityDoc(ents), "STL mesh (\(triangles) triangles)")
         case "3mf":
             let ents = try ThreeMFImporter.entities(try Data(contentsOf: url), scale: 1 / reference.units.mm)
             return (entityDoc(ents, native: true), "\(ents.count) 3MF objects")
