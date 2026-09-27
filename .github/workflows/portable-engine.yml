@@ -47,7 +47,10 @@ jobs:
             grep -B1 "exception [0-9]" ../verbose.log | grep -oE "\-primary-file [^ ]+" | sort -u | tee -a ../ci.log
             exit 1
           fi
-          swift test 2>&1 | tee -a ../ci.log
+          echo "=== building tests" | tee -a ../ci.log
+          swift build --build-tests 2>&1 | tail -30 | tee -a ../ci.log
+          echo "=== running tests (40 min limit)" | tee -a ../ci.log
+          timeout 40m swift test --skip-build 2>&1 | tee -a ../ci.log
       - name: Publish the log to ci-log-${{ runner.os }}
         if: always()
         shell: bash
@@ -57,7 +60,8 @@ jobs:
           cp "$GITHUB_WORKSPACE/ci.log" full.log 2>/dev/null || echo "no log" > full.log
           {
             echo "commit ${GITHUB_SHA} · run ${GITHUB_RUN_ID} · outcome ${{ steps.tests.outcome }}"
-            grep -E "error:|exception|primary-file|Assertion|Stack dump|Test Suite 'All tests'|Executed [0-9]+ tests|failed \(|Fatal error|Build complete" full.log | head -300
+            grep -E "error:|exception|primary-file|Assertion|Stack dump|===|Test Suite 'All tests'|Executed [0-9]+ tests|failed \(|Fatal error|Build complete" full.log | head -300
+            echo "--- last lines"; tail -25 full.log
           } > summary.txt
           git init -q . && git checkout -q -b "ci-log-$os"
           git -c user.name=ci -c user.email=ci@users.noreply.github.com add -A
