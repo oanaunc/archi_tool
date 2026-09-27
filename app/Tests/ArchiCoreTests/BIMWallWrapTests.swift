@@ -32,12 +32,14 @@ final class BIMWallWrapTests: XCTestCase {
         // Ends.
         await ed.run("WALLWRAP Ends Yes")
         let v2 = volumes(ed.doc.element(w)!, ed.doc)
-        XCTAssertEqual(v2["Plaster"]! - v1["Plaster"]!, 2 * 15.0 * (365 - 25) * 3000, accuracy: 1)
+        let expected35_1: Double = 2 * 15.0 * (365 - 25) * 3000
+        XCTAssertEqual(v2["Plaster"]! - v1["Plaster"]!, expected35_1, accuracy: 1)
         let items2 = PlanRepresentation.items(ed.doc.element(w)!, doc: ed.doc)
         XCTAssertTrue(items2.contains { if case .stroke(let p, _, _) = $0, p.count == 2 { return abs(p[0].x - 15) < 1e-6 && abs(p[1].x - 15) < 1e-6 }; return false })
         // Only inserts off, ends still on.
         await ed.run("WALLWRAP Off")
         let v3 = volumes(ed.doc.element(w)!, ed.doc)
-        XCTAssertEqual(v3["Plaster"]! - v0["Plaster"]!, 2 * 15.0 * (365 - 25) * 3000, accuracy: 1)
+        let expected41_1: Double = 2 * 15.0 * (365 - 25) * 3000
+        XCTAssertEqual(v3["Plaster"]! - v0["Plaster"]!, expected41_1, accuracy: 1)
     }
 }

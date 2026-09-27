@@ -155,7 +155,8 @@ final class ModelingRound7Tests: XCTestCase {
         """
         let r = SCAD.evaluate(src)
         XCTAssertTrue(r.errors.isEmpty, "\(r.errors)")
-        XCTAssertEqual(tvol(r.triangles), 100 * 100 * 10 - 4 * (2 * 25) * 10, accuracy: 1e-3)
+        let expected: Double = 100 * 100 * 10 - 4 * (2 * 25) * 10
+        XCTAssertEqual(tvol(r.triangles), expected, accuracy: 1e-3)
         XCTAssertEqual(r.echo.first, "\"area\", 10000, [1, 4, 9]")
         // intersection, hull, rotate, mirror, scale, union overlap.
         XCTAssertEqual(tvol(SCAD.evaluate("intersection() { cube(10); translate([5,5,5]) cube(10); }").triangles), 125, accuracy: 1e-6)

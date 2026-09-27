@@ -100,7 +100,8 @@ final class IOGeoImageTests: XCTestCase {
         let lon10 = 25 + 10 / (6_378_137 * cos(Double.pi / 4)) * 180 / .pi
         XCTAssertTrue(k.contains("\(fmt(lon10, 8)),\(fmt(45, 8))"), "east end of the line")
         let g = KMLExporter.lonLat(Vec2(0, 10000), doc: d)
-        XCTAssertEqual(g.lat, 45 + 10 / 6_378_137 * 180 / .pi, accuracy: 1e-10); XCTAssertEqual(g.lon, 25, accuracy: 1e-12)
+        let expectedLat: Double = 45 + 10 / 6_378_137 * 180 / Double.pi
+        XCTAssertEqual(g.lat, expectedLat, accuracy: 1e-10); XCTAssertEqual(g.lon, 25, accuracy: 1e-12)
         // True north turned 90° counter-clockwise from +Y: +Y points east.
         d.info.northAngle = 90
         let g90 = KMLExporter.lonLat(Vec2(0, 10000), doc: d)

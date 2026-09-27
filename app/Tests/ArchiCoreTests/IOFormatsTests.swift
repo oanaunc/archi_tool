@@ -85,7 +85,7 @@ final class IOFormatsTests: XCTestCase {
         let xyz = PointCloud.parseText("# x y z r g b\n1,2,3,10,20,30\n4;5;6\n")
         XCTAssertEqual(xyz.count, 2); XCTAssertEqual(xyz[0].color?.2, 30); XCTAssertNil(xyz[1].color)
         // Voxel filter keeps one point per 100-unit cell; the budget samples evenly.
-        let grid = (0..<1000).map { CloudPoint(Vec3(Double($0 % 100) * 10, Double($0 / 100) * 10, 0)) }
+        let grid: [CloudPoint] = (0..<1000).map { (i: Int) -> CloudPoint in CloudPoint(Vec3(Double(i % 100) * 10, Double(i / 100) * 10, 0)) }
         XCTAssertEqual(PointCloud.decimate(grid, voxel: 100, maxPoints: 0).count, 10)
         XCTAssertEqual(PointCloud.decimate(grid, voxel: 0, maxPoints: 250).count, 250)
         XCTAssertEqual(PointCloud.decimate(grid, voxel: 0, maxPoints: 0).count, 1000)
@@ -220,7 +220,8 @@ final class IOFormatsTests: XCTestCase {
         guard case .polyline(let pl) = b.geometry else { return XCTFail() }
         XCTAssertTrue(pl.closed)
         XCTAssertEqual(pl.vertices[0].p.x, 0, accuracy: 1); XCTAssertEqual(pl.vertices[0].p.y, 0, accuracy: 1)
-        XCTAssertEqual(pl.vertices[1].p.x, 0.0002 * .pi / 180 * 6_378_137 * cos(44.43 * .pi / 180) * 1000, accuracy: 1)
+        let expectedX: Double = 0.0002 * Double.pi / 180 * 6_378_137 * cos(44.43 * Double.pi / 180) * 1000
+        XCTAssertEqual(pl.vertices[1].p.x, expectedX, accuracy: 1)
         XCTAssertEqual(OSMImporter.height(["height": "30 ft"]) ?? 0, 9.144, accuracy: 1e-6)
         // ESRI ASCII grid → toposurface
         let asc = "ncols 3\nnrows 2\nxllcorner 500000\nyllcorner 4900000\ncellsize 10\nNODATA_value -9999\n1 2 3\n4 5 -9999\n"

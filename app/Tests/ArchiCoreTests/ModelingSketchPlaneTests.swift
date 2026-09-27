@@ -54,7 +54,8 @@ final class ModelingSketchPlaneTests: XCTestCase {
         XCTAssertEqual(b.min.x, 0, accuracy: 1e-6); XCTAssertEqual(b.max.x, 1000, accuracy: 1e-6)
         XCTAssertEqual(b.max.z, 2000, accuracy: 1e-6)
         XCTAssertEqual(b.size.y, 200, accuracy: 1e-6)
-        XCTAssertLessThan(CSG.volume(s), 1000 * 2000 * 200 - 3.0 * 200 * 200 * 200)
+        let limit: Double = 1000 * 2000 * 200 - 3.0 * 200 * 200 * 200
+        XCTAssertLessThan(CSG.volume(s), limit)
         // Sketch on a face of a box: the top face at z = 1000.
         let bx = ed.doc.add(.solid(SolidGeom(kind: .box, origin: Vec3(5000, 0, 0), size: Vec3(1000, 1000, 1000))))
         await ed.run("SKETCHPLANE New T1 Face #\(bx) 5500,500,1000")

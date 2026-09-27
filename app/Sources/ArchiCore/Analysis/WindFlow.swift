@@ -166,7 +166,7 @@ public enum WindFlow {
                             let g = 1 - 0.5 * om
                             for i in 0..<9 {
                                 let ex = Double(ci[i]), ey = Double(cj[i])
-                                let wi = i == 0 ? 4.0 / 9 : (i < 5 ? 1.0 / 9 : 1.0 / 36)
+                                let wi: Double = i == 0 ? 4.0 / 9.0 : (i < 5 ? 1.0 / 9.0 : 1.0 / 36.0)
                                 let cu = ex * ux + ey * uy
                                 q[i] += g * wi * (3 * ((ex - ux) * fx + (ey - uy) * fy) + 9 * cu * (ex * fx + ey * fy))
                             }

@@ -77,8 +77,10 @@ final class IOIFCSchemaTests: XCTestCase {
         // Both import back with the same element counts (meshes as meshes).
         let a = try IFCImporter.importFile(rv).doc, b = try IFCImporter.importFile(dtv).doc
         XCTAssertEqual(a.elements.count, b.elements.count)
-        XCTAssertEqual(a.elements.filter { $0.typeName == "stair" || $0.typeName == "component" }.count + a.entities.count,
-                       b.elements.filter { $0.typeName == "stair" || $0.typeName == "component" }.count + b.entities.count)
+        let special: (BIMElement) -> Bool = { $0.typeName == "stair" || $0.typeName == "component" }
+        let countA: Int = a.elements.filter(special).count + a.entities.count
+        let countB: Int = b.elements.filter(special).count + b.entities.count
+        XCTAssertEqual(countA, countB)
     }
 
     func testIFC4x3HeaderGeoreferenceAndLayouts() throws {

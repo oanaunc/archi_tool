@@ -62,7 +62,10 @@ final class IOPointCloudToolsTests: XCTestCase {
     }
 
     func testPlaneFitAndRansac() throws {
-        let wall = (0..<200).map { i in Vec3(Double(i % 20) * 0.1, 0.002 * Double(i % 3), Double(i / 20) * 0.1) }
+        let wall: [Vec3] = (0..<200).map { (i: Int) -> Vec3 in
+            let x: Double = Double(i % 20) * 0.1, y: Double = 0.002 * Double(i % 3), z: Double = Double(i / 20) * 0.1
+            return Vec3(x, y, z)
+        }
         let pl = try XCTUnwrap(PlaneFit.fit(wall))
         XCTAssertEqual(abs(pl.normal.y), 1, accuracy: 1e-3)
         XCTAssertTrue(pl.isVertical)

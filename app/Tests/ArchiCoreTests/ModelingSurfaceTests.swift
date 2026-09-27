@@ -27,7 +27,9 @@ final class ModelingSurfaceTests: XCTestCase {
         let sq = [Vec2(-50, -50), Vec2(50, -50), Vec2(50, 50), Vec2(-50, 50)]
         let path = (0...20).map { Vec3(Double($0) * 50, 0, 0) }
         let m = SurfaceTools.twistedSweep(sq, along: path, twist: .pi / 2)
-        XCTAssertEqual(MeshTools.signedVolume(m), 100 * 100 * 1000, accuracy: 100 * 100 * 1000 * 0.03)
+        let expected30_1: Double = 100 * 100 * 1000
+        let expected30_2: Double = 100 * 100 * 1000 * 0.03
+        XCTAssertEqual(MeshTools.signedVolume(m), expected30_1, accuracy: expected30_2)
         let tapered = SurfaceTools.twistedSweep(sq, along: [Vec3(0, 0, 0), Vec3(1000, 0, 0)], twist: 0, endScale: 0.5)
         // Frustum of squares 100 → 50 over 1000: V = h/3 (A1 + A2 + √(A1A2)).
         XCTAssertEqual(MeshTools.signedVolume(tapered), 1000.0 / 3 * (10000 + 2500 + 5000), accuracy: 1)

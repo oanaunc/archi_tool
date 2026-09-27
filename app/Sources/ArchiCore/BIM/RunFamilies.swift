@@ -262,7 +262,10 @@ extension ComponentLibrary {
             add([Vec2(-R * 0.707, -R * 0.707), Vec2(R * 0.707, R * 0.707)], outline: false); add([Vec2(-R * 0.707, R * 0.707), Vec2(R * 0.707, -R * 0.707)], outline: false)
         case "light-wall":
             let R = W / 2
-            add([Vec2(-R, D / 2)] + (0...12).map { Vec2.polar(R, Double.pi + Double.pi * Double($0) / 12) + Vec2(0, D / 2) }.reversed() + [Vec2(R, D / 2)], closed: true)
+            var arc: [Vec2] = [Vec2(-R, D / 2)]
+            for k in stride(from: 12, through: 0, by: -1) { let a: Double = Double.pi + Double.pi * Double(k) / 12; arc.append(Vec2.polar(R, a) + Vec2(0, D / 2)) }
+            arc.append(Vec2(R, D / 2))
+            add(arc, closed: true)
             add([Vec2(-R * 0.5, D / 2 - R * 0.8), Vec2(R * 0.5, D / 2 - R * 0.1)], outline: false); add([Vec2(-R * 0.5, D / 2 - R * 0.1), Vec2(R * 0.5, D / 2 - R * 0.8)], outline: false)
         case "panel":
             add([Vec2(-W / 2, -D / 2), Vec2(W / 2, -D / 2), Vec2(W / 2, D / 2), Vec2(-W / 2, D / 2)], closed: true)

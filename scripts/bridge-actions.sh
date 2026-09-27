@@ -60,6 +60,10 @@ run_action() {
       for b in windows linux; do echo "===== $b: $(git log -1 --format='%s (%cr)' origin/ci-log-$b 2>/dev/null)"; git show origin/ci-log-$b:summary.txt 2>/dev/null | head -150; done ;;
     ci-full)       # tail of the full CI log; build/ci-os.txt holds windows or linux
       cd "$ROOT" && os="$(tr -cd 'a-z' < build/ci-os.txt 2>/dev/null)"; git show "origin/ci-log-${os:-windows}:full.log" 2>/dev/null | tail -300 ;;
+    slow-exprs)    # expressions that take >150 ms to type-check (the Windows/Linux compilers are slower and give up)
+      cd "$ROOT/app" && rm -rf "$ROOT/build/slowscan" && swift build --build-tests --scratch-path "$ROOT/build/slowscan" \
+        -Xswiftc -Xfrontend -Xswiftc -warn-long-expression-type-checking=30 > "$ROOT/build/slowscan.log" 2>&1; cat "$ROOT/build/slowscan.log" \
+        | grep -E "warning: expression took|error:" | sed -E "s|^$ROOT/app/||" | sort -u > "$ROOT/build/slow-exprs.txt"; wc -l "$ROOT/build/slow-exprs.txt" ;;
     *) echo "Unknown action: $1"; return 64 ;;
   esac
 }

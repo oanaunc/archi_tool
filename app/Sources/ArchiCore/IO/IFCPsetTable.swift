@@ -20,7 +20,12 @@ public final class IFCPsetTable {
                 guard q.count >= 3 else { continue }
                 props[q[0]] = Prop(name: q[0], kind: q[1], type: q[2], values: q.count > 3 ? q[3].split(separator: ";").map(String.init) : [])
             }
-            let app = f[1].split(separator: ",").map { $0.split(separator: "/").first.map(String.init) ?? "" }.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+            var app: [String] = []
+            for part in f[1].split(separator: ",") {
+                let name: String = part.split(separator: "/").first.map(String.init) ?? ""
+                let t = name.trimmingCharacters(in: .whitespaces)
+                if !t.isEmpty { app.append(t) }
+            }
             out[f[0]] = PSet(name: f[0], applicable: app, templateType: f[2], props: props)
         }
         sets = out

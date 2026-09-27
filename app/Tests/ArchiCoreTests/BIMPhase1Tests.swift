@@ -64,7 +64,8 @@ final class BIMPhase1Tests: XCTestCase {
         let ctx = PlanRepresentation.context(ed.doc)
         XCTAssertEqual(ctx.pieces(ctx.frames[wid]!).count, 3)
         let cut = volume(ed.doc.element(wid)!, ed.doc)
-        XCTAssertEqual(full - cut, 900 * 200 * 2100 + 1200 * 200 * 1200, accuracy: 1000)
+        let expected67_1: Double = 900 * 200 * 2100 + 1200 * 200 * 1200
+        XCTAssertEqual(full - cut, expected67_1, accuracy: 1000)
         let door = ed.doc.elements.first { if case .opening(let o) = $0.geometry { return o.kind == .door }; return false }!
         guard case .opening(let d) = door.geometry else { return XCTFail() }
         XCTAssertTrue(d.flipHand)

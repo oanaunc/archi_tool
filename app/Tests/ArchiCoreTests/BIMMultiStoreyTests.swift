@@ -124,7 +124,8 @@ final class BIMMultiStoreyTests: XCTestCase {
         XCTAssertEqual(l.treads.count, 17)
         XCTAssertEqual(l.treads.filter(\.landing).count, 1)
         XCTAssertEqual(l.treads.first { $0.landing }?.step, 9)
-        XCTAssertEqual(l.walk.last!.x, 8 * 280 + 1100 + 8 * 280, accuracy: 1e-9)
+        let expected127_1: Double = 8 * 280 + 1100 + 8 * 280
+        XCTAssertEqual(l.walk.last!.x, expected127_1, accuracy: 1e-9)
         XCTAssertTrue(BIMConstraints.stairIssues(g).isEmpty, BIMConstraints.stairIssues(g).joined())
         XCTAssertTrue(BIMConstraints.stairIssues(StairGeom(start: .zero, totalRise: 4000, riserCount: 22)).contains { $0.contains("flight") })
         // U stair with a custom landing depth.

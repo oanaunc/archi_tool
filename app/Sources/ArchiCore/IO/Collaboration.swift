@@ -123,8 +123,9 @@ public enum ThreeWayMerge {
         d.namedViews = mergeKeyed(base.namedViews, ours.namedViews, theirs.namedViews, key: { $0.name }, kind: "view", label: { $0 }, result: &res)
         d.families = mergeKeyed(base.families, ours.families, theirs.families, key: { $0.name }, kind: "family", label: { $0 }, result: &res)
         struct KV: Equatable { var k: String; var v: String }
-        let vars = mergeKeyed(base.variables.map { KV(k: $0.key, v: $0.value) }.sorted { $0.k < $1.k }, ours.variables.map { KV(k: $0.key, v: $0.value) }.sorted { $0.k < $1.k },
-                              theirs.variables.map { KV(k: $0.key, v: $0.value) }.sorted { $0.k < $1.k }, key: { $0.k }, kind: "variable", label: { $0 }, result: &res)
+        func kvs(_ vars: [String: String]) -> [KV] { vars.map { KV(k: $0.key, v: $0.value) }.sorted { $0.k < $1.k } }
+        let baseVars = kvs(base.variables), ourVars = kvs(ours.variables), theirVars = kvs(theirs.variables)
+        let vars: [KV] = mergeKeyed(baseVars, ourVars, theirVars, key: { (kv: KV) -> String in kv.k }, kind: "variable", label: { (s: String) -> String in s }, result: &res)
         d.variables = Dictionary(vars.map { ($0.k, $0.v) }, uniquingKeysWith: { a, _ in a })
         let bl = mergeKeyed(base.blocks.values.sorted { $0.name < $1.name }, ours.blocks.values.sorted { $0.name < $1.name }, theirs.blocks.values.sorted { $0.name < $1.name },
                             key: { $0.name }, kind: "block", label: { $0 }, result: &res)

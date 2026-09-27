@@ -1058,7 +1058,8 @@ final class StepBRepReader {
             if (da > 0) == (db0 > 0) { b = reversed(b) }
             // Start b where a ends (same coordinate along the band, modulo the period).
             let endA = a.uv[0] + a.drift
-            let P = alongU ? (PU ?? 2 * .pi) : (PV ?? 2 * .pi)
+            let fullTurn: Double = 2 * Double.pi
+            let P: Double = alongU ? (PU ?? fullTurn) : (PV ?? fullTurn)
             var bestI = 0, bestD = Double.infinity
             for (i, q) in b.uv.enumerated() {
                 let d = alongU ? abs(unwrap(q.x, near: endA.x, period: P) - endA.x) : abs(unwrap(q.y, near: endA.y, period: P) - endA.y)

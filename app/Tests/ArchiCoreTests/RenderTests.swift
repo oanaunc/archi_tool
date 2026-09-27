@@ -98,7 +98,8 @@ final class RenderTests: XCTestCase {
         XCTAssertEqual(b.min.y, -100, accuracy: 1e-6); XCTAssertEqual(b.max.y, 100, accuracy: 1e-6)
         XCTAssertEqual(b.min.z, 0, accuracy: 1e-6); XCTAssertEqual(b.max.z, 3000, accuracy: 1e-6)
         // Wall volume = full volume minus the window hole.
-        XCTAssertEqual(volume(cut[0].mesh), 4000 * 200 * 3000 - 1200 * 200 * 1200, accuracy: 1)
+        let expected101_1: Double = 4000 * 200 * 3000 - 1200 * 200 * 1200
+        XCTAssertEqual(volume(cut[0].mesh), expected101_1, accuracy: 1)
         let all = MeshBuilder.build(doc: doc)
         XCTAssertTrue(all.contains { $0.material == "Glass" })
     }

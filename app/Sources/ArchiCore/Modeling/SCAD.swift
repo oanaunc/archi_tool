@@ -671,7 +671,14 @@ public enum SCAD {
             case "polygon":
                 guard let pts = try A("points", 0)?.list?.compactMap({ $0.vec3.map { Vec2($0.x, $0.y) } }) else { return [] }
                 if let paths = try A("paths", 1)?.list {
-                    return [.shape(paths.compactMap { p in p.list?.compactMap { $0.num.map(Int.init) }.filter { $0 >= 0 && $0 < pts.count }.map { pts[$0] } }.filter { $0.count >= 3 })]
+                    var rings: [[Vec2]] = []
+                    for p in paths {
+                        guard let items = p.list else { continue }
+                        let idx: [Int] = items.compactMap { $0.num.map(Int.init) }.filter { $0 >= 0 && $0 < pts.count }
+                        let ring: [Vec2] = idx.map { pts[$0] }
+                        if ring.count >= 3 { rings.append(ring) }
+                    }
+                    return [.shape(rings)]
                 }
                 return [.shape([pts])]
             case "translate", "rotate", "scale", "mirror", "multmatrix", "resize", "color":

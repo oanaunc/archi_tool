@@ -80,7 +80,8 @@ final class BIMFamilyTests: XCTestCase {
         XCTAssertEqual(Set(r.parts.keys), ["Wood", "Aluminium", "Steel"])
         // The void removed 200×100×200 from the panel.
         let v = MeshTools.signedVolume(r.parts["Wood"]!.mesh)
-        XCTAssertEqual(v, 1000 * 100 * 500 - 200 * 100 * 200, accuracy: 1)
+        let expected83_1: Double = 1000 * 100 * 500 - 200 * 100 * 200
+        XCTAssertEqual(v, expected83_1, accuracy: 1)
         // Nested knob radius bound to Height/10 = 50.
         let kb = r.parts["Aluminium"]!.mesh.bounds
         XCTAssertEqual(kb.max.x - kb.min.x, 100, accuracy: 1)

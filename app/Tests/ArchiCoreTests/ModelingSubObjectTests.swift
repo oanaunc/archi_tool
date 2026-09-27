@@ -46,7 +46,12 @@ final class ModelingSubObjectTests: XCTestCase {
         XCTAssertNil(ed.doc.entity(c))
         let imps = SubObjects.decode(ed.doc.entity(b)?.props[SubObjects.imprintKey])
         XCTAssertFalse(imps.isEmpty)
-        XCTAssertTrue(imps.allSatisfy { [$0.0, $0.1].allSatisfy { p in abs(p.z - 1000) < 1e-6 && p.distance(to: Vec3(500, 500, 1000)) > 190 && p.distance(to: Vec3(500, 500, 1000)) < 200 + 1e-6 } })
+        let centre = Vec3(500, 500, 1000)
+        let onFaceRing: (Vec3) -> Bool = { p in
+            let d: Double = p.distance(to: centre)
+            return abs(p.z - 1000) < 1e-6 && d > 190 && d < 200 + 1e-6
+        }
+        XCTAssertTrue(imps.allSatisfy { onFaceRing($0.0) && onFaceRing($0.1) })
         // Curve far away from the face: nothing imprinted, solid unchanged.
         let far = ed.doc.add(.line(LineGeom(Vec2(5000, 0), Vec2(6000, 0))))
         let before = ed.doc.entity(b)

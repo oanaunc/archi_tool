@@ -16,17 +16,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        os: [windows-latest, ubuntu-24.04]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Swift (Windows)
         if: runner.os == 'Windows'
         uses: compnerd/gha-setup-swift@main
         with:
-          branch: swift-6.1.2-release
-          tag: 6.1.2-RELEASE
+          swift-version: swift-6.1.2-release
+          swift-build: 6.1.2-RELEASE
       - name: Install Swift (Linux)
         if: runner.os == 'Linux'
         uses: swift-actions/setup-swift@v2

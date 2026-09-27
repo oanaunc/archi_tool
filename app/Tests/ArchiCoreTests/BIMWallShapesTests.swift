@@ -17,7 +17,8 @@ final class BIMWallShapesTests: XCTestCase {
         await ed.run("WALLTOP Gable 4500")
         guard case .wall(let g)? = ed.doc.element(id)?.geometry else { return XCTFail() }
         XCTAssertEqual(g.height, 4500, accuracy: 1e-9); XCTAssertEqual(g.profile?.count, 5)
-        XCTAssertEqual(vol(ed, id), 200 * (6000 * 3000 + 0.5 * 6000 * 1500), accuracy: 1e6)
+        let expected20_1: Double = 200 * (6000 * 3000 + 0.5 * 6000 * 1500)
+        XCTAssertEqual(vol(ed, id), expected20_1, accuracy: 1e6)
         let zs = MeshBuilder.groups(for: ed.doc.element(id)!, doc: ed.doc)[0].mesh.positions.map(\.z)
         XCTAssertEqual(zs.max() ?? 0, 4500, accuracy: 1e-6)
         // Section through the ridge: the cut is 4500 high.

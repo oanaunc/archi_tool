@@ -173,7 +173,12 @@ public enum FamilyFiles {
     public static func encode(_ def: FamilyDefinition, doc: ArchiDocument) throws -> Data {
         var seen: Set<String> = [def.name.lowercased()]
         let nested = dependencies(def, doc: doc, seen: &seen)
-        let names = Set(([def] + nested).flatMap { $0.forms.compactMap(\.material) } + ([def] + nested).flatMap { $0.parameters.filter { $0.kind == .material }.map(\.value) })
+        let all = [def] + nested
+        var names = Set<String>()
+        for f in all {
+            for m in f.forms.compactMap(\.material) { names.insert(m) }
+            for p in f.parameters where p.kind == .material { names.insert(p.value) }
+        }
         var d = def; d.source = nil
         let env = Envelope(app: ArchiFile.appName, formatVersion: 1, family: d, nested: nested, materials: doc.materials.filter { names.contains($0.name) })
         let enc = JSONEncoder(); enc.outputFormatting = [.prettyPrinted, .sortedKeys]

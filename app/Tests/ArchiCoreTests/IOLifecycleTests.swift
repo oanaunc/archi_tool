@@ -364,7 +364,10 @@ final class IOLifecycleTests: XCTestCase {
     // MARK: E57
 
     func testE57WriteReadRoundTrip() throws {
-        let a = (0..<3000).map { i in CloudPoint(Vec3(Double(i) * 0.01, sin(Double(i)), -1.5), color: (UInt8(i % 256), 20, 250), intensity: Double(i % 100) / 100) }
+        let a: [CloudPoint] = (0..<3000).map { (i: Int) -> CloudPoint in
+            let x: Double = Double(i) * 0.01, y: Double = sin(Double(i)), level: Double = Double(i % 100) / 100
+            return CloudPoint(Vec3(x, y, -1.5), color: (UInt8(i % 256), 20, 250), intensity: level)
+        }
         let b = [CloudPoint(Vec3(1, 2, 3)), CloudPoint(Vec3(-4, 5.5, 6.25))]
         let data = E57.write([E57.Scan(name: "Scan <A>", points: a), E57.Scan(name: "Plain", points: b)])
         XCTAssertEqual(data.count % 1024, 0)

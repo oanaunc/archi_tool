@@ -329,7 +329,9 @@ public enum SubObjects {
         case .edge: return nearestEdge(m, to: p).map { [$0.0, $0.1] } ?? []
         case .face:
             guard let f = nearestFace(m, to: p) else { return [] }
-            return Set(faceRegion(m, seed: f, barriers: barriers).flatMap { [m.triangles[3 * $0], m.triangles[3 * $0 + 1], m.triangles[3 * $0 + 2]] })
+            var verts = Set<Int>()
+            for t in faceRegion(m, seed: f, barriers: barriers) { verts.insert(m.triangles[3 * t]); verts.insert(m.triangles[3 * t + 1]); verts.insert(m.triangles[3 * t + 2]) }
+            return verts
         }
     }
 

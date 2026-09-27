@@ -133,8 +133,12 @@ final class BIMPartialsTests: XCTestCase {
         XCTAssertEqual(gs.map(\.material), ["Plaster", "Brick", "Insulation", "Plaster"])
         // Each ply's volume ≈ its thickness × length × height.
         let vols = gs.map { MeshTools.signedVolume($0.mesh) }
-        XCTAssertEqual(vols[1], 240 * 5000 * 3000, accuracy: 240 * 5000 * 3000 * 0.01)
-        XCTAssertEqual(vols.reduce(0, +), 365 * 5000 * 3000, accuracy: 365 * 5000 * 3000 * 0.01)
+        let expected136_1: Double = 240 * 5000 * 3000
+        let expected136_2: Double = 240 * 5000 * 3000 * 0.01
+        XCTAssertEqual(vols[1], expected136_1, accuracy: expected136_2)
+        let expected137_1: Double = 365 * 5000 * 3000
+        let expected137_2: Double = 365 * 5000 * 3000 * 0.01
+        XCTAssertEqual(vols.reduce(0, +), expected137_1, accuracy: expected137_2)
         // Curved compound wall.
         var d2 = ArchiDocument()
         let cid = d2.addElement(.wall(WallGeom(start: Vec2(0, 0), end: Vec2(6000, 0), thickness: 365, bulge: 0.4, wallType: "Exterior Brick 365")))

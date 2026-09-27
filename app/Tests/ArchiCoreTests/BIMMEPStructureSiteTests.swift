@@ -13,7 +13,8 @@ final class BIMMEPStructureSiteTests: XCTestCase {
         XCTAssertEqual(StructuralProfiles.section("rhs 200x100x8")!.area, 200 * 100 - 184 * 84, accuracy: 1e-6)
         XCTAssertEqual(StructuralProfiles.section("CHS 168x6")!.area, Double.pi * (84 * 84 - 78 * 78), accuracy: 60)
         XCTAssertEqual(StructuralProfiles.section("L 100x10")!.area, 100 * 10 + 90 * 10, accuracy: 1e-6)
-        XCTAssertEqual(StructuralProfiles.section("I 300x150x7x10")!.area, 2 * 150 * 10 + 280 * 7, accuracy: 1e-6)
+        let expected16_1: Double = 2 * 150 * 10 + 280 * 7
+        XCTAssertEqual(StructuralProfiles.section("I 300x150x7x10")!.area, expected16_1, accuracy: 1e-6)
         XCTAssertEqual(StructuralProfiles.section("T 100x100x10")!.shape, .t)
         XCTAssertEqual(StructuralProfiles.section("SHS 100x5")!.b, 100)
         XCTAssertNil(StructuralProfiles.section("RHS 100x100x60"))
