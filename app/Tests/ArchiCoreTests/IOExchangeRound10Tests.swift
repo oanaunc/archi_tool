@@ -101,6 +101,9 @@ final class IOExchangeRound10Tests: XCTestCase {
     }
 
     func testLAZThroughAnInstalledDecompressor() throws {
+        #if os(Windows)
+        throw XCTSkip("the stand-in converter is a Unix shell script; Windows uses the real .exe converters")
+        #endif
         let dir = try tmpDir()
         // A LAZ file (the compressed flag set on a LAS) and a stand-in "laszip" that restores the LAS.
         let las = LASReader.write([CloudPoint(Vec3(1, 2, 3), color: (255, 0, 0), intensity: 5), CloudPoint(Vec3(4, 5, 6), color: (0, 255, 0), intensity: 7)])

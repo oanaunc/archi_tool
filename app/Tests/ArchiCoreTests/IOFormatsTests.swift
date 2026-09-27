@@ -274,6 +274,9 @@ final class IOFormatsTests: XCTestCase {
     }
 
     func testDWGConverterHook() throws {
+        #if os(Windows)
+        throw XCTSkip("the stand-in converter is a Unix shell script; Windows uses the real .exe converters")
+        #endif
         let dir = try tmpDir()
         // No converter → guidance.
         XCTAssertTrue(DWGConverter.guidance.contains("ODA File Converter"))

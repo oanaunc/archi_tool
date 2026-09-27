@@ -34,6 +34,9 @@ final class IOSketchUpTests: XCTestCase {
     }
 
     func testGuidanceWithoutConverterAndConversionThroughOne() throws {
+        #if os(Windows)
+        throw XCTSkip("the stand-in converter is a Unix shell script; Windows uses the real .exe converters")
+        #endif
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("skp-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: dir) }

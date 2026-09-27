@@ -101,7 +101,9 @@ final class AnalysisAdvancedTests: XCTestCase {
         XCTAssertEqual(sin(WindStudy.flowAngle(south, northAngle: 0)), 1, accuracy: 1e-9)
         let dir = try FileManager.default.temporaryDirectory.appendingPathComponent("wind-\(UUID().uuidString)")
         XCTAssertEqual(try WindStudy.writeCase(d, to: dir, options: o).count, files.count)
+        #if !os(Windows)   // Windows has no executable permission bit
         XCTAssertTrue(FileManager.default.isExecutableFile(atPath: dir.appendingPathComponent("Allrun").path))
+        #endif
         // Results: case-frame +X velocity in a southerly wind points north in the drawing.
         let s = WindStudy.parseSamples("# x y z U_x U_y U_z\n0 0 1.5 3 0 0\n2 0 1.5 7 0 0\nbad line\n")
         XCTAssertEqual(s.count, 2)

@@ -19,7 +19,9 @@ final class AnalysisRadianceTests: XCTestCase {
         XCTAssertEqual(pts.first.map { Double($0.split(separator: " ")[2]) ?? 0 } ?? 0, 0.75, accuracy: 1e-9, "work plane at 0.75 m")
         let script = try String(contentsOf: dir.appendingPathComponent("run.sh"), encoding: .utf8)
         for tool in ["gendaymtx", "rfluxmtx", "dctimestep", "rmtxop -fa -c 47.4 119.9 11.6", "oconv"] { XCTAssertTrue(script.contains(tool), tool) }
+        #if !os(Windows)   // Windows has no executable permission bit
         XCTAssertTrue(FileManager.default.isExecutableFile(atPath: dir.appendingPathComponent("run.sh").path))
+        #endif
         XCTAssertEqual(RadianceDaylight.transmissivity(0.6), 0.6536, accuracy: 0.001)
         // Synthetic results: 3 hours (12 and 13 occupied, 20 not); every sensor of the first room lit ≥ 300 lx in one
         // occupied hour (50 %), the others dark; direct sun only in hour 12.

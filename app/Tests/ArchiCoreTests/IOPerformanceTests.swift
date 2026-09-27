@@ -99,7 +99,7 @@ final class IOPerformanceTests: XCTestCase {
         #if canImport(Darwin)
         let limit = 3.0
         #else
-        let limit = 6.0      // shared CI machines on Windows/Linux are about half as fast as a Mac
+        let limit = 8.0      // shared CI machines on Windows/Linux are two to three times slower than a Mac
         #endif
         XCTAssertLessThan(t, limit, "opening \(data.count / 1_000_000) MB took \(t) s")
         print("\(data.count / 1_000_000) MB file: open \(fmt(t, 3)) s")
