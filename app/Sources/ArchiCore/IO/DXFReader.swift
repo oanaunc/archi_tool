@@ -388,16 +388,19 @@ public enum DXFReader {
             let names = Set(paper.keys).union(paperViewports.keys).union(layoutTitle.keys)
             guard !names.isEmpty else { return }
             let order = layoutInfo.sorted { $0.tab < $1.tab }.map(\.name)
-            let sorted = names.sorted { (order.firstIndex(of: $0) ?? Int.max, $0) < (order.firstIndex(of: $1) ?? Int.max, $1) }
-            doc.layouts = sorted.map { n in
-                let ents = paper[n] ?? []
+            let rank: (String) -> Int = { order.firstIndex(of: $0) ?? Int.max }
+            let sorted: [String] = names.sorted { rank($0) != rank($1) ? rank($0) < rank($1) : $0 < $1 }
+            let landscape: [PaperSize] = PaperSize.standard
+                .map { $0.width >= $0.height ? $0 : PaperSize(name: $0.name, width: $0.height, height: $0.width) }
+                .sorted { $0.width * $0.height < $1.width * $1.height }
+            doc.layouts = sorted.map { (n: String) -> Layout in
+                let ents: [Entity] = paper[n] ?? []
                 var b = BBox2.empty
                 for e in ents { b.add(GeometryOps.bounds(e.geometry, doc: doc)) }
                 for v in paperViewports[n] ?? [] { b.add(v.origin); b.add(v.origin + v.size) }
                 // Smallest standard sheet (landscape) that holds the content.
-                let size = PaperSize.standard.map { $0.width >= $0.height ? $0 : PaperSize(name: $0.name, width: $0.height, height: $0.width) }
-                    .sorted { $0.width * $0.height < $1.width * $1.height }
-                    .first { b.isEmpty || ($0.width >= b.max.x - 1 && $0.height >= b.max.y - 1) } ?? PaperSize.standard[1]
+                let fits: (PaperSize) -> Bool = { b.isEmpty || ($0.width >= b.max.x - 1 && $0.height >= b.max.y - 1) }
+                let size: PaperSize = landscape.first(where: fits) ?? PaperSize.standard[1]
                 return Layout(name: n, paper: layoutPaper[n] ?? size, viewports: paperViewports[n] ?? [], entities: ents, titleBlock: layoutTitle[n] ?? [:])
             }
         }

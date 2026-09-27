@@ -299,7 +299,11 @@ struct R3Xform {
     }
     static func * (a: R3Xform, b: R3Xform) -> R3Xform {
         var r = [Double](repeating: 0, count: 16)
-        for i in 0..<4 { for j in 0..<4 { r[4 * i + j] = (0..<4).reduce(0) { $0 + a.m[4 * i + $1] * b.m[4 * $1 + j] } } }
+        for i in 0..<4 { for j in 0..<4 {
+            var sum = 0.0
+            for k in 0..<4 { sum += a.m[4 * i + k] * b.m[4 * k + j] }
+            r[4 * i + j] = sum
+        } }
         return R3Xform(m: r)
     }
 }

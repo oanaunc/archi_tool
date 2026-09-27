@@ -188,7 +188,10 @@ enum BlockToolCommands {
         }
         let th = ed.settings.textHeight
         let cols = rows.map(\.count).max() ?? 1
-        let widths = (0..<cols).map { c in max(th * 4, Double(rows.map { c < $0.count ? $0[c].count : 0 }.max() ?? 0) * th * 0.7 + th) }
+        let widths: [Double] = (0..<cols).map { (c: Int) -> Double in
+            let longest: Int = rows.map { c < $0.count ? $0[c].count : 0 }.max() ?? 0
+            return max(th * 4, Double(longest) * th * 0.7 + th)
+        }
         let p = try await ed.requirePoint("Specify insertion point") { c in [.table(TableGeom(origin: c, columnWidths: widths, rowHeight: th * 2, cells: rows, textHeight: th))] }
         ed.addEntity(.table(TableGeom(origin: p, columnWidths: widths, rowHeight: th * 2, cells: rows.map { $0 + Array(repeating: "", count: cols - $0.count) }, textHeight: th)))
         ed.print("Extraction table with \(rows.count - 1) row(s) inserted.")

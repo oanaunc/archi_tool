@@ -601,7 +601,7 @@ public enum CommandHelpers {
                 var name = ""
                 while i < c.count, c[i].isLetter || c[i].isNumber { name.append(c[i]); i += 1 }
                 if name == "pi" { return .pi }
-                if name == "e" { return M_E }
+                if name == "e" { return exp(1.0) }
                 guard i < c.count, c[i] == "(" else { return nil }
                 i += 1
                 guard let a = expr(), i < c.count, c[i] == ")" else { return nil }

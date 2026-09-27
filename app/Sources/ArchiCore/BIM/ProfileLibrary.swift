@@ -68,7 +68,13 @@ public enum ProfileLibrary {
         case "gutter-ogee":
             let t = min(w, h) * 0.06
             let front = (0...10).map { k -> Vec2 in let s = Double(k) / 10; return Vec2(w * (0.55 + 0.45 * s), h * (0.5 - 0.5 * cos(s * .pi))) }
-            p = [Vec2(0, h), Vec2(0, 0)] + front.map { Vec2($0.x, $0.y) }.dropFirst() + [Vec2(w - t, h)] + front.reversed().dropFirst().dropLast().map { Vec2($0.x - t, max($0.y, t)) } + [Vec2(t, t), Vec2(t, h)]
+            let inner: [Vec2] = front.reversed().dropFirst().dropLast().map { Vec2($0.x - t, max($0.y, t)) }
+            var q: [Vec2] = [Vec2(0, h), Vec2(0, 0)]
+            q.append(contentsOf: front.dropFirst())
+            q.append(Vec2(w - t, h))
+            q.append(contentsOf: inner)
+            q.append(contentsOf: [Vec2(t, t), Vec2(t, h)])
+            p = q
         case "gutter-box":
             let t = min(w, h) * 0.06
             p = [Vec2(0, 0), Vec2(w, 0), Vec2(w, h), Vec2(w - t, h), Vec2(w - t, t), Vec2(t, t), Vec2(t, h), Vec2(0, h)]

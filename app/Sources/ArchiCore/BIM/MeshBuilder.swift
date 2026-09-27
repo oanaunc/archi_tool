@@ -997,8 +997,15 @@ public enum MeshBuilder {
             }
             if r0 > 1e-12 { acc.cap(RG.circle(o2, r0, segments: n), z: z0, up: false) }
             if r1 > 1e-12 { acc.cap(RG.circle(o2, r1, segments: n), z: z1, up: true) }
-            acc.edges.append((RG.circle(o2, max(r0, 1e-9), segments: n) + [o2 + Vec2(max(r0, 1e-9), 0)]).map { MeshAcc.up($0, z0) })
-            if r1 > 1e-12 { acc.edges.append((RG.circle(o2, r1, segments: n) + [o2 + Vec2(r1, 0)]).map { MeshAcc.up($0, z1) }) }
+            let rb = max(r0, 1e-9)
+            var ring0: [Vec2] = RG.circle(o2, rb, segments: n)
+            ring0.append(o2 + Vec2(rb, 0))
+            acc.edges.append(ring0.map { MeshAcc.up($0, z0) })
+            if r1 > 1e-12 {
+                var ring1: [Vec2] = RG.circle(o2, r1, segments: n)
+                ring1.append(o2 + Vec2(r1, 0))
+                acc.edges.append(ring1.map { MeshAcc.up($0, z1) })
+            }
         case .sphere:
             let r = s.size.x
             guard r > 0 else { return }

@@ -165,8 +165,12 @@ public enum IssueTracker {
 
     /// One-line summary per issue.
     public static func line(_ i: Issue) -> String {
-        "#\(i.id) [\(i.status.rawValue)] \(i.priority == .normal ? "" : i.priority.rawValue.uppercased() + " ")\(i.title)" +
-        (i.assignee.isEmpty ? "" : " → \(i.assignee)") + (i.due.map { " (due \($0))" } ?? "") +
-        (i.elements.isEmpty ? "" : " — " + i.elements.map { "#\($0)" }.joined(separator: ",")) + (i.comments.isEmpty ? "" : " — \(i.comments.count) comments")
+        let priority: String = i.priority == .normal ? "" : i.priority.rawValue.uppercased() + " "
+        var s = "#\(i.id) [\(i.status.rawValue)] \(priority)\(i.title)"
+        if !i.assignee.isEmpty { s += " → \(i.assignee)" }
+        if let due = i.due { s += " (due \(due))" }
+        if !i.elements.isEmpty { s += " — " + i.elements.map { "#\($0)" }.joined(separator: ",") }
+        if !i.comments.isEmpty { s += " — \(i.comments.count) comments" }
+        return s
     }
 }

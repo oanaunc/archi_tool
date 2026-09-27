@@ -191,7 +191,13 @@ public enum Markdown {
                 i += 2
                 while i < lines.count, lines[i].contains("|"), !lines[i].trimmingCharacters(in: .whitespaces).isEmpty {
                     let r = cells(lines[i])
-                    out += "<tr>" + (0..<head.count).map { k in "<td\(k < aligns.count ? aligns[k] : "")>" + (k < r.count ? inline(r[k], linkMap: linkMap) : "") + "</td>" }.joined() + "</tr>\n"
+                    var row = "<tr>"
+                    for k in 0..<head.count {
+                        let align: String = k < aligns.count ? aligns[k] : ""
+                        let cell: String = k < r.count ? inline(r[k], linkMap: linkMap) : ""
+                        row += "<td\(align)>" + cell + "</td>"
+                    }
+                    out += row + "</tr>\n"
                     i += 1
                 }
                 out += "</tbody>\n</table>\n"
