@@ -55,12 +55,13 @@ jobs:
         if: always()
         shell: bash
         run: |
+          set +e +o pipefail   # a summary filter must never stop the log from being published
           os=$(echo "${{ runner.os }}" | tr 'A-Z' 'a-z')
           mkdir -p /tmp/cilog && cd /tmp/cilog
           cp "$GITHUB_WORKSPACE/ci.log" full.log 2>/dev/null || echo "no log" > full.log
           {
             echo "commit ${GITHUB_SHA} · run ${GITHUB_RUN_ID} · outcome ${{ steps.tests.outcome }}"
-            grep -E "error:|exception|primary-file|Assertion|Stack dump|===|Test Suite 'All tests'|Executed [0-9]+ tests|failed \(|Fatal error|Build complete" full.log | head -300
+            grep -E "error:|exception|primary-file|Assertion|Stack dump|^=== |Test Suite 'All tests'|Executed [0-9]+ tests|failed \(|Fatal error|Build complete" full.log > matches.txt; head -300 matches.txt; rm -f matches.txt
             echo "--- last lines"; tail -25 full.log
           } > summary.txt
           git init -q . && git checkout -q -b "ci-log-$os"
