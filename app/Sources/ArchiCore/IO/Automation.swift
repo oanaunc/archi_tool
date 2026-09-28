@@ -66,7 +66,9 @@ public final class AutomationWatcher {
             guard (try? f.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true,
                   let m = AutomationWatcher.modified(f) else { continue }
             guard let r = rules.firstIndex(where: { AutomationWatcher.matches(f.lastPathComponent, $0.pattern) }) else { continue }
-            if let seen = state[f.lastPathComponent], seen >= m { continue }
+            // 1 ms tolerance: the state file stores the time as a JSON number, and swift-corelibs-foundation (Windows, Linux)
+            // writes fewer digits than the 100 ns NTFS timestamp has, so an unchanged file read back a hair "newer".
+            if let seen = state[f.lastPathComponent], seen >= m - 0.001 { continue }
             out.append((f, r))
         }
         return out
