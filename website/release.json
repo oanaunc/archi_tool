@@ -16,7 +16,7 @@
  "features": 1114,
  "total_features": 1157,
  "tests": 945,
- "source_public": false,
+ "source_public": true,
  "gallery": [
   {
    "src": "images/apps/archi-tool/model-front.jpg",
