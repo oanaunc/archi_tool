@@ -424,6 +424,7 @@ jobs:
         if: always()
         timeout-minutes: 3
         run: |
+          set +e +o pipefail   # a filter that matches nothing (grep exit 1) must not end the summary or fail the job
           mkdir -p "$LOGS"; cd "$LOGS"
           {
             echo "commit ${GITHUB_SHA} · run ${GITHUB_RUN_ID} (attempt ${GITHUB_RUN_ATTEMPT}) · version ${{ steps.version.outputs.version }} · job ${{ job.status }}"
