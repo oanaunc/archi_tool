@@ -166,6 +166,7 @@ public final class EngineSession {
             if let r = try await callSheets(method, params) { return r }
             if let r = try await callWorkspace(method, params) { return r }
             if let r = try await callStandards(method, params) { return r }
+            if let r = try await callSystem(method, params) { return r }
             throw EngineError(EngineError.methodNotFound, "Method not found: " + method)
         }
     }
@@ -867,10 +868,15 @@ public final class EngineSession {
         guard let preset = EngineRenderPresets.named(name) else {
             throw EngineError.params("unknown preset '\(name)' (Daylight, Goldenhour, Overcast, Night)")
         }
-        // Same effect as the Mac RENDERPRESET command: one undo step, stored in the drawing.
+        // Same effect as the Mac RENDERPRESET command: one undo step, stored in the drawing (so the drawing is changed),
+        // and the 3D view switches to Realistic to show the look (BeautyRender.swift: m.viewStyle = "Realistic").
         if editor.doc.variable(EngineRenderPresets.variable) != preset {
             editor.transaction("RENDERPRESET") { $0.setVariable(EngineRenderPresets.variable, preset) }
         }
+        view3dStyleChanged("Realistic")
+        var o = EngineObject()
+        o.set("style", "Realistic")
+        hostNotify("setViewStyle", o)
         return renderSettings()
     }
 

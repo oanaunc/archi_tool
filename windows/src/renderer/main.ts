@@ -15,6 +15,7 @@ import { PlanCanvas } from "./canvas/plan-canvas";
 import { help, closeMenus } from "./ui/menu";
 import { icon } from "./icons";
 import { View3D, EngineBridge } from "./view3d";
+import { gradientEnvironment, physicalSkyEnvironment } from "./view3d/render-scene";
 import { installDialogs, handleDialogKey, newFromTemplate } from "./dialogs";
 import { installPartB } from "./partb";
 import { installOutput } from "./output";
@@ -25,6 +26,7 @@ import { installDocTools } from "./doctools";
 import { installSheets, layoutTabsVisible } from "./sheets";
 import { installWorkspace } from "./workspace";
 import { installStandards } from "./standards";
+import { installSystem, rankCommands, ribbonTitles } from "./system";
 
 const app = new App(createEngine());
 (window as any).archiApp = app; // for tests and the script console
@@ -67,6 +69,7 @@ function ensure3D() {
       print: (t) => app.print(t),
     });
     (window as any).archiView3D = view3dWidget;
+    (window as any).archiRenderScene = { gradientEnvironment, physicalSkyEnvironment }; // tests (render-r4.mjs)
     view3dBridge.load().catch((e) => app.print(`3D view: ${e?.message ?? e}`));
   } catch (e: any) {
     view3d.append(h("span", { text: `3D view unavailable: ${e?.message ?? e}` }));
@@ -132,8 +135,9 @@ function commandSearch() {
   const rows = h("div", { class: "rows" });
   const ov = h("div", { class: "overlay" }, h("div", { class: "palette" }, inp, rows));
   const results = () => {
-    const q = inp.value.trim().toLowerCase();
-    return app.hello.commands.filter((c) => !q || c.name.toLowerCase().includes(q) || c.summary.toLowerCase().includes(q) || c.aliases.some((a) => a.toLowerCase() === q)).slice(0, 60);
+    // The Mac ranking (CommandSearch.rank): name, alias, prefix, button title, summary, category, letters in order.
+    const q = inp.value.trim();
+    return q ? rankCommands(q, app.hello.commands, ribbonTitles((n) => app.lookup(n)?.name), 60) : app.hello.commands.slice(0, 60);
   };
   const render = () => {
     clear(rows);
@@ -173,6 +177,8 @@ installHelp(app, { commandSearch });
 installDocTools(app, { editText: (id) => void plan.editObject(id) });
 // Graphic standards, clipboard and sharing: GRAPHICSTYLES, OBJECTSTYLESDIALOG, MATPATTERNDIALOG, IMAGEADJUSTDIALOG, VISUALSTYLES, PASTESPECIAL, COPYPICTURE, SHARE …
 installStandards(app);
+// APPSELFTEST, HELPWINDOW (offline help browser), VRVIEW, SPACEMOUSE and SPELL with the Windows spell checker (system/).
+installSystem(app, { view3d: () => view3dWidget });
 
 // ---- contextual ribbon tabs, sheet commands, crash recovery and file versions (sheets/) ----
 const sheets = installSheets(app, { plan });

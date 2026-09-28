@@ -3,7 +3,7 @@
 # app/Info.plist), installs it per-user, checks the installation (shortcuts, file associations, uninstall entry),
 # smoke-tests the installed app (Playwright for Electron: start screen, Cedar House 2D, 3D Golden hour, LINE,
 # save/reopen, PDF plot) and uninstalls it again. Then the shell test suites run in Chromium against the fixture engine
-# (ui-snapshots, dialogs, partb-tools, canvas, output, windows-conventions, menus-keys, audit-spot, view3d/tools).
+# (ui-snapshots, dialogs, partb-tools, canvas, output, ..., render-r4, shell-polish, system, view3d/tools).
 # Every step writes its own log to winapp-logs/ as it runs; the last steps run even when an earlier step failed or the
 # run was cancelled: logs, screenshots and summary.txt are uploaded as the artifact "winapp-logs" and force-pushed to the
 # branch ci-windows-app (bridge action "winapp-fetch"). The installer itself is a separate workflow artifact.
@@ -53,6 +53,7 @@ jobs:
           need windows/packaging/electron-builder.yml "installer configuration"
           need windows/packaging/installer.nsh "installer additions (per-user install)"
           need windows/packaging/sync-version.mjs "version from app/Info.plist"
+          need windows/packaging/release-files.mjs "SHA256SUMS.txt and release.json for the installer"
           need windows/packaging/collect-dlls.py "Swift runtime DLL collector"
           need windows/packaging/make-ico.py "icon converter"
           need windows/packaging/smoke-electron.mjs "packaged-app smoke test"
@@ -250,6 +251,14 @@ jobs:
           fi
           echo "installers:"; for f in out/*.exe out-arm64/*.exe; do [ -f "$f" ] && echo "  $f  $(stat -c %s "$f") bytes  sha256 $(sha256sum "$f" | cut -d' ' -f1)"; done
           echo "packaged resources:"; (cd out/win-unpacked && find resources -maxdepth 2 | sort)
+          # Release files (windows/README.md "Publishing on the website"): SHA256SUMS.txt and release.json next to each
+          # installer; copies go to the logs (release/, published to ci-windows-app without the .exe).
+          echo "=== release files"
+          node packaging/release-files.mjs || { echo "::error title=Release files::packaging/release-files.mjs failed (09-package.log)"; exit 1; }
+          node packaging/release-files.mjs --verify out || { echo "::error title=Checksum::SHA256SUMS.txt does not match the installer"; exit 1; }
+          mkdir -p "$LOGS/release"; cp out/SHA256SUMS.txt out/release.json "$LOGS/release/"
+          [ -f out-arm64/SHA256SUMS.txt ] && { cp out-arm64/SHA256SUMS.txt "$LOGS/release/SHA256SUMS-arm64.txt"; cp out-arm64/release.json "$LOGS/release/release-arm64.json"; }
+          true
           } 2>&1 | tee "$LOGS/09-package.log"
 
       - name: Upload the installer
@@ -259,7 +268,11 @@ jobs:
           name: Oanarina-Archi-Tool-Windows-${{ steps.version.outputs.version }}
           path: |
             windows/out/Oanarina-Archi-Tool-Setup-*.exe
+            windows/out/SHA256SUMS.txt
+            windows/out/release.json
             windows/out-arm64/Oanarina-Archi-Tool-Setup-*.exe
+            windows/out-arm64/SHA256SUMS.txt
+            windows/out-arm64/release.json
           if-no-files-found: error
           retention-days: 30
           overwrite: true
@@ -406,7 +419,7 @@ jobs:
               || echo "::warning title=Engine fixtures::archi-engine.exe --fixtures failed (13-shell-tests.log)"
           fi
           fail=0
-          for t in ui-snapshots dialogs partb-tools canvas output windows-conventions menus-keys audit-spot audit-ribbon doctools workspace sheets standards render-extras-ui view3d/tools; do
+          for t in ui-snapshots dialogs partb-tools canvas output windows-conventions menus-keys audit-spot audit-ribbon doctools workspace sheets standards render-extras-ui render-r4 shell-polish system view3d/tools; do
             [ -f "test/$t.mjs" ] || { echo "SUITE SKIP test/$t.mjs (not in this commit)"; continue; }
             if [ "$t" = view3d/tools ] && [ ! -f ../build/engine-fixtures/meshes-all-lod2.json ]; then
               echo "SUITE SKIP test/$t.mjs (no build/engine-fixtures/meshes-all-lod2.json: archi-engine.exe was not built)"; continue; fi
@@ -437,7 +450,7 @@ jobs:
             [ -f 04-engine-build.log ] && { echo "=== bundled DLLs"; grep -E "^bundled:|collect-dlls:" 04-engine-build.log; }
             [ -f 05-engine-dlls.log ] && { echo "=== engine"; grep -E "^--version|^engine.hello|^OK:|::error" 05-engine-dlls.log | cut -c1-400; }
             [ -f 07-icons.log ] && { echo "=== icons"; grep -E "icons|FAIL|PASS" 07-icons.log | cut -c1-600; }
-            [ -f 09-package.log ] && { echo "=== installer"; grep -E "^version|Setup-.*bytes" 09-package.log; }
+            [ -f 09-package.log ] && { echo "=== installer"; grep -E "^version|Setup-.*bytes|^note:|^wrote .*SHA256SUMS|^(OK|FAIL)  " 09-package.log; }
             [ -f 10-install.log ] && { echo "=== install"; grep -E "PASS|::error" 10-install.log; }
             [ -f 11-smoke.log ] && { echo "=== smoke"; grep -E "PASS|FAIL|SKIP|smoke:|app:" 11-smoke.log; }
             [ -f 12-uninstall.log ] && { echo "=== uninstall"; grep -E "PASS|::error|::warning" 12-uninstall.log; }

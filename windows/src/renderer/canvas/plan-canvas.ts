@@ -84,6 +84,9 @@ export class PlanCanvas {
   private overlayDirty = true;
   /** MECHANISMPLAY: the poses played over the plan (accent colour). */
   private mechanism: MechanismPlayer | null = null;
+  /** Drawn in world coordinates after the hover highlight, before the command preview (the Mac CanvasView draws the
+   *  drawing compare overlay there: CompareOverlay.draw(ctx, scale:)). */
+  readonly overlayPainters: ((ctx: CanvasRenderingContext2D, scale: number) => void)[] = [];
   private cursorBusy = false;
   private cursorPending = false;
   private lastMiddle = 0;
@@ -196,13 +199,17 @@ export class PlanCanvas {
   // ---- view ----
   private resize() {
     const r = this.el.getBoundingClientRect();
+    // Hidden (3D or Sheet shown, the canvas out of the window): keep the view and its zoom, as the Mac CanvasView keeps
+    // its scale while another view is shown (zoomExtents waits for bounds > 10 pt), so the status bar Zoom stays put.
+    if (r.width < 10 || r.height < 10 || !this.el.isConnected) return;
     this.dpr = window.devicePixelRatio || 1;
     const old = [this.v.w, this.v.h];
     this.v.w = Math.max(1, r.width); this.v.h = Math.max(1, r.height);
     for (const c of [this.content, this.overlay]) { c.width = Math.round(this.v.w * this.dpr); c.height = Math.round(this.v.h * this.dpr); }
     this.contentDirty = this.overlayDirty = true;
     // Split divider / window resize: a view the user never zoomed stays fitted to the drawing.
-    if (!this.userZoomed && !this.paper && (Math.abs(old[0] - this.v.w) > 1 || Math.abs(old[1] - this.v.h) > 1) && this.entries.length) this.zoomExtents(false);
+    if (this.needsInitialZoom && !this.paper && this.entries.length) { this.needsInitialZoom = false; this.zoomExtents(false); }
+    else if (!this.userZoomed && !this.paper && (Math.abs(old[0] - this.v.w) > 1 || Math.abs(old[1] - this.v.h) > 1) && this.entries.length) this.zoomExtents(false);
     this.paintNow();
   }
   private get tw() { return this.v.twist ?? 0; }
@@ -221,6 +228,8 @@ export class PlanCanvas {
     return [Math.min(...pts.map((p) => p[0])), Math.min(...pts.map((p) => p[1])), Math.max(...pts.map((p) => p[0])), Math.max(...pts.map((p) => p[1]))];
   }
   zoomExtents(record = true) {
+    // PlanCanvasView.zoomExtents: not while the canvas has no size (hidden); fit when it is shown again.
+    if (!this.el.isConnected || this.v.w < 10 || this.v.h < 10) { this.needsInitialZoom = true; return; }
     if (this.paper) { this.fitPaper(); return; }
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const e of this.entries) { if (!isFinite(e.bounds[0])) continue; x0 = Math.min(x0, e.bounds[0]); y0 = Math.min(y0, e.bounds[1]); x1 = Math.max(x1, e.bounds[2]); y1 = Math.max(y1, e.bounds[3]); }
@@ -563,6 +572,7 @@ export class PlanCanvas {
     const prm = this.params();
     applyView(ctx, this.v, d);
     if (this.hover && !this.app.selection.ids.includes(this.hover.id!)) paintItems(ctx, this.hover.items, this.v, prm, { colorOverride: "rgba(255,255,255,0.85)", extraWidth: 1.6, fillAlpha: 0.06, noText: false });
+    for (const f of this.overlayPainters) { ctx.save(); f(ctx, this.v.scale); ctx.restore(); }
     const req = this.app.prompt;
     const pointish = req.active && req.kinds.some((k) => k === "point" || k === "distance" || k === "angle");
     if (pointish && this.preview.length && this.mouse) paintItems(ctx, this.preview, this.v, prm);

@@ -8,6 +8,7 @@ import type { View3D, Look, CameraState, FrameOptions } from "../view3d";
 import { PRESETS, presetNamed, lookFrom, UNIT } from "../view3d";
 import { fromSaved } from "../view3d/camera";
 import { environmentFromBytes, type EnvImage } from "../view3d/hdri";
+import { sceneOptions, gradientEnvironment } from "../view3d/render-scene";
 import { out, webFiles } from "./native";
 
 export type V3 = [number, number, number];
@@ -110,36 +111,18 @@ export function solar(utcMs: number, lat: number, lon: number): { altitude: numb
 }
 
 /**
- * The look of a render: the photographic preset (BeautyLighting replaces the sun, sky and camera response), or the
- * custom environment mapped onto the renderer's skies with the site sun at the render date; then exposure, bloom,
- * ambient occlusion, shadow quality / softness and the environment intensity of the window.
+ * The look of a render (RenderEngine.makeScene): the photographic preset (BeautyLighting replaces the sun, sky and camera
+ * response), or the drawing's Realistic view lit by the site sun at the render date with the window's environment map
+ * (Clear Sky, Overcast, Sunset, Studio and Night gradients, the Physical Sky, an HDRI file), shadow quality and softness,
+ * ambient occlusion, bloom and exposure (view3d/render-scene.ts).
  */
-export function lookFor(s: RenderSettings, site: { latitude: number; longitude: number; northAngle: number }): { look: Look; sun: V3 | null; sunLight: { intensity: number; color: V3 } | null } {
-  let look: Look;
-  let sun: V3 | null = null, sunLight: { intensity: number; color: V3 } | null = null;
-  if (s.beauty) {
-    look = lookFrom({ ...PRESETS[presetNamed(s.beauty) ?? "Daylight"], northAngle: site.northAngle });
-    look = { ...look, exposure: look.exposure + s.exposure };
-  } else {
-    const env = s.environment;
-    const base = env === "Sunset" ? "Golden hour" : env === "Overcast" || env === "Studio" ? "Overcast" : env === "Night" ? "Night" : "Daylight";
-    look = lookFrom({ ...PRESETS[base], northAngle: site.northAngle });
-    const p = sunAt(s.day, s.hour, site.latitude, site.longitude, site.northAngle);
-    const altR = p.altitude * Math.PI / 180;
-    if (env !== "Studio") {
-      sun = p.dir;
-      // RenderEngine.makeScene: dusk dims and warms the sun; night keeps it at most 60.
-      let intensity = altR <= 0 ? 0 : 1800 * Math.min(1, Math.sin(altR) * 2.2 + 0.1);
-      if (env === "Night") intensity = Math.min(intensity, 60);
-      sunLight = { intensity: intensity / 1000, color: altR < 0.25 ? [1, 0.78, 0.55] : [1, 0.97, 0.92] };
-    }
-    look = {
-      ...look, exposure: look.exposure + s.exposure, bloom: s.bloom, ao: look.ao * s.ambientOcclusion,
-      envIntensity: look.envIntensity * (s.environmentIntensity / 1.3),
-      shadowRadius: Math.max(0.5, s.shadowSoftness * 0.6), shadowAlpha: s.shadowQuality === "Off" ? 0 : look.shadowAlpha,
-    };
-  }
-  return { look, sun, sunLight };
+export function lookFor(s: RenderSettings, site: { latitude: number; longitude: number; northAngle: number }, doc?: { look: Look; explicit: boolean }):
+    { look: Look; sun: V3 | null; sunLight: { intensity: number; color: V3 } | null; scene: Partial<FrameOptions> & { look: Look; explicitPreset: boolean } } {
+  const st = { look: doc?.look ?? lookFrom({ ...PRESETS.Daylight, northAngle: site.northAngle }), explicit: doc?.explicit ?? false, site };
+  const scene = sceneOptions(s, st);
+  const sun = (scene.sunOverride as V3 | null | undefined) ?? null;
+  const rs = scene.renderScene;
+  return { look: scene.look, sun, sunLight: rs ? { intensity: rs.sunIntensity, color: rs.sunColor } : null, scene };
 }
 
 /** White balance of the finished image (BeautyRenderer.whiteBalance: neutral K → 6500 K), in linear light. */
@@ -191,22 +174,27 @@ export async function renderImage(view: View3D, o: RenderOptions): Promise<Pixel
   const v = view as any;
   let cam: CameraState = view.getCamera();
   if (o.camera) cam = fromSaved(o.camera, UNIT, o.verticalCorrection !== false);
-  const { look, sun, sunLight } = lookFor(s, o.site);
+  const { scene } = lookFor(s, o.site, { look: v.lookState ?? view.getLook(), explicit: !!v.explicit });
   const ss = o.supersample ?? (s.antialias ? Math.max(1, s.supersample) : 1);
   const style = o.style === "Sketch" ? "Sketchy" : "Realistic";
+  const rs = scene.renderScene ? { ...scene.renderScene } : null;
+  // Sun study frames: an explicit sun direction and light.
+  if (o.sun && rs) { rs.sunIntensity = o.sun.intensity; rs.sunColor = o.sun.color.map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)) as V3; rs.ambient = o.sun.intensity <= 0 ? 90 : 260; }
   const fo: FrameOptions = {
-    width: w, height: h, camera: cam, style, look, explicitPreset: true, quality: "final", supersample: ss, selection: new Set(),
+    width: w, height: h, camera: cam, style, look: scene.look, explicitPreset: scene.explicitPreset, quality: "final", supersample: ss, selection: new Set(),
     sectionBox: v.box ?? null, sectionPlane: v.plane ?? null, northAngle: o.site.northAngle,
-    sunOverride: o.sun ? o.sun.dir : sun, sunLight: o.sun ? { intensity: o.sun.intensity, color: o.sun.color } : sunLight,
+    sunOverride: o.sun ? o.sun.dir : (scene.sunOverride ?? null),
+    sunLight: o.sun && !rs ? { intensity: o.sun.intensity, color: o.sun.color } : null,
+    renderScene: rs,
     weather: v.weather ?? null, fog: v.fog ?? null, water: v.water ?? null, time: 1, particles: false,
     background: s.background === "White" ? "white" : s.background === "Transparent" ? "transparent" : "sky",
-    // Render window extras (RenderEngine.makeScene): clay model, depth of field, HDRI environment.
+    // Render window extras (RenderEngine.makeScene): clay model, depth of field, environment map or HDRI file.
     // AODIALOG (AOForm.viewport): the stronger of the window's occlusion and the drawing's, with the drawing's radius;
     // a photographic preset sets its own (BeautyLighting.configure runs last).
-    aoOverride: !s.beauty && v.aoOverride ? { intensity: Math.max(look.ao, v.aoOverride.intensity), radius: v.aoOverride.radius } : null,
+    aoOverride: !s.beauty && v.aoOverride ? v.aoOverride : null,
     clay: !!s.clay,
     dof: s.depthOfField ? { focus: Math.max(0, s.focusDistance ?? 0), fStop: s.fStop ?? 2.8 } : null,
-    envImage: !s.beauty && s.environment === "HDRI File" && s.hdriPath ? await hdriImage(s.hdriPath) : null,
+    envImage: s.beauty ? null : s.environment === "HDRI File" ? (s.hdriPath ? await hdriImage(s.hdriPath) : null) ?? gradientEnvironment("Clear Sky") : scene.envImage ?? null,
   };
   let px: Pixels = view.renderer.renderPixels(view.scene, fo);
   view.invalidate();

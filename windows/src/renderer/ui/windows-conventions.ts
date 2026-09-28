@@ -2,12 +2,15 @@
 // Windows conventions on top of the Mac layout: the Mac's ⌘ shortcuts are Ctrl here (main.ts keyboard map), plus
 //   F1            help for the running (or typed) command: its section of the user guide
 //                 (https://www.oanarinaldi.com/archi-tool-guide.html#<section>; the Mac's HelpPages.contextRoute)
-//   Alt+letter    opens the title-bar menu starting with that letter (Alt+F File, Alt+E Edit, Alt+V View, Alt+H Help …)
+//   Alt+letter    opens the title-bar menu with that access key (Alt+F File, Alt+E Edit, Alt+V View, Alt+D Draw, Alt+M Modify,
+//                 Alt+N Annotate, Alt+A Architecture, Alt+O Model, Alt+Y Analyze, Alt+T Tools, Alt+W Window, Alt+H Help;
+//                 titlebar.ts menuMnemonics), the letters underlined while Alt is held
 //   Ctrl+W / Ctrl+F4   close the window · Ctrl+Shift+Z   redo (as well as Ctrl+Y) · Alt+F4   exit (native on Windows)
 //   native caption buttons (snap layouts) when the main process uses titleBarOverlay (body.native-captions)
 //   high-DPI: moving the window to a monitor with another scale factor re-sizes the canvases (event "archi:dpr").
 import type { App } from "../app";
 import ui from "../data/ui.generated.json";
+import { placeAccessKeys } from "./titlebar";
 
 export const GUIDE_URL = "https://www.oanarinaldi.com/archi-tool-guide.html";
 
@@ -50,10 +53,16 @@ export function installWindowsConventions(app: App) {
     if (ctrl && !e.altKey && e.shiftKey && e.code === "KeyZ") { stop(); void app.redo(); return; }
     if (e.altKey && !ctrl && !e.shiftKey && /^Key[A-Z]$/.test(e.code)) {
       const letter = e.code.slice(3).toLowerCase();
-      const btn = [...document.querySelectorAll<HTMLButtonElement>(".titlebar .menubar button")].find((b) => (b.textContent ?? "").trim().toLowerCase().startsWith(letter));
-      if (btn) { stop(); btn.click(); }
+      const btn = [...document.querySelectorAll<HTMLButtonElement>(".titlebar .menubar button")].find((b) => b.dataset.mnemonic === letter);
+      if (btn) { stop(); document.body.classList.remove("alt-cues"); btn.click(); }
     }
+    if (e.key === "Alt" && !ctrl) { placeAccessKeys(); document.body.classList.add("alt-cues"); }
+    else if (!e.altKey) document.body.classList.remove("alt-cues");
   }, true);
+  const hideCues = () => document.body.classList.remove("alt-cues");
+  addEventListener("keyup", (e) => { if (e.key === "Alt") hideCues(); }, true);
+  addEventListener("blur", hideCues);
+  addEventListener("mousedown", hideCues, true);
 
   // Per-monitor DPI: devicePixelRatio changes without a CSS resize when the window moves to another display.
   let mq: MediaQueryList | null = null;

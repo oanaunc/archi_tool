@@ -8,6 +8,7 @@ import "./canvas";
 import "./spell";
 import "./workspace";
 import "./standards";
+import "./system";
 
 const bridge: ArchiBridge = {
   async rpc(method, params) {

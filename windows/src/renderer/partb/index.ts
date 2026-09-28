@@ -29,6 +29,9 @@ export interface PlanHooks {
   toWorld(x: number, y: number): [number, number];
   center(): [number, number];
   zoomTo(r: [number, number, number, number]): void;
+  /** Adds a painter to the plan canvas overlay (world coordinates, after the hover highlight). */
+  addOverlayPainter(f: (ctx: CanvasRenderingContext2D, scale: number) => void): void;
+  repaint(): void;
 }
 
 /** The tutorial videos on the website (the Mac records them with TUTORIALRECORD Record). */
@@ -44,6 +47,8 @@ export function installPartB(app: App, o: { plan: PlanLike; ribbon?: Ribbon; pan
     toWorld: (x, y) => o.plan.toWorld(x, y),
     center: () => { const v = plan.view(); return [v.cx, v.cy]; },
     zoomTo: (r) => o.plan.zoomTo(r),
+    addOverlayPainter: (f) => { (p.overlayPainters as unknown[] | undefined)?.push(f); },
+    repaint: () => { p.refresh?.(); },
   };
   const con = new ScriptConsole(app);
   N.initScripts(app);

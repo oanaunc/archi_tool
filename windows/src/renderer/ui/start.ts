@@ -63,7 +63,8 @@ export class StartScreen {
     const sg = h("div", { class: "grid s" });
     for (const s of SAMPLES) {
       const th = h("div", { class: "thumb big" });
-      const c = h("button", { class: "card2" }, th, h("div", { class: "n" }, icon("star.fill", 10), h("span", { text: s.name })), h("div", { class: "d", text: s.subtitle }));
+      const star = icon("star.fill", 10); star.setAttribute("fill", "currentColor");  // SF "star.fill" is a solid star
+      const c = h("button", { class: "card2" }, th, h("div", { class: "n" }, star, h("span", { text: s.name })), h("div", { class: "d", text: s.subtitle }));
       c.addEventListener("click", () => app.openSample(s.name));
       sg.append(c);
       paintThumbnail(th, `assets/samples/${s.name}.thumb.json`, "house");

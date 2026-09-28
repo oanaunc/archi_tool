@@ -78,7 +78,7 @@ for (const [line, re] of [["NAVIGATOR", /Navigator/], ["NOTIFICATIONS", /Restore
   await cmd(line); const t = await page.evaluate(() => document.body.innerText); check(`${line} fills its panel`, re.test(t)); await esc();
 }
 await cmd("FLOATPANEL Layers"); await wait(300);
-check("FLOATPANEL Layers floats the panel", await A(() => !!document.querySelector("[class*=float]")));
+check("FLOATPANEL Layers floats the panel", await A(() => !!window.archiWorkspace?.floatingWindow("Layers") || !!document.querySelector("[class*=float]")));
 check("no page errors", errors.length === 0, errors.slice(0, 3).join(" / "));
 console.log(JSON.stringify(out, null, 1).slice(0, 3000));
 console.log(fails ? `${fails} failed` : "all passed");

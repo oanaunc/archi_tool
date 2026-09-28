@@ -144,6 +144,8 @@ extension EngineSession {
         for c in EngineUICommands.overrides { registry.register(c) }
         // Help and window chrome: About, command search, clean screen, history panel, start screen, sample, what's new.
         for c in EngineHelpCommands.all where registry.lookup(c.name) == nil { registry.register(c) }
+        // Self test, help browser, VR headset page and SpaceMouse (EngineSystemCommands.swift).
+        for c in EngineSystemCommands.all where registry.lookup(c.name) == nil { registry.register(c) }
         // 3D view: section box / plane, cameras, gizmo, measure, levels, navigation, weather, animation, panoramas.
         for c in EngineView3DCommands.all where registry.lookup(c.name) == nil { registry.register(c) }
         // Render, materials and environment: lights, fog, water, scatter, billboards, PBR maps, 4D video, mechanisms.

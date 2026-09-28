@@ -30,6 +30,9 @@ input { font: inherit; color: inherit; }
 .titlebar .title .icon { color: var(--dim); }
 body.inactive .titlebar .title { color: var(--faint); }
 .titlebar .captions { margin-left: auto; display: flex; height: 100%; -webkit-app-region: no-drag; }
+.titlebar .menubar button { position: relative; }
+.titlebar .menubar .mn { position: absolute; height: 1px; background: currentColor; display: none; pointer-events: none; }
+body.alt-cues .titlebar .menubar .mn { display: block; }
 .titlebar .captions button { width: 46px; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text); }
 .titlebar .captions button:hover { background: rgba(255,255,255,0.08); }
 .titlebar .captions button.close:hover { background: #C42B1C; color: #fff; }
@@ -111,10 +114,11 @@ body.inactive .titlebar .title { color: var(--faint); }
 /* ---- Panels ---- */
 .panels { flex: none; display: flex; flex-direction: column; background: var(--panel); min-height: 0; }
 /* SwiftUI centres the 6×25 pt tab grid and the float/close column in the panel (PanelsView.swift). */
-.panel-tabs { display: flex; justify-content: center; background: var(--tabbar); }
+.panel-tabs { display: flex; justify-content: center; align-items: center; background: var(--tabbar); }
 .panel-tabs .grid { width: 150px; flex: none; display: grid; grid-template-columns: repeat(6, 25px); }
 .panel-tabs .ptab { height: 36px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--dim); position: relative; min-width: 0; }
-.panel-tabs .ptab .t { font-size: 8.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; padding: 0 1px; }
+.panel-tabs .ptab { width: 25px; }
+.panel-tabs .ptab .t { font-size: 8.5px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; padding: 0; }
 .panel-tabs .ptab.sel { color: var(--accent); background: var(--hover); }
 .panel-tabs .ptab.sel::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--accent); }
 .panel-tabs .side { display: flex; flex-direction: column; padding: 0 2px; }
@@ -183,6 +187,7 @@ body.inactive .titlebar .title { color: var(--faint); }
 .statusbar .dropfield { height: 20px; font-size: 12.5px; }
 .statusbar .right { margin-left: auto; display: flex; align-items: center; gap: 10px; padding-right: 10px; }
 .statusbar .right button { color: var(--dim); display: flex; align-items: center; gap: 4px; }
+.statusbar .right button.mbtn { color: var(--text); font-size: 13px; font-weight: 600; gap: 3px; }
 .statusbar .sel { color: var(--accent); display: flex; gap: 4px; align-items: center; }
 .agent-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); }
 
@@ -213,11 +218,11 @@ body.inactive .titlebar .title { color: var(--faint); }
 .start .grid.t { grid-template-columns: repeat(3, 1fr); }
 .start .grid.s { grid-template-columns: repeat(2, 1fr); }
 .start .grid.r { grid-template-columns: repeat(3, 1fr); }
-.card2 { display: flex; flex-direction: column; gap: 6px; padding: 8px; background: rgba(27,28,31,0.4); border: 1px solid var(--sep); border-radius: 8px; text-align: left; }
+.card2 { display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 8px; background: rgba(27,28,31,0.4); border: 1px solid var(--sep); border-radius: 8px; text-align: left; }
 .card2:hover { background: var(--hover); border-color: rgba(245,197,24,0.7); }
-.card2 .thumb { height: 70px; border-radius: 6px; background: var(--canvas); display: flex; align-items: center; justify-content: center; color: var(--accent); overflow: hidden; }
+.card2 .thumb { align-self: stretch; width: 100%; box-sizing: border-box; flex: none; height: 70px; border-radius: 6px; background: var(--canvas); display: flex; align-items: center; justify-content: center; color: var(--accent); overflow: hidden; }
 .card2 .thumb.big { height: 100px; }
-.card2 .thumb canvas { width: 100%; height: 100%; }
+.card2 .thumb canvas { display: block; width: 100%; height: 100%; }
 .card2 .n { font: 600 12px var(--ui); color: var(--text); display: flex; gap: 5px; align-items: center; }
 .card2 .n .icon { color: var(--accent); }
 .card2 .d { font-size: 10px; color: var(--dim); line-height: 1.35; }

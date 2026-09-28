@@ -117,23 +117,33 @@ check("Content ▸ Add All adds the rest", (await app(() => window.archiApp.laye
 await shot("content");
 
 // ---- Floating panels ----
+// Each floating panel is a separate OS window (window.open "archi-float:<tab>"; a BrowserWindow owned by the drawing
+// window in Electron), like the Mac's NSPanel — not a box inside the drawing window.
+const popups = [];
+page.context().on("page", (p) => popups.push(p));
+const floatWin = async (tab) => { for (const p of popups) if (!p.isClosed() && (await p.evaluate(() => window.name).catch(() => "")) === "archi-float:" + tab) return p; return null; };
 await run("FLOATPANEL Layers");
-await wait(400);
-check("FLOATPANEL Layers floats the panel in its own window", !!(await page.$('.ws-floatpanel[data-window="float:Layers"]')));
+await wait(600);
+const layersWin = await floatWin("Layers");
+check("FLOATPANEL Layers floats the panel in its own OS window", !!layersWin && !(await page.$('.ws-floatpanel[data-window="float:Layers"]')) && (await layersWin.title()) === "Layers");
 const docked = await page.$$eval(".panels:not(.floating) .ptab .t", (els) => els.map((e) => e.textContent));
 check("a floating panel leaves the docked tab strip", !docked.includes("Layers") && docked.length === 13, docked.join(","));
-const floatText = (await page.textContent('.ws-floatpanel[data-window="float:Layers"] .panel-body')) ?? "";
+const floatText = layersWin ? ((await layersWin.textContent('.ws-floatwin[data-window="float:Layers"] .panel-body')) ?? "") : "";
 check("the floating panel shows the layer list", floatText.includes("Continuous"), floatText.slice(0, 80));
+check("the floating window is the Mac's 300×520 panel", JSON.stringify(layersWin?.viewportSize()) === JSON.stringify({ width: 300, height: 520 }), JSON.stringify(layersWin?.viewportSize()));
 await run("FLOATPANEL Quick Props");
-await wait(300);
-check("FLOATPANEL Quick Props (two words, from the menus)", !!(await page.$('.ws-floatpanel[data-window="float:Quick Props"]')));
+await wait(500);
+const quickWin = await floatWin("Quick Props");
+check("FLOATPANEL Quick Props (two words, from the menus)", !!quickWin);
+if (layersWin) await layersWin.screenshot({ path: path.join(out, "workspace-floating-layers.png") });
 await shot("floating");
-await page.click('.ws-floatpanel[data-window="float:Layers"] .ws-floathead .iconbtn');
-await wait(300);
+if (layersWin) await layersWin.click('.ws-floathead .iconbtn');
+await wait(400);
 const docked2 = await page.$$eval(".panels:not(.floating) .ptab .t", (els) => els.map((e) => e.textContent));
-check("the dock button puts it back and shows it", !(await page.$('.ws-floatpanel[data-window="float:Layers"]')) && docked2.includes("Layers") && (await app(() => window.archiApp.panelTab)) === "Layers");
-await page.click('.ws-floatpanel[data-window="float:Quick Props"] .pb-close');
-await wait(200);
+check("the dock button puts it back and shows it", !!layersWin?.isClosed() && docked2.includes("Layers") && (await app(() => window.archiApp.panelTab)) === "Layers");
+if (quickWin) await quickWin.close({ runBeforeUnload: true });
+await wait(400);
+check("closing the window docks the panel", !!quickWin?.isClosed() && (await page.$$eval(".panels:not(.floating) .ptab .t", (els) => els.map((e) => e.textContent))).includes("Quick Props"));
 check("remembered floating set is empty after docking", (await app(() => localStorage.getItem("archi.floatingPanels.open"))) === "[]");
 
 // ---- Tiled views ----

@@ -12,6 +12,8 @@ import {
   viewDirection, basis, viewMatrix, projMatrix, zRange,
 } from "./camera";
 import { ViewCube } from "./viewcube";
+import { SceneSettings, defaultSceneSettings, sceneOptions } from "./render-scene";
+import type { EnvImage } from "./hdri";
 import { setBillboards, BillboardItem } from "./billboards";
 import { V3, add, sub, scale, len, norm, mul, invert, transform, clamp } from "./math";
 import { View3DExtras, ExtrasHost } from "./extras";
@@ -496,25 +498,36 @@ export class View3D {
   }
 
   /**
-   * 360° panoramas (PANORAMA, STEREOPANORAMA / RenderEngine.stereoPanorama): six 90° cube faces from the eye (model mm)
-   * resampled to an equirectangular image centred on north; stereo renders each of `slices` longitude slices from eyes
-   * offset sideways by half the interpupillary distance and stacks the eyes over-under (left on top).
+   * 360° panoramas (PANORAMA, STEREOPANORAMA / RenderEngine.panorama, stereoPanorama): 90° cube faces (w / 4 pixels,
+   * 4× MSAA, no supersampling, no vignetting) rendered from the eye (model mm) with the Render window's scene
+   * (RenderEngine.makeScene: `settings`, default RenderSettings() — the clear sky, the site sun on 21 June at 15:00),
+   * resampled nearest-texel to an equirectangular image centred on north; stereo renders each of `slices` longitude
+   * slices from eyes offset sideways by half the interpupillary distance and stacks the eyes over-under (left on top).
    */
-  async panorama(o: { eye: V3; width: number; stereo?: boolean; ipd?: number; slices?: number; format?: "PNG" | "JPEG"; preset?: string }): Promise<Blob> {
+  async panorama(o: { eye: V3; width: number; stereo?: boolean; ipd?: number; slices?: number; format?: "PNG" | "JPEG"; preset?: string;
+    settings?: SceneSettings; envImage?: EnvImage | null }): Promise<Blob> {
     const w = Math.max(256, o.width - (o.width % 2)), h = w / 2;
-    const face = Math.max(64, Math.floor(w / 4));
+    const face = o.stereo ? Math.max(64, Math.floor(w / 4)) : Math.max(128, Math.floor(w / 4));
     const prev = this.style;
     this.style = "Realistic";
     await this.whenTexturesLoaded();
     this.style = prev;
-    const presetName = presetNamed(o.preset ?? this.lookState.preset) ?? "Daylight";
-    const look = lookFrom({ ...PRESETS[presetName], northAngle: this.northAngle });
+    const settings: SceneSettings = o.settings ?? { ...defaultSceneSettings(), beauty: o.preset ? presetNamed(o.preset) : null };
+    const site = this.extras.site;
+    const so = sceneOptions(settings, { look: this.lookState, explicit: this.explicit, site: { latitude: site.latitude, longitude: site.longitude, northAngle: this.northAngle } });
+    if (o.envImage) so.envImage = o.envImage;
     let faceCount = 0;
     const renderFace = (eye: V3, f: number) => {
       const cf = CUBE_FACES[f];
       const e = scale(eye, UNIT);
       const cam: CameraState = { eye: e, target: add(e, cf.front), up: cf.up, fov: 90, ortho: false, orthoScale: 10, shiftY: 0 };
-      const px = this.renderPixelsNow({ width: face, height: face, supersample: 1, cameraState: cam, verticalCorrection: false, reuseShadow: faceCount > 0 }, cam, look, false);
+      const fo: FrameOptions = {
+        ...this.frameOptions(face, face), ...so, camera: cam, style: "Realistic", quality: "final", supersample: 1, selection: new Set(),
+        // The Mac draws each face over white: a transparent background comes out white.
+        background: settings.background === "Sky" ? "sky" : "white", noVignette: true, dof: null, clay: !!settings.clay,
+        time: this.extras.animTime >= 0 ? this.extras.animTime : 1, particles: false, reuseShadow: faceCount > 0,
+      };
+      const px = this.renderer.renderPixels(this.scene, fo);
       faceCount++;
       return px;
     };

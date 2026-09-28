@@ -13,6 +13,7 @@ import { fakeDocCall } from "./doctools/fake-doctools";
 import { fakeSheetsCall } from "./sheets/fake-sheets";
 import { fakeWorkspaceCall } from "./workspace/fake-workspace";
 import { fakeStandardsCall } from "./standards/fake-standards";
+import { fakeSystemCall } from "./system/fake-system";
 
 type Raw = { id: string | null; layer?: string; items: any[] };
 const PREVIEW = "#DBE0EB";
@@ -38,6 +39,9 @@ export class FakeEngine implements Engine {
   private cmd: null | { name: string; pts: [number, number][]; step: number; cursor: [number, number] } = null;
   private lastCommand = "";
   private nextId = 100000;
+  /** RENDERPRESET of the drawing (render.preset) and the 3D view style the engine asked for (view3d.info). */
+  private renderPreset: string | null | undefined = undefined;
+  private visualStyle: string | null = null;
 
   constructor(private base: string) {
     this.ready = this.load();
@@ -106,6 +110,8 @@ export class FakeEngine implements Engine {
 
   async call(method: string, params: any = {}): Promise<any> {
     await this.ready;
+    const sys = fakeSystemCall(this as any, method, params);
+    if (sys !== undefined) return sys;
     const wsr = fakeWorkspaceCall(this as any, method, params);
     if (wsr !== undefined) return wsr;
     const gsr = fakeStandardsCall(this as any, method, params);
@@ -191,7 +197,33 @@ export class FakeEngine implements Engine {
       case "panel.set": return this.panelSet(params);
       case "file.export": this.log(`Exported ${params.path ?? ""}`); return { path: params.path, format: params.format, bytes: 0 };
       case "file.import": this.log(`Import needs archi-engine (fixture mode): ${params.path}`); return { summary: "nothing imported", entityIds: [], elementIds: [] };
-      case "render.settings": case "render.preset": return this.rec(method)?.result ?? { preset: params.name ?? "Daylight" };
+      case "render.settings": {
+        const want = this.renderPreset ?? "Daylight";
+        return this.rec("render.preset", (p, r) => r?.preset === want)?.result ?? this.rec(method)?.result ?? { preset: want };
+      }
+      case "render.preset": {
+        // As the engine (and the Mac RENDERPRESET): one undo step in the drawing and the 3D view switches to Realistic.
+        const r = this.rec("render.preset", (p) => String(p.name ?? "").toLowerCase().replace(/\s/g, "") === String(params.name ?? "").toLowerCase().replace(/\s/g, ""))?.result
+          ?? { preset: params.name ?? "Daylight" };
+        if (this.renderPreset !== r.preset) { this.renderPreset = r.preset; this.info.dirty = true; this.changed("document"); }
+        this.visualStyle = "Realistic";
+        this.emit("host", { action: "setViewStyle", style: "Realistic" });
+        return r;
+      }
+      case "view3d.setVariable": {
+        const n = String(params.name ?? "").toUpperCase();
+        if (n === "VSCURRENT") this.visualStyle = params.value ?? null;
+        if (n === "RENDERPRESET") { this.renderPreset = params.value ?? null; this.info.dirty = true; }
+        break;
+      }
+      case "view3d.info": {
+        const r = this.rec("view3d.info")?.result;
+        if (!r) break;
+        const o = JSON.parse(JSON.stringify(r));
+        if (this.renderPreset !== undefined) { o.renderPreset = this.renderPreset; o.variables = { ...(o.variables ?? {}), RENDERPRESET: this.renderPreset }; }
+        if (this.visualStyle) o.visualStyle = this.visualStyle;
+        return o;
+      }
       case "model.meshes": {
         // The recorded Cedar House meshes (meshes-level-0.json: Ground Floor, full detail) when that drawing is open.
         const rec = this.info.empty ? null : await this.fetchJSON("meshes-level-0.json");

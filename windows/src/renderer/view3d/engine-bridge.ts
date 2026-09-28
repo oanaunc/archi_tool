@@ -98,13 +98,12 @@ export class EngineBridge {
     if (this.loading) return this.loading;
     this.loading = (async () => {
       const binary = this.opts.binaryPath ?? (this.opts.readBinary ? true : undefined);
-      const [meshes, settings] = await Promise.all([
-        this.engine.call("model.meshes", { level: "all", lod: this.opts.lod ?? 0, ...(binary != null ? { binary } : {}) }) as Promise<MeshesResult>,
-        this.engine.call("render.settings", {}).catch(() => null),
-      ]);
+      const meshes = await (this.engine.call("model.meshes", { level: "all", lod: this.opts.lod ?? 0, ...(binary != null ? { binary } : {}) }) as Promise<MeshesResult>);
       let bin: ArrayBuffer | undefined;
       if (meshes?.binary && this.opts.readBinary) bin = await this.opts.readBinary(meshes.binary);
-      const doc = await this.documentData();
+      // Read the preset after the (slow) mesh load, together with view3d.info, so a RENDERPRESET set meanwhile is not
+      // overwritten by a stale render.settings.
+      const [doc, settings] = await Promise.all([this.documentData(), this.engine.call("render.settings", {}).catch(() => null)]);
       this.applyDocument(doc, settings);
       this.view.setModel(meshes, bin);
       // Animations split doors after the meshes exist.
@@ -139,6 +138,14 @@ export class EngineBridge {
     const explicit = doc.renderPreset !== undefined ? !!doc.renderPreset : vars.RENDERPRESET != null ? !!presetNamed(vars.RENDERPRESET) : true;
     this.view.setRenderSettings(settings, explicit);
     this.hasInfo = true;
+  }
+
+  /** The drawing's lighting preset (render.settings + view3d.info renderPreset) without reloading the model. */
+  async refreshLook() {
+    const [doc, settings] = await Promise.all([this.documentData(), this.engine.call("render.settings", {}).catch(() => null)]);
+    const vars = doc.variables ?? {};
+    const explicit = doc.renderPreset !== undefined ? !!doc.renderPreset : vars.RENDERPRESET != null ? !!presetNamed(vars.RENDERPRESET) : !!settings;
+    this.view.setRenderSettings(settings, explicit);
   }
 
   /** view3d.info (saved cameras incl. Front / Aerial / Corner, section box and plane, projection, visual style, preset, maps …). */
@@ -228,7 +235,9 @@ export class EngineBridge {
         if (p.style) { this.styleFromEngine = true; this.view.setStyle(String(p.style)); }
         // VISUALSTYLES Current: a custom style is its base plus overrides (standards/index.ts).
         if (p.custom) this.view.setCustomStyle(p.custom);
-        if (String(p.style).toLowerCase() === "realistic") this.engine.call("render.settings", {}).then((s) => this.view.setRenderSettings(s, true)).catch(() => {});
+        // RENDERPRESET / render.preset: the look of the drawing's preset (none after "Off": the default daylight look),
+        // as Scene3DBuilder.update reads BeautyPreset.current(doc) when the Mac viewport switches to Realistic.
+        if (String(p.style).toLowerCase() === "realistic") this.refreshLook().catch(() => {});
         break;
       case "setView": if (p.view) this.view.setView(String(p.view)); break;
       case "zoomExtents": this.view.zoomExtents(); break;
@@ -259,14 +268,29 @@ export class EngineBridge {
       case "wheel": x.toggleWheel(!!p.on); break;
       case "animate": await this.refreshInfo(); x.play(!!p.play); break;
       case "animationFrame": {
-        await this.refreshInfo();
-        x.prepareDoors();
+        // ANIMATE Frame (PathTraceFile.render): the path tracer at the frame time — moved objects and swinging door
+        // leaves (EnginePathTraceAnimation.swift) — 960 × 540, denoised, the neutral light mix, from the 3D view's camera.
         const t = Number(p.time ?? 1);
-        x.animTime = t; x.applyAnimations(t);
-        const png = await v.renderToPNG({ width: 960, height: 540, supersample: 2 });
-        x.animTime = -1; x.applyLevelView();
-        const out = await this.save(p.path ?? null, png, p.path);
-        if (out) this.opts.print?.(`Frame at ${fmt(t, 2)} s (${p.samples ?? 32} samples) → ${out}`);
+        const samples = Math.max(1, Math.round(Number(p.samples ?? 32)));
+        const c = v.getCamera(), mm = (a: number[]) => a.map((q) => q / UNIT);
+        const camera = { eye: mm(c.eye), target: mm(c.target), fov: c.fov, orthographic: c.ortho };
+        const out = p.path ?? (this.opts.chooseSavePath ? await this.opts.chooseSavePath(p.suggested ?? "frame.png") : null);
+        if (!out) break;
+        try {
+          await this.engine.call("pathtrace.start", { width: 960, height: 540, samples, denoise: true, ev: 0, mix: { sun: 1, sky: 1, artificial: 1 }, camera, time: t, sync: true });
+          const st = await this.engine.call("pathtrace.status", { image: false }).catch(() => null);
+          const r = await this.engine.call("pathtrace.save", { path: out });
+          this.opts.print?.(`Frame at ${fmt(t, 2)} s (${st?.samples ?? samples} samples) → ${r?.path ?? out}`);
+        } catch {
+          // Engines without the path tracer: the photographic frame with the animation applied.
+          await this.refreshInfo();
+          x.prepareDoors();
+          x.animTime = t; x.applyAnimations(t);
+          const png = await v.renderToPNG({ width: 960, height: 540, supersample: 2 });
+          x.animTime = -1; x.applyLevelView();
+          const saved = await this.save(out, png, p.path);
+          if (saved) this.opts.print?.(`Frame at ${fmt(t, 2)} s (${samples} samples) → ${saved}`);
+        }
         break;
       }
       case "panorama": {

@@ -10,6 +10,7 @@ import { installPartB, attachPartB } from "./partb";
 import { installOutput } from "./output";
 import { installWorkspace } from "./workspace";
 import { installStandards } from "./standards";
+import { installSystem } from "./system";
 
 interface DocRequest { kind: string; path?: string }
 
@@ -55,6 +56,7 @@ function requestFromArgs(argv: string[], cwd = process.cwd()): DocRequest {
   const args = argv.slice(app.isPackaged ? 1 : 2);
   const file = args.find((a) => DOC_FILE.test(a) && !a.startsWith("--"));
   if (file) return { kind: "open", path: path.resolve(cwd, file) };
+  if (args.includes("--selftest")) return { kind: "selftest" }; // APPSELFTEST headless (src/main/system.ts)
   const s = args.indexOf("--sample");
   if (s >= 0 && args[s + 1]) return { kind: "sample", path: args[s + 1] };
   return { kind: "start" };
@@ -98,12 +100,37 @@ function createWindow(request: DocRequest | null = { kind: "start" }): BrowserWi
   engine.on("exit", (message: string) => { if (!win.isDestroyed()) win.webContents.send("engine:notify", { method: "engineExit", params: { message } }); });
   try { engine.start(); } catch (e: any) { entry.engine = null; engine = null; }
   attachPartB(win, () => entry.engine);
+  // Floating panels (renderer workspace/float.ts, FloatingPanels.swift): window.open("", "archi-float:<tab>") becomes a
+  // real tool window owned by this drawing window; any other window.open goes to the browser (https only).
+  win.webContents.setWindowOpenHandler(({ frameName, url }) => {
+    if (frameName.startsWith("archi-float:")) return { action: "allow", overrideBrowserWindowOptions: floatingPanelWindowOptions(win, frameName.slice("archi-float:".length)) };
+    if (/^https:\/\//.test(url)) void shell.openExternal(url);
+    return { action: "deny" };
+  });
+  win.webContents.on("did-create-window", (child, { frameName }) => {
+    if (!frameName.startsWith("archi-float:")) return;
+    child.setMenu(null);
+    // NSPanel .nonactivatingPanel / becomesKeyOnlyIfNeeded: appears without taking the focus from the drawing.
+    child.once("ready-to-show", () => { if (!child.isDestroyed() && !child.isVisible()) child.showInactive(); });
+    setTimeout(() => { if (!child.isDestroyed() && !child.isVisible()) child.showInactive(); }, 400);
+  });
   const sendState = () => { if (!win.isDestroyed()) win.webContents.send("window:state", { maximized: win.isMaximized(), focused: win.isFocused() }); };
   for (const ev of ["maximize", "unmaximize", "focus", "blur", "enter-full-screen", "leave-full-screen"] as const) win.on(ev as any, sendState);
   win.once("ready-to-show", () => { win.show(); });
   win.on("closed", () => { entry.engine?.stop(); windows.delete(id); });
   win.loadFile(path.join(__dirname, "../renderer/index.html"));
   return win;
+}
+
+/** A floating panel window (the Mac's NSPanel: titled, closable, resizable utility window, 300×520, min 240×240): owned
+ *  by the drawing window (stays above it, minimises and closes with it), no taskbar button, no maximise/minimise. */
+export function floatingPanelWindowOptions(parent: BrowserWindow, title: string): Electron.BrowserWindowConstructorOptions {
+  return {
+    // Size and position come from the window.open features (the remembered frame, else 300×520 near the top-right).
+    parent, title, show: false, minWidth: 240, minHeight: 240,
+    minimizable: false, maximizable: false, fullscreenable: false, skipTaskbar: true, autoHideMenuBar: true,
+    backgroundColor: (lightTheme ? THEME.light : THEME.dark).bg, icon: path.join(resourcesDir(), "icon.ico"),
+  };
 }
 
 function entryFor(e: Electron.IpcMainInvokeEvent) { return windows.get(e.sender.id); }
@@ -160,6 +187,7 @@ installPartB({ resources: resourcesDir() });
 installOutput();
 installWorkspace();
 installStandards();
+installSystem({ icon: path.join(resourcesDir(), "icon.ico") });
 if (isWin) app.setAppUserModelId(APP_ID);
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) app.quit();

@@ -28,7 +28,7 @@ to `done`, `partial`, `wip` or `n/a (reason)`: the generator keeps every non-tod
 | Theme | 50 |
 | **Total checklist lines** | **2904** |
 
-Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parity audit; open items in docs/WINDOWS-GAPS.md)
+Items not `todo`: 2903 — **done 2882 · partial 14 · todo 1 · n/a 7** (parity audit; open items in docs/WINDOWS-GAPS.md)
 
 ## Command coverage
 
@@ -807,7 +807,7 @@ Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parit
 | done | Output ▸ Schedules ▸ CSV ▸ Slabs schedule (CSV)… | `@export:csv:slabs` |
 | done | Output ▸ Schedules ▸ CSV ▸ All schedule (CSV)… | `@export:csv:all` |
 | done | Output ▸ Schedules ▸ View | `SCHEDULE` |
-| partial | Tab Manage | 5 groups |
+| done | Tab Manage | 5 groups |
 | done | Manage ▸ Panels (group) |  |
 | done | Manage ▸ Panels ▸ Layers | `@panel:Layers` |
 | done | Manage ▸ Panels ▸ Browser | `@panel:Browser` |
@@ -822,7 +822,7 @@ Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parit
 | done | Manage ▸ Cleanup (group) |  |
 | done | Manage ▸ Cleanup ▸ Purge | `PURGE` |
 | done | Manage ▸ Cleanup ▸ Audit | `AUDIT` |
-| partial | Manage ▸ More (group) |  |
+| done | Manage ▸ More (group) |  |
 | done | Manage ▸ More ▸ Settings (menu) | Settings and system variables |
 | done | Manage ▸ More ▸ Settings ▸ Settings ▸ Options | `OPTIONS` |
 | done | Manage ▸ More ▸ Settings ▸ Settings ▸ Units | `UNITS` |
@@ -894,7 +894,7 @@ Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parit
 | done | Manage ▸ More ▸ Settings ▸ System Variables ▸ TRIMMODE | `TRIMMODE` |
 | done | Manage ▸ More ▸ Settings ▸ System Variables ▸ WALLHEIGHT | `WALLHEIGHT` |
 | done | Manage ▸ More ▸ Settings ▸ System Variables ▸ WALLTHICKNESS | `WALLTHICKNESS` |
-| partial | Manage ▸ More ▸ Tools (menu) | Action recorder, aliases, scripting, help |
+| done | Manage ▸ More ▸ Tools (menu) | Action recorder, aliases, scripting, help |
 | done | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Record Action | `ACTRECORD` |
 | done | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Stop Recording | `ACTSTOP` |
 | done | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Play Action | `ACTPLAY` |
@@ -911,7 +911,7 @@ Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parit
 | done | Manage ▸ More ▸ Tools ▸ Help ▸ Command List | `COMMANDS` |
 | done | Manage ▸ More ▸ Tools ▸ Help ▸ Search Commands | `COMMANDSEARCH` |
 | done | Manage ▸ More ▸ Tools ▸ Help ▸ About | `ABOUT` |
-| todo: command APPSELFTEST is not registered in archi-engine | Manage ▸ More ▸ Tools ▸ Help ▸ Self Test | `APPSELFTEST` |
+| done | Manage ▸ More ▸ Tools ▸ Help ▸ Self Test | `APPSELFTEST` |
 | done | Manage ▸ More ▸ Tools ▸ Help ▸ Export Command Reference | `EXPORTCOMMANDS` |
 | done | Tab Script | 3 groups |
 | done | Script ▸ Scripting (group) |  |
@@ -1654,12 +1654,12 @@ Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parit
 | done | Tools ▸ Start & Templates ▸ Save as Template | `SAVEASTEMPLATE` |
 | done | Tools ▸ Start & Templates ▸ Theme | `THEME` |
 | done | Tools ▸ Start & Templates ▸ Constraint Bar | `CONSTRAINTBAR` |
-| partial | Tools ▸ Help |  |
+| done | Tools ▸ Help |  |
 | done | Tools ▸ Help ▸ Help | `HELP` |
 | done | Tools ▸ Help ▸ Command List | `COMMANDS` |
 | done | Tools ▸ Help ▸ Search Commands | `COMMANDSEARCH` |
 | done | Tools ▸ Help ▸ About | `ABOUT` |
-| todo: command APPSELFTEST is not registered in archi-engine | Tools ▸ Help ▸ Self Test | `APPSELFTEST` |
+| done | Tools ▸ Help ▸ Self Test | `APPSELFTEST` |
 | done | Tools ▸ Help ▸ Export Command Reference | `EXPORTCOMMANDS` |
 | done | Tools ▸ Review & Markup |  |
 | done | Tools ▸ Review & Markup ▸ Markups | `MARKUP` |
@@ -1880,8 +1880,8 @@ Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parit
 | done | Tools ▸ Navigation & Sheets ▸ Quick Properties | `QUICKPROPS` |
 | done | Tools ▸ Navigation & Sheets ▸ Inspector | `INSPECT` |
 | done | Tools ▸ Navigation & Sheets ▸ Design Center | `ADCENTER` |
-| todo: command HELPWINDOW is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Help Browser | `HELPWINDOW` |
-| done | Tools ▸ Navigation & Sheets ▸ Tutorials | `TUTORIALS` |
+| done | Tools ▸ Navigation & Sheets ▸ Help Browser | `HELPWINDOW` |
+| partial: opens the website guide; the Mac opens the offline help browser (system/help-browser.ts showHelpBrowser exists) | Tools ▸ Navigation & Sheets ▸ Tutorials | `TUTORIALS` |
 | done | Tools ▸ Navigation & Sheets ▸ Sample House | `SAMPLEHOUSE` |
 | done | Tools ▸ Navigation & Sheets ▸ Select Wall Chain | `SELECTWALLCHAIN` |
 | done | Tools ▸ Navigation & Sheets ▸ Twist View | `DVIEW` |
@@ -2090,7 +2090,7 @@ Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parit
 | done | Tools ▸ BIM Graphics & Systems ▸ Electrical Circuits | `CIRCUIT` |
 | done | Tools ▸ BIM Graphics & Systems ▸ Panel Schedule | `PANELSCHEDULE` |
 | done | Tools ▸ BIM Graphics & Systems ▸ Room Data Sheets | `ROOMDATASHEET` |
-| partial | Tools ▸ Render, Materials & Environment |  |
+| done | Tools ▸ Render, Materials & Environment |  |
 | done | Tools ▸ Render, Materials & Environment ▸ Path Tracer | `PATHTRACE` |
 | done | Tools ▸ Render, Materials & Environment ▸ Light Mix | `LIGHTMIX` |
 | done | Tools ▸ Render, Materials & Environment ▸ PBR Maps | `MATMAPS` |
@@ -2102,7 +2102,7 @@ Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parit
 | done | Tools ▸ Render, Materials & Environment ▸ Water | `WATER` |
 | done | Tools ▸ Render, Materials & Environment ▸ Scatter Plants | `SCATTER` |
 | done | Tools ▸ Render, Materials & Environment ▸ Animate Objects | `ANIMATE` |
-| todo: command SPACEMOUSE is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ SpaceMouse | `SPACEMOUSE` |
+| done | Tools ▸ Render, Materials & Environment ▸ SpaceMouse | `SPACEMOUSE` |
 | done | Tools ▸ Render, Materials & Environment ▸ Customize Ribbon | `CUI` |
 | done | Tools ▸ Render, Materials & Environment ▸ Node Packages | `NODEPACKAGE` |
 | done | Tools ▸ Render, Materials & Environment ▸ Graphic Styles | `GRAPHICSTYLES` |
@@ -2154,7 +2154,7 @@ Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parit
 | done | Tools ▸ Adaptive, Corners & Roofs ▸ Scripted Component | `SCRIPTCOMPONENT` |
 | done | Tools ▸ Adaptive, Corners & Roofs ▸ Sketch Environment | `SKETCHPAD` |
 | done | Tools ▸ Adaptive, Corners & Roofs ▸ Sketch Plane | `SKETCHPLANE` |
-| partial | Tools ▸ Styles, Patterns & Occlusion |  |
+| done | Tools ▸ Styles, Patterns & Occlusion |  |
 | done | Tools ▸ Styles, Patterns & Occlusion ▸ Object Styles… | `OBJECTSTYLESDIALOG` |
 | done | Tools ▸ Styles, Patterns & Occlusion ▸ Object Styles (command) | `OBJECTSTYLES` |
 | done | Tools ▸ Styles, Patterns & Occlusion ▸ Text Styles… | `TEXTSTYLEDIALOG` |
@@ -2162,7 +2162,7 @@ Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parit
 | done | Tools ▸ Styles, Patterns & Occlusion ▸ Ambient Occlusion… | `AODIALOG` |
 | done | Tools ▸ Styles, Patterns & Occlusion ▸ Ambient Occlusion (command) | `AMBIENTOCCLUSION` |
 | done | Tools ▸ Styles, Patterns & Occlusion ▸ Crash Reports | `CRASHREPORTS` |
-| todo: command VRVIEW is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ VR Headset View | `VRVIEW` |
+| done | Tools ▸ Styles, Patterns & Occlusion ▸ VR Headset View | `VRVIEW` |
 | done | Tools ▸ Styles, Patterns & Occlusion ▸ Edit Text In Place | `TEXTEDITINPLACE` |
 | done | Tools ▸ Styles, Patterns & Occlusion ▸ Material Fill Patterns… | `MATPATTERNDIALOG` |
 | done | Tools ▸ Styles, Patterns & Occlusion ▸ Floor Pattern | `FLOORPATTERN` |
@@ -2239,15 +2239,15 @@ Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parit
 | done | Window ▸ Zoom | system |
 | n/a (macOS only) | Window ▸ Bring All to Front | system |
 | partial | Menu Help | 13 items |
-| done | Help ▸ Oanarina Archi Tool Help (F1) | `HELP` |
-| done | Help ▸ Tutorials | `HELP` |
+| partial: opens the website guide; the Mac opens the offline help browser (system/help-browser.ts showHelpBrowser exists) | Help ▸ Oanarina Archi Tool Help (F1) | `HELP` |
+| partial: opens the website guide; the Mac opens the offline help browser (system/help-browser.ts showHelpBrowser exists) | Help ▸ Tutorials | `HELP` |
 | done | Help ▸ Open Sample House | `@ui:WindowRouter.open` |
 | done | Help ▸ Search Commands… | `COMMANDSEARCH` · Ctrl+K |
 | done | Help ▸ Command Reference | `@ui:window:command-reference` · Ctrl+Shift+/ |
 | done | Help ▸ User Guide | `@openURL` |
 | done | Help ▸ Keyboard Shortcuts | `@ui:window:keyboard-shortcuts` |
 | done | Help ▸ Start Screen | `STARTSCREEN` |
-| todo: command APPSELFTEST is not registered in archi-engine | Help ▸ Check Command Coverage | `APPSELFTEST` |
+| done | Help ▸ Check Command Coverage | `APPSELFTEST` |
 | done | Help ▸ Export Command Reference… | `EXPORTCOMMANDS` |
 | done | Help ▸ Customize Shortcuts… | `@ui:window:PreferencesWindow.shortcuts` |
 | done | Help ▸ Connect Claude… | `CONNECTCLAUDE` |
@@ -2868,7 +2868,7 @@ Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parit
 | done | Right-click [Right-click] Enter while a command runs · context menu when idle |  |
 | done | Tab [Tab] Accept autocomplete |  |
 | done | ↑ / ↓ [↑ / ↓] Command history / suggestions |  |
-| done | F1 [F1] Help for the running command | Windows help key: matches the Mac (context help) → F1 |
+| partial: opens the website guide; the Mac opens the offline help browser (system/help-browser.ts showHelpBrowser exists) | F1 [F1] Help for the running command | Windows help key: matches the Mac (context help) → F1 |
 | done | F2 [F2] Command history panel |  |
 | done | F3 [F3] Object snap on/off |  |
 | done | F7 [F7] Grid display |  |
@@ -2917,10 +2917,10 @@ Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parit
 
 | Status | Item | Command / detail |
 | --- | --- | --- |
-| partial: cosmetic: 2.1-3.1 levels from the Mac; cedar 5-7 levels too bright in flat light | Lighting preset Daylight | sky=daylight, sunAltitude=46, sunAzimuth=222, sunColor=[1.0, 0.955, 0.89], sunIntensity=3300, shadowRadius=2.5, shadowAlpha=0.94, envIntensity=1.05 … |
-| partial: cosmetic: 2.0-2.7 levels from the Mac; cedar +5-6. Smoke test on Windows: the interactive 3D view did not show the warm look after the preset was set | Lighting preset Golden hour | sky=golden, sunAltitude=11, sunAzimuth=228, sunColor=[1.0, 0.66, 0.38], sunIntensity=3400, shadowRadius=5, shadowAlpha=0.9, envIntensity=0.95 … |
-| partial: 4.6 levels from the Mac; limestone +12 | Lighting preset Overcast | sky=overcast, sunAltitude=58, sunAzimuth=200, sunColor=[0.93, 0.96, 1.0], sunIntensity=420, shadowRadius=22, shadowAlpha=0.7, envIntensity=1.55 … |
-| partial: cosmetic: 1.7 levels from the Mac; the Mac's bollard light pools are brighter | Lighting preset Night | sky=night, sunAltitude=38, sunAzimuth=135, sunColor=[0.62, 0.72, 1.0], sunIntensity=70, shadowRadius=6, shadowAlpha=0.85, envIntensity=1.0 … |
+| done | Lighting preset Daylight | sky=daylight, sunAltitude=46, sunAzimuth=222, sunColor=[1.0, 0.955, 0.89], sunIntensity=3300, shadowRadius=2.5, shadowAlpha=0.94, envIntensity=1.05 … |
+| done | Lighting preset Golden hour | sky=golden, sunAltitude=11, sunAzimuth=228, sunColor=[1.0, 0.66, 0.38], sunIntensity=3400, shadowRadius=5, shadowAlpha=0.9, envIntensity=0.95 … |
+| done | Lighting preset Overcast | sky=overcast, sunAltitude=58, sunAzimuth=200, sunColor=[0.93, 0.96, 1.0], sunIntensity=420, shadowRadius=22, shadowAlpha=0.7, envIntensity=1.55 … |
+| partial: cosmetic: 1.8 levels from the Mac; the Mac's bollards cast shadows inside their own light pools | Lighting preset Night | sky=night, sunAltitude=38, sunAzimuth=135, sunColor=[0.62, 0.72, 1.0], sunIntensity=70, shadowRadius=6, shadowAlpha=0.85, envIntensity=1.0 … |
 | done | Visual style Wireframe |  |
 | done | Visual style Hidden Line |  |
 | done | Visual style Shaded |  |
@@ -2929,7 +2929,7 @@ Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parit
 | done | Visual style Realistic |  |
 | done | Visual style X-Ray |  |
 | done | Visual style Sketchy |  |
-| partial: clay, depth of field and HDRI done; the Clear Sky / Sunset / Studio / Night / Physical Sky environments approximate the Mac gradient maps | Photographic render (RENDER) with presets, supersampling, PNG output |  |
+| done | Photographic render (RENDER) with presets, supersampling, PNG output |  |
 | done | Walk mode (WASD + mouse) |  |
 | done | Section box |  |
 | done | Sun study (animated sun and shadows) |  |
@@ -2937,7 +2937,7 @@ Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parit
 | done | 3D gizmo (move/rotate) |  |
 | done | Camera paths and walkthrough video |  |
 | done | Render queue |  |
-| partial: rendered with the photographic look, not the Mac panorama renderer | 360° panorama |  |
+| done | 360° panorama |  |
 | done | Measure 3D |  |
 | done | Split view (plan + 3D) |  |
 

@@ -20,7 +20,8 @@
     "test:icons": "node test/icons.mjs",
     "test:win": "node tools/gen-ui-data.mjs && node build.mjs --web && node test/windows-conventions.mjs && node packaging/smoke-electron.mjs --web test-results/smoke-web",
     "version:sync": "node packaging/sync-version.mjs",
-    "dist": "node packaging/sync-version.mjs && npm run build && python packaging/make-ico.py .. packaging/build/icon.ico && electron-builder --win --x64 --config packaging/electron-builder.yml --publish never"
+    "dist": "node packaging/sync-version.mjs && npm run build && python packaging/make-ico.py .. packaging/build/icon.ico && electron-builder --win --x64 --config packaging/electron-builder.yml --publish never && node packaging/release-files.mjs",
+    "release:files": "node packaging/release-files.mjs"
   },
   "devDependencies": {
     "electron": "^33.2.0",

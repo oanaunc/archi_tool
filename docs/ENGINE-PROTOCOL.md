@@ -178,7 +178,9 @@ The photographic presets of the Mac Realistic view (`ArchiApp/BeautyLighting.swi
  "lampGlow":1,"northAngle":0,"presets":["Daylight","Golden hour","Overcast","Night"]}
 ```
 `name`: Daylight, Goldenhour, Overcast, Night (lenient: "golden hour", "sunset", "cloudy" …). Stored in the drawing
-(RENDERPRESET variable) as one undo step. `sunColor` is linear RGB; `sunIntensity` is SceneKit lux-like units (scale
+(RENDERPRESET variable) as one undo step (the drawing is changed, as by the Mac RENDERPRESET command), and like that command
+it sends the `host` notification `{"action":"setViewStyle","style":"Realistic"}` (the Mac sets the viewport style to Realistic),
+so the 3D view shows the preset's sky, sun, shadows and exposure. `sunColor` is linear RGB; `sunIntensity` is SceneKit lux-like units (scale
 for three.js); `shadowRadius` is in shadow-map texels.
 
 ### panel.layers / panel.levels / panel.properties / panel.materials / panel.sheets / panel.history `{}`
@@ -456,7 +458,7 @@ Rendering:
 - `render.window {}` → Render window state (presets from `render.presets`, output sizes, the look, sun, camera list, saved cameras). `render.queueName {name, folder?}` → a free file name for a queue job.
 - `render.pass {pass, width, height, path?}` → data passes (depth, normal, object id, material id, AO) computed in the engine; `image` data URL when no `path`.
 - `camerapath.list {}` · `camerapath.set {paths}` (CAMERAPATHS) · `camerapath.frames {path|label, fps, cameras?, seconds?}` → Catmull-Rom cameras per frame. `render.sunFrames {day, fromHour, toHour, fps, seconds}` → sun directions for a sun study.
-- `pathtrace.start {width?, height?, samples?, camera?|cameraName?, environment?, day?, hour?, clay?, ground?, lod?, mix?, denoise?, ev?, sync?}` → `{triangles, lights, textures, width, height, target, status}`; runs on a background thread. `pathtrace.status {image?=true, mix?, denoise?, ev?}` → `{running, samples, target, seconds, status, image}` · `pathtrace.stop` · `pathtrace.save {path}` · `pathtrace.mix {sun, sky, artificial}` (light mixer without re-rendering).
+- `pathtrace.start {width?, height?, samples?, camera?|cameraName?, environment?, day?, hour?, clay?, ground?, lod?, mix?, denoise?, ev?, time?, sync?}` → `{triangles, lights, textures, width, height, target, status}`; runs on a background thread. `time` (seconds) places the OBJANIM animations — moved objects and swinging door leaves — and the water waves at that moment (the shell's ANIMATE Frame: 960 × 540, denoised, neutral light mix, then `pathtrace.save`, as the Mac PathTraceFile.render). `pathtrace.status {image?=true, mix?, denoise?, ev?}` → `{running, samples, target, seconds, status, image}` · `pathtrace.stop` · `pathtrace.save {path}` · `pathtrace.mix {sun, sky, artificial}` (light mixer without re-rendering).
 - `webviewer.export {path}` → a stand-alone HTML 3D viewer of the model (WEBVIEWEREXPORT).
 
 Commands and `host` notifications: PLOT sends `{action:"plot"}` (the shell opens the print dialog; `PLOT <file>` writes the PDF in the engine). PREVIEW, PRINTSETUP, BATCHPUBLISH, PLOTSTYLE, RENDERQUEUE, CAMERAPATHEDIT and PATHTRACE send `{action:"dialog", dialog:"plotPreview"|"printSetup"|"batchPublish"|"plotStyles"|"renderQueue"|"cameraPaths"|"pathTrace"}`; RENDER sends `{action:"render"}` (Render window). Operations the engine cannot finish alone send `{action:"output", op:…}`: `publish` (PUBLISH without a file name), `sheetSVG`, `openFile`, `lightMix`, `renderSave` (RENDERSAVE), `renderToFile` (RENDERTOFILE: the shell renders beauty with WebGL, the engine writes data passes), `video` (WALKTHROUGHVIDEO / SUNSTUDYVIDEO / turntable: MP4 via WebCodecs in the shell) and `shadePlotRender`. PLOTSTYLENAME, PLOTAREA, SHADEPLOT, PLOTLOG and EXPORTPDF finish in the engine. `file.export {format:"pdf"}` plots the active sheet or the model.
@@ -619,6 +621,26 @@ Methods (each edit is one undo step with the Mac label):
 SHADEPLOT Rendered viewports without a render stored by the shell (plots from the command line, MCP or batch, or a drawing
 whose render file is gone) are drawn with the portable path tracer, framed like the hidden-line projection, misses white
 (`EngineShadePlot.pathTracedImage`, cached per drawing and camera).
+
+### Self test, help browser, VR, SpaceMouse and spelling (Host/EngineSystemCommands.swift)
+Portable versions of the last Mac UI-layer commands, same names, aliases, prompts and messages; the shell side is
+`windows/src/renderer/system/`:
+- `APPSELFTEST` (`SELFTEST`) runs the engine's checks (node graphs, sheet sets, help routes, VR page, spelling, SpaceMouse
+  status). When the shell has set `ui.prefs {"selfTest.shell":"1"}` it sends `{"action":"selfTest","passed":n,"failures":[…]}`
+  and the shell adds its checks (catalogue, coverage, command search, help pages, SpaceMouse maths and HID reports, spell
+  checker) and prints the Mac report; headless the engine prints `FAIL: …` and `N check(s) passed, M failed.` itself.
+  `selftest.run {}` → `{passed, failures}`. `Oanarina Archi Tool.exe --selftest` runs it and exits 0 / 1.
+- `HELPWINDOW` (`DOCS`, `HELPBROWSER`, `MANUAL`; prompt "Command or topic [Tutorials/Shortcuts/Scripting] (Enter = index)")
+  → `{"action":"helpBrowser","route":"index"|"cmd/LINE"|"tutorials"|"shortcuts"|"scripting"}`; an unknown name fails with
+  `Unknown command "X".` The shell's help browser also shows the bundled user guide (route `guide`).
+- `VRVIEW` (`WEBXR`, `VREXPORT`, `HEADSETVIEW`; "After saving [Open/Reveal/Save] <Reveal>") writes `<drawing>-VR.html`
+  (EngineWebViewer, next to the drawing or on the Desktop) and sends `{"action":"vrView","path","mode":"Open"|"Reveal"}`.
+- `SPACEMOUSE` (`3DMOUSE`, `NDOF`, `3DCONNEXION`; "SpaceMouse [On/Off/Object/Fly/Sensitivity/Status] <Status>") reads the
+  shell's `ui.prefs` `spaceMouse.enabled|mode|sensitivity|available|devices`, sends `{"action":"spaceMouse","enabled",
+  "mode","sensitivity"}` on a change and prints `SpaceMouse on, Object mode, sensitivity 1; devices: none connected.`
+- `spell.verdicts {misspelled:{word:[suggestions]}}` → `{misspelled:n}` installs the Windows spell checker's answers as the
+  engine's checker, so `SPELL` runs as on the Mac (NSSpellChecker). The shell sends it (after `spell.words {all:true}`)
+  before every command line that starts `SPELL`.
 
 ## A complete LINE exchange (from `build/engine-fixtures/line-sequence.json`)
 

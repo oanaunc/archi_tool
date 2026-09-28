@@ -15,7 +15,7 @@ const common = { bundle: true, sourcemap: true, logLevel: "warning", target: "es
 
 await esbuild.build({ ...common, entryPoints: ["src/main/main.ts"], outfile: "dist/main/main.js", platform: "node", format: "cjs", external: ["electron"] });
 await esbuild.build({ ...common, entryPoints: ["src/preload/preload.ts"], outfile: "dist/preload/preload.js", platform: "node", format: "cjs", external: ["electron"] });
-await esbuild.build({ ...common, entryPoints: ["src/renderer/main.ts"], outfile: "dist/renderer/renderer.js", platform: "browser", format: "iife", loader: { ".json": "json" } });
+await esbuild.build({ ...common, entryPoints: ["src/renderer/main.ts"], outfile: "dist/renderer/renderer.js", platform: "browser", format: "iife", loader: { ".json": "json", ".md": "text" } }); // .md: the user guide in the help browser
 
 // Script console worker: a Node worker thread in the main process, a Web Worker for the browser build.
 await esbuild.build({ ...common, entryPoints: ["src/shared/script-worker.ts"], outfile: "dist/main/script-worker.js", platform: "node", format: "cjs" });

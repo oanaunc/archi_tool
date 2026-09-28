@@ -106,6 +106,12 @@ required("renderer ready (body.ready)", ok);
 await page.waitForTimeout(800);
 await shot("01-start-screen");
 if (!required("start screen visible", await page.isVisible(".start .card").catch(() => false))) await finish(1);
+// Plan thumbnails of both bundled samples (Cedar House and Nordic House .thumb.json), and full-width thumbnail boxes.
+const thumbs = await page.evaluate(() => ({
+  samples: document.querySelectorAll(".start .grid.s .thumb canvas").length,
+  fullWidth: [...document.querySelectorAll(".start .card2")].every((c) => { const t = c.querySelector(".thumb"); return !!t && Math.abs(t.getBoundingClientRect().width - (c.clientWidth - 16)) <= 1; }),
+})).catch((e) => ({ error: String(e) }));
+check("start screen: plan thumbnails for both samples, full-width thumbnail boxes", thumbs.samples === 2 && thumbs.fullWidth, JSON.stringify(thumbs));
 const hello = await page.evaluate(() => window.archiApp?.hello ?? null).catch(() => null);
 check("engine answered engine.hello", hello && Array.isArray(hello.commands), hello ? `version ${hello.version}, ${hello.commands?.length} commands` : "no hello (engine missing or crashed; see app.log)", !web);
 if (!web) {
@@ -127,7 +133,25 @@ const before = await itemCount();
 required("plan has drawing items", before > 0, `${before} DrawItems`);
 if (!ok) await finish(1);
 
+// ---- 2b. a floating panel is a separate OS window (FloatingPanels.swift's NSPanel) ----
+if (!web) {
+  await page.evaluate(() => window.archiWorkspace?.floatPanel("Layers")).catch(() => {});
+  await page.waitForTimeout(2000);
+  const wins = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().map((w) => ({ title: w.getTitle(), owned: !!w.getParentWindow(), visible: w.isVisible(), size: w.getContentSize(), focused: w.isFocused() }))).catch((e) => String(e));
+  const fw = Array.isArray(wins) ? wins.find((w) => w.title === "Layers") : null;
+  check("FLOATPANEL Layers opens a separate window owned by the drawing window", !!fw && fw.owned && fw.visible, JSON.stringify(wins));
+  for (const p of app.windows()) {
+    if ((await p.evaluate(() => window.name).catch(() => "")) === "archi-float:Layers") { await p.screenshot({ path: path.join(out, "07-floating-panel.png"), timeout: 60_000 }).catch(() => {}); break; }
+  }
+  await page.evaluate(() => window.archiWorkspace?.floatingWindow?.("Layers")?.close()).catch(() => {});
+  await page.waitForTimeout(1000);
+  const docked = await page.evaluate(() => [...document.querySelectorAll(".panels:not(.floating) .ptab .t")].map((e) => e.textContent)).catch(() => []);
+  const left = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length).catch(() => -1);
+  check("closing the floating window docks the panel again", docked.includes("Layers") && left === 1, `${left} windows; docked: ${docked.join(",")}`);
+}
+
 // ---- 3. 3D view, Golden hour ----
+const zoom2D = await page.evaluate(() => document.querySelector(".zoom")?.textContent ?? "").catch(() => "");
 await page.evaluate(() => window.archiApp?.setUI?.("mode", "3D")).catch(() => {});
 await page.waitForTimeout(1000);
 const preset = await page.evaluate(async () => {
@@ -140,6 +164,11 @@ const preset = await page.evaluate(async () => {
 check("Golden hour preset applied", /clicked|render\.preset Goldenhour/.test(preset), preset);
 check("3D view has a canvas", (await page.locator(".workspace canvas").count().catch(() => 0)) > 0);
 await page.waitForTimeout(web ? 1500 : 6000);
+// As the Mac: the preset switches the viewport to Realistic with the preset's look, and the status bar keeps the plan zoom.
+const look3D = await page.evaluate(() => { const v = window.archiView3D; return v ? { style: v.getStyle(), preset: v.getLook().preset, explicit: v.explicit } : null; }).catch(() => null);
+check("3D view shows Realistic with the Golden hour look", look3D?.style === "Realistic" && look3D?.preset === "Golden hour" && look3D?.explicit === true, JSON.stringify(look3D));
+const zoom3D = await page.evaluate(() => document.querySelector(".zoom")?.textContent ?? "").catch(() => "");
+check("status bar Zoom in 3D is the plan's", !!zoom2D && zoom3D === zoom2D, `2D "${zoom2D}", 3D "${zoom3D}"`);
 await shot("03-cedar-3d-golden-hour");
 
 // ---- 4. LINE in the command line ----

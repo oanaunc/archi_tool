@@ -845,6 +845,9 @@ enum EPTSceneBuilder {
         var folder: URL?
         /// Level of detail of the meshes (0 = full, as the Mac; MeshLOD levels for quick previews and tests).
         var lod = 0
+        /// Seconds into the object animations (ANIMATE Frame, as PTSceneBuilder.Options.time): water waves, moved
+        /// objects and swinging door leaves.
+        var time = 0.0
     }
 
     static func isVegetation(_ material: String) -> Bool {
@@ -969,6 +972,7 @@ enum EPTSceneBuilder {
         var cache: [String: Int] = [:]
         var matIndex: [String: Int] = [:]
         let weather = doc.variable(EngineWeather.variable).flatMap(EngineWeather.init(stored:)) ?? EngineWeather()
+        let anims = EngineObjectAnimation.load(doc)
         for g in MeshBuilder.build(doc: doc) where !g.mesh.isEmpty {
             let mi: Int
             if let i = matIndex[g.material] { mi = i } else {
@@ -981,7 +985,13 @@ enum EPTSceneBuilder {
                 let lg = MeshLOD.build(g)
                 mesh = lg.levels[min(o.lod, lg.levels.count - 1)]
             }
-            scene.add(mapped(mesh, material: g.material, doc: doc), material: mi)
+            let m = mapped(mesh, material: g.material, doc: doc)
+            // Object animation at the render time (VIS-045): whole objects move; door leaves swing.
+            if !anims.isEmpty, let parts = EngineObjectAnimation.meshes(m, group: g, anims: anims, doc: doc, time: o.time) {
+                for part in parts { scene.add(part, material: mi) }
+            } else {
+                scene.add(m, material: mi)
+            }
         }
         if o.ground {
             var gm = EPTMaterial()
@@ -991,6 +1001,7 @@ enum EPTSceneBuilder {
             let base = Float(doc.levels.map(\.elevation).min() ?? 0)
             scene.groundZ = scene.tris.isEmpty ? base : min(base, scene.boundsMin.z) - 1
         }
+        scene.time = Float(o.time)
         scene.buildBVH()
         let info = doc.info
         let s = EngineOutputFormat.sun(day: o.day, hour: o.hour, latitude: info.latitude, longitude: info.longitude, tz: (info.longitude / 15).rounded())
@@ -1104,6 +1115,7 @@ extension EngineSession {
         if let c = p["clay"]?.boolValue { o.clay = c }
         if let g = p["ground"]?.boolValue { o.ground = g }
         if let l = p["lod"]?.intValue { o.lod = max(0, l) }
+        if let t = p["time"]?.doubleValue { o.time = t }
         var cam: Camera? = p["camera"].flatMap { EngineOutputFormat.camera(from: $0) }
         if cam == nil, let name = p["cameraName"]?.stringValue { cam = editor.doc.namedViews.first { $0.name.caseInsensitiveCompare(name) == .orderedSame }?.camera }
         if cam == nil { cam = view3d.camera }

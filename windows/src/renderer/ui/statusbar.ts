@@ -99,10 +99,12 @@ export class StatusBar {
     clear(this.right);
     if (app.selection.ids.length) this.right.append(h("span", { class: "sel" }, icon("cursorarrow.rays", 11), h("span", { text: `${app.selection.ids.length} selected` })));
     this.right.append(this.prog);
-    const iso = h("button", {}, icon("eye", 13)); help(iso, "Isolate or hide the selected objects");
+    // Isolate, annotation scale and units are borderless menu buttons on the Mac (Menu .borderlessButton), which AppKit
+    // draws at the 13 pt control size in the label colour — larger and brighter than the 10 pt dim status texts.
+    const iso = h("button", { class: "mbtn" }, icon("eye", 16)); help(iso, "Isolate or hide the selected objects");
     iso.addEventListener("click", () => showMenu([{ title: "Isolate Selection", disabled: !app.selection.ids.length, action: () => app.runCommand("ISOLATEOBJECTS") },
       { title: "Hide Selection", disabled: !app.selection.ids.length, action: () => app.runCommand("HIDEOBJECTS") }, { separator: true }, { title: "End Isolation", action: () => app.runCommand("UNISOLATEOBJECTS") }], iso));
-    const ann = h("button", {}, icon("square.3.layers.3d.middle.filled", 13), h("span", { text: app.sysvars.CANNOSCALE ?? "1:1", style: { color: "var(--text)", fontSize: "11px" } }));
+    const ann = h("button", { class: "mbtn" }, icon("square.3.layers.3d.middle.filled", 15), h("span", { text: app.sysvars.CANNOSCALE ?? "1:1" }));
     help(ann, "Annotation scale");
     ann.addEventListener("click", () => showMenu(["1:1", "1:5", "1:10", "1:20", "1:50", "1:100", "1:200", "1:500"].map((s) => ({ title: s, checked: s === (app.sysvars.CANNOSCALE ?? "1:1"), action: () => app.setVar("CANNOSCALE", s) })), ann));
     // Quick Properties over the drawing (doctools QuickPropsOverlay): the button toggles it and shows its state.
@@ -110,7 +112,7 @@ export class StatusBar {
     const qpOn = !!qpo?.on;
     const qp = h("button", { class: qpOn ? "on" : "" }, icon("slider.horizontal.below.rectangle", 13)); help(qp, `Quick Properties (QP) ${qpOn ? "on" : "off"}`);
     qp.addEventListener("click", () => { if (qpo) { qpo.on = !qpo.on; this.renderRight(); } else void app.action("@panel:Quick Props"); });
-    const units = h("button", { text: unitAbbrev(app.info?.units), style: { color: "var(--text)", fontSize: "11px" } }); help(units, "Drawing units");
+    const units = h("button", { class: "mbtn", text: unitAbbrev(app.info?.units) }); help(units, "Drawing units");
     units.addEventListener("click", () => showMenu(UNITS.map(([n]) => ({ title: n[0].toUpperCase() + n.slice(1), checked: n === app.info?.units, action: () => app.setVar("INSUNITS", n) })), units));
     const zoom = h("span", { class: "zoom", text: `Zoom ${zoomText(app.live.zoomPercent)}` }); help(zoom, "Screen scale relative to real size");
     const ag = this.agent;

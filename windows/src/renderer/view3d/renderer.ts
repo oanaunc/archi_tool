@@ -62,6 +62,15 @@ export interface FrameOptions {
   envImage?: { key: string; width: number; height: number; data: Float32Array } | null;
   /** Lighting environment intensity override (Render window: environmentIntensity). */
   envIntensity?: number | null;
+  /** Render window without a photographic preset (RenderEngine.makeScene, view3d/render-scene.ts): sun (/1000, linear colour),
+   *  ambient light (SceneKit intensity, sRGB colour), environment intensity, shadow quality and the plain HDR camera. */
+  renderScene?: {
+    sunIntensity: number; sunColor: V3; ambient: number; ambientColor: V3; envIntensity: number;
+    shadows: boolean; shadowRadius: number; shadowAlpha: number; shadowMap: number; shadowSamples: number;
+    exposure: number; bloom: number; bloomThreshold: number; ao: number; aoRadius: number; vignette: number; vignettePower: number;
+  } | null;
+  /** No vignetting (the 90° cube faces of 360° panoramas). */
+  noVignette?: boolean;
   /** Custom visual style (VISUALSTYLES, Viewport3DView.custom): edges, edge colour (sRGB), face opacity, shadows, background (sRGB). */
   custom?: { edges: boolean | null; edgeColor: V3 | null; faceOpacity: number | null; shadows: boolean | null; background: V3 | null } | null;
 }
@@ -79,6 +88,8 @@ interface StyleSetup {
   ao: number; aoRadius: number; vignette: number; vignettePower: number;
   fog: boolean; groundKind: "meadow" | "grid"; groundBase: V3; groundLine: V3; groundMode: number; groundOpacity: number;
   lightScale: number;
+  /** Shadow map size and soft-shadow samples (null: 8192 / 32 for renders, 4096 / 12 interactive). */
+  shadowMapSize?: number | null; shadowSamples?: number | null;
 }
 
 const SUN_DEFAULT: V3 = norm([-0.45, -0.7, 0.75]);
@@ -121,6 +132,11 @@ export class Renderer {
   static SLOPE_TEXELS = 5;
   /** Diffuse share of the image-based light (SceneKit lightingEnvironment), measured on the Mac renders. */
   static ENV_DIFFUSE = 1.0;
+  /** Image-based diffuse on vertical faces relative to up-facing ones (mixed by the normal's Z; SceneKit lights walls
+   *  less than the cosine-weighted irradiance of its environment gives), measured on the Mac renders (render-match-r4). */
+  static ENV_SIDE = 0.8;
+  /** The same for the image-based specular of opaque dielectrics (the cedar cladding kept a grey sky sheen). */
+  static ENV_SIDE_SPECULAR = 0.5;
   /** Roughness maps: texel ^ ROUGH_GAMMA (SceneKit reads 8-bit roughness images through their sRGB curve). */
   static ROUGH_GAMMA = 1.0;
   /** sRGB value the camera contrast pivots about (with CONTRAST_SCALE; calibration probe). */
@@ -174,6 +190,22 @@ export class Renderer {
   private setup(o: FrameOptions): StyleSetup {
     const s0 = this.setupStyle(o);
     if (o.sunOverride && o.sunLight && s0.sunI > 0) { s0.sunI = o.sunLight.intensity; s0.sunColor = linearRGB(o.sunLight.color); s0.shadows = s0.drawFaces && s0.mode !== 3 ? true : s0.shadows; }
+    const rs = o.renderScene;
+    if (rs && o.style === "Realistic") {
+      // RenderEngine.makeScene: the sun of the render date, 260 ambient, the environment map and a fresh HDR camera
+      // (white point 1, no saturation / contrast grading); a preset of the drawing keeps its haze, meadow and lamps.
+      s0.sunI = rs.sunIntensity; s0.sunColor = [...rs.sunColor] as V3;
+      s0.ambient = linearRGB(rs.ambientColor).map((v) => (v * rs.ambient) / 1000) as V3;
+      s0.envIntensity = rs.envIntensity;
+      s0.shadows = rs.shadows && s0.drawFaces; s0.shadowRadius = rs.shadowRadius; s0.shadowAlpha = rs.shadowAlpha;
+      s0.shadowMapSize = rs.shadowMap; s0.shadowSamples = rs.shadowSamples;
+      s0.exposure = rs.exposure; s0.white = 1; s0.saturation = 1; s0.contrast = 0;
+      s0.bloom = rs.bloom; s0.bloomThreshold = rs.bloomThreshold; s0.ao = rs.ao; s0.aoRadius = rs.aoRadius;
+      s0.vignette = rs.vignette; s0.vignettePower = rs.vignettePower;
+      if (o.aoOverride) { s0.ao = Math.max(s0.ao, o.aoOverride.intensity); s0.aoRadius = o.aoOverride.radius; }
+    }
+    // Panorama cube faces: RenderEngine.panorama turns the camera's vignetting off.
+    if (o.noVignette) s0.vignette = 0;
     const cs = o.custom;
     if (cs && cs.shadows !== null) s0.shadows = cs.shadows && s0.drawFaces;
     if (cs && cs.background) { s0.top = linearRGB(cs.background); s0.bottom = linearRGB(cs.background); s0.skyBackground = false; }
@@ -357,7 +389,7 @@ export class Renderer {
     const env = s.env || s.skyBackground ? (o.envImage ? this.environmentImage(o.envImage) : this.environment(look, sun, o.quality, o.explicitPreset)) : null;
     if (o.envIntensity != null) s.envIntensity = o.envIntensity;
     // Clay with a preset: BeautyLighting brightens the lighting environment by 10 % (RenderEngine.makeScene).
-    if (o.clay && o.explicitPreset && o.style === "Realistic") s.envIntensity *= 1.1;
+    if (o.clay && o.explicitPreset && o.style === "Realistic" && !o.renderScene) s.envIntensity *= 1.1;
     const sunSK = toSK(sun);
     const fogColor: V3 = o.explicitPreset ? horizonColor(look.sky, sunSK).map((v) => Math.min(1, Math.max(0, v))) as V3 : [0, 0, 0];
 
@@ -371,11 +403,11 @@ export class Renderer {
     // Shadow map (sun, orthographic over the scene sphere)
     const final = o.quality === "final";
     let shadowMat: M4 | null = null;
-    const shadowKey = `${sun.join(",")}|${radius}|${center.join(",")}|${final}`;
+    const shadowKey = `${sun.join(",")}|${radius}|${center.join(",")}|${final}|${s.shadowMapSize ?? 0}`;
     if (o.reuseShadow && this.lastShadow && this.lastShadow.key === shadowKey && this.shadowT) {
       shadowMat = this.lastShadow.mat;
     } else if (s.shadows && s.drawFaces && !scene.empty && s.sunI > 0) {
-      const size = Math.min(this.maxSize, final ? 8192 : 4096);
+      const size = Math.min(this.maxSize, s.shadowMapSize ?? (final ? 8192 : 4096));
       if (!this.shadowT || this.shadowT.width !== size) { disposeTarget(gl, this.shadowT); this.shadowT = depthTarget(gl, size); }
       const r = radius * 1.05;
       const eye: V3 = [center[0] + sun[0] * r * 3, center[1] + sun[1] * r * 3, center[2] + sun[2] * r * 3];
@@ -441,12 +473,12 @@ export class Renderer {
     const sunScale = s.mode === 0 ? Renderer.SUN_SCALE : 1;
     p.v3("uSunColor", s.sunColor.map((c) => c * s.sunI * sunScale));
     p.i("uShadows", shadowMat ? 1 : 0).f("uShadowAlpha", s.shadowAlpha).f("uShadowRadius", s.shadowRadius * (this.shadowT ? this.shadowT.width / 4096 : 1))
-      .i("uShadowSamples", final ? 32 : 12).f("uShadowBias", 0.0004).f("uShadowTexel", (radius * 2.1) / (this.shadowT?.width ?? 4096))
+      .i("uShadowSamples", Math.min(32, s.shadowSamples ?? (final ? 32 : 12))).f("uShadowBias", 0.0004).f("uShadowTexel", (radius * 2.1) / (this.shadowT?.width ?? 4096))
       .f("uShadowRange", radius * 1.05 * 5).f("uSlopeTexels", Renderer.SLOPE_TEXELS);
     if (shadowMat) p.m4("uShadowMat", shadowMat).tex("uShadowMap", 5, this.shadowT!.depth!);
     else p.tex("uShadowMap", 5, this.whiteTex);
     p.i("uHasEnv", s.env && env ? 1 : 0).f("uEnvIntensity", s.envIntensity * Renderer.ENV_SCALE).f("uEnvMaxLod", env ? env.maxLod : 0);
-    p.tex("uEnv", 4, env ? env.tex : this.whiteTex).f("uEnvDiffuse", Renderer.ENV_DIFFUSE).f("uRoughGamma", Renderer.ROUGH_GAMMA);
+    p.tex("uEnv", 4, env ? env.tex : this.whiteTex).f("uEnvDiffuse", Renderer.ENV_DIFFUSE).f("uEnvSide", Renderer.ENV_SIDE).f("uEnvSideSpec", Renderer.ENV_SIDE_SPECULAR).f("uRoughGamma", Renderer.ROUGH_GAMMA);
     p.v3a("uSH", env ? env.sh : new Float32Array(27));
     p.v3("uAmbient", s.ambient);
     const fogOn = s.fog;

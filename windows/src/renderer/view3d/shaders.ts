@@ -90,6 +90,8 @@ uniform int uShadowSamples;
 uniform vec3 uSH[9];
 uniform float uEnvIntensity;
 uniform float uEnvDiffuse;
+uniform float uEnvSide;       // image-based light on vertical and downward faces relative to up-facing ones (Renderer.ENV_SIDE)
+uniform float uEnvSideSpec;   // the same for the image-based specular of opaque dielectrics (Renderer.ENV_SIDE_SPECULAR)
 uniform int uHasEnv;
 uniform sampler2D uEnv;
 uniform float uEnvMaxLod;
@@ -290,12 +292,15 @@ void main() {
       Lamp += (diff * (1.0 - F) + PI * spec) * uLightColor[i].rgb * nl * att;
     }
     // SceneKit's diffuse image-based light, relative to lights of intensity / 1000 (measured on the Mac renders).
-    vec3 amb = diff * (shIrradiance(N) * uEnvIntensity * uEnvDiffuse + uAmbient);
+    // SceneKit's image-based light on faces turned away from the zenith is weaker than the cosine-weighted irradiance
+    // and the split-sum specular give (measured on the Mac renders: walls and cedar under the overcast sky).
+    float up = clamp(N.z, 0.0, 1.0);
+    vec3 amb = diff * (shIrradiance(N) * uEnvIntensity * uEnvDiffuse * mix(uEnvSide, 1.0, up) + uAmbient);
     vec3 specEnv = vec3(0.0);
     if (uHasEnv == 1) {
       vec3 R = reflect(-V, N);
       vec3 env = textureLod(uEnv, equirect(normalize(R)), rough * uEnvMaxLod).rgb;
-      specEnv = env * envBRDF(F0, rough, NdV) * uEnvIntensity;
+      specEnv = env * envBRDF(F0, rough, NdV) * uEnvIntensity * (alpha < 1.0 || metal > 0.5 ? 1.0 : mix(uEnvSideSpec, 1.0, up));
     }
     color = Lo + amb + specEnv;
     indirect = amb;

@@ -32,6 +32,34 @@ function humanize(name: string) {
   return out.replace(/Id\b/g, "ID");
 }
 
+/** Label size of the panel tabs (PanelsView: `.font(.system(size: 8.5)).lineLimit(1).minimumScaleFactor(0.7)`). */
+export const TAB_LABEL_SIZE = 8.5, TAB_LABEL_MIN_SCALE = 0.7;
+let measureCtx: CanvasRenderingContext2D | null = null;
+/** SwiftUI's minimumScaleFactor: a label wider than its 25 px cell is drawn smaller (down to 70 %) until it fits,
+ *  and only then truncated with "…" — so "Layers", "Browser" and "Content" show whole, "Materials" becomes "Materi…". */
+export function fitTabLabels(grid: HTMLElement) {
+  const labels = [...grid.querySelectorAll<HTMLElement>(".ptab .t")];
+  if (!labels.length) return;
+  const apply = () => {
+    const cell = labels[0].parentElement!.clientWidth;
+    if (!cell) return false;
+    measureCtx ??= document.createElement("canvas").getContext("2d");
+    const cs = getComputedStyle(labels[0]);
+    for (const l of labels) {
+      let size = TAB_LABEL_SIZE;
+      if (measureCtx) {
+        measureCtx.font = `${cs.fontWeight} ${TAB_LABEL_SIZE}px ${cs.fontFamily}`;
+        const natural = measureCtx.measureText(l.textContent ?? "").width;
+        if (natural > cell) size = Math.max(TAB_LABEL_SIZE * TAB_LABEL_MIN_SCALE, TAB_LABEL_SIZE * cell / natural);
+      }
+      l.style.fontSize = `${Math.floor(size * 100) / 100}px`;
+      l.dataset.scale = (size / TAB_LABEL_SIZE).toFixed(2);
+    }
+    return true;
+  };
+  if (!apply()) requestAnimationFrame(() => { if (!apply()) { const ro = new ResizeObserver(() => { if (apply()) ro.disconnect(); }); ro.observe(grid); } });
+}
+
 export class Panels {
   el: HTMLElement;
   private tabs: HTMLElement;
@@ -68,6 +96,7 @@ export class Panels {
     const x = h("button", { class: "iconbtn" }, icon("xmark", 12, 2)); help(x, "Hide panels");
     x.addEventListener("click", () => this.app.setUI("showPanels", false));
     this.tabs.append(grid, h("div", { class: "side" }, fl, x));
+    fitTabLabels(grid);
   }
 
   private async renderBody() {

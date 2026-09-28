@@ -10,6 +10,9 @@ export interface MenuItem {
 let open: HTMLElement[] = [];
 let onCloseCb: (() => void) | null = null;
 
+/** Document the next menu at a point opens in: the drawing window, or a floating panel window (workspace/float.ts)
+ *  after a mouse press there — so a context menu opens where it was asked for. */
+let menuDoc: Document = document;
 export function closeMenus() { open.forEach((m) => m.remove()); open = []; const cb = onCloseCb; onCloseCb = null; cb?.(); }
 
 export function showMenu(items: MenuItem[], at: { x: number; y: number } | HTMLElement, opts: { level?: number; onClose?: () => void; minWidth?: number } = {}): HTMLElement {
@@ -34,21 +37,32 @@ export function showMenu(items: MenuItem[], at: { x: number; y: number } | HTMLE
     row.addEventListener("click", (e) => { e.stopPropagation(); if (it.disabled || it.submenu) return; closeMenus(); it.action?.(); });
     m.append(row);
   }
-  document.body.append(m);
+  const doc = "getBoundingClientRect" in at ? (at as HTMLElement).ownerDocument : (level ? open[0]?.ownerDocument ?? menuDoc : menuDoc);
+  const view = doc.defaultView ?? window;
+  const innerWidth = view.innerWidth, innerHeight = view.innerHeight;
+  doc.body.append(m);
   open.push(m);
   let x: number, y: number;
-  if (at instanceof HTMLElement) { const r = at.getBoundingClientRect(); x = r.left; y = r.bottom + 2; if (!opts.minWidth) m.style.minWidth = Math.max(180, r.width) + "px"; }
+  if ("getBoundingClientRect" in at) { const r = (at as HTMLElement).getBoundingClientRect(); x = r.left; y = r.bottom + 2; if (!opts.minWidth) m.style.minWidth = Math.max(180, r.width) + "px"; }
   else { x = at.x; y = at.y; }
   const mr = m.getBoundingClientRect();
-  if (x + mr.width > innerWidth - 4) x = Math.max(4, level ? x - mr.width - (at instanceof HTMLElement ? 0 : 180) : innerWidth - mr.width - 4);
+  if (x + mr.width > innerWidth - 4) x = Math.max(4, level ? x - mr.width - ("getBoundingClientRect" in at ? 0 : 180) : innerWidth - mr.width - 4);
   if (y + mr.height > innerHeight - 4) y = Math.max(4, innerHeight - mr.height - 4);
   m.style.left = x + "px"; m.style.top = y + "px";
   return m;
 }
 
-addEventListener("mousedown", (e) => { if (open.length && !open.some((m) => m.contains(e.target as Node))) closeMenus(); }, true);
-addEventListener("keydown", (e) => { if (e.key === "Escape" && open.length) { closeMenus(); e.stopPropagation(); e.preventDefault(); } }, true);
-addEventListener("blur", () => closeMenus());
+/** Menu dismissal (click outside, Escape, losing the focus) in a window: the drawing window, and each floating panel
+ *  window, whose presses also make it the window context menus open in. */
+export function attachMenuWindow(w: Window) {
+  const own = w.document;
+  w.addEventListener("mousedown", (e) => { menuDoc = own; if (open.length && !open.some((m) => m.contains(e.target as Node))) closeMenus(); }, true);
+  w.addEventListener("contextmenu", () => { menuDoc = own; }, true);
+  w.addEventListener("keydown", (e) => { if (e.key === "Escape" && open.length) { closeMenus(); e.stopPropagation(); e.preventDefault(); } }, true);
+  w.addEventListener("blur", () => { if (open.some((m) => m.ownerDocument === own)) closeMenus(); });
+  w.addEventListener("pagehide", () => { if (menuDoc === own) menuDoc = document; });
+}
+attachMenuWindow(window);
 
 // ---- tooltips (the Mac .help(...) strings) ----
 let tip: HTMLElement | null = null, tipTimer = 0;
@@ -60,7 +74,8 @@ export function help(el: HTMLElement, text: string) {
     tipTimer = window.setTimeout(() => {
       tip?.remove();
       tip = h("div", { class: "tooltip", text });
-      document.body.append(tip);
+      el.ownerDocument.body.append(tip);  // the window the control is in (floating panels are separate windows)
+      const view = el.ownerDocument.defaultView ?? window, innerWidth = view.innerWidth, innerHeight = view.innerHeight;
       const r = el.getBoundingClientRect(), tr = tip.getBoundingClientRect();
       tip.style.left = Math.min(innerWidth - tr.width - 4, Math.max(4, r.left + r.width / 2 - tr.width / 2)) + "px";
       tip.style.top = (r.bottom + 6 + tr.height > innerHeight ? r.top - tr.height - 6 : r.bottom + 6) + "px";

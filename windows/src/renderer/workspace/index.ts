@@ -15,7 +15,7 @@ import { Sheet, button } from "../partb/ui";
 import { WS, type WinInfo } from "./native";
 import { progress, trackEngine } from "./progress";
 import { planHooks, invalidateNavigator, type PlanHooks } from "./panels";
-import { floatPanel, isFloating, restoreFloatingPanels } from "./float";
+import { floatPanel, isFloating, restoreFloatingPanels, floatingWindow } from "./float";
 import { TiledViews, tileState, arrangementFor, arrangementTitle } from "./tiles";
 import { showOutliner } from "./outliner";
 import { showAssistant } from "./assistant";
@@ -200,7 +200,7 @@ export function installWorkspace(app: App, hooks: WorkspaceHooks) {
   planHooks.current = hooks.plan;
   const fileTabs = new FileTabs(app);
   const tiles = new TiledViews(app, { plan: hooks.plan.el, view3d: hooks.view3d, ensure3D: hooks.ensure3D, changed: () => { if (app.mode === "Split") hooks.relayout(); } });
-  (window as any).archiWorkspace = { floatPanel: (t: string) => floatPanel(app, t), tiles, tileState, fileTabs, showOutliner: () => showOutliner(app), showAssistant: (q?: string) => showAssistant(app, q), progress, WS };
+  (window as any).archiWorkspace = { floatPanel: (t: string) => floatPanel(app, t), floatingWindow, tiles, tileState, fileTabs, showOutliner: () => showOutliner(app), showAssistant: (q?: string) => showAssistant(app, q), progress, WS };
 
   // Slow engine calls show in the status bar; Cancel sends Escape.
   trackEngine(app.engine, () => (app.prompt.command ? `Running ${app.prompt.command}` : "Working…"), () => void app.cancel());

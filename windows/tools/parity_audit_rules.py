@@ -402,3 +402,20 @@ ov("Properties ▸ Menu {\"\\(types.count) objects (\" + counts.sorted() {…}.m
 # The Mac shows Done only when the reference is a sheet (onClose); Windows opens it as a window like Help ▸ Command
 # Reference on the Mac, closed with its title-bar ×.
 ov("CommandReferenceView ▸ Button Done", "done")
+
+# ---------------- Round 4 (auditor) ----------------
+# Render (windows/test-results/render-match-r4/before-after.json: 8 Mac renders at 1.8-2.7 mean levels; render-r4.mjs 26/26).
+ov("Lighting preset Daylight", "done")
+ov("Lighting preset Overcast", "done")          # 4.7 → 2.3 levels, limestone +12 → +3
+ov("Lighting preset Golden hour", "done")       # render.preset switches the 3D view to Realistic (EngineSession.swift, render-r4.mjs)
+ov("Lighting preset Night", "partial", "cosmetic: 1.8 levels from the Mac; the Mac's bollards cast shadows inside their own light pools")
+ov("Photographic render (RENDER) with presets, supersampling, PNG output", "done")   # view3d/render-scene.ts ports RenderController.Environment maps
+ov("360° panorama", "done")                     # cube faces with the Render window scene (render-r4.mjs PANORAMA checks)
+# Help: the Mac opens the offline HelpBrowser for F1, Help ▸ Help (F1), Help ▸ Tutorials and TUTORIALS (ArchiApp.swift 107/488/489,
+# AppCommandsNav.swift TUTORIALS); Windows has the help browser now (system/help-browser.ts) but these still open the website.
+_HW = "opens the website guide; the Mac opens the offline help browser (system/help-browser.ts showHelpBrowser exists)"
+ov("Help ▸ Oanarina Archi Tool Help (F1)", "partial", _HW)
+ov("Help ▸ Tutorials", "partial", _HW)
+ov("Tools ▸ Navigation & Sheets ▸ Tutorials", "partial", _HW)
+for s_ in J["shortcuts"]:
+    if s_["keys"] == "F1": ov("%s [%s] %s" % (s_["keys"], s_["mac"], s_["action"]), "partial", _HW)

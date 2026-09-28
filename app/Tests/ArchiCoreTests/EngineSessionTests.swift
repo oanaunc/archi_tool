@@ -337,6 +337,26 @@ final class EngineSessionTests: XCTestCase {
         let settings = try await s.call("render.settings")
         XCTAssertEqual(settings["preset"]?.stringValue, "Overcast")
     }
+
+    /// render.preset behaves like the Mac RENDERPRESET command: the drawing is changed and the 3D view shows Realistic.
+    @MainActor func testRenderPresetSwitchesTheViewToRealistic() async throws {
+        let (s, sink) = dialogSession()
+        _ = try await s.call("view3d.setVariable", obj([("name", .string("VSCURRENT")), ("value", .string("Shaded with Edges"))]))
+        XCTAssertFalse(s.editor.isDirty)
+        _ = try await s.call("render.preset", obj([("name", .string("Goldenhour"))]))
+        XCTAssertTrue(s.editor.isDirty)
+        s.flushNotifications()
+        let h = hostActions(sink).last
+        XCTAssertEqual(h?["action"]?.stringValue, "setViewStyle")
+        XCTAssertEqual(h?["style"]?.stringValue, "Realistic")
+        let info = try await s.call("view3d.info")
+        XCTAssertEqual(info["visualStyle"]?.stringValue, "Realistic")
+        XCTAssertEqual(info["renderPreset"]?.stringValue, "Golden hour")
+        _ = try await s.call("command.run", obj([("line", .string("RENDERPRESET Off"))]))
+        XCTAssertNil(s.editor.doc.variable("RENDERPRESET"))
+        s.flushNotifications()
+        XCTAssertEqual(hostActions(sink).last?["style"]?.stringValue, "Realistic")
+    }
 }
 
 // MARK: - Scripting, agents and the Windows dialogs (EngineScripting.swift, EngineDialogs.swift, EngineMCP.swift)

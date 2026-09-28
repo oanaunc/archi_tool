@@ -8,7 +8,7 @@
 import type { App } from "../app";
 import { h, clear } from "../dom";
 import { toolWindow, picker, toggle, flatButton, note, label, row, stepper, slider, section, promptDialog, textField, Option } from "../dialogs/ui";
-import { renderImage, alphaMask, paste, defaultSettings, applyPreset, presetFrom, sunAt, RenderSettings, OutputPreset, Pixels, SHADOW_SAMPLES, ModelCamera, V3 } from "./render";
+import { renderImage, alphaMask, paste, defaultSettings, applyPreset, presetFrom, sunAt, hdriImage, RenderSettings, OutputPreset, Pixels, SHADOW_SAMPLES, ModelCamera, V3 } from "./render";
 import { view3d, modelCamera, renderWindowInfo } from "./context";
 import { saveDialog, writeBytes, encodePixels, dataURL, out, docName, fileName, blobBytes } from "./native";
 import { exportVideo } from "./videos";
@@ -260,7 +260,9 @@ export async function openRenderWindow(app: App) {
         const cam = modelCamera(v);
         const width = Math.max(2048, s.width * 2);
         const jpeg = !/\.png$/i.test(path);
-        const blob = await v.panorama({ eye: cam.eye as V3, width, format: jpeg ? "JPEG" : "PNG", preset: s.beauty ?? undefined });
+        // RenderEngine.panorama(doc, settings: the window's settings, …): its environment, sun date, shadows and exposure.
+        const envImage = !s.beauty && s.environment === "HDRI File" && s.hdriPath ? await hdriImage(s.hdriPath) : null;
+        const blob = await v.panorama({ eye: cam.eye as V3, width, format: jpeg ? "JPEG" : "PNG", settings: s, envImage });
         const bytes = await blobBytes(blob);
         await writeBytes(path, bytes);
         const img = await decodeDataURL(URL.createObjectURL(blob));

@@ -1,209 +1,155 @@
-# Windows port — open gaps after round 3
+# Windows port — open gaps after round 4
 
-Parity audit of 28 Sep 2026 over the 2904 lines of `docs/WINDOWS-PARITY.md`: **2869 done · 21 partial · 7 todo · 7 n/a**
-(round 2: 2450 · 171 · 275 · 8). "Done" means the Windows entry exists and runs the same engine code, or a tested shell port,
-as the Mac. It does **not** yet mean "verified on real Windows": none of the round-3 work has run in Electron on Windows, and
-none of it is committed.
+Parity audit of 28 Sep 2026 (round 4) over the 2904 lines of `docs/WINDOWS-PARITY.md`: **2882 done · 14 partial · 1 todo · 7 n/a**
+(round 3: 2869 · 21 · 7 · 7; round 2: 2450 · 171 · 275 · 8). "Done" means the Windows entry exists and runs the same engine
+code, or a tested shell port, as the Mac. It does **not** mean "verified on real Windows": none of the round-4 work has run in
+Electron on Windows, and none of it is committed.
 
-**Verdict: not ready to publish as an exact replica.** 7 checklist lines are still `todo`, 2 of the 21 partial lines are not
-cosmetic (Overcast render, 360° panorama), all round-3 work is uncommitted, so it has not been through either CI workflow or
-the installed-app smoke test on Windows, and `canvas.mjs` fails on the combined tree. See "Release blockers" below.
+**Verdict: not ready to publish as an exact replica.** 1 line is `todo` (FILEPREVIEW, waiting on Oana's decision); 4 partial
+lines are not cosmetic (F1 / Help / Tutorials open the website instead of the offline help browser, a small fix); round 4 is
+uncommitted, so neither CI workflow has built it and the installed app has not been smoke-tested with it; and no CI run has
+reported since 9885fb9 (Windows engine red there). See "Release blockers" and "Ready to publish?".
 
 ## How the audit was done
 
-- **Script**: `python3 windows/tools/parity_audit.py` re-derives every status; the rules are in
-  `windows/tools/parity_audit_rules.py`. The round-3 section of the rules removes the stale round-2 overrides. Each row that
-  changed status was checked against the code and a Playwright check.
-- **Resolver changes**: the audit now resolves entries the way the round-3 shell does.
-  - Every menu comes from `docs/windows-parity.json` (`ui/menubar.ts`).
-  - `{r}` is resolved to COMPONENT (`gen-ui-data.mjs`).
-  - The commands the shell implements itself count (`registerShellCommand`: ABOUT, COMMANDSEARCH, CLEANSCREENON/OFF,
-    HISTORYPANEL, STARTSCREEN, SAMPLEHOUSE, WHATSNEW, EXPORTCOMMANDS, FULLSCREEN, BLOCKLIBRARY, FAMILY …).
-  - The shell's Mac `ui` targets are read from `ui/shell-commands.ts`.
-  - `file.export` accepts `png`, `csv:<kind>` and `xlsx:<kind>` (`IO/BatchRunner.swift`).
-- **Engine command list**: every `CommandDef` in the new Host files is in the regenerated `build/engine-fixtures/hello.json`
-  (1038 commands).
-- **Cross-check in Chromium** (web build with the fixture engine; the Mac's fresh `hello.json` was dropped into the build):
-  - The menu bar greys out exactly the 5 unregistered commands the audit lists: APPSELFTEST (twice), HELPWINDOW,
-    SPACEMOUSE, FILEPREVIEW and VRVIEW. It also greys out Clear Menu and Delete, which depend on state.
-  - No top-level ribbon button is disabled on any tab.
-- **New spot check**: `windows/test/audit-spot.mjs` was rewritten for round 3 and passes 30/30. It checks by effect, not by
-  label:
-  - the menu bar order, Component ▸ Chair running `COMPONENT Chair`;
-  - Ctrl+Alt+P, Ctrl+Alt+1-4, Ctrl+Alt+J, F2, Ctrl+Alt+Shift+P (PREVIEW, not PLOT), Ctrl+Shift+A (465 selected → 0),
-    Ctrl+Shift+/ (Command Reference window), and F1 during LINE (`archi-tool-guide.html#draw`);
-  - selecting a wall shows the MODIFY WALL strip;
-  - SELECTIONINFO, SPELLDIALOG, FILEVERSIONS, GRAPHICSTYLES, ASSISTANT, OUTLINERPANEL and TEXTSTYLEDIALOG open their
-    windows;
-  - NAVIGATOR, NOTIFICATIONS and ADCENTER fill their panels, and FLOATPANEL floats a panel.
-- **Engineers' suites re-run by the auditor** on a copy of the Mac tree: menus-keys 96/96, doctools 56/56, sheets 27/27,
-  workspace 63/63, standards 29/29, render-extras-ui 15/15, ui-snapshots 30/30, dialogs 49/49, partb-tools 27/27, output 35/35,
-  windows-conventions 9/9. **canvas.mjs fails** (see release blockers).
-- Not re-verified by the auditor: the render numbers (taken from `windows/test-results/render-match/before-after.json`), the
-  A-102 PDF comparison (`build/a102/`), the Swift test totals, and the Windows-only PowerShell/.NET paths (share sheet, print
-  ticket, multi-format clipboard).
-
-## Per section
-
-| Section | done | partial | todo | n/a |
-| --- | ---: | ---: | ---: | ---: |
-| Ribbon | 903 | 3 | 1 | 0 |
-| Contextual ribbon tabs (selection) | 11 | 0 | 0 | 0 |
-| Menu bar | 1259 | 10 | 6 | 3 |
-| Tool palettes | 57 | 0 | 0 | 0 |
-| Panels | 108 | 0 | 0 | 0 |
-| Dialogs and windows | 366 | 0 | 0 | 0 |
-| Status bar | 21 | 0 | 0 | 0 |
-| Keyboard shortcuts (Windows keys; Mac in brackets) | 77 | 2 | 0 | 4 |
-| Rendering and 3D | 17 | 6 | 0 | 0 |
-| Theme | 50 | 0 | 0 | 0 |
-
-The partial ribbon and menu rows are almost all roll-ups: a menu, group or tab is `partial` because one of its entries is
-`todo`. Only 2 partial menu lines are entries in their own right, the two Tutorial Videos lines.
+- **Script**: `python3 windows/tools/parity_audit.py` re-derives every status; rules in `windows/tools/parity_audit_rules.py`.
+  Round 4 adds a section at the end of the rules file: the render lines the evidence now supports, and the help lines that
+  regressed relative to the Mac once Windows had its own help browser.
+- **Rows that changed, and the evidence**:
+  - APPSELFTEST (3 lines), HELPWINDOW, VRVIEW, SPACEMOUSE → done. Registered in
+    `app/Sources/ArchiCore/Host/EngineSystemCommands.swift` (in the regenerated `build/engine-fixtures/hello.json`), shell side in
+    `windows/src/renderer/system/`. `test/system.mjs` 30/30 in Chromium, including the Mac report "Command coverage: 1042 in
+    ribbon/menus … 20 check(s) passed, 0 failed", DOCS / MANUAL / HELPBROWSER routes, and VRVIEW Save.
+    SpaceMouse and the VR window are code-and-maths verified only (no device, no Windows run).
+  - Lighting presets Daylight, Golden hour, Overcast → done. `windows/test-results/render-match-r4/before-after.json`: all 8
+    Mac renders are 1.8-2.7 mean levels off (Overcast 4.7 → 2.3, limestone +12 → +3, cedar now +0 to +4). The auditor viewed
+    the corner-overcast comparison. The Golden hour interactive look (round-3 gap 10) is fixed in the engine: `render.preset`
+    now switches the viewport to Realistic like the Mac RENDERPRESET (render-r4.mjs checks it, and `smoke-electron.mjs` now
+    asserts it on Windows).
+  - Night stays **partial (cosmetic)**: 1.8 levels, but the Mac's bollards cast shadows inside their own light pools.
+  - Photographic render (Render window environments) → done. `view3d/render-scene.ts` holds the Mac
+    `RenderController.Environment` gradient colours verbatim (spot-checked: Sunset zenith/horizon/ground/glow match
+    `RenderController.swift:105`). There is no Mac reference image of a non-preset render, so brightness is unverified; it is
+    listed under C.
+  - 360° panorama → done (Render window scene, 90° faces, w/4, 4× MSAA; render-r4.mjs: 2:1, zenith is the Clear Sky map).
+  - Help ▸ Oanarina Archi Tool Help (F1), Help ▸ Tutorials, Tools ▸ Navigation & Sheets ▸ Tutorials, the F1 shortcut →
+    **partial** (were done). The Mac opens the offline `HelpBrowser` for all of them (`ArchiApp.swift` 107, 488, 489;
+    TUTORIALS in `AppCommandsNav.swift`); Windows still opens the website guide although `showHelpBrowser` now exists.
+  - Roll-ups (Tab Manage, Manage ▸ More, Tools ▸ Help, Menu Help …) follow their entries.
+- **Suites re-run by the auditor** on a copy of the merged Mac tree (web build + fixture engine, Chromium): system 30/30,
+  shell-polish all pass, render-r4 26/26, menus-keys 96/96, audit-spot all pass, windows-conventions 9/9, workspace 65/65,
+  canvas 61/61 (round-3 blocker fixed), view3d/ui pass, doctools 56/56, sheets 27/27, standards 29/29, render-extras-ui 15/15,
+  ui-snapshots 30/30, dialogs 49/49, partb-tools 27/27, output 35/35, icons pass, view3d/tools 37 PASS.
+  `tsc` for the renderer and view3d configs is clean; the main/preload config could not be checked here (no Electron types
+  in the sandbox), so the new Electron main-process code (floating OS windows, help / VR windows, `--selftest`) has had no
+  real type check.
+- **Auditor finding, fixed**: the web smoke test (`packaging/smoke-electron.mjs --web`) failed "3D view shows Realistic with
+  the Golden hour look" (got Daylight, explicit) on the merged tree, twice. Cause: `view3d/engine-bridge.ts` `load()` read
+  `render.settings` in parallel with `model.meshes` and applied it after the mesh load, so a preset set while the model was
+  loading (the smoke test sets it 1 s after entering 3D; on Windows the real mesh load takes seconds) was overwritten by the
+  stale settings. This is the likely cause of the round-3 screenshot-03 symptom as well. The auditor moved the
+  `render.settings` read after the mesh load (read together with `view3d.info`); smoke-web then passes 14/14 (2 skipped
+  as web-only), render-r4 26/26, renderer and view3d `tsc` clean. Patch: `build/xfer-audit/engine-bridge-race.patch`.
+- **Swift**: the engineers report 1036 tests / 0 failures on the Mac for the merged tree. The auditor's own `q.sh test`
+  (queued 14:30 UTC) had produced no output an hour later (the Mac bridge was offline part of that time), so the Swift total
+  for the final tree, including the auditor's shell-only patch, is the engineers' figure, not re-verified.
+- **Not re-verified by the auditor**: Windows-only paths (Electron main process, WebHID, the Windows spell checker for SPELL,
+  floating panels as OS windows) — these need the windows-app workflow.
 
 ## Remaining gaps, by importance
 
-Round 2's 30 gaps are closed in code, except for the parts listed here. The list below is everything that is still open.
+### A. Checklist line still `todo` (1)
 
-### A. Checklist lines still `todo` (7 lines, 5 commands)
+1. **FILEPREVIEW** (Tools ▸ Files, Clipboard & Access ▸ File Preview & Spotlight). Design in `docs/WINDOWS-FILEPREVIEW.md`
+   (Explorer thumbnail handler, about 2.5 days). **Oana decides**:
+   - may `.archi` files carry an optional embedded plan thumbnail (a file-format change on Mac and Windows)?
+   - may the installer ship and register (per user) an unsigned native Explorer add-on built in CI?
+   Both yes → build it. Otherwise the line becomes `n/a (Finder/Spotlight extension)`.
 
-1. **APPSELFTEST** (Help ▸ Check Command Coverage, Tools ▸ Help ▸ Self Test, Manage ▸ More ▸ Tools ▸ Help ▸ Self Test; 3 lines).
-   Port the command-coverage self test: the parts of `AppSelfTests*.swift` that do not need AppKit, run against the engine.
-2. **HELPWINDOW** (Tools ▸ Navigation & Sheets ▸ Help Browser). The offline help browser. On Windows, bundle the guide HTML
-   and open it in an app window.
-3. **VRVIEW** (Tools ▸ Styles, Patterns & Occlusion ▸ VR Headset View). The Mac exports for a headset. On Windows, WebXR in
-   Electron or the same export.
-4. **SPACEMOUSE** (Tools ▸ Render, Materials & Environment ▸ SpaceMouse). 3Dconnexion input. On Windows use WebHID in
-   Electron, or document it as `n/a` if Oana agrees.
-5. **FILEPREVIEW** (Tools ▸ Files, Clipboard & Access ▸ File Preview & Spotlight). The engineer proposes `n/a`. The auditor
-   keeps it `todo`, because Windows has an equivalent: an Explorer thumbnail and preview handler, a native COM DLL
-   registered by the installer. Oana decides: build it, or mark the line `n/a (Finder/Spotlight extension)`.
+### B. Partial lines (14; 4 not cosmetic)
 
-### B. Partial lines
+2. **Offline help not used by F1 / Help / Tutorials** (4 lines, not cosmetic). Point `openContextHelp` (F1 and
+   Help ▸ … Help (F1)) at `showHelpBrowser(app, contextRoute(app))`, and Help ▸ Tutorials / TUTORIALS at
+   `showHelpBrowser(app, "tutorials")`; update the three tests that assert the website URL (`windows-conventions.mjs`,
+   `menus-keys.mjs`, `audit-spot.mjs`).
+3. **Night preset** (1 line, cosmetic): the Mac's bollards cast shadows inside their own light pools.
+4. **Ctrl+0 for Zoom Extents** (2 lines, convention): Ctrl+0 is Clean Screen on Windows. **Oana decides**: accept, or give
+   Zoom Extents another key.
+5. **Tutorial Videos ▸ Record and Check** (2 lines, by design): recording is Mac-only. **Oana decides**: accept or mark `n/a`.
+6. Roll-ups of the above (Menu Tools, Tools ▸ Navigation & Sheets, Tools ▸ Files, Clipboard & Access, Tools ▸ Tutorial
+   Videos, Menu Help).
 
-6. **Rendering** (6 lines).
-   - Overcast is 4.6 levels from the Mac, with limestone +12. This one is not cosmetic.
-   - Daylight, Golden hour and Night are 1.7-3.1 levels off, with cedar 5-7 too bright in flat light. These count as
-     cosmetic.
-   - The 360° panorama and ANIMATE Frame use the photographic look instead of the Mac panorama renderer and path tracer.
-     This is not cosmetic.
-   - The Render window's Clear Sky, Sunset, Studio, Night and Physical Sky environments approximate the Mac gradient
-     environment maps.
-   - The compare overlay on the canvas (round-2 gap 21) is still not drawn.
-7. **Ctrl+0 for Zoom Extents** (2 lines). This is a documented Windows key conflict: Ctrl+0 is Clean Screen. Accept it as
-   the Windows convention, or bind Zoom Extents to another key.
-8. **Tutorial Videos ▸ Record and Check** (2 lines). Partial by design, because recording is Mac-only. Accept it or mark it
-   `n/a`.
+### C. Differences outside the checklist
 
-### C. Differences found outside the checklist
-
-9. **Typed-ahead input is lost** (`app.ts` `submitLine`). Input typed before the engine answers is run as a new command:
-   "PLOT <file>" in one line reports an unknown command. Queue submissions. The smoke test only works around this.
-10. **3D view on Windows** (installed-app smoke test at 162de27; recheck after render-match's changes):
-    - the interactive 3D view did not show the Golden hour look after the preset was set;
-    - setting the preset marked the drawing as changed (check what the Mac does);
-    - the status bar shows "Zoom 1:135290" in 3D.
-11. **Panel tab strip.** At 1440×900 on Windows, the right-hand panel tabs wrap into three rows of cut-off labels ("Pro…",
-    "Lay…"). The Mac shows a single tab bar.
-12. **Start screen.** The Nordic House sample has no thumbnail (`assets/samples/Nordic House.thumb.json` is not packaged).
-    The template tiles show a dark strip next to their icons.
-13. **Alt+letter menu access.** Alt+A opens only the first of Analyze, Annotate and Architecture. Give each menu its own
-    access key (&-mnemonics).
-14. **Floating panels and window tabs are emulated.**
-    - Floating panels are windows inside the app window, not separate OS windows.
-    - Merged windows share one frame; file tabs have no hover thumbnail.
-    - The crash-reports toggle is only reachable through CRASHREPORTS, not Settings ▸ General.
-15. **Output details.**
-    - The engine PNG draws text with the stroke font and images in grey.
-    - Plain SPELL on the command line has no spell checker; SPELLDIALOG uses Windows'.
-    - ZOOMXP assumes 96 dpi.
-    - Sheet TIFFs are uncompressed.
-    - The Versions store is `%APPDATA%\Oanarina Archi Tool\Versions`.
-16. **Icons.** `gen-ui-data.mjs` has no Lucide mapping for `paperplane.fill` (the Assistant send button),
-    `rectangle.righthalf.inset.filled` and `xmark.circle.fill`, so a fallback icon is shown.
+7. **Render details (cosmetic)**: front-view limestone −4 (regressed from −1), glass −4 in daylight; the Render window's
+   non-preset environments have no Mac reference render (the `render-cedar` bridge action only renders presets).
+8. **User guide** still says "Requirements: macOS 14 or later" (shown by the Windows help window's User guide page).
+9. **SPELL from scripts / agents** that call the engine directly (main process) bypasses the Windows spell checker.
+10. **Shell-polish leftovers (cosmetic)**: the Mac's larger "ByLayer" text in the ribbon Properties pickers; the Mac ruler,
+    house and float-button icons; label fitting in the panel tab grid is measured with Segoe UI on Windows and may shrink a
+    few labels differently from the Chromium run; Segoe UI renders slightly smaller than SF at the same size.
+11. **Still open from round 3**: merged windows share one frame, file tabs have no hover thumbnail; the crash-reports toggle
+    is only reachable through CRASHREPORTS; engine PNG uses the stroke font and grey images; ZOOMXP assumes 96 dpi; sheet
+    TIFFs are uncompressed. (Resolved since round 3: typed-ahead input is queued (`app.ts` `inputQueue`), the README install
+    folder, the three missing icons, panel tab strip, Nordic House thumbnail, template strip, Alt menu keys, floating panels
+    as OS windows, plain SPELL, the canvas.mjs failure, 3D zoom readout and preset look.)
+12. **Test fixture**: `windows/test/fixtures/engine/hello.json` lists 1038 commands; the engine now has 1042 (the four
+    system commands come from `system/fake-system.ts` in web tests). Refresh it from `build/engine-fixtures/hello.json`.
 
 ## Release blockers (not in the checklist)
 
-- **Nothing from round 3 is committed**, so neither CI workflow has built it. This covers about 20 new ArchiCore Host files,
-  two new test files per engineer, and the shell folders `doctools/`, `sheets/`, `standards/`, `workspace/` and `ui/*`.
-  - The last green runs are from before round 3's changes: portable engine at 8ff844a, Windows app at 162de27.
-  - The new Swift has only been compiled and tested on the Mac: 1028 tests pass, as the last engineer reported.
-  - The Linux/Windows Swift 6.1 type checker already failed on similar code in round 3 (f28e53d, 3e1b73b).
-- **canvas.mjs fails on the combined tree.**
-  - Cause: the contextual strip (`sheets/context-ribbon.ts`) appears when something is selected and pushes the canvas down
-    22 px. The Mac `MainWindow` stacks it the same way, so the behaviour is right.
-  - The test reads the canvas position once (`const box = …boundingBox()` at line 50), so every grip check after the first
-    selection misses.
-  - Fix the test: re-read the box after selecting, or re-read it inside `at()`. With that change the grip checks pass, but
-    a later step (line 105) still needs attention.
-  - canvas.mjs is in the CI shell suites, so the Windows app workflow will fail until this is fixed.
-- **The tracked fixture `windows/test/fixtures/engine/hello.json` is stale.**
-  - Copy `build/engine-fixtures/hello.json` (1038 commands) and the new `doc-*`, `ws-*`, `render-*` and sheet fixtures into
-    `windows/test/fixtures/engine/`.
-  - With the old file, the web tests grey out LIGHT, FOG, WATER, SCATTER, MATMAPS and 12 other menu entries that the real
-    engine has.
-- **CI suites.**
-  - `menus-keys`, `sheets`, `standards`, `render-extras-ui` and `audit-spot` must be added to `windows-app.yml`.
-  - `doctools` and `workspace` are already listed.
-- **The round-3 shell has not run in real Electron or on Windows.** The full Windows app workflow must pass, including the
-  installed-app smoke test, the 3D and render checks, and the Windows-only paths: share sheet, print ticket tray/media,
-  multi-format clipboard, spell checker, encrypted API key and speech.
-- **Documentation.** `windows/README.md` and the `electron-builder.yml` comment still give the install folder as
-  `Programs\oanarina-archi-tool`; it is `%LOCALAPPDATA%\Programs\Oanarina Archi Tool`.
-- **Swift 6 warnings.** `BCFServer.swift` has two captured-variable warnings that become errors in Swift 6 language mode.
-- **No code-signing certificate.**
+- **CI has not reported since 9885fb9.** There: Linux engine green, Windows app green, **Windows engine red**
+  (`IOAutomationTests.testRulesProcessNewAndChangedFilesOnce`, fixed by a4d2233 but unconfirmed). No run appeared for
+  a4d2233 three hours after the push, so runs are probably queued or blocked by used-up Actions minutes. **Oana**: check
+  github.com/oanaunc/archi_tool/actions and Settings ▸ Billing, then re-run both workflows on the latest `main`.
+- **Nothing from round 4 is committed** (EngineSystemCommands, EnginePathTraceAnimation, render-scene, system/, floating OS
+  windows, release-files …). It has to go through both workflows: the new Swift has only been compiled on the Mac, and the
+  Linux/Windows Swift 6.1 type checker has rejected Mac-green code before.
+- **Installed-app smoke test** with round-4 code (new screenshot 03 Golden hour, 07 floating panel, thumbnails) has not run.
+  `--selftest` exists but is not yet called by the CI smoke test; wiring it in is cheap and recommended.
+- **Installer size**: 131 MB, over GitHub's 100 MiB file limit; publish by FTP to `public_html/downloads/archi-tool/`
+  (documented in `windows/README.md`), not through the website repo.
+- **Code signing**: none. **Oana decides** (options and costs in `windows/README.md`; recommended: Azure Trusted Signing if
+  eligible, else a Certum OV certificate). Unsigned, users see SmartScreen "More info → Run anyway".
+- **Swift 6 warnings** in `BCFServer.swift` (captured variables) — not rechecked this round.
 
 ## Ready to publish?
 
 **No.** The bar is: todo = 0, only cosmetic partial lines, both CI workflows green on the release commit, and the installed
-app smoke-tested on Windows. Today:
+app smoke-tested on Windows with this round's code. Today:
 
-- todo = 7;
-- 2 partial lines are not cosmetic;
-- round 3 is uncommitted and has no CI run;
-- canvas.mjs is red;
-- the smoke-test findings in items 9-11 are open.
+- todo = 1 (FILEPREVIEW, Oana's decision);
+- 4 partial lines are not cosmetic (offline help routing; a small shell fix);
+- round 4 is uncommitted; no CI result since 9885fb9, where the Windows engine workflow was red;
+- the installed app has not been smoke-tested with round-4 code.
+
+What Oana must decide: FILEPREVIEW (embedded thumbnail + unsigned Explorer add-on, or n/a); Ctrl+0 and Tutorial
+Record/Check (accept as Windows conventions / n/a); code signing; and unblock GitHub Actions (minutes/queue).
 
 ## Appendix: every open checklist line
 
 Grouped by checklist section, `todo` first, then `partial`; the note is the audit's reason.
 
-### Ribbon
-
-- **todo** Manage ▸ More ▸ Tools ▸ Help ▸ Self Test — `APPSELFTEST` · _command APPSELFTEST is not registered in archi-engine_
-- **partial** Tab Manage — 5 groups
-- **partial** Manage ▸ More (group)
-- **partial** Manage ▸ More ▸ Tools (menu) — Action recorder, aliases, scripting, help
-
 ### Menu bar
 
-- **todo** Tools ▸ Help ▸ Self Test — `APPSELFTEST` · _command APPSELFTEST is not registered in archi-engine_
-- **todo** Tools ▸ Navigation & Sheets ▸ Help Browser — `HELPWINDOW` · _command HELPWINDOW is not registered in archi-engine_
-- **todo** Tools ▸ Render, Materials & Environment ▸ SpaceMouse — `SPACEMOUSE` · _command SPACEMOUSE is not registered in archi-engine_
 - **todo** Tools ▸ Files, Clipboard & Access ▸ File Preview & Spotlight — `FILEPREVIEW` · _command FILEPREVIEW is not registered in archi-engine_
-- **todo** Tools ▸ Styles, Patterns & Occlusion ▸ VR Headset View — `VRVIEW` · _command VRVIEW is not registered in archi-engine_
-- **todo** Help ▸ Check Command Coverage — `APPSELFTEST` · _command APPSELFTEST is not registered in archi-engine_
 - **partial** Menu Tools — 73 items
-- **partial** Tools ▸ Help
 - **partial** Tools ▸ Navigation & Sheets
-- **partial** Tools ▸ Render, Materials & Environment
+- **partial** Tools ▸ Navigation & Sheets ▸ Tutorials — `TUTORIALS` · _opens the website guide; the Mac opens the offline help browser (system/help-browser.ts showHelpBrowser exists)_
 - **partial** Tools ▸ Files, Clipboard & Access
-- **partial** Tools ▸ Styles, Patterns & Occlusion
 - **partial** Tools ▸ Tutorial Videos
 - **partial** Tools ▸ Tutorial Videos ▸ Record Tutorial Videos — `TUTORIALRECORD Record` · _recording is Mac-only; Windows opens the website tutorials_
 - **partial** Tools ▸ Tutorial Videos ▸ Check Tutorial Scripts — `TUTORIALRECORD Check` · _only checks that the commands exist_
 - **partial** Menu Help — 13 items
+- **partial** Help ▸ Oanarina Archi Tool Help (F1) — `HELP` · _opens the website guide; the Mac opens the offline help browser (system/help-browser.ts showHelpBrowser exists)_
+- **partial** Help ▸ Tutorials — `HELP` · _opens the website guide; the Mac opens the offline help browser (system/help-browser.ts showHelpBrowser exists)_
 
 ### Keyboard shortcuts (Windows keys; Mac in brackets)
 
 - **partial** Ctrl+0 [⌘0] View ▸ Zoom Extents — See ⌃0: Ctrl+0 is Clean Screen on Windows; same Windows keys as: clean screen → (none) · _Windows key conflict (documented): Ctrl+0 is Clean Screen, Zoom Extents has no Ctrl key (double middle-click, ribbon, Z E)_
+- **partial** F1 [F1] Help for the running command — Windows help key: matches the Mac (context help) → F1 · _opens the website guide; the Mac opens the offline help browser (system/help-browser.ts showHelpBrowser exists)_
 - **partial** Ctrl+0 [⌘0] Zoom extents — See ⌃0: Ctrl+0 is Clean Screen on Windows; same Windows keys as: clean screen → (none) · _Windows key conflict (documented): Ctrl+0 is Clean Screen, Zoom Extents has no Ctrl key (double middle-click, ribbon, Z E)_
 
 ### Rendering and 3D
 
-- **partial** Lighting preset Daylight — sky=daylight, sunAltitude=46, sunAzimuth=222, sunColor=[1.0, 0.955, 0.89], sunIntensity=3300, shadowRadius=2.5, shadowAlpha=0.94, envIntensity=1.05 … · _cosmetic: 2.1-3.1 levels from the Mac; cedar 5-7 levels too bright in flat light_
-- **partial** Lighting preset Golden hour — sky=golden, sunAltitude=11, sunAzimuth=228, sunColor=[1.0, 0.66, 0.38], sunIntensity=3400, shadowRadius=5, shadowAlpha=0.9, envIntensity=0.95 … · _cosmetic: 2.0-2.7 levels from the Mac; cedar +5-6. Smoke test on Windows: the interactive 3D view did not show the warm look after the preset was set_
-- **partial** Lighting preset Overcast — sky=overcast, sunAltitude=58, sunAzimuth=200, sunColor=[0.93, 0.96, 1.0], sunIntensity=420, shadowRadius=22, shadowAlpha=0.7, envIntensity=1.55 … · _4.6 levels from the Mac; limestone +12_
-- **partial** Lighting preset Night — sky=night, sunAltitude=38, sunAzimuth=135, sunColor=[0.62, 0.72, 1.0], sunIntensity=70, shadowRadius=6, shadowAlpha=0.85, envIntensity=1.0 … · _cosmetic: 1.7 levels from the Mac; the Mac's bollard light pools are brighter_
-- **partial** Photographic render (RENDER) with presets, supersampling, PNG output · _clay, depth of field and HDRI done; the Clear Sky / Sunset / Studio / Night / Physical Sky environments approximate the Mac gradient maps_
-- **partial** 360° panorama · _rendered with the photographic look, not the Mac panorama renderer_
+- **partial** Lighting preset Night — sky=night, sunAltitude=38, sunAzimuth=135, sunColor=[0.62, 0.72, 1.0], sunIntensity=70, shadowRadius=6, shadowAlpha=0.85, envIntensity=1.0 … · _cosmetic: 1.8 levels from the Mac; the Mac's bollards cast shadows inside their own light pools_

@@ -129,55 +129,42 @@ class CompareOverlay {
   path: string | null = null;
   visible = true;
   kinds = new Set(["added", "removed", "modified"]);
-  private cv: HTMLCanvasElement | null = null;
-  private raf = 0;
-  private last = "";
+  private installed = false;
   constructor(private plan: PlanHooks) {}
-  set(data: any, path: string | null) { this.data = data; this.path = path; this.visible = true; this.ensure(); }
-  clear() { this.data = null; this.path = null; this.cv?.remove(); this.cv = null; cancelAnimationFrame(this.raf); }
+  set(data: any, path: string | null) { this.data = data; this.path = path; this.visible = true; this.ensure(); this.refresh(); }
+  clear() { this.data = null; this.path = null; this.refresh(); }
+  /** CompareOverlay.draw: painted by the plan canvas in world coordinates (twisted views and all), under the preview. */
   private ensure() {
-    if (this.cv && this.cv.isConnected) { this.last = ""; return; }
-    this.cv = h("canvas", { style: { position: "absolute", inset: "0", width: "100%", height: "100%", pointerEvents: "none", zIndex: "3" } }) as HTMLCanvasElement;
-    const tick = () => { this.paint(); this.raf = requestAnimationFrame(tick); };
-    this.raf = requestAnimationFrame(tick);
+    if (this.installed) return;
+    this.installed = true;
+    this.plan.addOverlayPainter((g, scale) => this.draw(g, scale));
   }
-  private paint() {
-    const host = this.plan.el();
-    if (!this.cv || !host) return;
-    if (this.cv.parentElement !== host) host.append(this.cv);
-    const v = this.plan.view();
-    const key = `${v.cx},${v.cy},${v.scale},${host.clientWidth},${host.clientHeight},${this.visible},${[...this.kinds].join()}`;
-    if (key === this.last) return;
-    this.last = key;
-    const dpr = devicePixelRatio || 1, w = host.clientWidth, hh = host.clientHeight;
-    this.cv.width = w * dpr; this.cv.height = hh * dpr;
-    const g = this.cv.getContext("2d")!;
-    g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    g.clearRect(0, 0, w, hh);
-    if (!this.visible || !this.data) return;
-    const toView = (p: number[]) => [(p[0] - v.cx) * v.scale + w / 2, hh / 2 - (p[1] - v.cy) * v.scale];
-    g.lineWidth = 2.5;
-    for (const s of this.data.shapes ?? []) {
+  draw(g: CanvasRenderingContext2D, scale: number) {
+    if (!this.visible || !this.data?.shapes?.length) return;
+    g.lineWidth = 2.5 / scale;
+    g.globalAlpha = 0.95;
+    g.lineJoin = "miter"; g.lineCap = "butt";
+    for (const s of this.data.shapes) {
       if (!this.kinds.has(s.kind)) continue;
       g.strokeStyle = this.data.colors?.[s.kind] ?? "#ffffff";
-      g.globalAlpha = 0.95;
-      g.setLineDash(s.kind === "removed" ? [6, 4] : []);
+      g.setLineDash(s.kind === "removed" ? [6 / scale, 4 / scale] : []);
       for (const pl of s.polylines ?? []) {
         if (pl.length < 2) continue;
         g.beginPath();
-        const a = toView(pl[0]); g.moveTo(a[0], a[1]);
-        for (const q of pl.slice(1)) { const b = toView(q); g.lineTo(b[0], b[1]); }
+        g.moveTo(pl[0][0], pl[0][1]);
+        for (const q of pl.slice(1)) g.lineTo(q[0], q[1]);
         g.stroke();
       }
     }
   }
-  refresh() { this.last = ""; }
+  refresh() { this.plan.repaint(); }
 }
 let overlay: CompareOverlay | null = null;
 
 export function showCompare(app: App, plan: PlanHooks) {
   overlay ??= new CompareOverlay(plan);
   const ov = overlay;
+  (window as any).archiCompareOverlay = ov; // tests (render-r4.mjs)
   const w = ToolWindow.show("compare", "Compare Drawings", { w: 440, h: 520, minW: 380, minH: 360 }, (win) => {
     const body = h("div", { class: "pb-col", style: { padding: "10px", gap: "8px", flex: "1", minHeight: "0" } });
     win.body.append(body);
