@@ -84,7 +84,8 @@ function watch(pg) {
   pg.on("pageerror", (e) => log.write(`[pageerror] ${e}\n`));
   pg.on("requestfailed", (r) => log.write(`[requestfailed] ${r.url()} ${r.failure()?.errorText ?? ""}\n`));
 }
-const shot = (name) => page.screenshot({ path: path.join(out, name + ".png") }).catch((e) => check(`screenshot ${name}`, false, String(e)));
+// 120 s: on CI runners the 3D view renders with SwiftShader (software WebGL), a 1440x900 frame can take many seconds.
+const shot = (name) => page.screenshot({ path: path.join(out, name + ".png"), timeout: 120_000 }).catch((e) => check(`screenshot ${name}`, false, String(e)));
 const title = () => page.textContent(".titlebar .title").catch(() => "");
 const itemCount = () => page.evaluate(async () => (await window.archiApp?.tryCall?.("view.drawList", { rect: [-1e7, -1e7, 1e7, 1e7], pixelsPerUnit: 0.01 }))?.items?.length ?? -1).catch(() => -1);
 const lastLog = (n = 12) => page.evaluate((k) => (window.archiApp?.log ?? []).slice(-k).join(" ⏎ "), n).catch(() => "");
