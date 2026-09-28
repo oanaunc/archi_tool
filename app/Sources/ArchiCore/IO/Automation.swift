@@ -64,7 +64,7 @@ public final class AutomationWatcher {
         var out: [(URL, Int)] = []
         for f in files {
             guard (try? f.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true,
-                  let m = (try? f.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate)?.timeIntervalSince1970 else { continue }
+                  let m = AutomationWatcher.modified(f) else { continue }
             guard let r = rules.firstIndex(where: { AutomationWatcher.matches(f.lastPathComponent, $0.pattern) }) else { continue }
             if let seen = state[f.lastPathComponent], seen >= m { continue }
             out.append((f, r))
@@ -88,6 +88,13 @@ public final class AutomationWatcher {
         return job
     }
 
+    /// The file's modification time read from the file itself. Not the date prefetched by the directory listing: on
+    /// Windows (NTFS) the directory entry's timestamps are updated lazily, so a listing can report an older time that
+    /// changes after the file is opened, and the file would look changed again.
+    static func modified(_ f: URL) -> Double? {
+        ((try? FileManager.default.attributesOfItem(atPath: f.path))?[.modificationDate] as? Date)?.timeIntervalSince1970
+    }
+
     func saveState() {
         if let d = try? JSONSerialization.data(withJSONObject: state, options: [.prettyPrinted, .sortedKeys]) { try? d.write(to: folder.appendingPathComponent(AutomationWatcher.stateName), options: .atomic) }
     }
@@ -109,7 +116,7 @@ public final class AutomationWatcher {
             } catch {
                 r["ok"] = false; r["error"] = (error as? LocalizedError)?.errorDescription ?? "\(error)"
             }
-            if let m = (try? f.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate)?.timeIntervalSince1970 { state[f.lastPathComponent] = m }
+            if let m = AutomationWatcher.modified(f) { state[f.lastPathComponent] = m }
             if let hook = rule.webhook { r["webhook"] = await AutomationWatcher.post(r, to: hook) }
             results.append(r)
         }
