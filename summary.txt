@@ -1,0 +1,30 @@
+commit df1855187680273ffaee600687a6b1af3e16c254 · run 36473040193 · outcome success
+=== building tests
+Build complete! (116.92s)
+=== running tests (parallel, 120 min limit)
+--- last lines
+[1017/1037] Testing ArchiCoreTests.RenderProjectViewsTests/testViewAnnotationsDuplicateAndCrop
+[1018/1037] Testing ArchiCoreTests.RenderSheetViewsTests/testCalloutAndViewTitles
+[1019/1037] Testing ArchiCoreTests.RenderSheetViewsTests/testFamilyPlanSymbolsDrawn
+[1020/1037] Testing ArchiCoreTests.RenderTests/testDoorCutsWallOutline
+[1021/1037] Testing ArchiCoreTests.RenderTests/testDrawListResolvesLayersAndBlocks
+[1022/1037] Testing ArchiCoreTests.RenderSheetViewsTests/testInteriorElevationsOfRoom
+[1023/1037] Testing ArchiCoreTests.RenderTests/testLinearDimensionText
+[1024/1037] Testing ArchiCoreTests.RenderTests/testRoofAndElevation
+[1025/1037] Testing ArchiCoreTests.RenderTests/testSlabWithHoleArea
+[1026/1037] Testing ArchiCoreTests.RenderTests/testTJoinTrimsToHostFace
+[1027/1037] Testing ArchiCoreTests.RenderTests/testWallMeshWithWindow
+[1028/1037] Testing ArchiCoreTests.RenderTests/testWallOutlineMiterAtLCorner
+[1029/1037] Testing ArchiCoreTests.RenderViewGraphicsTests/testDimensionsInElevations
+[1030/1037] Testing ArchiCoreTests.RenderViewGraphicsTests/testHiddenLinesLineWeightsDepthCueAndFarClip
+[1031/1037] Testing ArchiCoreTests.RenderViewGraphicsTests/testLegendsDraftingViewsAndTemplates
+[1032/1037] Testing ArchiCoreTests.RenderViewRangeTests/testViewRangeUnderlayRevealAndCategoryHide
+[1033/1037] Testing ArchiCoreTests.RenderVisibilityTests/testCategoryOverridesAndFilters
+[1034/1037] Testing ArchiCoreTests.RenderVisibilityTests/testDetailLevelChangesWallAndOpeningGraphics
+[1035/1037] Testing ArchiCoreTests.RenderTests/testHatchANSI31InsideSquare
+[1036/1037] Testing ArchiCoreTests.EngineOutputTests/testPathTracerAndPasses
+[1037/1037] Testing ArchiCoreTests.IOInteropCorpusTests/testWriteDXFCorpusAndReadBack
+◊ Test run started.
+→ Testing Library Version: 6.1.2 (d6b70f9ef9eb207)
+→ Target Platform: x86_64-unknown-windows-msvc
+√ Test run with 0 tests passed after 0.001 seconds.
