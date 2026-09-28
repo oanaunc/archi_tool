@@ -108,6 +108,12 @@ final class EngineOutputTests: XCTestCase {
         XCTAssertTrue(texts.contains { $0.hasPrefix("SCALE 1:150") })
         // PLOT <file> plots the shown sheet like the Mac: one A3 landscape page, viewports clipped, Helvetica text.
         let url = tmp("A-102.pdf")
+        // The plot log is one shared file per user; parallel test processes append to it too, so this test logs to its own folder.
+        let logDir = tmp("plotlog")
+        try FileManager.default.createDirectory(at: logDir, withIntermediateDirectories: true)
+        let savedLogFolder = EnginePlotLog.folder
+        EnginePlotLog.folder = logDir
+        defer { EnginePlotLog.folder = savedLogFolder; try? FileManager.default.removeItem(at: logDir) }
         try await run(s, "PLOT " + url.path)
         let data = try Data(contentsOf: url)
         XCTAssertEqual(String(decoding: data.prefix(8), as: UTF8.self), "%PDF-1.4")
@@ -127,7 +133,8 @@ final class EngineOutputTests: XCTestCase {
         XCTAssertGreaterThan(body.components(separatedBy: " S Q").count, 500)
         // The plot log has the sheet.
         let log = try await s.call("plotlog.get", obj([]))
-        XCTAssertTrue(log["rows"]?.arrayValue?.last?.arrayValue?.contains(.string(url.path)) ?? false)
+        let lastRow = log["rows"]?.arrayValue?.last?.arrayValue ?? []
+        XCTAssertTrue(lastRow.contains(.string(url.path)), "plot log " + String(describing: log["path"]) + ": " + String(describing: log["rows"]))
         try? FileManager.default.removeItem(at: url)
     }
 
