@@ -43,6 +43,13 @@ public enum DocumentIO {
         case "stl": try text(STLExporter.export(MeshBuilder.build(doc: doc).map { FileImport.scaled($0, mm) }, name: doc.info.name))
         case "glb", "gltf": try GLTFExporter.exportGLB(MeshBuilder.build(doc: doc), materials: doc.materials, unitMM: mm).write(to: url, options: .atomic)
         case "csv": try text(ScheduleExporter.csv(doc: doc, kind: "all"))
+        case "png": try PlanImageExport.write(doc: doc, level: level ?? doc.currentLevel, to: url, imageBase: url.deletingLastPathComponent())
+        case let k where k.hasPrefix("csv:"): try text(ScheduleExporter.csv(doc: doc, kind: String(k.dropFirst(4))))
+        case let k where k.hasPrefix("xlsx:"):
+            // One schedule as a workbook (the Schedule window's kind); "xlsx" alone writes every schedule.
+            let kind = String(k.dropFirst(5))
+            let rows = ScheduleExporter.table(doc: doc, kind: kind)
+            try XLSX.write([XLSX.Sheet(name: kind.prefix(1).uppercased() + String(kind.dropFirst()), rows: rows)]).write(to: url, options: .atomic)
         case "takeoff": try text(QuantityTakeoff.compute(doc).csv)
         case "pdf": try PDFWriter.document(doc, level: level).write(to: url, options: .atomic)
         default:

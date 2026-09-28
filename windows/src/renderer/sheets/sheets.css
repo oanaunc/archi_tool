@@ -1,0 +1,27 @@
+/* Oanarina Archi Tool for Windows — GPL-3.0-or-later */
+/* Contextual ribbon strip (ContextualRibbonStrip): 22 pt, accent at 14 %, the tab title on the accent. */
+.ctx-strip { height: 22px; flex: none; display: flex; align-items: stretch; gap: 2px; background: rgba(245, 197, 24, 0.14); overflow: hidden; }
+.ctx-strip .ctx-title { display: flex; align-items: center; padding: 0 8px; background: var(--accent); color: var(--accent-text); font-size: 9.5px; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap; }
+.ctx-strip .ctx-btn { display: flex; align-items: center; gap: 4px; padding: 0 6px; color: var(--text); font-size: 10.5px; white-space: nowrap; border-radius: 0; }
+.ctx-strip .ctx-btn:hover { background: var(--hover); }
+.ctx-strip .ctx-btn:active { background: var(--pressed); }
+.ctx-strip .ctx-btn .icon { flex: none; }
+/* Start screen: RECOVERED DOCUMENTS (StartView.recoverySection). */
+.rec-section { display: flex; flex-direction: column; gap: 6px; }
+.rec-head { display: flex; align-items: center; gap: 6px; color: var(--accent); font-size: 10px; font-weight: 600; letter-spacing: 0.8px; }
+.rec-note { font-size: 10px; color: var(--dim); }
+.rec-row { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 8px; border-radius: 6px; background: rgba(245, 197, 24, 0.08); }
+.rec-row .rec-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.rec-row .rec-name { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rec-row .rec-date { font-size: 10px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rec-row .spacer { flex: 0; }
+/* Versions window (VersionsBrowser). */
+.ver-body { display: flex; flex-direction: column; gap: 8px; padding: 12px; box-sizing: border-box; height: 100%; }
+.ver-note { font-size: 10px; color: var(--dim); }
+.ver-list { flex: 1; min-height: 240px; overflow-y: auto; background: var(--field); border: 1px solid var(--sep); border-radius: 4px; outline: none; }
+.ver-row { height: 22px; line-height: 22px; padding: 0 8px; font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ver-row:nth-child(even) { background: rgba(255, 255, 255, 0.03); }
+.ver-row.sel { background: var(--accent); color: var(--accent-text); }
+.ver-buttons { display: flex; align-items: center; gap: 8px; }
+.ver-buttons .spacer { flex: 1; }
+.ver-msg { font-size: 10px; color: var(--dim); }

@@ -42,6 +42,9 @@ export interface EngineLight {
   beam: number;
   size?: [number, number];
   fixture?: boolean;
+  /** IES file of an IES light and its distribution (engine EngineIESProfile.json). */
+  ies?: string;
+  iesProfile?: { vertical: number[]; relative: number[]; maxCandela?: number; lumens?: number; beam?: number };
 }
 
 export interface MeshesResult {
@@ -400,7 +403,7 @@ export class SceneModel {
 
   /** "textures/cedar.jpg" → cedar_n.jpg / cedar_r.jpg when the document gives no MATMAPS (the demo textures' naming). */
   conventionalMaps(texture: string): MaterialMaps | undefined {
-    if (!this.guessMaps) return undefined;
+    if (!this.guessMaps || /^(data|blob):/.test(texture)) return undefined;
     const m = /^(.*)\.(jpe?g|png)$/i.exec(texture);
     if (!m || /_(n|r)$/i.test(m[1])) return undefined;
     return { normal: `${m[1]}_n.${m[2]}`, roughness: `${m[1]}_r.${m[2]}`, normalStrength: 1 };
@@ -410,7 +413,8 @@ export class SceneModel {
     const key = path + (srgb ? "|s" : "|l");
     let p = this.texCache.get(key);
     if (!p) {
-      p = this.loadImage(this.resolve(path)).then((img) => imageTexture(this.gl, img, srgb, 16)).catch(() => null);
+      const url = /^(data|blob):/.test(path) ? path : this.resolve(path);
+      p = this.loadImage(url).then((img) => imageTexture(this.gl, img, srgb, 16)).catch(() => null);
       this.texCache.set(key, p);
     }
     return p;

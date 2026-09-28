@@ -8,6 +8,8 @@ import { EngineProcess } from "./rpc";
 import { registerSettingsIpc, recentLimit, readSettings } from "./settings-ipc";
 import { installPartB, attachPartB } from "./partb";
 import { installOutput } from "./output";
+import { installWorkspace } from "./workspace";
+import { installStandards } from "./standards";
 
 interface DocRequest { kind: string; path?: string }
 
@@ -85,7 +87,7 @@ function createWindow(request: DocRequest | null = { kind: "start" }): BrowserWi
     backgroundColor: (lightTheme ? THEME.light : THEME.dark).bg, show: false,
     title: "Oanarina Archi Tool",
     icon: path.join(resourcesDir(), "icon.ico"),
-    webPreferences: { preload: path.join(__dirname, "../preload/preload.js"), contextIsolation: true, sandbox: false, nodeIntegration: false, spellcheck: false },
+    webPreferences: { preload: path.join(__dirname, "../preload/preload.js"), contextIsolation: true, sandbox: false, nodeIntegration: false, spellcheck: true },
   });
   const id = win.webContents.id;
   let engine: EngineProcess | null = new EngineProcess(enginePath(), ["--cwd", app.getPath("documents")], path.dirname(enginePath()));
@@ -119,6 +121,7 @@ ipcMain.handle("window:control", (e, action: string) => {
   else if (action === "maximize") win.isMaximized() ? win.unmaximize() : win.maximize();
   else if (action === "close") win.close();
   else if (action === "quit") { app.quit(); return false; } // File ▸ Exit: every window
+  else if (action === "fullscreen") { win.setFullScreen(!win.isFullScreen()); return !win.isFullScreen(); } // View ▸ Enter Full Screen
   return win.isMaximized();
 });
 ipcMain.handle("dialog:open", async (e, opts) => {
@@ -155,6 +158,8 @@ protocol.registerSchemesAsPrivileged([{ scheme: "archi-file", privileges: { stan
 registerSettingsIpc();
 installPartB({ resources: resourcesDir() });
 installOutput();
+installWorkspace();
+installStandards();
 if (isWin) app.setAppUserModelId(APP_ID);
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) app.quit();

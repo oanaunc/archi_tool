@@ -23,7 +23,7 @@ function hexOf(color: string | undefined): string | null {
 
 export interface TextEditRequest {
   id: number; content: string; singleLine: boolean; styleFont: string; color: string;
-  format: { font?: string; bold?: boolean; italic?: boolean; underline?: boolean };
+  format: { font?: string; bold?: boolean; italic?: boolean; underline?: boolean; strike?: boolean };
   text: { position: [number, number]; height: number; rotation: number; halign: string; width: number };
 }
 
@@ -33,17 +33,17 @@ export class InPlaceTextEditor {
   el: HTMLElement;
   area: HTMLTextAreaElement;
   private finished = false;
-  private state: { content: string; height: number; font: string | null; bold: boolean; italic: boolean; underline: boolean; color: string };
+  private state: { content: string; height: number; font: string | null; bold: boolean; italic: boolean; underline: boolean; strike: boolean; color: string };
   private original: string;
 
   constructor(private app: App, private req: TextEditRequest, host: HTMLElement, at: (p: [number, number]) => [number, number], private scale: number, private done: () => void) {
     InPlaceTextEditor.current?.commit();
     InPlaceTextEditor.current = this;
-    this.state = { content: req.content, height: req.text.height, font: req.format.font ?? null, bold: !!req.format.bold, italic: !!req.format.italic, underline: !!req.format.underline, color: req.color || "ByLayer" };
+    this.state = { content: req.content, height: req.text.height, font: req.format.font ?? null, bold: !!req.format.bold, italic: !!req.format.italic, underline: !!req.format.underline, strike: !!req.format.strike, color: req.color || "ByLayer" };
     this.original = JSON.stringify(this.state);
     this.el = h("div", { class: "text-editor", role: "dialog", "aria-label": "In-place text editor" });
     const bar = h("div", { class: "te-bar" });
-    const fmtBtn = (label: string, key: "bold" | "italic" | "underline", tip: string, style: string) => {
+    const fmtBtn = (label: string, key: "bold" | "italic" | "underline" | "strike", tip: string, style: string) => {
       const b = h("button", { class: "te-btn" + (this.state[key] ? " on" : ""), text: label, style: { cssText: style } }) as HTMLButtonElement;
       help(b, tip);
       b.addEventListener("mousedown", (e) => e.preventDefault());
@@ -76,7 +76,7 @@ export class InPlaceTextEditor {
     const cancel = h("button", { class: "te-cancel", text: "Cancel" }); help(cancel, "Discard (Esc)");
     ok.addEventListener("click", () => this.commit());
     cancel.addEventListener("click", () => this.cancel());
-    bar.append(fmtBtn("B", "bold", "Bold", "font-weight:700"), fmtBtn("I", "italic", "Italic", "font-style:italic"), fmtBtn("U", "underline", "Underline", "text-decoration:underline"),
+    bar.append(fmtBtn("B", "bold", "Bold", "font-weight:700"), fmtBtn("I", "italic", "Italic", "font-style:italic"), fmtBtn("U", "underline", "Underline", "text-decoration:underline"), fmtBtn("S", "strike", "Strike-through", "text-decoration:line-through"),
       font, height, color, h("label", { class: "te-bylayer" }, byLayer, h("span", { text: "ByLayer" })), ok, cancel);
     this.area = h("textarea", { class: "te-text", spellcheck: false, "aria-label": "Text" }) as HTMLTextAreaElement;
     this.area.value = req.content;
@@ -122,7 +122,7 @@ export class InPlaceTextEditor {
     s.fontSize = this.pointSize + "px";
     s.fontWeight = this.state.bold ? "700" : "400";
     s.fontStyle = this.state.italic ? "italic" : "normal";
-    s.textDecoration = this.state.underline ? "underline" : "none";
+    s.textDecoration = [this.state.underline ? "underline" : "", this.state.strike ? "line-through" : ""].filter(Boolean).join(" ") || "none";
     const hex = hexOf(this.state.color);
     s.color = hex ?? "var(--text)";
     s.caretColor = hex ?? "var(--text)";
@@ -137,7 +137,7 @@ export class InPlaceTextEditor {
     if (!changed) return;
     if (!this.state.content.trim()) { this.app.print("Error: text is empty"); return; }
     await this.app.tryCall("text.edit", { id: this.req.id, content: this.state.content, height: this.state.height, font: this.state.font ?? "",
-      bold: this.state.bold, italic: this.state.italic, underline: this.state.underline, color: this.state.color });
+      bold: this.state.bold, italic: this.state.italic, underline: this.state.underline, strike: this.state.strike, color: this.state.color });
     await this.app.refresh(["drawing", "properties", "history"]);
   }
   cancel() { this.finished = true; this.close(); }

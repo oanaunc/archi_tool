@@ -12,3 +12,12 @@
 {"jsonrpc":"2.0","id":12,"method":"render.preset","params":{"name":"Goldenhour"}}
 {"jsonrpc":"2.0","id":13,"method":"edit.undo","params":{}}
 {"jsonrpc":"2.0","id":14,"method":"no.such.method","params":{}}
+{"jsonrpc": "2.0", "id": 9001, "method": "doc.open", "params": {"path": "assets/demo/Cedar House.archi"}}
+{"jsonrpc": "2.0", "id": 9002, "method": "command.run", "params": {"line": "LAYOUT New \"A-102 Plans\""}}
+{"jsonrpc": "2.0", "id": 9003, "method": "command.run", "params": {"line": "MVIEW 15,40 205,280 1:150 Plan \"Ground Floor\""}}
+{"jsonrpc": "2.0", "id": 9004, "method": "command.run", "params": {"line": "LEVEL Set \"Upper Floor\""}}
+{"jsonrpc": "2.0", "id": 9005, "method": "command.run", "params": {"line": "MVIEW 215,150 405,280 1:200 Plan \"Upper Floor\""}}
+{"jsonrpc": "2.0", "id": 9006, "method": "command.run", "params": {"line": "LEVEL Set \"Ground Floor\""}}
+{"jsonrpc": "2.0", "id": 9007, "method": "command.run", "params": {"line": "MVIEW 215,40 405,140 1:200 South \"South Elevation\""}}
+{"jsonrpc": "2.0", "id": 9008, "method": "command.run", "params": {"line": "LAYOUT Titleblock Title \"Plans\" Number \"A-102\" ;"}}
+{"jsonrpc": "2.0", "id": 9009, "method": "plot.pdf", "params": {"path": "build/a102/A-102-win.pdf", "layout": "A-102 Plans"}}

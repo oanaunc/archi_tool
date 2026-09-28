@@ -1,0 +1,17 @@
+# Mac reference plot of sheet A-102 (tutorial 10) for windows/tools/pdf_compare.py: played by the tutorial recorder dry run.
+title: A-102 reference
+summary: Mac reference PDF of sheet A-102 for the Windows page-for-page check
+---
+open sample "Cedar House"
+type LAYOUT New "A-102 Plans"
+click mode Sheet
+wait 1
+type MVIEW 15,40 205,280 1:150 Plan "Ground Floor"
+type LEVEL Set "Upper Floor"
+type MVIEW 215,150 405,280 1:200 Plan "Upper Floor"
+type LEVEL Set "Ground Floor"
+type MVIEW 215,40 405,140 1:200 South "South Elevation"
+type LAYOUT Titleblock Title "Plans" Number "A-102" ;
+wait 1
+type PLOT /Users/oanarinaldi/Desktop/archi_tool/build/a102/A-102-mac.pdf
+wait 2

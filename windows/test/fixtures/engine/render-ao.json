@@ -1,0 +1,1 @@
+{"request":{"jsonrpc":"2.0","id":3006,"method":"render.ao","params":{}},"response":{"jsonrpc":"2.0","id":3006,"result":{"intensity":0,"radius":1000,"samples":24,"units":"millimeters","unitMM":1,"on":false,"viewport":null}},"notifications":[]}

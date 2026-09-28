@@ -83,5 +83,6 @@ export function dimstyleDropdown(app: App, width: number) {
 let visualStyle = "Realistic";
 export function visualstyleDropdown(app: App, width: number) {
   return field(width, "Visual style of the 3D viewport", (el) => { el.append(icon("circle.lefthalf.filled", 12), h("span", { class: "t", text: visualStyle })); },
-    () => VISUAL_STYLES.map((n) => ({ title: n, checked: n === visualStyle, action: () => { visualStyle = n; app.runCommand(`VSCURRENT ${n}`); app.emit("ui"); } })), app, ["ui"]);
+    () => [...VISUAL_STYLES.map((n) => ({ title: n, checked: n === visualStyle, action: () => { visualStyle = n; app.runCommand(`VSCURRENT ${n}`); app.emit("ui"); } })),
+      ...(((window as any).archiVisualStyles?.custom ?? []) as { name: string }[]).map((c) => ({ title: c.name, checked: c.name === visualStyle, action: () => { visualStyle = c.name; app.runCommand(`VISUALSTYLES Current "${c.name}"`); app.emit("ui"); } }))], app, ["ui"]);
 }

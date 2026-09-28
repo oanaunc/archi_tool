@@ -38,7 +38,7 @@ export interface ArchiBridge {
   rpc(method: string, params?: unknown): Promise<any>;
   onNotify(cb: (n: Notification) => void): void;
   platform: string;
-  windowControl(action: "minimize" | "maximize" | "close" | "isMaximized" | "quit"): Promise<boolean>;
+  windowControl(action: "minimize" | "maximize" | "close" | "isMaximized" | "quit" | "fullscreen"): Promise<boolean>;
   onWindowState(cb: (s: { maximized: boolean; focused: boolean }) => void): void;
   openFileDialog(opts: { title?: string; filters?: { name: string; extensions: string[] }[] }): Promise<string | null>;
   saveFileDialog(opts: { title?: string; defaultPath?: string; filters?: { name: string; extensions: string[] }[] }): Promise<string | null>;

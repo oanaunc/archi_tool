@@ -18,9 +18,11 @@ import { snapPoint, type Grip, type SnapInfo } from "../../shared/protocol";
 import { decodeDrawList, decodeItem, paintItems, applyView, Entry, Item, View, Params, defaultParams, pick, setImageLoadedCallback, setImageUrlResolver } from "./drawitems";
 import { showMenu, closeMenus, type MenuItem } from "../ui/menu";
 import { shortcutItems, SNAP_OVERRIDES, RadialMenuView, radialItems, radialContext, radialSector, radialTooltip, radialPrefs, type ShortcutItem } from "./canvas-menus";
+import { lwDisplayScale } from "../standards/lwscale";
 import { InPlaceTextEditor, editTextAlert } from "./text-editor";
 import { PREFIX, DROP_TYPE } from "./tool-palette";
 import { installFakeCanvas } from "./fake-canvas";
+import { MechanismPlayer, type PlaybackMode } from "./mechanism";
 import "./canvas.css";
 
 const ACCENT = "#F5C518";
@@ -80,6 +82,8 @@ export class PlanCanvas {
   private zoomWindowPending = false;
   private contentDirty = true;
   private overlayDirty = true;
+  /** MECHANISMPLAY: the poses played over the plan (accent colour). */
+  private mechanism: MechanismPlayer | null = null;
   private cursorBusy = false;
   private cursorPending = false;
   private lastMiddle = 0;
@@ -284,7 +288,8 @@ export class PlanCanvas {
     if (this.contentDirty) { this.paintContent(); this.contentDirty = false; }
     this.paintOverlay(); this.overlayDirty = false;
   }
-  private params(): Params { return { ...defaultParams, lineweights: this.app.sysvarOn("LWDISPLAY"), minWidth: 1 / (window.devicePixelRatio || 1) }; }
+  /** LWDISPLAYSCALE multiplies the screen lineweights (CanvasView: p.lwScale *= LineweightDisplay.scale). */
+  private params(): Params { return { ...defaultParams, lwScale: defaultParams.lwScale * lwDisplayScale(), lineweights: this.app.sysvarOn("LWDISPLAY"), minWidth: 1 / (window.devicePixelRatio || 1) }; }
 
   // ---- content ----
   private paintContent() {
@@ -570,6 +575,8 @@ export class PlanCanvas {
     }
     // Grip drag preview and palette placement preview, in the accent colour.
     if (this.hot && this.hot.items.length) paintItems(ctx, this.hot.items, this.v, prm, { colorOverride: ACCENT });
+    const pose = this.mechanism?.current;
+    if (pose?.length) paintItems(ctx, pose, this.v, prm, { colorOverride: ACCENT });
     if (this.placement && this.placement.items.length && this.mouse) paintItems(ctx, this.placement.items, this.v, prm, { colorOverride: ACCENT });
     ctx.setTransform(d, 0, 0, d, 0, 0);
     // Rubber band from the base point.
@@ -1158,7 +1165,7 @@ export class PlanCanvas {
       }
       return;
     }
-    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key) && this.app.isIdle && !typed && this.app.selection.ids.length && t !== cmd) {
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key) && !e.altKey && this.app.isIdle && !typed && this.app.selection.ids.length && t !== cmd) {
       // Arrow keys nudge the selection (MOD-028): one pixel, the snap spacing with grid snap, ×10 with Shift.
       const d = e.key === "ArrowLeft" ? [-1, 0] : e.key === "ArrowRight" ? [1, 0] : e.key === "ArrowDown" ? [0, -1] : [0, 1];
       const c = Math.cos(-this.tw), s = Math.sin(-this.tw);
@@ -1390,6 +1397,20 @@ export class PlanCanvas {
         }
         case "restoreViewport": app.activeLayout = Number(p.layout ?? 0) + 1; app.setUI("mode", "Sheet"); return true;
         case "hidePanel": if (app.panelTab === p.panel) app.setUI("panelTab", "Properties"); return true;
+        case "canvas":
+          if (p.op === "mechanismPlay" || p.op === "mechanismStop") {
+            this.mechanism?.stop(false);
+            this.mechanism = null;
+            if (p.op === "mechanismPlay") {
+              const repaint = () => { this.overlayDirty = true; this.schedule(); };
+              const player = new MechanismPlayer(p.poses ?? [], (p.mode ?? "Loop") as PlaybackMode, Number(p.fps ?? 24), repaint,
+                () => { if (this.mechanism === player) this.mechanism = null; void app.tryCall("render.mechanismDone", {}); });
+              this.mechanism = player;
+              player.start();
+            }
+            return true;
+          }
+          break;
         case "preference": if (p.key === "radialMenu") { radialPrefs.enabled = !!p.value; return true; } break;
       }
       return !!prev?.(p);

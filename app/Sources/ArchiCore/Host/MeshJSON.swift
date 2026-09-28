@@ -111,7 +111,9 @@ public enum EngineMeshJSON {
         o.set("positions", buffer(bytes(floats(mesh.positions)), sink))
         if mesh.normals.count == mesh.positions.count { o.set("normals", buffer(bytes(floats(mesh.normals)), sink)) }
         o.set("indices", buffer(bytes(mesh.indices), sink))
-        if mesh.uvs.count == mesh.positions.count, !mesh.uvs.isEmpty { o.set("uvs", buffer(bytes(floats(mesh.uvs)), sink)) }
+        // MATMAPPING (TextureMapping.apply): the material's Box / Planar / Cylindrical / Spherical / UV mapping and placement.
+        let uvs = EPTSceneBuilder.mapped(mesh, material: g.material, doc: doc).uvs
+        if uvs.count == mesh.positions.count, !uvs.isEmpty { o.set("uvs", buffer(bytes(floats(uvs)), sink)) }
         if let t = mat?.texture, !t.isEmpty {
             o.set("texture", t)
             o.set("textureScale", mat?.textureScale ?? 1000)
@@ -140,7 +142,10 @@ public enum EngineMeshJSON {
             o.set("cct", min(max(d("cct", 3000), 1000), 20000))
             o.set("beam", min(max(d("beam", 60), 1), 170))
             o.set("size", EngineJSON.point(Vec2(max(d("width", 600), 1), max(d("length", 600), 1))))
-            if let ies = e.props["ies"] { o.set("ies", ies) }
+            if let ies = e.props["ies"] {
+                o.set("ies", ies)
+                if let prof = EngineIESProfile.load(ies) { o.set("iesProfile", prof.json) }
+            }
             out.append(o.json)
         }
         for f in LightingFixtures.renderLights(doc: doc) {

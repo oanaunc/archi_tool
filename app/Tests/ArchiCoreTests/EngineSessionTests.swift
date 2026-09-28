@@ -711,6 +711,47 @@ extension EngineSessionTests {
         sink.lines.compactMap { try? EngineJSON.parse($0) }.filter { $0["method"]?.stringValue == "host" }.compactMap { $0["params"] }
     }
 
+    @MainActor func testPortableHelpCommands() async throws {
+        let (s, sink) = dialogSession()
+        _ = try await s.call("command.run", obj([("line", .string("ABOUT"))]))
+        var h = hostActions(sink).last
+        XCTAssertEqual(h?["action"]?.stringValue, "dialog")
+        XCTAssertEqual(h?["dialog"]?.stringValue, "about")
+        _ = try await s.call("command.run", obj([("line", .string("CMDSEARCH"))]))
+        XCTAssertEqual(hostActions(sink).last?["dialog"]?.stringValue, "commandSearch")
+        _ = try await s.call("command.run", obj([("line", .string("WHATSNEW"))]))
+        XCTAssertEqual(hostActions(sink).last?["dialog"]?.stringValue, "whatsNew")
+        _ = try await s.call("command.run", obj([("line", .string("CLEANSCREEN"))]))
+        h = hostActions(sink).last
+        XCTAssertEqual(h?["action"]?.stringValue, "cleanScreen")
+        XCTAssertEqual(h?["on"], .bool(true))
+        XCTAssertTrue(s.editor.log.contains("Clean screen on. CLEANSCREENOFF or Ctrl+0 restores the ribbon and panels."))
+        _ = try await s.call("command.run", obj([("line", .string("CLEANSCREENOFF"))]))
+        XCTAssertEqual(hostActions(sink).last?["on"], .bool(false))
+        _ = try await s.call("command.run", obj([("line", .string("HISTORYPANEL"))]))
+        h = hostActions(sink).last
+        XCTAssertEqual(h?["action"]?.stringValue, "showPanel")
+        XCTAssertEqual(h?["panel"]?.stringValue, "History")
+        XCTAssertEqual(s.editor.registry.lookup("HISTORY")?.name, "HISTORY", "the core HISTORY command keeps its name")
+        _ = try await s.call("command.run", obj([("line", .string("WELCOME"))]))
+        XCTAssertEqual(hostActions(sink).last?["action"]?.stringValue, "startScreen")
+        _ = try await s.call("command.run", obj([("line", .string("SAMPLEHOUSE"))]))
+        h = hostActions(sink).last
+        XCTAssertEqual(h?["action"]?.stringValue, "newWindow")
+        XCTAssertEqual(h?["kind"]?.stringValue, "sample")
+        XCTAssertTrue(s.editor.log.contains("Opening the sample house…"))
+        _ = try await s.call("command.run", obj([("line", .string("EXPORTCOMMANDS"))]))
+        _ = try await s.call("input.text", obj([("text", .string("C:/Temp/commands.csv"))]))
+        h = hostActions(sink).last
+        XCTAssertEqual(h?["action"]?.stringValue, "exportCommands")
+        XCTAssertEqual(h?["path"]?.stringValue, "C:/Temp/commands.csv")
+        XCTAssertEqual(h?["csv"], .bool(true))
+        XCTAssertGreaterThan(h?["count"]?.intValue ?? 0, 100)
+        for n in ["ABOUT", "COMMANDSEARCH", "CLEANSCREENON", "CLEANSCREENOFF", "HISTORYPANEL", "STARTSCREEN", "SAMPLEHOUSE", "WHATSNEW", "EXPORTCOMMANDS"] {
+            XCTAssertFalse(s.editor.registry.lookup(n)?.modifies ?? true, n)
+        }
+    }
+
     @MainActor func testDialogUnits() async throws {
         let (s, _) = dialogSession()
         var r = try await s.call("units.get")

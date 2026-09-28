@@ -192,7 +192,7 @@ public enum MTextFormatting {
     }
 
     /// MTEXT string for plain `content` with whole-text formatting (inverse of `leading`).
-    public static func encode(_ content: String, font: String? = nil, bold: Bool = false, italic: Bool = false, underline: Bool = false, color: ColorRef? = nil) -> String {
+    public static func encode(_ content: String, font: String? = nil, bold: Bool = false, italic: Bool = false, underline: Bool = false, color: ColorRef? = nil, strike: Bool = false) -> String {
         var codes = ""
         if font != nil || bold || italic { codes += "\\f\(font ?? "Arial")|b\(bold ? 1 : 0)|i\(italic ? 1 : 0)|c0|p34;" }
         if let c = color {
@@ -203,6 +203,7 @@ public enum MTextFormatting {
             }
         }
         if underline { codes += "\\L" }
+        if strike { codes += "\\K" }
         let body = DXFWriter.Writer.mtextEscape(content)
         return codes.isEmpty ? body : "{" + codes + body + "}"
     }

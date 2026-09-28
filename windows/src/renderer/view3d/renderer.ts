@@ -10,6 +10,7 @@ import { Look, VisualStyle, styleEdges, SKETCH_PAPER, ACCENT, sunDirection } fro
 import { V3, M4, mul, invert, lookAt, ortho, linearRGB, kelvin, norm, sub, len, toLinear, ident, hex } from "./math";
 import { Weather, isVegetation, seasonTint, isWater } from "./effects";
 import { CameraState, viewMatrix, projMatrix, zRange } from "./camera";
+import { orientBillboards } from "./billboards";
 import { skyPixels, irradianceSH, horizonColor, toSK, groundTexture, gridTexture, GROUND_TILE_METRES } from "./sky";
 
 export const UNIT = 0.001; // model millimetres → world metres
@@ -52,6 +53,17 @@ export interface FrameOptions {
   hideGround?: boolean;
   /** Keep the previous frame's sun shadow map (panorama faces: same sun, same scene). */
   reuseShadow?: boolean;
+  /** Clay model (RenderEngine.applyClay): one matte white material (glass keeps its transparency). */
+  clay?: boolean;
+  /** Depth of field (Render window): focus distance in metres (0 = the model centre) and the f-stop. */
+  dof?: { focus: number; fStop: number } | null;
+  /** Environment image (HDRI File or the Render window's environment maps): linear RGBA, row 0 at the top,
+   *  equirectangular like the sky; replaces the sky as image-based light and background. */
+  envImage?: { key: string; width: number; height: number; data: Float32Array } | null;
+  /** Lighting environment intensity override (Render window: environmentIntensity). */
+  envIntensity?: number | null;
+  /** Custom visual style (VISUALSTYLES, Viewport3DView.custom): edges, edge colour (sRGB), face opacity, shadows, background (sRGB). */
+  custom?: { edges: boolean | null; edgeColor: V3 | null; faceOpacity: number | null; shadows: boolean | null; background: V3 | null } | null;
 }
 
 const IDENT = ident();
@@ -75,6 +87,10 @@ export class Renderer {
   readonly gl: GL;
   private mesh: Program; private shadow: Program; private line: Program; private sky: Program; private ssao: Program;
   private blur: Program; private bright: Program; private composite: Program; private down: Program; private copy: Program;
+  private dof: Program;
+  private dofT: Target | null = null;
+  private iesTex: WebGLTexture | null = null;
+  private iesKey = "";
   private env: EnvState | null = null;
   private meadow: WebGLTexture | null = null;
   private grids = new Map<string, WebGLTexture>();
@@ -97,12 +113,30 @@ export class Renderer {
   static ENV_SCALE = 1.0;
   /** SceneKit's SSAO darkens the ambient / image-based diffuse light, not the sun (measured on the Mac renders). */
   static AO_INDIRECT = true;
+  /** Scale of the SSAO intensity (SceneKit screenSpaceAmbientOcclusionIntensity), measured on the Mac renders. */
+  static AO_SCALE = 1;
   /** Multiplier of normal-map strength (calibration probe). */
   static NORMAL_SCALE = 1;
   /** Slope-scaled shadow bias covers soft-shadow kernels up to this radius in texels (measured on the Mac renders). */
   static SLOPE_TEXELS = 5;
   /** Diffuse share of the image-based light (SceneKit lightingEnvironment), measured on the Mac renders. */
   static ENV_DIFFUSE = 1.0;
+  /** Roughness maps: texel ^ ROUGH_GAMMA (SceneKit reads 8-bit roughness images through their sRGB curve). */
+  static ROUGH_GAMMA = 1.0;
+  /** sRGB value the camera contrast pivots about (with CONTRAST_SCALE; calibration probe). */
+  static CONTRAST_PIVOT = 0.5;
+  /** Scale of the preset contrast (SCNCamera.contrast). The Mac renders show no contrast change with the HDR camera:
+   *  applying it crushed the shadows (lawn, paving, the whole Night preset ~25 % too dark), so it is 0 (render-match). */
+  static CONTRAST_SCALE = 0;
+  /** Scale of the preset vignette (SceneKit vignettingIntensity), measured on the Mac renders. */
+  static VIGNETTE_SCALE = 1;
+  /** Bloom intensity and blur radius relative to SceneKit's bloomIntensity / bloomBlurRadius (measured on the Mac renders:
+   *  at the full radius the soffit lamps and wall washers of the Night preset spread halos twice as wide as the Mac's). */
+  static BLOOM_SCALE = 1;
+  static BLOOM_RADIUS = 0.5;
+  /** SceneKit's multiply colour of textured materials: false = its sRGB components scale the linear texture as they are
+   *  (measured on the Mac renders: dark tints — lawn, cedar, hedge — would otherwise render too dark). */
+  static MULTIPLY_LINEAR = false;
 
   constructor(gl: GL) {
     this.gl = gl;
@@ -121,6 +155,7 @@ export class Renderer {
     this.composite = new Program(gl, S.quadVS, S.compositeFS, "composite");
     this.down = new Program(gl, S.quadVS, S.downsampleFS, "downsample");
     this.copy = new Program(gl, S.quadVS, S.copyFS, "copy");
+    this.dof = new Program(gl, S.quadVS, S.dofFS, "dof");
     this.emptyVAO = gl.createVertexArray()!;
     // Ground: a unit quad scaled in the vertex data per frame (positions in model mm, uv in tiles).
     this.groundVAO = gl.createVertexArray()!;
@@ -139,6 +174,9 @@ export class Renderer {
   private setup(o: FrameOptions): StyleSetup {
     const s0 = this.setupStyle(o);
     if (o.sunOverride && o.sunLight && s0.sunI > 0) { s0.sunI = o.sunLight.intensity; s0.sunColor = linearRGB(o.sunLight.color); s0.shadows = s0.drawFaces && s0.mode !== 3 ? true : s0.shadows; }
+    const cs = o.custom;
+    if (cs && cs.shadows !== null) s0.shadows = cs.shadows && s0.drawFaces;
+    if (cs && cs.background) { s0.top = linearRGB(cs.background); s0.bottom = linearRGB(cs.background); s0.skyBackground = false; }
     return s0;
   }
 
@@ -231,6 +269,38 @@ export class Renderer {
     return this.env;
   }
 
+  /** An environment image as the lighting environment and background (HDRI File, environment maps). */
+  private environmentImage(img: { key: string; width: number; height: number; data: Float32Array }): EnvState {
+    const key = "image|" + img.key;
+    if (this.env?.key === key) return this.env;
+    const gl = this.gl;
+    if (this.env) gl.deleteTexture(this.env.tex);
+    const tex = gl.createTexture()!;
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    let w = img.width, h = img.height, data = img.data, level = 0;
+    const small: { w: number; h: number; d: Float32Array }[] = [];
+    for (;;) {
+      gl.texImage2D(gl.TEXTURE_2D, level, gl.RGBA16F, w, h, 0, gl.RGBA, gl.FLOAT, data);
+      if (w <= 256 && small.length === 0) small.push({ w, h, d: data });
+      if (w <= 8 || h <= 4) break;
+      const nw = w >> 1, nh = h >> 1, nd = new Float32Array(nw * nh * 4);
+      for (let y = 0; y < nh; y++) for (let x = 0; x < nw; x++) for (let c = 0; c < 4; c++) {
+        const q = (xx: number, yy: number) => data[(yy * w + xx) * 4 + c];
+        nd[(y * nw + x) * 4 + c] = (q(2 * x, 2 * y) + q(2 * x + 1, 2 * y) + q(2 * x, 2 * y + 1) + q(2 * x + 1, 2 * y + 1)) / 4;
+      }
+      w = nw; h = nh; data = nd; level++;
+    }
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, level);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const sm = small[0] ?? { w, h, d: data };
+    const sh = irradianceSH({ width: sm.w, height: sm.h, data: sm.d, key });
+    this.env = { key, tex, sh, maxLod: Math.max(1, level - 1), width: img.width };
+    return this.env;
+  }
+
   private groundTexture(s: StyleSetup): WebGLTexture {
     const gl = this.gl;
     if (s.groundKind === "meadow") {
@@ -273,6 +343,7 @@ export class Renderer {
     const W = o.width, H = o.height;
     const s = this.setup(o);
     const look = o.look;
+    orientBillboards(scene, o.camera.eye.map((v) => v / UNIT) as V3);
     const center: V3 = scene.center.map((v) => v * UNIT) as V3;
     const radius = scene.radius * UNIT;
     const ext = Math.max(scene.max[0] - scene.min[0], scene.max[1] - scene.min[1]) * UNIT;
@@ -283,7 +354,10 @@ export class Renderer {
     sun = norm(sun);
     if (sun[2] < 0.05) sun = norm([sun[0], sun[1], 0.05]);
 
-    const env = s.env || s.skyBackground ? this.environment(look, sun, o.quality, o.explicitPreset) : null;
+    const env = s.env || s.skyBackground ? (o.envImage ? this.environmentImage(o.envImage) : this.environment(look, sun, o.quality, o.explicitPreset)) : null;
+    if (o.envIntensity != null) s.envIntensity = o.envIntensity;
+    // Clay with a preset: BeautyLighting brightens the lighting environment by 10 % (RenderEngine.makeScene).
+    if (o.clay && o.explicitPreset && o.style === "Realistic") s.envIntensity *= 1.1;
     const sunSK = toSK(sun);
     const fogColor: V3 = o.explicitPreset ? horizonColor(look.sky, sunSK).map((v) => Math.min(1, Math.max(0, v))) as V3 : [0, 0, 0];
 
@@ -318,10 +392,11 @@ export class Renderer {
       p.m4("uViewProj", shadowMat).f("uUnit", UNIT).m4("uModel", IDENT);
       for (const m of scene.meshes) {
         if (m.transparent || m.hidden) continue;
-        const tex = m.foliage ? scene.texturesFor(m.mat, false) : null;
-        p.f("uFoliage", m.foliage ? 1 : 0).f("uUVScale", 1000 / Math.max(m.mat.textureScale, 1));
-        const cut = m.foliage && !!tex?.albedo;
-        p.i("uCutout", cut ? 1 : 0).tex("uAlbedo", 0, cut ? tex!.albedo! : this.whiteTex);
+        const leaf = m.foliage && !(o.clay && o.style === "Realistic");
+        const tex = leaf || m.kind === "billboard" ? scene.texturesFor(m.mat, false) : null;
+        p.f("uFoliage", leaf ? 1 : 0).f("uUVScale", 1000 / Math.max(m.mat.textureScale, 1));
+        const cut = (leaf || m.kind === "billboard") && !!tex?.albedo;
+        p.i("uCutout", cut ? (m.kind === "billboard" ? 2 : 1) : 0).tex("uAlbedo", 0, cut ? tex!.albedo! : this.whiteTex);
         const mult = multiplyTint(m.mat.color);
         p.v3("uMultiply", mult);
         this.drawTriangles(p, m);
@@ -371,7 +446,7 @@ export class Renderer {
     if (shadowMat) p.m4("uShadowMat", shadowMat).tex("uShadowMap", 5, this.shadowT!.depth!);
     else p.tex("uShadowMap", 5, this.whiteTex);
     p.i("uHasEnv", s.env && env ? 1 : 0).f("uEnvIntensity", s.envIntensity * Renderer.ENV_SCALE).f("uEnvMaxLod", env ? env.maxLod : 0);
-    p.tex("uEnv", 4, env ? env.tex : this.whiteTex).f("uEnvDiffuse", Renderer.ENV_DIFFUSE);
+    p.tex("uEnv", 4, env ? env.tex : this.whiteTex).f("uEnvDiffuse", Renderer.ENV_DIFFUSE).f("uRoughGamma", Renderer.ROUGH_GAMMA);
     p.v3a("uSH", env ? env.sh : new Float32Array(27));
     p.v3("uAmbient", s.ambient);
     const fogOn = s.fog;
@@ -448,7 +523,8 @@ export class Renderer {
 
     // Edges
     onlyColor();
-    const e = styleEdges(o.style);
+    const e0 = styleEdges(o.style);
+    const e = o.custom ? { ...e0, show: o.custom.edges ?? e0.show, color: o.custom.edgeColor ?? e0.color } : e0;
     if (e.show) this.drawEdges(scene, o, viewProj, e, sel, clipMin, clipMax, planeP, planeN);
     else if (sel.size) this.drawEdges(scene, o, viewProj, { show: true, color: ACCENT, alpha: 1, depthTest: true }, sel, clipMin, clipMax, planeP, planeN, true);
     if (box) this.drawBox(box, viewProj);
@@ -492,26 +568,44 @@ export class Renderer {
       this.bright.use().tex("uTex", 0, T.hdr.color!).f("uExposure", s.exposure).f("uSceneScale", s.hdr ? Renderer.SCENE_SCALE : 1).f("uThreshold", s.bloomThreshold);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       // SceneKit bloomBlurRadius 10 points (× supersampling in final renders), at half resolution.
-      const sigma = Math.max(1, (10 * (o.supersample ?? 1)) / 2 / 2);
+      const sigma = Math.max(1, (10 * (o.supersample ?? 1) * Renderer.BLOOM_RADIUS) / 2 / 2);
       this.blurPass(T.b1, T.b2, 1 / hw, 0, sigma);
       this.blurPass(T.b2, T.b1, 0, 1 / hh, sigma);
+    }
+    // Depth of field on the exposed HDR frame (SceneKit applies it before the camera response).
+    let hdrColor = T.hdr.color!;
+    if (o.dof && s.drawFaces && !o.camera.ortho) {
+      if (!this.dofT || this.dofT.width !== W || this.dofT.height !== H) { disposeTarget(gl, this.dofT); this.dofT = target(gl, W, H, { hdr: true }); }
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.dofT.fb);
+      gl.viewport(0, 0, W, H);
+      const fovR = (o.camera.fov * Math.PI) / 180;
+      const focal = 0.012 / Math.tan(fovR / 2);
+      const focus = o.dof.focus > 0 ? o.dof.focus : Math.max(0.1, len(sub(center, o.camera.eye)));
+      const fStop = Math.max(0.5, o.dof.fStop);
+      const pxPerM = H / 0.024;
+      const maxCoC = Math.max(2, Math.min(24 * (o.supersample ?? 1), H * 0.03));
+      const q = this.dof.use();
+      q.tex("uTex", 0, T.hdr.color!).tex("uDepth", 1, T.hdr.depth!).f("uNearFar", near, far).f("uFocus", focus).f("uFocal", focal)
+        .f("uAperture", focal / fStop).f("uPixelsPerM", pxPerM).f("uMaxCoC", maxCoC).f("uTexel", 1 / W, 1 / H).i("uOrtho", o.camera.ortho ? 1 : 0);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      hdrColor = this.dofT.color!;
     }
     // Camera response into `out` (or the canvas)
     gl.bindFramebuffer(gl.FRAMEBUFFER, out ? out.fb : null);
     gl.viewport(0, 0, W, H);
     const c = this.composite.use();
-    c.tex("uHDR", 0, T.hdr.color!).tex("uDepth", 1, T.hdr.depth!).tex("uAO", 2, T.ao.color!).tex("uBloom", 3, T.b1.color!);
+    c.tex("uHDR", 0, hdrColor).tex("uDepth", 1, T.hdr.depth!).tex("uAO", 2, T.ao.color!).tex("uBloom", 3, T.b1.color!);
     c.i("uAOIndirect", Renderer.AO_INDIRECT ? 1 : 0).tex("uIndirect", 4, T.hdr.color2!);
-    c.i("uHasAO", aoOn ? 1 : 0).f("uAOIntensity", s.ao).f("uExposure", s.exposure).f("uSceneScale", s.hdr ? Renderer.SCENE_SCALE : 1).i("uHasBloom", bloomOn ? 1 : 0).f("uBloomIntensity", s.bloom);
-    c.i("uToneMap", s.hdr ? 1 : 0).f("uWhite", s.white).f("uSaturation", s.saturation).f("uContrast", s.contrast)
-      .f("uVignette", s.vignette).f("uVignettePower", s.vignettePower);
+    c.i("uHasAO", aoOn ? 1 : 0).f("uAOIntensity", s.ao * Renderer.AO_SCALE).f("uExposure", s.exposure).f("uSceneScale", s.hdr ? Renderer.SCENE_SCALE : 1).i("uHasBloom", bloomOn ? 1 : 0).f("uBloomIntensity", s.bloom * Renderer.BLOOM_SCALE);
+    c.i("uToneMap", s.hdr ? 1 : 0).f("uWhite", s.white).f("uSaturation", s.saturation).f("uContrast", s.contrast * Renderer.CONTRAST_SCALE).f("uContrastPivot", Renderer.CONTRAST_PIVOT)
+      .f("uVignette", s.vignette * Renderer.VIGNETTE_SCALE).f("uVignettePower", s.vignettePower);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindVertexArray(null);
     return { view, proj };
   }
 
   private isTransparent(m: MeshGPU, o: FrameOptions): boolean {
-    const t = 1 - m.mat.opacity;
+    const t = 1 - m.mat.opacity * (o.custom?.faceOpacity ?? 1);
     if (o.style === "Realistic" && t > 0.3 && o.explicitPreset && o.look.windowGlow > 0) return false; // lit windows are opaque
     return t > 0;
   }
@@ -551,14 +645,17 @@ export class Renderer {
     lights.sort((a, b) => len(sub(a.position, tgt)) - len(sub(b.position, tgt)));
     const n = Math.min(16, lights.length);
     const pos = new Float32Array(64), col = new Float32Array(64), dir = new Float32Array(64), inner = new Float32Array(16);
+    const iesRows: (Float32Array | null)[] = new Array(16).fill(null);
     for (let i = 0; i < n; i++) {
       const l = lights[i];
       const end = Math.max(3, Math.sqrt(Math.max(l.lumens, 1)) / 4);
       pos.set([l.position[0] * UNIT, l.position[1] * UNIT, l.position[2] * UNIT, end], i * 4);
       const k = kelvin(l.cct);
       const I = (l.lumens / 1000) * scale * Renderer.LIGHT_SCALE;
-      const spot = l.kind !== "point" && l.kind !== "area" && l.kind !== "line";
-      col.set([k[0] * I, k[1] * I, k[2] * I, spot ? 1 : 0], i * 4);
+      const prof = l.kind === "ies" ? l.iesProfile : undefined;
+      const kind = l.kind === "point" ? 0 : l.kind === "area" || l.kind === "line" ? 2 : prof ? 3 : 1;
+      col.set([k[0] * I, k[1] * I, k[2] * I, kind], i * 4);
+      if (prof) iesRows[i] = iesRow(prof);
       const t = l.target ?? [l.position[0], l.position[1], l.position[2] - 1000];
       const d = norm(sub(t as V3, l.position));
       const outer = Math.cos(((l.beam || 60) * Math.PI) / 360), inn = Math.cos(((l.beam || 60) * 0.7 * Math.PI) / 360);
@@ -570,6 +667,26 @@ export class Renderer {
     const L = (nm: string) => p.loc(nm);
     gl.uniform4fv(L("uLightPos[0]"), pos); gl.uniform4fv(L("uLightColor[0]"), col); gl.uniform4fv(L("uLightDir[0]"), dir);
     gl.uniform1fv(L("uLightInner[0]"), inner);
+    // IES distributions: one 32-sample row per light (relative candela, 0° = the aiming direction … 180°).
+    const table = new Float32Array(32 * 16).fill(1);
+    iesRows.forEach((r, i) => { if (r) table.set(r, i * 32); });
+    const key = iesRows.some(Boolean) ? Array.from(table, (v) => v.toFixed(3)).join(",") : "flat";
+    // Texture unit 6 is the IES table's own: binding on another unit would replace that unit's texture (sky, shadows).
+    gl.activeTexture(gl.TEXTURE0 + 6);
+    if (!this.iesTex) {
+      this.iesTex = gl.createTexture()!;
+      gl.bindTexture(gl.TEXTURE_2D, this.iesTex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    }
+    if (key !== this.iesKey) {
+      this.iesKey = key;
+      const half = new Uint16Array(table.length);
+      for (let i = 0; i < table.length; i++) half[i] = toHalf(table[i]);
+      gl.bindTexture(gl.TEXTURE_2D, this.iesTex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R16F, 32, 16, 0, gl.RED, gl.HALF_FLOAT, half);
+    }
+    p.tex("uIES", 6, this.iesTex);
   }
 
   /** Per-mesh material of the style (Scene3DBuilder.material + BeautyLighting.enhance). */
@@ -616,13 +733,22 @@ export class Renderer {
       emissive = linearRGB(colorS).map((v) => v * mat.emissive) as V3;
     }
     if (st === "X-Ray") mode = 2;
-    p.i("uMode", mode).v3("uColor", color).f("uOpacity", opacity);
+    if (o.clay && st === "Realistic" && m.kind !== "billboard") {
+      // RenderEngine.applyClay: matte white 0.92, roughness 0.85; transparent surfaces keep their transparency.
+      color = linearRGB([0.92, 0.92, 0.92]); rough = 0.85; metal = 0; emissive = [0, 0, 0];
+      opacity = t > 0.05 ? 1 - t : 1;
+      // The clay material replaces the leaves' shader modifiers too: no cut-outs, no leaf lumps.
+      useTex = false; useNormal = false; useRough = false; cutout = false;
+    }
+    const cutMode = m.kind === "billboard" ? 2 : cutout ? 1 : 0;
+    p.i("uMode", mode).v3("uColor", color).f("uOpacity", opacity * (o.custom?.faceOpacity ?? 1));
     p.i("uHasTex", useTex ? 1 : 0).tex("uAlbedo", 0, useTex ? tex!.albedo! : this.whiteTex).v3("uMultiply", multiplyTint(colorS));
     p.i("uHasNormal", useNormal ? 1 : 0).tex("uNormalMap", 1, useNormal ? (tex!.normal ?? tex!.derived)! : this.whiteTex).f("uNormalStrength", normalStrength * Renderer.NORMAL_SCALE);
     p.i("uHasRough", useRough ? 1 : 0).tex("uRoughMap", 2, useRough ? tex!.rough! : this.whiteTex);
     p.f("uRoughness", rough).f("uMetalness", metal).f("uSpecular", spec).f("uShininess", shin);
-    p.v3("uEmissive", emissive).i("uCutout", cutout ? 1 : 0);
-    p.f("uFoliage", st === "Realistic" && m.foliage ? 1 : 0).f("uUVScale", 1000 / Math.max(mat.textureScale, 1));
+    p.v3("uEmissive", emissive).i("uCutout", cutMode);
+    if (cutMode === 2 && tex?.albedo) p.i("uHasTex", 1).tex("uAlbedo", 0, tex.albedo);
+    p.f("uFoliage", st === "Realistic" && m.foliage && !o.clay ? 1 : 0).f("uUVScale", 1000 / Math.max(mat.textureScale, 1));
     const hl = m.id != null && sel.has(m.id);
     p.v3("uHighlight", hl ? linearRGB(ACCENT).map((v) => v * 0.55) : [0, 0, 0]);
     p.i("uWater", ["Realistic", "Shaded", "Shaded with Edges"].includes(st) && isWater(mat.name, o.water ?? null) ? 1 : 0);
@@ -784,16 +910,44 @@ export class Renderer {
 
   dispose() {
     const gl = this.gl;
-    disposeTarget(gl, this.shadowT);
+    disposeTarget(gl, this.shadowT); disposeTarget(gl, this.dofT);
     if (this.targets) for (const t of [this.targets.ms, this.targets.hdr, this.targets.ao, this.targets.ao2, this.targets.b1, this.targets.b2, this.targets.ldr]) disposeTarget(gl, t);
     if (this.env) gl.deleteTexture(this.env.tex);
   }
 }
 
 /** SceneKit multiply of textured materials: the colour blended 75 % towards white (linear). */
-function multiplyTint(c: V3): V3 { return linearRGB(mixS(c, [1, 1, 1], 0.75)); }
+function multiplyTint(c: V3): V3 {
+  const m = mixS(c, [1, 1, 1], 0.75);
+  return Renderer.MULTIPLY_LINEAR ? linearRGB(m) : m;
+}
 function mixS(a: V3, b: V3, t: number): V3 { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
 function dist2(m: MeshGPU, e: V3) {
   const c = [(m.min[0] + m.max[0]) / 2 - e[0], (m.min[1] + m.max[1]) / 2 - e[1], (m.min[2] + m.max[2]) / 2 - e[2]];
   return c[0] * c[0] + c[1] * c[1] + c[2] * c[2];
+}
+
+/** 32 samples (0…180° from the aiming direction) of an IES profile's relative intensity (EngineIESProfile.json). */
+export function iesRow(p: { vertical: number[]; relative: number[] }): Float32Array {
+  const out = new Float32Array(32);
+  const v = p.vertical, r = p.relative;
+  for (let i = 0; i < 32; i++) {
+    const a = (i / 31) * 180;
+    let x = 0;
+    if (!v.length) x = 1;
+    else if (a <= v[0]) x = r[0];
+    else if (a >= v[v.length - 1]) x = v[v.length - 1] >= 179 ? r[r.length - 1] : 0;
+    else for (let k = 1; k < v.length; k++) if (a <= v[k]) { const t = (a - v[k - 1]) / Math.max(v[k] - v[k - 1], 1e-9); x = r[k - 1] + (r[k] - r[k - 1]) * t; break; }
+    out[i] = Math.max(0, x);
+  }
+  return out;
+}
+function toHalf(f: number): number {
+  const b = new DataView(new ArrayBuffer(4));
+  b.setFloat32(0, f);
+  const x = b.getUint32(0);
+  const sign = (x >> 16) & 0x8000, e = ((x >> 23) & 0xff) - 127 + 15, m = (x >> 13) & 0x3ff;
+  if (e <= 0) return sign;
+  if (e >= 31) return sign | 0x7c00;
+  return sign | (e << 10) | m;
 }

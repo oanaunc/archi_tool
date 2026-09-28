@@ -7,6 +7,8 @@ import { h, clear } from "../dom";
 import { icon } from "../icons";
 import { help, showMenu } from "./menu";
 import ui from "../data/ui.generated.json";
+import { DOC_PANELS, typeFilterHeader } from "../doctools";
+import { WS_PANELS } from "../workspace/panels";
 
 export const PANEL_SYMBOLS: Record<string, string> = {
   Properties: "slider.horizontal.3", Layers: "square.3.layers.3d", Levels: "building.2", Browser: "list.bullet.indent", Materials: "paintpalette",
@@ -15,6 +17,10 @@ export const PANEL_SYMBOLS: Record<string, string> = {
 };
 const PANELS: string[] = ((ui as any).panels as any[]).map((p) => (typeof p === "string" ? p : p.name ?? p.title)).filter(Boolean);
 const METHOD: Record<string, string> = { "Quick Props": "quick" };
+/** Tabs floating in their own windows (workspace/float.ts): left out of the docked tab strip. */
+export const floatingTabs = new Set<string>();
+/** Asks workspace/float.ts to float a tab (FloatingPanels.float); FLOATPANEL on the command line does the same. */
+function floatRequest(tab: string) { document.dispatchEvent(new CustomEvent("archi:floatPanel", { detail: tab })); }
 
 function humanize(name: string) {
   let out = "";
@@ -31,36 +37,56 @@ export class Panels {
   private tabs: HTMLElement;
   private body: HTMLElement;
   private seq = 0;
+  private disposed = false;
 
-  constructor(private app: App) {
+  /** The docked panel column, or (with `fixedTab`) one panel's content for a floating panel window. */
+  constructor(private app: App, private fixedTab?: string) {
     this.tabs = h("div", { class: "panel-tabs" });
     this.body = h("div", { class: "panel-body" });
-    this.el = h("div", { class: "panels" }, this.tabs, h("div", { class: "hsep" }), this.body);
-    this.renderTabs(); this.renderBody();
-    app.on("ui", () => { this.renderTabs(); this.renderBody(); });
-    app.on(["panel", "selection", "layers", "doc"], () => this.renderBody());
+    this.el = fixedTab ? h("div", { class: "panels floating" }, this.body) : h("div", { class: "panels" }, this.tabs, h("div", { class: "hsep" }), this.body);
+    if (!fixedTab) this.renderTabs();
+    this.renderBody();
+    app.on("ui", () => { if (this.disposed) return; if (!this.fixedTab) this.renderTabs(); this.renderBody(); });
+    app.on(["panel", "selection", "layers", "doc"], () => { if (!this.disposed) this.renderBody(); });
   }
+  private get tab() { return this.fixedTab ?? this.app.panelTab; }
+  dispose() { this.disposed = true; }
 
   private renderTabs() {
     clear(this.tabs);
     const grid = h("div", { class: "grid" });
     for (const t of PANELS) {
+      if (floatingTabs.has(t)) continue;
       const b = h("button", { class: "ptab" + (t === this.app.panelTab ? " sel" : "") }, icon(PANEL_SYMBOLS[t] ?? "square", 13, 1.6), h("span", { class: "t", text: t }));
       help(b, `${t} — right-click to float`);
       b.addEventListener("click", () => this.app.setUI("panelTab", t));
-      b.addEventListener("contextmenu", (e) => { e.preventDefault(); showMenu([{ title: `Float ${t} Panel`, action: () => this.app.runCommand(`FLOATPANEL ${t}`) }], { x: e.clientX, y: e.clientY }); });
+      b.addEventListener("contextmenu", (e) => { e.preventDefault(); showMenu([{ title: `Float ${t} Panel`, action: () => floatRequest(t) }], { x: e.clientX, y: e.clientY }); });
       grid.append(b);
     }
     const fl = h("button", { class: "iconbtn" }, icon("macwindow.on.rectangle", 12)); help(fl, "Float this panel in its own window (FLOATPANEL)");
-    fl.addEventListener("click", () => this.app.runCommand(`FLOATPANEL ${this.app.panelTab}`));
+    fl.addEventListener("click", () => floatRequest(this.app.panelTab));
     const x = h("button", { class: "iconbtn" }, icon("xmark", 12, 2)); help(x, "Hide panels");
     x.addEventListener("click", () => this.app.setUI("showPanels", false));
     this.tabs.append(grid, h("div", { class: "side" }, fl, x));
   }
 
   private async renderBody() {
-    const tab = this.app.panelTab;
+    const tab = this.tab;
     const seq = ++this.seq;
+    // Alerts, Navigator and Content (workspace/panels.ts).
+    if (WS_PANELS[tab]) {
+      const scroll = this.body.scrollTop;
+      await WS_PANELS[tab](this.app, this.body, () => seq === this.seq && !this.disposed);
+      if (seq === this.seq) this.body.scrollTop = scroll;
+      return;
+    }
+    // Project Browser, Selection, Quick Props, Inspector and History (doctools/panels.ts).
+    if (DOC_PANELS[tab]) {
+      const scroll = this.body.scrollTop;
+      await DOC_PANELS[tab](this.app, this.body, () => seq === this.seq);
+      if (seq === this.seq) this.body.scrollTop = scroll;
+      return;
+    }
     const local = ["Browser", "Tools", "Selection", "Alerts", "Content", "Navigator"];
     const method = "panel." + (METHOD[tab] ?? tab.toLowerCase());
     let data: any = null, err = "";
@@ -70,7 +96,7 @@ export class Panels {
     if (seq !== this.seq) return;
     const scroll = this.body.scrollTop;
     clear(this.body);
-    if (tab === "Properties" || tab === "Quick Props" || tab === "Inspector") this.properties(data);
+    if (tab === "Properties") this.properties(data);
     else if (tab === "Layers") renderLayersPanel(this.body, data, (k, v) => this.set("layers", k, v));
     else if (tab === "Levels") this.levels(data);
     else if (tab === "Materials" && data) this.materials(data);
@@ -151,6 +177,8 @@ export class Panels {
       const clearBtn = h("button", { class: "iconbtn" }, icon("xmark.circle", 13)); help(clearBtn, "Clear selection");
       clearBtn.addEventListener("click", () => app.call("select.set", { ids: [] }).then(() => app.refresh(["selection"])));
       head.append(clearBtn);
+      // A mixed selection: the summary is a menu that keeps one object type (the Mac Properties header).
+      void typeFilterHeader(app).then((b) => { if (b && head.isConnected) head.querySelector(".v")?.replaceChildren(b); });
       const tools = h("div", { class: "ptoolbar" });
       for (const [sym, tip, cmd] of [["line.3.horizontal.decrease.circle", "Quick Select…", "QSELECTDIALOG"], ["paintbrush.pointed", "Match properties from the first selected object (MATCHPROP)", "MATCHPROP"],
         ["square.on.square.intersection.dashed", "Select similar objects (SELECTSIMILAR)", "SELECTSIMILAR"], ["arrow.left.arrow.right.square", "Invert the selection (SELECTINVERT)", "SELECTINVERT"], ["scope", "Zoom to the selection", "ZOOM O"]]) {

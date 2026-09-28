@@ -19,6 +19,12 @@ import { installDialogs, handleDialogKey, newFromTemplate } from "./dialogs";
 import { installPartB } from "./partb";
 import { installOutput } from "./output";
 import { installWindowsConventions } from "./ui/windows-conventions";
+import { handleShortcut, altGrCharacter } from "./ui/keys";
+import { installHelp } from "./ui/help";
+import { installDocTools } from "./doctools";
+import { installSheets, layoutTabsVisible } from "./sheets";
+import { installWorkspace } from "./workspace";
+import { installStandards } from "./standards";
 
 const app = new App(createEngine());
 (window as any).archiApp = app; // for tests and the script console
@@ -72,9 +78,10 @@ function renderWorkspace() {
   if (app.mode === "3D" || app.mode === "Split") ensure3D();
   if (app.mode === "3D") workspace.append(view3d);
   else if (app.mode === "Split") {
-    const l = h("div"), r = h("div");
-    l.append(plan.el); r.append(view3d);
-    workspace.append(h("div", { class: "split" }, l, h("div", { class: "vsep" }), r));
+    // Tiled views (TiledViews.swift): 2–4 tiles of plan, 3D, section and elevations (workspace/tiles.ts).
+    const host = h("div", { class: "split" });
+    workspace.append(host);
+    ws.tiles.render(host);
   } else workspace.append(plan.el);
   workspace.append(badge);
   renderBadge();
@@ -159,16 +166,39 @@ installOutput(app, {
   displayBox: () => { const v = (plan as any).v; if (!v?.w) return null; const a = plan.toWorld(0, v.h), b = plan.toWorld(v.w, 0); return [a[0], a[1], b[0], b[1]]; },
 });
 
+// ---- About, Command Reference, What's New and the Mac UI-layer help / window commands (ui/help.ts) ----
+installHelp(app, { commandSearch });
+
+// ---- Schedule sheet, Spelling, Text Styles, TEXTEDITINPLACE, Quick Properties over the drawing (doctools/) ----
+installDocTools(app, { editText: (id) => void plan.editObject(id) });
+// Graphic standards, clipboard and sharing: GRAPHICSTYLES, OBJECTSTYLESDIALOG, MATPATTERNDIALOG, IMAGEADJUSTDIALOG, VISUALSTYLES, PASTESPECIAL, COPYPICTURE, SHARE …
+installStandards(app);
+
+// ---- contextual ribbon tabs, sheet commands, crash recovery and file versions (sheets/) ----
+const sheets = installSheets(app, { plan });
+
+// ---- Alerts / Navigator / Content panels, floating panels, tiled views, Outliner, Assistant, file tabs, window
+// arrangement, keyboard crosshair, command line options, language, settings transfer, crash reports (workspace/) ----
+const ws = installWorkspace(app, {
+  plan: {
+    el: plan.el, overlay: (plan as any)["overlay"], mouse: () => (plan as any)["mouse"] ?? null,
+    visibleBox: () => { const v = (plan as any).v; if (!v?.w || !plan.el.isConnected) return null; const a = plan.toWorld(0, v.h), b = plan.toWorld(v.w, 0); return [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[0], b[0]), Math.max(a[1], b[1])]; },
+    centre: (x, y) => { plan.view.cx = x; plan.view.cy = y; plan.refresh(); },
+    zoomTo: (r) => plan.zoomTo(r),
+  },
+  view3d, ensure3D, commandLine: cmd, relayout: () => renderWorkspace(),
+});
+
 // ---- layout ----
 const mainRow = h("div", { class: "main-row" }, workspace);
 function layout() {
   clear(root);
   root.append(titlebar.el);
-  if (!app.cleanScreen) root.append(ribbon.el, h("div", { class: "hsep" }));
+  if (!app.cleanScreen) root.append(ribbon.el, sheets.strip.el, ws.fileTabs.el, h("div", { class: "hsep" }));
   mainRow.replaceChildren(workspace);
   if (app.showPanels && !app.cleanScreen) { panels.el.style.width = app.panelWidth + "px"; mainRow.append(handle, panels.el); }
   root.append(mainRow);
-  if (!app.cleanScreen) { renderLayoutTabs(); root.append(layoutTabs); }
+  if (!app.cleanScreen && layoutTabsVisible()) { renderLayoutTabs(); root.append(layoutTabs); }
   if (app.showScriptConsole) root.append(h("div", { class: "hsep" }), scriptConsole);
   root.append(h("div", { class: "hsep" }), cmd.el, h("div", { class: "hsep" }), status.el);
   document.body.append(start.el);
@@ -187,24 +217,18 @@ addEventListener("keydown", (e) => {
   if (handleDialogKey(e)) return;
   const ctrl = e.ctrlKey || e.metaKey;
   const fkeys: Record<string, string> = { F3: "OSMODE", F7: "GRIDMODE", F8: "ORTHOMODE", F9: "SNAPMODE", F10: "POLARMODE", F11: "OTRACK", F12: "DYNMODE" };
-  if (fkeys[e.key]) { e.preventDefault(); app.toggleVar(fkeys[e.key], TOGGLES.find((x) => x.varName === fkeys[e.key])?.title); return; }
-  if (e.key === "F2") { e.preventDefault(); return; }
-  if (ctrl) {
-    const k = e.key.toLowerCase();
-    const map: Record<string, () => void> = {
-      z: () => app.undo(), y: () => app.redo(), s: () => app.save(e.shiftKey), o: () => app.open(), p: () => app.runCommand("PLOT"), a: () => app.selectAll(),
-      k: () => commandSearch(), "0": () => app.action("@cleanScreen"), n: () => app.engine.native ? app.engine.native.newWindow({ kind: "start" }) : app.newDocument(),
-      "=": () => plan.zoomBy(1.5), "+": () => plan.zoomBy(1.5), "-": () => plan.zoomBy(1 / 1.5), c: () => app.runCommand("COPYCLIP"), v: () => app.runCommand("PASTECLIP"), x: () => app.runCommand("CUTCLIP"),
-    };
-    if (map[k]) { e.preventDefault(); map[k](); }
-    return;
-  }
+  if (fkeys[e.key] && !ctrl && !e.altKey) { e.preventDefault(); app.toggleVar(fkeys[e.key], TOGGLES.find((x) => x.varName === fkeys[e.key])?.title); return; }
+  // Every Mac shortcut with its Windows keys (ui/keys.ts); Shift and Alt count. With text in the command line,
+  // Ctrl+A/C/X/V/Z/Y edit that text.
+  if (handleShortcut(app, e, t === cmd.input && cmd.input.value !== "")) return;
+  const altGr = altGrCharacter(e); // AltGr (= Ctrl+Alt) types @ € { … on European layouts
+  if ((ctrl || e.altKey) && !altGr) return;
   if (t === cmd.input) return;
   if (e.key === "Escape") { closeMenus(); if (!plan.cancelGrip()) app.cancel(); e.preventDefault(); return; }
   if (e.key === "Delete") { if (app.isIdle && app.selection.ids.length) app.runCommand("ERASE"); e.preventDefault(); return; }
   if (e.key === "Enter" || (e.key === " " && !e.repeat && app.commandInput === "" && document.activeElement !== plan["overlay"])) { e.preventDefault(); app.submitLine(""); return; }
   if (e.key === " " && document.activeElement === plan["overlay"]) return; // Space+drag pans; released without drag repeats (keyup)
-  if (e.key.length === 1 && !e.altKey) { e.preventDefault(); cmd.typeKey(e.key); }
+  if (e.key.length === 1) { e.preventDefault(); cmd.typeKey(e.key); }
 });
 addEventListener("keyup", (e) => { if (e.key === " " && document.activeElement === plan["overlay"] && !(plan as any).panLast) app.submitLine(""); });
 

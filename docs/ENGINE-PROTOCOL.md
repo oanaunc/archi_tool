@@ -131,7 +131,8 @@ Draw items are `Render/DrawList.swift` `DrawItem` with its field names:
   units: positive dash, negative gap, 0 dot; empty = continuous)};
 - `fill` — `loops` (even-odd rule), `color`, `alpha`?;
 - `text` — `text` (TextGeom: `position`, `height`, `rotation`, `content`, `style`, `halign` left|center|right,
-  `valign` baseline|bottom|middle|top, `width` wrap width, 0 = none), `font`, `color`;
+  `valign` baseline|bottom|middle|top, `width` wrap width, 0 = none), `font`, `color`, and for formatted text objects
+  `format` `{font?, bold, italic, underline, strike}` (entity props, or the MTEXT codes \L / \K of imported DXF);
 - `image` — `image` (ImageGeom: `path`, `origin`, `size`, `rotation`).
 `id` is the object the item belongs to (selection highlight, hover); missing for decoration. Paint in list order.
 
@@ -205,8 +206,13 @@ Cancels a running command first.
 `{"name":"OSMODE","value":"4287","kind":"integer","readOnly":false,"summary":"…"}`; values as SETVAR (settings such as
 ORTHOMODE, OSMODE, GRIDMODE map to the drafting settings).
 
-### file.export `{path, format?, level?}` → `{path, format, bytes}` · file.import `{path, format?, offset?}`
-Export by extension or `format` (dxf, dwg via converter, ifc, pdf, svg, obj, stl, glb/gltf, 3mf, usdz, csv …).
+### file.export `{path, format?, level?, dpi?}` → `{path, format, bytes}` · file.import `{path, format?, offset?}`
+Export by extension or `format` (dxf, dwg via converter, ifc, pdf, svg, obj, stl, glb/gltf, 3mf, usdz, csv, xlsx, png …).
+`png` is the plan of the level (default the current one) on white paper, rasterised in the engine (IO/RasterExport.swift,
+the Mac FileController.renderPNG framing: 3 % margin, 300 dpi at 1:100 for millimetre drawings, 1600–9000 px on the long
+side, pHYs 300 dpi; `dpi` changes the resolution); `csv:<kind>` and `xlsx:<kind>` write one schedule (`walls`, `doors`, `windows`, `rooms`, `slabs`,
+`all`: ScheduleExporter), `csv` alone the `all` schedule and `xlsx` alone the schedules workbook. `EXPORT PNG <file>`
+and `EXPORT CSV <file>` on the command line write the same files.
 Import merges the file into the drawing as one undo step → `{summary, entityIds, elementIds}`.
 
 ### engine.log `{limit?}` → `{"lines":[…]}`
@@ -258,6 +264,18 @@ window they send a `host` notification the shell answers with its dialogs:
 - `{"action":"cui","op":"set","data":{format:"oanarina-archi-cui",…},"quickAccess"?:[…]}`;
 - `{"action":"layerFilter","filter":"#on A-*"}` ("" clears); `{"action":"newWindow","kind":"template","path":<template id>}`.
 `showPanel` names that are dialogs on the Mac (`Units`, `Drafting Settings` from UNITS / DSETTINGS) open the same dialogs.
+
+### Help and window commands (Host/EngineHelpCommands.swift)
+Portable versions of the Mac UI-layer commands for the app chrome, same names, aliases and messages:
+`ABOUT` → `{"action":"dialog","dialog":"about"}` (About window); `COMMANDSEARCH` (`CMDSEARCH`, `SEARCHCOMMANDS`) →
+`dialog:"commandSearch"` (Ctrl+K palette); `WHATSNEW` (`RELEASENOTES`) → `dialog:"whatsNew"`; `CLEANSCREENON` (`CLEANSCREEN`) /
+`CLEANSCREENOFF` → `{"action":"cleanScreen","on":true|false}`; `HISTORYPANEL` (`UNDOHISTORY`, `HISTORY` — the core `HISTORY`
+command keeps its name) → `{"action":"showPanel","panel":"History"}`; `STARTSCREEN` (`START`, `WELCOME`) →
+`{"action":"startScreen"}`; `SAMPLEHOUSE` (`SAMPLE`, `OPENSAMPLE`) → `{"action":"newWindow","kind":"sample"}`;
+`EXPORTCOMMANDS` (`COMMANDREFEXPORT`, `CMDEXPORT`; prompt "Output file (.md or .csv) <choose>") →
+`{"action":"exportCommands","path":…,"csv":bool,"count":n}` — the shell writes the file (it knows where each command is in
+the menus and ribbon; empty path = save dialog). Menu, ribbon and keyboard entries for these run the shell's own
+implementation directly (windows/src/renderer/ui/shell-commands.ts, ui/help.ts).
 
 ### Tool windows (Host/EngineToolDialogs.swift, EngineScripting.swift, EngineMCP.swift): part B of the Windows port
 Methods behind the Mac tool windows. Edits are one undo step each (the label is given below) and send `changed`.
@@ -388,6 +406,40 @@ List/Delete/Clear (engine, OBJANIM) and Play/Stop → `animate {play}`, Frame �
 `PANORAMA` / `STEREOPANORAMA` → `panorama {eye, width, stereo, ipd (mm), path|null, suggested}`, `VIEWIMAGE` →
 `viewImage {width, height, format, transparent, path|null, suggested}`. Each also sends `show3D`.
 
+### Render, materials and environment (Host/EngineRenderExtras.swift)
+Portable versions of the Mac render, material and environment commands (AppCommandsRound9/10/11/12.swift), same names,
+aliases, prompts, keywords, stored variables and messages. Registered by archi-engine only (the Mac registers its own).
+- Data commands, finished in the engine: `LIGHT` Point/Spot/Area/Line/IES (entity on layer LIGHTS with `light`, `z`, `lumens`,
+  `cct`, `beam`, `targetX/Y/Z`, `width`/`length`, `ies`; List; On/Off = ARTIFICIALLIGHTS), `FOG` (FOG, FOGSTART, FOGEND,
+  FOGCOLOR, FOGDENSITY), `MATEMISSIVE` (MATEMIT:<NAME>), `MATMAPPING` (MATMAP:<NAME> = "mode;offsetX,offsetY;rotation;scale"),
+  `BILLBOARD` Person/Tree/Shrub/File (point entity on BILLBOARDS with `billboard`, `z`, `height`), `MATMAPS` (MATMAPS:<NAME>, the
+  Mac JSON with sorted keys), `MATASSET` Identity/Graphics/Physical/List (MATASSET:<NAME>), `WATER` Select/Points (extrusion solid on
+  WATER, material Water with MATWATER:WATER = 1), `SCATTER` Grass/Flowers/Shrubs/Trees (Poisson-disk mesh solids on PLANTING, the
+  Mac's seeded generator and plant meshes).
+- `host` actions: `RENDERPROMPT` → `{"action":"output","op":"renderPrompt","preset":{name:"Prompt: …", width, height, antialias,
+  exposure, background, environment, shadowQuality, shadowSoftness, ambientOcclusion, depthOfField, fStop, whiteBalance, clay,
+  hour|null}}` (the shell stores it as a custom Render window preset, selects it and opens the Render window);
+  `PHASEANIMATION` → `{"action":"output","op":"phaseVideo","source":"Phases"|"Schedule","seconds","fps":30,"width":1280,"height":720,
+  "path"}` (the shell renders the frames of `render.phaseFrames` from the 3D view's camera, captions them and writes the MP4);
+  `PROCMATERIAL` → `{"action":"materials","op":"procedural","name","params":{kind,color1,color2 (#RRGGBB),tileSize,rows,columns,
+  joint,seed}}` and `MATFROMIMAGE` → `{"action":"materials","op":"fromImage","path","name","tileSize"}` (the shell generates the
+  maps as the Materials panel's Procedural… / From Photo… and applies them with `doc.edit`); `AODIALOG` →
+  `{"action":"dialog","dialog":"ambientOcclusion","settings":render.ao}`; `MECHANISMPLAY` →
+  `{"action":"canvas","op":"mechanismPlay","poses":[[draw items]…],"fps","mode":"Once"|"Loop"|"Bounce","maxLoops":20}` (the plan
+  plays the poses as an accent overlay; the drawing is not changed) and `{"action":"canvas","op":"mechanismStop"}`.
+- `render.ao {}` → `{intensity, radius (drawing units), samples, units, unitMM, on, viewport:{intensity, radius (m)}|null}` (AOForm;
+  `viewport` is SceneKit's screen-space occlusion, AOForm.viewport). `render.aoSet {intensity?, radius?, samples?}` → `{settings,
+  message}`: one "Ambient Occlusion" undo step (AOINTENSITY removed at 0, AORADIUS, AOSAMPLES 4–256).
+- `render.phaseFrames {source:"Phases"|"Schedule", seconds?, fps?=30}` → `{fps, elements:[ids], sets:[[ids]…], frames:[{set,
+  caption}]}`: the elements shown in each frame (PhasingAnimation.frame: new elements bottom-up, demolished ones top-down;
+  scheduleFrame: tasks started by each working day), the distinct id sets once, captions "Phase 2 of 3: New Construction" /
+  "Day 4 of 20 — 12 Oct 2026".
+- `render.promptSettings {text}` → `{applied:[…], preset}` (RenderPrompt.apply without storing anything).
+- `render.iesProfile {path}` → `{vertical:[deg], relative:[0…1], maxCandela, lumens, beam}` (LM-63, candela averaged over the
+  horizontal planes). `model.meshes` lights of kind `ies` carry the same object as `iesProfile`.
+- `render.mechanismDone {}`: the shell finished the playback (MECHANISMPLAY then starts a new one instead of asking Stop/Restart).
+- `view3d.info` adds `"ambientOcclusion"` (render.ao) and `"billboards":[{id, position:[x,y,z], height, source}]` (model mm).
+
 ### Output (Host/EngineOutput.swift, EngineOutputCommands.swift, EnginePlot.swift, EnginePDF.swift, EnginePathTracer.swift, EngineWebViewer.swift): plotting, publishing and rendering
 
 The engine writes every PDF itself (Foundation only: plot style tables, lineweights, layers as optional content groups, bookmarks, Flate and DCT images), so the Windows shell only shows pages, prints SVG pages through Electron and encodes images/videos from the WebGL renderer.
@@ -410,6 +462,163 @@ Rendering:
 Commands and `host` notifications: PLOT sends `{action:"plot"}` (the shell opens the print dialog; `PLOT <file>` writes the PDF in the engine). PREVIEW, PRINTSETUP, BATCHPUBLISH, PLOTSTYLE, RENDERQUEUE, CAMERAPATHEDIT and PATHTRACE send `{action:"dialog", dialog:"plotPreview"|"printSetup"|"batchPublish"|"plotStyles"|"renderQueue"|"cameraPaths"|"pathTrace"}`; RENDER sends `{action:"render"}` (Render window). Operations the engine cannot finish alone send `{action:"output", op:…}`: `publish` (PUBLISH without a file name), `sheetSVG`, `openFile`, `lightMix`, `renderSave` (RENDERSAVE), `renderToFile` (RENDERTOFILE: the shell renders beauty with WebGL, the engine writes data passes), `video` (WALKTHROUGHVIDEO / SUNSTUDYVIDEO / turntable: MP4 via WebCodecs in the shell) and `shadePlotRender`. PLOTSTYLENAME, PLOTAREA, SHADEPLOT, PLOTLOG and EXPORTPDF finish in the engine. `file.export {format:"pdf"}` plots the active sheet or the model.
 
 Fixtures: `output-plot-info`, `output-preview-sheet` (Cedar House A-102), `output-preview-model`, `output-plotstyle-list`, `output-command-preview`, `output-render-window`, `output-camerapath-list`, `output-camerapath-frames`, `output-sun-frames`, `output-command-renderqueue`, `output-command-rendersave`.
+
+### Schedules, browser, text and selection tools (Host/EngineDocTools.swift, EngineDocCommands.swift)
+The data behind the Mac Schedule sheet, Project Browser, Selection / Inspector / History panels, Spelling dialog and
+Text Styles window. Edits are one undo step each with the Mac label.
+- `schedule.get {kind}` → `{kind, kinds, rows:[[header…], [cells…]…], count}` (ScheduleExporter.table: walls, doors,
+  windows, rooms, slabs, all).
+- `browser.get {}` → `{levels:[{id,name,elevation,current}], currentLevel, views3d:["Iso","Top","Front","Right","Back","Left"],
+  namedViews:[{name, camera, cameraData?, center, height}] (saved views that are not project views), projectViews:[{name,
+  label ("X (dependent on Y)"), kind plan|ceiling|3d, symbol, current}], currentView, elevations:[{kind, title, view
+  (back/front/right/left), symbol}] (North/South/East/West Elevation, Section A-A), sheets:[{index,name}], schedules
+  (kinds), families:[{name,category}], groups:[{name,elements}], links:[{name,path,overlay,loaded}]}`.
+- `browser.openView {name}` → `{name, kind, level, crop?:[x0,y0,x1,y1] (plan crop + 500 mm), camera?}` ("Open View":
+  ProjectViews.open applies the view's settings and level).
+- `selection.info {}` → `{total, rows:[{type,count,ids}] (most first), layers:[{name,count}], length, area, lengthText,
+  areaText, bounds}` (SelectionInfo.summarize; also the Properties type filter).
+- `inspect.get {ids?, limit?=20}` → `{objects:[{id, rows:[[key,value]…] (ID, GUID, Type, Layer, Color, Linetype,
+  Lineweight, Extents, prop.*, Geometry JSON — elements: Name, Level, Material), text}], count, more}` (ObjectInspector).
+- `history.goto {index}` → panel.history: step `index` of the History panel (0 = the opened document); undoes or redoes
+  the steps in between (refused while a command runs).
+- `spell.words {ids?, all?}` → `{words:[{entity, word, field}], custom:[drawing dictionary], scope}`: every word of text,
+  leaders, tables, dimension overrides and attributes (the selection, or all). The shell asks the Windows spell checker
+  (Chromium, preload `window.archiSpell`) which are misspelled. `spell.replace {word, replacement, ids}` → `{changed}`
+  ("Spelling"); `spell.add {word}` → `{custom}` ("Add to Dictionary", variable SPELLDICT).
+- `textstyle.list {}` → `{styles:[{name,font,height,widthFactor,obliqueDegrees,strokeFont,uses}], current, fonts, newName}`;
+  `textstyle.apply {original?, name, font, height, widthFactor, obliqueDegrees}` → `{ok, name?, message}` ("Text Style";
+  the Mac TextStyleForm checks: "Check: name, height ≥ 0, width factor 0.01–100, oblique −85…85°", "A style with that
+  name exists."; a rename renames the style on its text); `textstyle.current {name}` ("Current text style", TEXTSTYLE).
+- `text.edit` also takes `strike` (props `strike`, MTEXT `\K`); `canvas.doubleClick` returns it in `format`.
+Portable commands with the Mac names, aliases and messages: `SPELLDIALOG` → `{"action":"dialog","dialog":"spelling"}`,
+`TEXTSTYLEDIALOG` → `dialog:"textStyles"`, `TEXTEDITINPLACE` (picks text) → `{"action":"textEditor","id"}`, `SELECTIONINFO`
+→ `showPanel Selection`, `INSPECT` → `showPanel Inspector` (and prints the first values), `QUICKPROPS` (`QP`, ON/OFF/Toggle)
+→ `{"action":"quickProps","mode":"on"|"off"|"toggle"}`; `HYPERLINK` (props `hyperlink`) and `SELECTWALLCHAIN` run in the
+engine. Fixtures: `doc-schedules`, `doc-browser`, `doc-textstyles`, `doc-spell-words`, `doc-selection-info`,
+`doc-inspect`, `doc-history`, `doc-export-png` (+ `doc-plan.png`).
+
+### Contextual ribbon, sheets, recovery and versions (Host/EngineContextRibbon.swift, EngineSheetCommands.swift, EngineSheetImage.swift, EngineRecovery.swift)
+
+- `ribbon.context {ids?}` → `{tab: {title, category, items:[{title, symbol, command, names, help}]} | null, count}`: the Mac's
+  ContextualRibbon.tab for the selection (or `ids`): all objects of one kind → "Modify Wall", "Modify Door" / "Modify Window",
+  "Text Editor", "Hatch Editor", "Dimension", "Block Reference", "Polyline", "Table Cell", "Modify Room" or "Modify <kind>",
+  its commands then Move, Copy, Rotate, Mirror, Match Props, Select Similar; unregistered commands are left out; `null` for
+  an empty or mixed selection. The shell asks after every selection change.
+- `sheet.image {layout: index|"Model", dpi?=150 (36–1200), format?="png"|"tiff"|"jpeg", path?, level?, quiet?}` →
+  `{path, width, height, bytes, title}` (PNG / TIFF written, "Saved <sheet> at <dpi> dpi (<w>×<h> px) to <path>." logged) or,
+  for JPEG or without `path`, `{png: <temporary PNG>, width, height, dpi, title}` for the shell to encode and save with
+  `view3d.saveImage`. The sheet is its plot page (page setup pens, viewport clips); "Model" is the model plot page.
+- `recovery.setup {folder, versionsFolder?, keep?=50, versionsOnSave?=true}` → `{id, folder, versionsFolder, keep}`.
+- `recovery.autosave {write?=true, force?}` → `{written, path?}`: refreshes this window's heartbeat and, when `write` and the
+  drawing has unsaved changes since the last autosave, writes `<id>.archi` + `<id>.json` ({id, name, originalPath, date,
+  pid, heartbeat}). The shell calls it every 30 s with `write` true once the autosave interval has passed.
+- `recovery.discard {}` (normal close) · `recovery.list {}` → `{items:[{id, name, originalPath, date, dateText}], folder}`:
+  copies of other windows whose heartbeat is older than 75 s · `recovery.restore {id}` → `{doc, originalPath}` (drawing
+  replaced, unsaved, copy removed, "Recovered “…” from the autosave of …" logged) · `recovery.remove {id}` → recovery.list.
+- Saving an .archi file removes the window's recovery copy and (versionsOnSave) adds a version.
+- `versions.list {}` → `{path, name, keep, versions:[{index, label, date}]}` newest first (error "Save the drawing as an .archi
+  file first."); `versions.save {}` → `{ok, message, count}`; `versions.open {index}` → `{path}` (a copy in
+  %TEMP%/ArchiVersions); `versions.restore {index}` → doc.info (the current file is kept as a version, then reloaded).
+  Store: `<versionsFolder>/<name> <hash of the path>/<yyyy-MM-dd HH.mm.ss>.archi` + `versions.json`.
+- Commands (archi-engine): MVIEWPOLY, MVSETUP, SHEETGRID, SHEETPLACEHOLDER, SHEETFIELD, SHEETRENUMBER, SHEETVIEWTITLES,
+  TITLEBLOCKDESIGN run in the engine. `host` actions: `LAYOUTTABS` → `{"action":"layoutTabs","on":true|false|null}` (null =
+  toggle); `ZOOMXP` and `ZOOM nXP` → `{"action":"paperZoom","factor","ratio","ratioText","pixelsPerUnit" (CSS px per unit at
+  true size),"viewportScale"}` (the shell sets the selected sheet viewport with sheet.viewport scale, or zooms the plan);
+  `PSETUPIN` with Enter → `{"action":"chooseFile","purpose":"PSETUPIN","title","extensions":["archi"]}` then the prompt
+  "Drawing file (.archi)" waits for the chosen path (the shell answers with input.text, or Escape); `SHEETIMAGE` without a
+  typed path (or JPEG) → `{"action":"sheetImage","layout","dpi","format","path"?,"suggested"}`; `DRAWINGRECOVERY` →
+  `{"action":"recovered","name"}` after restoring by number in an empty window, else `{"action":"startScreen"}`;
+  `FILEVERSIONS` Browse → `{"action":"dialog","dialog":"versions","path"}`, Open → `{"action":"openWindow","path"}`, Keep →
+  `{"action":"preference","key":"fileVersionsKeep","value"}`.
+
+### Panels and workspace (Host/EngineWorkspace.swift, EngineWorkspaceCommands.swift, EngineMCPExtras.swift)
+Data behind the Mac panels and windows the Windows shell draws itself (windows/src/renderer/workspace/). Edits are one
+undo step each with the Mac label.
+- `alerts.get {showInfo?=false, dismissed?:[key]}` → `{items:[{key, severity ("error"|"warning"|"info"), code, message, ids,
+  bounds:[x0,y0,x1,y1]|null, level:id|null}], count, warnings, total}`: the Alerts panel (ModelNotifications: model check,
+  family errors, missing blocks and layers, unreconciled new layers), errors first. Dismissing is the shell's (per window).
+- `navigator.get {limit?=20000}` → `{lines:[[x0,y0,x1,y1…]…], extents, level}`: the Navigator overview map (every entity
+  tessellated and the current level's element outlines as flat polylines).
+- `content.scan {path}` → `{name, path, kinds:[{kind, symbol, names}]}` (Blocks, Layers, Linetypes, Text Styles, Dimension
+  Styles, Materials of another drawing, any format doc.open reads) · `content.add {path, kind, names | all:true}` →
+  `{added, message}` ("Design Center"; blocks bring nested blocks, their layers and linetypes; existing names are kept;
+  "Nothing new: those names already exist here." / "Added n: …") · `content.kinds {}`.
+- `outliner.get {filter?}` → `{nodes:[{name, kind, symbol, id|null, selected, children}], empty}` (Outliner.tree; a node
+  matches when its name or a descendant's contains the filter).
+- `view.projection {view: Section|North|South|East|West, width?, height?, rect?, dpr?, limit?}` → `{view, title, bounds}` plus,
+  with `width`/`height` (pixels, 16–4096), `{png: <base64>, rect, width, height}` — the hidden-line projection painted on white
+  paper for the world window `rect` (default: the whole projection + 5 %) by the portable rasteriser — or, without them,
+  `{items, truncated}` (draw items, at most `limit`). Entries are cached per drawing revision. Tiles of TILEDVIEWS.
+- `macro.buttons {}` → `[{name, macro, icon, tooltip, group}]` (MacroButtons.all: user profile + drawing MACROBUTTONS) ·
+  `macro.run {macro}` → prompt state (Editor.runMacro: `^C^C` cancels, `;` is Enter, `\` pauses).
+- `undo.begin {}` · `undo.end {label}` → `{collapsed, label?}`: every edit in between becomes one undo step named `label`
+  (UndoStep). The shell wraps plugin commands in them, so a plugin command is one undo step like on the Mac; the
+  `runScript` host action now carries `command` (the plugin command's name) for the label.
+- `assistant.context {}` → `{system, context, toolName: "run_commands", toolDescription}` (AssistantProtocol.systemPrompt) ·
+  `assistant.assess {commands, bulkLimit?=25, deleteLimit?=5}` → `{added, removed, modified, total, summary, bulk, output}`
+  (the commands run on a copy of the drawing) · `assistant.apply {commands}` → `{count, output}` (normal, undoable commands).
+  The shell sends the request (Anthropic Messages API or a localhost OpenAI-compatible endpoint) from the main process.
+
+Portable commands with the Mac names, aliases, prompts and messages (registered by archi-engine): `NOTIFICATIONS`
+(`WARNINGS`, `NOTIFYCENTER`; "No warnings." / "n warning(s).") → `{"action":"showPanel","panel":"Alerts"}`; `NAVIGATOR` →
+`showPanel Navigator` with `"mode":"2D"`; `ADCENTER` → `showPanel Content`; `OUTLINERPANEL` → `dialog:"outliner"`;
+`FLOATPANEL` (panel keyword, default the current tab from ui.prefs `panelTab`) → `{"action":"floatPanel","panel"}`;
+`TILEDVIEWS` [2/Stacked/3/4/Single] → `{"action":"tiledViews","arrangement"}` (the shell prints "Tiled views: …");
+`DVIEW` [TWist/Off] sets VIEWTWIST in the engine ("View twist 30°."); `PERSPECTIVE` 0|1 sets the PERSPECTIVE variable and
+sends `show3D` then `{"action":"setView","view":"perspective"|"ortho"}`; `KEYBOARDNAV` (1–200 px) →
+`{"action":"preference","key":"keyboardCursorStep","value"}` and prints the keyboard help; `ASSISTANT` [Panel/Ask] →
+`dialog:"assistant"` (with `ask`); `LANGUAGE` [Auto/English/Română/Deutsch/Français/Español/Italiano] →
+`preference uiLanguage` (code or "auto"); `EXPORTSETTINGS` / `IMPORTSETTINGS` → `{"action":"exportSettings"|"importSettings"}`;
+`CMDLINEOPTIONS` [Size/Lines/Opacity/Float/Dock/Reset] → `{"action":"preference","key":"cmdline","value":{fontSize, lines,
+opacity, floating, reset}}`; `CRASHREPORTS` [On/Off/Status/Show/Clear] → `{"action":"crashReports","op"}`; `FILETAB` /
+`FILETABCLOSE` → `{"action":"fileTabs","on"}`; `WINDOWTABS` [Merge/Tabs/Windows] → `{"action":"windowTabs","op"}`;
+`SYSWINDOWS` [Vertical/Horizontal/Cascade/Tabs/Separate] → `{"action":"arrangeWindows","mode"}`; `FULLSCREEN` (`FS`) →
+`{"action":"fullScreen"}`. The shell sends the current values with `ui.prefs` (`keyboardCursorStep`, `uiLanguage`,
+`systemLanguage`, `cmdline.*`, `fileTabs`, `crashReports`, `panelTab`) so the prompts show the same defaults.
+`archi-engine --mcp` also serves archi-cli's `run_batch`, `cost_estimate`, `clash` and `sun_position` tools.
+Fixtures: `ws-alerts`, `ws-navigator`, `ws-outliner`, `ws-content-scan`, `ws-projection` (South and Section as PNG),
+`ws-macro-buttons`, `ws-assistant-context`.
+
+### Graphic standards, clipboard and sharing (Host/EngineStandards.swift, EngineStandardsCommands.swift)
+Portable versions of the Mac UI-layer commands `GRAPHICSTYLES`, `OBJECTSTYLESDIALOG`, `MATPATTERNDIALOG`, `IMAGEADJUSTDIALOG`,
+`VISUALSTYLES`, `LWDISPLAYSCALE`, `PASTESPECIAL`, `COPYPICTURE`, `SHARE`, `SPEAKDRAWING`, `NODEPACKAGE` and `ARQUICKLOOK` (same
+names, aliases, prompts, messages and undo labels). Where the Mac shows a window or uses the pasteboard, share sheet or
+VoiceOver they send `host` notifications:
+- `{"action":"dialog","dialog":"graphicStyles"|"objectStyles"|"matPatterns"}`, `{"action":"dialog","dialog":"imageAdjust","ids":[…]}`;
+- `{"action":"visualStyle","name","base","custom":{name, base, edges, edgeColor "#RRGGBB", faceOpacity, shadows, background}|null}`
+  (VISUALSTYLES Current; plan and sheet windows switch to 3D); `{"action":"preference","key":"lwDisplayScale","value":0.1–5}`;
+- `{"action":"pasteSpecial","x","y"}` — the shell reads the Windows clipboard and calls `clipboard.paste` (or `file.drop` for
+  files copied in Explorer); the command refuses when ui.prefs `clipboardExternal` is "0";
+- `{"action":"copyPicture","pdf":<temp file>,"svg","width","height" (mm),"ratio"}` — the shell adds a 1600 px PNG and puts PNG,
+  bitmap, "Portable Document Format" and "image/svg+xml" on the clipboard;
+- `{"action":"share","paths":[…]}` (SHARE: `<name>.archi` snapshot and/or the layered PDF of the drawing or active sheet;
+  ARQUICKLOOK Share) — the Windows share sheet; `{"action":"openFile","path"}` (ARQUICKLOOK Preview: a real-scale GLB for the
+  Windows 3D viewer); `{"action":"speak","text"}` (SPEAKDRAWING: speech synthesis and a live region for Narrator).
+ui.prefs keys read by these commands: `viewMode` (2D, 3D, Split, Sheet), `lwDisplayScale`, `clipboardExternal`, `nodePackagesFolder`.
+
+Methods (each edit is one undo step with the Mac label):
+- `graphicstyles.get` → `{lineStyles:[{key, name, color, lineweight|null, linetype}], linetypes, layers:[{name, lineStyle}], lwTable,
+  lwRows:[{scale, factor, text}], penSets:[{name, pens}], activePenSet, penSetDisplay, filters:[{name, enabled, field, op, value,
+  condition, effect}], fields, ops, message}`; `graphicstyles.edit {op, …}` → the same with `message`: `addLineStyle {name}`
+  ("New Line Style"), `setLineStyle {key, color?, lineweight? (null = ByLayer, ≤ 5), linetype?}` ("Line Style"),
+  `deleteLineStyle {key}`, `setLayerLineStyle {layer, style}`, `setLwTable {text}` ("2 row(s).", "Table cleared.",
+  "No valid rows (use 1:50=1)."), `setActivePenSet {name}`, `setPenSetDisplay {on}`, `savePenSet {name, pens}`, `deletePenSet {name}`,
+  `addFilter {name, field, operator, value, color, lineweight, halftone, hide}` ("Give a value and an override."),
+  `setFilterEnabled {index, enabled}`, `raiseFilter {index}`, `deleteFilter {index}` ("Graphic Filter").
+- `objectstyles.get` → `{rows:[{category, title, projection, cut, color|null, fill|null, pattern}], patterns, lineweights}`;
+  `objectstyles.set {rows}` → `{ok, message ("Check: wall: cut lineweight" | "1 category styled."), data}` ("Object Styles").
+- `matpatterns.get` → `{rows:[{name, cut, surface}], patterns}`; `matpatterns.set {rows}` → `{changed, message, data}`
+  ("Material Patterns"; bound hatches and floor patterns follow).
+- `imageadjust.get {ids}` → `{ids (images only), brightness, contrast, fade, path, note}`; `imageadjust.set {ids, brightness,
+  contrast, fade}` (0–100) → `{adjusted, message}` ("Image Adjust").
+- `visualstyles.list` → `{builtIn, custom:[…], menu, current}` (custom styles are the Mac VISUALSTYLES variable, JSON).
+- `clipboard.paste {type: svg|pdf|png|jpeg|dxf|text, data (base64), x, y}` → `{ok, ids, summary}` ("Paste SVG" …; pictures are
+  saved in "<drawing> assets" or the application data folder "Pasted").
+- `copypicture.make {ids?}` → `{pdf, svg, width, height, ratio}` (Artwork.pdf: largest standard scale fitting 280 mm, 12 pt margin).
+- `drawing.describe` → `{text}` (A11y.summary).
+SHADEPLOT Rendered viewports without a render stored by the shell (plots from the command line, MCP or batch, or a drawing
+whose render file is gone) are drawn with the portable path tracer, framed like the hidden-line projection, misses white
+(`EngineShadePlot.pathTracedImage`, cached per drawing and camera).
 
 ## A complete LINE exchange (from `build/engine-fixtures/line-sequence.json`)
 

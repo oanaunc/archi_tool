@@ -168,10 +168,11 @@ public enum EngineNamedPlotStyles {
 
 /// Whole-text formatting of a text entity (props bold / italic / underline, AppRenderInfo.TextFormat).
 public struct EngineTextFormat: Hashable {
-    public var bold = false, italic = false, underline = false
+    public var bold = false, italic = false, underline = false, strike = false
     public init?(props: [String: String]) {
         bold = props["bold"] == "1"; italic = props["italic"] == "1"; underline = props["underline"] == "1"
-        if !bold && !italic && !underline { return nil }
+        strike = props["strike"] == "1"
+        if !bold && !italic && !underline && !strike { return nil }
     }
 }
 
@@ -800,7 +801,8 @@ public enum EngineShadePlot {
     }
 
     /// Hidden line (default), wireframe or shaded faces with edges, centred on the viewport's view centre. "Rendered"
-    /// uses the shell's raster render when one was stored (SHADEPLOTIMAGE:<sheet>:<n>), else as displayed.
+    /// uses the shell's raster render when one was stored (SHADEPLOTIMAGE:<sheet>:<n>), else a path-traced render
+    /// (EngineStandards.swift pathTracedImage).
     public static func entries(doc: ArchiDocument, vp: Viewport, layout: String?, index: Int?) -> [DrawEntry] {
         var l = layout, ix = index
         if l == nil || ix == nil, let loc = locate(vp, in: doc) { l = loc.0; ix = loc.1 }
@@ -825,6 +827,9 @@ public enum EngineShadePlot {
         case "Rendered":
             if let l, let ix, let path = doc.variable("SHADEPLOTIMAGE:" + l.uppercased() + ":" + String(ix)), FileManager.default.fileExists(atPath: path) {
                 raw = [DrawEntry(id: nil, items: [.image(ImageGeom(path: path, origin: box.min, size: Vec2(box.width, box.height)))])]
+            } else if let im = pathTracedImage(doc: doc, camera: cam, box: box, maxPixels: fallbackPixels(vp)) {
+                // No render stored by the shell (command line, MCP, batch, a moved drawing): the portable path tracer.
+                raw = [DrawEntry(id: nil, items: [.image(im)])]
             }
         default: break
         }

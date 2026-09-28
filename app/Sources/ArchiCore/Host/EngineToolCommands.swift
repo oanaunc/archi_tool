@@ -220,5 +220,7 @@ extension EngineSession {
         registry.ensureBuiltins()
         for c in EngineToolCommands.all where registry.lookup(c.name) == nil { registry.register(c) }
         registerCanvasCommands(registry)
+        registerDocCommands(registry)
+        registerWorkspaceCommands(registry)
     }
 }

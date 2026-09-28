@@ -160,7 +160,12 @@ public final class EngineSession {
         default:
             if let r = try await callCanvas(method, params) { return r }
             if let r = try await callOutput(method, params) { return r }
+            if let r = try await callRenderExtras(method, params) { return r }
             if let r = try await callUI(method, params) { return r }
+            if let r = try await callDocTools(method, params) { return r }
+            if let r = try await callSheets(method, params) { return r }
+            if let r = try await callWorkspace(method, params) { return r }
+            if let r = try await callStandards(method, params) { return r }
             throw EngineError(EngineError.methodNotFound, "Method not found: " + method)
         }
     }
@@ -277,7 +282,7 @@ public final class EngineSession {
         #else
         o.set("platform", "macos")
         #endif
-        o.set("methods", EngineJSON.strings(EngineProtocol.methods))
+        o.set("methods", EngineJSON.strings(EngineProtocol.methods + EngineStandardsMethods.all))
         o.set("commands", EngineJSON.array(cmds))
         o.set("sysvars", EngineJSON.array(vars))
         return o.json
@@ -389,6 +394,7 @@ public final class EngineSession {
         let f = (format ?? u.pathExtension).lowercased()
         try DocumentIO.write(editor.doc, to: u, format: f)
         if EngineSession.nativeExtensions.contains(f) { editor.fileURL = u; editor.isDirty = false }
+        if f == ArchiFile.fileExtension { afterNativeSave(u) }
         markChanged("document")
     }
 
@@ -717,12 +723,14 @@ public final class EngineSession {
         if let v = visible { EngineSession.lastDisplayBoxes[ObjectIdentifier(self)] = v }
         let opts = try drawOptions(p)
         let es = entries(opts)
+        let formats = EngineDrawJSON.textFormats(editor.doc.entities)
         var items: [EngineJSON] = []
         var all = BBox2.empty
         for e in es {
             all.add(e.bounds)
             if let v = visible, !e.bounds.isEmpty, !v.intersects(e.bounds) { continue }
-            for it in e.items { items.append(EngineDrawJSON.item(it, id: e.id)) }
+            let f = e.id.flatMap { formats[$0] }
+            for it in e.items { items.append(EngineDrawJSON.item(it, id: e.id, format: f)) }
         }
         var o = EngineObject()
         o.set("items", EngineJSON.array(items))
@@ -752,6 +760,7 @@ public final class EngineSession {
         let l = doc.layouts[li]
         var items: [EngineJSON] = []
         var vps: [EngineJSON] = []
+        let modelFormats = EngineDrawJSON.textFormats(doc.entities)
         for (i, vp) in l.viewports.enumerated() where vp.size.x > 0 && vp.size.y > 0 && vp.scale > 0 {
             let clip = BBox2(min: vp.origin, max: vp.origin + vp.size)
             var vo = EngineObject()
@@ -766,8 +775,10 @@ public final class EngineSession {
             if let vis = visible, !vis.intersects(clip) { continue }
             let center = vp.origin + vp.size / 2
             for e in Presentation.viewportEntries(doc, vp) {
+                let f = e.id.flatMap { modelFormats[$0] }
                 for it in e.items {
-                    items.append(EngineDrawJSON.item(EngineDrawJSON.mapped(it, from: vp.viewCenter, scale: vp.scale, to: center), id: e.id, clip: clip))
+                    let m = EngineDrawJSON.mapped(it, from: vp.viewCenter, scale: vp.scale, to: center)
+                    items.append(EngineDrawJSON.item(m, id: e.id, clip: clip, format: f))
                 }
             }
         }
@@ -777,8 +788,10 @@ public final class EngineSession {
             paper.elements = []
             var o = DrawOptions(level: nil)
             o.forPaper = true
+            let formats = EngineDrawJSON.textFormats(l.entities)
             for e in DrawListBuilder.entries(doc: paper, options: o) {
-                for it in e.items { items.append(EngineDrawJSON.item(it, id: e.id)) }
+                let f = e.id.flatMap { formats[$0] }
+                for it in e.items { items.append(EngineDrawJSON.item(it, id: e.id, format: f)) }
             }
         }
         var paperObj = EngineObject()
@@ -894,7 +907,13 @@ public final class EngineSession {
         let u = url(try string(p, "path"))
         let format = p["format"]?.stringValue
         let lv = try level(p["level"])
-        try DocumentIO.write(editor.doc, to: u, format: format, level: lv)
+        let f = (format ?? u.pathExtension).lowercased()
+        if f == "png", let dpi = p["dpi"]?.doubleValue, dpi > 0 {
+            // Plan image at another resolution than the Mac's 300 dpi (file.export png default).
+            try PlanImageExport.write(doc: editor.doc, level: lv, to: u, dpi: dpi, imageBase: u.deletingLastPathComponent())
+        } else {
+            try DocumentIO.write(editor.doc, to: u, format: format, level: lv)
+        }
         let attrs = try? FileManager.default.attributesOfItem(atPath: u.path)
         let size = (attrs?[.size] as? NSNumber)?.intValue ?? (attrs?[.size] as? Int)
         var o = EngineObject()

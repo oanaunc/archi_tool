@@ -6,6 +6,7 @@
 import { BrowserWindow, ipcMain, shell, clipboard, nativeImage, app } from "electron";
 import path from "node:path";
 import fs from "node:fs";
+import { withPrintOptions } from "./standards";
 
 export interface PrintJob {
   title: string;
@@ -19,6 +20,9 @@ export interface PrintJob {
   copies?: number;
   showDialog?: boolean;
   landscape?: boolean;
+  /** Input tray and media type (Print Schema options "feature|namespace|option", src/main/standards.ts printerCaps). */
+  tray?: string;
+  mediaType?: string;
 }
 
 const STANDARD: Record<string, [number, number]> = {
@@ -93,7 +97,7 @@ async function print(job: PrintJob): Promise<{ ok: boolean; error?: string }> {
 }
 
 export function installOutput() {
-  ipcMain.handle("o:print", (_e, job: PrintJob) => print(job));
+  ipcMain.handle("o:print", (_e, job: PrintJob) => withPrintOptions(job.printer ?? "", [job.tray ?? "", job.mediaType ?? ""], () => print(job)));
   ipcMain.handle("o:printers", async (e) => {
     const list = await e.sender.getPrintersAsync();
     return list.map((p) => ({ name: p.name, displayName: p.displayName || p.name, isDefault: !!(p as any).isDefault, description: p.description ?? "" }));

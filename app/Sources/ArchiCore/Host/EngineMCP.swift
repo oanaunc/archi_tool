@@ -95,6 +95,7 @@ public final class EngineMCPServer {
     public lazy var tools: [EngineJSON] = {
         var t = EngineMCPServer.baseTools()
         if let extra = ScriptJSON.fromAny(AgentTools.definitions + AgentExtraTools.mutatingDefinitions).arrayValue { t += extra }
+        t += EngineMCPServer.extraTools()
         return t
     }()
 
@@ -331,6 +332,7 @@ public final class EngineMCPServer {
             }
             return ScriptJSON.object([("count", .int(issues.count)), ("issues", .array(out))])
         default:
+            if let r = try await callExtraTool(name, a) { return r }
             if AgentExtraTools.mutatingNames.contains(name) || AgentTools.names.contains(name) { return try session.callAgentTool(name, a) }
             throw EngineError.params("unknown tool " + name)
         }

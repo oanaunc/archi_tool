@@ -3,6 +3,7 @@
 // Settings, Quick Select, Layer States, Layers panel filters, Page Setup, workspaces, ribbon customisation, custom
 // keyboard shortcuts, templates, autosave and the startup script. The engine's portable UI commands ask for them with
 // `host` notifications (docs/ENGINE-PROTOCOL.md "Dialogs"); ribbon items with a Mac `ui` target open them directly.
+import { openAmbientOcclusion } from "./ambient-occlusion";
 import type { App } from "../app";
 import type { MenuItem } from "../ui/menu";
 import { prefs, applyTheme } from "../prefs";
@@ -18,6 +19,8 @@ import { applyWorkspaceNamed, saveWorkspace, workspaceMenu } from "./workspaces"
 import { newFromTemplate, templateMenu, revealTemplatesFolder, listTemplates, openTemplateFile, DrawingTemplate } from "./templates";
 import { requestLayerFilter, renderLayersPanel } from "./layers-panel";
 import { reveal } from "./context";
+import { recoveryTick, recoveryDiscard } from "../sheets/recovery";
+import { runStartup } from "../partb/script-console";
 
 export { openSettings, openUnits, openDraftingSettings, openQuickSelect, openLayerStates, openPageSetup, openCUI, openShortcutsReference, newFromTemplate, openTemplateFile, revealTemplatesFolder, renderLayersPanel, listTemplates };
 export type { DrawingTemplate };
@@ -59,6 +62,7 @@ export function handleHost(p: any): boolean {
         case "cui": openCUI(); return true;
         case "units": void openUnits(); return true;
         case "drafting": void openDraftingSettings(); return true;
+        case "ambientOcclusion": void openAmbientOcclusion(p.settings ?? undefined); return true;
       }
       return false;
     case "showPanel": {
@@ -138,34 +142,14 @@ export function handleDialogKey(e: KeyboardEvent): boolean {
 }
 
 // ---- autosave (AutosaveManager): unsaved changes go to a recovery file every N minutes ----
-const session = Math.random().toString(36).slice(2, 8);
-let lastAutosave = Date.now();
-let recoveryPath: string | null = null;
-async function autosaveTick() {
-  const a = ctx.app!;
-  const minutes = prefs.get("autosaveMinutes");
-  if (!minutes || !a.info?.dirty || Date.now() - lastAutosave < minutes * 60000) return;
-  lastAutosave = Date.now();
-  const f = await folders();
-  const safe = (a.info.title || "Untitled").replace(/[\\/:*?"<>|]/g, "-");
-  const path = `${f.recovery}\\${safe} (recovered ${session}).archi`;
-  const r = await a.tryCall("file.export", { path, format: "archi" });
-  if (r) recoveryPath = path;
-}
-async function dropRecovery() {
-  const n = ctx.app?.engine.native;
-  if (recoveryPath && n?.removeFile) { await n.removeFile(recoveryPath); recoveryPath = null; }
-}
+// The engine writes "<id>.archi" + "<id>.json" (with a heartbeat) in the recovery folder: sheets/recovery.ts.
+async function autosaveTick() { await recoveryTick(ctx.app!); }
+async function dropRecovery() { if (ctx.app) await recoveryDiscard(ctx.app); }
 
 // ---- startup.js from the script library ----
+// It runs like any script file (partb runScriptFile): the window's script context with the full `archi` API.
 async function runStartupScript() {
-  const a = ctx.app!;
-  const n = a.engine.native;
-  if (!prefs.get("runStartupScript") || !n?.readTextFile) return;
-  const src = await n.readTextFile(`${await scriptsFolder()}\\startup.js`);
-  if (!src) return;
-  const archi = { run: (line: string) => a.runCommand(line), call: (m: string, p?: unknown) => a.engine.call(m, p ?? {}), print: (s: unknown) => a.print(String(s)), get selection() { return a.selection.ids; } };
-  try { await new Function("archi", `return (async () => { ${src}\n })()`)(archi); } catch (e: any) { a.print(`startup.js: ${e?.message ?? e}`); }
+  if (ctx.app) await runStartup(ctx.app);
 }
 
 export function installDialogs(app: App, opts: { displayBox?: () => number[] | null } = {}) {

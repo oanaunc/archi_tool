@@ -5,6 +5,9 @@ import type { ArchiBridge } from "../shared/protocol";
 import "./partb";
 import "./output";
 import "./canvas";
+import "./spell";
+import "./workspace";
+import "./standards";
 
 const bridge: ArchiBridge = {
   async rpc(method, params) {

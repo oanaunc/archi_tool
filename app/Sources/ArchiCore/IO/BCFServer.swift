@@ -24,16 +24,21 @@ public final class BCFAPIClient {
 
     /// Synchronous URLSession request (30 s timeout).
     public static func urlSession(_ r: URLRequest) throws -> (status: Int, body: Data) {
-        var result: (Int, Data)?, failure: Error?
+        // The completion handler runs on another thread; the box carries its outcome back (read only after the semaphore).
+        final class Outcome: @unchecked Sendable { var status = 0; var body = Data(); var failure: Error? }
+        let box = Outcome()
         let sem = DispatchSemaphore(value: 0)
         var req = r; req.timeoutInterval = 30
         URLSession.shared.dataTask(with: req) { d, resp, e in
-            if let e { failure = e } else { result = ((resp as? HTTPURLResponse)?.statusCode ?? 0, d ?? Data()) }
+            if let e { box.failure = e } else {
+                box.status = (resp as? HTTPURLResponse)?.statusCode ?? 0
+                box.body = d ?? Data()
+            }
             sem.signal()
         }.resume()
         sem.wait()
-        if let failure { throw APIError(message: failure.localizedDescription) }
-        return result ?? (0, Data())
+        if let failure = box.failure { throw APIError(message: failure.localizedDescription) }
+        return (box.status, box.body)
     }
 
     func request(_ method: String, _ path: String, body: Any? = nil) throws -> Any? {

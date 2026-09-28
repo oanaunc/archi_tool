@@ -51,6 +51,9 @@ extension EngineSession {
         try save("view3d-caps.json", try await exchange("view3d.sectionCaps", .object([])))
         try save("view3d-camera.json", try await exchange("view3d.setCamera", params([("eye", EngineJSON.point3(Vec3(-12000, -18000, 9000))), ("target", EngineJSON.point3(ext.isEmpty ? .zero : ext.center)), ("fov", .number(45))])))
         try save("view3d-sun.json", try await exchange("view3d.sun", params([("day", .int(172)), ("hour", .number(15))])))
+        // Render extras (EngineRenderExtras.swift): the AO dialog's settings and a render prompt's preset.
+        try save("render-ao.json", try await exchange("render.ao", .object([])))
+        try save("render-prompt-settings.json", try await exchange("render.promptSettings", params([("text", .string("golden hour, soft shadows, warm, 4K"))])))
         // A door animation (ANIMATE Door) so the info carries door leaves; a gizmo move of the door, undone.
         if let door = doc.elements.first(where: { e in if case .opening(let o) = e.geometry { return o.kind == .door && (o.doorStyle == .single || o.doorStyle == .double) }; return false }) {
             var anims: [EngineAnimation] = []

@@ -108,6 +108,8 @@ extension EngineSession {
         o.set("water", EngineJSON.strings(doc.materials.map(\.name).filter { EngineView3DData.isWater($0, doc: doc) }))
         o.set("weather", EngineView3DData.weather(doc))
         o.set("fog", EngineView3DData.fog(doc))
+        o.set("ambientOcclusion", EngineAOSettings.json(doc))
+        o.set("billboards", EngineView3DData.billboards(doc))
         o.set("animations", EngineView3DData.animations(doc))
         o.set("northAngle", doc.info.northAngle)
         o.set("units", doc.units.rawValue)
@@ -400,6 +402,21 @@ enum EngineView3DData {
             o.set("particles", q.json)
         } else { o.set("particles", EngineJSON.null) }
         return o.json
+    }
+
+    /// Camera-facing cut-outs (ArchiApp Billboards): base point (model mm), height and source (person, tree, shrub or an image path).
+    static func billboards(_ doc: ArchiDocument) -> EngineJSON {
+        var out: [EngineJSON] = []
+        for e in doc.entities {
+            guard let src = e.props["billboard"], case .point(let p) = e.geometry, doc.isVisible(layer: e.layer) else { continue }
+            var o = EngineObject()
+            o.set("id", e.id)
+            o.set("position", EngineJSON.point3(Vec3(p.x, p.y, e.props["z"].flatMap(Double.init) ?? 0)))
+            o.set("height", max(e.props["height"].flatMap(Double.init) ?? 1750, 10))
+            o.set("source", src)
+            out.append(o.json)
+        }
+        return .array(out)
     }
 
     static func fog(_ doc: ArchiDocument) -> EngineJSON {

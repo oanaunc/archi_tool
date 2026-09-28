@@ -25,7 +25,7 @@ Layout: `src/main` (Electron main, engine process + JSON-RPC client), `src/prelo
   `package.json`; the build number `CFBundleVersion` becomes the fourth number of the .exe file version).
 - **App id**: `com.oanarina.architool`, the Mac bundle identifier; also the Windows AppUserModelID (taskbar grouping,
   jump list) set in `src/main/main.ts`.
-- **Per-user install, no administrator rights**: installs into `%LOCALAPPDATA%\Programs\oanarina-archi-tool`
+- **Per-user install, no administrator rights**: installs into `%LOCALAPPDATA%\Programs\Oanarina Archi Tool`
   (`packaging/installer.nsh` forces the current-user mode, so there is no UAC prompt). The folder can be changed.
 - **Shortcuts**: Start menu and desktop, both "Oanarina Archi Tool".
 - **File associations**: `.archi`, `.dxf` and `.ifc` open in the app (double-click, "Open with", jump list).
@@ -34,8 +34,9 @@ Layout: `src/main` (Electron main, engine process + JSON-RPC client), `src/prelo
 - **Uninstall**: Settings ▸ Apps ▸ Oanarina Archi Tool ▸ Uninstall (or "Uninstall Oanarina Archi Tool.exe" in the
   install folder). Settings, recent files and the documents folder are kept.
 - **Jump list**: right-click the taskbar button for the recent projects, New Window and the Cedar House sample.
-- **Windows conventions**: Ctrl instead of ⌘ for every shortcut, Alt+letter opens the menus, Alt+F4 exits, Ctrl+W
-  closes the window, F1 opens the user guide (https://www.oanarinaldi.com/archi-tool-guide.html), native caption
+- **Windows conventions**: Ctrl instead of ⌘ and Alt instead of ⌥ for every shortcut (Ctrl+Y redo, Ctrl+0 clean screen;
+  AltGr characters still type), Alt+letter opens the menus, Alt+F4 exits, Ctrl+W closes the window, F1 opens the user
+  guide at the running command's section (https://www.oanarinaldi.com/archi-tool-guide.html#…), native caption
   buttons with snap layouts, per-monitor DPI scaling, and the Mac's dark theme (Settings ▸ Appearance ▸ Light switches
   the window, native dialogs and caption buttons together).
 

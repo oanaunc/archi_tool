@@ -6,8 +6,9 @@ import { h, clear } from "../dom";
 import { icon } from "../icons";
 import { help } from "./menu";
 
-const FONT = 11, LINES = 4;
-const ROW = Math.round(FONT * 1.36);
+/** Command line appearance (CommandLineAppearance, CMDLINEOPTIONS): text size, history lines, background opacity. */
+export const cmdAppearance = { font: 11, lines: 4, opacity: 0.55 };
+const rowHeight = () => Math.round(Math.min(Math.max(cmdAppearance.font, 8), 20) * 1.36);
 
 export class CommandLine {
   el: HTMLElement;
@@ -43,7 +44,16 @@ export class CommandLine {
     this.input.addEventListener("blur", () => setTimeout(() => this.hideSuggestions(), 150));
   }
 
-  private layout() { this.historyBox.style.height = (this.expanded ? Math.max(240, ROW * LINES + 6) : ROW * LINES + 6) + "px"; this.lines.scrollTop = 1e9; }
+  private layout() {
+    const row = rowHeight(), n = Math.min(Math.max(cmdAppearance.lines, 1), 40);
+    this.el.style.setProperty("--cl-font", `${cmdAppearance.font}px`);
+    this.el.style.setProperty("--cl-row", `${row}px`);
+    this.el.style.setProperty("--cl-opacity", String(cmdAppearance.opacity));
+    this.historyBox.style.height = (this.expanded ? Math.max(240, row * n + 6) : row * n + 6) + "px";
+    this.lines.scrollTop = 1e9;
+  }
+  /** Applies cmdAppearance (CMDLINEOPTIONS). */
+  relayout() { this.layout(); }
 
   private cls(line: string) {
     if (line.startsWith("Command: ")) return "ln cmd";

@@ -1,0 +1,42 @@
+/* Oanarina Archi Tool for Windows — GPL-3.0-or-later
+   About (AboutWindow.swift), Command Reference (CommandReferenceView) and What's New (WhatsNewView) windows. */
+
+/* About: fixed size like the Mac window (titled, closable, not resizable). */
+.dlg.twin.about-window { resize: none; }
+.about { flex: 1; overflow-y: auto; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 0 20px 14px; background: var(--panel); }
+.about-icon { width: 96px; height: 96px; margin-top: 18px; }
+.about-name { font: 600 20px var(--display); color: var(--text); }
+.about-version { font-size: 12px; color: var(--dim); }
+.about-tag { font-size: 12px; color: var(--text); text-align: center; }
+.about-box { align-self: stretch; display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 7px; background: var(--field); }
+.about-hdr { font-size: 9.5px; font-weight: 600; letter-spacing: 0.6px; color: var(--dim); }
+.about-small { font-size: 11px; color: var(--text); line-height: 1.35; }
+.about-small.dim { color: var(--dim); }
+.about-row { display: flex; gap: 8px; }
+.about-credit { display: flex; align-items: baseline; gap: 6px; }
+.about-credit .n { width: 96px; flex: none; white-space: nowrap; font-size: 12px; font-weight: 600; color: var(--accent); }
+.about-credit .w { font-size: 11px; color: var(--text); }
+.about-foot { display: flex; gap: 4px; font-size: 11px; color: var(--dim); }
+.about-link { color: var(--accent); text-decoration: none; }
+.about-link:hover { text-decoration: underline; }
+
+/* Command Reference */
+.cref { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--panel); }
+.cref-top { display: flex; align-items: center; gap: 10px; padding: 12px; color: var(--accent); }
+.cref-title { font: 600 14px var(--display); color: var(--text); }
+.cref-count { font-size: 11px; color: var(--dim); }
+.cref-search { width: 280px; height: 24px; background: var(--field); border: 1px solid var(--sep); border-radius: 5px; padding: 0 8px; color: var(--text); outline: none; font-size: 12px; }
+.cref-search:focus { border-color: var(--accent); }
+.cref-list { flex: 1; overflow-y: auto; }
+.cref-hdr { position: sticky; top: 0; font-size: 10px; font-weight: 600; letter-spacing: 0.7px; color: var(--dim); padding: 5px 14px; background: var(--ribbon); }
+.cref-row { display: flex; align-items: baseline; gap: 12px; padding: 4px 14px; }
+.cref-row .n { width: 150px; flex: none; font: 600 11.5px var(--mono); color: var(--accent); user-select: text; }
+.cref-row .a { width: 130px; flex: none; font: 11px var(--mono); color: var(--dim); overflow: hidden; text-overflow: ellipsis; }
+.cref-row .s { flex: 1; min-width: 0; font-size: 12px; color: var(--text); }
+
+/* What's New */
+.whatsnew { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 14px; background: var(--panel); font-size: 12px; color: var(--text); }
+.wn-title { font: 600 17px var(--display); }
+.wn-sec { font-weight: 600; color: var(--accent); }
+.wn-line { line-height: 1.35; }
+.wn-note { font-size: 11px; color: var(--dim); }

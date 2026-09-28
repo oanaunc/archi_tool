@@ -46,7 +46,7 @@ export const explicit = {
   "square.lefthalf.filled": "PanelLeft", "photo": "Image", "photo.on.rectangle": "Images", "photo.stack": "Images", "building.columns": "Landmark", "shippingbox": "Package",
   "doc.text": "FileText", "doc": "File", "doc.fill": "File", "doc.badge.plus": "FilePlus", "doc.badge.arrow.up": "FileUp", "doc.zipper": "FileArchive", "doc.on.clipboard": "ClipboardCopy",
   "folder": "Folder", "arrow.uturn.backward": "Undo2", "arrow.uturn.forward": "Redo2", "arrow.uturn.backward.square": "Undo2", "chevron.down": "ChevronDown", "chevron.up": "ChevronUp",
-  "chevron.right": "ChevronRight", "chevron.right.2": "ChevronsRight", "xmark": "X", "xmark.circle": "CircleX", "xmark.rectangle": "SquareX", "xmark.square": "SquareX",
+  "chevron.right": "ChevronRight", "chevron.right.2": "ChevronsRight", "xmark": "X", "xmark.circle": "CircleX", "xmark.circle.fill": "CircleX", "paperplane.fill": "Send", "rectangle.righthalf.inset.filled": "PanelRight", "xmark.rectangle": "SquareX", "xmark.square": "SquareX",
   "sidebar.right": "PanelRight", "macwindow.on.rectangle": "AppWindow", "info.square": "Info", "info.circle": "Info", "i.square": "Info", "map": "Map", "map.fill": "Map",
   "bell.badge": "BellDot", "bell": "Bell", "slider.horizontal.below.rectangle": "SlidersHorizontal", "books.vertical.circle": "LibraryBig", "keyboard": "Keyboard", "clock": "Clock",
   "square.and.pencil": "SquarePen", "star": "Star", "star.fill": "Star", "lifepreserver": "LifeBuoy", "cursorarrow.rays": "MousePointerClick", "cursorarrow": "MousePointer2",

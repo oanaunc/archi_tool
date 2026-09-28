@@ -6,7 +6,7 @@
 # Version: package.json "version", written from app/Info.plist CFBundleShortVersionString by packaging/sync-version.mjs
 # (the Windows file version gets CFBundleVersion as its fourth number, -c.buildVersion in the workflow).
 #
-# Installer (NSIS, assisted): per-user install into %LOCALAPPDATA%\Programs\oanarina-archi-tool without administrator
+# Installer (NSIS, assisted): per-user install into %LOCALAPPDATA%\Programs\Oanarina Archi Tool without administrator
 # rights (installer.nsh forces the current-user mode, no UAC prompt), Start menu and desktop shortcuts, file
 # associations .archi / .dxf / .ifc (HKCU\Software\Classes), the Cedar House and Nordic House samples, and an
 # uninstaller registered in Settings ▸ Apps (HKCU ...\Uninstall). Unsigned until a code-signing certificate is set up

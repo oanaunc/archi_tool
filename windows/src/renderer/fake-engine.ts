@@ -9,6 +9,10 @@ import type { Engine } from "./engine";
 import { decodeDrawList, pick as pickEntry, Entry } from "./canvas/drawitems";
 import { fakeDialogCall } from "./dialogs/fake-dialogs";
 import { fakeOutputCall } from "./output/fake-output";
+import { fakeDocCall } from "./doctools/fake-doctools";
+import { fakeSheetsCall } from "./sheets/fake-sheets";
+import { fakeWorkspaceCall } from "./workspace/fake-workspace";
+import { fakeStandardsCall } from "./standards/fake-standards";
 
 type Raw = { id: string | null; layer?: string; items: any[] };
 const PREVIEW = "#DBE0EB";
@@ -102,10 +106,18 @@ export class FakeEngine implements Engine {
 
   async call(method: string, params: any = {}): Promise<any> {
     await this.ready;
+    const wsr = fakeWorkspaceCall(this as any, method, params);
+    if (wsr !== undefined) return wsr;
+    const gsr = fakeStandardsCall(this as any, method, params);
+    if (gsr !== undefined) return gsr;
     const outp = fakeOutputCall(this as any, method, params);
     if (outp !== undefined) return outp;
     const dlg = fakeDialogCall(this as any, method, params);
     if (dlg !== undefined) return dlg;
+    const doc = fakeDocCall(this as any, method, params);
+    if (doc !== undefined) return doc;
+    const sh = fakeSheetsCall(this as any, method, params);
+    if (sh !== undefined) return sh;
     switch (method) {
       case "engine.hello": return this.hello;
       case "doc.new": {

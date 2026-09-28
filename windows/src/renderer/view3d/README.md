@@ -54,6 +54,17 @@ animate, animationFrame, panorama, viewImage). Images are written by the engine 
   supersampling (3× up to 1920×1080, else 2×, frame ≤ 12 288 px) filtered down; final quality shadow map 8192 and
   2048-wide sky.
 
+- **Render window extras** (`FrameOptions`): clay model (RenderEngine.applyClay: matte white 0.92, roughness 0.85, glass
+  keeps its transparency, +10 % environment with a preset), depth of field (SCNCamera focusDistance / fStop, 24 mm sensor:
+  a circle-of-confusion gather on the HDR frame before the camera response), environment images (`envImage`: HDRI File —
+  Radiance .hdr flat or RLE, JPEG, PNG — decoded by `hdri.ts` into the sky's equirect layout as image-based light and
+  background).
+- **Lights**: point, spot (inner 70 % of the beam), area and line (Lambertian emitters) and IES (the photometric web's
+  relative intensity by angle from `model.meshes` `iesProfile`, a 32 × 16 half-float table), SceneKit attenuation.
+- **Billboards** (`billboards.ts`, BILLBOARD): person / tree / shrub drawn as on the Mac or an image file, cut out by alpha,
+  turned about the vertical towards the camera every frame (shadows follow). **Ambient occlusion** of the drawing
+  (AODIALOG: `view3d.info.ambientOcclusion.viewport`) overrides the style's SSAO like AOForm.viewport.
+
 Calibration constants (`Renderer.SCENE_SCALE`, `SUN_SCALE`, `ENV_DIFFUSE`, `LIGHT_SCALE`) map SceneKit's units to
 this shader; they were measured against the Mac renders in `build/renders` (see `windows/test/view3d`). SSAO darkens
 only the indirect light (`AO_INDIRECT`, a second colour attachment of the scene pass), and the sun shadow uses a
@@ -76,6 +87,10 @@ model (`build/engine-fixtures/view3d-meshes-lod0.bin`, written by `./scripts/q.s
 
 ## Tests
 
+`node windows/test/view3d/render-match.mjs --full --tag after` renders Front / Corner / Aerial × the four presets and writes
+the per-region (sky, lawn, paving, cedar, limestone, glass; `regions.py`) mean-colour differences to the Mac renders with
+side-by-side images (`test-results/render-match/<tag>/`); `calib-regions.mjs` sweeps renderer constants over the same regions;
+`render-extras.mjs` checks clay, depth of field, HDRI, billboards and IES lights.
 `node windows/test/view3d/run.mjs` renders every preset from the saved cameras and writes side-by-side comparisons;
 `node windows/test/view3d/ui.mjs` drives the interactive view (styles, orbit, pan, zoom, view cube, picking, section
 box, walk, render to PNG); `node windows/test/view3d/tools.mjs` checks the tools above and the bridge's view3d actions.

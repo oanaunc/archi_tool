@@ -142,7 +142,15 @@ extension EngineSession {
         // Settings, Quick Select, layer states and filters, workspaces, ribbon customisation, page setup, templates.
         for c in EngineUICommands.all where registry.lookup(c.name) == nil { registry.register(c) }
         for c in EngineUICommands.overrides { registry.register(c) }
+        // Help and window chrome: About, command search, clean screen, history panel, start screen, sample, what's new.
+        for c in EngineHelpCommands.all where registry.lookup(c.name) == nil { registry.register(c) }
         // 3D view: section box / plane, cameras, gizmo, measure, levels, navigation, weather, animation, panoramas.
         for c in EngineView3DCommands.all where registry.lookup(c.name) == nil { registry.register(c) }
+        // Render, materials and environment: lights, fog, water, scatter, billboards, PBR maps, 4D video, mechanisms.
+        for c in EngineRenderCommands.all where registry.lookup(c.name) == nil { registry.register(c) }
+        // Sheets (MVIEWPOLY, MVSETUP, SHEETIMAGE, TITLEBLOCKDESIGN, PSETUPIN, ZOOMXP …), DRAWINGRECOVERY and FILEVERSIONS.
+        registerSheetCommands(registry)
+        // Graphic standards, clipboard and sharing (GRAPHICSTYLES, VISUALSTYLES, PASTESPECIAL, COPYPICTURE, SHARE …).
+        registerStandardsCommands(registry)
     }
 }

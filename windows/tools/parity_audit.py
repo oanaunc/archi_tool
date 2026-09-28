@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Oanarina Archi Tool — GPL-3.0-or-later
-# Parity auditor (python3 windows/tools/parity_audit.py): decides a status for every row of docs/WINDOWS-PARITY.md from the Windows shell source (windows/src)
+# Parity auditor, rounds 2-3 (python3 windows/tools/parity_audit.py): decides a status for every row of docs/WINDOWS-PARITY.md from the Windows shell source (windows/src)
 # and the engine (ArchiCore + archi-engine command registrations). Writes statuses back into the checklist.
 import json, os, re, sys, glob, collections
 
@@ -28,12 +28,22 @@ hello = os.path.join(ROOT, "build/engine-fixtures/hello.json")
 if os.path.exists(hello):
     for c in json.load(open(hello))["response"]["result"]["commands"]:
         E.add(c["name"].upper()); [E.add(a.upper()) for a in c.get("aliases", [])]
+# Commands the Windows shell implements itself (ui/shell-commands.ts registerShellCommand: the Mac runs them in its UI layer).
+SHELLCMD = set()
+for m in re.finditer(r'registerShellCommand\(\[([^\]]*)\]', SHELL_ALL):
+    for n in re.findall(r'"([^"]+)"', m.group(1)): SHELLCMD.add(n.upper())
+# Mac `ui` targets the shell opens (ui/shell-commands.ts UI_TARGETS).
+_ut = re.search(r'const UI_TARGETS = /(.*)/;', SHELL_FILES.get("renderer/ui/shell-commands.ts", ""))
+UI_TARGETS_RE = re.compile(_ut.group(1)) if _ut else None
 # Subcommands excluded in the Mac catalogue too.
 APPONLY = {c["name"]: c for c in J["commands"]}
 
 PANELS_WIN = {"Properties", "Layers", "Levels", "Browser", "Materials", "Tools", "Sheets", "History", "Selection", "Navigator",
               "Alerts", "Quick Props", "Inspector", "Content"}
-EXPORT_OK = {"pdf", "dxf", "svg", "ifc", "obj", "stl", "glb"}  # DocumentIO.write / EnginePDF; png and csv:<kind> fail
+EXPORT_OK = {"pdf", "dxf", "svg", "ifc", "obj", "stl", "glb"}  # DocumentIO.write / EnginePDF
+_bw = read(os.path.join(ROOT, "app/Sources/ArchiCore/IO/BatchRunner.swift"))
+if 'case "png"' in _bw: EXPORT_OK.add("png")                       # round 3: IO/RasterExport.swift
+EXPORT_PREFIX_OK = [k for k in ("csv:", "xlsx:") if 'hasPrefix("%s")' % k in _bw]  # round 3: ScheduleExporter kinds
 UI_OK = {"window:PreferencesWindow", "window:PreferencesWindow.shortcuts", "window:keyboard-shortcuts", "window:CUIWindow", "sheet:units",
          "sheet:drafting", "sheet:quickSelect", "sheet:layerStates", "sheet:pageSetup", "FileManager.default.createDirectory",
          "ScriptLibrary.revealFolder", "window:BlockLibraryWindow", "window:MaterialLibraryWindow", "window:NodeEditorWindow",
@@ -42,8 +52,10 @@ UI_OK = {"window:PreferencesWindow", "window:PreferencesWindow.shortcuts", "wind
 
 def cmd_ok(c, names=(), ui=None):
     """(ok, note) for a command reference as the Windows ribbon / menu resolves it."""
-    if ui and ui in UI_OK: return True, ""
+    if ui and (ui in UI_OK or (UI_TARGETS_RE and UI_TARGETS_RE.match(ui))): return True, ""
     if not c: return None, ""
+    if c.startswith("{r}"):  # tools/gen-ui-data.mjs resolves {r} to COMPONENT / FURNITURE (RibbonView.componentMenu)
+        return ("COMPONENT" in E or "FURNITURE" in E), "" 
     if c.startswith("@"):
         k, _, v = c[1:].partition(":")
         if k == "panel": return (v in PANELS_WIN), ""
@@ -51,15 +63,16 @@ def cmd_ok(c, names=(), ui=None):
         if k == "zoom": return v in ("extents", "in", "out", "window"), ""
         if k == "newWindow": return v in ("start", "sample", "blankMetric", "blankImperial", "building"), ""
         if k == "export":
-            if v in EXPORT_OK: return True, ""
+            if v in EXPORT_OK or any(v.startswith(k) for k in EXPORT_PREFIX_OK): return True, ""
             if v == "png": return False, "engine file.export has no PNG writer"
             return False, "engine file.export does not accept %s" % v
         if k == "agent": return "AGENTSERVER" in E, ""
-        if k == "ui": return (v in UI_OK), ""
+        if k == "ui": return (v in UI_OK or bool(UI_TARGETS_RE and UI_TARGETS_RE.match(v))), ""
         if k == "view": return (v.upper() + "VIEW") in E, ""
         return k.upper() in E, ""
     for n in [c] + list(names or []):
         if n.split(" ")[0].upper() in E: return True, ""
+    if c.split(" ")[0].upper() in SHELLCMD and " " not in c.strip(): return True, ""
     return False, "command %s is not registered in archi-engine" % c.split(" ")[0]
 
 def st(ok, note=""):
@@ -69,6 +82,8 @@ def st(ok, note=""):
 
 # ---------------- dynamic ribbon/menu lists the shell fills ----------------
 DYN = {"Workspaces.all", "scripts"}  # dialogs/index.ts dynamicMenu, partb/index.ts script library
+if "allCommandsMenu" in SHELL_FILES.get("renderer/ui/menubar.ts", ""): DYN.add("groups")          # Tools ▸ All Commands
+if "newFromTemplateMenu" in SHELL_FILES.get("renderer/ui/menubar.ts", ""): DYN.add("TemplateLibrary")  # File ▸ New from Template
 
 # ---------------- rows ----------------
 ROWS = collections.OrderedDict()   # item path -> (status, note)
@@ -151,6 +166,9 @@ for c in J["contextualTabs"]:
 
 # Menus
 SPECIAL = {"Oanarina Archi Tool", "File", "Edit", "View", "Window", "Help"}
+# Round 3: ui/menubar.ts builds every menu from docs/windows-parity.json (the app menu folded into File / Edit / Help),
+# so these menus resolve their entries like the others; Windows-convention rows are overrides in the rules file.
+if "buildMenuBar" in SHELL_FILES.get("renderer/ui/menubar.ts", ""): SPECIAL = set()
 def mwalk(items, path, special):
     out = []
     for it in items:

@@ -8,7 +8,9 @@ import { showMenu, help, MenuItem } from "./menu";
 import ui from "../data/ui.generated.json";
 import * as dd from "./dropdowns";
 import { prefs } from "../prefs";
-import { customRibbonPanels, isHiddenRibbonPanel, dynamicMenu, openUI, openSettings } from "../dialogs";
+import { customRibbonPanels, isHiddenRibbonPanel, dynamicMenu, openSettings } from "../dialogs";
+import { resolveEntry, runEntry, uiKnown } from "./shell-commands";
+import { t as tr } from "../workspace/l10n";
 
 export interface RItem {
   title: string; symbol?: string; command?: string; args?: string; names?: string[]; size?: "large" | "small"; rows?: number;
@@ -31,12 +33,8 @@ export function ribbonTitle(name: string): string | undefined {
   return undefined;
 }
 export function commandLine(it: RItem) { return it.command ? (it.args ? `${it.command} ${it.args}` : it.command) : ""; }
-export function resolveCommand(app: App, it: RItem): string | null {
-  if (!it.command) return null;
-  if (it.command.startsWith("@")) return it.command;
-  for (const n of [it.command, ...(it.names ?? [])]) { const base = n.split(" ")[0]; if (app.has(base)) return n; }
-  return null;
-}
+/** The command a ribbon entry runs (engine command, shell command or "@" action; ui/shell-commands.ts), null = disabled. */
+export function resolveCommand(app: App, it: RItem): string | null { return resolveEntry(app, it); }
 
 export class Ribbon {
   el: HTMLElement;
@@ -60,7 +58,7 @@ export class Ribbon {
     clear(this.tabsEl);
     const logo = h("button", { class: "app-btn" }, h("img", { src: "assets/app-icon.png", alt: "" }));
     help(logo, "About Oanarina Archi Tool");
-    logo.addEventListener("click", () => app.runCommand("ABOUT"));
+    logo.addEventListener("click", () => void runEntry(app, { command: "ABOUT" }));
     this.tabsEl.append(logo);
     for (const n of prefs.quickAccess) {
       const def = app.lookup(n);
@@ -76,7 +74,7 @@ export class Ribbon {
       .concat([{ separator: true }, { title: "More Commands…", action: () => openSettings("Toolbar") }]), more));
     this.tabsEl.append(more, h("div", { class: "vsep", style: { height: "14px", alignSelf: "center", margin: "0 4px" } }));
     for (const t of RIBBON.filter((x) => !prefs.hiddenRibbonTabs.includes(x.tab) || x.tab === app.ribbonTab)) {
-      const b = h("button", { class: "tab" + (t.tab === app.ribbonTab ? " sel" : ""), text: t.tab });
+      const b = h("button", { class: "tab" + (t.tab === app.ribbonTab ? " sel" : ""), text: tr(t.tab) });
       b.addEventListener("click", () => { app.setUI("ribbonTab", t.tab); if (app.ribbonCollapsed) app.setUI("ribbonCollapsed", false); });
       this.tabsEl.append(b);
     }
@@ -137,7 +135,7 @@ export class Ribbon {
         col.append(this.button(it)); n++;
       }
     }
-    return h("div", { class: "rgroup" }, h("div", { class: "inner" }, content, h("div", { class: "label", text: g.name })), h("div", { class: "vsep" }));
+    return h("div", { class: "rgroup" }, h("div", { class: "inner" }, content, h("div", { class: "label", text: tr(g.name) })), h("div", { class: "vsep" }));
   }
 
   private dropdown(it: RItem): HTMLElement {
@@ -165,9 +163,12 @@ export class Ribbon {
     const app = this.app;
     const large = (it.size ?? "large") === "large" || it.kind === "menu";
     const b = h("button", { class: `rbtn ${large ? "large" : "small"}${it.width && it.width > 50 ? " wide" : ""}` },
-      h("span", { class: "glyph" }, icon(it.symbol || "terminal", large ? 22 : 13, large ? 1.35 : 1.7)), h("span", { class: "t", text: it.title }));
+      h("span", { class: "glyph" }, icon(it.symbol || "terminal", large ? 22 : 13, large ? 1.35 : 1.7)), h("span", { class: "t", text: tr(it.title) }));
     if (it.kind === "menu") {
-      help(b, it.help || it.title);
+      // Menus whose entries are resolved at run time (Component: COMPONENT / FURNITURE) are disabled when none can run.
+      const unavailable = !!(it as any).helpUnavailable && this.menuItems(it).every((x) => x.disabled || x.separator || x.header !== undefined);
+      help(b, unavailable ? (it as any).helpUnavailable : it.help || it.title);
+      (b as HTMLButtonElement).disabled = unavailable;
       b.addEventListener("click", () => showMenu(this.menuItems(it), b));
     } else {
       const resolved = resolveCommand(app, it);
@@ -175,7 +176,7 @@ export class Ribbon {
       help(b, it.help || (def ? `${it.title} — ${def.summary}  [${def.name}${def.aliases?.length ? ", " + def.aliases.join(", ") : ""}]` : resolved ? it.title : `${it.title} is not available in this build`));
       const uiTarget = (it as any).ui as string | undefined;
       (b as HTMLButtonElement).disabled = !resolved && !uiTarget;
-      b.addEventListener("click", () => { if (uiTarget && openUI(uiTarget)) return; if (resolved) app.runCommand(resolved.startsWith("@") ? resolved : it.args ? `${resolved} ${it.args}` : resolved); });
+      b.addEventListener("click", () => void runEntry(app, it, resolved));
     }
     this.buttons.push({ el: b, it });
     return b;
@@ -191,7 +192,7 @@ export class Ribbon {
         if (x.dynamic) { const d = dynamicMenu(String(x.dynamic)); if (d) out.push(...d); continue; }
         if (x.dynamic || x.kind === "label" || !x.title || /\{[^}]+\}/.test(x.title)) continue; // run-time lists (dim styles, recent …)
         const r = resolveCommand(this.app, x);
-        out.push({ title: x.title, symbol: x.symbol, disabled: !r, action: () => r && this.app.runCommand(r.startsWith("@") ? r : x.args ? `${r} ${x.args}` : r) });
+        out.push({ title: x.title, symbol: x.symbol, disabled: !r && !(x.ui && uiKnown(x.ui)), action: () => void runEntry(this.app, x, r) });
       }
     }
     return out;

@@ -5,6 +5,7 @@
 // Print… prints exactly the previewed pages through Windows printing (src/main/output.ts) — and Print Setup with the
 // printer, paper, roll and custom sizes, scaling and copies (remembered between prints).
 import type { App } from "../app";
+import { std } from "../standards/native";
 import { h, clear } from "../dom";
 import { toolWindow, picker, segmented, slider, toggle, textField, flatButton, note, label, row, divider, stepper, Option } from "../dialogs/ui";
 import { out, saveDialog, docName } from "./native";
@@ -179,8 +180,8 @@ export function savePrintOptions(o: PrintOptions) { try { localStorage.setItem(P
 const SCALING: Option<PrintOptions["scaling"]>[] = [{ value: "fit", title: "Fit to Paper" }, { value: "actual", title: "Actual Size (1:1 paper)" }, { value: "custom", title: "Custom %" }];
 
 /** Prints plotted pages (native: Windows printing; browser: the page's print dialog). Remembered for tests. */
-export async function printPages(app: App, pages: PlotPage[], o: { title: string; showDialog: boolean; scaling: PrintOptions["scaling"]; percent?: number; printer?: string; paper?: string; copies?: number }): Promise<boolean> {
-  const job = { title: o.title, pages: pages.map((p) => ({ svg: p.svg, svgPath: p.svgPath, width: p.width, height: p.height })), printer: o.printer, paper: o.paper, scaling: o.scaling, percent: o.percent, copies: o.copies, showDialog: o.showDialog };
+export async function printPages(app: App, pages: PlotPage[], o: { title: string; showDialog: boolean; scaling: PrintOptions["scaling"]; percent?: number; printer?: string; paper?: string; copies?: number; tray?: string; mediaType?: string }): Promise<boolean> {
+  const job = { title: o.title, pages: pages.map((p) => ({ svg: p.svg, svgPath: p.svgPath, width: p.width, height: p.height })), printer: o.printer, paper: o.paper, scaling: o.scaling, percent: o.percent, copies: o.copies, showDialog: o.showDialog, tray: o.tray || undefined, mediaType: o.mediaType || undefined };
   (window as any).archiLastPrintJob = job;
   const n = out();
   if (n) {
@@ -214,15 +215,24 @@ export async function openPrintSetup(app: App) {
   toolWindow("printSetup", "Print", 420, 420, (body) => {
     const o = loadPrintOptions();
     let printers: { name: string; displayName: string; isDefault: boolean }[] = [];
+    // Input trays and media types of the printer (Print Schema capabilities of the Windows print queue).
+    let caps: { trays: { value: string; title: string }[]; media: { value: string; title: string }[] } = { trays: [], media: [] };
+    const loadCaps = () => {
+      const s = std();
+      if (!s) return;
+      const name = o.printer || (printers.find((p) => p.isDefault)?.name ?? "");
+      void s.printerCaps(name).then((c) => { caps = c; if (!caps.trays.some((t) => t.value === o.tray)) o.tray = ""; if (!caps.media.some((m) => m.value === o.mediaType)) o.mediaType = ""; render(); }).catch(() => {});
+    };
     const form = h("div", { class: "dcol print-form" });
     body.append(form);
     const papers = ["A4", "A3", "A2", "A1", "A0", "Letter", "Legal", "Tabloid"];
     const render = () => {
       clear(form);
       form.append(
-        picker([{ value: "", title: "Default" }, ...printers.map((p) => ({ value: p.name, title: p.displayName }))], o.printer, (v) => { o.printer = v; o.tray = ""; o.paper = ""; o.mediaType = ""; render(); }, { label: "Printer", width: 260 }),
+        picker([{ value: "", title: "Default" }, ...printers.map((p) => ({ value: p.name, title: p.displayName }))], o.printer, (v) => { o.printer = v; o.tray = ""; o.paper = ""; o.mediaType = ""; caps = { trays: [], media: [] }; render(); loadCaps(); }, { label: "Printer", width: 260 }),
         picker([{ value: "", title: "Printer default" }, ...papers.map((p) => ({ value: p, title: p }))], o.paper, (v) => { o.paper = v; }, { label: "Paper", width: 260 }),
-        picker([{ value: "", title: "Auto select" }], o.tray, (v) => { o.tray = v; }, { label: "Tray", width: 260, disabled: true }),
+        picker([{ value: "", title: "Auto select" }, ...caps.trays], o.tray, (v) => { o.tray = v; }, { label: "Tray", width: 260, disabled: !caps.trays.length }),
+        ...(caps.media.length ? [picker([{ value: "", title: "Printer default" }, ...caps.media], o.mediaType, (v) => { o.mediaType = v; }, { label: "Media", width: 260 })] : []),
         picker<PrintOptions["sizeMode"]>([{ value: "printer", title: "Printer paper" }, { value: "drawing", title: "Match drawing (custom size)" }, { value: "roll", title: "Roll paper" }], o.sizeMode, (v) => { o.sizeMode = v; render(); }, { label: "Paper size", width: 220 }));
       if (o.sizeMode === "roll") {
         const f = textField("mm", String(o.rollWidth), (v) => { const n = Number(v); if (n > 0) o.rollWidth = Math.max(100, n); }, { width: 70 });
@@ -249,7 +259,7 @@ export async function openPrintSetup(app: App) {
     };
     render();
     const n = out();
-    if (n) void n.printers().then((list) => { printers = list; render(); }).catch(() => {});
+    if (n) void n.printers().then((list) => { printers = list; render(); loadCaps(); }).catch(() => {});
   });
 }
 
@@ -258,8 +268,8 @@ export async function printWith(app: App, o: PrintOptions) {
   try { r = await app.engine.call("plot.preview", { what: currentTarget(app), svg: true, svgFiles: !!app.engine.native }); }
   catch (e: any) { app.print(`Print failed: ${e?.message ?? e}`); return; }
   const paper = o.sizeMode === "drawing" ? "drawing" : o.sizeMode === "roll" ? `roll:${o.rollWidth}` : o.paper;
-  const ok = await printPages(app, r.pages, { title: app.info?.title ?? r.title, showDialog: o.showSystemDialog, scaling: o.sizeMode === "printer" ? o.scaling : "actual", percent: o.percent, printer: o.printer, paper, copies: o.copies });
+  const ok = await printPages(app, r.pages, { title: app.info?.title ?? r.title, showDialog: o.showSystemDialog, scaling: o.sizeMode === "printer" ? o.scaling : "actual", percent: o.percent, printer: o.printer, paper, copies: o.copies, tray: o.tray, mediaType: o.mediaType });
   if (!ok) return;
   const scale = o.scaling === "custom" ? `${o.percent}%` : SCALING.find((s) => s.value === o.scaling)!.title;
-  app.print(`Sent ${app.info?.title ?? "the drawing"} to ${o.printer || "the default printer"}${o.tray ? `, tray ${o.tray}` : ""}, ${scale}, ${o.copies} cop${o.copies === 1 ? "y" : "ies"}.`);
+  app.print(`Sent ${app.info?.title ?? "the drawing"} to ${o.printer || "the default printer"}${o.tray ? `, tray ${o.tray.split("|").pop()}` : ""}, ${scale}, ${o.copies} cop${o.copies === 1 ? "y" : "ies"}.`);
 }

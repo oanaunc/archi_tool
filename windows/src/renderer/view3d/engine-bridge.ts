@@ -127,9 +127,13 @@ export class EngineBridge {
     this.view.setInfo({
       levels: doc.levels, currentLevel: doc.currentLevel, weather: doc.weather ?? null, fog: doc.fog ?? null, water: doc.water,
       site: doc.site, unitMM: doc.unitMM,
+      ...("ambientOcclusion" in doc ? { ambientOcclusion: doc.ambientOcclusion ?? null } : {}),
+      ...(doc.billboards ? { billboards: doc.billboards } : {}),
       ...(doc.levelView && (doc.levelView.isolate != null || doc.levelView.explodeGap > 0) ? { levelView: doc.levelView } : {}),
     });
     if (doc.visualStyle && !this.styleFromEngine && this.hasInfo === false) { this.view.setStyle(doc.visualStyle); }
+    const customStyle = (window as any).archiVisualStyleCustom;
+    if (customStyle && this.hasInfo === false) this.view.setCustomStyle(customStyle);
     if (doc.gizmo) this.view.extras.setGizmo(doc.gizmo as GizmoMode);
     // A preset stored in the drawing (RENDERPRESET) turns on haze, meadow and the preset camera response.
     const explicit = doc.renderPreset !== undefined ? !!doc.renderPreset : vars.RENDERPRESET != null ? !!presetNamed(vars.RENDERPRESET) : true;
@@ -222,6 +226,8 @@ export class EngineBridge {
     switch (p?.action) {
       case "setViewStyle":
         if (p.style) { this.styleFromEngine = true; this.view.setStyle(String(p.style)); }
+        // VISUALSTYLES Current: a custom style is its base plus overrides (standards/index.ts).
+        if (p.custom) this.view.setCustomStyle(p.custom);
         if (String(p.style).toLowerCase() === "realistic") this.engine.call("render.settings", {}).then((s) => this.view.setRenderSettings(s, true)).catch(() => {});
         break;
       case "setView": if (p.view) this.view.setView(String(p.view)); break;

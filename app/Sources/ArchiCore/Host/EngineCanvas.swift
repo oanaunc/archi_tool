@@ -592,6 +592,7 @@ extension EngineSession {
             f.set("bold", e.props["bold"] == "1")
             f.set("italic", e.props["italic"] == "1")
             f.set("underline", e.props["underline"] == "1")
+            f.set("strike", e.props["strike"] == "1")
             o.set("format", f.json)
             o.set("color", e.color.text)
         case .leader(let l):
@@ -611,7 +612,7 @@ extension EngineSession {
         return o.json
     }
 
-    /// `text.edit {id, content, height?, font?, bold?, italic?, underline?, color?}`: the in-place editor / Edit Text dialog
+    /// `text.edit {id, content, height?, font?, bold?, italic?, underline?, strike?, color?}`: the in-place editor / Edit Text dialog
     /// commit ("Edit Text"). Text formatting is stored as whole-text props plus the equivalent MTEXT string.
     func textEdit(_ p: EngineJSON) throws -> EngineJSON {
         guard let id = p["id"]?.intValue, let e = editor.doc.entity(id) else { throw EngineError.params("missing or unknown 'id'") }
@@ -633,11 +634,13 @@ extension EngineSession {
             let bold = p["bold"]?.boolValue ?? wasBold
             let italic = p["italic"]?.boolValue ?? wasItalic
             let underline = p["underline"]?.boolValue ?? wasUnderline
+            let wasStrike = e.props["strike"] == "1"
+            let strike = p["strike"]?.boolValue ?? wasStrike
             var color = e.color
             if let cs = p["color"]?.stringValue, let c = ColorRef.parse(cs) { color = c }
             var same = t0.content == content && t0.height == h
             same = same && e.color == color && e.props["font"] == font
-            same = same && wasBold == bold && wasItalic == italic && wasUnderline == underline
+            same = same && wasBold == bold && wasItalic == italic && wasUnderline == underline && wasStrike == strike
             if !same {
                 editor.transaction("Edit Text") { d in
                     guard let k = d.entityIndex(id), case .text(var t) = d.entities[k].geometry else { return }
@@ -650,11 +653,12 @@ extension EngineSession {
                     props["bold"] = bold ? "1" : nil
                     props["italic"] = italic ? "1" : nil
                     props["underline"] = underline ? "1" : nil
+                    props["strike"] = strike ? "1" : nil
                     props["mtext"] = nil
-                    if font != nil || bold || italic || underline {
+                    if font != nil || bold || italic || underline || strike {
                         let family = font ?? TextStyleFonts.style(t.style, doc: d)?.font ?? "Helvetica"
                         let f: String? = (bold || italic || font != nil) ? family : nil
-                        props["mtext"] = MTextFormatting.encode(content, font: f, bold: bold, italic: italic, underline: underline)
+                        props["mtext"] = MTextFormatting.encode(content, font: f, bold: bold, italic: italic, underline: underline, strike: strike)
                     }
                     d.entities[k].props = props
                 }

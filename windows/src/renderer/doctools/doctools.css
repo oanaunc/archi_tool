@@ -1,0 +1,111 @@
+/* Oanarina Archi Tool for Windows — GPL-3.0-or-later
+   Document tools: Schedule sheet, Spelling, Text Styles, Project Browser, Selection, Quick Props (panel and overlay),
+   Inspector, History pages (Theme.swift fonts and colours). */
+.dt-bold { font-weight: 600; color: var(--text); }
+.dt-small { font-size: 10px; color: var(--dim); }
+.dt-dim { color: var(--dim); }
+.dt-mono { font-family: var(--mono); font-size: 10.5px; color: var(--text); }
+.dt-label { color: var(--text); }
+.dt-btn { font-size: 10.5px !important; }
+.hsep.dt-sep { height: 1px; background: var(--sep); margin: 4px 0; }
+.dt-rowbtns { display: flex; gap: 6px; margin-top: 4px; }
+
+/* Project Browser */
+.dt-browser { padding: 6px 0; }
+.dt-sec { display: flex; align-items: center; gap: 5px; width: 100%; height: 24px; padding: 0 8px; color: var(--text); font-weight: 600; text-align: left; }
+.dt-sec:hover { background: var(--hover); }
+.dt-item { display: flex; align-items: center; gap: 6px; width: 100%; height: 22px; padding: 0 8px 0 30px; color: var(--text); text-align: left; }
+.dt-item .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-item:hover { background: var(--hover); }
+.dt-item.cur { color: var(--accent); background: rgba(245,197,24,0.12); }
+
+/* Selection */
+.dt-selection { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.dt-selrow { display: flex; align-items: center; gap: 6px; }
+.dt-selrow .ty { width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-selrow .n { width: 40px; text-align: right; font-family: var(--mono); }
+.dt-selrow .spacer, .dt-qphead .spacer, .dt-foot .spacer { flex: 1; }
+
+/* Quick Properties */
+.dt-qp { padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+.dt-qphead { display: flex; align-items: center; gap: 2px; min-height: 20px; }
+.dt-qprow { display: flex; align-items: center; gap: 6px; min-height: 22px; }
+.dt-qprow .k { width: 78px; flex: none; font-size: 10px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-qprow .v.ro { font-size: 10px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-qprow .darkfield, .dt-qprow .dropfield { flex: 1; min-width: 0; }
+.dt-qp-overlay { position: fixed; z-index: 60; width: 260px; display: none; background: var(--panel); opacity: 0.97; border: 1px solid var(--sep); border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.35); color: var(--text); font: 11px var(--ui); }
+
+/* Inspector */
+.dt-inspector { padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+.dt-card { padding: 6px; border-radius: 4px; background: var(--hover); display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+.dt-kv { display: flex; gap: 6px; align-items: flex-start; width: 100%; }
+.dt-kv .k { width: 78px; flex: none; font-size: 10px; color: var(--dim); }
+.dt-kv .v { flex: 1; min-width: 0; font-size: 10px; color: var(--text); user-select: text; overflow-wrap: anywhere; white-space: pre-wrap; }
+.dt-kv.geo .v { font-family: var(--mono); }
+.dt-card .dt-btn { margin-top: 4px; }
+
+/* History */
+.dt-segbar { padding: 8px; display: flex; }
+.dt-segbar .segmented { display: flex; width: 100%; border: 1px solid var(--sep); border-radius: 5px; overflow: hidden; }
+.dt-segbar .seg { flex: 1; height: 22px; color: var(--text); font-size: 11px; }
+.dt-segbar .seg.on { background: var(--accent); color: var(--accent-text, #1a1a1a); }
+.dt-steps, .dt-cmds { padding: 4px 0; display: flex; flex-direction: column; }
+.dt-step { display: flex; align-items: center; gap: 8px; height: 22px; padding: 0 8px; text-align: left; color: var(--text); }
+.dt-step:hover, .dt-cmd:hover { background: var(--hover); }
+.dt-step .n { width: 28px; text-align: right; font-family: var(--mono); font-size: 10px; color: var(--faint); flex: none; }
+.dt-step .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); flex: none; }
+.dt-step.current { background: rgba(245,197,24,0.12); }
+.dt-step.current .dot { background: var(--accent); border-radius: 0; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.dt-step.undone .dot { background: transparent; border: 1px dashed var(--dim); width: 6px; height: 6px; }
+.dt-step.undone .t { color: var(--faint); font-style: italic; }
+.dt-step .t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-cmd { display: flex; align-items: center; gap: 6px; height: 21px; padding: 0 10px; text-align: left; color: var(--dim); }
+.dt-cmd .t { flex: 1; font-family: var(--mono); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-cmd .c { font-size: 10px; color: var(--faint); }
+.dt-foot { display: flex; align-items: center; padding: 6px; }
+
+/* Properties type filter */
+.dt-typefilter { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: var(--text); max-width: 100%; text-align: left; white-space: normal; }
+.dt-typefilter:hover { color: var(--accent); }
+
+/* Schedule sheet */
+.dt-sched { display: flex; flex-direction: column; gap: 8px; }
+.dt-sched-top { display: flex; align-items: center; gap: 8px; }
+.dt-sched-top .spacer { flex: 1; }
+.dt-sched-scroll { min-height: 300px; max-height: 56vh; overflow: auto; background: var(--field); padding: 8px; border-radius: 3px; }
+.dt-sched-grid { display: grid; column-gap: 14px; row-gap: 4px; align-items: baseline; }
+.dt-sched-grid .cell { white-space: nowrap; color: var(--text); user-select: text; }
+.dt-sched-grid .cell.head { font-weight: 600; color: var(--accent); }
+.dt-sched-grid .rule { height: 1px; background: var(--sep); }
+.dt-sched-empty { color: var(--dim); min-height: 200px; display: flex; align-items: center; justify-content: center; }
+.dt-sched-holder { display: flex; flex-direction: column; gap: 4px; }
+
+/* Spelling */
+.dt-spell { display: flex; flex-direction: column; gap: 10px; }
+.dt-spell-head { display: flex; align-items: center; gap: 8px; width: 100%; }
+.dt-spell-head .spacer { flex: 1; }
+.dt-spell-head .dt-dim { font: 400 11px var(--ui); }
+.dt-spell-word { display: flex; align-items: center; gap: 8px; }
+.dt-spell-word .w { font-size: 15px; font-weight: 600; color: var(--danger); }
+.dt-spell-row { display: flex; align-items: center; gap: 8px; }
+.dt-spell-rep { flex: 1; }
+.dt-spell-sugg { display: flex; gap: 6px; overflow-x: auto; }
+.dt-spell-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.dt-spell-done { color: var(--text); }
+
+/* Text Styles */
+.dt-ts { display: flex; gap: 12px; padding: 12px; width: 100%; min-height: 0; }
+.dt-ts-left { width: 150px; flex: none; display: flex; flex-direction: column; gap: 6px; }
+.dt-ts-list { flex: 1; overflow: auto; background: var(--field); border: 1px solid var(--sep); border-radius: 3px; padding: 2px 0; }
+.dt-ts-item { display: block; width: 100%; text-align: left; padding: 3px 8px; color: var(--text); }
+.dt-ts-item:hover { background: var(--hover); }
+.dt-ts-item.sel { background: var(--accent); color: var(--accent-text, #1a1a1a); }
+.dt-ts-btns { display: flex; gap: 6px; }
+.dt-ts-right { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.dt-ts-row { display: flex; align-items: center; gap: 8px; }
+.dt-ts-row .k { width: 170px; flex: none; text-align: right; color: var(--text); }
+.dt-ts-row .darkfield { flex: 1; }
+.dt-ts-preview { min-height: 70px; background: var(--field); display: flex; align-items: center; padding: 0 20px; overflow: hidden; }
+.dt-ts-sample { font-size: 28px; color: var(--text); transform-origin: left center; white-space: nowrap; display: inline-block; }
+.dt-ts-foot { display: flex; align-items: center; gap: 8px; }
+.dt-ts-foot .spacer { flex: 1; }

@@ -1,5 +1,5 @@
 # Oanarina Archi Tool — GPL-3.0-or-later
-# Rules for audit.py: windows that exist on Windows (with the files that implement them), menus the Windows shell writes by
+# Rules for parity_audit.py (rounds 2-3): windows that exist on Windows (with the files that implement them), menus the Windows shell writes by
 # hand (File, Edit, View, Window, Help, app menu), status bar, shortcuts, render features and theme. Evidence from code
 # reading of windows/src at the round-2 audit (27 Sep 2026).
 
@@ -295,3 +295,110 @@ ov("PrintSetup ▸ Picker Tray", "partial", "placeholder list (Electron cannot l
 ov("PrintSetup ▸ Picker Media", "partial", "placeholder list (Electron cannot list media types)")
 ov("Tools ▸ Navigate, Light & Publish ▸ Shade Plot", "partial", "SHADEPLOT Rendered falls back to As Displayed for engine-only plots")
 ov("Preferences ▸ general ▸ Toggle Run startup.js from the script library in every new window", "partial", "startup.js runs with a reduced archi API (not partb runScriptFile)")
+
+# ======================================================================================================================
+# ---- round-3 audit (28 Sep 2026). Evidence: code reading of windows/src + ArchiCore, the engine's hello.json
+# (build/engine-fixtures, 1038 commands, every new CommandDef present) and windows/test/audit-spot.mjs (30/30 in Chromium
+# with the fixture engine) plus the engineers' suites re-run by the auditor (menus-keys 96, doctools 56, sheets 27,
+# workspace 63, standards 29, render-extras-ui 15, ui-snapshots 30, dialogs 49, partb-tools 27, output 35,
+# windows-conventions 9). Nothing here has run in real Electron on Windows yet unless noted.
+# ======================================================================================================================
+
+# Panels no longer placeholders: NAVIGATOR / NOTIFICATIONS / ADCENTER fill them (workspace/panels.ts; audit-spot).
+cmd_ok = _orig_cmd_ok
+
+# Windows now implemented, with the files whose labels the audit checks.
+WINDOWS.update({
+    "Browser": ("done", [W + "doctools/panels.ts", W + "ui/panels.ts"], ""),
+    "History": ("done", [W + "doctools/panels.ts", W + "ui/panels.ts"], ""),
+    "Selection": ("done", [W + "doctools/panels.ts", W + "ui/panels.ts"], ""),
+    "Navigator": ("done", [W + "workspace/panels.ts"], ""),
+    "Alerts": ("done", [W + "workspace/panels.ts"], ""),
+    "Quick Props": ("done", [W + "doctools/panels.ts", W + "ui/panels.ts"], ""),
+    "Inspector": ("done", [W + "doctools/panels.ts"], ""),
+    "Content": ("done", [W + "workspace/panels.ts"], ""),
+    "ScheduleSheet": ("done", [W + "doctools/schedule.ts"], ""),
+    "CommandReferenceView": ("done", [W + "ui/help.ts"], ""),
+    "SpellingSheet": ("done", [W + "doctools/spelling.ts"], ""),
+    "About": ("done", [W + "ui/help.ts"], ""),
+    "Assistant": ("done", [W + "workspace/assistant.ts"], ""),
+    "GraphicStyles": ("done", [W + "standards/graphic-styles.ts"], ""),
+    "Outliner": ("done", [W + "workspace/outliner.ts"], ""),
+    "Versions": ("done", [W + "sheets/versions.ts"], ""),
+    "PrintSetup": ("done", [W + "output/plot.ts", W + "standards/native.ts", "main/output.ts", "main/standards.ts"], ""),
+})
+
+# Round-2 overrides that the round-3 work made stale: the hand-written File / Edit / View / Help menus (ui/menubar.ts now
+# builds every menu from docs/windows-parity.json), the {r} Component bug, the unregistered shell commands, the shortcut
+# bugs (ui/keys.ts), the panel placeholders, the Block Library / Family Editor "More" entries (shell commands open the
+# windows), startup.js, the tray/media pickers and SHADEPLOT Rendered.
+_STALE = ("Windows %s menu", "Windows File menu", "Windows Edit menu", "Windows View menu", "Windows Help menu", "File ▸ Export menu",
+          "no View-menu entry", "submenu missing", "hand-written", "not in the Help menu", "Open Recent", "bug: menu items carry",
+          "the shell has the feature", "not bound", "bug: ", "F2 is swallowed", "F1 opens the guide", "command-line BLOCKLIBRARY",
+          "command-line FAMILY", "reduced archi API", "placeholder list", "falls back to As Displayed", "Help ▸ About runs ABOUT",
+          "runs ABOUT", "AGENTSETTINGS works", "APPSELFTEST not ported", "EXPORTCOMMANDS not ported", "FLOATPANEL", "file.export",
+          "COMMANDREFERENCE on the command line", "Help ▸ Command Help", "no Open Recent", "no File ▸ Insert", "#4D80FF",
+          "no contextual", "type summary shown", "PDF/DXF/SVG/IFC/OBJ/STL/GLB only")
+for _k in list(OVERRIDE):
+    if any(s_ in OVERRIDE[_k][1] for s_ in _STALE): del OVERRIDE[_k]
+for _k in ["Menu File", "Menu Edit", "Menu View", "Menu Help", "Menu Oanarina Archi Tool"]: OVERRIDE.pop(_k, None)
+for _k in list(OVERRIDE):
+    if _k.startswith(("File ▸ ", "Edit ▸ ", "Help ▸ ")) and OVERRIDE[_k][0] == "done": del OVERRIDE[_k]   # let the resolver decide
+
+# Windows conventions of the generated menu bar (ui/menubar.ts header comment; audit-spot: 12 menus, About last in Help,
+# Options… / Agent Server… at the end of Edit, File ▸ Exit Alt+F4).
+ov("Menu Oanarina Archi Tool", "done", "folded into the Windows menus: About → Help, Settings → Edit ▸ Options…, Agent Server → Edit, Quit → File ▸ Exit")
+ov(A + "Hide Oanarina Archi Tool", "n/a (macOS only)"); ov(A + "Hide Others", "n/a (macOS only)")
+ov(A + "Quit Oanarina Archi Tool", "done")
+ov("Window ▸ Minimize", "done"); ov("Window ▸ Zoom", "done"); ov("Window ▸ Bring All to Front", "n/a (macOS only)")
+ov("View ▸ Enter Full Screen", "done")                         # menubar.ts system item → windowControl("fullscreen")
+ov("File ▸ Open Recent", "done"); ov("File ▸ Open Recent ▸ Clear Menu", "done")   # recentMenu()
+ov("Help ▸ Oanarina Archi Tool Help (F1)", "done")             # openContextHelp: guide#<section> (audit-spot: LINE → #draw)
+ov("Help ▸ Open Sample House", "done")                         # @ui:WindowRouter.open → @newWindow:sample
+ov("Help ▸ User Guide", "done"); ov("Help ▸ Oana Rinaldi Website", "done")   # @openURL
+ov("Help ▸ Tutorials", "done")                                 # TUTORIALS
+ov("Tab bar ▸ app icon (About)", "done")                       # ABOUT (shell + engine), About window in ui/help.ts
+CHROME = [(p_, (("done", "") if p_.startswith("Tab bar ▸ app icon") else v_)) for p_, v_ in CHROME]
+
+# Contextual tabs: EngineContextRibbon.swift (ribbon.context) + sheets/context-ribbon.ts; sheets.mjs checks Wall, Window,
+# mixed and empty selections, audit-spot a wall ("MODIFY WALL").
+for c_ in J["contextualTabs"]:
+    ov("Selection %s → tab \"%s\"" % (c_["selection"], c_["tab"]), "done")
+
+# Status bar (workspace/progress.ts, statusbar.ts; workspace.mjs).
+for p_ in ["view MacroButtonBar", "view ProgressStatusView", "button slider.horizontal.below.rectangle", "button agentIndicator"]: ov(p_, "done")
+
+# Shortcuts: ui/keys.ts maps every Mac menu key (⌘→Ctrl, ⌥→Alt) with all modifiers counted; audit-spot checks Ctrl+Alt+P,
+# Ctrl+Alt+1-4, Ctrl+Alt+J, F2, Ctrl+Alt+Shift+P (PREVIEW), Ctrl+Shift+A, Ctrl+Shift+/ and F1 by their effect.
+_SC3 = {"Ctrl+Shift+I": "done", "Ctrl+Alt+Shift+P": "done", "Ctrl+Shift+A": "done", "Ctrl+Alt+1": "done", "Ctrl+Alt+2": "done",
+        "Ctrl+Alt+3": "done", "Ctrl+Alt+4": "done", "Ctrl+Alt+P": "done", "Ctrl+Alt+J": "done", "Ctrl+Shift+/": "done", "F1": "done",
+        "F2": "done", "Ctrl+Alt+1 … Ctrl+Alt+4": "done"}
+for s_ in J["shortcuts"]:
+    if s_["keys"] in _SC3: ov("%s [%s] %s" % (s_["keys"], s_["mac"], s_["action"]), _SC3[s_["keys"]])
+for s_ in J["shortcuts"]:
+    if s_["keys"] == "Ctrl+0" and "Zoom" in s_["action"]:
+        ov("%s [%s] %s" % (s_["keys"], s_["mac"], s_["action"]), "partial", "Windows key conflict (documented): Ctrl+0 is Clean Screen, Zoom Extents has no Ctrl key (double middle-click, ribbon, Z E)")
+
+# Render (windows/test-results/render-match/before-after.json: mean per-region difference 5.0 → 2.69 levels).
+ov("Lighting preset Daylight", "partial", "cosmetic: 2.1-3.1 levels from the Mac; cedar 5-7 levels too bright in flat light")
+ov("Lighting preset Golden hour", "partial", "cosmetic: 2.0-2.7 levels from the Mac; cedar +5-6. Smoke test on Windows: the interactive 3D view did not show the warm look after the preset was set")
+ov("Lighting preset Overcast", "partial", "4.6 levels from the Mac; limestone +12")
+ov("Lighting preset Night", "partial", "cosmetic: 1.7 levels from the Mac; the Mac's bollard light pools are brighter")
+ov("Photographic render (RENDER) with presets, supersampling, PNG output", "partial", "clay, depth of field and HDRI done; the Clear Sky / Sunset / Studio / Night / Physical Sky environments approximate the Mac gradient maps")
+ov("360° panorama", "partial", "rendered with the photographic look, not the Mac panorama renderer")
+
+# Theme: the Mac canvas draws window selection in (0.3, 0.5, 1) = #4D80FF (CanvasView.swift 1314/1323), like Windows;
+# Theme.windowBlue #4073F2 is referenced nowhere in ArchiApp.
+ov("Color windowBlue", "done")
+
+# Kept as they are: Tutorials Record (Mac-only screen recording) and Check (command existence only).
+ov("Tools ▸ Tutorial Videos ▸ Record Tutorial Videos", "partial", "recording is Mac-only; Windows opens the website tutorials")
+ov("Tools ▸ Tutorial Videos ▸ Check Tutorial Scripts", "partial", "only checks that the commands exist")
+for _k in list(OVERRIDE):
+    if "main.ts ignores Shift" in OVERRIDE[_k][1]: del OVERRIDE[_k]
+# Properties: the per-type filter menu of a mixed selection is doctools/panels.ts typeFilterHeader (doctools.mjs).
+WINDOWS["Properties"] = ("done", [W + "ui/panels.ts", W + "doctools/panels.ts"], "")
+ov("Properties ▸ Menu {\"\\(types.count) objects (\" + counts.sorted() {…}.map() {…}.joined(separator: \", \") + \")\"}", "done")
+# The Mac shows Done only when the reference is a sheet (onClose); Windows opens it as a window like Help ▸ Command
+# Reference on the Mac, closed with its title-bar ×.
+ov("CommandReferenceView ▸ Button Done", "done")

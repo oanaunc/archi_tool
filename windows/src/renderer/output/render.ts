@@ -7,6 +7,8 @@
 import type { View3D, Look, CameraState, FrameOptions } from "../view3d";
 import { PRESETS, presetNamed, lookFrom, UNIT } from "../view3d";
 import { fromSaved } from "../view3d/camera";
+import { environmentFromBytes, type EnvImage } from "../view3d/hdri";
+import { out, webFiles } from "./native";
 
 export type V3 = [number, number, number];
 export interface ModelCamera { eye: V3; target: V3; fov?: number; orthographic?: boolean; name?: string }
@@ -198,6 +200,13 @@ export async function renderImage(view: View3D, o: RenderOptions): Promise<Pixel
     sunOverride: o.sun ? o.sun.dir : sun, sunLight: o.sun ? { intensity: o.sun.intensity, color: o.sun.color } : sunLight,
     weather: v.weather ?? null, fog: v.fog ?? null, water: v.water ?? null, time: 1, particles: false,
     background: s.background === "White" ? "white" : s.background === "Transparent" ? "transparent" : "sky",
+    // Render window extras (RenderEngine.makeScene): clay model, depth of field, HDRI environment.
+    // AODIALOG (AOForm.viewport): the stronger of the window's occlusion and the drawing's, with the drawing's radius;
+    // a photographic preset sets its own (BeautyLighting.configure runs last).
+    aoOverride: !s.beauty && v.aoOverride ? { intensity: Math.max(look.ao, v.aoOverride.intensity), radius: v.aoOverride.radius } : null,
+    clay: !!s.clay,
+    dof: s.depthOfField ? { focus: Math.max(0, s.focusDistance ?? 0), fStop: s.fStop ?? 2.8 } : null,
+    envImage: !s.beauty && s.environment === "HDRI File" && s.hdriPath ? await hdriImage(s.hdriPath) : null,
   };
   let px: Pixels = view.renderer.renderPixels(view.scene, fo);
   view.invalidate();
@@ -206,6 +215,16 @@ export async function renderImage(view: View3D, o: RenderOptions): Promise<Pixel
   if (o.style === "Watercolour") px = watercolour(px);
   if (o.region) px = cut(px, o.region);
   return px;
+}
+
+/** The HDRI file of the Render window as an environment image (null: missing or unreadable → the clear sky, as the Mac). */
+export async function hdriImage(path: string): Promise<EnvImage | null> {
+  try {
+    const n = out();
+    const bytes = n ? await n.readBytes(path) : webFiles.get(path) ?? null;
+    if (!bytes) return null;
+    return await environmentFromBytes(path, bytes);
+  } catch { return null; }
 }
 
 /** A transparent background: the model's coverage from a white and a black background render. */

@@ -15,7 +15,7 @@ import { prefs } from "../prefs";
 import { ScriptConsole, ScriptLibrary, runScriptFile } from "./script-console";
 import { toggleAgentServer, showConnectClaude, agentStatusBlock, planScreenshot } from "./agents";
 import { showBlockLibrary, insertLibraryItem, DRAG_TYPE, type LibItem } from "./block-library";
-import { renderMaterialsPanel, showMaterialLibrary } from "./materials";
+import { renderMaterialsPanel, showMaterialLibrary, materialsHost } from "./materials";
 import { renderSheetSetPanel, showTitleBlock } from "./sheets";
 import { showMarkups, showCompare, showRevisionClouds } from "./review";
 import { showFamilyEditor } from "./family-editor";
@@ -185,6 +185,7 @@ export function openToolUI(app: App, plan: PlanHooks, ref: string): boolean {
 
 /** Host notifications for part B (true when handled). */
 export function handleHost(app: App, plan: PlanHooks, con: ScriptConsole, p: any): boolean {
+  if (materialsHost(app, p)) return true;
   switch (p.action) {
     case "dialog":
       switch (String(p.dialog)) {
@@ -225,10 +226,13 @@ async function runPluginCommand(app: App, p: any) {
     const r = await N.scriptEval(app, String(p.source), name);
     if (r.error) { app.print(`${name}: ${r.error}`); return; }
   }
+  // Everything the plugin does (commands, archi.add/update…) becomes one undo step named after the command (UndoStep).
+  await app.tryCall("undo.begin", {});
   const r = await N.scriptEval(app, `${fn}()`, name);
+  await app.tryCall("undo.end", { label: String(p.command ?? p.plugin ?? fn) });
   for (const l of r.output) app.print(l);
   if (r.error) app.print(`${fn}: ${r.error}`);
-  await app.refresh(["document", "selection"]);
+  await app.refresh(["document", "selection", "history"]);
 }
 
 /** TUTORIALRECORD List | Check | Record and TUTORIALS (TutorialCommands.swift). Videos are recorded by the Mac app. */

@@ -117,6 +117,8 @@ extension EngineSession {
         written += try await writeView3DFixtures(to: dir, sample: sample)
         written += try await writeCanvasFixtures(to: dir, sample: sample)
         written += try await writeOutputFixtures(to: dir, sample: sample)
+        written += try await writeDocToolFixtures(to: dir, sample: sample)
+        written += try await writeWorkspaceFixtures(to: dir, sample: sample)
         try save("index.json", EngineJSON.strings(written))
         return written
     }

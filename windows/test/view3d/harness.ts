@@ -2,6 +2,9 @@
 // Test page for the 3D view: loads the Cedar House meshes fixture and exposes window.harness for Playwright
 // (windows/test/view3d/run.mjs, ui.mjs) to render each lighting preset from the saved cameras and to drive the interactive view.
 import { View3D, EngineBridge, Effects } from "../../src/renderer/view3d";
+import { decodeHDR, environmentFromBytes } from "../../src/renderer/view3d/hdri";
+import { iesRow } from "../../src/renderer/view3d/renderer";
+import { builtinBillboard } from "../../src/renderer/view3d/billboards";
 
 declare global { interface Window { harness: any } }
 
@@ -45,6 +48,20 @@ async function main() {
     async renderLook(look: any, camera: string, w: number, h: number, ss: number) {
       view.setRenderSettings({ ...settingsFor(look.preset ?? "Daylight"), ...look }, true);
       const png = await view.renderToPNG({ width: w, height: h, supersample: ss, camera });
+      const buf = new Uint8Array(await png.arrayBuffer());
+      let s = ""; for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+      return { png: btoa(s) };
+    },
+    hdri: { decodeHDR, environmentFromBytes }, iesRow, builtinBillboard,
+    /** A render with extra frame options (clay, dof, envImage, envIntensity …) merged into the renderer's. */
+    async renderExtra(extra: any, preset: string, camera: string, w: number, h: number) {
+      view.setRenderSettings(settingsFor(preset), true);
+      if (extra?.envImage && Array.isArray(extra.envImage.data)) extra = { ...extra, envImage: { ...extra.envImage, data: new Float32Array(extra.envImage.data) } };
+      await view.whenTexturesLoaded();
+      const R: any = view.renderer, orig = R.renderPixels.bind(R);
+      R.renderPixels = (sc: any, o: any) => orig(sc, { ...o, ...extra });
+      let png: Blob;
+      try { png = await view.renderToPNG({ width: w, height: h, supersample: 1, camera }); } finally { R.renderPixels = orig; }
       const buf = new Uint8Array(await png.arrayBuffer());
       let s = ""; for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode(...buf.subarray(i, i + 0x8000));
       return { png: btoa(s) };

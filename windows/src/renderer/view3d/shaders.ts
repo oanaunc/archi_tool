@@ -63,6 +63,7 @@ uniform float uNormalStrength;
 uniform int uHasRough;
 uniform sampler2D uRoughMap;
 uniform float uRoughness;
+uniform float uRoughGamma;
 uniform float uMetalness;
 uniform float uSpecular;      // Blinn specular level
 uniform float uShininess;
@@ -99,7 +100,8 @@ uniform vec3 uFogColor;
 
 uniform int uNumLights;
 uniform vec4 uLightPos[16];   // xyz, w = attenuation end distance
-uniform vec4 uLightColor[16]; // rgb × intensity, w = 1 spot
+uniform vec4 uLightColor[16]; // rgb × intensity, w = 0 point, 1 spot, 2 area (Lambertian emitter), 3 IES (spot + profile)
+uniform sampler2D uIES;        // 32 × 16 relative candela by vertical angle 0…180° (row = light), IES lights
 uniform vec4 uLightDir[16];   // xyz = direction the spot points, w = cos(outer/2)
 uniform float uLightInner[16];// cos(inner/2)
 
@@ -195,7 +197,9 @@ void main() {
     vec4 t = texture(uAlbedo, vUV);
     albedo = t.rgb * uMultiply;
   }
-  if (uCutout == 1 && dot(albedo, vec3(0.3, 0.59, 0.11)) < 0.075) discard;
+  // BeautyLighting.foliageCutout reads _surface.diffuse: the texture before SceneKit's multiply tint.
+  if (uCutout == 1 && dot(uHasTex == 1 ? texture(uAlbedo, vUV).rgb : albedo, vec3(0.3, 0.59, 0.11)) < 0.075) discard;
+  if (uCutout == 2 && uHasTex == 1 && texture(uAlbedo, vUV).a < 0.5) discard;
 
   if (uMode == 3) {
     vec3 c = albedo + uEmissive + uHighlight;
@@ -245,7 +249,7 @@ void main() {
 
   if (uMode == 0) {
     float rough = uRoughness;
-    if (uHasRough == 1) rough = texture(uRoughMap, vUV).g;
+    if (uHasRough == 1) rough = pow(texture(uRoughMap, vUV).g, uRoughGamma);
     rough = mix(rough * wetRough, 0.75, snowCover);
     rough = clamp(rough, 0.03, 1.0);
     float a = rough * rough;
@@ -268,9 +272,14 @@ void main() {
       vec3 l = d / max(dist, 1e-4);
       // SceneKit attenuation: full at the light, falling to zero at the end distance with exponent 2.
       float att = pow(clamp(1.0 - dist / uLightPos[i].w, 0.0, 1.0), 2.0);
-      if (uLightColor[i].w > 0.5) {
-        float c = dot(-l, normalize(uLightDir[i].xyz));
-        att *= smoothstep(uLightDir[i].w, uLightInner[i], c);
+      float kind = uLightColor[i].w;
+      float c = dot(-l, normalize(uLightDir[i].xyz));
+      if (kind > 0.5 && kind < 1.5) att *= smoothstep(uLightDir[i].w, uLightInner[i], c);
+      else if (kind > 1.5 && kind < 2.5) att *= max(c, 0.0);
+      else if (kind > 2.5) {
+        // IES: the photometric web's relative intensity at the vertical angle from the aiming direction.
+        float a = acos(clamp(c, -1.0, 1.0)) / PI;
+        att *= texture(uIES, vec2((a * 31.0 + 0.5) / 32.0, (float(i) + 0.5) / 16.0)).r;
       }
       float nl = max(dot(N, l), 0.0);
       if (att <= 0.0 || nl <= 0.0) continue;
@@ -348,7 +357,8 @@ uniform sampler2D uAlbedo;
 uniform vec3 uMultiply;
 out vec4 o;
 void main() {
-  if (uCutout == 1 && dot(texture(uAlbedo, vUV).rgb * uMultiply, vec3(0.3, 0.59, 0.11)) < 0.075) discard;
+  if (uCutout == 1 && dot(texture(uAlbedo, vUV).rgb, vec3(0.3, 0.59, 0.11)) < 0.075) discard;
+  if (uCutout == 2 && texture(uAlbedo, vUV).a < 0.5) discard;
   o = vec4(1.0);
 }
 `;
@@ -513,6 +523,7 @@ uniform int uToneMap;
 uniform float uWhite;
 uniform float uSaturation;
 uniform float uContrast;
+uniform float uContrastPivot;
 uniform float uVignette;
 uniform float uVignettePower;
 uniform int uHasBloom;
@@ -543,7 +554,7 @@ void main() {
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
   c = max(mix(vec3(l), c, uSaturation), 0.0);
   vec3 s = toSRGB(c);
-  s = clamp((s - 0.5) * (1.0 + uContrast) + 0.5, 0.0, 1.0);
+  s = clamp((s - uContrastPivot) * (1.0 + uContrast) + uContrastPivot, 0.0, 1.0);
   if (uVignette > 0.0) {
     vec2 d = vUV - 0.5;
     float r = length(d) * 1.41421356;
@@ -576,4 +587,50 @@ in vec2 vUV;
 uniform sampler2D uTex;
 out vec4 o;
 void main() { o = texture(uTex, vUV); }
+`;
+
+/** Depth of field (SCNCamera wantsDepthOfField, focusDistance, fStop, sensor 24 mm): a disc gather over the HDR frame
+ *  with the circle of confusion of each sample, so sharp surfaces in front do not bleed into the blur. */
+export const dofFS = header + `
+in vec2 vUV;
+uniform sampler2D uTex;
+uniform sampler2D uDepth;
+uniform vec2 uNearFar;      // metres
+uniform float uFocus;       // metres
+uniform float uFocal;       // metres (lens focal length)
+uniform float uAperture;    // metres (focal / f-stop)
+uniform float uPixelsPerM;  // frame height in pixels / sensor height (0.024 m)
+uniform float uMaxCoC;      // pixels
+uniform vec2 uTexel;
+uniform int uOrtho;
+out vec4 o;
+float linearZ(float d) {
+  float n = uNearFar.x, f = uNearFar.y;
+  if (uOrtho == 1) return n + d * (f - n);
+  float z = d * 2.0 - 1.0;
+  return 2.0 * n * f / (f + n - z * (f - n));
+}
+float coc(vec2 uv) {
+  float z = linearZ(texture(uDepth, uv).r);
+  float c = uAperture * uFocal * abs(z - uFocus) / max(z * (uFocus - uFocal), 1e-6);
+  return min(c * uPixelsPerM, uMaxCoC);
+}
+void main() {
+  float c0 = coc(vUV);
+  vec3 sum = texture(uTex, vUV).rgb;
+  float wsum = 1.0;
+  const int N = 48;
+  for (int i = 1; i < N; i++) {
+    float fi = float(i);
+    float r = sqrt(fi / float(N)) * uMaxCoC;
+    float a = fi * 2.39996323;
+    vec2 uv = vUV + vec2(cos(a), sin(a)) * r * uTexel;
+    float cs = coc(uv);
+    // A sample contributes when its own blur disc reaches this pixel (and not from sharp surfaces behind).
+    float w = smoothstep(r - 1.0, r + 1.0, min(cs, c0 + 2.0) );
+    sum += texture(uTex, uv).rgb * w;
+    wsum += w;
+  }
+  o = vec4(sum / wsum, 1.0);
+}
 `;

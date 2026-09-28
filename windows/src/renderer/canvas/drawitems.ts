@@ -8,6 +8,8 @@ export interface Fill { type: "fill"; loops: P[][]; color: string }
 export interface Text {
   type: "text"; position: P; height: number; rotation: number; content: string; halign: string; valign: string;
   width: number; font: string; color: string;
+  /** Whole-text formatting of the object (entity props, EngineDrawJSON.textFormats): font override, bold, italic, underline, strike-through. */
+  bold?: boolean; italic?: boolean; underline?: boolean; strike?: boolean;
 }
 export interface Img { type: "image"; path: string; origin: P; size: P; rotation: number }
 export type Item = Stroke | Fill | Text | Img;
@@ -61,7 +63,8 @@ function decodeItem0(raw: any): Item | null {
       return {
         type: "text", position: pt(t.position), height: Number(t.height ?? 2.5), rotation: Number(t.rotation ?? 0), content: String(t.content ?? ""),
         halign: String(t.halign ?? "left"), valign: String(t.valign ?? "baseline"), width: Number(t.width ?? 0),
-        font: String(v.font ?? t.style ?? "Standard"), color: color(v.color, "#ffffff", v.alpha),
+        font: String(v.format?.font ?? v.font ?? t.style ?? "Standard"), color: color(v.color, "#ffffff", v.alpha),
+        ...(v.format ? { bold: !!v.format.bold, italic: !!v.format.italic, underline: !!v.format.underline, strike: !!v.format.strike } : {}),
       };
     }
     case "image": {
@@ -188,7 +191,7 @@ export function paintText(ctx: CanvasRenderingContext2D, t: Text, s: number, ove
   ctx.scale(1 / s, -1 / s);
   const lines = t.content.replace(/\\P/g, "\n").split("\n");
   const lh = screenH * 1.667;
-  ctx.font = `${fontPx}px ${cssFont(t.font)}`;
+  ctx.font = `${t.italic ? "italic " : ""}${t.bold ? "700 " : ""}${fontPx}px ${cssFont(t.font)}`;
   const widths = lines.map((l) => ctx.measureText(l).width);
   const align = t.halign === "right" ? 1 : t.halign === "center" || t.halign === "middle" || t.halign === "aligned" || t.halign === "fit" ? 0.5 : 0;
   // Baseline of the first line relative to the insertion point (y down).
@@ -205,6 +208,15 @@ export function paintText(ctx: CanvasRenderingContext2D, t: Text, s: number, ove
     ctx.fillStyle = override ?? t.color;
     ctx.textBaseline = "alphabetic";
     lines.forEach((l, i) => ctx.fillText(l, -widths[i] * align, y0 + i * lh));
+    // Underline and strike-through (the Mac draws NSAttributedString underline; strike from MTEXT \K / the editor).
+    if (t.underline || t.strike) {
+      const th = Math.max(1, fontPx * 0.06);
+      lines.forEach((_, i) => {
+        const x = -widths[i] * align, y = y0 + i * lh;
+        if (t.underline) ctx.fillRect(x, y + fontPx * 0.1, widths[i], th);
+        if (t.strike) ctx.fillRect(x, y - fontPx * 0.3 - th / 2, widths[i], th);
+      });
+    }
   }
   ctx.restore();
 }

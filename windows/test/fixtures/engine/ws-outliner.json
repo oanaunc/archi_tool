@@ -1,0 +1,1 @@
+{"request":{"jsonrpc":"2.0","id":5003,"method":"outliner.get","params":{}},"response":{"jsonrpc":"2.0","id":5003,"result":{"nodes":[],"empty":true}},"notifications":[]}

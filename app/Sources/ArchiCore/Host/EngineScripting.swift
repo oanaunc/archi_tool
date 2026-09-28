@@ -307,6 +307,7 @@ extension EngineSession {
             o.set("function", function)
             o.set("plugin", plugin.manifest.name)
             o.set("script", plugin.manifest.main)
+            o.set("command", plugin.manifest.commands.first { $0.function == function }?.name ?? plugin.manifest.name)
             s.hostNotify("runScript", o)
         }
     }

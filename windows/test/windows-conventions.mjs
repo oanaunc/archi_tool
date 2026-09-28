@@ -51,7 +51,7 @@ await page.keyboard.press("Escape");
 await page.keyboard.press("Alt+KeyH");
 await page.waitForTimeout(150);
 const helpMenu = await page.$$eval(".menu", (ms) => ms.map((m) => m.textContent ?? "").join("|"));
-check("Alt+H opens Help with User Guide F1", /User Guide\s*F1/.test(helpMenu), helpMenu.slice(0, 120));
+check("Alt+H opens Help with context help on F1 and the User Guide", /Oanarina Archi Tool Help \(F1\)\s*F1/.test(helpMenu) && /User Guide/.test(helpMenu), helpMenu.slice(0, 120));
 await page.keyboard.press("Escape");
 
 // Ctrl+Shift+Z → redo (not undo)

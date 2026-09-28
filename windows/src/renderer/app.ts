@@ -176,7 +176,15 @@ export class App {
     catch (e: any) { this.print(`${e?.message ?? e}`); return null; }
   }
   /** Enter/Space in the command line: feeds the active prompt or starts a command (empty = repeat the last). */
-  async submitLine(text: string) {
+  private inputQueue: Promise<void> = Promise.resolve();
+  submitLine(text: string): Promise<void> {
+    // Typed-ahead input (Enter pressed again before the engine answered) waits for the previous line, so it reaches the
+    // prompt that line opens instead of starting a new command (AutoCAD-style type-ahead, as on the Mac).
+    const run = this.inputQueue.then(() => this.submitLineNow(text));
+    this.inputQueue = run.catch(() => {});
+    return run;
+  }
+  private async submitLineNow(text: string) {
     const t = text.trim();
     if (t) { this.inputHistory = this.inputHistory.filter((x) => x !== t); this.inputHistory.push(t); if (this.inputHistory.length > 100) this.inputHistory.shift(); }
     if (this.prompt.active) {
@@ -261,8 +269,13 @@ export class App {
   async exportAs(format: string) {
     const n = this.engine.native;
     const ext = format.split(":")[0];
-    const path = n ? await n.saveFileDialog({ title: `Export ${ext.toUpperCase()}`, defaultPath: `${this.info?.title ?? "Untitled"}.${ext}`, filters: [{ name: ext.toUpperCase(), extensions: [ext] }] }) : `${this.info?.title ?? "Untitled"}.${ext}`;
-    if (path) await this.tryCallLogged("file.export", { format, path });
+    // Schedules (csv:<kind>, xlsx:<kind>) suggest "<drawing>-<kind>" like FileController.export.
+    const kind = format.includes(":") ? "-" + format.slice(format.indexOf(":") + 1) : "";
+    const suggested = `${this.info?.title ?? "Untitled"}${kind}.${ext}`;
+    const path = n ? await n.saveFileDialog({ title: `Export ${ext.toUpperCase()}`, defaultPath: suggested, filters: [{ name: ext.toUpperCase(), extensions: [ext] }] }) : suggested;
+    if (!path) return;
+    const r = await this.tryCallLogged("file.export", { format, path });
+    if (r) this.print(`Exported ${ext.toUpperCase()} to ${r.path ?? path}`);
   }
 
   /** Shell actions ("@…") used by ribbon buttons that open panels or change the view instead of running a command. */

@@ -12,6 +12,7 @@ import {
   viewDirection, basis, viewMatrix, projMatrix, zRange,
 } from "./camera";
 import { ViewCube } from "./viewcube";
+import { setBillboards, BillboardItem } from "./billboards";
 import { V3, add, sub, scale, len, norm, mul, invert, transform, clamp } from "./math";
 import { View3DExtras, ExtrasHost } from "./extras";
 import { Weather, ObjectAnimation, LevelInfo, sunStudy, sunStudyText, FieldOfView, fmt, parseWeather, CUBE_FACES, panoDirection, cubeLookup, odsOffset } from "./effects";
@@ -60,6 +61,10 @@ export interface View3DInfo {
   site?: { latitude: number; longitude: number; day: number; hour: number };
   levelView?: { isolate: number | null; explodeGap: number };
   unitMM?: number;
+  /** AODIALOG settings; `viewport` is the SceneKit screen-space occlusion (intensity, radius in metres) or null (off). */
+  ambientOcclusion?: { intensity: number; radius: number; samples: number; on: boolean; viewport: { intensity: number; radius: number } | null } | null;
+  /** BILLBOARD cut-outs: base point (model mm), height (mm), source (person, tree, shrub or an image path). */
+  billboards?: BillboardItem[];
 }
 
 export interface RenderRequest {
@@ -120,6 +125,11 @@ export class View3D {
   readonly extras: View3DExtras;
   private weather: Weather | null = null;
   private fog: View3DInfo["fog"] = null;
+  /** Viewport ambient occlusion of the drawing (AOINTENSITY / AORADIUS), null = the style's. */
+  private aoOverride: { intensity: number; radius: number } | null = null;
+  /** Camera-facing cut-outs of the drawing (BILLBOARD). */
+  private billboards: BillboardItem[] = [];
+  private get resolveAsset(): (p: string) => string { return this.scene.resolve; }
   private water: Set<string> | null = null;
   private sunLight: { intensity: number; color: V3 } | null = null;
   private clipPanel = false;
@@ -168,6 +178,7 @@ export class View3D {
   /** Replaces the model with a model.meshes result (`binary`: buffer file when requested with {"binary": path}). */
   setModel(result: MeshesResult, binary?: ArrayBuffer) {
     this.scene.set(result, binary);
+    if (this.billboards.length) void setBillboards(this.scene, this.billboards, this.resolveAsset).then(() => this.invalidate());
     this.extras.setAnimations(this.extras.animations);
     this.extras.applyLevelView();
     if (result.sun && !this.explicit) this.lookState = lookFrom({ ...this.lookState, preset: result.sun.preset ?? this.lookState.preset });
@@ -184,6 +195,12 @@ export class View3D {
     if (info.currentLevel != null) this.extras.currentLevel = info.currentLevel;
     if ("weather" in info) this.weather = info.weather ? parseWeather(`${info.weather.kind};${info.weather.intensity};${info.weather.season};${info.weather.snowCover}`) : null;
     if ("fog" in info) this.fog = info.fog ?? null;
+    // Ambient occlusion of the drawing (AODIALOG, AmbientOcclusion.settings → AOForm.viewport).
+    if ("ambientOcclusion" in info) this.aoOverride = info.ambientOcclusion?.viewport ?? null;
+    if (info.billboards && JSON.stringify(info.billboards) !== JSON.stringify(this.billboards)) {
+      this.billboards = info.billboards;
+      void setBillboards(this.scene, info.billboards, this.resolveAsset).then(() => this.invalidate());
+    }
     if (info.water) this.water = new Set(info.water);
     if (info.site) this.extras.site = { ...info.site };
     if (info.levelView) this.extras.setLevelView(info.levelView.isolate, info.levelView.explodeGap * (info.unitMM ?? 1));
@@ -239,7 +256,17 @@ export class View3D {
   setNorthAngle(deg: number) { this.northAngle = deg; this.invalidate(); }
 
   /** Visual style (Wireframe, Hidden Line, Shaded, Shaded with Edges, Conceptual, Realistic, X-Ray, Sketchy). */
-  setStyle(name: string) { this.style = VISUAL_STYLES.includes(name as VisualStyle) ? (name as VisualStyle) : styleNamed(name); this.refreshOverlay(); this.invalidate(); }
+  setStyle(name: string) { this.style = VISUAL_STYLES.includes(name as VisualStyle) ? (name as VisualStyle) : styleNamed(name); this.custom = null; this.customName = null; this.refreshOverlay(); this.invalidate(); }
+  /** Custom visual style (VISUALSTYLES Current): overrides on top of the built-in style set with setStyle; null = none. */
+  private custom: FrameOptions["custom"] = null;
+  private customName: string | null = null;
+  setCustomStyle(c: { name?: string; edges?: boolean | null; edgeColor?: string | null; faceOpacity?: number | null; shadows?: boolean | null; background?: string | null } | null) {
+    const rgb = (s?: string | null): V3 | null => { const m = /^#?([0-9a-f]{6})$/i.exec(s ?? ""); if (!m) return null; const v = parseInt(m[1], 16); return [(v >> 16 & 255) / 255, (v >> 8 & 255) / 255, (v & 255) / 255]; };
+    this.custom = c ? { edges: c.edges ?? null, edgeColor: rgb(c.edgeColor), faceOpacity: c.faceOpacity ?? null, shadows: c.shadows ?? null, background: rgb(c.background) } : null;
+    this.customName = c?.name ?? null;
+    this.refreshOverlay(); this.invalidate();
+  }
+  getCustomStyle() { return this.custom ? { name: this.customName, ...this.custom } : null; }
   getStyle() { return this.style; }
 
   /** render.settings / render.preset result. `explicit`: a preset is stored in the drawing (RENDERPRESET). */
@@ -558,6 +585,7 @@ export class View3D {
       width: w, height: h, camera: this.camera, style: this.style, look: this.lookState, explicitPreset: this.explicit, quality: "interactive",
       supersample: 1, selection: this.selection, sectionBox: this.box, sectionPlane: this.plane, northAngle: this.northAngle, sunOverride: this.sun,
       sunLight: this.sun ? this.sunLight : null, weather: this.weather, fog: this.fog, water: this.water, time: performance.now() / 1000, particles: true,
+      aoOverride: this.aoOverride, custom: this.custom,
     };
   }
 
@@ -874,7 +902,7 @@ export class View3D {
     const lv = this.pills.get("levels");
     if (lv) lv.replaceChildren(this.icon(this.extras?.levelViewActive ? "square.stack.3d.up.fill" : "square.stack.3d.up", "≡"));
     if (this.cube) this.cube.canvas.hidden = !this.showCube;
-    if (this.styleBtn) this.styleBtn.textContent = this.style;
+    if (this.styleBtn) this.styleBtn.textContent = this.customName ?? this.style;
   }
 
   private menu(anchor: HTMLElement, items: MenuItem[]) {

@@ -10,7 +10,7 @@ import { encodeVideo } from "./video";
 import { writeBytes } from "./native";
 
 export interface VideoRequest {
-  kind: "turntable" | "walkthrough" | "sunStudy" | "cameraPath";
+  kind: "turntable" | "walkthrough" | "sunStudy" | "cameraPath" | "phases";
   settings: RenderSettings;
   site: { latitude: number; longitude: number; northAngle: number };
   path: string;
@@ -20,6 +20,8 @@ export interface VideoRequest {
   camera?: ModelCamera | null;
   cameras?: ModelCamera[];
   pathName?: string;
+  /** PHASEANIMATION: "Phases" or "Schedule", seconds per phase / working day. */
+  source?: string;
   progress?(p: number): void;
   cancelled?(): boolean;
 }
@@ -50,6 +52,8 @@ export async function exportVideo(app: App, r: VideoRequest): Promise<string> {
     cameras = res.frames;
     rate = res.fps ?? fps;
     frames = cameras.length;
+  } else if (r.kind === "phases") {
+    return phaseVideo(app, v, r, s, start);
   } else {
     const res = await app.engine.call("render.sunFrames", { day: r.day ?? 172, fromHour: r.fromHour ?? 7, toHour: r.toHour ?? 19, seconds: r.seconds ?? 10, fps });
     suns = res.frames.map((f: any) => {
@@ -66,4 +70,55 @@ export async function exportVideo(app: App, r: VideoRequest): Promise<string> {
   await writeBytes(r.path, out.bytes);
   (window as any).archiLastVideo = { path: r.path, bytes: out.bytes.length, codec: out.codec, frames: out.frames };
   return r.path;
+}
+
+/**
+ * PHASEANIMATION (PhasingAnimation.video / scheduleVideo): the construction sequence from the engine's frames
+ * (render.phaseFrames: the elements shown in each frame), rendered from the camera with the others hidden and the
+ * phase or working day captioned in the lower left (VideoCaption: white bold text on a dark band).
+ */
+async function phaseVideo(app: App, v: any, r: VideoRequest, s: RenderSettings, camera: ModelCamera): Promise<string> {
+  const fps = r.fps ?? 30;
+  const res = await app.engine.call("render.phaseFrames", { source: r.source ?? "Phases", seconds: r.seconds ?? 4, fps });
+  const elements = new Set<string>((res.elements as number[]).map(String));
+  const sets: Set<string>[] = (res.sets as number[][]).map((ids) => new Set(ids.map(String)));
+  const frames: { set: number; caption: string | null }[] = res.frames;
+  const meshes = v.scene.meshes as { id: string | null; hidden: boolean }[];
+  const saved = meshes.map((m) => m.hidden);
+  try {
+    const out = await encodeVideo({
+      width: s.width, height: s.height, fps: res.fps ?? fps, frames: frames.length,
+      render: async (i) => {
+        const f = frames[i], show = sets[f.set];
+        // Elements outside the frame's set are hidden; everything that is not an element (site, lights …) stays.
+        meshes.forEach((m, k) => { m.hidden = saved[k] || (m.id != null && elements.has(m.id) && !show.has(m.id)); });
+        const px = await renderImage(v, { settings: s, site: r.site, camera, supersample: 1, verticalCorrection: false });
+        if (f.caption) caption(px, f.caption);
+        return px;
+      },
+      progress: r.progress, cancelled: r.cancelled,
+    });
+    await writeBytes(r.path, out.bytes);
+    (window as any).archiLastVideo = { path: r.path, bytes: out.bytes.length, codec: out.codec, frames: out.frames };
+  } finally {
+    meshes.forEach((m, k) => { m.hidden = saved[k]; });
+    v.invalidate?.();
+  }
+  return r.path;
+}
+
+/** VideoCaption.draw: bold text of height h/24 on a 55 % black band, lower left. */
+export function caption(px: { width: number; height: number; data: Uint8Array }, text: string) {
+  const c = new OffscreenCanvas(px.width, px.height);
+  const g = c.getContext("2d")!;
+  g.putImageData(new ImageData(Uint8ClampedArray.from(px.data), px.width, px.height), 0, 0);
+  const size = Math.max(12, Math.floor(px.height / 24));
+  g.font = `bold ${size}px "Segoe UI", Helvetica, Arial, sans-serif`;
+  const tw = g.measureText(text).width;
+  g.fillStyle = "rgba(0,0,0,0.55)";
+  g.fillRect(size * 0.6, px.height - size * 0.6 - size * 1.6, tw + size, size * 1.6);
+  g.fillStyle = "#fff";
+  g.textBaseline = "alphabetic";
+  g.fillText(text, size * 1.1, px.height - size * 1.05);
+  px.data.set(g.getImageData(0, 0, px.width, px.height).data);
 }

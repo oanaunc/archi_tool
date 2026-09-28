@@ -28,7 +28,7 @@ to `done`, `partial`, `wip` or `n/a (reason)`: the generator keeps every non-tod
 | Theme | 50 |
 | **Total checklist lines** | **2904** |
 
-Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (parity audit; open items in docs/WINDOWS-GAPS.md)
+Items not `todo`: 2897 — **done 2869 · partial 21 · todo 7 · n/a 7** (parity audit; open items in docs/WINDOWS-GAPS.md)
 
 ## Command coverage
 
@@ -236,7 +236,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Lineweight | `LWEIGHT` |
 | done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Linetype Scale | `LTSCALE` |
 | done | Home ▸ More ▸ Layers ▸ Layer Tools ▸ Rename | `RENAME` |
-| partial | Tab Insert | 7 groups |
+| done | Tab Insert | 7 groups |
 | done | Insert ▸ Import (group) |  |
 | done | Insert ▸ Import ▸ Import File | `IMPORTFILE` |
 | done | Insert ▸ Import ▸ IFC | `IFCIMPORT` |
@@ -251,31 +251,31 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Insert ▸ Block & Reference ▸ Image | `IMAGEATTACH` |
 | done | Insert ▸ Block & Reference ▸ Attribute | `ATTDEF` |
 | done | Insert ▸ Block & Reference ▸ Paste Special | `PASTEORIG` |
-| partial | Insert ▸ Content (group) |  |
+| done | Insert ▸ Content (group) |  |
 | done | Insert ▸ Content ▸ Tool Palettes | `@panel:Tools` |
 | done | Insert ▸ Content ▸ Materials | `MATBROWSER` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component (menu) | Components are not available in this build / Place furniture and fixtures |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Chair | `{r} Chair` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Table | `{r} Table` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Desk | `{r} Desk` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Sofa | `{r} Sofa` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Bed | `{r} Bed` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Wardrobe | `{r} Wardrobe` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Kitchen | `{r} Kitchen` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Sink | `{r} Sink` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ WC | `{r} WC` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Bath | `{r} Bath` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Car | `{r} Car` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Insert ▸ Content ▸ Component ▸ Component… | `{r}` |
+| done | Insert ▸ Content ▸ Component (menu) | Components are not available in this build / Place furniture and fixtures |
+| done | Insert ▸ Content ▸ Component ▸ Chair | `{r} Chair` |
+| done | Insert ▸ Content ▸ Component ▸ Table | `{r} Table` |
+| done | Insert ▸ Content ▸ Component ▸ Desk | `{r} Desk` |
+| done | Insert ▸ Content ▸ Component ▸ Sofa | `{r} Sofa` |
+| done | Insert ▸ Content ▸ Component ▸ Bed | `{r} Bed` |
+| done | Insert ▸ Content ▸ Component ▸ Wardrobe | `{r} Wardrobe` |
+| done | Insert ▸ Content ▸ Component ▸ Kitchen | `{r} Kitchen` |
+| done | Insert ▸ Content ▸ Component ▸ Sink | `{r} Sink` |
+| done | Insert ▸ Content ▸ Component ▸ WC | `{r} WC` |
+| done | Insert ▸ Content ▸ Component ▸ Bath | `{r} Bath` |
+| done | Insert ▸ Content ▸ Component ▸ Car | `{r} Car` |
+| done | Insert ▸ Content ▸ Component ▸ Component… | `{r}` |
 | done | Insert ▸ Export (group) |  |
 | done | Insert ▸ Export ▸ GeoJSON | `GEOJSONEXPORT` |
 | done | Insert ▸ Export ▸ Points | `POINTSEXPORT` |
 | done | Insert ▸ Export ▸ 3MF | `EXPORT3MF` |
 | done | Insert ▸ Export ▸ USDZ | `USDEXPORT` |
 | done | Insert ▸ Export ▸ DXF R12 | `DXFR12OUT` |
-| partial | Insert ▸ More (group) |  |
-| partial | Insert ▸ More ▸ Blocks (menu) | Block and attribute tools |
-| partial: runs the command-line BLOCKLIBRARY instead of opening the Block Library window | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Block Library | `BLOCKLIBRARY` |
+| done | Insert ▸ More (group) |  |
+| done | Insert ▸ More ▸ Blocks (menu) | Block and attribute tools |
+| done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Block Library | `BLOCKLIBRARY` |
 | done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Write Block | `WBLOCK` |
 | done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Drawing Base | `BASE` |
 | done | Insert ▸ More ▸ Blocks ▸ Blocks & Attributes ▸ Block Base Point | `BLOCKBASE` |
@@ -292,7 +292,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Insert ▸ More ▸ Blocks ▸ Dynamic Blocks ▸ Dynamic Parameter | `BPARAMETER` |
 | done | Insert ▸ More ▸ Blocks ▸ Dynamic Blocks ▸ Dynamic Value | `DYNPROP` |
 | done | Insert ▸ More ▸ Blocks ▸ Dynamic Blocks ▸ Reset Block | `RESETBLOCK` |
-| partial | Insert ▸ More ▸ Exchange (menu) | More import/export formats and file commands |
+| done | Insert ▸ More ▸ Exchange (menu) | More import/export formats and file commands |
 | done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ DWG In | `DWGIN` |
 | done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ DWG Converter | `DWGCONVERTER` |
 | done | Insert ▸ More ▸ Exchange ▸ Import & Export ▸ STEP In | `STEPIN` |
@@ -318,7 +318,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Insert ▸ More ▸ Exchange ▸ File ▸ Import | `IMPORT` |
 | done | Insert ▸ More ▸ Exchange ▸ File ▸ Export | `EXPORT` |
 | done | Insert ▸ More ▸ Exchange ▸ File ▸ Plot | `PLOT` |
-| todo: command DRAWINGRECOVERY is not registered in archi-engine | Insert ▸ More ▸ Exchange ▸ File ▸ Drawing Recovery | `DRAWINGRECOVERY` |
+| done | Insert ▸ More ▸ Exchange ▸ File ▸ Drawing Recovery | `DRAWINGRECOVERY` |
 | done | Insert ▸ More ▸ Exchange ▸ File ▸ Run Script | `SCRIPT` |
 | done | Insert ▸ More ▸ Exchange ▸ File ▸ Script Text | `SCRIPTTEXT` |
 | done | Insert ▸ More ▸ Exchange ▸ File ▸ Quit | `QUIT` |
@@ -330,7 +330,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Insert ▸ Images & Geo ▸ Load .pat Patterns | `PATLOAD` |
 | done | Insert ▸ Library (group) |  |
 | done | Insert ▸ Library ▸ Block Library | `BLOCKLIBRARY` |
-| partial | Tab Annotate | 6 groups |
+| done | Tab Annotate | 6 groups |
 | done | Annotate ▸ Text (group) |  |
 | done | Annotate ▸ Text ▸ Text | `TEXT` |
 | done | Annotate ▸ Text ▸ MText | `MTEXT` |
@@ -343,7 +343,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Annotate ▸ Leaders & Tables (group) |  |
 | done | Annotate ▸ Leaders & Tables ▸ Leader | `LEADER` |
 | done | Annotate ▸ Leaders & Tables ▸ Table | `TABLE` |
-| partial | Annotate ▸ More (group) |  |
+| done | Annotate ▸ More (group) |  |
 | done | Annotate ▸ More ▸ Dims (menu) | Baseline, continue, ordinate, QDIM, dimension editing |
 | done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Smart Dimension | `DIM` |
 | done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Quick Dimension | `QDIM` |
@@ -364,12 +364,12 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Dimension Walls | `AUTODIMWALLS` |
 | done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Spot Elevation | `SPOTELEV` |
 | done | Annotate ▸ More ▸ Dims ▸ Dimensions ▸ Spot Slope | `SPOTSLOPE` |
-| partial | Annotate ▸ More ▸ Text (menu) | Text editing, spelling, fields, tables, symbols |
+| done | Annotate ▸ More ▸ Text (menu) | Text editing, spelling, fields, tables, symbols |
 | done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Edit Text | `TEXTEDIT` |
 | done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Text Style | `TEXTSTYLE` |
 | done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Find & Replace | `FIND` |
 | done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Spelling | `SPELL` |
-| todo: command SPELLDIALOG is not registered in archi-engine | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Spelling Dialog | `SPELLDIALOG` |
+| done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Spelling Dialog | `SPELLDIALOG` |
 | done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Field | `FIELD` |
 | done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Update Fields | `UPDATEFIELD` |
 | done | Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Justify Text | `JUSTIFYTEXT` |
@@ -435,7 +435,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Annotate ▸ Style ▸ {model.doc.currentDimStyle} (menu) |  |
 | done | Annotate ▸ Style ▸ {model.doc.currentDimStyle} ▸ {model.doc.dimStyles} |  |
 | done | Annotate ▸ Style ▸ Text height: {fmt(model.editor.settings.textHeight, 2)} (label) |  |
-| partial | Tab Architecture | 7 groups |
+| done | Tab Architecture | 7 groups |
 | done | Architecture ▸ Build (group) |  |
 | done | Architecture ▸ Build ▸ Wall | `WALL` |
 | done | Architecture ▸ Build ▸ Door | `DOOR` |
@@ -483,23 +483,23 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Architecture ▸ Documentation ▸ More ▸ Opening Types | `OPENINGTYPE` |
 | done | Architecture ▸ Documentation ▸ More ▸ Copy to Level | `COPYTOLEVEL` |
 | done | Architecture ▸ Documentation ▸ More ▸ Stair Check | `STAIRCHECK` |
-| partial | Architecture ▸ Model (group) |  |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component (menu) | Components are not available in this build / Place furniture and fixtures |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Chair | `{r} Chair` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Table | `{r} Table` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Desk | `{r} Desk` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Sofa | `{r} Sofa` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Bed | `{r} Bed` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Wardrobe | `{r} Wardrobe` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Kitchen | `{r} Kitchen` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Sink | `{r} Sink` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ WC | `{r} WC` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Bath | `{r} Bath` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Car | `{r} Car` |
-| todo: bug: menu items carry command '{r}' (the Mac resolves it to COMPONENT at run time); Windows resolves nothing so the menu is disabled | Architecture ▸ Model ▸ Component ▸ Component… | `{r}` |
+| done | Architecture ▸ Model (group) |  |
+| done | Architecture ▸ Model ▸ Component (menu) | Components are not available in this build / Place furniture and fixtures |
+| done | Architecture ▸ Model ▸ Component ▸ Chair | `{r} Chair` |
+| done | Architecture ▸ Model ▸ Component ▸ Table | `{r} Table` |
+| done | Architecture ▸ Model ▸ Component ▸ Desk | `{r} Desk` |
+| done | Architecture ▸ Model ▸ Component ▸ Sofa | `{r} Sofa` |
+| done | Architecture ▸ Model ▸ Component ▸ Bed | `{r} Bed` |
+| done | Architecture ▸ Model ▸ Component ▸ Wardrobe | `{r} Wardrobe` |
+| done | Architecture ▸ Model ▸ Component ▸ Kitchen | `{r} Kitchen` |
+| done | Architecture ▸ Model ▸ Component ▸ Sink | `{r} Sink` |
+| done | Architecture ▸ Model ▸ Component ▸ WC | `{r} WC` |
+| done | Architecture ▸ Model ▸ Component ▸ Bath | `{r} Bath` |
+| done | Architecture ▸ Model ▸ Component ▸ Car | `{r} Car` |
+| done | Architecture ▸ Model ▸ Component ▸ Component… | `{r}` |
 | done | Architecture ▸ Model ▸ Quick Building | `BUILDING` |
-| partial | Architecture ▸ More (group) |  |
-| partial | Architecture ▸ More ▸ Systems (menu) | BIM data, structure, MEP and site tools |
+| done | Architecture ▸ More (group) |  |
+| done | Architecture ▸ More ▸ Systems (menu) | BIM data, structure, MEP and site tools |
 | done | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Level | `LEVEL` |
 | done | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Schedule | `SCHEDULE` |
 | done | Architecture ▸ More ▸ Systems ▸ BIM Data ▸ Set Property | `SETPROP` |
@@ -514,7 +514,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Update Associative | `BIMUPDATE` |
 | done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Dormer | `DORMER` |
 | done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Elevator | `ELEVATOR` |
-| partial: runs the command-line FAMILY instead of opening the Family Editor window | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Family Editor | `FAMILY` |
+| done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Family Editor | `FAMILY` |
 | done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Floor Finish | `FLOORFINISH` |
 | done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Model Group | `MODELGROUP` |
 | done | Architecture ▸ More ▸ Systems ▸ BIM Authoring ▸ Opening Trim | `OPENINGTRIM` |
@@ -648,7 +648,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Calculator | `CAL` |
 | done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Measure Geometry | `MEASUREGEOM` |
 | done | Analyze ▸ Building Physics ▸ More ▸ Analysis & Checks ▸ Status | `STATUS` |
-| partial | Tab Collaborate | 4 groups |
+| done | Tab Collaborate | 4 groups |
 | done | Collaborate ▸ Review (group) |  |
 | done | Collaborate ▸ Review ▸ Markups | `MARKUP` |
 | done | Collaborate ▸ Review ▸ Compare | `COMPARE` |
@@ -663,16 +663,16 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Collaborate ▸ Versions & Issues ▸ Change Journal | `JOURNAL` |
 | done | Collaborate ▸ Versions & Issues ▸ Recover File | `RECOVER` |
 | done | Collaborate ▸ Versions & Issues ▸ Recovery Files | `RECOVERYFILES` |
-| partial | Collaborate ▸ Share (group) |  |
-| todo: command SHARE is not registered in archi-engine | Collaborate ▸ Share ▸ Share | `SHARE Both` |
+| done | Collaborate ▸ Share (group) |  |
+| done | Collaborate ▸ Share ▸ Share | `SHARE Both` |
 | done | Collaborate ▸ Share ▸ eTransmit | `ETRANSMIT` |
-| todo: command SHARE is not registered in archi-engine | Collaborate ▸ Share ▸ Share… | `SHARE` |
+| done | Collaborate ▸ Share ▸ Share… | `SHARE` |
 | done | Collaborate ▸ Share ▸ Exchange Check | `EXCHANGECHECK` |
 | done | Collaborate ▸ Share ▸ Batch Jobs | `BATCH` |
 | done | Collaborate ▸ Share ▸ IFC Options | `IFCOPTIONS` |
 | done | Collaborate ▸ Sheets (group) |  |
 | done | Collaborate ▸ Sheets ▸ Revision Clouds | `REVCLOUDPANEL` |
-| partial | Tab View | 8 groups |
+| done | Tab View | 8 groups |
 | done | View ▸ Workspace (group) |  |
 | done | View ▸ Workspace ▸ 2D Plan | `@mode:2D` |
 | done | View ▸ Workspace ▸ 3D Model | `@mode:3D` |
@@ -694,10 +694,10 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | View ▸ Views ▸ Back | `BACKVIEW` |
 | done | View ▸ Views ▸ Left | `LEFTVIEW` |
 | done | View ▸ Views ▸ Iso | `ISOVIEW` |
-| partial | View ▸ 3D Tools (group) |  |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D Tools ▸ Section Box | `SECTIONBOX` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D Tools ▸ Sun Study | `SUNSTUDY` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D Tools ▸ View Cube | `NAVVCUBE` |
+| done | View ▸ 3D Tools (group) |  |
+| done | View ▸ 3D Tools ▸ Section Box | `SECTIONBOX` |
+| done | View ▸ 3D Tools ▸ Sun Study | `SUNSTUDY` |
+| done | View ▸ 3D Tools ▸ View Cube | `NAVVCUBE` |
 | done | View ▸ 3D Tools ▸ Orbit Selection | `ORBITSELECTION` |
 | done | View ▸ 3D Tools ▸ Save Camera | `SAVECAMERA` |
 | done | View ▸ Presentation (group) |  |
@@ -711,8 +711,8 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | View ▸ Presentation ▸ Camera Paths | `CAMERAPATHEDIT` |
 | done | View ▸ Presentation ▸ Render Queue | `RENDERQUEUE` |
 | done | View ▸ Presentation ▸ Gizmo | `GIZMO3D` |
-| partial | View ▸ More (group) |  |
-| partial | View ▸ More ▸ View (menu) | Every view command |
+| done | View ▸ More (group) |  |
+| done | View ▸ More ▸ View (menu) | Every view command |
 | done | View ▸ More ▸ View ▸ View ▸ Zoom | `ZOOM` |
 | done | View ▸ More ▸ View ▸ View ▸ Pan | `PAN` |
 | done | View ▸ More ▸ View ▸ View ▸ Regenerate | `REGEN` |
@@ -743,10 +743,10 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | View ▸ More ▸ View ▸ View ▸ NW Iso | `NWISO` |
 | done | View ▸ More ▸ View ▸ View ▸ Workspace | `WSCURRENT` |
 | done | View ▸ More ▸ View ▸ View ▸ Save Workspace | `WSSAVE` |
-| todo: the shell has the feature but CLEANSCREENON is not registered, so the entry is disabled (map it to the shell action) | View ▸ More ▸ View ▸ View ▸ Clean Screen On | `CLEANSCREENON` |
-| todo: the shell has the feature but CLEANSCREENOFF is not registered, so the entry is disabled (map it to the shell action) | View ▸ More ▸ View ▸ View ▸ Clean Screen Off | `CLEANSCREENOFF` |
-| todo: command FLOATPANEL is not registered in archi-engine | View ▸ More ▸ View ▸ View ▸ Float Panel | `FLOATPANEL` |
-| todo: the shell has the feature but HISTORYPANEL is not registered, so the entry is disabled (map it to the shell action) | View ▸ More ▸ View ▸ View ▸ History Panel | `HISTORYPANEL` |
+| done | View ▸ More ▸ View ▸ View ▸ Clean Screen On | `CLEANSCREENON` |
+| done | View ▸ More ▸ View ▸ View ▸ Clean Screen Off | `CLEANSCREENOFF` |
+| done | View ▸ More ▸ View ▸ View ▸ Float Panel | `FLOATPANEL` |
+| done | View ▸ More ▸ View ▸ View ▸ History Panel | `HISTORYPANEL` |
 | done | View ▸ More ▸ View ▸ View ▸ Tool Palettes | `TOOLPALETTES` |
 | done | View ▸ More ▸ View ▸ View ▸ Close Tool Palettes | `TOOLPALETTESCLOSE` |
 | done | View ▸ More ▸ View ▸ View ▸ Materials | `MATERIALS` |
@@ -760,7 +760,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | View ▸ Interface ▸ Workspace ▸ {Workspaces.all} |  |
 | done | View ▸ Interface ▸ Workspace ▸ Save Current Workspace… | `WSSAVE` |
 | done | View ▸ Interface ▸ Clean Screen | `@cleanScreen` |
-| partial | Tab Output | 5 groups |
+| done | Tab Output | 5 groups |
 | done | Output ▸ Plot (group) |  |
 | done | Output ▸ Plot ▸ Plot / Print | `PLOT` |
 | done | Output ▸ Plot ▸ Preview | `PREVIEW` |
@@ -774,8 +774,8 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Output ▸ Sheets ▸ View Titles | `VIEWTITLE {model.doc.layouts[li].name}` |
 | done | Output ▸ Sheets ▸ Revision | `@panel:Sheets` |
 | done | Output ▸ Sheets ▸ Sheet Index | `SHEETINDEX` |
-| partial | Output ▸ More (group) |  |
-| partial | Output ▸ More ▸ Output (menu) | Every output command, plot styles, batch publish |
+| done | Output ▸ More (group) |  |
+| done | Output ▸ More ▸ Output (menu) | Every output command, plot styles, batch publish |
 | done | Output ▸ More ▸ Output ▸ Output ▸ Page Setup | `PAGESETUP` |
 | done | Output ▸ More ▸ Output ▸ Output ▸ Plot Preview | `PREVIEW` |
 | done | Output ▸ More ▸ Output ▸ Output ▸ Publish | `PUBLISH` |
@@ -783,29 +783,29 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Output ▸ More ▸ Output ▸ Output ▸ Sheet Set | `SHEETSET` |
 | done | Output ▸ More ▸ Output ▸ Output ▸ Sheet Index | `SHEETINDEX` |
 | done | Output ▸ More ▸ Output ▸ Output ▸ Revision | `SHEETREVISION` |
-| todo: command SHEETRENUMBER is not registered in archi-engine | Output ▸ More ▸ Output ▸ Output ▸ Renumber Sheets | `SHEETRENUMBER` |
-| todo: command SHEETVIEWTITLES is not registered in archi-engine | Output ▸ More ▸ Output ▸ Output ▸ Editable View Titles | `SHEETVIEWTITLES` |
+| done | Output ▸ More ▸ Output ▸ Output ▸ Renumber Sheets | `SHEETRENUMBER` |
+| done | Output ▸ More ▸ Output ▸ Output ▸ Editable View Titles | `SHEETVIEWTITLES` |
 | done | Output ▸ More ▸ Output ▸ Output ▸ View Title | `VIEWTITLE` |
 | done | Output ▸ More ▸ Output ▸ Output ▸ Lock Viewports | `VPLOCK` |
 | done | Output ▸ More ▸ Output ▸ Plot Styles ▸ Plot Styles | `PLOTSTYLE` |
 | done | Output ▸ More ▸ Output ▸ Plot Styles ▸ Batch Publish | `BATCHPUBLISH` |
 | done | Output ▸ More ▸ Output ▸ Plot Styles ▸ Plot Log | `PLOTLOG` |
-| partial | Output ▸ Export (group) |  |
+| done | Output ▸ Export (group) |  |
 | done | Output ▸ Export ▸ DXF | `@export:dxf` |
 | done | Output ▸ Export ▸ SVG | `@export:svg` |
-| todo: engine file.export has no PNG writer | Output ▸ Export ▸ PNG | `@export:png` |
+| done | Output ▸ Export ▸ PNG | `@export:png` |
 | done | Output ▸ Export ▸ OBJ | `@export:obj` |
 | done | Output ▸ Export ▸ STL | `@export:stl` |
 | done | Output ▸ Export ▸ GLB | `@export:glb` |
 | done | Output ▸ Export ▸ IFC | `@export:ifc` |
-| partial | Output ▸ Schedules (group) |  |
-| todo | Output ▸ Schedules ▸ CSV (menu) | Export schedules as CSV |
-| todo: engine file.export does not accept csv:walls | Output ▸ Schedules ▸ CSV ▸ Walls schedule (CSV)… | `@export:csv:walls` |
-| todo: engine file.export does not accept csv:doors | Output ▸ Schedules ▸ CSV ▸ Doors schedule (CSV)… | `@export:csv:doors` |
-| todo: engine file.export does not accept csv:windows | Output ▸ Schedules ▸ CSV ▸ Windows schedule (CSV)… | `@export:csv:windows` |
-| todo: engine file.export does not accept csv:rooms | Output ▸ Schedules ▸ CSV ▸ Rooms schedule (CSV)… | `@export:csv:rooms` |
-| todo: engine file.export does not accept csv:slabs | Output ▸ Schedules ▸ CSV ▸ Slabs schedule (CSV)… | `@export:csv:slabs` |
-| todo: engine file.export does not accept csv:all | Output ▸ Schedules ▸ CSV ▸ All schedule (CSV)… | `@export:csv:all` |
+| done | Output ▸ Schedules (group) |  |
+| done | Output ▸ Schedules ▸ CSV (menu) | Export schedules as CSV |
+| done | Output ▸ Schedules ▸ CSV ▸ Walls schedule (CSV)… | `@export:csv:walls` |
+| done | Output ▸ Schedules ▸ CSV ▸ Doors schedule (CSV)… | `@export:csv:doors` |
+| done | Output ▸ Schedules ▸ CSV ▸ Windows schedule (CSV)… | `@export:csv:windows` |
+| done | Output ▸ Schedules ▸ CSV ▸ Rooms schedule (CSV)… | `@export:csv:rooms` |
+| done | Output ▸ Schedules ▸ CSV ▸ Slabs schedule (CSV)… | `@export:csv:slabs` |
+| done | Output ▸ Schedules ▸ CSV ▸ All schedule (CSV)… | `@export:csv:all` |
 | done | Output ▸ Schedules ▸ View | `SCHEDULE` |
 | partial | Tab Manage | 5 groups |
 | done | Manage ▸ Panels (group) |  |
@@ -909,10 +909,10 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Connect Claude | `CONNECTCLAUDE` |
 | done | Manage ▸ More ▸ Tools ▸ Help ▸ Help | `HELP` |
 | done | Manage ▸ More ▸ Tools ▸ Help ▸ Command List | `COMMANDS` |
-| todo: the shell has the feature but COMMANDSEARCH is not registered, so the entry is disabled (map it to the shell action) | Manage ▸ More ▸ Tools ▸ Help ▸ Search Commands | `COMMANDSEARCH` |
-| todo: command ABOUT is not registered in archi-engine | Manage ▸ More ▸ Tools ▸ Help ▸ About | `ABOUT` |
+| done | Manage ▸ More ▸ Tools ▸ Help ▸ Search Commands | `COMMANDSEARCH` |
+| done | Manage ▸ More ▸ Tools ▸ Help ▸ About | `ABOUT` |
 | todo: command APPSELFTEST is not registered in archi-engine | Manage ▸ More ▸ Tools ▸ Help ▸ Self Test | `APPSELFTEST` |
-| todo: command EXPORTCOMMANDS is not registered in archi-engine | Manage ▸ More ▸ Tools ▸ Help ▸ Export Command Reference | `EXPORTCOMMANDS` |
+| done | Manage ▸ More ▸ Tools ▸ Help ▸ Export Command Reference | `EXPORTCOMMANDS` |
 | done | Tab Script | 3 groups |
 | done | Script ▸ Scripting (group) |  |
 | done | Script ▸ Scripting ▸ JS Console | `@scriptConsole` |
@@ -947,7 +947,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Script ▸ AI Agents ▸ Copy token | `@ui:NSPasteboard.general.clearContents` |
 | done | Script ▸ AI Agents ▸ Settings… | `AGENTSETTINGS` |
 | done | Script ▸ AI Agents ▸ Connect Claude | `CONNECTCLAUDE` |
-| todo: runs ABOUT, which archi-engine does not register (no About window) | Tab bar ▸ app icon (About) | `ABOUT` |
+| done | Tab bar ▸ app icon (About) | `ABOUT` |
 | done | Tab bar ▸ quick access toolbar | NEW, OPEN, SAVE, UNDO, REDO, PLOT (customizable: NEW, OPEN, SAVE, SAVEAS, UNDO, REDO, PLOT, PREVIEW, PUBLISH, MATCHPROP, QSELECTDIALOG, LAYER, RENDER, OPTIONS) |
 | done | Tab bar ▸ Search commands (Ctrl+K) | `COMMANDSEARCH` |
 | done | Tab bar ▸ Clean screen (Ctrl+0) | `@cleanScreen` |
@@ -958,30 +958,30 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 
 | Status | Item | Command / detail |
 | --- | --- | --- |
-| todo: no contextual (selection) ribbon tabs on Windows | Selection Wall → tab "Modify Wall" | DOOR, WINDOW, OPENING, AUTODIMWALLS, OFFSET, PROPERTIES, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo: no contextual (selection) ribbon tabs on Windows | Selection Door → tab "Modify Door" | PROPERTIES, SETPROP, OPENINGPARTS, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo: no contextual (selection) ribbon tabs on Windows | Selection Window → tab "Modify Window" | PROPERTIES, SETPROP, OPENINGPARTS, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo: no contextual (selection) ribbon tabs on Windows | Selection Text → tab "Text Editor" | TEXTEDIT, TEXTSTYLE, JUSTIFYTEXT, SCALETEXT, SPELL, FIND, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo: no contextual (selection) ribbon tabs on Windows | Selection Hatch → tab "Hatch Editor" | HATCHEDIT, HATCHGENERATEBOUNDARY, HATCHTOBACK, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo: no contextual (selection) ribbon tabs on Windows | Selection Dimension → tab "Dimension" | DIMEDIT, DIMTEDIT, DIMSTYLE, DIMBREAK, DIMSPACE, DIMREASSOCIATE, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo: no contextual (selection) ribbon tabs on Windows | Selection Block Reference → tab "Block Reference" | ATTEDIT, BLOCKREPLACE, BCOUNT, EXPLODE, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo: no contextual (selection) ribbon tabs on Windows | Selection Polyline → tab "Polyline" | PEDIT, JOIN, REVERSE, EXPLODE, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo: no contextual (selection) ribbon tabs on Windows | Selection Table → tab "Table Cell" | TABLEEDIT, TABLEEXPORT, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo: no contextual (selection) ribbon tabs on Windows | Selection Room → tab "Modify Room" | ROOMFINISH, COLORFILL, PROPERTIES, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
-| todo: no contextual (selection) ribbon tabs on Windows | Selection (other) → tab "Modify (other)" | PROPERTIES, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| done | Selection Wall → tab "Modify Wall" | DOOR, WINDOW, OPENING, AUTODIMWALLS, OFFSET, PROPERTIES, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| done | Selection Door → tab "Modify Door" | PROPERTIES, SETPROP, OPENINGPARTS, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| done | Selection Window → tab "Modify Window" | PROPERTIES, SETPROP, OPENINGPARTS, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| done | Selection Text → tab "Text Editor" | TEXTEDIT, TEXTSTYLE, JUSTIFYTEXT, SCALETEXT, SPELL, FIND, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| done | Selection Hatch → tab "Hatch Editor" | HATCHEDIT, HATCHGENERATEBOUNDARY, HATCHTOBACK, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| done | Selection Dimension → tab "Dimension" | DIMEDIT, DIMTEDIT, DIMSTYLE, DIMBREAK, DIMSPACE, DIMREASSOCIATE, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| done | Selection Block Reference → tab "Block Reference" | ATTEDIT, BLOCKREPLACE, BCOUNT, EXPLODE, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| done | Selection Polyline → tab "Polyline" | PEDIT, JOIN, REVERSE, EXPLODE, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| done | Selection Table → tab "Table Cell" | TABLEEDIT, TABLEEXPORT, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| done | Selection Room → tab "Modify Room" | ROOMFINISH, COLORFILL, PROPERTIES, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
+| done | Selection (other) → tab "Modify (other)" | PROPERTIES, MOVE, COPY, ROTATE, MIRROR, MATCHPROP, SELECTSIMILAR |
 
 ## Menu bar
 
 | Status | Item | Command / detail |
 | --- | --- | --- |
-| partial: no app menu on Windows (by convention); Settings is Edit ▸ Options, Quit is File ▸ Exit, About is under Help | Menu Oanarina Archi Tool | 6 items |
-| todo: Help ▸ About runs ABOUT, which archi-engine does not register | Oanarina Archi Tool ▸ About Oanarina Archi Tool | `ABOUT` |
+| done | Menu Oanarina Archi Tool | 6 items |
+| done | Oanarina Archi Tool ▸ About Oanarina Archi Tool | `ABOUT` |
 | done | Oanarina Archi Tool ▸ Settings… | `OPTIONS` · Ctrl+, |
-| partial: AGENTSETTINGS works (Settings ▸ Agents) but no Windows menu entry | Oanarina Archi Tool ▸ Agent Server… | `AGENTSETTINGS` |
+| done | Oanarina Archi Tool ▸ Agent Server… | `AGENTSETTINGS` |
 | n/a (macOS only) | Oanarina Archi Tool ▸ Hide Oanarina Archi Tool | Ctrl+H · system |
 | n/a (macOS only) | Oanarina Archi Tool ▸ Hide Others | Ctrl+Alt+H · system |
 | done | Oanarina Archi Tool ▸ Quit Oanarina Archi Tool | Ctrl+Q · system |
-| partial: hand-written Windows File menu: New/Open/Save/Import/Export/Page Setup/Print/Close/Exit only | Menu File | 17 items |
+| done | Menu File | 17 items |
 | done | File ▸ New Drawing | `@newWindow:start` · Ctrl+N |
 | done | File ▸ New from Template |  |
 | done | File ▸ New from Template ▸ Metric Drawing (mm) | `@newWindow:blankMetric` |
@@ -992,54 +992,54 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | File ▸ New from Template ▸ Show Templates Folder | `@ui:FileManager.default.createDirectory` |
 | done | File ▸ New from Template ▸ Sample House | `@newWindow:sample` |
 | done | File ▸ Open… | `OPEN` · Ctrl+O |
-| todo: no Open Recent submenu (recent files only on the start screen and the taskbar jump list) | File ▸ Open Recent |  |
-| todo | File ▸ Open Recent ▸ Clear Menu | `@ui:RecentFiles.clear` |
+| done | File ▸ Open Recent |  |
+| done | File ▸ Open Recent ▸ Clear Menu | `@ui:RecentFiles.clear` |
 | done | File ▸ Close | `CLOSE` · Ctrl+W |
 | done | File ▸ Save | `SAVE` · Ctrl+S |
 | done | File ▸ Save As… | `SAVEAS` · Ctrl+Shift+S |
 | done | File ▸ Import… | `IMPORT` · Ctrl+Shift+I |
-| partial: no File ▸ Insert submenu on Windows; the commands work from the Insert ribbon tab | File ▸ Insert |  |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Import File | `IMPORTFILE` |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ IFC | `IFCIMPORT` |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ SVG | `SVGIMPORT` |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Mesh (OBJ/STL) | `MESHIMPORT` |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ GeoJSON | `GEOJSONIMPORT` |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Points (CSV) | `POINTSIMPORT` |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Insert Block | `INSERT` |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Create Block | `BLOCK` |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Xref | `XREF` |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Image | `IMAGEATTACH` |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Attribute | `ATTDEF` |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Insert ▸ Paste Special | `PASTEORIG` |
-| partial: PDF/DXF/SVG/IFC/OBJ/STL/GLB only; PNG fails and GeoJSON, Points, 3MF, USDZ, DXF R12, Schedules are missing | File ▸ Export |  |
+| done | File ▸ Insert |  |
+| done | File ▸ Insert ▸ Import File | `IMPORTFILE` |
+| done | File ▸ Insert ▸ IFC | `IFCIMPORT` |
+| done | File ▸ Insert ▸ SVG | `SVGIMPORT` |
+| done | File ▸ Insert ▸ Mesh (OBJ/STL) | `MESHIMPORT` |
+| done | File ▸ Insert ▸ GeoJSON | `GEOJSONIMPORT` |
+| done | File ▸ Insert ▸ Points (CSV) | `POINTSIMPORT` |
+| done | File ▸ Insert ▸ Insert Block | `INSERT` |
+| done | File ▸ Insert ▸ Create Block | `BLOCK` |
+| done | File ▸ Insert ▸ Xref | `XREF` |
+| done | File ▸ Insert ▸ Image | `IMAGEATTACH` |
+| done | File ▸ Insert ▸ Attribute | `ATTDEF` |
+| done | File ▸ Insert ▸ Paste Special | `PASTEORIG` |
+| done | File ▸ Export |  |
 | done | File ▸ Export ▸ PDF… | `@export:pdf` |
 | done | File ▸ Export ▸ DXF… | `@export:dxf` |
 | done | File ▸ Export ▸ SVG… | `@export:svg` |
-| todo: Windows File ▸ Export ▸ PNG calls file.export png, which the engine rejects (no raster writer) | File ▸ Export ▸ PNG (300 dpi)… | `@export:png` |
+| done | File ▸ Export ▸ PNG (300 dpi)… | `@export:png` |
 | done | File ▸ Export ▸ OBJ + MTL… | `@export:obj` |
 | done | File ▸ Export ▸ STL… | `@export:stl` |
 | done | File ▸ Export ▸ glTF Binary (GLB)… | `@export:glb` |
 | done | File ▸ Export ▸ IFC4… | `@export:ifc` |
-| partial: command works from the ribbon / command line; the Windows File ▸ Export menu has no entry | File ▸ Export ▸ GeoJSON | `GEOJSONEXPORT` |
-| partial: command works from the ribbon / command line; the Windows File ▸ Export menu has no entry | File ▸ Export ▸ Points | `POINTSEXPORT` |
-| partial: command works from the ribbon / command line; the Windows File ▸ Export menu has no entry | File ▸ Export ▸ 3MF | `EXPORT3MF` |
-| partial: command works from the ribbon / command line; the Windows File ▸ Export menu has no entry | File ▸ Export ▸ USDZ | `USDEXPORT` |
-| partial: command works from the ribbon / command line; the Windows File ▸ Export menu has no entry | File ▸ Export ▸ DXF R12 | `DXFR12OUT` |
-| todo: @export:csv:<kind> is not accepted by engine file.export and the submenu is missing | File ▸ Export ▸ Schedules (CSV) |  |
-| todo: engine file.export does not accept csv:<kind> | File ▸ Export ▸ Schedules (CSV) ▸ Walls… | `@export:csv:walls` |
-| todo: engine file.export does not accept csv:<kind> | File ▸ Export ▸ Schedules (CSV) ▸ Doors… | `@export:csv:doors` |
-| todo: engine file.export does not accept csv:<kind> | File ▸ Export ▸ Schedules (CSV) ▸ Windows… | `@export:csv:windows` |
-| todo: engine file.export does not accept csv:<kind> | File ▸ Export ▸ Schedules (CSV) ▸ Rooms… | `@export:csv:rooms` |
-| todo: engine file.export does not accept csv:<kind> | File ▸ Export ▸ Schedules (CSV) ▸ Slabs… | `@export:csv:slabs` |
-| todo: engine file.export does not accept csv:<kind> | File ▸ Export ▸ Schedules (CSV) ▸ All… | `@export:csv:all` |
+| done | File ▸ Export ▸ GeoJSON | `GEOJSONEXPORT` |
+| done | File ▸ Export ▸ Points | `POINTSEXPORT` |
+| done | File ▸ Export ▸ 3MF | `EXPORT3MF` |
+| done | File ▸ Export ▸ USDZ | `USDEXPORT` |
+| done | File ▸ Export ▸ DXF R12 | `DXFR12OUT` |
+| done | File ▸ Export ▸ Schedules (CSV) |  |
+| done | File ▸ Export ▸ Schedules (CSV) ▸ Walls… | `@export:csv:walls` |
+| done | File ▸ Export ▸ Schedules (CSV) ▸ Doors… | `@export:csv:doors` |
+| done | File ▸ Export ▸ Schedules (CSV) ▸ Windows… | `@export:csv:windows` |
+| done | File ▸ Export ▸ Schedules (CSV) ▸ Rooms… | `@export:csv:rooms` |
+| done | File ▸ Export ▸ Schedules (CSV) ▸ Slabs… | `@export:csv:slabs` |
+| done | File ▸ Export ▸ Schedules (CSV) ▸ All… | `@export:csv:all` |
 | done | File ▸ Page Setup… | `PAGESETUP` · Ctrl+Shift+P |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Plot Preview… | `PREVIEW` · Ctrl+Alt+Shift+P |
+| done | File ▸ Plot Preview… | `PREVIEW` · Ctrl+Alt+Shift+P |
 | done | File ▸ Plot / Print… | `PLOT` · Ctrl+P |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Publish All Sheets to PDF… | `PUBLISH` |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Batch Publish… | `BATCHPUBLISH` |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Plot Style Tables… | `PLOTSTYLE` |
-| partial: command works from the ribbon / command line; the Windows File menu has no entry | File ▸ Title Block… | `TITLEBLOCK` |
-| partial: hand-written Windows Edit menu lacks Deselect All, Selection Tools, Groups & Isolation, Match Properties | Menu Edit | 12 items |
+| done | File ▸ Publish All Sheets to PDF… | `PUBLISH` |
+| done | File ▸ Batch Publish… | `BATCHPUBLISH` |
+| done | File ▸ Plot Style Tables… | `PLOTSTYLE` |
+| done | File ▸ Title Block… | `TITLEBLOCK` |
+| done | Menu Edit | 12 items |
 | done | Edit ▸ Undo | `UNDO` · Ctrl+Z |
 | done | Edit ▸ Redo | `REDO` · Ctrl+Shift+Z |
 | done | Edit ▸ Cut | `CUTCLIP` · Ctrl+X |
@@ -1047,26 +1047,26 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Edit ▸ Paste | `PASTECLIP` · Ctrl+V |
 | done | Edit ▸ Delete | `ERASE` |
 | done | Edit ▸ Select All | `@selectAll` · Ctrl+A |
-| partial: no menu entry; Ctrl+Shift+A selects all instead (main.ts ignores Shift) | Edit ▸ Deselect All | `@deselectAll` · Ctrl+Shift+A |
+| done | Edit ▸ Deselect All | `@deselectAll` · Ctrl+Shift+A |
 | done | Edit ▸ Quick Select… | `QSELECTDIALOG` |
-| partial: submenu missing; the commands work from the ribbon | Edit ▸ Selection Tools |  |
-| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ Quick Select | `QSELECT` |
-| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ Select Similar | `SELECTSIMILAR` |
-| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ Invert | `SELECTINVERT` |
-| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ By Layer | `SELECTLAYER` |
-| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ By Type | `SELECTTYPE` |
-| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ Chain | `SELECTCHAIN` |
-| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ Intersecting | `SELECTINTERSECTING` |
-| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ Filter | `FILTER` |
-| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Selection Tools ▸ Named Sets | `SELSET` |
-| partial: submenu missing; the commands work from the ribbon | Edit ▸ Groups & Isolation |  |
-| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Groups & Isolation ▸ Group | `GROUP` |
-| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Groups & Isolation ▸ Ungroup | `UNGROUP` |
-| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Groups & Isolation ▸ Isolate | `ISOLATEOBJECTS` |
-| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Groups & Isolation ▸ Hide | `HIDEOBJECTS` |
-| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Groups & Isolation ▸ End Isolation | `UNISOLATEOBJECTS` |
-| partial: command works from the ribbon / command line; the Windows Edit menu has no entry | Edit ▸ Match Properties | `MATCHPROP` |
-| partial: hand-written Windows View menu: modes, Workspace, Layer States, zoom, panels, Clean Screen, Command Search only | Menu View | 28 items |
+| done | Edit ▸ Selection Tools |  |
+| done | Edit ▸ Selection Tools ▸ Quick Select | `QSELECT` |
+| done | Edit ▸ Selection Tools ▸ Select Similar | `SELECTSIMILAR` |
+| done | Edit ▸ Selection Tools ▸ Invert | `SELECTINVERT` |
+| done | Edit ▸ Selection Tools ▸ By Layer | `SELECTLAYER` |
+| done | Edit ▸ Selection Tools ▸ By Type | `SELECTTYPE` |
+| done | Edit ▸ Selection Tools ▸ Chain | `SELECTCHAIN` |
+| done | Edit ▸ Selection Tools ▸ Intersecting | `SELECTINTERSECTING` |
+| done | Edit ▸ Selection Tools ▸ Filter | `FILTER` |
+| done | Edit ▸ Selection Tools ▸ Named Sets | `SELSET` |
+| done | Edit ▸ Groups & Isolation |  |
+| done | Edit ▸ Groups & Isolation ▸ Group | `GROUP` |
+| done | Edit ▸ Groups & Isolation ▸ Ungroup | `UNGROUP` |
+| done | Edit ▸ Groups & Isolation ▸ Isolate | `ISOLATEOBJECTS` |
+| done | Edit ▸ Groups & Isolation ▸ Hide | `HIDEOBJECTS` |
+| done | Edit ▸ Groups & Isolation ▸ End Isolation | `UNISOLATEOBJECTS` |
+| done | Edit ▸ Match Properties | `MATCHPROP` |
+| done | Menu View | 28 items |
 | done | View ▸ Workspace |  |
 | done | View ▸ Workspace ▸ 2D Plan |  |
 | done | View ▸ Workspace ▸ 3D Model |  |
@@ -1079,61 +1079,61 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | View ▸ Zoom Extents | `@zoom:extents` · Ctrl+0 |
 | done | View ▸ Zoom In | `@zoom:in` · Ctrl+= |
 | done | View ▸ Zoom Out | `@zoom:out` · Ctrl+- |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Zoom Window | `@zoom:window` |
-| partial: submenu missing; the ribbon visual-style drop-down works | View ▸ Visual Style |  |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Visual Style ▸ Wireframe | `VSCURRENT Wireframe` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Visual Style ▸ Hidden Line | `VSCURRENT Hidden Line` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Visual Style ▸ Shaded | `VSCURRENT Shaded` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Visual Style ▸ Shaded with Edges | `VSCURRENT Shaded with Edges` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Visual Style ▸ Conceptual | `VSCURRENT Conceptual` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Visual Style ▸ Realistic | `VSCURRENT Realistic` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Visual Style ▸ X-Ray | `VSCURRENT X-Ray` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Visual Style ▸ Sketchy | `VSCURRENT Sketchy` |
-| partial: submenu missing; the view commands work from the ribbon and view cube | View ▸ 3D View |  |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D View ▸ Top | `TOPVIEW` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D View ▸ Front | `FRONTVIEW` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D View ▸ Right | `RIGHTVIEW` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D View ▸ Back | `BACKVIEW` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D View ▸ Left | `LEFTVIEW` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D View ▸ Iso | `ISOVIEW` |
+| done | View ▸ Zoom Window | `@zoom:window` |
+| done | View ▸ Visual Style |  |
+| done | View ▸ Visual Style ▸ Wireframe | `VSCURRENT Wireframe` |
+| done | View ▸ Visual Style ▸ Hidden Line | `VSCURRENT Hidden Line` |
+| done | View ▸ Visual Style ▸ Shaded | `VSCURRENT Shaded` |
+| done | View ▸ Visual Style ▸ Shaded with Edges | `VSCURRENT Shaded with Edges` |
+| done | View ▸ Visual Style ▸ Conceptual | `VSCURRENT Conceptual` |
+| done | View ▸ Visual Style ▸ Realistic | `VSCURRENT Realistic` |
+| done | View ▸ Visual Style ▸ X-Ray | `VSCURRENT X-Ray` |
+| done | View ▸ Visual Style ▸ Sketchy | `VSCURRENT Sketchy` |
+| done | View ▸ 3D View |  |
+| done | View ▸ 3D View ▸ Top | `TOPVIEW` |
+| done | View ▸ 3D View ▸ Front | `FRONTVIEW` |
+| done | View ▸ 3D View ▸ Right | `RIGHTVIEW` |
+| done | View ▸ 3D View ▸ Back | `BACKVIEW` |
+| done | View ▸ 3D View ▸ Left | `LEFTVIEW` |
+| done | View ▸ 3D View ▸ Iso | `ISOVIEW` |
 | done | View ▸ Hide Panels | `@panels:toggle` · Ctrl+Alt+P |
-| partial: no View-menu entry; the panel opens from its panel tab / ribbon | View ▸ Layers Panel | `@panel:Layers` |
-| partial: no View-menu entry; the panel opens from its panel tab / ribbon | View ▸ Properties Panel | `@panel:Properties` |
-| partial: no View-menu entry; the panel opens from its panel tab / ribbon | View ▸ Levels Panel | `@panel:Levels` |
-| partial: no View-menu entry; the panel opens from its panel tab / ribbon | View ▸ Project Browser | `@panel:Browser` |
-| partial: no View-menu entry; the panel opens from its panel tab / ribbon | View ▸ Materials Panel | `@panel:Materials` |
-| partial: no View-menu entry; the panel opens from its panel tab / ribbon | View ▸ History Panel | `@panel:History` |
-| partial: no View-menu entry; the panel opens from its panel tab / ribbon | View ▸ Sheet Set Manager | `@panel:Sheets` |
-| partial: no View-menu entry; the panel opens from its panel tab / ribbon | View ▸ Tool Palettes | `@panel:Tools` |
-| todo: FLOATPANEL (floating panel windows) not ported | View ▸ Float Panel |  |
-| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Properties | `FLOATPANEL Properties` |
-| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Layers | `FLOATPANEL Layers` |
-| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Levels | `FLOATPANEL Levels` |
-| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Browser | `FLOATPANEL Browser` |
-| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Materials | `FLOATPANEL Materials` |
-| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Tools | `FLOATPANEL Tools` |
-| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Sheets | `FLOATPANEL Sheets` |
-| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ History | `FLOATPANEL History` |
-| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Selection | `FLOATPANEL Selection` |
-| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Navigator | `FLOATPANEL Navigator` |
-| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Alerts | `FLOATPANEL Alerts` |
-| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Quick Props | `FLOATPANEL Quick Props` |
-| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Inspector | `FLOATPANEL Inspector` |
-| todo: FLOATPANEL not registered in archi-engine | View ▸ Float Panel ▸ Content | `FLOATPANEL Content` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Material Library… | `MATBROWSER` |
+| done | View ▸ Layers Panel | `@panel:Layers` |
+| done | View ▸ Properties Panel | `@panel:Properties` |
+| done | View ▸ Levels Panel | `@panel:Levels` |
+| done | View ▸ Project Browser | `@panel:Browser` |
+| done | View ▸ Materials Panel | `@panel:Materials` |
+| done | View ▸ History Panel | `@panel:History` |
+| done | View ▸ Sheet Set Manager | `@panel:Sheets` |
+| done | View ▸ Tool Palettes | `@panel:Tools` |
+| done | View ▸ Float Panel |  |
+| done | View ▸ Float Panel ▸ Properties | `FLOATPANEL Properties` |
+| done | View ▸ Float Panel ▸ Layers | `FLOATPANEL Layers` |
+| done | View ▸ Float Panel ▸ Levels | `FLOATPANEL Levels` |
+| done | View ▸ Float Panel ▸ Browser | `FLOATPANEL Browser` |
+| done | View ▸ Float Panel ▸ Materials | `FLOATPANEL Materials` |
+| done | View ▸ Float Panel ▸ Tools | `FLOATPANEL Tools` |
+| done | View ▸ Float Panel ▸ Sheets | `FLOATPANEL Sheets` |
+| done | View ▸ Float Panel ▸ History | `FLOATPANEL History` |
+| done | View ▸ Float Panel ▸ Selection | `FLOATPANEL Selection` |
+| done | View ▸ Float Panel ▸ Navigator | `FLOATPANEL Navigator` |
+| done | View ▸ Float Panel ▸ Alerts | `FLOATPANEL Alerts` |
+| done | View ▸ Float Panel ▸ Quick Props | `FLOATPANEL Quick Props` |
+| done | View ▸ Float Panel ▸ Inspector | `FLOATPANEL Inspector` |
+| done | View ▸ Float Panel ▸ Content | `FLOATPANEL Content` |
+| done | View ▸ Material Library… | `MATBROWSER` |
 | done | View ▸ Layer States… | `LAYERSTATE` |
 | done | View ▸ Workspace |  |
 | done | View ▸ Workspace ▸ {Workspaces.all} |  |
 | done | View ▸ Workspace ▸ Save Current Workspace… | `WSSAVE` |
 | done | View ▸ Clean Screen | `@cleanScreen` |
-| partial: submenu missing; the commands work from the View ribbon tab | View ▸ 3D Tools |  |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D Tools ▸ View Cube | `NAVVCUBE` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D Tools ▸ Section Box | `SECTIONBOX` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D Tools ▸ Sun Study | `SUNSTUDY` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D Tools ▸ Orbit Around Selection | `ORBITSELECTION` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ 3D Tools ▸ Save Camera… | `SAVECAMERA` |
-| partial: command works from the ribbon / command line; the Windows View menu has no entry | View ▸ Show Script Console | `@scriptConsole` · Ctrl+Alt+J |
-| n/a (macOS system item) | View ▸ Enter Full Screen | Ctrl+F · system |
+| done | View ▸ 3D Tools |  |
+| done | View ▸ 3D Tools ▸ View Cube | `NAVVCUBE` |
+| done | View ▸ 3D Tools ▸ Section Box | `SECTIONBOX` |
+| done | View ▸ 3D Tools ▸ Sun Study | `SUNSTUDY` |
+| done | View ▸ 3D Tools ▸ Orbit Around Selection | `ORBITSELECTION` |
+| done | View ▸ 3D Tools ▸ Save Camera… | `SAVECAMERA` |
+| done | View ▸ Show Script Console | `@scriptConsole` · Ctrl+Alt+J |
+| done | View ▸ Enter Full Screen | Ctrl+F · system |
 | done | Menu Draw | 9 items |
 | done | Draw ▸ Line | `LINE` |
 | done | Draw ▸ Polyline | `PLINE` |
@@ -1372,12 +1372,12 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Tools ▸ Dimensions More ▸ Dimension Walls | `AUTODIMWALLS` |
 | done | Tools ▸ Dimensions More ▸ Spot Elevation | `SPOTELEV` |
 | done | Tools ▸ Dimensions More ▸ Spot Slope | `SPOTSLOPE` |
-| partial | Tools ▸ Text & Tables |  |
+| done | Tools ▸ Text & Tables |  |
 | done | Tools ▸ Text & Tables ▸ Edit Text | `TEXTEDIT` |
 | done | Tools ▸ Text & Tables ▸ Text Style | `TEXTSTYLE` |
 | done | Tools ▸ Text & Tables ▸ Find & Replace | `FIND` |
 | done | Tools ▸ Text & Tables ▸ Spelling | `SPELL` |
-| todo: command SPELLDIALOG is not registered in archi-engine | Tools ▸ Text & Tables ▸ Spelling Dialog | `SPELLDIALOG` |
+| done | Tools ▸ Text & Tables ▸ Spelling Dialog | `SPELLDIALOG` |
 | done | Tools ▸ Text & Tables ▸ Field | `FIELD` |
 | done | Tools ▸ Text & Tables ▸ Update Fields | `UPDATEFIELD` |
 | done | Tools ▸ Text & Tables ▸ Justify Text | `JUSTIFYTEXT` |
@@ -1427,8 +1427,8 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Tools ▸ Parametric ▸ Diameter (dim) | `DCDIAMETER` |
 | done | Tools ▸ Parametric ▸ Ratio (dim) | `DCRATIO` |
 | done | Tools ▸ Parametric ▸ Difference (dim) | `DCDIFFERENCE` |
-| partial | Tools ▸ Blocks & Attributes |  |
-| partial: runs the command-line BLOCKLIBRARY instead of opening the Block Library window | Tools ▸ Blocks & Attributes ▸ Block Library | `BLOCKLIBRARY` |
+| done | Tools ▸ Blocks & Attributes |  |
+| done | Tools ▸ Blocks & Attributes ▸ Block Library | `BLOCKLIBRARY` |
 | done | Tools ▸ Blocks & Attributes ▸ Write Block | `WBLOCK` |
 | done | Tools ▸ Blocks & Attributes ▸ Drawing Base | `BASE` |
 | done | Tools ▸ Blocks & Attributes ▸ Block Base Point | `BLOCKBASE` |
@@ -1544,7 +1544,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Tools ▸ Exchange ▸ IFC ZIP | `IFCZIPOUT` |
 | done | Tools ▸ Exchange ▸ HPGL | `HPGLOUT` |
 | done | Tools ▸ Exchange ▸ Excel Out | `XLSXOUT` |
-| partial | Tools ▸ File |  |
+| done | Tools ▸ File |  |
 | done | Tools ▸ File ▸ New | `NEW` |
 | done | Tools ▸ File ▸ Open | `OPEN` |
 | done | Tools ▸ File ▸ Save | `SAVE` |
@@ -1553,7 +1553,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Tools ▸ File ▸ Import | `IMPORT` |
 | done | Tools ▸ File ▸ Export | `EXPORT` |
 | done | Tools ▸ File ▸ Plot | `PLOT` |
-| todo: command DRAWINGRECOVERY is not registered in archi-engine | Tools ▸ File ▸ Drawing Recovery | `DRAWINGRECOVERY` |
+| done | Tools ▸ File ▸ Drawing Recovery | `DRAWINGRECOVERY` |
 | done | Tools ▸ File ▸ Run Script | `SCRIPT` |
 | done | Tools ▸ File ▸ Script Text | `SCRIPTTEXT` |
 | done | Tools ▸ File ▸ Quit | `QUIT` |
@@ -1588,7 +1588,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Tools ▸ Settings ▸ System Variable | `SETVAR` |
 | done | Tools ▸ Settings ▸ Audit | `AUDIT` |
 | done | Tools ▸ Settings ▸ Purge | `PURGE` |
-| partial | Tools ▸ View |  |
+| done | Tools ▸ View |  |
 | done | Tools ▸ View ▸ Zoom | `ZOOM` |
 | done | Tools ▸ View ▸ Pan | `PAN` |
 | done | Tools ▸ View ▸ Regenerate | `REGEN` |
@@ -1619,15 +1619,15 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Tools ▸ View ▸ NW Iso | `NWISO` |
 | done | Tools ▸ View ▸ Workspace | `WSCURRENT` |
 | done | Tools ▸ View ▸ Save Workspace | `WSSAVE` |
-| todo: command CLEANSCREENON is not registered in archi-engine | Tools ▸ View ▸ Clean Screen On | `CLEANSCREENON` |
-| todo: command CLEANSCREENOFF is not registered in archi-engine | Tools ▸ View ▸ Clean Screen Off | `CLEANSCREENOFF` |
-| todo: command FLOATPANEL is not registered in archi-engine | Tools ▸ View ▸ Float Panel | `FLOATPANEL` |
-| todo: command HISTORYPANEL is not registered in archi-engine | Tools ▸ View ▸ History Panel | `HISTORYPANEL` |
+| done | Tools ▸ View ▸ Clean Screen On | `CLEANSCREENON` |
+| done | Tools ▸ View ▸ Clean Screen Off | `CLEANSCREENOFF` |
+| done | Tools ▸ View ▸ Float Panel | `FLOATPANEL` |
+| done | Tools ▸ View ▸ History Panel | `HISTORYPANEL` |
 | done | Tools ▸ View ▸ Tool Palettes | `TOOLPALETTES` |
 | done | Tools ▸ View ▸ Close Tool Palettes | `TOOLPALETTESCLOSE` |
 | done | Tools ▸ View ▸ Materials | `MATERIALS` |
 | done | Tools ▸ View ▸ Material Library | `MATBROWSER` |
-| partial | Tools ▸ Output |  |
+| done | Tools ▸ Output |  |
 | done | Tools ▸ Output ▸ Page Setup | `PAGESETUP` |
 | done | Tools ▸ Output ▸ Plot Preview | `PREVIEW` |
 | done | Tools ▸ Output ▸ Publish | `PUBLISH` |
@@ -1635,8 +1635,8 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Tools ▸ Output ▸ Sheet Set | `SHEETSET` |
 | done | Tools ▸ Output ▸ Sheet Index | `SHEETINDEX` |
 | done | Tools ▸ Output ▸ Revision | `SHEETREVISION` |
-| todo: command SHEETRENUMBER is not registered in archi-engine | Tools ▸ Output ▸ Renumber Sheets | `SHEETRENUMBER` |
-| todo: command SHEETVIEWTITLES is not registered in archi-engine | Tools ▸ Output ▸ Editable View Titles | `SHEETVIEWTITLES` |
+| done | Tools ▸ Output ▸ Renumber Sheets | `SHEETRENUMBER` |
+| done | Tools ▸ Output ▸ Editable View Titles | `SHEETVIEWTITLES` |
 | done | Tools ▸ Output ▸ View Title | `VIEWTITLE` |
 | done | Tools ▸ Output ▸ Lock Viewports | `VPLOCK` |
 | done | Tools ▸ Animation & Export |  |
@@ -1648,8 +1648,8 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Tools ▸ Plot Styles ▸ Plot Styles | `PLOTSTYLE` |
 | done | Tools ▸ Plot Styles ▸ Batch Publish | `BATCHPUBLISH` |
 | done | Tools ▸ Plot Styles ▸ Plot Log | `PLOTLOG` |
-| partial | Tools ▸ Start & Templates |  |
-| todo: command STARTSCREEN is not registered in archi-engine | Tools ▸ Start & Templates ▸ Start Screen | `STARTSCREEN` |
+| done | Tools ▸ Start & Templates |  |
+| done | Tools ▸ Start & Templates ▸ Start Screen | `STARTSCREEN` |
 | done | Tools ▸ Start & Templates ▸ New from Template | `NEWFROMTEMPLATE` |
 | done | Tools ▸ Start & Templates ▸ Save as Template | `SAVEASTEMPLATE` |
 | done | Tools ▸ Start & Templates ▸ Theme | `THEME` |
@@ -1657,10 +1657,10 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | partial | Tools ▸ Help |  |
 | done | Tools ▸ Help ▸ Help | `HELP` |
 | done | Tools ▸ Help ▸ Command List | `COMMANDS` |
-| todo: command COMMANDSEARCH is not registered in archi-engine | Tools ▸ Help ▸ Search Commands | `COMMANDSEARCH` |
-| todo: command ABOUT is not registered in archi-engine | Tools ▸ Help ▸ About | `ABOUT` |
+| done | Tools ▸ Help ▸ Search Commands | `COMMANDSEARCH` |
+| done | Tools ▸ Help ▸ About | `ABOUT` |
 | todo: command APPSELFTEST is not registered in archi-engine | Tools ▸ Help ▸ Self Test | `APPSELFTEST` |
-| todo: command EXPORTCOMMANDS is not registered in archi-engine | Tools ▸ Help ▸ Export Command Reference | `EXPORTCOMMANDS` |
+| done | Tools ▸ Help ▸ Export Command Reference | `EXPORTCOMMANDS` |
 | done | Tools ▸ Review & Markup |  |
 | done | Tools ▸ Review & Markup ▸ Markups | `MARKUP` |
 | done | Tools ▸ Review & Markup ▸ Compare Drawings | `COMPARE` |
@@ -1680,9 +1680,9 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Tools ▸ Inquiry Extras ▸ Distance to Object | `DISTTOOBJECT` |
 | done | Tools ▸ Inquiry Extras ▸ Point Inside? | `POINTINSIDE` |
 | done | Tools ▸ Inquiry Extras ▸ Total Length | `TLEN` |
-| partial | Tools ▸ Sharing & Exchange |  |
+| done | Tools ▸ Sharing & Exchange |  |
 | done | Tools ▸ Sharing & Exchange ▸ eTransmit | `ETRANSMIT` |
-| todo: command SHARE is not registered in archi-engine | Tools ▸ Sharing & Exchange ▸ Share… | `SHARE` |
+| done | Tools ▸ Sharing & Exchange ▸ Share… | `SHARE` |
 | done | Tools ▸ Sharing & Exchange ▸ Exchange Check | `EXCHANGECHECK` |
 | done | Tools ▸ Sharing & Exchange ▸ Batch Jobs | `BATCH` |
 | done | Tools ▸ Sharing & Exchange ▸ IFC Options | `IFCOPTIONS` |
@@ -1732,12 +1732,12 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Tools ▸ Dynamic Blocks ▸ Dynamic Parameter | `BPARAMETER` |
 | done | Tools ▸ Dynamic Blocks ▸ Dynamic Value | `DYNPROP` |
 | done | Tools ▸ Dynamic Blocks ▸ Reset Block | `RESETBLOCK` |
-| partial | Tools ▸ BIM Authoring |  |
+| done | Tools ▸ BIM Authoring |  |
 | done | Tools ▸ BIM Authoring ▸ Area Scheme | `AREASCHEME` |
 | done | Tools ▸ BIM Authoring ▸ Update Associative | `BIMUPDATE` |
 | done | Tools ▸ BIM Authoring ▸ Dormer | `DORMER` |
 | done | Tools ▸ BIM Authoring ▸ Elevator | `ELEVATOR` |
-| partial: runs the command-line FAMILY instead of opening the Family Editor window | Tools ▸ BIM Authoring ▸ Family Editor | `FAMILY` |
+| done | Tools ▸ BIM Authoring ▸ Family Editor | `FAMILY` |
 | done | Tools ▸ BIM Authoring ▸ Floor Finish | `FLOORFINISH` |
 | done | Tools ▸ BIM Authoring ▸ Model Group | `MODELGROUP` |
 | done | Tools ▸ BIM Authoring ▸ Opening Trim | `OPENINGTRIM` |
@@ -1780,17 +1780,17 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Tools ▸ 3D, Render & Print ▸ Render Queue | `RENDERQUEUE` |
 | done | Tools ▸ 3D, Render & Print ▸ Clipping Plane | `CLIPPLANES` |
 | done | Tools ▸ 3D, Render & Print ▸ Print Setup | `PRINTSETUP` |
-| partial | Tools ▸ Families, Views & Panels |  |
+| done | Tools ▸ Families, Views & Panels |  |
 | done | Tools ▸ Families, Views & Panels ▸ Family Editor Panel | `FAMILYPANEL` |
 | done | Tools ▸ Families, Views & Panels ▸ Move Up/Down (Z) | `MOVEZ` |
 | done | Tools ▸ Families, Views & Panels ▸ Levels in 3D | `LEVELVIEW3D` |
 | done | Tools ▸ Families, Views & Panels ▸ Field of View | `FOV` |
 | done | Tools ▸ Families, Views & Panels ▸ Save 3D View Image | `VIEWIMAGE` |
-| todo: command SHEETIMAGE is not registered in archi-engine | Tools ▸ Families, Views & Panels ▸ Sheet to Image | `SHEETIMAGE` |
-| todo: command SELECTIONINFO is not registered in archi-engine | Tools ▸ Families, Views & Panels ▸ Selection Info | `SELECTIONINFO` |
-| todo: command NOTIFICATIONS is not registered in archi-engine | Tools ▸ Families, Views & Panels ▸ Notifications | `NOTIFICATIONS` |
-| todo: command NAVIGATOR is not registered in archi-engine | Tools ▸ Families, Views & Panels ▸ Navigator | `NAVIGATOR` |
-| todo: command WHATSNEW is not registered in archi-engine | Tools ▸ Families, Views & Panels ▸ What's New | `WHATSNEW` |
+| done | Tools ▸ Families, Views & Panels ▸ Sheet to Image | `SHEETIMAGE` |
+| done | Tools ▸ Families, Views & Panels ▸ Selection Info | `SELECTIONINFO` |
+| done | Tools ▸ Families, Views & Panels ▸ Notifications | `NOTIFICATIONS` |
+| done | Tools ▸ Families, Views & Panels ▸ Navigator | `NAVIGATOR` |
+| done | Tools ▸ Families, Views & Panels ▸ What's New | `WHATSNEW` |
 | done | Tools ▸ 3D Primitives & Solid Tools |  |
 | done | Tools ▸ 3D Primitives & Solid Tools ▸ Wedge | `WEDGE` |
 | done | Tools ▸ 3D Primitives & Solid Tools ▸ Torus | `TORUS` |
@@ -1874,37 +1874,37 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Tools ▸ Analysis & Design Assist ▸ AutoLISP | `LISP` |
 | done | Tools ▸ Analysis & Design Assist ▸ Load LISP File | `LISPLOAD` |
 | partial | Tools ▸ Navigation & Sheets |  |
-| todo: command FILETAB is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ File Tabs | `FILETAB` |
-| todo: command FILETABCLOSE is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Hide File Tabs | `FILETABCLOSE` |
-| todo: command LAYOUTTABS is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Model/Layout Tabs | `LAYOUTTABS` |
-| todo: command QUICKPROPS is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Quick Properties | `QUICKPROPS` |
-| todo: command INSPECT is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Inspector | `INSPECT` |
-| todo: command ADCENTER is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Design Center | `ADCENTER` |
+| done | Tools ▸ Navigation & Sheets ▸ File Tabs | `FILETAB` |
+| done | Tools ▸ Navigation & Sheets ▸ Hide File Tabs | `FILETABCLOSE` |
+| done | Tools ▸ Navigation & Sheets ▸ Model/Layout Tabs | `LAYOUTTABS` |
+| done | Tools ▸ Navigation & Sheets ▸ Quick Properties | `QUICKPROPS` |
+| done | Tools ▸ Navigation & Sheets ▸ Inspector | `INSPECT` |
+| done | Tools ▸ Navigation & Sheets ▸ Design Center | `ADCENTER` |
 | todo: command HELPWINDOW is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Help Browser | `HELPWINDOW` |
 | done | Tools ▸ Navigation & Sheets ▸ Tutorials | `TUTORIALS` |
-| todo: command SAMPLEHOUSE is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Sample House | `SAMPLEHOUSE` |
-| todo: command SELECTWALLCHAIN is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Select Wall Chain | `SELECTWALLCHAIN` |
-| todo: command DVIEW is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Twist View | `DVIEW` |
-| todo: command PERSPECTIVE is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Perspective | `PERSPECTIVE` |
+| done | Tools ▸ Navigation & Sheets ▸ Sample House | `SAMPLEHOUSE` |
+| done | Tools ▸ Navigation & Sheets ▸ Select Wall Chain | `SELECTWALLCHAIN` |
+| done | Tools ▸ Navigation & Sheets ▸ Twist View | `DVIEW` |
+| done | Tools ▸ Navigation & Sheets ▸ Perspective | `PERSPECTIVE` |
 | done | Tools ▸ Navigation & Sheets ▸ Maximise Viewport | `VPMAX` |
 | done | Tools ▸ Navigation & Sheets ▸ Restore Viewport | `VPMIN` |
 | done | Tools ▸ Navigation & Sheets ▸ Clip Viewport | `VPCLIP` |
-| todo: command MVIEWPOLY is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Polygonal Viewport | `MVIEWPOLY` |
-| todo: command MVSETUP is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Align Viewports | `MVSETUP` |
-| todo: command SHEETGRID is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Sheet Guide Grid | `SHEETGRID` |
-| todo: command SHEETPLACEHOLDER is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Placeholder Sheet | `SHEETPLACEHOLDER` |
-| todo: command SHEETFIELD is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Custom Fields | `SHEETFIELD` |
-| todo: command PSETUPIN is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Import Page Setup | `PSETUPIN` |
-| todo: command LWDISPLAYSCALE is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Lineweight Display Scale | `LWDISPLAYSCALE` |
-| todo: command VISUALSTYLES is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Visual Styles Manager | `VISUALSTYLES` |
-| todo: command TILEDVIEWS is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Tiled Views | `TILEDVIEWS` |
+| done | Tools ▸ Navigation & Sheets ▸ Polygonal Viewport | `MVIEWPOLY` |
+| done | Tools ▸ Navigation & Sheets ▸ Align Viewports | `MVSETUP` |
+| done | Tools ▸ Navigation & Sheets ▸ Sheet Guide Grid | `SHEETGRID` |
+| done | Tools ▸ Navigation & Sheets ▸ Placeholder Sheet | `SHEETPLACEHOLDER` |
+| done | Tools ▸ Navigation & Sheets ▸ Custom Fields | `SHEETFIELD` |
+| done | Tools ▸ Navigation & Sheets ▸ Import Page Setup | `PSETUPIN` |
+| done | Tools ▸ Navigation & Sheets ▸ Lineweight Display Scale | `LWDISPLAYSCALE` |
+| done | Tools ▸ Navigation & Sheets ▸ Visual Styles Manager | `VISUALSTYLES` |
+| done | Tools ▸ Navigation & Sheets ▸ Tiled Views | `TILEDVIEWS` |
 | done | Tools ▸ Navigation & Sheets ▸ Plot Area | `PLOTAREA` |
 | done | Tools ▸ Navigation & Sheets ▸ Sheet to SVG | `SHEETSVG` |
 | done | Tools ▸ Navigation & Sheets ▸ Named Plot Styles | `PLOTSTYLENAME` |
-| todo: command EXPORTSETTINGS is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Export Settings | `EXPORTSETTINGS` |
-| todo: command WINDOWTABS is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Window Tabs | `WINDOWTABS` |
-| todo: command FULLSCREEN is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Full Screen | `FULLSCREEN` |
-| todo: command IMPORTSETTINGS is not registered in archi-engine | Tools ▸ Navigation & Sheets ▸ Import Settings | `IMPORTSETTINGS` |
+| done | Tools ▸ Navigation & Sheets ▸ Export Settings | `EXPORTSETTINGS` |
+| done | Tools ▸ Navigation & Sheets ▸ Window Tabs | `WINDOWTABS` |
+| done | Tools ▸ Navigation & Sheets ▸ Full Screen | `FULLSCREEN` |
+| done | Tools ▸ Navigation & Sheets ▸ Import Settings | `IMPORTSETTINGS` |
 | done | Tools ▸ File Tools & Exchange |  |
 | done | Tools ▸ File Tools & Exchange ▸ Save a Copy | `SAVECOPY` |
 | done | Tools ▸ File Tools & Exchange ▸ Round-trip Check | `SAVECHECK` |
@@ -2009,29 +2009,29 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Tools ▸ Exchange Options |  |
 | done | Tools ▸ Exchange Options ▸ DXF Output Version | `DXFOUTVERSION` |
 | done | Tools ▸ Exchange Options ▸ ifcXML Out | `IFCXMLOUT` |
-| partial | Tools ▸ Navigate, Light & Publish |  |
-| todo: command SYSWINDOWS is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Arrange Windows | `SYSWINDOWS` |
+| done | Tools ▸ Navigate, Light & Publish |  |
+| done | Tools ▸ Navigate, Light & Publish ▸ Arrange Windows | `SYSWINDOWS` |
 | done | Tools ▸ Navigate, Light & Publish ▸ Fly | `FLY` |
 | done | Tools ▸ Navigate, Light & Publish ▸ Look Around | `LOOKAROUND` |
 | done | Tools ▸ Navigate, Light & Publish ▸ Position Camera | `POSITIONCAMERA` |
 | done | Tools ▸ Navigate, Light & Publish ▸ Two-Point Perspective | `TWOPOINT` |
 | done | Tools ▸ Navigate, Light & Publish ▸ Steering Wheel | `NAVSWHEEL` |
-| todo: command LIGHT is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Lights | `LIGHT` |
-| todo: command FOG is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Fog | `FOG` |
-| todo: command MATEMISSIVE is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Emissive Material | `MATEMISSIVE` |
-| todo: command MATMAPPING is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Texture Mapping | `MATMAPPING` |
-| todo: command BILLBOARD is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Billboard | `BILLBOARD` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Lights | `LIGHT` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Fog | `FOG` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Emissive Material | `MATEMISSIVE` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Texture Mapping | `MATMAPPING` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Billboard | `BILLBOARD` |
 | done | Tools ▸ Navigate, Light & Publish ▸ Export PDF | `EXPORTPDF` |
-| partial: SHADEPLOT Rendered falls back to As Displayed for engine-only plots | Tools ▸ Navigate, Light & Publish ▸ Shade Plot | `SHADEPLOT` |
-| todo: command TITLEBLOCKDESIGN is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Title Block Design | `TITLEBLOCKDESIGN` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Shade Plot | `SHADEPLOT` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Title Block Design | `TITLEBLOCKDESIGN` |
 | done | Tools ▸ Navigate, Light & Publish ▸ Web Viewer Export | `WEBVIEWEREXPORT` |
 | done | Tools ▸ Navigate, Light & Publish ▸ Render to File (Passes, Region, 8K) | `RENDERTOFILE` |
 | done | Tools ▸ Navigate, Light & Publish ▸ Stereo 360° Panorama | `STEREOPANORAMA` |
-| todo: command PHASEANIMATION is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Construction Sequence (4D) | `PHASEANIMATION` |
-| todo: command HYPERLINK is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Hyperlink | `HYPERLINK` |
-| todo: command ASSISTANT is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ AI Assistant | `ASSISTANT` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Construction Sequence (4D) | `PHASEANIMATION` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Hyperlink | `HYPERLINK` |
+| done | Tools ▸ Navigate, Light & Publish ▸ AI Assistant | `ASSISTANT` |
 | done | Tools ▸ Navigate, Light & Publish ▸ Graph Player | `GRAPHPLAYER` |
-| todo: command RENDERPROMPT is not registered in archi-engine | Tools ▸ Navigate, Light & Publish ▸ Render Prompt | `RENDERPROMPT` |
+| done | Tools ▸ Navigate, Light & Publish ▸ Render Prompt | `RENDERPROMPT` |
 | done | Tools ▸ Navigate, Light & Publish ▸ Radial Menu | `RADIALMENU` |
 | done | Tools ▸ Studies, Signatures & Publishing |  |
 | done | Tools ▸ Studies, Signatures & Publishing ▸ Radiance Daylight | `DAYLIGHTRADIANCE` |
@@ -2093,30 +2093,30 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | partial | Tools ▸ Render, Materials & Environment |  |
 | done | Tools ▸ Render, Materials & Environment ▸ Path Tracer | `PATHTRACE` |
 | done | Tools ▸ Render, Materials & Environment ▸ Light Mix | `LIGHTMIX` |
-| todo: command MATMAPS is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ PBR Maps | `MATMAPS` |
-| todo: command MATASSET is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ Material Assets | `MATASSET` |
-| todo: command PROCMATERIAL is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ Procedural Material | `PROCMATERIAL` |
-| todo: command MATFROMIMAGE is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ Material from Photo | `MATFROMIMAGE` |
+| done | Tools ▸ Render, Materials & Environment ▸ PBR Maps | `MATMAPS` |
+| done | Tools ▸ Render, Materials & Environment ▸ Material Assets | `MATASSET` |
+| done | Tools ▸ Render, Materials & Environment ▸ Procedural Material | `PROCMATERIAL` |
+| done | Tools ▸ Render, Materials & Environment ▸ Material from Photo | `MATFROMIMAGE` |
 | done | Tools ▸ Render, Materials & Environment ▸ Weather | `WEATHER` |
 | done | Tools ▸ Render, Materials & Environment ▸ Season | `SEASON` |
-| todo: command WATER is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ Water | `WATER` |
-| todo: command SCATTER is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ Scatter Plants | `SCATTER` |
+| done | Tools ▸ Render, Materials & Environment ▸ Water | `WATER` |
+| done | Tools ▸ Render, Materials & Environment ▸ Scatter Plants | `SCATTER` |
 | done | Tools ▸ Render, Materials & Environment ▸ Animate Objects | `ANIMATE` |
 | todo: command SPACEMOUSE is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ SpaceMouse | `SPACEMOUSE` |
 | done | Tools ▸ Render, Materials & Environment ▸ Customize Ribbon | `CUI` |
-| todo: command NODEPACKAGE is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ Node Packages | `NODEPACKAGE` |
-| todo: command GRAPHICSTYLES is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ Graphic Styles | `GRAPHICSTYLES` |
+| done | Tools ▸ Render, Materials & Environment ▸ Node Packages | `NODEPACKAGE` |
+| done | Tools ▸ Render, Materials & Environment ▸ Graphic Styles | `GRAPHICSTYLES` |
 | done | Tools ▸ Render, Materials & Environment ▸ Redraw | `REDRAW` |
-| todo: command ARQUICKLOOK is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ AR Quick Look | `ARQUICKLOOK` |
-| todo: command CMDLINEOPTIONS is not registered in archi-engine | Tools ▸ Render, Materials & Environment ▸ Command Line Options | `CMDLINEOPTIONS` |
+| done | Tools ▸ Render, Materials & Environment ▸ AR Quick Look | `ARQUICKLOOK` |
+| done | Tools ▸ Render, Materials & Environment ▸ Command Line Options | `CMDLINEOPTIONS` |
 | done | Tools ▸ Render, Materials & Environment ▸ Customizer Panel | `CUSTOMIZERPANEL` |
-| partial | Tools ▸ Components & Surfaces |  |
+| done | Tools ▸ Components & Surfaces |  |
 | done | Tools ▸ Components & Surfaces ▸ Make Component | `MAKECOMPONENT` |
 | done | Tools ▸ Components & Surfaces ▸ Make Group | `MAKEGROUP` |
 | done | Tools ▸ Components & Surfaces ▸ Make Unique | `MAKEUNIQUE` |
 | done | Tools ▸ Components & Surfaces ▸ Component to BIM | `COMPONENTTOBIM` |
 | done | Tools ▸ Components & Surfaces ▸ Outliner | `OUTLINER` |
-| todo: command OUTLINERPANEL is not registered in archi-engine | Tools ▸ Components & Surfaces ▸ Outliner Window | `OUTLINERPANEL` |
+| done | Tools ▸ Components & Surfaces ▸ Outliner Window | `OUTLINERPANEL` |
 | done | Tools ▸ Components & Surfaces ▸ Datum Plane/Axis/Point | `DATUM` |
 | done | Tools ▸ Components & Surfaces ▸ Sub-object Edit | `SUBOBJECT` |
 | done | Tools ▸ Components & Surfaces ▸ Imprint | `IMPRINT` |
@@ -2135,16 +2135,16 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Tools ▸ Images, Links & Structure ▸ Material Patterns | `MATPATTERN` |
 | done | Tools ▸ Images, Links & Structure ▸ Rebar | `REBAR` |
 | done | Tools ▸ Images, Links & Structure ▸ Steel Connection | `STEELCONNECTION` |
-| todo | Tools ▸ Files, Clipboard & Access |  |
-| todo: command FILEVERSIONS is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ Browse Versions | `FILEVERSIONS` |
+| partial | Tools ▸ Files, Clipboard & Access |  |
+| done | Tools ▸ Files, Clipboard & Access ▸ Browse Versions | `FILEVERSIONS` |
 | todo: command FILEPREVIEW is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ File Preview & Spotlight | `FILEPREVIEW` |
-| todo: command PASTESPECIAL is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ Paste from Other App | `PASTESPECIAL` |
-| todo: command COPYPICTURE is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ Copy as Picture | `COPYPICTURE` |
-| todo: command ZOOMXP is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ Zoom to Paper Scale | `ZOOMXP` |
-| todo: command SPEAKDRAWING is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ Describe Drawing | `SPEAKDRAWING` |
-| todo: command KEYBOARDNAV is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ Keyboard Navigation | `KEYBOARDNAV` |
-| todo: command MECHANISMPLAY is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ Play Mechanism | `MECHANISMPLAY` |
-| todo: command LANGUAGE is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ Language | `LANGUAGE` |
+| done | Tools ▸ Files, Clipboard & Access ▸ Paste from Other App | `PASTESPECIAL` |
+| done | Tools ▸ Files, Clipboard & Access ▸ Copy as Picture | `COPYPICTURE` |
+| done | Tools ▸ Files, Clipboard & Access ▸ Zoom to Paper Scale | `ZOOMXP` |
+| done | Tools ▸ Files, Clipboard & Access ▸ Describe Drawing | `SPEAKDRAWING` |
+| done | Tools ▸ Files, Clipboard & Access ▸ Keyboard Navigation | `KEYBOARDNAV` |
+| done | Tools ▸ Files, Clipboard & Access ▸ Play Mechanism | `MECHANISMPLAY` |
+| done | Tools ▸ Files, Clipboard & Access ▸ Language | `LANGUAGE` |
 | done | Tools ▸ Adaptive, Corners & Roofs |  |
 | done | Tools ▸ Adaptive, Corners & Roofs ▸ Adaptive Component | `ADAPTIVE` |
 | done | Tools ▸ Adaptive, Corners & Roofs ▸ bSDD Lookup | `BSDD` |
@@ -2155,16 +2155,16 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Tools ▸ Adaptive, Corners & Roofs ▸ Sketch Environment | `SKETCHPAD` |
 | done | Tools ▸ Adaptive, Corners & Roofs ▸ Sketch Plane | `SKETCHPLANE` |
 | partial | Tools ▸ Styles, Patterns & Occlusion |  |
-| todo: command OBJECTSTYLESDIALOG is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ Object Styles… | `OBJECTSTYLESDIALOG` |
+| done | Tools ▸ Styles, Patterns & Occlusion ▸ Object Styles… | `OBJECTSTYLESDIALOG` |
 | done | Tools ▸ Styles, Patterns & Occlusion ▸ Object Styles (command) | `OBJECTSTYLES` |
-| todo: command TEXTSTYLEDIALOG is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ Text Styles… | `TEXTSTYLEDIALOG` |
-| todo: command IMAGEADJUSTDIALOG is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ Image Adjust… | `IMAGEADJUSTDIALOG` |
-| todo: command AODIALOG is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ Ambient Occlusion… | `AODIALOG` |
+| done | Tools ▸ Styles, Patterns & Occlusion ▸ Text Styles… | `TEXTSTYLEDIALOG` |
+| done | Tools ▸ Styles, Patterns & Occlusion ▸ Image Adjust… | `IMAGEADJUSTDIALOG` |
+| done | Tools ▸ Styles, Patterns & Occlusion ▸ Ambient Occlusion… | `AODIALOG` |
 | done | Tools ▸ Styles, Patterns & Occlusion ▸ Ambient Occlusion (command) | `AMBIENTOCCLUSION` |
-| todo: command CRASHREPORTS is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ Crash Reports | `CRASHREPORTS` |
+| done | Tools ▸ Styles, Patterns & Occlusion ▸ Crash Reports | `CRASHREPORTS` |
 | todo: command VRVIEW is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ VR Headset View | `VRVIEW` |
-| todo: command TEXTEDITINPLACE is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ Edit Text In Place | `TEXTEDITINPLACE` |
-| todo: command MATPATTERNDIALOG is not registered in archi-engine | Tools ▸ Styles, Patterns & Occlusion ▸ Material Fill Patterns… | `MATPATTERNDIALOG` |
+| done | Tools ▸ Styles, Patterns & Occlusion ▸ Edit Text In Place | `TEXTEDITINPLACE` |
+| done | Tools ▸ Styles, Patterns & Occlusion ▸ Material Fill Patterns… | `MATPATTERNDIALOG` |
 | done | Tools ▸ Styles, Patterns & Occlusion ▸ Floor Pattern | `FLOORPATTERN` |
 | done | Tools ▸ Exchange More |  |
 | done | Tools ▸ Exchange More ▸ Rhino 3DM In | `RHINOIN` |
@@ -2232,25 +2232,25 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Tools ▸ System Variables ▸ TRIMMODE | `TRIMMODE` |
 | done | Tools ▸ System Variables ▸ WALLHEIGHT | `WALLHEIGHT` |
 | done | Tools ▸ System Variables ▸ WALLTHICKNESS | `WALLTHICKNESS` |
-| todo | Tools ▸ All Commands |  |
-| todo: run-time list not filled on Windows | Tools ▸ All Commands ▸ {groups} |  |
+| done | Tools ▸ All Commands |  |
+| done | Tools ▸ All Commands ▸ {groups} |  |
 | done | Menu Window | 3 items |
 | done | Window ▸ Minimize | Ctrl+M · system |
 | done | Window ▸ Zoom | system |
 | n/a (macOS only) | Window ▸ Bring All to Front | system |
-| partial: hand-written Windows Help menu | Menu Help | 13 items |
-| partial: F1 opens the online guide, not the running command's page; Help ▸ Command Help runs HELP | Help ▸ Oanarina Archi Tool Help (F1) | `HELP` |
-| partial: command works from the ribbon / command line; the Windows Help menu has no entry | Help ▸ Tutorials | `HELP` |
-| partial: not in the Help menu; File ▸ New from Template ▸ Sample House and the start screen open it | Help ▸ Open Sample House | `@ui:WindowRouter.open` |
+| partial | Menu Help | 13 items |
+| done | Help ▸ Oanarina Archi Tool Help (F1) | `HELP` |
+| done | Help ▸ Tutorials | `HELP` |
+| done | Help ▸ Open Sample House | `@ui:WindowRouter.open` |
 | done | Help ▸ Search Commands… | `COMMANDSEARCH` · Ctrl+K |
-| partial: runs COMMANDREFERENCE on the command line; no Command Reference window | Help ▸ Command Reference | `@ui:window:command-reference` · Ctrl+Shift+/ |
+| done | Help ▸ Command Reference | `@ui:window:command-reference` · Ctrl+Shift+/ |
 | done | Help ▸ User Guide | `@openURL` |
 | done | Help ▸ Keyboard Shortcuts | `@ui:window:keyboard-shortcuts` |
 | done | Help ▸ Start Screen | `STARTSCREEN` |
-| todo: APPSELFTEST not ported | Help ▸ Check Command Coverage | `APPSELFTEST` |
-| todo: EXPORTCOMMANDS not ported | Help ▸ Export Command Reference… | `EXPORTCOMMANDS` |
+| todo: command APPSELFTEST is not registered in archi-engine | Help ▸ Check Command Coverage | `APPSELFTEST` |
+| done | Help ▸ Export Command Reference… | `EXPORTCOMMANDS` |
 | done | Help ▸ Customize Shortcuts… | `@ui:window:PreferencesWindow.shortcuts` |
-| partial: command works from the ribbon / command line; the Windows Help menu has no entry | Help ▸ Connect Claude… | `CONNECTCLAUDE` |
+| done | Help ▸ Connect Claude… | `CONNECTCLAUDE` |
 | done | Help ▸ Oana Rinaldi Website | `@openURL` |
 
 ## Tool palettes
@@ -2319,8 +2319,8 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 
 | Status | Item | Command / detail |
 | --- | --- | --- |
-| partial | Panel Properties (PropertiesPanel) | sections: Project, Drawing, General, Geometry & Parameters |
-| partial: type summary shown, not a per-type filter menu | Properties ▸ Menu {"\(types.count) objects (" + counts.sorted() {…}.map() {…}.joined(separator: ", ") + ")"} |  |
+| done | Panel Properties (PropertiesPanel) | sections: Project, Drawing, General, Geometry & Parameters |
+| done | Properties ▸ Menu {"\(types.count) objects (" + counts.sorted() {…}.map() {…}.joined(separator: ", ") + ")"} |  |
 | done | Properties ▸ Button Clear selection | `@deselectAll` |
 | done | Properties ▸ Button Quick Select… | `QSELECTDIALOG` |
 | done | Properties ▸ Button Match properties from the first selected object (MATCHPROP) | `MATCHPROP` |
@@ -2347,17 +2347,17 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Levels ▸ Button Make current | (repeated) |
 | done | Levels ▸ TextField  | text (repeated) |
 | done | Levels ▸ Button Delete level | (repeated) |
-| partial: only Floor Plans, 3D Views (Front/Aerial/Corner) and Sheets | Panel Browser (ProjectBrowserPanel) | sections:  |
+| done | Panel Browser (ProjectBrowserPanel) | sections:  |
 | done | Browser ▸ Button Floor Plans |  |
 | done | Browser ▸ Button 3D Views |  |
-| todo: label not found in panels.ts | Browser ▸ Button Project Views |  |
-| todo: label not found in panels.ts | Browser ▸ Button Elevations & Sections |  |
+| done | Browser ▸ Button Project Views |  |
+| done | Browser ▸ Button Elevations & Sections |  |
 | done | Browser ▸ Button Sheets |  |
-| todo: label not found in panels.ts | Browser ▸ Button Schedules |  |
-| todo: label not found in panels.ts | Browser ▸ Button Families |  |
+| done | Browser ▸ Button Schedules |  |
+| done | Browser ▸ Button Families |  |
 | done | Browser ▸ Button Groups |  |
-| todo: label not found in panels.ts | Browser ▸ Button Links |  |
-| partial | Panel Materials (MaterialsPanel) | sections: Identity, graphics & physical |
+| done | Browser ▸ Button Links |  |
+| done | Panel Materials (MaterialsPanel) | sections: Identity, graphics & physical |
 | done | Materials ▸ Button New |  |
 | done | Materials ▸ Button Duplicate |  |
 | done | Materials ▸ Button Delete |  |
@@ -2371,7 +2371,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Materials ▸ Slider  | Binding(get: {…}, set: {…}) |
 | done | Materials ▸ Picker  | Binding(get: {…}, set: {…}) |
 | done | Materials ▸ Button Path Trace | `PATHTRACE` |
-| partial: command PROCMATERIAL is not registered in archi-engine | Materials ▸ Button Procedural… | `PROCMATERIAL` |
+| done | Materials ▸ Button Procedural… | `PROCMATERIAL` |
 | done | Materials ▸ Button From Photo… |  |
 | done | Panel Tools (ToolPalettePanel) | sections:  |
 | done | Tools ▸ Button {t} | (repeated) |
@@ -2398,35 +2398,35 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Sheets ▸ TextField Description | revDescription |
 | done | Sheets ▸ TextField By | revBy |
 | done | Sheets ▸ Button Add |  |
-| partial: undo list, redo and command history; no page picker, Copy Log or numbered undo steps | Panel History (HistoryPanel) | sections:  |
-| partial | History ▸ Picker  | page |
-| partial | History ▸ Button 0 |  |
-| partial | History ▸ Button {index} | (repeated) |
-| partial | History ▸ Button {index} | (repeated) |
+| done | Panel History (HistoryPanel) | sections:  |
+| done | History ▸ Picker  | page |
+| done | History ▸ Button 0 |  |
+| done | History ▸ Button {index} | (repeated) |
+| done | History ▸ Button {index} | (repeated) |
 | done | History ▸ Button {c} | `{c}`  (repeated) |
-| todo: label not found in panels.ts | History ▸ Button Copy Log |  |
-| partial: summary and type counts only; no Only / Remove / Zoom buttons | Panel Selection (SelectionInfoPanel) | sections:  |
+| done | History ▸ Button Copy Log |  |
+| done | Panel Selection (SelectionInfoPanel) | sections:  |
 | done | Selection ▸ Button Only | (repeated) |
-| todo: label not found in panels.ts | Selection ▸ Button Remove | (repeated) |
-| todo: label not found in panels.ts | Selection ▸ Button Zoom to Selection |  |
+| done | Selection ▸ Button Remove | (repeated) |
+| done | Selection ▸ Button Zoom to Selection |  |
 | done | Selection ▸ Button Clear | `@deselectAll` |
-| todo: placeholder text only | Panel Navigator (NavigatorPanel) | sections:  |
-| todo: placeholder 'No alerts.' only | Panel Alerts (NotificationsPanel) | sections:  |
-| todo | Alerts ▸ Toggle Info | showInfo |
-| todo | Alerts ▸ Button Restore dismissed |  |
-| todo | Alerts ▸ Button Dismiss |  |
-| partial: shows the Properties panel; no floating Quick Properties window | Panel Quick Props (QuickPropertiesView) | sections:  |
-| todo: label not found in panels.ts | Quick Props ▸ Button Dock in the panels (Quick Props tab) | `@panel:Quick Props` |
-| todo: label not found in panels.ts | Quick Props ▸ Button Float in a window | `FLOATPANEL` |
-| todo: label not found in panels.ts | Quick Props ▸ Button Hide Quick Properties (QP) | `QUICKPROPS` |
-| partial | Quick Props ▸ TextField  | text (repeated) |
-| partial: shows the Properties panel; no raw inspector / Copy | Panel Inspector (InspectorPanel) | sections:  |
-| todo: label not found in panels.ts | Inspector ▸ Button Copy | (repeated) |
-| todo: shows the static tool list, not the DesignCenter content browser | Panel Content (DesignCenterPanel) | sections:  |
-| todo | Content ▸ Menu Choose Drawing |  |
-| todo | Content ▸ Picker  | kind |
-| todo | Content ▸ Button Add to Drawing |  |
-| todo | Content ▸ Button Add All |  |
+| done | Panel Navigator (NavigatorPanel) | sections:  |
+| done | Panel Alerts (NotificationsPanel) | sections:  |
+| done | Alerts ▸ Toggle Info | showInfo |
+| done | Alerts ▸ Button Restore dismissed |  |
+| done | Alerts ▸ Button Dismiss |  |
+| done | Panel Quick Props (QuickPropertiesView) | sections:  |
+| done | Quick Props ▸ Button Dock in the panels (Quick Props tab) | `@panel:Quick Props` |
+| done | Quick Props ▸ Button Float in a window | `FLOATPANEL` |
+| done | Quick Props ▸ Button Hide Quick Properties (QP) | `QUICKPROPS` |
+| done | Quick Props ▸ TextField  | text (repeated) |
+| done | Panel Inspector (InspectorPanel) | sections:  |
+| done | Inspector ▸ Button Copy | (repeated) |
+| done | Panel Content (DesignCenterPanel) | sections:  |
+| done | Content ▸ Menu Choose Drawing |  |
+| done | Content ▸ Picker  | kind |
+| done | Content ▸ Button Add to Drawing |  |
+| done | Content ▸ Button Add All |  |
 
 ## Dialogs and windows
 
@@ -2454,11 +2454,11 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | DraftingSettingsSheet ▸ Toggle {k.rawValue.capitalized} | Binding(get: {…}, set: {…}) |
 | done | DraftingSettingsSheet ▸ Button Select All |  |
 | done | DraftingSettingsSheet ▸ Button Clear All |  |
-| todo: SCHEDULE has no schedule sheet on Windows | ScheduleSheet (sheet ScheduleSheet) | `SCHEDULE` |
-| todo | ScheduleSheet ▸ Picker Schedule | kind |
-| todo | ScheduleSheet ▸ Button Export CSV… | `@export:csv:{kind}` |
-| partial: Help ▸ Command Reference runs COMMANDREFERENCE on the command line; no searchable window | CommandReferenceView (sheet CommandReferenceView) | `COMMANDS` |
-| todo: label not found in shortcuts.ts | CommandReferenceView ▸ TextField Search commands, aliases, descriptions | query |
+| done | ScheduleSheet (sheet ScheduleSheet) | `SCHEDULE` |
+| done | ScheduleSheet ▸ Picker Schedule | kind |
+| done | ScheduleSheet ▸ Button Export CSV… | `@export:csv:{kind}` |
+| done | CommandReferenceView (sheet CommandReferenceView) | `COMMANDS` |
+| done | CommandReferenceView ▸ TextField Search commands, aliases, descriptions | query |
 | done | CommandReferenceView ▸ Button Done |  |
 | done | ShortcutsView (sheet ShortcutsView) |  |
 | done | ShortcutsView ▸ Button Done |  |
@@ -2516,16 +2516,16 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | SaveCameraSheet ▸ TextField Camera name | name |
 | done | SaveCameraSheet ▸ Button Cancel |  |
 | done | SaveCameraSheet ▸ Button Save |  |
-| todo: SPELLDIALOG not ported | SpellingSheet (sheet SpellingSheet) | `SPELLDIALOG` |
-| todo | SpellingSheet ▸ Button Zoom To |  |
-| todo | SpellingSheet ▸ TextField  | replacement |
-| todo | SpellingSheet ▸ Button {s} |  |
-| todo | SpellingSheet ▸ Button Change |  |
-| todo | SpellingSheet ▸ Button Change All |  |
-| todo | SpellingSheet ▸ Button Ignore |  |
-| todo | SpellingSheet ▸ Button Ignore All |  |
-| todo | SpellingSheet ▸ Button Add to Dictionary |  |
-| todo | SpellingSheet ▸ Button Done |  |
+| done | SpellingSheet (sheet SpellingSheet) | `SPELLDIALOG` |
+| done | SpellingSheet ▸ Button Zoom To |  |
+| done | SpellingSheet ▸ TextField  | replacement |
+| done | SpellingSheet ▸ Button {s} |  |
+| done | SpellingSheet ▸ Button Change |  |
+| done | SpellingSheet ▸ Button Change All |  |
+| done | SpellingSheet ▸ Button Ignore |  |
+| done | SpellingSheet ▸ Button Ignore All |  |
+| done | SpellingSheet ▸ Button Add to Dictionary |  |
+| done | SpellingSheet ▸ Button Done |  |
 | done | PlotStyleSheet (sheet PlotStyleSheet) | `PLOTSTYLE` |
 | done | PlotStyleSheet ▸ Picker  | Binding(get: {…}, set: {…}) |
 | done | PlotStyleSheet ▸ Button New Copy |  |
@@ -2544,21 +2544,21 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | BatchPublishSheet ▸ Button None |  |
 | done | BatchPublishSheet ▸ Button Cancel |  |
 | done | BatchPublishSheet ▸ Button Publish… |  |
-| todo: ABOUT is not registered in archi-engine and the shell has no About window | About (window AboutView) | `ABOUT` |
-| todo | About ▸ Button View License | `@openURL` |
-| todo | About ▸ Link www.oanarinaldi.com |  |
-| todo: ASSISTANT (AI assistant window) not ported | Assistant (window AssistantPanel) | `ASSISTANT` |
-| todo | Assistant ▸ Button Provider, model and key |  |
-| todo | Assistant ▸ Picker Provider | session.config.provider |
-| todo | Assistant ▸ TextField Model | session.config.model |
-| todo | Assistant ▸ TextField Endpoint (localhost) | session.config.endpoint |
-| todo | Assistant ▸ SecureField Anthropic API key (stored in the keychain) | key |
-| todo | Assistant ▸ Stepper Confirm above {session.config.bulkLimit} changes | session.config.bulkLimit |
-| todo | Assistant ▸ Button Save |  |
-| todo | Assistant ▸ Button Discard |  |
-| todo | Assistant ▸ Button Apply |  |
-| todo | Assistant ▸ TextField Ask or describe a change (e.g. “add a 5 m wall from 0,0 to the east”) | input |
-| todo | Assistant ▸ Button [paperplane.fill] |  |
+| done | About (window AboutView) | `ABOUT` |
+| done | About ▸ Button View License | `@openURL` |
+| done | About ▸ Link www.oanarinaldi.com |  |
+| done | Assistant (window AssistantPanel) | `ASSISTANT` |
+| done | Assistant ▸ Button Provider, model and key |  |
+| done | Assistant ▸ Picker Provider | session.config.provider |
+| done | Assistant ▸ TextField Model | session.config.model |
+| done | Assistant ▸ TextField Endpoint (localhost) | session.config.endpoint |
+| done | Assistant ▸ SecureField Anthropic API key (stored in the keychain) | key |
+| done | Assistant ▸ Stepper Confirm above {session.config.bulkLimit} changes | session.config.bulkLimit |
+| done | Assistant ▸ Button Save |  |
+| done | Assistant ▸ Button Discard |  |
+| done | Assistant ▸ Button Apply |  |
+| done | Assistant ▸ TextField Ask or describe a change (e.g. “add a 5 m wall from 0,0 to the east”) | input |
+| done | Assistant ▸ Button [paperplane.fill] |  |
 | done | BlockLibrary (window BlockLibraryView) | `BLOCKPALETTE` |
 | done | BlockLibrary ▸ Menu Choose a folder |  |
 | done | BlockLibrary ▸ Button Add a library folder of .archi / .dxf drawings |  |
@@ -2628,32 +2628,32 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | GraphPlayer ▸ Slider  | Binding(get: {…}, set: {…}) |
 | done | GraphPlayer ▸ Button Reset |  |
 | done | GraphPlayer ▸ Button Run |  |
-| todo: GRAPHICSTYLES (line styles, pens, graphic override rules) not ported | GraphicStyles (window GraphicStylesView) | `GRAPHICSTYLES` |
-| todo | GraphicStyles ▸ Picker  | page |
-| todo | GraphicStyles ▸ 0 ▸ TextField New line style name | newStyle |
-| todo | GraphicStyles ▸ 0 ▸ Button Add |  |
-| todo | GraphicStyles ▸ 1 ▸ Picker  | Binding(get: {…}, set: {…}) |
-| todo | GraphicStyles ▸ 2 ▸ TextField  | lwText |
-| todo | GraphicStyles ▸ 2 ▸ Button Apply |  |
-| todo | GraphicStyles ▸ 3 ▸ Picker  | Binding(get: {…}, set: {…}) |
-| todo | GraphicStyles ▸ 3 ▸ Toggle Show on screen | Binding(get: {…}, set: {…}) |
-| todo | GraphicStyles ▸ 3 ▸ Button Edit |  |
-| todo | GraphicStyles ▸ 3 ▸ Button Delete |  |
-| todo | GraphicStyles ▸ 3 ▸ TextField Name | penName |
-| todo | GraphicStyles ▸ 3 ▸ TextField Pens | penText |
-| todo | GraphicStyles ▸ 3 ▸ Button Save |  |
-| todo | GraphicStyles ▸ Toggle  | Binding(get: {…}, set: {…}) |
-| todo | GraphicStyles ▸ Button Higher priority |  |
-| todo | GraphicStyles ▸ Button Delete |  |
-| todo | GraphicStyles ▸ TextField Name | rule.name |
-| todo | GraphicStyles ▸ Picker  | rule.field |
-| todo | GraphicStyles ▸ Picker  | rule.op |
-| todo | GraphicStyles ▸ TextField Value | rule.value |
-| todo | GraphicStyles ▸ TextField Colour #RRGGBB | ruleColor |
-| todo | GraphicStyles ▸ TextField Lineweight | ruleWeight |
-| todo | GraphicStyles ▸ Toggle Halftone | Binding(get: {…}, set: {…}) |
-| todo | GraphicStyles ▸ Toggle Hide | Binding(get: {…}, set: {…}) |
-| todo | GraphicStyles ▸ Button Add Rule |  |
+| done | GraphicStyles (window GraphicStylesView) | `GRAPHICSTYLES` |
+| done | GraphicStyles ▸ Picker  | page |
+| done | GraphicStyles ▸ 0 ▸ TextField New line style name | newStyle |
+| done | GraphicStyles ▸ 0 ▸ Button Add |  |
+| done | GraphicStyles ▸ 1 ▸ Picker  | Binding(get: {…}, set: {…}) |
+| done | GraphicStyles ▸ 2 ▸ TextField  | lwText |
+| done | GraphicStyles ▸ 2 ▸ Button Apply |  |
+| done | GraphicStyles ▸ 3 ▸ Picker  | Binding(get: {…}, set: {…}) |
+| done | GraphicStyles ▸ 3 ▸ Toggle Show on screen | Binding(get: {…}, set: {…}) |
+| done | GraphicStyles ▸ 3 ▸ Button Edit |  |
+| done | GraphicStyles ▸ 3 ▸ Button Delete |  |
+| done | GraphicStyles ▸ 3 ▸ TextField Name | penName |
+| done | GraphicStyles ▸ 3 ▸ TextField Pens | penText |
+| done | GraphicStyles ▸ 3 ▸ Button Save |  |
+| done | GraphicStyles ▸ Toggle  | Binding(get: {…}, set: {…}) |
+| done | GraphicStyles ▸ Button Higher priority |  |
+| done | GraphicStyles ▸ Button Delete |  |
+| done | GraphicStyles ▸ TextField Name | rule.name |
+| done | GraphicStyles ▸ Picker  | rule.field |
+| done | GraphicStyles ▸ Picker  | rule.op |
+| done | GraphicStyles ▸ TextField Value | rule.value |
+| done | GraphicStyles ▸ TextField Colour #RRGGBB | ruleColor |
+| done | GraphicStyles ▸ TextField Lineweight | ruleWeight |
+| done | GraphicStyles ▸ Toggle Halftone | Binding(get: {…}, set: {…}) |
+| done | GraphicStyles ▸ Toggle Hide | Binding(get: {…}, set: {…}) |
+| done | GraphicStyles ▸ Button Add Rule |  |
 | done | Markup (window MarkupPanel) | `MARKUPPANEL` |
 | done | Markup ▸ Picker  | filter |
 | done | Markup ▸ TextField Search comments, authors, replies | query |
@@ -2688,8 +2688,8 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | NodeEditor ▸ Button Save Graph |  |
 | done | NodeEditor ▸ TextField Comment | comment.text |
 | done | NodeEditor ▸ Picker  | previewMode |
-| todo: OUTLINERPANEL not ported | Outliner (window OutlinerView) | `OUTLINERPANEL` |
-| todo | Outliner ▸ TextField Filter by name | filter |
+| done | Outliner (window OutlinerView) | `OUTLINERPANEL` |
+| done | Outliner ▸ TextField Filter by name | filter |
 | done | PathTrace (window PathTraceView) | `PATHTRACE` |
 | done | PathTrace ▸ Button Stop / Render |  |
 | done | PathTrace ▸ Button Save… |  |
@@ -2716,7 +2716,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | PlotPreview ▸ Button Close |  |
 | done | PlotPreview ▸ Button Save PDF… |  |
 | done | PlotPreview ▸ Button Print… |  |
-| partial | Preferences (window PreferencesView) | `OPTIONS` |
+| done | Preferences (window PreferencesView) | `OPTIONS` |
 | done | Preferences ▸ Button {t.rawValue} |  |
 | done | Preferences ▸ Button Reset to Defaults |  |
 | done | Preferences ▸ general ▸ Toggle Autosave | Binding(get: {…}, set: {…}) |
@@ -2725,7 +2725,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Preferences ▸ general ▸ Stepper Remember {prefs.recentLimit} documents | prefs.recentLimit |
 | done | Preferences ▸ general ▸ Button Clear Recent Documents |  |
 | done | Preferences ▸ general ▸ Picker Default units | prefs.defaultUnits |
-| partial: startup.js runs with a reduced archi API (not partb runScriptFile) | Preferences ▸ general ▸ Toggle Run startup.js from the script library in every new window | prefs.runStartupScript |
+| done | Preferences ▸ general ▸ Toggle Run startup.js from the script library in every new window | prefs.runStartupScript |
 | done | Preferences ▸ general ▸ Button Open Script Library |  |
 | done | Preferences ▸ drafting ▸ Toggle Show grid | prefs.draft.showGrid |
 | done | Preferences ▸ drafting ▸ Toggle Grid snap | prefs.draft.gridSnap |
@@ -2750,11 +2750,11 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Preferences ▸ toolbar ▸ Button Add |  |
 | done | Preferences ▸ toolbar ▸ Menu Browse |  |
 | done | Preferences ▸ toolbar ▸ Button Restore Default |  |
-| partial | PrintSetup (window PrintSetupView) | `PRINTSETUP` |
+| done | PrintSetup (window PrintSetupView) | `PRINTSETUP` |
 | done | PrintSetup ▸ Picker Printer | o.printer |
 | done | PrintSetup ▸ Picker Paper | o.paper |
-| partial: placeholder list (Electron cannot list trays) | PrintSetup ▸ Picker Tray | o.tray |
-| partial: placeholder list (Electron cannot list media types) | PrintSetup ▸ Picker Media | o.mediaType |
+| done | PrintSetup ▸ Picker Tray | o.tray |
+| done | PrintSetup ▸ Picker Media | o.mediaType |
 | done | PrintSetup ▸ Picker Paper size | Binding(get: {…}, set: {…}) |
 | done | PrintSetup ▸ TextField mm | Binding(get: {…}, set: {…}) |
 | done | PrintSetup ▸ Menu Common |  |
@@ -2783,10 +2783,10 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | RevisionCloud ▸ Button Add Revision Cloud |  |
 | done | RevisionCloud ▸ Button Open the sheet |  |
 | done | RevisionCloud ▸ Button Delete the cloud and its tag |  |
-| todo: FILEVERSIONS not ported | Versions (window VersionsBrowser) | `FILEVERSIONS` |
-| todo | Versions ▸ Button Open Copy |  |
-| todo | Versions ▸ Button Restore… |  |
-| todo | Versions ▸ Button Save Version Now |  |
+| done | Versions (window VersionsBrowser) | `FILEVERSIONS` |
+| done | Versions ▸ Button Open Copy |  |
+| done | Versions ▸ Button Restore… |  |
+| done | Versions ▸ Button Save Version Now |  |
 | done | Start Screen (window StartView) | `STARTSCREEN` |
 | done | Start Screen ▸ StartTile New Drawing |  |
 | done | Start Screen ▸ StartTile Open… |  |
@@ -2805,7 +2805,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | --- | --- | --- |
 | done | view CoordinateReadout |   |
 | done | menu ucsIndicator |   |
-| todo: macro buttons not in the Windows status bar | view MacroButtonBar |   |
+| done | view MacroButtonBar |   |
 | done | toggle GRID | F7  |
 | done | toggle SNAP | F9  |
 | done | toggle ORTHO | F8  |
@@ -2817,13 +2817,13 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | dropdown Level |   |
 | done | dropdown Layer |   |
 | done | label {sel} selected |   |
-| todo: no progress indicator for long commands | view ProgressStatusView |   |
+| done | view ProgressStatusView |   |
 | done | menu isolateMenu |   |
 | done | view AnnotationScaleMenu |   |
-| partial: opens the Quick Props tab; tooltip does not follow the on/off state | button slider.horizontal.below.rectangle |  Quick Properties (QP) {model.showQuickProperties ? "on" : "off"} |
+| done | button slider.horizontal.below.rectangle |  Quick Properties (QP) {model.showQuickProperties ? "on" : "off"} |
 | done | menu {model.doc.units.abbreviation} |  Drawing units |
 | done | view ZoomReadout |   |
-| partial: static 'Agent: off' label; runs AGENTSERVER but does not show the server state | button agentIndicator |   |
+| done | button agentIndicator |   |
 
 ## Keyboard shortcuts (Windows keys; Mac in brackets)
 
@@ -2838,9 +2838,9 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Ctrl+W [⌘W] File ▸ Close | Close: Windows also uses Ctrl+F4 for documents; add Ctrl+F4 as alias → Ctrl+W |
 | done | Ctrl+S [⌘S] File ▸ Save |  |
 | done | Ctrl+Shift+S [⇧⌘S] File ▸ Save As… |  |
-| todo: not bound on Windows | Ctrl+Shift+I [⇧⌘I] File ▸ Import… |  |
+| done | Ctrl+Shift+I [⇧⌘I] File ▸ Import… |  |
 | done | Ctrl+Shift+P [⇧⌘P] File ▸ Page Setup… |  |
-| todo: bug: main.ts maps any Ctrl+P combination to PLOT | Ctrl+Alt+Shift+P [⌥⇧⌘P] File ▸ Plot Preview… | Ctrl+Alt = AltGr → Ctrl+Alt+Shift+P |
+| done | Ctrl+Alt+Shift+P [⌥⇧⌘P] File ▸ Plot Preview… | Ctrl+Alt = AltGr → Ctrl+Alt+Shift+P |
 | done | Ctrl+P [⌘P] File ▸ Plot / Print… |  |
 | done | Ctrl+Z [⌘Z] Edit ▸ Undo |  |
 | done | Ctrl+Shift+Z [⇧⌘Z] Edit ▸ Redo | Redo: Windows convention is Ctrl+Y; keep Ctrl+Shift+Z as a second binding → Ctrl+Y |
@@ -2848,28 +2848,28 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Ctrl+C [⌘C] Edit ▸ Copy |  |
 | done | Ctrl+V [⌘V] Edit ▸ Paste |  |
 | done | Ctrl+A [⌘A] Edit ▸ Select All |  |
-| todo: bug: Ctrl+Shift+A selects all (main.ts ignores Shift) | Ctrl+Shift+A [⇧⌘A] Edit ▸ Deselect All |  |
-| todo: not bound | Ctrl+Alt+1 [⌥⌘1] View ▸ 2D Plan | Ctrl+Alt+digit = AltGr+digit on European layouts (types characters such as ~ or ¡) → Ctrl+Alt+1 |
-| todo: not bound | Ctrl+Alt+2 [⌥⌘2] View ▸ 3D Model | Ctrl+Alt = AltGr → Ctrl+Alt+2 |
-| todo: not bound | Ctrl+Alt+3 [⌥⌘3] View ▸ Split View | Ctrl+Alt = AltGr → Ctrl+Alt+3 |
-| todo: not bound | Ctrl+Alt+4 [⌥⌘4] View ▸ Sheets | Ctrl+Alt = AltGr → Ctrl+Alt+4 |
-| partial: Ctrl+0 toggles Clean Screen on Windows (the Mac binds both) | Ctrl+0 [⌘0] View ▸ Zoom Extents | See ⌃0: Ctrl+0 is Clean Screen on Windows; same Windows keys as: clean screen → (none) |
+| done | Ctrl+Shift+A [⇧⌘A] Edit ▸ Deselect All |  |
+| done | Ctrl+Alt+1 [⌥⌘1] View ▸ 2D Plan | Ctrl+Alt+digit = AltGr+digit on European layouts (types characters such as ~ or ¡) → Ctrl+Alt+1 |
+| done | Ctrl+Alt+2 [⌥⌘2] View ▸ 3D Model | Ctrl+Alt = AltGr → Ctrl+Alt+2 |
+| done | Ctrl+Alt+3 [⌥⌘3] View ▸ Split View | Ctrl+Alt = AltGr → Ctrl+Alt+3 |
+| done | Ctrl+Alt+4 [⌥⌘4] View ▸ Sheets | Ctrl+Alt = AltGr → Ctrl+Alt+4 |
+| partial: Windows key conflict (documented): Ctrl+0 is Clean Screen, Zoom Extents has no Ctrl key (double middle-click, ribbon, Z E) | Ctrl+0 [⌘0] View ▸ Zoom Extents | See ⌃0: Ctrl+0 is Clean Screen on Windows; same Windows keys as: clean screen → (none) |
 | done | Ctrl+= [⌘=] View ▸ Zoom In |  |
 | done | Ctrl+- [⌘-] View ▸ Zoom Out |  |
-| todo: bug: runs PLOT (main.ts ignores Alt) | Ctrl+Alt+P [⌥⌘P] View ▸ Hide Panels | Ctrl+Alt equals AltGr on many European keyboards (may type a character); consider Ctrl+Shift+F2-style alternatives → Ctrl+Alt+P |
-| todo: not bound | Ctrl+Alt+J [⌥⌘J] View ▸ Show Script Console | Ctrl+Alt = AltGr on European layouts → Ctrl+Alt+J |
+| done | Ctrl+Alt+P [⌥⌘P] View ▸ Hide Panels | Ctrl+Alt equals AltGr on many European keyboards (may type a character); consider Ctrl+Shift+F2-style alternatives → Ctrl+Alt+P |
+| done | Ctrl+Alt+J [⌥⌘J] View ▸ Show Script Console | Ctrl+Alt = AltGr on European layouts → Ctrl+Alt+J |
 | n/a (macOS system item) | Ctrl+F [⌃⌘F] View ▸ Enter Full Screen | Full screen is F11 on Windows but F11 is Object snap tracking (AutoCAD); keep F11 for OTRACK, full screen via View menu only → F11? |
 | n/a (Windows uses Win+Down) | Ctrl+M [⌘M] Window ▸ Minimize | Minimize → window button / Win+Down; do not bind Ctrl+M |
 | done | Ctrl+K [⌘K] Help ▸ Search Commands… |  |
-| todo: not bound | Ctrl+Shift+/ [⇧⌘/] Help ▸ Command Reference | Ctrl+? on US layouts; fine → Ctrl+Shift+/ |
+| done | Ctrl+Shift+/ [⇧⌘/] Help ▸ Command Reference | Ctrl+? on US layouts; fine → Ctrl+Shift+/ |
 | done | Type anywhere [Type anywhere] Start a command on the command line |  |
 | done | Enter / Space [Enter / Space] Finish input · repeat the last command |  |
 | done | Esc [Esc] Cancel the command · clear the selection |  |
 | done | Right-click [Right-click] Enter while a command runs · context menu when idle |  |
 | done | Tab [Tab] Accept autocomplete |  |
 | done | ↑ / ↓ [↑ / ↓] Command history / suggestions |  |
-| partial: F1 opens the guide, not the running command's section | F1 [F1] Help for the running command | Windows help key: matches the Mac (context help) → F1 |
-| todo: F2 is swallowed (main.ts) and opens nothing | F2 [F2] Command history panel |  |
+| done | F1 [F1] Help for the running command | Windows help key: matches the Mac (context help) → F1 |
+| done | F2 [F2] Command history panel |  |
 | done | F3 [F3] Object snap on/off |  |
 | done | F7 [F7] Grid display |  |
 | done | F8 [F8] Ortho mode |  |
@@ -2881,7 +2881,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Two-finger scroll [Two-finger scroll] Pan |  |
 | done | Middle-drag · Space+drag [Middle-drag · Space+drag] Pan |  |
 | done | Double middle-click [Double middle-click] Zoom extents |  |
-| partial: Ctrl+0 is Clean Screen on Windows | Ctrl+0 [⌘0] Zoom extents | See ⌃0: Ctrl+0 is Clean Screen on Windows; same Windows keys as: clean screen → (none) |
+| partial: Windows key conflict (documented): Ctrl+0 is Clean Screen, Zoom Extents has no Ctrl key (double middle-click, ribbon, Z E) | Ctrl+0 [⌘0] Zoom extents | See ⌃0: Ctrl+0 is Clean Screen on Windows; same Windows keys as: clean screen → (none) |
 | done | Ctrl+= / Ctrl+- [⌘= / ⌘-] Zoom in / out |  |
 | done | Drag left → right [Drag left → right] Window selection (fully inside) |  |
 | done | Drag right → left [Drag right → left] Crossing selection (touching) |  |
@@ -2892,17 +2892,17 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Ctrl+Z / Ctrl+Shift+Z [⌘Z / ⇧⌘Z] Undo / Redo |  |
 | done | Ctrl+C / Ctrl+X / Ctrl+V [⌘C / ⌘X / ⌘V] Copy / Cut / Paste objects (paste at cursor) |  |
 | done | Ctrl+A [⌘A] Select all |  |
-| todo: not bound | Ctrl+Alt+1 … Ctrl+Alt+4 [⌥⌘1 … ⌥⌘4] 2D · 3D · Split · Sheets |  |
-| todo: bug: runs PLOT | Ctrl+Alt+P [⌥⌘P] Show / hide panels | Ctrl+Alt equals AltGr on many European keyboards (may type a character); consider Ctrl+Shift+F2-style alternatives → Ctrl+Alt+P |
-| todo: not bound | Ctrl+Alt+J [⌥⌘J] Script console | Ctrl+Alt = AltGr on European layouts → Ctrl+Alt+J |
+| done | Ctrl+Alt+1 … Ctrl+Alt+4 [⌥⌘1 … ⌥⌘4] 2D · 3D · Split · Sheets |  |
+| done | Ctrl+Alt+P [⌥⌘P] Show / hide panels | Ctrl+Alt equals AltGr on many European keyboards (may type a character); consider Ctrl+Shift+F2-style alternatives → Ctrl+Alt+P |
+| done | Ctrl+Alt+J [⌥⌘J] Script console | Ctrl+Alt = AltGr on European layouts → Ctrl+Alt+J |
 | done | Ctrl+N / Ctrl+O / Ctrl+S / Ctrl+Shift+S [⌘N / ⌘O / ⌘S / ⇧⌘S] New · Open · Save · Save As |  |
 | done | Ctrl+P [⌘P] Plot / Print |  |
 | done | Ctrl+Shift+P [⇧⌘P] Page setup |  |
-| todo: bug: runs PLOT | Ctrl+Alt+Shift+P [⌥⇧⌘P] Plot preview | Ctrl+Alt = AltGr → Ctrl+Alt+Shift+P |
+| done | Ctrl+Alt+Shift+P [⌥⇧⌘P] Plot preview | Ctrl+Alt = AltGr → Ctrl+Alt+Shift+P |
 | done | Ctrl+K [⌘K] Search commands |  |
 | done | Ctrl+0 [⌃0] Clean screen | Clean screen ⌃0 and zoom extents ⌘0 both become Ctrl+0: AutoCAD for Windows uses Ctrl+0 for Clean Screen; give Zoom Extents no Ctrl binding (double middle-click, Z E); same Windows keys as: zoom extents → Ctrl+0 |
 | done | Ctrl+, [⌘,] Settings (custom shortcuts, colors, autosave…) | Settings: no Windows standard; place Options… under Tools/Edit menu as well (AutoCAD: OPTIONS) → Ctrl+, |
-| todo: not bound | Ctrl+Shift+/ [⇧⌘/] Command reference | Ctrl+? on US layouts; fine → Ctrl+Shift+/ |
+| done | Ctrl+Shift+/ [⇧⌘/] Command reference | Ctrl+? on US layouts; fine → Ctrl+Shift+/ |
 | done | F7 [F7] Toggle GRID |  |
 | done | F9 [F9] Toggle SNAP |  |
 | done | F8 [F8] Toggle ORTHO |  |
@@ -2917,10 +2917,10 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 
 | Status | Item | Command / detail |
 | --- | --- | --- |
-| partial: within ~5 levels of the Mac, but lawn/meadow render darker (view3d calib) | Lighting preset Daylight | sky=daylight, sunAltitude=46, sunAzimuth=222, sunColor=[1.0, 0.955, 0.89], sunIntensity=3300, shadowRadius=2.5, shadowAlpha=0.94, envIntensity=1.05 … |
-| partial: lawn and paving darker than the Mac (mean diff 5.7-9.4) | Lighting preset Golden hour | sky=golden, sunAltitude=11, sunAzimuth=228, sunColor=[1.0, 0.66, 0.38], sunIntensity=3400, shadowRadius=5, shadowAlpha=0.9, envIntensity=0.95 … |
-| partial: within ~5 levels of the Mac, but lawn/meadow render darker (view3d calib) | Lighting preset Overcast | sky=overcast, sunAltitude=58, sunAzimuth=200, sunColor=[0.93, 0.96, 1.0], sunIntensity=420, shadowRadius=22, shadowAlpha=0.7, envIntensity=1.55 … |
-| partial: about 25% darker than the Mac; bollard light pools too wide | Lighting preset Night | sky=night, sunAltitude=38, sunAzimuth=135, sunColor=[0.62, 0.72, 1.0], sunIntensity=70, shadowRadius=6, shadowAlpha=0.85, envIntensity=1.0 … |
+| partial: cosmetic: 2.1-3.1 levels from the Mac; cedar 5-7 levels too bright in flat light | Lighting preset Daylight | sky=daylight, sunAltitude=46, sunAzimuth=222, sunColor=[1.0, 0.955, 0.89], sunIntensity=3300, shadowRadius=2.5, shadowAlpha=0.94, envIntensity=1.05 … |
+| partial: cosmetic: 2.0-2.7 levels from the Mac; cedar +5-6. Smoke test on Windows: the interactive 3D view did not show the warm look after the preset was set | Lighting preset Golden hour | sky=golden, sunAltitude=11, sunAzimuth=228, sunColor=[1.0, 0.66, 0.38], sunIntensity=3400, shadowRadius=5, shadowAlpha=0.9, envIntensity=0.95 … |
+| partial: 4.6 levels from the Mac; limestone +12 | Lighting preset Overcast | sky=overcast, sunAltitude=58, sunAzimuth=200, sunColor=[0.93, 0.96, 1.0], sunIntensity=420, shadowRadius=22, shadowAlpha=0.7, envIntensity=1.55 … |
+| partial: cosmetic: 1.7 levels from the Mac; the Mac's bollard light pools are brighter | Lighting preset Night | sky=night, sunAltitude=38, sunAzimuth=135, sunColor=[0.62, 0.72, 1.0], sunIntensity=70, shadowRadius=6, shadowAlpha=0.85, envIntensity=1.0 … |
 | done | Visual style Wireframe |  |
 | done | Visual style Hidden Line |  |
 | done | Visual style Shaded |  |
@@ -2929,7 +2929,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Visual style Realistic |  |
 | done | Visual style X-Ray |  |
 | done | Visual style Sketchy |  |
-| partial: no clay mode, depth of field or HDRI environment in the WebGL renderer | Photographic render (RENDER) with presets, supersampling, PNG output |  |
+| partial: clay, depth of field and HDRI done; the Clear Sky / Sunset / Studio / Night / Physical Sky environments approximate the Mac gradient maps | Photographic render (RENDER) with presets, supersampling, PNG output |  |
 | done | Walk mode (WASD + mouse) |  |
 | done | Section box |  |
 | done | Sun study (animated sun and shadows) |  |
@@ -2959,7 +2959,7 @@ Items not `todo`: 2629 — **done 2450 · partial 171 · todo 275 · n/a 8** (pa
 | done | Color accent | dark #F5C518 · light #F5C518 |
 | done | Color accentText | dark #1E1F22 · light #1E1F22 |
 | done | Color danger | dark #E5534B · light #E5534B |
-| partial: window-selection blue is #4D80FF in plan-canvas.ts (Mac #4073F2) | Color windowBlue | dark #4073F2 · light #4073F2 |
+| done | Color windowBlue | dark #4073F2 · light #4073F2 |
 | done | Color crossingGreen | dark #40CC66 · light #40CC66 |
 | done | Color nsAccent | dark #F5C518 · light #F5C518 |
 | done | Font font | 11.0 pt regular  |

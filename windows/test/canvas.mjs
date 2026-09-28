@@ -36,7 +36,11 @@ const errors = [];
 page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error" && !m.text().includes("404")) errors.push(m.text()); });
 const shot = (name, opts = {}) => page.screenshot({ path: path.join(out, "canvas-" + name + ".png"), ...opts });
-const wait = (ms) => page.waitForTimeout(ms);
+// The contextual ribbon strip (MODIFY WALL, …) appears under the ribbon while something is selected and moves the canvas
+// down, as on the Mac: every wait re-reads the plan canvas position so the coordinates below stay on the plan.
+let box = null;
+const planBox = () => page.locator(".workspace canvas.plan >> nth=1").boundingBox();
+const wait = async (ms) => { await page.waitForTimeout(ms); const b = await planBox().catch(() => null); if (b) box = b; };
 const C = (fn, arg) => page.evaluate(fn, arg);
 const history = async () => (await page.textContent(".cmd-history")) ?? "";
 const undoLabel = () => C(() => window.archiApp.engine.call("panel.history").then((h) => h.undoLabel));
@@ -47,7 +51,7 @@ await page.goto(base);
 await page.waitForSelector("body.ready");
 await page.click(".start .grid.s .card2 >> nth=0");
 await wait(700);
-const box = await page.locator(".workspace canvas.plan >> nth=1").boundingBox();
+box = await planBox();
 const at = (v) => [box.x + v[0], box.y + v[1]];
 /** A visible stroke of the plan: its id and a point on it (canvas coordinates). */
 const strokeTarget = (minLen = 40, skip = 0) => C(([minLen, skip]) => {
@@ -258,6 +262,15 @@ await page.mouse.click(box.x + 800, box.y + 500, { button: "right" });
 await wait(200);
 check("right-click during a command = Enter (ends LINE)", !(await C(() => window.archiApp.prompt.active)));
 
+// ---- typed-ahead input: lines submitted before the engine answers go to the prompt the previous line opened ----
+{
+  const n0 = await C(() => window.archiApp.engine.raw.length);
+  await C(() => { const a = window.archiApp; a.submitLine("LINE"); a.submitLine("-20000,-20000"); a.submitLine("-19000,-20000"); return a.submitLine(""); });
+  await wait(250);
+  check("typed-ahead LINE input is queued, not run as new commands", (await C(() => window.archiApp.engine.raw.length)) === n0 + 1 && !(await history()).includes("Unknown command"),
+    (await history()).split("\n").slice(-3).join(" / "));
+}
+
 // ---- selection cycling (two overlapping lines) ----
 await C(() => window.archiApp.runCommand("LINE -40000,-40000 -30000,-40000 "));
 await wait(100);
@@ -270,7 +283,8 @@ const ov = await C(() => window.archiCanvas.toView([-35000, -40000]));
 await page.mouse.click(...at(ov));
 await wait(300);
 const firstSel = (await selIds()).join(",");
-await page.mouse.click(...at(ov));
+const ov2 = await C(() => window.archiCanvas.toView([-35000, -40000]));
+await page.mouse.click(...at(ov2));
 await wait(300);
 const secondSel = (await selIds()).join(",");
 check("clicking again cycles to the overlapping object", firstSel && secondSel && firstSel !== secondSel, `${firstSel} → ${secondSel}`);

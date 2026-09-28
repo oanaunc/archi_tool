@@ -50,8 +50,9 @@ public enum EngineDrawJSON {
         return o.json
     }
 
-    /// One draw item; `id` is the object it belongs to (nil for decoration), `clip` a paper rectangle (sheet viewports).
-    public static func item(_ it: DrawItem, id: EntityID? = nil, clip: BBox2? = nil) -> EngineJSON {
+    /// One draw item; `id` is the object it belongs to (nil for decoration), `clip` a paper rectangle (sheet viewports),
+    /// `format` the whole-text formatting of a text item ({font?, bold, italic, underline, strike}; textFormats).
+    public static func item(_ it: DrawItem, id: EntityID? = nil, clip: BBox2? = nil, format: EngineJSON? = nil) -> EngineJSON {
         var o = EngineObject()
         switch it {
         case .stroke(let p, let closed, let st):
@@ -68,6 +69,7 @@ public enum EngineDrawJSON {
             o.set("text", textGeom(t))
             o.set("font", font)
             setColor(&o, "color", c)
+            if let f = format { o.set("format", f) }
         case .image(let im):
             o.set("type", "image")
             o.set("image", imageGeom(im))
@@ -75,6 +77,26 @@ public enum EngineDrawJSON {
         if let id { o.set("id", id) }
         if let c = clip { o.set("clip", rect(c)) }
         return o.json
+    }
+
+    /// Text formatting of the drawing's text objects (entity props bold / italic / underline / strike / font, as the
+    /// Mac canvas (AppRenderInfo.TextFormat) and the PDF writer read them), keyed by entity id.
+    public static func textFormats(_ entities: [Entity]) -> [EntityID: EngineJSON] {
+        var m: [EntityID: EngineJSON] = [:]
+        for e in entities {
+            guard case .text = e.geometry else { continue }
+            let font = e.props["font"].flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0 }
+            let r = PlanImageExport.format(e.props)
+            if font == nil && r == nil { continue }
+            var o = EngineObject()
+            if let font { o.set("font", font) }
+            o.set("bold", r?.bold ?? false)
+            o.set("italic", r?.italic ?? false)
+            o.set("underline", r?.underline ?? false)
+            o.set("strike", r?.strike ?? false)
+            m[e.id] = o.json
+        }
+        return m
     }
 
     public static func rect(_ b: BBox2) -> EngineJSON { EngineJSON.numbers([b.min.x, b.min.y, b.max.x, b.max.y]) }

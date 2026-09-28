@@ -7,6 +7,7 @@ import { help, showMenu } from "./menu";
 import { paintThumbnail } from "../canvas/thumbnail";
 import { prefs } from "../prefs";
 import { listTemplates, newFromTemplate, openTemplateFile, revealTemplatesFolder } from "../dialogs";
+import { recoverySection } from "../sheets/recovery";
 
 const TEMPLATES = [
   { id: "metric", name: "Metric", subtitle: "Millimetres, standard layers", symbol: "square.and.pencil" },
@@ -42,6 +43,9 @@ export class StartScreen {
         tile("folder", "Open…", ".archi projects and DXF drawings", () => app.open()),
         tile("house.lodge", "Build Sample House", "Watch a house being drawn by commands", () => app.buildSampleHouse())),
       h("div", { class: "tip" }, icon("keyboard", 12), h("span", { text: "Tip: just start typing — LINE, WALL, DOOR, ROOM… Space or Enter repeats the last command." })));
+    // Documents recovered from autosave after a crash (StartView.recoverySection), under the start tiles.
+    const recovered = await recoverySection(app, () => void this.render());
+    if (recovered) left.insertBefore(recovered, left.querySelector(".tip"));
     const right = h("div", { class: "right" });
     const hdr = (title: string, ...trailing: HTMLElement[]) => h("div", { class: "shdr" }, h("span", { class: "sec", text: title }), ...trailing);
     const folderBtn = h("button", { class: "flatbtn", text: "Folder" }); help(folderBtn, "Put .archi files here to use them as templates (or SAVEASTEMPLATE)");
@@ -85,6 +89,7 @@ export class StartScreen {
     }
     const close = h("button", { class: "iconbtn close" }, icon("xmark", 13, 2)); help(close, "Continue with an empty drawing");
     close.addEventListener("click", () => { app.closeStart(); app.canvas?.focus(); });
-    this.el.append(h("div", { class: "card" }, left, h("div", { class: "vsep" }), right, close));
+    // replaceChildren: a render that started earlier (and awaited longer) never leaves a second card behind.
+    this.el.replaceChildren(h("div", { class: "card" }, left, h("div", { class: "vsep" }), right, close));
   }
 }

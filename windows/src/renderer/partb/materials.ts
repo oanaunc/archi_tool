@@ -402,9 +402,10 @@ export async function createProcedural(app: App, p: ReturnType<typeof procDefaul
 }
 
 /** From Photo… (PhotoMaterial.create): a tileable PBR material from a photo of a surface. */
-export async function materialFromPhoto(app: App) {
-  const path = await chooseImage(app, "Choose a photo of the surface");
+export async function materialFromPhoto(app: App, opts: { path?: string; name?: string; tileSize?: number } = {}) {
+  const path = opts.path ?? await chooseImage(app, "Choose a photo of the surface");
   if (!path) return;
+  const tile = Math.max(10, opts.tileSize ?? 1000);
   const url = N.fileUrl(app, path);
   if (!url) { app.print("Material from photo needs the Windows app."); return; }
   const img = new Image();
@@ -415,7 +416,7 @@ export async function materialFromPhoto(app: App) {
   const c = document.createElement("canvas"); c.width = w; c.height = hh;
   const g = c.getContext("2d")!; g.drawImage(img, 0, 0, w, hh);
   const r = derivePhoto(g.getImageData(0, 0, w, hh).data, w, hh);
-  const name = N.stem(path).replace(/\b\w/g, (x) => x.toUpperCase());
+  const name = opts.name ?? N.stem(path).replace(/\b\w/g, (x) => x.toUpperCase());
   const folder = N.join((await N.paths()).materials, "Photo");
   const safe = name.replace(/\//g, "-");
   const a = N.join(folder, safe + "_albedo.png"), nm = N.join(folder, safe + "_normal.png"), ro = N.join(folder, safe + "_roughness.png"), ao = N.join(folder, safe + "_ao.png");
@@ -426,7 +427,7 @@ export async function materialFromPhoto(app: App) {
   const data = await list(app);
   const cur = data.materials.find((x) => x.material.name.toLowerCase() === name.toLowerCase());
   const m: Mat = cur ? { ...cur.material } : { name, color: { r: 1, g: 1, b: 1, a: 1 }, roughness: 0.8, metalness: 0, transparency: 0, textureScale: 1000, cutPattern: "SOLID" };
-  m.color = { r: 1, g: 1, b: 1, a: 1 }; m.texture = a; m.textureScale = 1000; m.roughness = r.meanRoughness;
+  m.color = { r: 1, g: 1, b: 1, a: 1 }; m.texture = a; m.textureScale = tile; m.roughness = r.meanRoughness;
   const mm = { ...(parseJSON(cur?.maps) ?? {}), normal: nm, roughness: ro, ao };
   const asset = { useRenderAppearance: true, description: "", manufacturer: "", model: "", mark: "", keynote: "", url: "", ...(parseJSON(cur?.assets) ?? {}) };
   asset.shadingColor = rgbaToHex(r.meanColor).toUpperCase();
@@ -437,6 +438,32 @@ export async function materialFromPhoto(app: App) {
     { op: "setVariable", name: "MATASSET:" + name.toUpperCase(), value: sortedJSON(asset) },
   ] });
   await app.refresh(["document"]);
+  // MATFROMIMAGE's message (the Materials panel button prints the same).
+  app.print(`Material ${name} from ${N.basename(path)}: roughness ${r.meanRoughness.toFixed(2)}, tile ${Math.round(tile)} mm, normal/roughness/AO maps.`);
+}
+
+/** PROCMATERIAL / MATFROMIMAGE from the command line: the engine's `host` action {"action":"materials","op":…}. */
+export function materialsHost(app: App, p: any): boolean {
+  if (p?.action !== "materials") return false;
+  if (p.op === "procedural") {
+    const q = p.params ?? {};
+    const d = procDefaults((q.kind ?? "Brick") as ProcKind);
+    const col = (hex: string | undefined, def: RGB): RGB => {
+      const m = /^#?([0-9a-f]{6})$/i.exec(hex ?? "");
+      if (!m) return def;
+      const v = parseInt(m[1], 16);
+      return { r: ((v >> 16) & 255) / 255, g: ((v >> 8) & 255) / 255, b: (v & 255) / 255 };
+    };
+    const params = { ...d, color1: col(q.color1, d.color1), color2: col(q.color2, d.color2), tileSize: Number(q.tileSize ?? d.tileSize),
+      rows: Number(q.rows ?? d.rows), columns: Number(q.columns ?? d.columns), joint: Number(q.joint ?? d.joint), seed: Number(q.seed ?? 1) };
+    void createProcedural(app, params, String(p.name ?? "Procedural " + params.kind)).then((ok) => { if (!ok) app.print("The textures could not be written (Windows app only)."); });
+    return true;
+  }
+  if (p.op === "fromImage") {
+    void materialFromPhoto(app, { path: String(p.path), name: p.name ? String(p.name) : undefined, tileSize: Number(p.tileSize ?? 1000) });
+    return true;
+  }
+  return false;
 }
 
 export { header };

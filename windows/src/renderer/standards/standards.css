@@ -1,0 +1,21 @@
+/* Oanarina Archi Tool for Windows — GPL-3.0-or-later
+   Graphic Styles, Object Styles, Material Fill Patterns, Image Adjust and Share windows (Theme.swift fonts and colours). */
+.gs-win { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 12px; color: var(--text); font: 11px var(--ui); }
+.gs-page { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
+.gs-row { gap: 8px; align-items: center; min-height: 24px; }
+.gs-head { gap: 8px; font-size: 10px; }
+.gs-msg { font-size: 10px; color: var(--dim); min-height: 13px; }
+.gs-grow { flex: 1; }
+.gs-trunc { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gs-wf { display: inline-flex; align-items: center; gap: 2px; width: 78px; flex: none; }
+.gs-menu { width: 20px; height: 22px; color: var(--dim); border-radius: 3px; }
+.gs-menu:hover { background: var(--hover); color: var(--text); }
+.gs-cf { display: inline-flex; align-items: center; gap: 4px; width: 96px; flex: none; }
+.gs-chk { accent-color: var(--accent); margin: 0; }
+.gs-color { width: 40px; height: 20px; padding: 0; border: 1px solid var(--sep); border-radius: 3px; background: var(--field); }
+.gs-color:disabled { opacity: 0.4; }
+.gs-thumb { align-self: center; max-width: 100%; max-height: 180px; background: #fff; }
+.gs-share { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 12px; color: var(--text); font: 11px var(--ui); }
+.gs-files { display: flex; flex-direction: column; gap: 2px; padding: 6px; border-radius: 4px; background: var(--hover); }
+.gs-file { font-family: var(--mono); font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gs-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

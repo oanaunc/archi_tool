@@ -86,6 +86,8 @@ async function runOutput(app: App, p: any) {
       case "renderSave": return renderSave(app, p);
       case "renderToFile": return renderToFile(app, p);
       case "video": return video(app, p);
+      case "phaseVideo": return phaseVideoOp(app, p);
+      case "renderPrompt": return renderPromptOp(app, p);
       case "shadePlotRender": return shadePlotRender(app, p);
     }
   } catch (e: any) { app.print(e?.message ?? String(e)); }
@@ -127,6 +129,27 @@ async function video(app: App, p: any) {
   const s = { ...defaultSettings(), width: Number(p.width ?? 1280), height: Number(p.height ?? 720) };
   await exportVideo(app, { kind: p.kind, settings: s, site: await site(app), path, seconds: Number(p.seconds ?? 10), fps: Number(p.fps ?? 30), day: p.day, fromHour: p.fromHour, toHour: p.toHour, camera: p.camera ?? null });
   app.print(`Saved ${path}`);
+}
+
+/** PHASEANIMATION: the construction sequence video (1280×720, 30 fps) of the 3D view's camera. */
+async function phaseVideoOp(app: App, p: any) {
+  const s = { ...defaultSettings(), width: Number(p.width ?? 1280), height: Number(p.height ?? 720) };
+  await exportVideo(app, { kind: "phases", source: String(p.source ?? "Phases"), settings: s, site: await site(app), path: String(p.path), seconds: Number(p.seconds ?? 4), fps: Number(p.fps ?? 30) });
+  app.print(`Saved ${p.path}`);
+}
+
+/** RENDERPROMPT: stores the "Prompt: …" preset (replacing earlier prompt presets), selects it and opens the Render window. */
+async function renderPromptOp(app: App, p: any) {
+  const preset = { ...p.preset };
+  if (!preset?.name) return;
+  if (preset.hour == null) delete preset.hour;
+  const key = "archi.render.presets";
+  let custom: any[] = [];
+  try { custom = JSON.parse(localStorage.getItem(key) ?? "[]"); } catch { custom = []; }
+  custom = custom.filter((x) => !String(x?.name ?? "").startsWith("Prompt: "));
+  custom.push(preset);
+  try { localStorage.setItem(key, JSON.stringify(custom)); localStorage.setItem("archi.render.lastPreset", preset.name); } catch { /* private mode */ }
+  void openRenderWindow(app);
 }
 
 /** SHADEPLOT Rendered: a raster render of the 3D viewport's camera, stored for the sheet (ShadePlot.renderImage). */

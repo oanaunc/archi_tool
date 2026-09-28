@@ -43,7 +43,7 @@ function normalizeParity(p) {
       }),
     };
   });
-  return { ribbon, menus: p.menus || fallback.menus, panels: p.panels || fallback.panels, shortcuts: p.shortcuts || [] };
+  return { ribbon, menus: p.menus || fallback.menus, panels: p.panels || fallback.panels, shortcuts: p.shortcuts || [], contextualTabs: p.contextualTabs || [] };
 }
 
 let ui, source;
@@ -55,6 +55,66 @@ if (fs.existsSync(parityPath)) {
   source = "src/renderer/data/ribbon-fallback.json";
 }
 ui.source = source;
+
+// ---- run-time placeholders in the catalogue ----
+// The Mac builds the Component menus (RibbonView.componentMenu) from `model.command(["COMPONENT", "FURNITURE"])` and runs
+// "<resolved> <furniture>"; the catalogue records the resolved name as "{r}" and the button help as "<unavailable> / <available>".
+const RUNTIME_COMMANDS = { Component: ["COMPONENT", "FURNITURE"] };
+const unresolved = new Set();
+(function resolveRuntime(o, parentTitle) {
+  if (Array.isArray(o)) { o.forEach((x) => resolveRuntime(x, parentTitle)); return; }
+  if (!o || typeof o !== "object") return;
+  if (typeof o.help === "string" && o.help.includes(" / ") && JSON.stringify(o).includes('"{r}"')) {
+    const [unavailable, available] = o.help.split(" / ");
+    o.help = available; o.helpUnavailable = unavailable;
+  }
+  if (o.command === "{r}") {
+    const names = RUNTIME_COMMANDS[parentTitle];
+    if (names) { o.command = names[0]; o.names = names; } else unresolved.add(`${parentTitle} ▸ ${o.title}`);
+  }
+  for (const v of Object.values(o)) if (v && typeof v === "object") resolveRuntime(v, typeof o.title === "string" && o.title ? o.title : parentTitle);
+})([ui.ribbon, ui.menus]);
+if (unresolved.size) console.warn(`gen-ui-data: unresolved {r} commands: ${[...unresolved].join(", ")}`);
+
+// ---- F1: guide anchors (website archi-tool-guide.html is docs/USER-GUIDE.md through python-markdown's toc extension) ----
+// Same ids as markdown.extensions.toc: slugify (NFKD, ASCII, drop [^\w\s-], lower case, runs of - and spaces -> "-")
+// made unique with _1, _2 …; build_guide.py drops the leading H1. Each command maps to its Command reference section.
+function guideAnchors(md) {
+  const used = new Set(), commands = {}, categories = {}, sections = [];
+  const slug = (t) => t.normalize("NFKD").replace(/[^\x00-\x7f]/g, "").replace(/[^\w\s-]/g, "").trim().toLowerCase().replace(/[-\s]+/g, "-");
+  const unique = (id) => {
+    while (!id || used.has(id)) { const m = id.match(/^(.*)_([0-9]+)$/); id = m ? `${m[1]}_${Number(m[2]) + 1}` : `${id}_1`; }
+    used.add(id); return id;
+  };
+  const lines = md.split(/\r?\n/);
+  if (/^# /.test(lines[0] ?? "")) lines.shift();
+  let fenced = false, inReference = false, current = null;
+  for (const line of lines) {
+    if (/^\s*(```|~~~)/.test(line)) { fenced = !fenced; continue; }
+    if (fenced) continue;
+    const m = line.match(/^(#{1,6})\s+(.*?)\s*#*\s*$/);
+    if (m) {
+      const text = m[2].replace(/`([^`]*)`/g, "$1").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/(\*\*|__|\*)/g, "");
+      current = unique(slug(text));
+      if (m[1].length === 2) { inReference = /^command reference$/i.test(text); sections.push({ title: text, id: current }); }
+      else if (inReference && m[1].length === 3) categories[text] = current;
+      continue;
+    }
+    const row = inReference && line.match(/^\|\s*`([^`]+)`\s*\|/);
+    if (row && current && !commands[row[1].toUpperCase()]) commands[row[1].toUpperCase()] = current;
+  }
+  return { commands, categories, sections };
+}
+const guidePath = path.resolve(root, "../docs/USER-GUIDE.md");
+ui.guide = fs.existsSync(guidePath) ? guideAnchors(fs.readFileSync(guidePath, "utf8")) : { commands: {}, categories: {}, sections: [] };
+
+// ---- version (About, What's New): app/Info.plist like packaging/sync-version.mjs ----
+{
+  const plistPath = path.resolve(root, "../app/Info.plist");
+  const plist = fs.existsSync(plistPath) ? fs.readFileSync(plistPath, "utf8") : "";
+  const key = (k) => plist.match(new RegExp(`<key>${k}</key>\\s*<string>([^<]*)</string>`))?.[1]?.trim();
+  ui.appVersion = { short: key("CFBundleShortVersionString") ?? JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version, build: key("CFBundleVersion") ?? "1" };
+}
 fs.writeFileSync(path.join(dataDir, "ui.generated.json"), JSON.stringify(ui));
 
 // ---- icons ----
@@ -149,6 +209,6 @@ for (const sf of [...syms].sort()) {
   icons[sf] = { lucide: name, nodes };
 }
 fs.writeFileSync(iconsPath, JSON.stringify({ licence: "Icons: Lucide (https://lucide.dev), ISC licence. Mapped from the Mac app's SF Symbol names.", icons }));
-console.log(`ui data from ${source}: ${ui.ribbon.length} tabs; ${Object.keys(icons).length} icons from ${iconSource || "the previous icons.generated.json (no lucide installed)"}` +
+console.log(`ui data from ${source}: ${ui.ribbon.length} tabs; ${Object.keys(ui.guide.commands).length} guide anchors; ${Object.keys(icons).length} icons from ${iconSource || "the previous icons.generated.json (no lucide installed)"}` +
   `${missing.length ? `; MISSING ${missing.length}: ${missing.join(" ")}` : ""}${unmapped.length ? `; UNMAPPED ${unmapped.length}: ${unmapped.join(" ")}` : ""}`);
 if (process.argv.includes("--strict") && (missing.length || unmapped.length)) process.exit(1);
