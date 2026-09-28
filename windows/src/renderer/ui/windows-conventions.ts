@@ -1,7 +1,7 @@
 // Oanarina Archi Tool for Windows — GPL-3.0-or-later
 // Windows conventions on top of the Mac layout: the Mac's ⌘ shortcuts are Ctrl here (main.ts keyboard map), plus
-//   F1            help for the running (or typed) command: its section of the user guide
-//                 (https://www.oanarinaldi.com/archi-tool-guide.html#<section>; the Mac's HelpPages.contextRoute)
+//   F1            help for the running (or typed) command: its page in the offline help browser, else the index
+//                 (system/help-browser.ts; the Mac's HelpBrowser.show(HelpPages.contextRoute), ArchiApp.swift)
 //   Alt+letter    opens the title-bar menu with that access key (Alt+F File, Alt+E Edit, Alt+V View, Alt+D Draw, Alt+M Modify,
 //                 Alt+N Annotate, Alt+A Architecture, Alt+O Model, Alt+Y Analyze, Alt+T Tools, Alt+W Window, Alt+H Help;
 //                 titlebar.ts menuMnemonics), the letters underlined while Alt is held
@@ -9,7 +9,7 @@
 //   native caption buttons (snap layouts) when the main process uses titleBarOverlay (body.native-captions)
 //   high-DPI: moving the window to a monitor with another scale factor re-sizes the canvases (event "archi:dpr").
 import type { App } from "../app";
-import ui from "../data/ui.generated.json";
+import { showHelpBrowser, contextRoute } from "../system/help-browser";
 import { placeAccessKeys } from "./titlebar";
 
 export const GUIDE_URL = "https://www.oanarinaldi.com/archi-tool-guide.html";
@@ -20,22 +20,8 @@ export function openGuide(app: App, url = GUIDE_URL) {
   else window.open(url, "_blank", "noopener");
 }
 
-/**
- * The guide page for F1 (HelpPages.contextRoute on the Mac): the running command, else the command typed so far, else the
- * top of the guide. A command links to its section of the guide's command reference (anchors from docs/USER-GUIDE.md,
- * tools/gen-ui-data.mjs), else to its category's section.
- */
-export function contextHelpURL(app: App): string {
-  const g = (ui as any).guide ?? { commands: {}, categories: {} };
-  const typed = (app.commandInput ?? "").trim().split(/\s+/)[0] ?? "";
-  const name = (app.prompt?.active && app.prompt.command) ? String(app.prompt.command) : typed;
-  if (!name) return GUIDE_URL;
-  const def = app.lookup(name);
-  const key = (def?.name ?? name).toUpperCase();
-  const anchor = g.commands[key] ?? (def ? g.categories[def.category] : undefined);
-  return anchor ? `${GUIDE_URL}#${anchor}` : GUIDE_URL;
-}
-export function openContextHelp(app: App) { openGuide(app, contextHelpURL(app)); }
+/** F1 and Help ▸ Oanarina Archi Tool Help (F1): the offline help browser at the running / typed command's page, like the Mac. */
+export function openContextHelp(app: App) { showHelpBrowser(app, contextRoute(app)); }
 
 export function installWindowsConventions(app: App) {
   const native = app.engine.native;

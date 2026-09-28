@@ -34,11 +34,14 @@ await page.waitForSelector("body.ready");
 await page.click(".start .grid.s .card2 >> nth=0");
 await page.waitForTimeout(600);
 
-// F1 → user guide
+// F1 → the offline help browser (the Mac's HelpBrowser), not the website
 await page.mouse.click(700, 600);
 await page.keyboard.press("F1");
+await page.waitForTimeout(200);
 const opened = await page.evaluate(() => window.__opened);
-check("F1 opens archi-tool-guide.html", opened.includes("https://www.oanarinaldi.com/archi-tool-guide.html"), opened.join(" "));
+const f1Route = await page.evaluate(() => document.querySelector('[data-window="help-browser"] .help-browser')?.dataset.route ?? "");
+check("F1 opens the offline help browser", f1Route === "index" && !opened.length, `${f1Route} ${opened.join(" ")}`);
+await page.evaluate(() => document.querySelector('[data-window="help-browser"] .twin-close')?.click());
 
 // Alt+F / Alt+H open the title-bar menus
 await page.keyboard.press("Alt+KeyF");

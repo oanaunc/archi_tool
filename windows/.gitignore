@@ -3,6 +3,8 @@ dist/
 out/
 resources/engine/*
 !resources/engine/README.txt
+resources/shellext/*
+!resources/shellext/README.txt
 test/view3d/harness.js
 test-results/
 packaging/build/

@@ -54,10 +54,12 @@ check("Ctrl+Shift+A deselects all", selN > 0 && (await A(() => window.archiApp.s
 await page.mouse.click(700, 500); await esc(); await page.keyboard.press("Control+Shift+Slash"); await wait(400);
 out.cmdref = (await page.locator('.twin[data-window="command-reference"]').isVisible()) ? "Command Reference" : "";
 check("Ctrl+Shift+/ opens the Command Reference window", /Command Reference/i.test(out.cmdref), out.cmdref); await esc();
+const helpRoute = () => A(() => document.querySelector('[data-window="help-browser"] .help-browser')?.dataset.route ?? "");
 opened.length = 0; await page.keyboard.press("F1"); await wait(300);
-check("F1 opens the guide", opened.some((u) => /archi-tool-guide/.test(u)), opened.join(","));
+check("F1 opens the offline help browser", (await helpRoute()) === "index" && !opened.length, (await helpRoute()) + " " + opened.join(","));
 opened.length = 0; await page.click(".cmdline input, #cmdline input, .commandline input").catch(() => {}); await page.keyboard.type("LINE"); await page.keyboard.press("Enter"); await wait(300); await page.keyboard.press("F1"); await wait(300); await esc();
-check("F1 during LINE opens its guide section", opened.some((u) => /#/.test(u)), opened.join(","));
+check("F1 during LINE opens its help page", (await helpRoute()) === "cmd/LINE" && !opened.length, (await helpRoute()) + " " + opened.join(","));
+await A(() => document.querySelector('[data-window="help-browser"] .twin-close')?.click());
 
 // ---- contextual tab: select one wall ----
 const call = (m, p = {}) => page.evaluate(([a, b]) => window.archiApp.engine.call(a, b), [m, p]);

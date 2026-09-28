@@ -17,6 +17,7 @@ export const SHEET_COMMANDS: { name: string; aliases: string[]; category: string
   { name: "SHEETIMAGE", aliases: ["LAYOUTIMAGE", "SHEETPNG"], category: "Output", summary: "Exports a sheet (layout) or the Model view of the current level as a PNG, JPEG or TIFF image at a chosen resolution (dpi).", modifies: false },
   { name: "TITLEBLOCKDESIGN", aliases: ["TBDESIGN", "CUSTOMTITLEBLOCK", "TITLEBLOCKBLOCK"], category: "Output", summary: "Custom title blocks: Create a starter block (edit it with BEDIT: lines, logo images, {field} texts or attributes), Use a block on all or the current sheet, or go back to the Builtin one.", modifies: true },
   { name: "ZOOMXP", aliases: ["ZXP", "ZOOMPAPER", "ZOOMSCALEXP"], category: "View", summary: "ZOOM nXP: in a sheet sets the selected viewport to 1:n (1/100XP); on the plan shows the drawing at that paper scale at true size on the screen.", modifies: false },
+  { name: "FILEPREVIEW", aliases: ["FINDERPREVIEW", "SPOTLIGHTINFO", "FILEMETADATA"], category: "File", summary: "Finder preview icon and Spotlight metadata of the saved drawing: Update now, Icons on/off, Versions on/off, Show the indexed metadata.", modifies: false },
   { name: "DRAWINGRECOVERY", aliases: ["DRM"], category: "File", summary: "Shows documents recovered from autosave after a crash.", modifies: false },
   { name: "FILEVERSIONS", aliases: ["BROWSEVERSIONS", "MACVERSIONS", "REVERTTO"], category: "File", summary: "Versions of the saved file (every save keeps one): Browse window, List, Restore a version, Open a copy, Save a version now, Keep count.", modifies: false },
 ];
@@ -157,6 +158,11 @@ export function fakeSheetsCall(fe: any, method: string, p: any): any {
           if (!fe.info?.path) { fe.log("Save the drawing as an .archi file first."); break; }
           if (!arg || arg === "BROWSE") host({ action: "dialog", dialog: "versions", path: fe.info.path });
           else if (arg === "LIST") versions(fe).forEach((v, i) => fe.log(`  ${i + 1}. ${v.label}`));
+          break;
+        case "FILEPREVIEW":
+          if (!fe.info?.path) { fe.log("Save the drawing as an .archi file first."); break; }
+          if (arg === "SHOW") { fe.log(`  kMDItemTitle: ${fe.info.title ?? "Drawing"}`); fe.log("  Explorer thumbnail: 512×512 picture in the file"); }
+          else if (!arg || arg === "UPDATE") fe.log(`Explorer thumbnail of ${String(fe.info.path).split(/[\\/]/).pop()} updated.`);
           break;
         case "SHEETIMAGE": host({ action: "sheetImage", layout: "Model", dpi: 150, format: "png", path: null, suggested: `${fe.info?.title ?? "Drawing"}.png` }); break;
         case "PSETUPIN": host({ action: "chooseFile", purpose: "PSETUPIN", title: "Import Page Setup", extensions: ["archi"] }); break;

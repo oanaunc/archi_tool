@@ -28,7 +28,7 @@ to `done`, `partial`, `wip` or `n/a (reason)`: the generator keeps every non-tod
 | Theme | 50 |
 | **Total checklist lines** | **2904** |
 
-Items not `todo`: 2903 — **done 2882 · partial 14 · todo 1 · n/a 7** (parity audit; open items in docs/WINDOWS-GAPS.md)
+Items not `todo`: 2904 — **done 2892 · partial 1 · todo 0 · n/a 11** (parity audit; open items in docs/WINDOWS-GAPS.md)
 
 ## Command coverage
 
@@ -1258,7 +1258,7 @@ Items not `todo`: 2903 — **done 2882 · partial 14 · todo 1 · n/a 7** (parit
 | done | Analyze ▸ Clash Detect | `CLASHDETECT` |
 | done | Analyze ▸ Check Model | `CHECKMODEL` |
 | done | Analyze ▸ Sun Position | `SUNPOSITION` |
-| partial | Menu Tools | 73 items |
+| done | Menu Tools | 73 items |
 | done | Tools ▸ Draw More |  |
 | done | Tools ▸ Draw More ▸ Ray | `RAY` |
 | done | Tools ▸ Draw More ▸ Construction Line | `XLINE` |
@@ -1873,7 +1873,7 @@ Items not `todo`: 2903 — **done 2882 · partial 14 · todo 1 · n/a 7** (parit
 | done | Tools ▸ Analysis & Design Assist ▸ Ask (Natural Language) | `ASK` |
 | done | Tools ▸ Analysis & Design Assist ▸ AutoLISP | `LISP` |
 | done | Tools ▸ Analysis & Design Assist ▸ Load LISP File | `LISPLOAD` |
-| partial | Tools ▸ Navigation & Sheets |  |
+| done | Tools ▸ Navigation & Sheets |  |
 | done | Tools ▸ Navigation & Sheets ▸ File Tabs | `FILETAB` |
 | done | Tools ▸ Navigation & Sheets ▸ Hide File Tabs | `FILETABCLOSE` |
 | done | Tools ▸ Navigation & Sheets ▸ Model/Layout Tabs | `LAYOUTTABS` |
@@ -1881,7 +1881,7 @@ Items not `todo`: 2903 — **done 2882 · partial 14 · todo 1 · n/a 7** (parit
 | done | Tools ▸ Navigation & Sheets ▸ Inspector | `INSPECT` |
 | done | Tools ▸ Navigation & Sheets ▸ Design Center | `ADCENTER` |
 | done | Tools ▸ Navigation & Sheets ▸ Help Browser | `HELPWINDOW` |
-| partial: opens the website guide; the Mac opens the offline help browser (system/help-browser.ts showHelpBrowser exists) | Tools ▸ Navigation & Sheets ▸ Tutorials | `TUTORIALS` |
+| done | Tools ▸ Navigation & Sheets ▸ Tutorials | `TUTORIALS` |
 | done | Tools ▸ Navigation & Sheets ▸ Sample House | `SAMPLEHOUSE` |
 | done | Tools ▸ Navigation & Sheets ▸ Select Wall Chain | `SELECTWALLCHAIN` |
 | done | Tools ▸ Navigation & Sheets ▸ Twist View | `DVIEW` |
@@ -2135,9 +2135,9 @@ Items not `todo`: 2903 — **done 2882 · partial 14 · todo 1 · n/a 7** (parit
 | done | Tools ▸ Images, Links & Structure ▸ Material Patterns | `MATPATTERN` |
 | done | Tools ▸ Images, Links & Structure ▸ Rebar | `REBAR` |
 | done | Tools ▸ Images, Links & Structure ▸ Steel Connection | `STEELCONNECTION` |
-| partial | Tools ▸ Files, Clipboard & Access |  |
+| done | Tools ▸ Files, Clipboard & Access |  |
 | done | Tools ▸ Files, Clipboard & Access ▸ Browse Versions | `FILEVERSIONS` |
-| todo: command FILEPREVIEW is not registered in archi-engine | Tools ▸ Files, Clipboard & Access ▸ File Preview & Spotlight | `FILEPREVIEW` |
+| done | Tools ▸ Files, Clipboard & Access ▸ File Preview & Spotlight | `FILEPREVIEW` |
 | done | Tools ▸ Files, Clipboard & Access ▸ Paste from Other App | `PASTESPECIAL` |
 | done | Tools ▸ Files, Clipboard & Access ▸ Copy as Picture | `COPYPICTURE` |
 | done | Tools ▸ Files, Clipboard & Access ▸ Zoom to Paper Scale | `ZOOMXP` |
@@ -2169,9 +2169,9 @@ Items not `todo`: 2903 — **done 2882 · partial 14 · todo 1 · n/a 7** (parit
 | done | Tools ▸ Exchange More |  |
 | done | Tools ▸ Exchange More ▸ Rhino 3DM In | `RHINOIN` |
 | done | Tools ▸ Exchange More ▸ Rhino 3DM Out | `RHINOOUT` |
-| partial | Tools ▸ Tutorial Videos |  |
-| partial: recording is Mac-only; Windows opens the website tutorials | Tools ▸ Tutorial Videos ▸ Record Tutorial Videos | `TUTORIALRECORD Record` |
-| partial: only checks that the commands exist | Tools ▸ Tutorial Videos ▸ Check Tutorial Scripts | `TUTORIALRECORD Check` |
+| done | Tools ▸ Tutorial Videos |  |
+| n/a (Oana's decision 28 Sep: recording tool is Mac-only; Windows opens the website tutorials) | Tools ▸ Tutorial Videos ▸ Record Tutorial Videos | `TUTORIALRECORD Record` |
+| n/a (Oana's decision 28 Sep: recording tool is Mac-only; Windows opens the website tutorials) | Tools ▸ Tutorial Videos ▸ Check Tutorial Scripts | `TUTORIALRECORD Check` |
 | done | Tools ▸ Tutorial Videos ▸ List Tutorials | `TUTORIALRECORD List` |
 | done | Tools ▸ Photographic Render |  |
 | done | Tools ▸ Photographic Render ▸ Lighting Preset | `RENDERPRESET` |
@@ -2238,9 +2238,9 @@ Items not `todo`: 2903 — **done 2882 · partial 14 · todo 1 · n/a 7** (parit
 | done | Window ▸ Minimize | Ctrl+M · system |
 | done | Window ▸ Zoom | system |
 | n/a (macOS only) | Window ▸ Bring All to Front | system |
-| partial | Menu Help | 13 items |
-| partial: opens the website guide; the Mac opens the offline help browser (system/help-browser.ts showHelpBrowser exists) | Help ▸ Oanarina Archi Tool Help (F1) | `HELP` |
-| partial: opens the website guide; the Mac opens the offline help browser (system/help-browser.ts showHelpBrowser exists) | Help ▸ Tutorials | `HELP` |
+| done | Menu Help | 13 items |
+| done | Help ▸ Oanarina Archi Tool Help (F1) | `HELP` |
+| done | Help ▸ Tutorials | `HELP` |
 | done | Help ▸ Open Sample House | `@ui:WindowRouter.open` |
 | done | Help ▸ Search Commands… | `COMMANDSEARCH` · Ctrl+K |
 | done | Help ▸ Command Reference | `@ui:window:command-reference` · Ctrl+Shift+/ |
@@ -2853,7 +2853,7 @@ Items not `todo`: 2903 — **done 2882 · partial 14 · todo 1 · n/a 7** (parit
 | done | Ctrl+Alt+2 [⌥⌘2] View ▸ 3D Model | Ctrl+Alt = AltGr → Ctrl+Alt+2 |
 | done | Ctrl+Alt+3 [⌥⌘3] View ▸ Split View | Ctrl+Alt = AltGr → Ctrl+Alt+3 |
 | done | Ctrl+Alt+4 [⌥⌘4] View ▸ Sheets | Ctrl+Alt = AltGr → Ctrl+Alt+4 |
-| partial: Windows key conflict (documented): Ctrl+0 is Clean Screen, Zoom Extents has no Ctrl key (double middle-click, ribbon, Z E) | Ctrl+0 [⌘0] View ▸ Zoom Extents | See ⌃0: Ctrl+0 is Clean Screen on Windows; same Windows keys as: clean screen → (none) |
+| n/a (Oana's decision 28 Sep: Windows CAD convention) | Ctrl+0 [⌘0] View ▸ Zoom Extents | See ⌃0: Ctrl+0 is Clean Screen on Windows; same Windows keys as: clean screen → (none) |
 | done | Ctrl+= [⌘=] View ▸ Zoom In |  |
 | done | Ctrl+- [⌘-] View ▸ Zoom Out |  |
 | done | Ctrl+Alt+P [⌥⌘P] View ▸ Hide Panels | Ctrl+Alt equals AltGr on many European keyboards (may type a character); consider Ctrl+Shift+F2-style alternatives → Ctrl+Alt+P |
@@ -2868,7 +2868,7 @@ Items not `todo`: 2903 — **done 2882 · partial 14 · todo 1 · n/a 7** (parit
 | done | Right-click [Right-click] Enter while a command runs · context menu when idle |  |
 | done | Tab [Tab] Accept autocomplete |  |
 | done | ↑ / ↓ [↑ / ↓] Command history / suggestions |  |
-| partial: opens the website guide; the Mac opens the offline help browser (system/help-browser.ts showHelpBrowser exists) | F1 [F1] Help for the running command | Windows help key: matches the Mac (context help) → F1 |
+| done | F1 [F1] Help for the running command | Windows help key: matches the Mac (context help) → F1 |
 | done | F2 [F2] Command history panel |  |
 | done | F3 [F3] Object snap on/off |  |
 | done | F7 [F7] Grid display |  |
@@ -2881,7 +2881,7 @@ Items not `todo`: 2903 — **done 2882 · partial 14 · todo 1 · n/a 7** (parit
 | done | Two-finger scroll [Two-finger scroll] Pan |  |
 | done | Middle-drag · Space+drag [Middle-drag · Space+drag] Pan |  |
 | done | Double middle-click [Double middle-click] Zoom extents |  |
-| partial: Windows key conflict (documented): Ctrl+0 is Clean Screen, Zoom Extents has no Ctrl key (double middle-click, ribbon, Z E) | Ctrl+0 [⌘0] Zoom extents | See ⌃0: Ctrl+0 is Clean Screen on Windows; same Windows keys as: clean screen → (none) |
+| n/a (Oana's decision 28 Sep: Windows CAD convention) | Ctrl+0 [⌘0] Zoom extents | See ⌃0: Ctrl+0 is Clean Screen on Windows; same Windows keys as: clean screen → (none) |
 | done | Ctrl+= / Ctrl+- [⌘= / ⌘-] Zoom in / out |  |
 | done | Drag left → right [Drag left → right] Window selection (fully inside) |  |
 | done | Drag right → left [Drag right → left] Crossing selection (touching) |  |
@@ -2920,7 +2920,7 @@ Items not `todo`: 2903 — **done 2882 · partial 14 · todo 1 · n/a 7** (parit
 | done | Lighting preset Daylight | sky=daylight, sunAltitude=46, sunAzimuth=222, sunColor=[1.0, 0.955, 0.89], sunIntensity=3300, shadowRadius=2.5, shadowAlpha=0.94, envIntensity=1.05 … |
 | done | Lighting preset Golden hour | sky=golden, sunAltitude=11, sunAzimuth=228, sunColor=[1.0, 0.66, 0.38], sunIntensity=3400, shadowRadius=5, shadowAlpha=0.9, envIntensity=0.95 … |
 | done | Lighting preset Overcast | sky=overcast, sunAltitude=58, sunAzimuth=200, sunColor=[0.93, 0.96, 1.0], sunIntensity=420, shadowRadius=22, shadowAlpha=0.7, envIntensity=1.55 … |
-| partial: cosmetic: 1.8 levels from the Mac; the Mac's bollards cast shadows inside their own light pools | Lighting preset Night | sky=night, sunAltitude=38, sunAzimuth=135, sunColor=[0.62, 0.72, 1.0], sunIntensity=70, shadowRadius=6, shadowAlpha=0.85, envIntensity=1.0 … |
+| partial: cosmetic: 1.8 levels from the Mac; bollard shadows and spot-light shadows now match, the bollard pools stay about 20 levels dimmer at their outer edges | Lighting preset Night | sky=night, sunAltitude=38, sunAzimuth=135, sunColor=[0.62, 0.72, 1.0], sunIntensity=70, shadowRadius=6, shadowAlpha=0.85, envIntensity=1.0 … |
 | done | Visual style Wireframe |  |
 | done | Visual style Hidden Line |  |
 | done | Visual style Shaded |  |

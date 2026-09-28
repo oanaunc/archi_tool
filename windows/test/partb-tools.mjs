@@ -178,8 +178,13 @@ if (await win("graphPlayer").isVisible()) { await shotWin("graphPlayer", "graph-
 await host({ action: "tutorials", mode: "List" });
 await wait(200);
 check("TUTORIALRECORD List answers in the command history", /tutorial/i.test(await history()));
-const opened = await page.evaluate(() => { let u = ""; const o = window.open; window.open = (x) => { u = String(x); return null; }; window.archiApp.uiHooks.host({ action: "tutorials", mode: "Open" }); window.open = o; return new Promise((r) => setTimeout(() => r(u), 100)); });
-check("TUTORIALS opens the tutorial videos on the website", opened.startsWith("https://www.oanarinaldi.com/"), opened);
+const opened = await page.evaluate(() => { let u = ""; const o = window.open; window.open = (x) => { u = String(x); return null; }; window.archiApp.uiHooks.host({ action: "tutorials", mode: "Record" }); window.open = o; return new Promise((r) => setTimeout(() => r(u), 100)); });
+check("TUTORIALRECORD Record opens the tutorial videos on the website", opened.startsWith("https://www.oanarinaldi.com/"), opened);
+await host({ action: "tutorials", mode: "Open" });
+await wait(200);
+const tutRoute = await page.evaluate(() => document.querySelector('[data-window="help-browser"] .help-browser')?.dataset.route ?? "");
+check("TUTORIALS opens the offline help browser's tutorials page", tutRoute === "tutorials", tutRoute);
+await page.evaluate(() => document.querySelector('[data-window="help-browser"] .twin-close')?.click());
 
 check("no page errors", errors.length === 0, errors.slice(0, 3).join(" | "));
 await browser.close();

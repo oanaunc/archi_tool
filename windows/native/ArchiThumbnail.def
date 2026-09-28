@@ -1,0 +1,7 @@
+; Oanarina Archi Tool — exports of the Explorer thumbnail handler (ArchiThumbnail.cpp)
+EXPORTS
+  DllGetClassObject PRIVATE
+  DllCanUnloadNow PRIVATE
+  DllRegisterServer PRIVATE
+  DllUnregisterServer PRIVATE
+  DllInstall PRIVATE

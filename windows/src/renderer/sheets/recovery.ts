@@ -18,6 +18,11 @@ export function versionsKeep(): number {
   try { const v = Number(localStorage.getItem("archi.fileVersionsKeep")); return v >= 1 && v <= 1000 ? v : 50; } catch { return 50; }
 }
 export function setVersionsKeep(n: number) { try { localStorage.setItem("archi.fileVersionsKeep", String(n)); } catch {} }
+/** FILEPREVIEW Icons / Versions (Mac SaveExtras.finderPreview / .versions, both on by default). */
+export function saveExtra(key: "finderPreviewIcons" | "fileVersionsOnSave"): boolean {
+  try { return localStorage.getItem("archi." + key) !== "0"; } catch { return true; }
+}
+export function setSaveExtra(key: "finderPreviewIcons" | "fileVersionsOnSave", on: boolean) { try { localStorage.setItem("archi." + key, on ? "1" : "0"); } catch {} }
 
 /** Tells the engine where the recovery and versions folders are (once per window). */
 export function ensureRecoverySetup(a: App): Promise<boolean> {
@@ -26,7 +31,8 @@ export function ensureRecoverySetup(a: App): Promise<boolean> {
     setup = (async () => {
       const f = await folders();
       const versions = f.recovery.replace(/Recovery$/i, "Versions");
-      const r = await a.tryCall("recovery.setup", { folder: f.recovery, versionsFolder: versions, keep: versionsKeep(), versionsOnSave: true });
+      const r = await a.tryCall("recovery.setup", { folder: f.recovery, versionsFolder: versions, keep: versionsKeep(),
+        versionsOnSave: saveExtra("fileVersionsOnSave"), previewOnSave: saveExtra("finderPreviewIcons") });
       return !!r;
     })();
   }

@@ -21,6 +21,7 @@ import { showMarkups, showCompare, showRevisionClouds } from "./review";
 import { showFamilyEditor } from "./family-editor";
 import { showCustomizer } from "./customizer";
 import { showNodeEditor, showGraphPlayer } from "./node-editor";
+import { showHelpBrowser } from "../system/help-browser";
 
 /** What the tool windows need from the 2D plan view (canvas/plan-canvas.ts). */
 export interface PlanHooks {
@@ -240,11 +241,13 @@ async function runPluginCommand(app: App, p: any) {
   await app.refresh(["document", "selection", "history"]);
 }
 
-/** TUTORIALRECORD List | Check | Record and TUTORIALS (TutorialCommands.swift). Videos are recorded by the Mac app. */
+/** TUTORIALRECORD List | Check | Record and TUTORIALS (TutorialCommands.swift). TUTORIALS opens the offline help browser's
+ *  tutorials page like the Mac; recording and checking the videos is Mac-only, so Record and Check open the website tutorials. */
 async function tutorials(app: App, mode: string) {
   const open = async () => { if (app.engine.native) await app.engine.native.openExternal(TUTORIALS_URL); else window.open(TUTORIALS_URL, "_blank"); };
-  if (mode === "Open" || mode === "Record") {
-    if (mode === "Record") app.print("Tutorial videos are recorded by the Mac app; opening the tutorial videos on the website.");
+  if (mode === "Open") { showHelpBrowser(app, "tutorials"); return; }
+  if (mode === "Record" || mode === "Check") {
+    app.print("Tutorial videos are recorded and checked by the Mac app; opening the tutorial videos on the website.");
     await open();
     return;
   }
@@ -255,16 +258,6 @@ async function tutorials(app: App, mode: string) {
     app.print(`${list.length} tutorial(s). The videos are at ${TUTORIALS_URL}`);
     return;
   }
-  // Check: every command a tutorial types must exist in this build.
-  let problems = 0;
-  for (const t of list) {
-    const text = (await N.readText(t.file)) ?? "";
-    const body = text.split(/^---\s*$/m).slice(1).join("\n");
-    const missing = new Set<string>();
-    for (const m of body.matchAll(/^\s*(?:type|command|run)\s+"?([A-Za-z][A-Za-z0-9]*)/gim)) if (!app.has(m[1])) missing.add(m[1].toUpperCase());
-    if (missing.size) { problems += missing.size; app.print(`${t.name}: unknown command(s) ${[...missing].join(", ")}`); }
-  }
-  app.print(problems ? `Tutorial check: ${problems} problem(s).` : `Tutorial check: ${list.length} tutorial(s), all commands found.`);
 }
 
 // ---- script panels (archi.panel) ----

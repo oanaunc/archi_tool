@@ -242,17 +242,18 @@ await page.keyboard.press("Escape");
 
 // ---- F1: help for the running / typed command ----
 await page.evaluate(() => { const a = window.archiApp; a.commandInput = ""; a.prompt = { ...a.prompt, active: false }; });
+const helpRoute = () => page.evaluate(() => document.querySelector('[data-window="help-browser"] .help-browser')?.dataset.route ?? "");
 c = await press("F1");
-const guide = "https://www.oanarinaldi.com/archi-tool-guide.html";
-check("F1 idle opens the guide", c.includes("open " + guide), c.join(","));
+check("F1 idle opens the offline help browser index", (await helpRoute()) === "index" && !c.some((x) => x.startsWith("open ")), c.join(","));
 await page.evaluate(() => { window.archiApp.commandInput = "wall"; });
 await page.keyboard.press("F1"); await wait(100);
 c = await calls();
-check("F1 with WALL typed opens its guide section", c.includes(`open ${guide}#architecture`), c.join(","));
+check("F1 with WALL typed opens its help page", (await helpRoute()) === "cmd/WALL" && !c.some((x) => x.startsWith("open ")), (await helpRoute()) + " " + c.join(","));
 await page.evaluate(() => { const a = window.archiApp; a.commandInput = ""; a.prompt = { ...a.prompt, active: true, command: "LINE" }; });
 await page.keyboard.press("F1"); await wait(100);
 c = await calls();
-check("F1 while LINE runs opens the Draw section", c.includes(`open ${guide}#draw`), c.join(","));
+check("F1 while LINE runs opens the LINE help page", (await helpRoute()) === "cmd/LINE" && !c.some((x) => x.startsWith("open ")), (await helpRoute()) + " " + c.join(","));
+await page.evaluate(() => document.querySelector('[data-window="help-browser"] .twin-close')?.click());
 await page.evaluate(() => { const a = window.archiApp; a.prompt = { ...a.prompt, active: false, command: null }; });
 check("Help ▸ Oanarina Archi Tool Help (F1) shows F1", at("Help ▸ Oanarina Archi Tool Help (F1)")?.sc === "F1");
 

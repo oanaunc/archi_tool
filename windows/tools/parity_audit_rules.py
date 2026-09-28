@@ -419,3 +419,23 @@ ov("Help ▸ Tutorials", "partial", _HW)
 ov("Tools ▸ Navigation & Sheets ▸ Tutorials", "partial", _HW)
 for s_ in J["shortcuts"]:
     if s_["keys"] == "F1": ov("%s [%s] %s" % (s_["keys"], s_["mac"], s_["action"]), "partial", _HW)
+
+# ---------------- Round 5: Oana's decisions of 28 Sep ----------------
+# Help: F1 / Help ▸ Oanarina Archi Tool Help (F1) open the offline help browser at HelpPages.contextRoute (ui/windows-conventions.ts
+# openContextHelp → system/help-browser.ts showHelpBrowser), TUTORIALS (Help ▸ Tutorials, Tools ▸ Navigation & Sheets ▸ Tutorials)
+# opens its tutorials page (partb/index.ts tutorials); menus-keys.mjs, windows-conventions.mjs, audit-spot.mjs, partb-tools.mjs.
+ov("Help ▸ Oanarina Archi Tool Help (F1)", "done")
+ov("Help ▸ Tutorials", "done")
+ov("Tools ▸ Navigation & Sheets ▸ Tutorials", "done")
+for s_ in J["shortcuts"]:
+    if s_["keys"] == "F1": ov("%s [%s] %s" % (s_["keys"], s_["mac"], s_["action"]), "done")
+# Ctrl+0 is Clean Screen on Windows (ui/keys.ts); Zoom Extents keeps its non-Ctrl keys (double middle-click, Z E, ribbon, View menu).
+for s_ in J["shortcuts"]:
+    if s_["keys"] == "Ctrl+0" and "Zoom" in s_["action"]:
+        ov("%s [%s] %s" % (s_["keys"], s_["mac"], s_["action"]), "n/a (Oana's decision 28 Sep: Windows CAD convention)")
+# Recording and checking the tutorial videos is Mac-only; on Windows Record and Check open the website tutorials.
+ov("Tools ▸ Tutorial Videos ▸ Record Tutorial Videos", "n/a (Oana's decision 28 Sep: recording tool is Mac-only; Windows opens the website tutorials)")
+ov("Tools ▸ Tutorial Videos ▸ Check Tutorial Scripts", "n/a (Oana's decision 28 Sep: recording tool is Mac-only; Windows opens the website tutorials)")
+# Night: placed lamp light falls under the moon's shadow (renderer.ts LAMP_SUN_SHADOW, bollard shadow streaks in their pools) and up to
+# four spot lights cast shadow maps (test/view3d/night-lights.mjs); the pools stay dimmer than the Mac's at their outer edges.
+ov("Lighting preset Night", "partial", "cosmetic: 1.8 levels from the Mac; bollard shadows and spot-light shadows now match, the bollard pools stay about 20 levels dimmer at their outer edges")

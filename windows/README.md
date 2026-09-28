@@ -29,16 +29,19 @@ Layout: `src/main` (Electron main, engine process + JSON-RPC client), `src/prelo
   (`packaging/installer.nsh` forces the current-user mode, so there is no UAC prompt). The folder can be changed.
 - **Shortcuts**: Start menu and desktop, both "Oanarina Archi Tool".
 - **File associations**: `.archi`, `.dxf` and `.ifc` open in the app (double-click, "Open with", jump list).
+- **Explorer thumbnails**: `.archi` files show their plan in Explorer (FILEPREVIEW): archi-engine embeds the picture on
+  save and the installer registers the unsigned thumbnail handler `native/` per user (`docs/WINDOWS-FILEPREVIEW.md`).
 - **Samples**: Cedar House and Nordic House with their textures (`resources/samples`); the start screen copies a
   sample to `Documents\Oanarina Archi Tool\Samples` before opening it, so it can be edited and saved.
 - **Uninstall**: Settings ▸ Apps ▸ Oanarina Archi Tool ▸ Uninstall (or "Uninstall Oanarina Archi Tool.exe" in the
   install folder). Settings, recent files and the documents folder are kept.
 - **Jump list**: right-click the taskbar button for the recent projects, New Window and the Cedar House sample.
-- **Windows conventions**: Ctrl instead of ⌘ and Alt instead of ⌥ for every shortcut (Ctrl+Y redo, Ctrl+0 clean screen;
+- **Windows conventions**: Ctrl instead of ⌘ and Alt instead of ⌥ for every shortcut (Ctrl+Y redo, Ctrl+0 clean screen as in
+  Windows CAD, so Zoom Extents is double middle-click / Z E;
   AltGr characters still type), Alt+letter opens the menus (unique access keys, underlined while Alt is held: File F, Edit E,
   View V, Draw D, Modify M, Annotate N, Architecture A, Model O, Analyze Y, Tools T, Window W, Help H), floating panels are separate
-  windows owned by the drawing window (like the Mac's utility panels), Alt+F4 exits, Ctrl+W closes the window, F1 opens the user
-  guide at the running command's section (https://www.oanarinaldi.com/archi-tool-guide.html#…), native caption
+  windows owned by the drawing window (like the Mac's utility panels), Alt+F4 exits, Ctrl+W closes the window, F1 opens the offline
+  help browser at the running command's page (like the Mac), native caption
   buttons with snap layouts, per-monitor DPI scaling, and the Mac's dark theme (Settings ▸ Appearance ▸ Light switches
   the window, native dialogs and caption buttons together).
 

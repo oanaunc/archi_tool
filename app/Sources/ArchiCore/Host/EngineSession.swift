@@ -393,7 +393,14 @@ public final class EngineSession {
         var u = target
         if u.pathExtension.isEmpty && format == nil { u = u.appendingPathExtension("archi") }
         let f = (format ?? u.pathExtension).lowercased()
-        try DocumentIO.write(editor.doc, to: u, format: f)
+        if f == ArchiFile.fileExtension {
+            // FILEPREVIEW Icons: the Explorer thumbnail picture goes into the file (Mac: the Finder preview icon).
+            try FileManager.default.createDirectory(at: u.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try ArchiFile.save(editor.doc, to: u, backup: editor.doc.variable("ISAVEBAK") != "0",
+                               preview: recoveryState.previewOnSave ? EngineRecovery.previewImage(editor.doc) : nil)
+        } else {
+            try DocumentIO.write(editor.doc, to: u, format: f)
+        }
         if EngineSession.nativeExtensions.contains(f) { editor.fileURL = u; editor.isDirty = false }
         if f == ArchiFile.fileExtension { afterNativeSave(u) }
         markChanged("document")

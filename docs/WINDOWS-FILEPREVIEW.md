@@ -1,108 +1,96 @@
-# FILEPREVIEW on Windows — Explorer thumbnails, preview and search metadata (design, decision needed)
+# FILEPREVIEW on Windows — Explorer thumbnails of .archi drawings
 
-Status: **not implemented; Oana decides** (build it as below, or mark the checklist line
-`n/a (Finder/Spotlight extension)`). Everything else of the last round (APPSELFTEST, HELPWINDOW, VRVIEW, SPACEMOUSE,
-SPELL) is done; `FILEPREVIEW` is the only Mac command that archi-engine does not register, and APPSELFTEST on Windows
-names it as "Not on Windows yet".
+Status: **built** (Oana's decision of 28 Sep 2026: build it, an unsigned Explorer add-on is accepted). The checklist line
+Tools ▸ Files, Clipboard & Access ▸ File Preview & Spotlight is done in the parity audit. Verified by the ArchiCore tests
+(`app/Tests/ArchiCoreTests/FilePreviewTests.swift`) and, on Windows, by the windows-app workflow (below); not yet looked
+at in Explorer on a real PC.
 
 ## What the Mac does
 
 `FILEPREVIEW` (`FINDERPREVIEW`, `SPOTLIGHTINFO`, `FILEMETADATA`; ArchiApp/AppCommandsRound11.swift, IO-006 / IO-007):
 
-| Option | Mac |
-| --- | --- |
-| Update (default) | writes the Spotlight attributes (title, keywords, authors, levels, rooms, entity and element counts) as extended attributes and sets the Finder icon to a picture of the plan |
-| Icons On/Off | Finder preview icon on every save |
-| Versions On/Off | keep a macOS version on every save |
-| Show | prints the indexed metadata of the saved file |
-
-## The Windows equivalent
-
-Explorer has no "custom icon per file". The same result needs **shell extension handlers**: in-process COM DLLs that
-Explorer (through its isolated thumbnail host, `dllhost.exe`) loads for the `.archi` type.
-
-| Mac | Windows | Interface |
+| Option | Mac | Windows (archi-engine, `Host/EngineRecovery.swift`) |
 | --- | --- | --- |
-| Finder preview icon | Explorer thumbnail (large icons, tiles, Alt+P) | `IThumbnailProvider` + `IInitializeWithStream` |
-| Quick Look | Preview pane (optional) | `IPreviewHandler` |
-| Spotlight attributes | Details pane, search, Properties ▸ Details | property handler `IPropertyStore` (+ a `.propdesc` schema for the Archi-specific keys) |
+| Update (default) | Spotlight attributes as extended attributes + Finder icon = a 512 px picture of the plan | re-renders the plan picture into the saved file: "Explorer thumbnail of <file> updated." |
+| Icons On/Off | Finder preview icon on every save | "Explorer thumbnails on save": the picture on every save (preference `finderPreviewIcons`, on by default) |
+| Versions On/Off | a macOS version on every save | a copy in `%APPDATA%\Oanarina Archi Tool\Versions` on every save (FILEVERSIONS; preference `fileVersionsOnSave`) |
+| Show | the indexed Spotlight metadata | the same metadata keys of the saved file, plus "Explorer thumbnail: 512×512 picture in the file" or "none" |
 
-### Where the picture comes from
+The preferences are kept by the shell (`localStorage`, `sheets/recovery.ts`) and passed to each window's engine with
+`recovery.setup {versionsOnSave, previewOnSave}`. Windows search metadata (a property handler) is not built: Explorer's
+own search indexes the file name; the Mac-only Spotlight part has no Windows counterpart in this feature.
 
-The handler must be small, fast and must never run the engine (Explorer asks for hundreds of thumbnails). Options:
+## The picture in the file
 
-1. **Embed a PNG preview in the `.archi` file (recommended).** On save the app writes an optional top-level field
-   `"preview": {"png": "<base64>", "width": 256, "height": 256}` (a 256 px plan picture, 15–40 KB; the engine already
-   renders PNG: `file.export {format:"png"}` / `EngineSheetImage`). The handler reads the stream, finds the field and
-   decodes the PNG with WIC. It survives copying, zipping, e-mail, OneDrive and USB sticks. Old app versions ignore the
-   unknown key (Codable skips it), but AGENTS.md requires a `formatVersion` bump and a migration note, and the Mac should
-   write the same field (it could then also feed Quick Look). **This is a document-format decision for both platforms.**
-2. NTFS alternate data stream `drawing.archi:Oanarina.Preview` (the closest thing to the Mac's extended attributes). No
-   format change, but it is lost on FAT/exFAT drives, in zip files, e-mail and most cloud sync, and a stream-based
-   handler cannot read it: the handler would need `IInitializeWithFile`, which Windows only allows when process
-   isolation is disabled for the handler (`DisableProcessIsolation`), i.e. running inside Explorer itself. Not robust.
-3. The handler draws the plan itself from the JSON (walls, lines, rooms). A second renderer in C++ that must follow every
-   geometry type of ArchiCore. Not maintainable.
-
-### The native handler (option 1)
-
-- `windows/shellext/ArchiShellExt.cpp` (~300 lines C++17, no dependencies beyond Windows SDK):
-  `DllGetClassObject`, `DllCanUnloadNow`, a class factory and one class implementing `IInitializeWithStream` and
-  `IThumbnailProvider::GetThumbnail(cx, &hbmp, &alpha)`: read at most 64 MB from the stream, locate `"preview"` at the
-  top level of the JSON (a streaming scan, no JSON library), base64-decode, `IWICImagingFactory` →
-  `IWICBitmapScaler` to `cx` → 32-bit DIB section, `WTSAT_ARGB`. Files without a preview return `E_FAIL`, so Explorer
-  shows the normal document icon (the app icon from the file association) — the same as today.
-- Build in `.github/workflows/windows-app.yml` with MSVC (`cl /LD /O2 /EHsc … windowscodecs.lib ole32.lib`) for x64 and
-  arm64, output `resources/shellext/ArchiShellExt-<arch>.dll` (~60 KB) packaged by electron-builder (`extraResources`).
-- A CI test: a tiny test executable (same workflow) that `CoCreateInstance`s the handler through the registered CLSID,
-  feeds it `Cedar House.archi` saved with a preview, and checks a 256×256 bitmap with non-background pixels; plus a
-  file without a preview → `E_FAIL`. (Explorer itself cannot be driven on the CI runner.)
-
-### Registration by the NSIS installer (per user, no admin)
-
-`packaging/installer.nsh`, in `customInstall` / `customUnInstall`:
+On every save of an `.archi` file archi-engine adds an optional **envelope** field after the document
+(`IO/ArchiFile.swift`, `EngineSession.save`):
 
 ```
-HKCU\Software\Classes\CLSID\{<new GUID>}                          (default) = "Oanarina Archi Tool thumbnail handler"
-HKCU\Software\Classes\CLSID\{<new GUID>}\InprocServer32            (default) = "$INSTDIR\resources\shellext\ArchiShellExt-x64.dll"
-                                                                   ThreadingModel = "Apartment"
-HKCU\Software\Classes\.archi\ShellEx\{e357fccd-a995-4576-b01f-234630154e96}   (default) = "{<new GUID>}"
+{ "app" : "Oanarina Archi Tool", "document" : { … }, "formatVersion" : N,
+  "preview" : { "height" : 512, "png" : "<base64>", "width" : 512 } }
 ```
 
-then `SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, 0, 0)` (System::Call) so Explorer picks it up without a restart.
-The uninstaller deletes the three keys and notifies again. The handler must be the DLL matching the OS architecture
-(x64 Explorer on x64, arm64 on arm64), which the per-arch installers already decide.
+- The picture is `PlanImageExport.thumbnail` (`IO/RasterExport.swift`): the current level on white, square, fitted with a
+  5 % margin, lineweights at side/400 px per mm — the Mac's `Artwork.thumbnail` framing, drawn by the portable rasteriser.
+  Nothing drawn → no picture. Typical size 20–60 KB of PNG.
+- With sorted keys `preview` is the last top-level key, so a reader finds it at the end of the file without parsing the
+  document. `ArchiFile.preview(in:)` and the handler use the same rule: the last `"preview"` in the final 16 MB, followed
+  by exactly one `{` and two `}` (so a `"preview"` inside the document never matches).
+- It is outside `document`: every app version decodes such files unchanged (the fast path's Codable envelope and the
+  migrating path both ignore it), so `formatVersion` is **not** bumped (AGENTS.md asks for a bump when the document
+  schema changes; this is not a document change). The Mac app neither writes nor keeps the field: a drawing saved on the
+  Mac has no Explorer thumbnail until it is saved again on Windows (or FILEPREVIEW Update runs there).
 
-### The command on Windows
+## The Explorer thumbnail handler (`windows/native/`)
 
-Same names, prompts and messages as the Mac, with Windows words:
+- `ArchiThumbnail.cpp` — in-process COM server, `IInitializeWithStream` + `IThumbnailProvider`, CLSID
+  `{9D934CB7-4E6D-404F-A240-C5DBE6F0CAC0}`. Explorer runs it in its isolated thumbnail host (`dllhost.exe`).
+  `GetThumbnail(cx)`: read the last 16 MB of the stream, find the picture (`ArchiPreview.cpp`), base64-decode, WIC PNG
+  decoder → scaler (fit `cx`) → 32-bit BGRA DIB section, `WTSAT_ARGB`. No picture → `E_FAIL` and Explorer shows the
+  normal document icon. Also exports `DllRegisterServer` / `DllUnregisterServer` / `DllInstall` (per-user keys, for
+  development machines: `regsvr32 /n /i:user ArchiThumbnail-x64.dll`).
+- `build.cmd [dll-folder] [test-folder]` — MSVC (vswhere → vcvarsall), static CRT (`/MT`, no VC++ redistributable),
+  `ArchiThumbnail-x64.dll` and `ArchiThumbnail-arm64.dll` into `windows/resources/shellext` (not in git), `thumbtest.exe`
+  into `build/native`.
+- The preview pane (`IPreviewHandler`) is not built: it needs a hosted window and message handling for little gain over
+  the thumbnail (the pane shows "No preview available" as today).
 
-| Option | Windows |
-| --- | --- |
-| Update | re-renders the preview into the saved file and tells Explorer (`SHChangeNotify(SHCNE_UPDATEITEM)`) — "Explorer preview updated" |
-| Icons On/Off | write the preview on every save (preference) |
-| Versions On/Off | keep a copy in the app's Versions store on every save (FILEVERSIONS already browses `%APPDATA%\Oanarina Archi Tool\Versions`) |
-| Show | prints the file's metadata (title, keywords, authors, levels, rooms, counts) |
+## Installer (per user, no administrator)
 
-Search metadata (property handler, phase 2): `System.Title`, `System.Keywords`, `System.Author` need no schema; the
-Archi-specific counts need a registered `.propdesc` schema (`PSRegisterPropertySchema`, admin rights on older Windows) —
-propose to ship only the three system properties.
+`windows/packaging/electron-builder.yml` packages `resources/shellext/*.dll` as `resources\shellext`;
+`windows/packaging/installer.nsh`:
 
-## Risks and cost
+```
+HKCU\Software\Classes\CLSID\{9D934CB7-4E6D-404F-A240-C5DBE6F0CAC0}                (default) = "Oanarina Archi Tool thumbnail handler"
+HKCU\Software\Classes\CLSID\{9D934CB7-…}\InprocServer32                            (default) = "$INSTDIR\resources\shellext\ArchiThumbnail-<x64|arm64>.dll"
+                                                                                   ThreadingModel = "Apartment"
+HKCU\Software\Classes\.archi\ShellEx\{e357fccd-a995-4576-b01f-234630154e96}        (default) = "{9D934CB7-…}"
+HKCU\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved            {9D934CB7-…} = "Oanarina Archi Tool thumbnail handler"
+```
 
-- Native code loaded by Explorer's thumbnail host: a bug crashes `dllhost.exe` (isolated; Explorer survives) and shows
-  no thumbnail. The DLL is unsigned until the app has a code-signing certificate; unsigned shell extensions load, but
-  some antivirus products flag unsigned DLLs registered under `ShellEx`.
-- Cannot be verified interactively from the development setup; only the CI test above and a manual check on a Windows
-  PC (thumbnail view of a folder of `.archi` files).
-- Effort: handler + CI build + test ≈ 1 day; installer registration ≈ ½ day; format field on both platforms and the
-  command ≈ 1 day.
+- The DLL matches **Explorer's** architecture, not the app's: the 32-bit installer reads `PROCESSOR_ARCHITEW6432`
+  (ARM64 → the arm64 DLL, else x64). Both DLLs are in every installer. The keys are written in the 64-bit registry view.
+- Then `SHChangeNotify(SHCNE_ASSOCCHANGED)`; the uninstaller deletes the keys and notifies again.
+- Updates: a DLL still loaded by the thumbnail host cannot be replaced, so `customInit` renames the installed DLLs aside
+  (default install folder) before the update; a renamed copy still in use is removed by the next update.
+- Unsigned until the app has a code-signing certificate (`signExts` signs `.exe` only). Some antivirus products flag
+  unsigned DLLs registered under ShellEx.
 
-## Decision needed from Oana
+## CI (`.github/workflows/windows-app.yml`)
 
-1. Accept the optional `preview` field in `.archi` (format version bump on Mac and Windows)? Without it there is no
-   robust thumbnail source.
-2. Ship an unsigned native shell extension in the Windows installer?
+1. **Build the Explorer thumbnail handler** (`build.cmd`, log `08-thumbnail-handler.log`); no arm64 DLL is a warning.
+2. **Package**: fails when `resources/shellext/ArchiThumbnail-x64.dll` is not in the package.
+3. **Install**: the registry keys exist and `InprocServer32` points into the install folder.
+4. **Explorer thumbnail** (log `10b-thumbnail.log`): the installed `archi-engine.exe` saves Cedar House twice (with the
+   picture, and with `previewOnSave:false`); `thumbtest.exe` checks the keys, loads the handler through COM
+   (`CoCreateInstance` on the registered CLSID, as the thumbnail host does), makes a 256 px bitmap with the plan's dark
+   pixels on white (saved as `screenshots/explorer-thumbnail.png`), gets no thumbnail for the drawing without a picture,
+   and reports (not required) the shell's own `IShellItemImageFactory` result. Explorer itself cannot be driven on the
+   runner.
+5. **Uninstall**: the handler keys are gone.
 
-If both are yes, build it as above. If not, mark `Tools ▸ Files, Clipboard & Access ▸ File Preview & Spotlight` as
-`n/a (Finder/Spotlight extension)` in the parity checklist.
+## Checking on a Windows PC
+
+Install, open Cedar House, save it under a new name, then look at the folder in Explorer with Large or Extra large icons:
+the file shows the plan. If an old icon sticks, run `FILEPREVIEW Update`, or clear the thumbnail cache (Disk Cleanup ▸
+Thumbnails).

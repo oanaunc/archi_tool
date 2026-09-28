@@ -16,8 +16,8 @@ import { catalogItems, rankCommands, ribbonTitles } from "./search";
 import { FUNCTION_KEYS, TUTORIALS, indexPage, commandPage, shortcutsPage, scriptingPage, guidePage, helpHtml } from "./help-browser";
 import { motion, applyMotion, defaultConfig, reportLayout, applyReport, emptyState, isSpaceMouse } from "./spacemouse-math";
 
-/** Commands of the Mac catalogue that are not on Windows until Oana decides (docs/WINDOWS-FILEPREVIEW.md). */
-export const PENDING_ON_WINDOWS = ["FILEPREVIEW"];
+/** Commands of the Mac catalogue that are not on Windows yet (none: FILEPREVIEW is built, docs/WINDOWS-FILEPREVIEW.md). */
+export const PENDING_ON_WINDOWS: string[] = [];
 
 export interface Coverage { missing: string[]; intentional: number; total: number }
 

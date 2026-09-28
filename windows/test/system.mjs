@@ -69,7 +69,7 @@ const summary = log.find((l) => /check\(s\) passed, \d+ failed\./.test(l)) ?? ""
 check("APPSELFTEST prints the Mac report", /^Command coverage: \d+ in ribbon\/menus, \d+ in palettes \(system variables\), \d+ without UI entry\.$/.test(log.find((l) => l.startsWith("Command coverage")) ?? "") && !!summary, log.join(" | "));
 const failsST = log.filter((l) => l.startsWith("FAIL: "));
 check("self-test checks pass on the fixture engine", /, 0 failed\./.test(summary), failsST.join(" | ").slice(0, 600));
-check("FILEPREVIEW named as not on Windows yet", log.some((l) => /Not on Windows yet: FILEPREVIEW/.test(l)));
+check("no Mac command pending on Windows (FILEPREVIEW is built)", !log.some((l) => /Not on Windows yet/.test(l)), log.find((l) => /Not on Windows yet/.test(l)) ?? "");
 
 // ---- command search uses the Mac ranking ----
 const ranked = await A(() => { document.dispatchEvent(new CustomEvent("archi:commandSearch")); const inp = document.querySelector(".overlay .palette input"); inp.value = "prspl"; inp.dispatchEvent(new Event("input")); const r = [...document.querySelectorAll(".overlay .rows .row .n")].map((e) => e.textContent); document.querySelector(".overlay")?.remove(); return r; });

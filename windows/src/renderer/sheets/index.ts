@@ -10,7 +10,7 @@
 import "./sheets.css";
 import type { App } from "../app";
 import { ContextStrip } from "./context-ribbon";
-import { afterRecovered, ensureRecoverySetup, recoverySection, recoveryTick, recoveryDiscard, setVersionsKeep } from "./recovery";
+import { afterRecovered, ensureRecoverySetup, recoverySection, recoveryTick, recoveryDiscard, setVersionsKeep, setSaveExtra } from "./recovery";
 import { openVersions, openCopyWindow } from "./versions";
 import { promptDialog } from "../dialogs/ui";
 
@@ -99,7 +99,11 @@ export function installSheets(app: App, hooks: SheetsHooks) {
       case "recovered": afterRecovered(app); return true;
       case "openWindow": if (p.path) openCopyWindow(app, String(p.path)); return true;
       case "dialog": if (p.dialog === "versions") { void openVersions(app); return true; } break;
-      case "preference": if (p.key === "fileVersionsKeep") { setVersionsKeep(Number(p.value)); return true; } break;
+      case "preference":
+        if (p.key === "fileVersionsKeep") { setVersionsKeep(Number(p.value)); return true; }
+        // FILEPREVIEW Icons / Versions: remembered for the next windows (recovery.setup passes them to the engine).
+        if (p.key === "finderPreviewIcons" || p.key === "fileVersionsOnSave") { setSaveExtra(p.key, !!p.value); return true; }
+        break;
     }
     return !!prev?.(p);
   };

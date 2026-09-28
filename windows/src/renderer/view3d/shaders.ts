@@ -81,6 +81,7 @@ uniform sampler2D uShadowMap;
 uniform mat4 uShadowMat;
 uniform float uShadowRadius;  // in shadow-map texels
 uniform float uShadowAlpha;
+uniform float uLampSunShadow;
 uniform float uShadowTexel;
 uniform float uShadowBias;
 uniform float uShadowRange;   // depth range of the sun's orthographic shadow camera (m)
@@ -106,6 +107,13 @@ uniform vec4 uLightColor[16]; // rgb × intensity, w = 0 point, 1 spot, 2 area (
 uniform sampler2D uIES;        // 32 × 16 relative candela by vertical angle 0…180° (row = light), IES lights
 uniform vec4 uLightDir[16];   // xyz = direction the spot points, w = cos(outer/2)
 uniform float uLightInner[16];// cos(inner/2)
+uniform int uNumSpotShadows;   // spot / IES shadow maps, 2 × 2 atlas (tile k: light uSpotShadowLight[k], uSpotShadowMat[k])
+uniform int uSpotShadowLight[4];
+uniform mat4 uSpotShadowMat[4];
+uniform sampler2D uSpotShadowMap;
+uniform float uSpotShadowAlpha;
+uniform float uSpotShadowRadius; // in shadow-map texels
+uniform vec2 uSpotNearFar;       // SCNLight zNear / zFar (m)
 
 uniform vec4 uClipMin;        // section box (w = on)
 uniform vec4 uClipMax;
@@ -171,6 +179,31 @@ float sunShadow(vec3 wp, vec3 n, float cosL) {
     lit += (s.z - bias <= d) ? 1.0 : 0.0;
   }
   return lit / float(n0);
+}
+
+// Shadow of spot light tile k (SceneKit castsShadow, 8 samples): 1 − alpha × the blocked share of the samples.
+float spotShadow(int k, vec3 wp) {
+  vec4 sp = uSpotShadowMat[k] * vec4(wp, 1.0);
+  float z = sp.w;   // distance along the spot's axis (m)
+  if (z <= uSpotNearFar.x || z >= uSpotNearFar.y) return 1.0;
+  vec2 uv = sp.xy / z * 0.5 + 0.5;
+  if (uv.x <= 0.0 || uv.x >= 1.0 || uv.y <= 0.0 || uv.y >= 1.0) return 1.0;
+  float texel = 1.0 / float(textureSize(uSpotShadowMap, 0).x);
+  vec2 tile = vec2(float(k % 2), float(k / 2)) * 0.5;
+  vec2 lo = tile + texel, hi = tile + 0.5 - texel;
+  vec2 c = tile + uv * 0.5;
+  float bias = 0.01 + z * 0.004;   // grows with the texel footprint of the perspective map
+  float a0 = hash12(gl_FragCoord.xy + float(k) * 7.0) * 6.2831853;
+  float lit = 0.0;
+  for (int i = 0; i < 8; i++) {
+    float fi = float(i) + 0.5;
+    float a = a0 + fi * 2.39996323;
+    vec2 o = vec2(cos(a), sin(a)) * sqrt(fi / 8.0) * uSpotShadowRadius * texel;
+    float d = texture(uSpotShadowMap, clamp(c + o, lo, hi)).r;
+    float zl = uSpotNearFar.x * uSpotNearFar.y / (uSpotNearFar.y - d * (uSpotNearFar.y - uSpotNearFar.x));
+    lit += (z - bias <= zl) ? 1.0 : 0.0;
+  }
+  return 1.0 - uSpotShadowAlpha * (1.0 - lit / 8.0);
 }
 
 float D_GGX(float NdH, float a) { float a2 = a * a; float d = NdH * NdH * (a2 - 1.0) + 1.0; return a2 / (PI * d * d); }
@@ -246,7 +279,7 @@ void main() {
   float shadowK = 1.0 - uShadowAlpha * (1.0 - vis);
   const float lightK = 1.0;
   vec3 color;
-  vec3 lamps = vec3(0.0);   // placed lights: not darkened by the sun's deferred shadow
+  vec3 lamps = vec3(0.0);   // placed lights: darkened by uLampSunShadow of the sun's deferred shadow
   vec3 indirect = vec3(0.0);
 
   if (uMode == 0) {
@@ -285,6 +318,7 @@ void main() {
       }
       float nl = max(dot(N, l), 0.0);
       if (att <= 0.0 || nl <= 0.0) continue;
+      for (int k = 0; k < 4; k++) if (k < uNumSpotShadows && uSpotShadowLight[k] == i) att *= spotShadow(k, vWorld);
       vec3 H = normalize(l + V);
       float NdH = max(dot(N, H), 0.0), VdH = max(dot(V, H), 0.0);
       vec3 F = F_Schlick(F0, VdH);
@@ -322,7 +356,7 @@ void main() {
     indirect = amb;
   }
   color += uEmissive;
-  color = color * shadowK + lamps + uHighlight;
+  color = color * shadowK + lamps * mix(1.0, shadowK, uLampSunShadow) + uHighlight;
   indirect *= shadowK;
 
   if (uFog.w > 0.5) {

@@ -548,6 +548,27 @@ public enum PlanImageExport {
         return r.image
     }
 
+    /// Square picture of a level on white, fitted with a 5 % margin: the Mac's Artwork.thumbnail (Finder preview icon),
+    /// embedded in saved .archi files for the Windows Explorer thumbnail (FILEPREVIEW). nil when nothing is drawn.
+    public static func thumbnail(doc: ArchiDocument, level: Int? = nil, size: Int = 512) -> RGBAImage? {
+        guard size >= 16, size <= 4096 else { return nil }
+        var opts = DrawOptions(level: level ?? doc.currentLevel)
+        opts.forPaper = true
+        let entries = DrawListBuilder.entries(doc: doc, options: opts)
+        let b = entries.reduce(BBox2.empty) { $0.union($1.bounds) }
+        guard !b.isEmpty, b.width.isFinite, b.height.isFinite, max(b.width, b.height) > 1e-12 else { return nil }
+        let side = Double(size)
+        let s = side * 0.9 / max(b.width, b.height)
+        let c = Vec2((b.min.x + b.max.x) / 2, (b.min.y + b.max.y) / 2)
+        var r = DrawRaster(image: RGBAImage(width: size, height: size), origin: Vec2(c.x - side / 2 / s, c.y + side / 2 / s), scale: s)
+        r.lineweightScale = side / 400
+        r.minWidth = max(1, side / 256)
+        r.textStyles = doc.textStyles
+        r.textFormats = textFormats(doc)
+        r.draw(entries)
+        return r.image
+    }
+
     /// Writes the PNG; returns its pixel size.
     @discardableResult
     public static func write(doc: ArchiDocument, level: Int? = nil, to url: URL, dpi: Double = 300, imageBase: URL? = nil) throws -> (width: Int, height: Int) {

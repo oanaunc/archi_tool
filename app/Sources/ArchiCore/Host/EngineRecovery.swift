@@ -32,6 +32,8 @@ final class EngineRecoveryState {
     var versionsFolder: URL?
     var keep = 50
     var versionsOnSave = true
+    /// FILEPREVIEW Icons: embed the Explorer thumbnail picture in every saved .archi file (Mac: Finder preview icons).
+    var previewOnSave = true
     let id = UUID().uuidString
     var lastSavedChange = -1
     var recoveredOriginalPath: String?
@@ -195,7 +197,7 @@ enum EngineRecovery {
 
     // MARK: Commands
 
-    static var commands: [CommandDef] { [drawingRecovery, fileVersions] }
+    static var commands: [CommandDef] { [drawingRecovery, fileVersions, filePreview] }
 
     @MainActor static func isEmptyDocument(_ d: ArchiDocument) -> Bool { d.entities.isEmpty && d.elements.isEmpty && d.layouts.allSatisfy { $0.viewports.isEmpty && $0.entities.isEmpty } }
 
@@ -265,6 +267,57 @@ enum EngineRecovery {
     }
 }
 
+// MARK: Explorer thumbnail and file metadata (FILEPREVIEW, IO-006 / IO-007)
+
+extension EngineRecovery {
+    /// Side of the preview picture embedded in saved .archi files (the Mac's Finder preview icon is 512 px too).
+    static let previewSize = 512
+
+    /// The picture embedded on save: the current level of the drawing, nil when nothing is drawn.
+    static func previewImage(_ doc: ArchiDocument) -> ArchiFile.PreviewImage? {
+        guard let img = PlanImageExport.thumbnail(doc: doc, level: doc.currentLevel, size: previewSize) else { return nil }
+        return ArchiFile.PreviewImage(png: img.pngData(alpha: false), width: img.width, height: img.height)
+    }
+
+    /// Mac FILEPREVIEW (ArchiApp/AppCommandsRound11.swift) with Windows words: Update writes the Explorer thumbnail picture
+    /// into the saved file (the Mac sets the Finder icon and the Spotlight attributes), Icons / Versions switch the
+    /// picture and the version on every save, Show prints the file's metadata.
+    static var filePreview: CommandDef {
+        CommandDef("FILEPREVIEW", aliases: ["FINDERPREVIEW", "SPOTLIGHTINFO", "FILEMETADATA"], category: "File", summary: "Finder preview icon and Spotlight metadata of the saved drawing: Update now, Icons on/off, Versions on/off, Show the indexed metadata.", modifies: false) { ed in
+            let st = EngineRecoveryState.of(ed)
+            let k = try await ed.getKeyword("File preview [Update/Icons/Versions/Show]", ["Update", "Icons", "Versions", "Show"], defaultValue: "Update") ?? "Update"
+            switch k {
+            case "Icons":
+                let on = (try await ed.getKeyword("Explorer thumbnails on save [On/Off] <\(st.previewOnSave ? "On" : "Off")>", ["On", "Off"], defaultValue: st.previewOnSave ? "On" : "Off") ?? "On") == "On"
+                st.previewOnSave = on
+                try EngineToolCommands.host(ed, "preference", [("key", .string("finderPreviewIcons")), ("value", .bool(on))])
+                ed.print("Explorer thumbnails \(on ? "on" : "off").")
+            case "Versions":
+                let on = (try await ed.getKeyword("Keep a version on every save [On/Off] <\(st.versionsOnSave ? "On" : "Off")>", ["On", "Off"], defaultValue: st.versionsOnSave ? "On" : "Off") ?? "On") == "On"
+                st.versionsOnSave = on
+                try EngineToolCommands.host(ed, "preference", [("key", .string("fileVersionsOnSave")), ("value", .bool(on))])
+                ed.print("Versions on save \(on ? "on" : "off").")
+            case "Show":
+                let url = try savedURL(ed)
+                let a: [String: Any]
+                do { a = try SpotlightMetadata.attributes(of: url) } catch { throw CommandError.invalid(EngineSession.describe(error)) }
+                for key in ["kMDItemTitle", "kMDItemKeywords", "kMDItemAuthors", "org.oanarina.archi.levels", "org.oanarina.archi.rooms", "org.oanarina.archi.entityCount", "org.oanarina.archi.elementCount"] {
+                    if let v = a[key] { ed.print("  \(key): \((v as? [Any]).map { $0.map { "\($0)" }.joined(separator: ", ") } ?? "\(v)")") }
+                }
+                let p = (try? Data(contentsOf: url)).flatMap { ArchiFile.preview(in: $0) }
+                ed.print("  Explorer thumbnail: " + (p.map { "\($0.width)×\($0.height) picture in the file" } ?? "none (FILEPREVIEW Update writes one)"))
+            default:
+                let url = try savedURL(ed)
+                let doc: ArchiDocument
+                do { doc = try ArchiFile.decode(Data(contentsOf: url)) } catch { throw CommandError.invalid(EngineSession.describe(error)) }
+                let preview = previewImage(doc)
+                do { try ArchiFile.encode(doc, preview: preview).write(to: url, options: .atomic) } catch { throw CommandError.invalid(EngineSession.describe(error)) }
+                ed.print(preview != nil ? "Explorer thumbnail of \(url.lastPathComponent) updated." : "Nothing is drawn on the current level: \(url.lastPathComponent) has no Explorer thumbnail.")
+            }
+        }
+    }
+}
+
 extension EngineSession {
     var recoveryState: EngineRecoveryState { EngineRecoveryState.of(editor) }
 
@@ -286,13 +339,14 @@ extension EngineSession {
 
     // MARK: Recovery
 
-    /// `recovery.setup {folder, versionsFolder?, keep?, versionsOnSave?}` → `{id, folder, versionsFolder, keep}`.
+    /// `recovery.setup {folder, versionsFolder?, keep?, versionsOnSave?, previewOnSave?}` → `{id, folder, versionsFolder, keep}`.
     func recoverySetup(_ p: EngineJSON) -> EngineJSON {
         let st = recoveryState
         if let f = p["folder"]?.stringValue, !f.isEmpty { st.folder = url(f) }
         if let f = p["versionsFolder"]?.stringValue, !f.isEmpty { st.versionsFolder = url(f) }
         if let k = p["keep"]?.intValue { st.keep = max(1, min(1000, k)) }
         if let b = p["versionsOnSave"]?.boolValue { st.versionsOnSave = b }
+        if let b = p["previewOnSave"]?.boolValue { st.previewOnSave = b }
         var o = EngineObject()
         o.set("id", st.id)
         o.set("folder", EngineJSON.optString(st.folder?.path))

@@ -110,8 +110,8 @@ public extension ArchiFile {
     static func backupURL(for url: URL) -> URL { url.deletingPathExtension().appendingPathExtension("bak") }
 
     /// Writes the drawing; the previous file is kept as <name>.bak when `backup` (system variable ISAVEBAK ≠ 0).
-    static func save(_ doc: ArchiDocument, to url: URL, backup: Bool = true) throws {
-        let data = try encode(doc)
+    static func save(_ doc: ArchiDocument, to url: URL, backup: Bool = true, preview: PreviewImage? = nil) throws {
+        let data = try encode(doc, preview: preview)
         let fm = FileManager.default
         if backup, fm.fileExists(atPath: url.path) {
             let bak = backupURL(for: url)

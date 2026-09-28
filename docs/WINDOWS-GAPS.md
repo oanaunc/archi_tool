@@ -5,7 +5,7 @@ Parity audit of 28 Sep 2026 (round 4) over the 2904 lines of `docs/WINDOWS-PARIT
 code, or a tested shell port, as the Mac. It does **not** mean "verified on real Windows": none of the round-4 work has run in
 Electron on Windows, and none of it is committed.
 
-**Verdict: not ready to publish as an exact replica.** 1 line is `todo` (FILEPREVIEW, waiting on Oana's decision); 4 partial
+**Verdict: not ready to publish as an exact replica.** FILEPREVIEW (the last `todo`) is now built, not yet verified by CI; 4 partial
 lines are not cosmetic (F1 / Help / Tutorials open the website instead of the offline help browser, a small fix); round 4 is
 uncommitted, so neither CI workflow has built it and the installed app has not been smoke-tested with it; and no CI run has
 reported since 9885fb9 (Windows engine red there). See "Release blockers" and "Ready to publish?".
@@ -60,11 +60,11 @@ reported since 9885fb9 (Windows engine red there). See "Release blockers" and "R
 
 ### A. Checklist line still `todo` (1)
 
-1. **FILEPREVIEW** (Tools ▸ Files, Clipboard & Access ▸ File Preview & Spotlight). Design in `docs/WINDOWS-FILEPREVIEW.md`
-   (Explorer thumbnail handler, about 2.5 days). **Oana decides**:
-   - may `.archi` files carry an optional embedded plan thumbnail (a file-format change on Mac and Windows)?
-   - may the installer ship and register (per user) an unsigned native Explorer add-on built in CI?
-   Both yes → build it. Otherwise the line becomes `n/a (Finder/Spotlight extension)`.
+1. **FILEPREVIEW** (Tools ▸ Files, Clipboard & Access ▸ File Preview & Spotlight) — **built** after Oana's decision of
+   28 Sep (build it, unsigned accepted); the audit now marks the line done. archi-engine embeds a 512 px plan picture in
+   every saved `.archi` (optional envelope key `preview`), the unsigned Explorer thumbnail handler `windows/native/` is
+   built by MSVC in windows-app.yml and registered per user by the installer; see `docs/WINDOWS-FILEPREVIEW.md`. Open:
+   the first windows-app run (thumbnail check after install), and a look at a folder of drawings on a real Windows PC.
 
 ### B. Partial lines (14; 4 not cosmetic)
 
@@ -118,12 +118,12 @@ reported since 9885fb9 (Windows engine red there). See "Release blockers" and "R
 **No.** The bar is: todo = 0, only cosmetic partial lines, both CI workflows green on the release commit, and the installed
 app smoke-tested on Windows with this round's code. Today:
 
-- todo = 1 (FILEPREVIEW, Oana's decision);
+- todo = 0 (FILEPREVIEW built; its CI check has not run yet);
 - 4 partial lines are not cosmetic (offline help routing; a small shell fix);
 - round 4 is uncommitted; no CI result since 9885fb9, where the Windows engine workflow was red;
 - the installed app has not been smoke-tested with round-4 code.
 
-What Oana must decide: FILEPREVIEW (embedded thumbnail + unsigned Explorer add-on, or n/a); Ctrl+0 and Tutorial
+What Oana must decide (FILEPREVIEW decided 28 Sep: built): Ctrl+0 and Tutorial
 Record/Check (accept as Windows conventions / n/a); code signing; and unblock GitHub Actions (minutes/queue).
 
 ## Appendix: every open checklist line
@@ -132,7 +132,6 @@ Grouped by checklist section, `todo` first, then `partial`; the note is the audi
 
 ### Menu bar
 
-- **todo** Tools ▸ Files, Clipboard & Access ▸ File Preview & Spotlight — `FILEPREVIEW` · _command FILEPREVIEW is not registered in archi-engine_
 - **partial** Menu Tools — 73 items
 - **partial** Tools ▸ Navigation & Sheets
 - **partial** Tools ▸ Navigation & Sheets ▸ Tutorials — `TUTORIALS` · _opens the website guide; the Mac opens the offline help browser (system/help-browser.ts showHelpBrowser exists)_

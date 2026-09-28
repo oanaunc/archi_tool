@@ -7,7 +7,7 @@ import { GL, Program, Target, target, msTarget, depthTarget, disposeTarget, text
 import * as S from "./shaders";
 import { SceneModel, MeshGPU } from "./scene";
 import { Look, VisualStyle, styleEdges, SKETCH_PAPER, ACCENT, sunDirection } from "./look";
-import { V3, M4, mul, invert, lookAt, ortho, linearRGB, kelvin, norm, sub, len, toLinear, ident, hex } from "./math";
+import { V3, M4, mul, invert, lookAt, ortho, perspective, linearRGB, kelvin, norm, sub, len, toLinear, ident, hex } from "./math";
 import { Weather, isVegetation, seasonTint, isWater } from "./effects";
 import { CameraState, viewMatrix, projMatrix, zRange } from "./camera";
 import { orientBillboards } from "./billboards";
@@ -111,6 +111,9 @@ export class Renderer {
   private whiteTex: WebGLTexture;
   private shadowT: Target | null = null;
   private lastShadow: { key: string; mat: M4 } | null = null;
+  /** Spot / IES light shadow maps (2 × 2 atlas) and, per tile, its light's index in `sortedLights` and light matrix. */
+  private spotT: Target | null = null;
+  private spotShadows: { light: number; mat: M4 }[] = [];
   private targets: { key: string; ms: Target | null; hdr: Target; ao: Target; ao2: Target; b1: Target; b2: Target; ldr: Target } | null = null;
   readonly maxSamples: number;
   readonly maxSize: number;
@@ -130,6 +133,18 @@ export class Renderer {
   static NORMAL_SCALE = 1;
   /** Slope-scaled shadow bias covers soft-shadow kernels up to this radius in texels (measured on the Mac renders). */
   static SLOPE_TEXELS = 5;
+  /** Share of the sun's (moon's) deferred shadow that darkens the placed lights too, measured on the Mac Night render:
+   *  the bollards' moon shadows show inside their own light pools, and the soffit and entrance wall under the canopy
+   *  are dimmer than undarkened lamps give (0: lamps never shadowed; 1: the whole pixel, as SceneKit's pass). */
+  static LAMP_SUN_SHADOW = 0.7;
+  /** Spot and IES lights cast shadows like the Mac's (SceneExtras.swift SceneLights.node: castsShadow, 8 samples,
+   *  radius 3, shadow colour alpha 0.5; SCNLight zNear / zFar 1 / 100 m), each on its own light. At most SPOT_SHADOWS,
+   *  the spots nearest the camera target; point lights cast none (as on the Mac). */
+  static SPOT_SHADOWS = 4;
+  static SPOT_SHADOW_ALPHA = 0.5;
+  static SPOT_SHADOW_RADIUS = 3;
+  static SPOT_NEAR = 1;
+  static SPOT_FAR = 100;
   /** Diffuse share of the image-based light (SceneKit lightingEnvironment), measured on the Mac renders. */
   static ENV_DIFFUSE = 1.0;
   /** Image-based diffuse on vertical faces relative to up-facing ones (mixed by the normal's Z; SceneKit lights walls
@@ -422,19 +437,41 @@ export class Renderer {
       gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(1.5, 2.0);
       const p = this.shadow.use();
       p.m4("uViewProj", shadowMat).f("uUnit", UNIT).m4("uModel", IDENT);
-      for (const m of scene.meshes) {
-        if (m.transparent || m.hidden) continue;
-        const leaf = m.foliage && !(o.clay && o.style === "Realistic");
-        const tex = leaf || m.kind === "billboard" ? scene.texturesFor(m.mat, false) : null;
-        p.f("uFoliage", leaf ? 1 : 0).f("uUVScale", 1000 / Math.max(m.mat.textureScale, 1));
-        const cut = (leaf || m.kind === "billboard") && !!tex?.albedo;
-        p.i("uCutout", cut ? (m.kind === "billboard" ? 2 : 1) : 0).tex("uAlbedo", 0, cut ? tex!.albedo! : this.whiteTex);
-        const mult = multiplyTint(m.mat.color);
-        p.v3("uMultiply", mult);
-        this.drawTriangles(p, m);
-      }
+      this.drawCasters(p, scene, o);
       gl.disable(gl.POLYGON_OFFSET_FILL);
       this.lastShadow = { key: shadowKey, mat: shadowMat };
+    }
+
+    // Spot / IES light shadows (SceneLights.node castsShadow): perspective depth maps over each spot's cone.
+    this.spotShadows = [];
+    if (s.mode === 0 && s.lightScale > 0 && s.drawFaces && !scene.empty) {
+      const casters = this.sortedLights(scene, o.camera).map((l, i) => ({ l, i }))
+        .filter(({ l }) => l.kind === "spot" || l.kind === "ies").slice(0, Renderer.SPOT_SHADOWS);
+      if (casters.length) {
+        const size = Math.min(this.maxSize, final ? 4096 : 2048), tile = size / 2;
+        if (!this.spotT || this.spotT.width !== size) { disposeTarget(gl, this.spotT); this.spotT = depthTarget(gl, size); }
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.spotT.fb);
+        gl.viewport(0, 0, size, size);
+        gl.clear(gl.DEPTH_BUFFER_BIT);
+        gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.depthMask(true);
+        gl.disable(gl.CULL_FACE); gl.disable(gl.BLEND);
+        gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(1.5, 2.0);
+        const p = this.shadow.use();
+        p.f("uUnit", UNIT).m4("uModel", IDENT);
+        casters.forEach(({ l, i }, k) => {
+          const eye = l.position.map((v) => v * UNIT) as V3;
+          const t = l.target ?? [l.position[0], l.position[1], l.position[2] - 1000];
+          const d = norm(sub(t as V3, l.position));
+          const lv = lookAt(eye, [eye[0] + d[0], eye[1] + d[1], eye[2] + d[2]], Math.abs(d[2]) > 0.99 ? [0, 1, 0] : [0, 0, 1]);
+          const beam = Math.min(Math.max(l.beam || 60, 1), 170);
+          const mat = mul(perspective((beam * Math.PI) / 180, 1, Renderer.SPOT_NEAR, Renderer.SPOT_FAR), lv);
+          gl.viewport((k % 2) * tile, Math.floor(k / 2) * tile, tile, tile);
+          p.m4("uViewProj", mat);
+          this.drawCasters(p, scene, o);
+          this.spotShadows.push({ light: i, mat });
+        });
+        gl.disable(gl.POLYGON_OFFSET_FILL);
+      }
     }
 
     // Scene into the HDR target
@@ -472,7 +509,7 @@ export class Renderer {
     p.v3("uSunDir", sun);
     const sunScale = s.mode === 0 ? Renderer.SUN_SCALE : 1;
     p.v3("uSunColor", s.sunColor.map((c) => c * s.sunI * sunScale));
-    p.i("uShadows", shadowMat ? 1 : 0).f("uShadowAlpha", s.shadowAlpha).f("uShadowRadius", s.shadowRadius * (this.shadowT ? this.shadowT.width / 4096 : 1))
+    p.i("uShadows", shadowMat ? 1 : 0).f("uShadowAlpha", s.shadowAlpha).f("uLampSunShadow", Renderer.LAMP_SUN_SHADOW).f("uShadowRadius", s.shadowRadius * (this.shadowT ? this.shadowT.width / 4096 : 1))
       .i("uShadowSamples", Math.min(32, s.shadowSamples ?? (final ? 32 : 12))).f("uShadowBias", 0.0004).f("uShadowTexel", (radius * 2.1) / (this.shadowT?.width ?? 4096))
       .f("uShadowRange", radius * 1.05 * 5).f("uSlopeTexels", Renderer.SLOPE_TEXELS);
     if (shadowMat) p.m4("uShadowMat", shadowMat).tex("uShadowMap", 5, this.shadowT!.depth!);
@@ -670,11 +707,31 @@ export class Renderer {
     gl.bindVertexArray(null);
   }
 
-  private setLights(p: Program, scene: SceneModel, scale: number, cam: CameraState) {
-    const lights = scale > 0 ? scene.lights.slice() : [];
-    // At most 16: the ones nearest the camera target.
+  /** Opaque shadow casters into the bound depth target (shadow program in use: sun and spot shadow maps). */
+  private drawCasters(p: Program, scene: SceneModel, o: FrameOptions) {
+    for (const m of scene.meshes) {
+      if (m.transparent || m.hidden) continue;
+      const leaf = m.foliage && !(o.clay && o.style === "Realistic");
+      const tex = leaf || m.kind === "billboard" ? scene.texturesFor(m.mat, false) : null;
+      p.f("uFoliage", leaf ? 1 : 0).f("uUVScale", 1000 / Math.max(m.mat.textureScale, 1));
+      const cut = (leaf || m.kind === "billboard") && !!tex?.albedo;
+      p.i("uCutout", cut ? (m.kind === "billboard" ? 2 : 1) : 0).tex("uAlbedo", 0, cut ? tex!.albedo! : this.whiteTex);
+      const mult = multiplyTint(m.mat.color);
+      p.v3("uMultiply", mult);
+      this.drawTriangles(p, m);
+    }
+  }
+
+  /** Placed lights and fixtures in shader order: at most 16, the ones nearest the camera target. */
+  private sortedLights(scene: SceneModel, cam: CameraState) {
+    const lights = scene.lights.slice();
     const tgt = cam.target.map((v) => v / UNIT) as V3;
     lights.sort((a, b) => len(sub(a.position, tgt)) - len(sub(b.position, tgt)));
+    return lights.slice(0, 16);
+  }
+
+  private setLights(p: Program, scene: SceneModel, scale: number, cam: CameraState) {
+    const lights = scale > 0 ? this.sortedLights(scene, cam) : [];
     const n = Math.min(16, lights.length);
     const pos = new Float32Array(64), col = new Float32Array(64), dir = new Float32Array(64), inner = new Float32Array(16);
     const iesRows: (Float32Array | null)[] = new Array(16).fill(null);
@@ -719,6 +776,15 @@ export class Renderer {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.R16F, 32, 16, 0, gl.RED, gl.HALF_FLOAT, half);
     }
     p.tex("uIES", 6, this.iesTex);
+    // Spot shadows (atlas tile k: light uSpotShadowLight[k], uSpotShadowMat[k]); texture unit 7 is the atlas's own.
+    const spots = scale > 0 ? this.spotShadows : [];
+    const sm = new Float32Array(64), si = new Int32Array(4).fill(-1);
+    spots.forEach((x, k) => { sm.set(x.mat, k * 16); si[k] = x.light; });
+    p.i("uNumSpotShadows", spots.length).f("uSpotShadowAlpha", Renderer.SPOT_SHADOW_ALPHA).f("uSpotShadowRadius", Renderer.SPOT_SHADOW_RADIUS)
+      .f("uSpotNearFar", Renderer.SPOT_NEAR, Renderer.SPOT_FAR);
+    gl.uniformMatrix4fv(L("uSpotShadowMat[0]"), false, sm);
+    gl.uniform1iv(L("uSpotShadowLight[0]"), si);
+    p.tex("uSpotShadowMap", 7, spots.length && this.spotT ? this.spotT.depth! : this.whiteTex);
   }
 
   /** Per-mesh material of the style (Scene3DBuilder.material + BeautyLighting.enhance). */
@@ -942,7 +1008,7 @@ export class Renderer {
 
   dispose() {
     const gl = this.gl;
-    disposeTarget(gl, this.shadowT); disposeTarget(gl, this.dofT);
+    disposeTarget(gl, this.shadowT); disposeTarget(gl, this.spotT); disposeTarget(gl, this.dofT);
     if (this.targets) for (const t of [this.targets.ms, this.targets.hdr, this.targets.ao, this.targets.ao2, this.targets.b1, this.targets.b2, this.targets.ldr]) disposeTarget(gl, t);
     if (this.env) gl.deleteTexture(this.env.tex);
   }

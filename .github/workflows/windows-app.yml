@@ -1,6 +1,8 @@
 # Builds the Windows app of Oanarina Archi Tool: archi-engine.exe (Swift, ArchiCore) with its Swift runtime DLLs,
 # the Electron shell in windows/, the NSIS installer "Oanarina-Archi-Tool-Setup-<version>.exe" (version from
-# app/Info.plist), installs it per-user, checks the installation (shortcuts, file associations, uninstall entry),
+# app/Info.plist) with the Explorer thumbnail handler for .archi (windows/native, MSVC), installs it per-user, checks the
+# installation (shortcuts, file associations, uninstall entry, thumbnail handler registration and a thumbnail made
+# through COM from a drawing the installed engine saved),
 # smoke-tests the installed app (Playwright for Electron: start screen, Cedar House 2D, 3D Golden hour, LINE,
 # save/reopen, PDF plot) and uninstalls it again. Then the shell test suites run in Chromium against the fixture engine
 # (ui-snapshots, dialogs, partb-tools, canvas, output, ..., render-r4, shell-polish, system, view3d/tools).
@@ -220,6 +222,22 @@ jobs:
           set -o pipefail
           python windows/packaging/make-ico.py . windows/packaging/build/icon.ico 2>&1 | tee "$LOGS/08-icon.log"
 
+      - name: Build the Explorer thumbnail handler (MSVC, x64 and arm64)
+        id: native
+        if: always() && steps.inputs.outcome == 'success'
+        timeout-minutes: 10
+        shell: cmd
+        run: |
+          rem FILEPREVIEW: windows/native (IThumbnailProvider COM DLL) -> windows/resources/shellext, packaged by
+          rem electron-builder and registered per user by packaging/installer.nsh; thumbtest.exe for the check after install.
+          call windows\native\build.cmd "%GITHUB_WORKSPACE%\windows\resources\shellext" "%GITHUB_WORKSPACE%\build\native" > "%LOGS%\08-thumbnail-handler.log" 2>&1
+          set rc=%errorlevel%
+          type "%LOGS%\08-thumbnail-handler.log"
+          if not exist "%GITHUB_WORKSPACE%\windows\resources\shellext\ArchiThumbnail-x64.dll" (echo ::error title=Thumbnail handler::ArchiThumbnail-x64.dll was not built ^(08-thumbnail-handler.log^) & exit /b 1)
+          if not exist "%GITHUB_WORKSPACE%\build\native\thumbtest.exe" (echo ::error title=Thumbnail handler::thumbtest.exe was not built ^(08-thumbnail-handler.log^) & exit /b 1)
+          if not exist "%GITHUB_WORKSPACE%\windows\resources\shellext\ArchiThumbnail-arm64.dll" echo ::warning title=Thumbnail handler::no ARM64 build (08-thumbnail-handler.log): Windows on Arm gets no Explorer thumbnails
+          exit /b %rc%
+
       - name: Package the NSIS installer
         id: package
         timeout-minutes: 30
@@ -242,6 +260,7 @@ jobs:
           [ -f "$inst" ] || { echo "::error title=Installer missing::$inst was not produced (09-package.log)"; ls -la out; exit 1; }
           [ -f "out/win-unpacked/resources/engine/archi-engine.exe" ] || { echo "::error title=Engine not bundled::resources/engine/archi-engine.exe is missing in the package"; exit 1; }
           [ -f "out/win-unpacked/resources/samples/Cedar House.archi" ] || { echo "::error title=Sample not bundled::resources/samples/Cedar House.archi is missing in the package"; exit 1; }
+          [ -f "out/win-unpacked/resources/shellext/ArchiThumbnail-x64.dll" ] || { echo "::error title=Thumbnail handler not bundled::resources/shellext/ArchiThumbnail-x64.dll is missing in the package"; exit 1; }
           if ! diff <(cd resources/engine && ls | grep -v README.txt | sort) <(cd out/win-unpacked/resources/engine && ls | sort); then
             echo "::error title=Engine DLLs not packaged::out/win-unpacked/resources/engine differs from resources/engine"; exit 1; fi
           if [ "${{ inputs.arm64 }}" = "true" ]; then
@@ -319,9 +338,57 @@ jobs:
             }
             $un = Get-ChildItem "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall" | ForEach-Object { Get-ItemProperty $_.PSPath } | Where-Object { $_.DisplayName -like "Oanarina Archi Tool*" }
             Check "uninstall entry in Settings > Apps (per-user)" ($un) "$($un.DisplayName) $($un.DisplayVersion)"
+            # Explorer thumbnail handler (installer.nsh): per-user COM registration for the .archi thumbnail handler key.
+            $clsid = "{9D934CB7-4E6D-404F-A240-C5DBE6F0CAC0}"
+            $shellex = (Get-ItemProperty -Path "HKCU:\Software\Classes\.archi\ShellEx\{e357fccd-a995-4576-b01f-234630154e96}" -ErrorAction SilentlyContinue).'(default)'
+            Check ".archi thumbnail handler key -> CLSID" ($shellex -eq $clsid) "$shellex"
+            $inproc = Get-ItemProperty -Path "HKCU:\Software\Classes\CLSID\$clsid\InprocServer32" -ErrorAction SilentlyContinue
+            Check "thumbnail handler DLL registered and installed" ($inproc -and (Test-Path $inproc.'(default)') -and $inproc.'(default)'.StartsWith($dir, 'OrdinalIgnoreCase')) "$($inproc.'(default)') ($($inproc.ThreadingModel))"
             $hklm = Get-ChildItem "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall" -ErrorAction SilentlyContinue | ForEach-Object { Get-ItemProperty $_.PSPath } | Where-Object { $_.DisplayName -like "Oanarina Archi Tool*" }
             Check "no per-machine (admin) install" (-not $hklm)
           } catch { Write-Host "::error title=Installer check failed::$_"; $fail = 1 } finally { Stop-Transcript | Out-Null }
+          exit $fail
+
+      - name: Explorer thumbnail of an .archi drawing (installed handler)
+        id: thumbnail
+        if: always() && steps.install.outcome != 'skipped' && steps.native.outcome == 'success'
+        timeout-minutes: 10
+        shell: pwsh
+        run: |
+          Start-Transcript -Path "$env:LOGS/10b-thumbnail.log" | Out-Null
+          $fail = 0
+          try {
+            # Two copies of Cedar House saved by the installed archi-engine.exe: with the embedded plan picture (the
+            # default, FILEPREVIEW Icons On) and without (recovery.setup previewOnSave:false). Then thumbtest.exe checks
+            # the registry, loads the handler through COM as Explorer's thumbnail host does and makes a 256 px bitmap.
+            $dir = if ($env:APPDIR) { $env:APPDIR } else { Join-Path $env:LOCALAPPDATA "Programs\Oanarina Archi Tool" }
+            $eng = Join-Path $dir "resources\engine\archi-engine.exe"
+            $src = Join-Path $dir "resources\samples\Cedar House.archi"
+            $work = Join-Path $env:RUNNER_TEMP "thumbnail"; New-Item -ItemType Directory -Force $work | Out-Null
+            $with = Join-Path $work "Cedar House (picture).archi"; $without = Join-Path $work "Cedar House (no picture).archi"
+            $rpc = { param($id, $method, $params) (@{ jsonrpc = "2.0"; id = $id; method = $method; params = $params } | ConvertTo-Json -Compress -Depth 5) }
+            $lines = @((& $rpc 1 "doc.open" @{ path = $src }), (& $rpc 2 "doc.save" @{ path = $with }),
+                       (& $rpc 3 "recovery.setup" @{ previewOnSave = $false }), (& $rpc 4 "doc.save" @{ path = $without }))
+            $out = $lines | & $eng --cwd $work 2>&1
+            $out | Where-Object { $_ -match '"id":[1-4],' } | ForEach-Object { Write-Host ($_.ToString().Substring(0, [Math]::Min(300, $_.ToString().Length))) }
+            if (-not ((Test-Path $with) -and (Test-Path $without))) { Write-Host "::error title=Thumbnail check::archi-engine.exe did not save the two test drawings"; exit 1 }
+            $hasPicture = (Get-Content -Raw $with) -match '"preview" : \{'
+            $noPicture = -not ((Get-Content -Raw $without) -match '"preview" : \{')
+            if ($hasPicture -and $noPicture) { Write-Host "PASS  archi-engine embeds the plan picture on save (and not with previewOnSave:false)" }
+            else { Write-Host "::error title=Thumbnail check::embedded picture: with=$hasPicture without-absent=$noPicture"; $fail = 1 }
+            New-Item -ItemType Directory -Force (Join-Path $env:LOGS "screenshots") | Out-Null
+            $bmp = Join-Path $env:LOGS "screenshots\explorer-thumbnail.bmp"
+            $tt = Join-Path $work "thumbtest.txt"
+            $p = Start-Process -FilePath "$env:GITHUB_WORKSPACE\build\native\thumbtest.exe" -ArgumentList "`"$with`"", "`"$without`"", "`"$bmp`"" -NoNewWindow -PassThru -RedirectStandardOutput $tt
+            $null = $p.Handle   # keeps the process handle so ExitCode is available after WaitForExit
+            if (-not $p.WaitForExit(180000)) { $p.Kill(); Write-Host "::error title=Thumbnail handler::thumbtest.exe did not finish in 3 minutes"; $fail = 1 }
+            if (Test-Path $tt) { Get-Content $tt | Write-Host }
+            if ($p.ExitCode -ne 0) { Write-Host "::error title=Thumbnail handler::thumbtest.exe failed with exit $($p.ExitCode) (10b-thumbnail.log)"; $fail = 1 }
+            if (Test-Path $bmp) {
+              python -c "import sys; from PIL import Image; Image.open(sys.argv[1]).save(sys.argv[2])" $bmp ($bmp -replace '\.bmp$', '.png')
+              if ($LASTEXITCODE -eq 0) { Remove-Item $bmp }
+            }
+          } catch { Write-Host "::error title=Thumbnail check failed::$_"; $fail = 1 } finally { Stop-Transcript | Out-Null }
           exit $fail
 
       - name: Screen resolution 1920x1080 for the screenshots (best effort)
@@ -398,7 +465,9 @@ jobs:
             if (Test-Path (Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Oanarina Archi Tool.lnk")) { $left += "Start menu shortcut" }
             if (Test-Path (Join-Path ([Environment]::GetFolderPath("Desktop")) "Oanarina Archi Tool.lnk")) { $left += "desktop shortcut" }
             if (Get-ChildItem "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall" | ForEach-Object { Get-ItemProperty $_.PSPath } | Where-Object { $_.DisplayName -like "Oanarina Archi Tool*" }) { $left += "uninstall entry" }
-            if ($left.Count) { Write-Host "::error title=Uninstall incomplete::left behind: $($left -join ', ')"; $fail = 1 } else { Write-Host "PASS  uninstaller removed the app, shortcuts and the uninstall entry" }
+            if (Test-Path "HKCU:\Software\Classes\CLSID\{9D934CB7-4E6D-404F-A240-C5DBE6F0CAC0}") { $left += "thumbnail handler CLSID" }
+            if (Test-Path "HKCU:\Software\Classes\.archi\ShellEx\{e357fccd-a995-4576-b01f-234630154e96}") { $left += ".archi thumbnail handler key" }
+            if ($left.Count) { Write-Host "::error title=Uninstall incomplete::left behind: $($left -join ', ')"; $fail = 1 } else { Write-Host "PASS  uninstaller removed the app, shortcuts, the uninstall entry and the thumbnail handler registration" }
           } catch { Write-Host "::error title=Uninstall failed::$_"; $fail = 1 } finally { Stop-Transcript | Out-Null }
           exit $fail
 
@@ -443,6 +512,7 @@ jobs:
             echo "commit ${GITHUB_SHA} · run ${GITHUB_RUN_ID} (attempt ${GITHUB_RUN_ATTEMPT}) · version ${{ steps.version.outputs.version }} · job ${{ job.status }}"
             echo "inputs ${{ steps.inputs.outcome }} · version ${{ steps.version.outcome }} · swift ${{ steps.swift.outcome }} · python ${{ steps.python.outcome }} · node ${{ steps.node.outcome }} · tools ${{ steps.tools.outcome }}"
             echo "engine ${{ steps.engine.outcome }} · engine-dlls ${{ steps.enginecheck.outcome }} · shell ${{ steps.shell.outcome }} · icons ${{ steps.icons.outcome }} · icon ${{ steps.icon.outcome }} · package ${{ steps.package.outcome }} · upload ${{ steps.upload.outcome }}"
+            echo "thumbnail-handler ${{ steps.native.outcome }} · thumbnail ${{ steps.thumbnail.outcome }}"
             echo "install ${{ steps.install.outcome }} · smoke ${{ steps.smoke.outcome }} · uninstall ${{ steps.uninstall.outcome }} · shell-tests ${{ steps.shelltests.outcome }}"
             for f in 04-engine-build.log 06-shell-build.log 09-package.log; do
               [ -f "$f" ] && { echo "=== $f"; sed 's/\x1b\[[0-9;]*m//g' "$f" | grep -E "error:|error |ERR!|⨯|Error:|failed|::error|Build complete|target=" | head -60; }
@@ -452,6 +522,8 @@ jobs:
             [ -f 07-icons.log ] && { echo "=== icons"; grep -E "icons|FAIL|PASS" 07-icons.log | cut -c1-600; }
             [ -f 09-package.log ] && { echo "=== installer"; grep -E "^version|Setup-.*bytes|^note:|^wrote .*SHA256SUMS|^(OK|FAIL)  " 09-package.log; }
             [ -f 10-install.log ] && { echo "=== install"; grep -E "PASS|::error" 10-install.log; }
+            [ -f 08-thumbnail-handler.log ] && { echo "=== thumbnail handler build"; grep -E "error|warning C|^ArchiThumbnail|build.cmd:" 08-thumbnail-handler.log | head -30; }
+            [ -f 10b-thumbnail.log ] && { echo "=== Explorer thumbnail"; grep -E "PASS|FAIL|INFO|::error|thumbtest:" 10b-thumbnail.log; }
             [ -f 11-smoke.log ] && { echo "=== smoke"; grep -E "PASS|FAIL|SKIP|smoke:|app:" 11-smoke.log; }
             [ -f 12-uninstall.log ] && { echo "=== uninstall"; grep -E "PASS|::error|::warning" 12-uninstall.log; }
             [ -f 13-shell-tests.log ] && { echo "=== shell tests (Chromium)"; grep -E "^SUITE |^FAIL|::error" 13-shell-tests.log | cut -c1-300 | head -80; }

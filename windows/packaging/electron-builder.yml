@@ -8,7 +8,8 @@
 #
 # Installer (NSIS, assisted): per-user install into %LOCALAPPDATA%\Programs\Oanarina Archi Tool without administrator
 # rights (installer.nsh forces the current-user mode, no UAC prompt), Start menu and desktop shortcuts, file
-# associations .archi / .dxf / .ifc (HKCU\Software\Classes), the Cedar House and Nordic House samples, and an
+# associations .archi / .dxf / .ifc (HKCU\Software\Classes), the Explorer thumbnail handler for .archi (resources/shellext
+# from windows/native/build.cmd, registered per user by installer.nsh), the Cedar House and Nordic House samples, and an
 # uninstaller registered in Settings ▸ Apps (HKCU ...\Uninstall). Unsigned until a code-signing certificate is set up
 # (windows/README.md "Code signing": CSC_LINK / CSC_KEY_PASSWORD or WIN_CSC_LINK / WIN_CSC_KEY_PASSWORD).
 appId: com.oanarina.architool            # = Mac CFBundleIdentifier and APP_ID in src/main/main.ts (AppUserModelID)
@@ -28,6 +29,9 @@ extraResources:
   - from: resources/engine
     to: engine
     filter: ["**/*", "!README.txt"]
+  - from: resources/shellext           # Explorer thumbnail handler (windows/native, FILEPREVIEW), registered by installer.nsh
+    to: shellext
+    filter: ["*.dll"]
   - from: ../assets/demo
     to: samples
     filter: ["**/*"]

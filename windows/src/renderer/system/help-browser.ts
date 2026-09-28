@@ -186,6 +186,7 @@ function render(app: App) {
   if (!shadow) return;
   const cmds = (app.hello?.commands ?? []) as Cmd[];
   shadow.innerHTML = helpHtml(cmds, currentRoute);
+  (shadow.host as HTMLElement).dataset.route = currentRoute;
   const q = shadow.getElementById("q") as HTMLInputElement | null;
   q?.addEventListener("input", () => {
     const v = q.value.toLowerCase();

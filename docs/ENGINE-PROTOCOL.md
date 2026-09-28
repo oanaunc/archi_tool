@@ -510,7 +510,7 @@ engine. Fixtures: `doc-schedules`, `doc-browser`, `doc-textstyles`, `doc-spell-w
   `{path, width, height, bytes, title}` (PNG / TIFF written, "Saved <sheet> at <dpi> dpi (<w>×<h> px) to <path>." logged) or,
   for JPEG or without `path`, `{png: <temporary PNG>, width, height, dpi, title}` for the shell to encode and save with
   `view3d.saveImage`. The sheet is its plot page (page setup pens, viewport clips); "Model" is the model plot page.
-- `recovery.setup {folder, versionsFolder?, keep?=50, versionsOnSave?=true}` → `{id, folder, versionsFolder, keep}`.
+- `recovery.setup {folder, versionsFolder?, keep?=50, versionsOnSave?=true, previewOnSave?=true}` → `{id, folder, versionsFolder, keep}`.
 - `recovery.autosave {write?=true, force?}` → `{written, path?}`: refreshes this window's heartbeat and, when `write` and the
   drawing has unsaved changes since the last autosave, writes `<id>.archi` + `<id>.json` ({id, name, originalPath, date,
   pid, heartbeat}). The shell calls it every 30 s with `write` true once the autosave interval has passed.
@@ -518,6 +518,8 @@ engine. Fixtures: `doc-schedules`, `doc-browser`, `doc-textstyles`, `doc-spell-w
   copies of other windows whose heartbeat is older than 75 s · `recovery.restore {id}` → `{doc, originalPath}` (drawing
   replaced, unsaved, copy removed, "Recovered “…” from the autosave of …" logged) · `recovery.remove {id}` → recovery.list.
 - Saving an .archi file removes the window's recovery copy and (versionsOnSave) adds a version.
+- Saving an .archi file embeds the Explorer thumbnail picture (previewOnSave; FILEPREVIEW Icons) as the envelope key
+  `preview {png, width, height}` after the document (docs/WINDOWS-FILEPREVIEW.md).
 - `versions.list {}` → `{path, name, keep, versions:[{index, label, date}]}` newest first (error "Save the drawing as an .archi
   file first."); `versions.save {}` → `{ok, message, count}`; `versions.open {index}` → `{path}` (a copy in
   %TEMP%/ArchiVersions); `versions.restore {index}` → doc.info (the current file is kept as a version, then reloaded).
