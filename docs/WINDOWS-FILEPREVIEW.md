@@ -71,8 +71,9 @@ HKCU\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved        
 - The DLL matches **Explorer's** architecture, not the app's: the 32-bit installer reads `PROCESSOR_ARCHITEW6432`
   (ARM64 → the arm64 DLL, else x64). Both DLLs are in every installer. The keys are written in the 64-bit registry view.
 - Then `SHChangeNotify(SHCNE_ASSOCCHANGED)`; the uninstaller deletes the keys and notifies again.
-- Updates: a DLL still loaded by the thumbnail host cannot be replaced, so `customInit` renames the installed DLLs aside
-  (default install folder) before the update; a renamed copy still in use is removed by the next update.
+- Updates: a DLL still loaded by the thumbnail host cannot be replaced, so the uninstaller (`customUnInstall`, also run by
+  an update before the new files are copied) renames the installed DLLs aside in the install folder; a renamed copy still
+  in use is removed by the next update or uninstall.
 - Unsigned until the app has a code-signing certificate (`signExts` signs `.exe` only). Some antivirus products flag
   unsigned DLLs registered under ShellEx.
 

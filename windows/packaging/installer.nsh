@@ -16,6 +16,8 @@
 !define ARCHI_THUMB_APPROVED_KEY "Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved"
 
 !macro archiRegisterThumbnailHandler
+  Push $R0
+  Push $R1
   ; The installer is a 32-bit process: PROCESSOR_ARCHITEW6432 names the native architecture (AMD64 or ARM64).
   ReadEnvStr $R0 PROCESSOR_ARCHITEW6432
   StrCmp $R0 "" 0 +2
@@ -31,6 +33,8 @@
     WriteRegStr HKCU "${ARCHI_THUMB_SHELLEX_KEY}" "" "${ARCHI_THUMB_CLSID}"
     WriteRegStr HKCU "${ARCHI_THUMB_APPROVED_KEY}" "${ARCHI_THUMB_CLSID}" "Oanarina Archi Tool thumbnail handler"
   archi_thumb_done:
+  Pop $R1
+  Pop $R0
 !macroend
 
 !macro archiUnregisterThumbnailHandler
@@ -41,16 +45,16 @@
 !macroend
 
 ; Explorer's thumbnail host may still have the handler of the installed version loaded; a loaded DLL cannot be replaced
-; or deleted but can be renamed, so an update moves it aside first (a moved copy still in use is deleted by the next update).
-!macro customInit
-  IfFileExists "$LOCALAPPDATA\Programs\Oanarina Archi Tool\resources\shellext\*.dll" 0 archi_thumb_init_done
-    Delete "$LOCALAPPDATA\Programs\Oanarina Archi Tool\resources\shellext\ArchiThumbnail-x64.dll.old"
-    Delete "$LOCALAPPDATA\Programs\Oanarina Archi Tool\resources\shellext\ArchiThumbnail-arm64.dll.old"
-    Rename "$LOCALAPPDATA\Programs\Oanarina Archi Tool\resources\shellext\ArchiThumbnail-x64.dll" "$LOCALAPPDATA\Programs\Oanarina Archi Tool\resources\shellext\ArchiThumbnail-x64.dll.old"
-    Rename "$LOCALAPPDATA\Programs\Oanarina Archi Tool\resources\shellext\ArchiThumbnail-arm64.dll" "$LOCALAPPDATA\Programs\Oanarina Archi Tool\resources\shellext\ArchiThumbnail-arm64.dll.old"
-    Delete "$LOCALAPPDATA\Programs\Oanarina Archi Tool\resources\shellext\ArchiThumbnail-x64.dll.old"
-    Delete "$LOCALAPPDATA\Programs\Oanarina Archi Tool\resources\shellext\ArchiThumbnail-arm64.dll.old"
-  archi_thumb_init_done:
+; or deleted but can be renamed, so the uninstaller (also run by an update, before the new files are copied) moves it
+; aside in $INSTDIR first; a moved copy still in use is removed by the next update or uninstall.
+; (Not in customInit: the first round-5 installer, which did this in .onInit, crashed on CI before copying any file.)
+!macro archiMoveThumbnailHandlerAside
+  Delete "$INSTDIR\resources\shellext\ArchiThumbnail-x64.dll.old"
+  Delete "$INSTDIR\resources\shellext\ArchiThumbnail-arm64.dll.old"
+  IfFileExists "$INSTDIR\resources\shellext\ArchiThumbnail-x64.dll" 0 +2
+    Rename "$INSTDIR\resources\shellext\ArchiThumbnail-x64.dll" "$INSTDIR\resources\shellext\ArchiThumbnail-x64.dll.old"
+  IfFileExists "$INSTDIR\resources\shellext\ArchiThumbnail-arm64.dll" 0 +2
+    Rename "$INSTDIR\resources\shellext\ArchiThumbnail-arm64.dll" "$INSTDIR\resources\shellext\ArchiThumbnail-arm64.dll.old"
   ClearErrors
 !macroend
 
@@ -62,5 +66,6 @@
 !macroend
 !macro customUnInstall
   !insertmacro archiUnregisterThumbnailHandler
+  !insertmacro archiMoveThumbnailHandlerAside
   System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
 !macroend
