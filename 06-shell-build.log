@@ -1,0 +1,29 @@
+npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+npm warn deprecated npmlog@6.0.2: This package is no longer supported.
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated @npmcli/move-file@2.0.1: This functionality has been moved to @npmcli/fs
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated glob@8.1.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated are-we-there-yet@3.0.1: This package is no longer supported.
+npm warn deprecated boolean@3.2.0: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+npm warn deprecated gauge@4.0.4: This package is no longer supported.
+npm warn deprecated tar@6.2.1: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+
+added 409 packages in 19s
+oanarina-archi-tool@1.0.0 D:\a\archi_tool\archi_tool\windows
++-- @types/node@22.20.4
++-- electron-builder@25.1.8
++-- electron@33.4.11
++-- esbuild@0.24.2
++-- lucide@0.460.0
++-- playwright-core@1.63.0
+`-- typescript@5.9.3
+
+
+> oanarina-archi-tool@1.0.0 build
+> node tools/gen-ui-data.mjs && node tools/gen-l10n.mjs && node build.mjs
+
+ui data from docs/windows-parity.json: 11 tabs; 994 guide anchors; 471 icons from lucide 0.460.0
+l10n: 118 ribbon + 67 menu strings → src\renderer\data\l10n.generated.json
+built dist/ (main, preload, renderer)

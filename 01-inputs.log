@@ -1,0 +1,14 @@
+ok  app/Package.swift
+ok  app/Info.plist
+ok  app/Sources/archi-engine
+ok  windows/package.json
+ok  windows/packaging/electron-builder.yml
+ok  windows/packaging/installer.nsh
+ok  windows/packaging/sync-version.mjs
+ok  windows/packaging/release-files.mjs
+ok  windows/packaging/collect-dlls.py
+ok  windows/packaging/make-ico.py
+ok  windows/packaging/smoke-electron.mjs
+ok  app/Resources/AppIcon.icns
+ok  assets/demo/Cedar House.archi
+ok  assets/demo/textures

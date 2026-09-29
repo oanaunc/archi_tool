@@ -1,0 +1,24 @@
+app: /c/Users/runneradmin/AppData/Local/Programs/Oanarina Archi Tool/Oanarina Archi Tool.exe
+PASS  app launches
+PASS  renderer ready (body.ready)
+PASS  start screen visible
+PASS  start screen: plan thumbnails for both samples, full-width thumbnail boxes  — {"samples":2,"fullWidth":true}
+PASS  engine answered engine.hello  — version 1.0.0, 1043 commands
+PASS  Windows title bar (native caption buttons)  — {"captions":true,"dpr":1}
+PASS  Cedar House opened  — Cedar House — Oanarina Archi Tool
+PASS  plan has drawing items  — 974 DrawItems
+PASS  FLOATPANEL Layers opens a separate window owned by the drawing window  — [{"title":"Layers","owned":true,"visible":true,"size":[284,481],"focused":false},{"title":"Cedar House — Oanarina Archi Tool","owned":false,"visible":true,"size":[1440,900],"focused":true}]
+PASS  closing the floating window docks the panel again  — 1 windows; docked: Properties,Layers,Levels,Browser,Materials,Tools,Sheets,History,Selection,Navigator,Alerts,Quick Props,Inspector,Content
+PASS  Golden hour preset applied  — render.preset Goldenhour
+PASS  3D view has a canvas
+PASS  3D view shows Realistic with the Golden hour look  — {"style":"Realistic","preset":"Golden hour","explicit":true}
+PASS  status bar Zoom in 3D is the plan's  — 2D "Zoom 1:201", 3D "Zoom 1:201"
+PASS  LINE starts and prompts for a point  — Command: LINE ⏎ Specify first point:
+PASS  LINE added a line to the plan  — 974 → 975 DrawItems; log: Command: LINE ⏎ Specify first point: ⏎ Specify next point: ⏎ Specify next point [Undo]:
+PASS  saved with Ctrl+Shift+S  — C:\Users\runneradmin\AppData\Local\Temp\archismoke-D6gm62\SmokeCedar.archi (391762 bytes)
+PASS  title shows the saved name  — SmokeCedar — Oanarina Archi Tool
+PASS  reopened the saved file from the command line  — SmokeCedar — Oanarina Archi Tool
+PASS  reopened drawing has the new line  — 975 DrawItems (saved 975)
+PASS  PLOT prompts for the PDF file  — Command: PLOT ⏎ Enter PDF file name (Enter = print dialog):
+PASS  PDF plot written  — PLOT command: 176463 bytes, header %PDF-
+smoke: 22 passed, 0 failed, 0 skipped

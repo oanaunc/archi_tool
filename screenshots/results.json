@@ -1,0 +1,137 @@
+{
+  "exe": "C:/Users/runneradmin/AppData/Local/Programs/Oanarina Archi Tool/Oanarina Archi Tool.exe",
+  "results": [
+    {
+      "name": "app launches",
+      "ok": true,
+      "required": true,
+      "detail": ""
+    },
+    {
+      "name": "renderer ready (body.ready)",
+      "ok": true,
+      "required": true,
+      "detail": ""
+    },
+    {
+      "name": "start screen visible",
+      "ok": true,
+      "required": true,
+      "detail": ""
+    },
+    {
+      "name": "start screen: plan thumbnails for both samples, full-width thumbnail boxes",
+      "ok": true,
+      "required": false,
+      "detail": "{\"samples\":2,\"fullWidth\":true}"
+    },
+    {
+      "name": "engine answered engine.hello",
+      "ok": true,
+      "required": true,
+      "detail": "version 1.0.0, 1043 commands"
+    },
+    {
+      "name": "Windows title bar (native caption buttons)",
+      "ok": true,
+      "required": false,
+      "detail": "{\"captions\":true,\"dpr\":1}"
+    },
+    {
+      "name": "Cedar House opened",
+      "ok": true,
+      "required": true,
+      "detail": "Cedar House — Oanarina Archi Tool"
+    },
+    {
+      "name": "plan has drawing items",
+      "ok": true,
+      "required": true,
+      "detail": "974 DrawItems"
+    },
+    {
+      "name": "FLOATPANEL Layers opens a separate window owned by the drawing window",
+      "ok": true,
+      "required": false,
+      "detail": "[{\"title\":\"Layers\",\"owned\":true,\"visible\":true,\"size\":[284,481],\"focused\":false},{\"title\":\"Cedar House — Oanarina Archi Tool\",\"owned\":false,\"visible\":true,\"size\":[1440,900],\"focused\":true}]"
+    },
+    {
+      "name": "closing the floating window docks the panel again",
+      "ok": true,
+      "required": false,
+      "detail": "1 windows; docked: Properties,Layers,Levels,Browser,Materials,Tools,Sheets,History,Selection,Navigator,Alerts,Quick Props,Inspector,Content"
+    },
+    {
+      "name": "Golden hour preset applied",
+      "ok": true,
+      "required": false,
+      "detail": "render.preset Goldenhour"
+    },
+    {
+      "name": "3D view has a canvas",
+      "ok": true,
+      "required": false,
+      "detail": ""
+    },
+    {
+      "name": "3D view shows Realistic with the Golden hour look",
+      "ok": true,
+      "required": false,
+      "detail": "{\"style\":\"Realistic\",\"preset\":\"Golden hour\",\"explicit\":true}"
+    },
+    {
+      "name": "status bar Zoom in 3D is the plan's",
+      "ok": true,
+      "required": false,
+      "detail": "2D \"Zoom 1:201\", 3D \"Zoom 1:201\""
+    },
+    {
+      "name": "LINE starts and prompts for a point",
+      "ok": true,
+      "required": false,
+      "detail": "Command: LINE ⏎ Specify first point:"
+    },
+    {
+      "name": "LINE added a line to the plan",
+      "ok": true,
+      "required": true,
+      "detail": "974 → 975 DrawItems; log: Command: LINE ⏎ Specify first point: ⏎ Specify next point: ⏎ Specify next point [Undo]:"
+    },
+    {
+      "name": "saved with Ctrl+Shift+S",
+      "ok": true,
+      "required": true,
+      "detail": "C:\\Users\\runneradmin\\AppData\\Local\\Temp\\archismoke-D6gm62\\SmokeCedar.archi (391762 bytes)"
+    },
+    {
+      "name": "title shows the saved name",
+      "ok": true,
+      "required": false,
+      "detail": "SmokeCedar — Oanarina Archi Tool"
+    },
+    {
+      "name": "reopened the saved file from the command line",
+      "ok": true,
+      "required": true,
+      "detail": "SmokeCedar — Oanarina Archi Tool"
+    },
+    {
+      "name": "reopened drawing has the new line",
+      "ok": true,
+      "required": true,
+      "detail": "975 DrawItems (saved 975)"
+    },
+    {
+      "name": "PLOT prompts for the PDF file",
+      "ok": true,
+      "required": false,
+      "detail": "Command: PLOT ⏎ Enter PDF file name (Enter = print dialog):"
+    },
+    {
+      "name": "PDF plot written",
+      "ok": true,
+      "required": true,
+      "detail": "PLOT command: 176463 bytes, header %PDF-"
+    }
+  ]
+}

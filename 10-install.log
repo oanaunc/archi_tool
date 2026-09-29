@@ -1,0 +1,41 @@
+**********************
+PowerShell transcript start
+Start time: 20260929071309
+Username: runnervm99s1a\runneradmin
+RunAs User: runnervm99s1a\runneradmin
+Configuration Name: 
+Machine: runnervm99s1a (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -command . 'D:\a\_temp\4eff6d4b-ce3f-4188-837d-20c9eee13439.ps1'
+Process ID: 7868
+PSVersion: 7.6.6
+PSEdition: Core
+GitCommitId: 7.6.6
+OS: Microsoft Windows 10.0.26100
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+silent install (per-user, no elevation): D:\a\archi_tool\archi_tool\windows\out\Oanarina-Archi-Tool-Setup-1.0.0.exe
+PASS  installer exit code 0  exit 0
+PS>TerminatingError(): "The pipeline has been stopped."
+install folder: C:\Users\runneradmin\AppData\Local\Programs\Oanarina Archi Tool (InstallLocation: )
+PASS  installed per-user in %LOCALAPPDATA%\Programs  C:\Users\runneradmin\AppData\Local\Programs\Oanarina Archi Tool\Oanarina Archi Tool.exe
+PASS  uninstaller present
+PASS  Cedar House sample installed
+PASS  archi-engine installed
+PASS  product version = app/Info.plist  product 1.0.0.0 file 1.0.0.3
+PASS  Start menu shortcut  C:\Users\runneradmin\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Oanarina Archi Tool.lnk
+PASS  desktop shortcut  C:\Users\runneradmin\Desktop\Oanarina Archi Tool.lnk
+PASS  file association .archi opens the app  Oanarina.ArchiTool.Project -> C:\Users\runneradmin\AppData\Local\Programs\Oanarina Archi Tool\Oanarina Archi Tool.exe "%1"
+PASS  file association .dxf opens the app  Oanarina.ArchiTool.DXF -> C:\Users\runneradmin\AppData\Local\Programs\Oanarina Archi Tool\Oanarina Archi Tool.exe "%1"
+PASS  file association .ifc opens the app  Oanarina.ArchiTool.IFC -> C:\Users\runneradmin\AppData\Local\Programs\Oanarina Archi Tool\Oanarina Archi Tool.exe "%1"
+PASS  uninstall entry in Settings > Apps (per-user)  Oanarina Archi Tool 1.0.0 1.0.0
+PASS  .archi thumbnail handler key -> CLSID  {9D934CB7-4E6D-404F-A240-C5DBE6F0CAC0}
+PASS  thumbnail handler DLL registered and installed  C:\Users\runneradmin\AppData\Local\Programs\Oanarina Archi Tool\resources\shellext\ArchiThumbnail-x64.dll (Apartment)
+PASS  no per-machine (admin) install
+**********************
+PowerShell transcript end
+End time: 20260929071320
+**********************

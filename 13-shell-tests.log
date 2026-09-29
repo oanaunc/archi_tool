@@ -1,0 +1,818 @@
+Downloading Chrome for Testing 153.0.8010.12 (playwright chromium v1243)[2m from https://cdn.playwright.dev/builds/cft/153.0.8010.12/win64/chrome-win64.zip[22m
+|                                                                                |   0% of 195.6 MiB
+|■■■■■■■■                                                                        |  10% of 195.6 MiB
+|■■■■■■■■■■■■■■■■                                                                |  20% of 195.6 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 195.6 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 195.6 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 195.6 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 195.6 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 195.6 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 195.6 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 195.6 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 195.6 MiB
+Chrome for Testing 153.0.8010.12 (playwright chromium v1243) downloaded to C:\Users\runneradmin\AppData\Local\ms-playwright\chromium-1243
+Downloading FFmpeg (playwright ffmpeg v1011)[2m from https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1011/ffmpeg-win64.zip[22m
+|                                                                                |   1% of 1.3 MiB
+|■■■■■■■■                                                                        |  10% of 1.3 MiB
+|■■■■■■■■■■■■■■■■                                                                |  20% of 1.3 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 1.3 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 1.3 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  51% of 1.3 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 1.3 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 1.3 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 1.3 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 1.3 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 1.3 MiB
+FFmpeg (playwright ffmpeg v1011) downloaded to C:\Users\runneradmin\AppData\Local\ms-playwright\ffmpeg-1011
+Downloading Chrome Headless Shell 153.0.8010.12 (playwright chromium-headless-shell v1243)[2m from https://cdn.playwright.dev/builds/cft/153.0.8010.12/win64/chrome-headless-shell-win64.zip[22m
+|                                                                                |   0% of 114.6 MiB
+|■■■■■■■■                                                                        |  10% of 114.6 MiB
+|■■■■■■■■■■■■■■■■                                                                |  20% of 114.6 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 114.6 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 114.6 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 114.6 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 114.6 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 114.6 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 114.6 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 114.6 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 114.6 MiB
+Chrome Headless Shell 153.0.8010.12 (playwright chromium-headless-shell v1243) downloaded to C:\Users\runneradmin\AppData\Local\ms-playwright\chromium_headless_shell-1243
+Downloading Winldd (playwright winldd v1007)[2m from https://cdn.playwright.dev/dbazure/download/playwright/builds/winldd/1007/winldd-win64.zip[22m
+|■■■■■■■■                                                                        |  12% of 0.1 MiB
+|■■■■■■■■■■■■■■■■                                                                |  25% of 0.1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  38% of 0.1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  51% of 0.1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 0.1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  89% of 0.1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 0.1 MiB
+Winldd (playwright winldd v1007) downloaded to C:\Users\runneradmin\AppData\Local\ms-playwright\winldd-1007
+built dist/ (main, preload, renderer)
+archi-engine: wrote 108 fixture files to ../build/engine-fixtures
+doc-plan.png: 0.2 s
+===== test/ui-snapshots.mjs
+PASS  start screen visible
+PASS  start tiles
+PASS  templates
+PASS  start closes after opening
+PASS  title shows document
+PASS  11 ribbon tabs  — Home,Insert,Annotate,Architecture,Modeling,Analyze,Collaborate,View,Output,Manage,Script
+PASS  ORTHO toggles
+PASS  toggle echoed in history
+PASS  window selection selects objects  — 201 selected: 201 objects
+PASS  properties show the selection
+PASS  Esc clears the selection
+PASS  autocomplete shows LINE
+PASS  LINE prompt
+PASS  keyword chip Undo
+PASS  line committed
+PASS  panel Layers
+PASS  panel Levels
+PASS  panel Browser
+PASS  panel Materials
+PASS  panel Tools
+PASS  panel Sheets
+PASS  panel History
+PASS  panel Properties
+PASS  level switch
+PASS  sheet mode
+PASS  split shows plan and 3D
+PASS  3D view has a canvas
+PASS  3D view shows the model  — 63 meshes
+PASS  parity menus in the menu bar  — File,Edit,View,Draw,Modify,Annotate,Architecture,Model,Analyze,Tools,Window,Help
+PASS  no page errors
+30/30 checks passed
+SUITE PASS test/ui-snapshots.mjs (30 s)
+===== test/dialogs.mjs
+PASS  Settings window opens from the ribbon
+PASS  six settings pages  — General,Drafting,Display,Shortcuts,Toolbar,Agents
+PASS  General page sections  — AUTOSAVE AND RECOVERYAutosaveevery 5 minUnsaved changes are written to a recovery file; after a crash the Start screen o
+PASS  autosave default every 5 min
+PASS  autosave stepper
+PASS  autosave off  — 0
+PASS  light theme applies at once
+PASS  accent colour
+PASS  Drafting page: 13 object snaps  — 13 GRID AND SNAP (NEW DRAWINGS)Show gridGrid snapGrid spacing (
+PASS  recording state
+PASS  shortcut assigned
+PASS  command search lists MATCHPROP  — MATCHPROP
+PASS  quick access toolbar gains MATCHPROP
+PASS  hidden ribbon tab
+PASS  reset alert
+PASS  reset restores quick access and accent
+PASS  custom shortcut runs LINE
+PASS  OPTIONS Display opens the Display page
+PASS  Drawing Units sheet
+PASS  units sample updates  — Sample: 1079.50  ·  45° → Sample: 3'-6 1/2"  ·  45°
+PASS  units applied
+PASS  UNITS command opens the sheet (showPanel)
+PASS  Esc cancels the sheet
+PASS  Drafting Settings sheet
+PASS  13 snap toggles + Object snap
+PASS  ortho on after OK
+PASS  Quick Select sheet
+PASS  live match count  — Line: 20 object(s) match
+PASS  Select replaces the selection  — 20
+PASS  Layer States Manager
+PASS  layer state saved
+PASS  layers panel rows  — 12
+PASS  layer filter  — 7 of 12 layers match the filter
+PASS  layer tree groups
+PASS  Page Setup — Model
+PASS  exact fit disabled at a fixed scale
+PASS  plot stamp fields
+PASS  Page Setup — sheet
+PASS  Customize Ribbon window
+PASS  unknown command rejected
+PASS  custom panel on Home  — Draw,Modify,Layers,Properties,Groups,More,My Tools
+PASS  hidden built-in panel
+PASS  workspace 3D Modeling  — {"mode":"3D","tab":"View","panel":"Materials"}
+PASS  workspace from the View menu
+PASS  keyboard reference with Windows keys  — Keyboard ShortcutsKeyboard & MouseDoneType anywhereStart a command on the comman
+PASS  New from Template menu  — Metric Drawing (mm)|Imperial Drawing (in)|Building (levels, grid, sheets)|Save Drawing as Template…|Show Templates Folder|Sample House
+PASS  start screen template gallery  — Metric,Metric Architectural,Imperial,Building
+PASS  Metric Architectural template
+PASS  no page errors
+49/49 checks passed
+SUITE PASS test/dialogs.mjs (34 s)
+===== test/partb-tools.mjs
+PASS  page is cross-origin isolated (script worker)
+PASS  JS Console opens from the ribbon
+PASS  console runs JavaScript with archi.print and a synchronous engine call  — ▶ archi.print("sum", 1 + 1); …sum 2object✓ finished in 2.0 ms⇐ 42
+PASS  archi.panel opens a script panel
+PASS  script panel button calls the global function with the values
+PASS  JS Console toggles off
+PASS  AI Agents ribbon block shows the server state
+PASS  Connect Claude sheet opens
+PASS  Connect Claude shows the archi-engine --mcp configuration
+PASS  Block Library opens from the ribbon
+PASS  Block Library shows Folder / Favourites / Recent
+PASS  Material Library opens from the ribbon
+PASS  Materials panel lists the drawing's materials  — NewDuplicateDeleteConcreteRough 0.9 · Metal 0BrickRough 0.85 · Metal 0PlasterRou
+PASS  Sheets panel is the Sheet Set Manager  — NewA-101Sheet 10 vp · A3—NUMBERINGRenumber AllSheet Index HereView TitlesREVISIO
+PASS  Title Block sheet opens
+PASS  Markups window opens from the ribbon
+PASS  Markups has Open / Resolved / All and Around Selection
+PASS  Compare Drawings window opens
+PASS  Revision Clouds window opens
+PASS  Family Editor opens (host dialog familyEditor)
+PASS  Furniture template: parameters, forms and the evaluated size  — Size 1600 × 900 × 750
+PASS  Customizer opens and asks for a scripted object
+PASS  Node Editor opens from the ribbon
+PASS  Graph Player opens
+PASS  TUTORIALRECORD List answers in the command history
+PASS  TUTORIALRECORD Record opens the tutorial videos on the website  — https://www.oanarinaldi.com/archi-tool.html#tutorials
+PASS  TUTORIALS opens the offline help browser's tutorials page  — tutorials
+PASS  no page errors
+
+28/28 passed
+SUITE PASS test/partb-tools.mjs (14 s)
+===== test/canvas.mjs
+PASS  a stroke of the plan is on screen
+PASS  hover highlight under the cursor
+PASS  click selects the object under the cursor  — 39
+PASS  grips of the selection
+PASS  hovered grip
+PASS  grip drag previews in the accent colour
+PASS  grip drag commits one Grip Edit step  — Grip Edit
+PASS  click on a grip makes it hot (not dragging)
+PASS  Space cycles Stretch → Move
+PASS  Enter cycles Move → Rotate
+PASS  typed SC switches to Scale
+PASS  typed C turns Copy on
+PASS  a typed distance in Move + Copy adds a copy  — Grip Move Copy
+PASS  Copy keeps the grip hot
+PASS  Esc releases the hot grip
+PASS  grip menu lists the grip options  — Stretch,Add Vertex,Remove Vertex
+PASS  grip menu option follows the cursor
+PASS  crossing selects at least as much as window  — 1 / 260
+PASS  counter-clockwise lasso selects (crossing)  — 167
+PASS  shortcut menu (no selection) matches the Mac  — Repeat|Recent Input|Pan|Zoom Window|Zoom Extents|Select All|Quick Select…|Undo|Redo Grip Move Copy|Quick Properties|Properties
+PASS  shortcut menu with a selection lists the edit commands  — Repeat|Recent Input|Move|Copy Selection|Rotate|Scale|Mirror|Erase|Isolate Objects|Select Similar|Deselect All|Quick Select…|Undo|Redo Grip Move Copy|Quick Properties|Properties
+PASS  marking menu: 8 drafting commands clockwise from the top  — Line,Polyline,Wall,Door,Dimension,Window,Rectangle,Circle
+PASS  dragging up highlights Line
+PASS  releasing runs the command  — Specify first point:
+PASS  object snap tracking along the base horizontal
+PASS  dynamic input: length / angle fields at the cursor
+PASS  Shift+right-click: snap override menu  — Temporary Track Point,From,Endpoint,Midpoint,Intersection,Extension,Center,Geometric Center,Quadrant,Tangent,Perpendicular,Parallel,Node,Insert,Nearest,None,Osnap Settings…
+PASS  Length Tab Angle Enter draws @1500<30  — Opened Cedar House.archi — 408 objects, 59 building elements.Undo Grip EditUndo Grip Move CopyCommand: LINE
+PASS  the new segment is 1500 long  — 1500
+PASS  right-click during a command = Enter (ends LINE)
+PASS  typed-ahead LINE input is queued, not run as new commands  — Opened Cedar House.archi — 408 objects, 59 building elements.Undo Grip EditUndo Grip Move CopyCommand: LINECommand: LINE
+PASS  clicking again cycles to the overlapping object  — 100004 → 100003
+PASS  cycling hint in the status bar  — -35005.49, -40000.00mm2 of 2: line #100003WCSGRIDSNAPORTHOPOLAROTRACKOSNAPDYNLWTGround Floor01 selected1:1mmZoom 1:31Agent: off
+PASS  arrow key nudges the selection (Nudge)  — Nudge
+PASS  double-click on text opens the in-place editor
+PASS  Enter commits the edit (Edit Text)  — Edit Text
+PASS  editor closed
+PASS  temporary dimension shown for the selected object  — 1
+PASS  clicking the value opens its field
+PASS  typing a value moves the object (Temporary Dimension)  — Temporary Dimension
+PASS  tool palette tabs  — Draw,Modify,Annotate,Build,Blocks,Components,My Tools
+PASS  component tiles with thumbnails
+PASS  clicking a component starts placement
+PASS  Space rotates the placement 90°
+PASS  click places the component (Place Sofa)  — Place Sofa
+PASS  placement ends after a plain click
+PASS  My Tools defaults  — Wall,Door,Window,Room,Dimlinear,Hatch
+PASS  dropping a palette component places it
+PASS  dropping a drawing file opens it  — Opened Cedar House.archi — 408 objects, 59 building elements.Undo Grip EditUndo Grip Move CopyCommand: LINECommand: LINECommand: LINECommand: LINE*Cancel*Placed sofa at 541.72,-21326.26.Placed dining table at -12086.41,-10814.46.Opened Cedar House.archi — 408 objects, 59 building elements.
+PASS  mouse wheel up zooms in by 1.2  — 0.014079999999999999 → 0.016895999999999998
+PASS  touchpad pinch (Ctrl+wheel) zooms out  — 0.016895999999999998 → 0.01528813301513557
+PASS  touchpad two-finger scroll pans  — 11732.433427505206,461.1983981570893 → 13694.739745111116,-323.72412888527424
+PASS  twisted view: toView / toWorld round trip  — 1234.0000000000018,5678.000000000001
+PASS  view twist is 30°
+PASS  sheet viewports listed  — [{"index":0,"rect":[15,25,315,282]}]
+PASS  click selects the viewport
+PASS  viewport menu (scales, lock, maximise, remove)  — Scale 1:20|Scale 1:50|Scale 1:100|Scale 1:200|Scale 1:500|Lock Viewport|Maximise (VPMAX)|Remove
+PASS  lock shows the badge state
+PASS  a locked viewport pans instead of moving
+PASS  dragging an unlocked viewport moves it (Move Viewport)  — 15,25,315,282 → 47.51824817518248,8.740875912408761,347.51824817518246,265.74087591240874
+PASS  no page errors
+61/61 checks passed
+SUITE PASS test/canvas.mjs (24 s)
+===== test/output.mjs
+PASS  Plot Preview window with the Mac title
+PASS  PLOT shows the active target (sheet A-102 in the fixture)  — Sheet — A-102 Plans
+PASS  sheet preview is the true-size A3 page with clipped viewports  — {"w":"0 0 1190.55 841.89","clips":2}
+PASS  title block on the page (A-102, OANARINA ARCHI TOOL)  — Living|01  46.74 m²|Stair Hall|02  33.84 m²|Entry|03  22.04 m²|Kitchen & Dining|04  40.23 m²|Porch|05  18.00 m²|4°|UP
+PASS  page count
+PASS  model target shows paper, orientation, plot area and scale
+PASS  monochrome plot style regenerates the preview  — #000000
+PASS  Save PDF… plots the previewed file  — Command: PREVIEW | Plotted to Cedar House.pdf
+PASS  Print… prints the previewed pages with the system dialog
+PASS  Print window: printer, paper, tray, paper size, scale, copies
+PASS  roll paper width with common sizes
+PASS  custom percentage slider
+PASS  Print sends the drawing with the options (Mac message)  — Sent Cedar House to the default printer, 100%, 2 copies.
+PASS  Batch Publish lists the sheets with number, paper and plot style  — A-101Sheet 1A3 · ColorA-102A-102 PlansA3 · Color
+PASS  title shows the chosen count
+PASS  Publish… disabled with no sheet
+PASS  Batch Publish publishes with bookmarks  — Published 2 sheet(s) with bookmarks to Cedar House — sheets.pdf
+PASS  PUBLISH with Enter asks for the file and publishes  — Published 2 sheet(s) to Cedar House — sheets.pdf
+PASS  plot style editor rows (Other, 1–9, 250–255)  — 16
+PASS  Save in Drawing stores a copy  — Plot style table archi pens 2.ctb saved in the drawing. Choose it in Page Setup (or PLOTSTYLE Set).
+PASS  Export PDF plots the sheet or model
+PASS  Render window sections (Mac form)  — PRESET,OUTPUT,PHOTOGRAPHIC LOOK,ENVIRONMENT,SHADOWS & OCCLUSION,SUN,CAMERA,,ANIMATION & PANORAMA
+PASS  presets from the engine
+PASS  Draft preset sets 1280×720
+PASS  Render draws the image with the 3D renderer  — Rendered Beauty 1280×720 in 5.
+PASS  render size  — [1280,720]
+PASS  region sliders and overlay
+PASS  data passes come from the engine
+PASS  Save… writes a PNG  — [["Cedar House render.png",7544]]
+PASS  walkthrough video: MP4 with ftyp, moov, mdat  — {"bytes":43978,"boxes":["ftyp","moov","mdat"],"codec":"avc1.640033","frames":10}
+PASS  render queue with the saved cameras
+PASS  queue renders every job and keeps the history
+PASS  camera path with two keys at 0 and 3 s
+PASS  path tracer window renders progressively
+PASS  no page errors
+35/35 passed
+SUITE PASS test/output.mjs (46 s)
+===== test/windows-conventions.mjs
+PASS  F1 opens the offline help browser  — index 
+PASS  Alt+F opens the File menu
+PASS  File menu has Exit Alt+F4
+PASS  menu shortcuts use Ctrl, not ⌘
+PASS  Alt+H opens Help with context help on F1 and the User Guide  — Oanarina Archi Tool Help (F1)F1TutorialsOpen Sample HouseSearch Commands…Ctrl+KCommand ReferenceCtrl+Shift+/User GuideKe
+PASS  Ctrl+Shift+Z and Ctrl+Y redo  — redo,redo
+PASS  ribbon icons all mapped  — 58 icons, fallback: 
+PASS  plan canvas re-sized for 150 % scaling  — 1709 px for 1139 CSS px
+PASS  no page errors
+9/9 checks passed
+SUITE PASS test/windows-conventions.mjs (3 s)
+===== test/menus-keys.mjs
+PASS  menu bar titles  — File,Edit,View,Draw,Modify,Annotate,Architecture,Model,Analyze,Tools,Window,Help
+PASS  every Mac menu entry is in the Windows menu bar (1254 entries)
+      2 entries disabled (commands not in this engine build): test-results/menus-disabled.txt
+PASS  menu entry File ▸ Open Recent ▸ Clear Menu
+PASS  menu entry File ▸ Insert ▸ Import File
+PASS  menu entry File ▸ Export ▸ GeoJSON
+PASS  menu entry File ▸ Export ▸ Schedules (CSV) ▸ Walls…
+PASS  menu entry File ▸ Plot Preview…
+PASS  menu entry File ▸ Publish All Sheets to PDF…
+PASS  menu entry Edit ▸ Deselect All
+PASS  menu entry Edit ▸ Selection Tools ▸ Quick Select
+PASS  menu entry Edit ▸ Groups & Isolation ▸ Isolate
+PASS  menu entry Edit ▸ Match Properties
+PASS  menu entry Edit ▸ Options…
+PASS  menu entry Edit ▸ Agent Server…
+PASS  menu entry View ▸ Zoom Window
+PASS  menu entry View ▸ Visual Style ▸ X-Ray
+PASS  menu entry View ▸ 3D View ▸ Iso
+PASS  menu entry View ▸ Layers Panel
+PASS  menu entry View ▸ Tool Palettes
+PASS  menu entry View ▸ Material Library…
+PASS  menu entry View ▸ 3D Tools ▸ Section Box
+PASS  menu entry View ▸ Show Script Console
+PASS  menu entry View ▸ Enter Full Screen
+PASS  menu entry Help ▸ Tutorials
+PASS  menu entry Help ▸ Open Sample House
+PASS  menu entry Help ▸ Command Reference
+PASS  menu entry Help ▸ Connect Claude…
+PASS  menu entry Help ▸ About Oanarina Archi Tool
+PASS  menu entry File ▸ Exit
+PASS  menu entry Window ▸ New Window
+PASS  menu shortcuts use Windows keys  — ["Ctrl+Y","Ctrl+Alt+Shift+P","Ctrl+Alt+P","Ctrl+Alt+1",null,"Ctrl+0","Ctrl+Shift+/","Ctrl+Shift+A"]
+PASS  Tools ▸ All Commands lists every category  — 29 categories
+PASS  Help ▸ Command Reference and Tools ▸ Help entries are enabled
+PASS  enabled: Tools ▸ View ▸ Clean Screen On
+PASS  enabled: Tools ▸ View ▸ Clean Screen Off
+PASS  enabled: Tools ▸ View ▸ History Panel
+PASS  enabled: Tools ▸ Start & Templates ▸ Start Screen
+PASS  enabled: Tools ▸ Navigation & Sheets ▸ Sample House
+PASS  enabled: Tools ▸ Families, Views & Panels ▸ What's New
+PASS  enabled: Help ▸ Export Command Reference…
+PASS  View ▸ 3D View ▸ Iso runs ISOVIEW
+PASS  View ▸ Visual Style runs VSCURRENT with the style
+PASS  View ▸ History Panel shows the panel
+PASS  Tools ▸ View ▸ Clean Screen On (CLEANSCREENON)
+PASS  Tools ▸ View ▸ Clean Screen Off
+PASS  Tools ▸ Help ▸ Search Commands opens the palette
+PASS  Help ▸ Start Screen (STARTSCREEN)
+PASS  Help ▸ Open Sample House opens the sample
+PASS  Tools ▸ … ▸ Sample House (SAMPLEHOUSE)
+PASS  Help ▸ About opens the About window
+PASS  About: name, version, licence, thanks, website  — About Oanarina Archi ToolOanarina Archi ToolVersion 1.0.0 (3)Drafting, building design, 3D, rendering and scripting for 
+PASS  About fits without scrolling
+PASS  About: the website link opens https://www.oanarinaldi.com
+PASS  the app icon opens About (ABOUT)
+PASS  Ctrl+Shift+/ opens the Command Reference window
+PASS  Command Reference lists every command by category  — 1043 of 1043
+PASS  Command Reference search  — 80 of 1043
+PASS  What's New window
+PASS  Insert ▸ More ▸ Blocks ▸ Block Library opens the window
+PASS  Architecture ▸ More ▸ Systems ▸ Family Editor opens the window
+PASS  Tools ▸ Blocks & Attributes ▸ Block Library opens the window
+PASS  Tools ▸ BIM Authoring ▸ Family Editor opens the window
+PASS  the command line keeps BLOCKLIBRARY / FAMILY
+PASS  Architecture ▸ Component is enabled
+PASS  Component menu entries are enabled
+PASS  Component ▸ Sofa runs COMPONENT Sofa
+PASS  Ctrl+Alt+P shows / hides the panels (not PLOT)  — @panels:toggle
+PASS  Ctrl+Alt+Shift+P runs PREVIEW (not PLOT)  — PREVIEW
+PASS  Ctrl+P runs PLOT  — PLOT
+PASS  Ctrl+Alt+1 → 2D
+PASS  Ctrl+Alt+2 → 3D
+PASS  Ctrl+Alt+3 → Split
+PASS  Ctrl+Alt+4 → Sheet
+PASS  Ctrl+Alt+1 → 2D
+PASS  Ctrl+Alt+J shows the script console
+PASS  Ctrl+A selects all, Ctrl+Shift+A deselects all  — 465 → 0
+PASS  Ctrl+Shift+I is Import (not a command line)
+PASS  Ctrl+K opens command search
+PASS  F2 shows the history panel
+PASS  Ctrl+0 is Clean Screen
+PASS  Ctrl+Y redo does not type
+PASS  AltGr characters type on the command line  — "@@€"
+PASS  AltGr+2 does not switch to 3D
+PASS  F1 idle opens the offline help browser index
+PASS  F1 with WALL typed opens its help page  — cmd/WALL 
+PASS  F1 while LINE runs opens the LINE help page  — cmd/LINE 
+PASS  Help ▸ Oanarina Archi Tool Help (F1) shows F1
+PASS  host dialog about
+PASS  host cleanScreen on
+PASS  host cleanScreen off
+PASS  host startScreen
+PASS  host dialog whatsNew
+PASS  host dialog commandSearch
+PASS  host newWindow sample
+PASS  EXPORTCOMMANDS writes the Markdown reference with Where  — | `LINE` | L | Draws straight line segments. | Draw |
+PASS  no page errors
+
+96/96 passed
+SUITE PASS test/menus-keys.mjs (21 s)
+===== test/audit-spot.mjs
+PASS  menu bar lists the Mac menus (no app menu)  — File,Edit,View,Draw,Modify,Annotate,Architecture,Model,Analyze,Tools,Window,Help
+PASS  Help ends with About  — Oanarina Archi Tool Help (F1)F1 / Tutorials / Open Sample House / Search Commands…Ctrl+K / Command ReferenceCtrl+Shift+/ / User Guide / Keyboard Shortcuts / Start Screen / Check Command Coverage / Export Command Reference… / Customize Shortcuts… / Connect Claude… / Oana Rinaldi Website / About Oanarina Archi Tool
+PASS  Edit has Deselect All, Selection Tools, Groups & Isolation, Match Properties, Options…  — UndoCtrl+Z / RedoCtrl+Y / CutCtrl+X / CopyCtrl+C / PasteCtrl+V / Delete [disabled] / Select AllCtrl+A / Deselect AllCtrl+Shift+A / Quick Select… / Selection Tools / Groups & Isolation / Match Properties / Options…Ctrl+, / Agent Server…
+PASS  Insert ▸ Component: 12 enabled entries  — Chair,Table,Desk,Sofa,Bed,Wardrobe,Kitchen,Sink,WC,Bath,Car,Component…
+PASS  Component ▸ Chair runs COMPONENT Chair  — COMPONENT Chair
+PASS  Ctrl+Alt+P toggles the panels
+PASS  Ctrl+Alt+2 switches to 3D  — 3D
+PASS  Ctrl+Alt+3 switches to Split  — Split
+PASS  Ctrl+Alt+4 switches to Sheet  — Sheet
+PASS  Ctrl+Alt+1 switches to 2D  — 2D
+PASS  Ctrl+Alt+J shows the script console
+PASS  F2 opens the History panel  — History
+PASS  Ctrl+Alt+Shift+P runs PREVIEW, not PLOT  — PREVIEW
+PASS  Ctrl+Shift+A deselects all  — 465 → 0
+PASS  Ctrl+Shift+/ opens the Command Reference window  — Command Reference
+PASS  F1 opens the offline help browser  — index 
+PASS  F1 during LINE opens its help page  — cmd/LINE 
+PASS  selecting a wall shows Modify Wall  — 1 MODIFY WALL
+PASS  SELECTIONINFO shows the Selection panel
+PASS  SPELLDIALOG opens its window
+PASS  FILEVERSIONS opens its window
+PASS  GRAPHICSTYLES opens its window
+PASS  ASSISTANT opens its window
+PASS  OUTLINERPANEL opens its window
+PASS  TEXTSTYLEDIALOG opens its window
+PASS  NAVIGATOR fills its panel
+PASS  NOTIFICATIONS fills its panel
+PASS  ADCENTER fills its panel
+PASS  FLOATPANEL Layers floats the panel
+PASS  no page errors
+{
+ "help": [
+  "Oanarina Archi Tool Help (F1)F1",
+  "Tutorials",
+  "Open Sample House",
+  "Search Commands…Ctrl+K",
+  "Command ReferenceCtrl+Shift+/",
+  "User Guide",
+  "Keyboard Shortcuts",
+  "Start Screen",
+  "Check Command Coverage",
+  "Export Command Reference…",
+  "Customize Shortcuts…",
+  "Connect Claude…",
+  "Oana Rinaldi Website",
+  "About Oanarina Archi Tool"
+ ],
+ "edit": [
+  "UndoCtrl+Z",
+  "RedoCtrl+Y",
+  "CutCtrl+X",
+  "CopyCtrl+C",
+  "PasteCtrl+V",
+  "Delete [disabled]",
+  "Select AllCtrl+A",
+  "Deselect AllCtrl+Shift+A",
+  "Quick Select…",
+  "Selection Tools",
+  "Groups & Isolation",
+  "Match Properties",
+  "Options…Ctrl+,",
+  "Agent Server…"
+ ],
+ "cmdref": "Command Reference",
+ "ctx": "MODIFY WALL"
+}
+all passed
+SUITE PASS test/audit-spot.mjs (29 s)
+===== test/audit-ribbon.mjs
+
+disabled: 0
+SUITE PASS test/audit-ribbon.mjs (5 s)
+===== test/doctools.mjs
+PASS  Output ▸ Export ▸ PNG exports through the engine  — Opened Cedar House.archi — 408 objects, 59 building elements.Exported PNG to Cedar House.pngExported Cedar House.png
+PASS  Schedules ▸ CSV menu lists six kinds  — Walls schedule (CSV)… | Doors schedule (CSV)… | Windows schedule (CSV)… | Rooms schedule (CSV)… | Slabs schedule (CSV)… | All schedule (CSV)…
+PASS  CSV export of the walls schedule  — House.pngExported Cedar House.pngExported CSV to Cedar House-walls.csvExported Cedar House-walls.csv
+PASS  Output ▸ Schedules ▸ View opens the Schedule sheet
+PASS  All schedule rows from the engine  — 59 row(s)
+PASS  Walls schedule table with a header row  — id,type,length,height,thickness,area,volume,level,material
+PASS  Export XLSX… from the Schedule sheet
+PASS  Close dismisses the Schedule sheet
+PASS  Project Browser sections as on the Mac
+PASS  3D views: six directions and the saved cameras
+PASS  Elevations & Sections items
+PASS  Schedules items
+PASS  a schedule in the browser opens the Schedule sheet on its kind
+PASS  an elevation shows the 3D view
+PASS  a floor plan returns to 2D
+PASS  sections collapse
+PASS  Selection panel: count and types  — 4 object(s) selectedwall3OnlyRemovewindow1OnlyRemoveLayers: A-GLAZ (1), A-WALL (3)Zoom to SelectionClear
+PASS  Only / Remove per type
+PASS  Layers, Zoom to Selection and Clear
+PASS  Remove drops that type
+PASS  Properties header of a mixed selection is a type menu  — 4 objects (3 wall, 1 window)
+PASS  type menu entries  — Wall (3),Window (1)
+PASS  narrowing keeps one type
+PASS  QP ON shows Quick Properties over the drawing
+PASS  Quick Properties rows  — 3 selectedLayer0ColorLinetypeLineweight
+PASS  Dock / Float / Hide buttons
+PASS  Dock moves Quick Properties into the panel
+PASS  INSPECT opens the Inspector with raw values  — ID#1GUID2x00000000000000000001TypewallLayerA-WALLColorByLayerGeometry{
+  "type": "fill",
+  "loops": [
+    [
+      [
+    
+PASS  Copy puts the object's values on the clipboard
+PASS  SELECTIONINFO shows the Selection panel
+PASS  SELECTWALLCHAIN selects joined walls
+PASS  numbered undo steps from the opened document  — 0Open / new document | 1Line | 2Circle
+PASS  clicking step 0 undoes everything (redo steps greyed)  — dt-step current,dt-step undone,dt-step undone
+PASS  clicking the last step redoes them  — dt-step done,dt-step done,dt-step current
+PASS  Commands page lists the session's commands  — CIRCLE,LINE,SELECTWALLCHAIN,SELECTIONINFO,INSPECT,QP
+PASS  command count
+PASS  Copy Log
+PASS  SPELLDIALOG opens Check Spelling
+PASS  first misspelled word with its object  — Kitchn
+PASS  suggestion prefilled
+PASS  Change replaces the word in the text  — Kitchen wiht door
+PASS  next word  — wiht
+PASS  Ignore All moves on  — Bedrom
+PASS  Add to Dictionary moves on  — kitchn
+PASS  check complete with the change count
+PASS  TEXTSTYLEDIALOG opens the Text Styles window
+PASS  New fills a unique name
+PASS  invalid width factor is refused with the Mac message
+PASS  Apply saves the style
+PASS  preview slants and narrows  — matrix(0.8, 0, -0.212557, 1, 0, 0)
+PASS  Current
+PASS  draw list text carries bold / underline / strike  — {"type":"text","position":[-2000,-4000],"height":600,"rotation":0,"content":"Bold struck","halign":"left","valign":"baseline","width":0,"font":"Helvetica","colo
+PASS  TEXTEDITINPLACE opens the in-place editor
+PASS  editor has Bold, Italic, Underline and Strike-through
+PASS  strike toggles on
+PASS  no page errors
+56/56 checks passed
+SUITE PASS test/doctools.mjs (32 s)
+===== test/workspace.mjs
+PASS  workspace commands are registered
+PASS  NOTIFICATIONS opens the Alerts panel with notifications  — 1 notification(s)InfoWalls overlapWALL-OVERLAP · #51 #52
+PASS  Alerts lists model warnings  — 1
+PASS  Alerts ▸ Info shows information items too  — 1 → 2
+PASS  clicking an alert selects its objects
+PASS  Alerts ▸ Dismiss hides the item
+PASS  Alerts ▸ Restore dismissed appears
+PASS  Restore dismissed brings it back
+PASS  NAVIGATOR shows the overview map
+PASS  Navigator draws the visible-area rectangle (accent)  — 362
+PASS  ADCENTER opens the Content panel
+PASS  Content lists the layers of the chosen drawing  — 0, A-WALL, A-DOOR, A-GLAZ, A-ELEMENTS, A-ANNO-DIMS
+PASS  Content ▸ Add to Drawing adds the definition  — Nothing new: those names already exist here.
+PASS  Content ▸ Add All adds the rest  — 12 → 12
+PASS  FLOATPANEL Layers floats the panel in its own OS window
+PASS  a floating panel leaves the docked tab strip  — Properties,Levels,Browser,Materials,Tools,Sheets,History,Selection,Navigator,Alerts,Quick Props,Inspector,Content
+PASS  the floating panel shows the layer list  — NewDeleteCurrentNameLinetypeLWT%0Continuous0.250Continuous0.500Continuous0.250Co
+PASS  the floating window is the Mac's 300×520 panel  — {"width":300,"height":520}
+PASS  FLOATPANEL Quick Props (two words, from the menus)
+PASS  the dock button puts it back and shows it
+PASS  closing the window docks the panel
+PASS  remembered floating set is empty after docking
+PASS  TILEDVIEWS 4 shows four tiles in Split  — Plan,3D,Section,South
+PASS  TILEDVIEWS prints the arrangement
+PASS  the elevation tile paints the projection on paper  — 1050
+PASS  tile menu changes a tile's view
+PASS  tile menu changes the arrangement
+PASS  TILEDVIEWS Single returns to the plan
+PASS  DVIEW twists the plan
+PASS  PERSPECTIVE 0 shows the 3D view
+PASS  KEYBOARDNAV stores the crosshair step
+PASS  arrow keys move the crosshair at a point prompt  — -3935.9376679247434 → -3409.1078981879014
+PASS  Enter picks the crosshair point  — Specify next point [Undo]:
+PASS  OUTLINERPANEL opens the Outliner window
+PASS  Outliner lists groups and components  — 2
+PASS  Outliner ▸ Filter by name
+PASS  ASSISTANT opens the assistant window
+PASS  Assistant ▸ Provider, model and key settings  — ProviderClaude (Anthropic API)Local model (Ollama / OpenAI-compatible)ModelEndpoint (localhost)Runs on this computer: th
+PASS  Assistant ▸ Anthropic shows the API key field
+PASS  Assistant ▸ Save switches to Claude with its default model
+PASS  Assistant runs the model's commands  — add a wallAdding a wall.LINE 0,0 1000,0 Ran 1 command(s) — undo with Ctrl+Z.
+PASS  bulk changes ask for confirmation
+PASS  Assistant ▸ Discard
+PASS  LANGUAGE Deutsch translates the ribbon  — Start,Einfügen,Beschriften,Architektur,Modellierung
+PASS  LANGUAGE Deutsch translates the menus  — Datei,Edit,Ansicht,Zeichnen,Ändern,Beschriften,Architektur,Modell,Analysieren,Werkzeuge,Fenster,Hilfe
+PASS  commands stay English
+PASS  LANGUAGE English restores the ribbon
+PASS  CMDLINEOPTIONS Lines 8 shows eight history lines  — 126
+PASS  CMDLINEOPTIONS Float floats the command line
+PASS  CMDLINEOPTIONS Reset docks it with 4 lines
+PASS  FILETAB shows the file tab bar
+PASS  FILETABCLOSE hides it
+PASS  SYSWINDOWS arranges the windows
+PASS  WINDOWTABS Tabs
+PASS  CRASHREPORTS On
+PASS  CRASHREPORTS Status
+PASS  EXPORTSETTINGS writes a settings file  — Oanarina Archi Tool Settings.json
+PASS  status bar shows macro buttons
+PASS  a macro button runs its macro
+PASS  progress indicator in the status bar
+PASS  progress Cancel
+PASS  Quick Properties button shows its state  — null / on
+PASS  agent indicator shows the server state
+PASS  undo.begin / undo.end collapse a plugin's edits into one step  — ["Line","MYPLUGIN"]
+PASS  no page errors
+65/65 checks passed
+SUITE PASS test/workspace.mjs (32 s)
+===== test/sheets.mjs
+PASS  start screen lists RECOVERED DOCUMENTS  — {"head":"RECOVERED DOCUMENTS","rows":["Cedar House27 Sep 2026 at 21:14RestoreDiscard"],"buttons":["Restore","Discard"],"beforeTip":true}
+PASS  recovered row has Restore and Discard, above the tip  — ["Restore","Discard"]
+PASS  Restore opens the recovered drawing unsaved  — {"start":"none","dirty":true,"mode":"2D"}
+PASS  restore message on the command line  — Opened Cedar House.archi — 408 objects, 59 building elements.Recovered “Cedar House” from the autosave of 27 Sep 2026 at 21:14. Save it to keep the changes.
+PASS  DRAWINGRECOVERY with nothing left
+PASS  no strip without a selection
+PASS  walls selected → MODIFY WALL  — {"title":"MODIFY WALL","buttons":["Door","Window","Opening","Dimension Walls","Offset","Properties","Move","Copy","Rotate","Mirror","Match Props","Select Similar"],"commands":["DOOR","WINDOW","OPENING","AUTODIMWALLS","OFFSET","PROPERTIES","MOVE","COPY","ROTATE","MIRROR","MATCHPROP","SELECTSIMILAR"],"bg":"rgba(245, 197, 24, 0.14)","chip":"rgb(245, 197, 24)","h":22,"underRibbon":true}
+PASS  Modify Wall has the Mac buttons in order  — ["Door","Window","Opening","Dimension Walls","Offset","Properties","Move","Copy","Rotate","Mirror","Match Props","Select Similar"]
+PASS  strip look: accent chip, 14 % accent band, 22 px, directly under the ribbon  — {"title":"MODIFY WALL","buttons":["Door","Window","Opening","Dimension Walls","Offset","Properties","Move","Copy","Rotate","Mirror","Match Props","Select Similar"],"commands":["DOOR","WINDOW","OPENING","AUTODIMWALLS","OFFSET","PROPERTIES","MOVE","COPY","ROTATE","MIRROR","MATCHPROP","SELECTSIMILAR"],"bg":"rgba(245, 197, 24, 0.14)","chip":"rgb(245, 197, 24)","h":22,"underRibbon":true}
+PASS  windows selected → MODIFY WINDOW (Properties, Set Property, Opening Parts …)  — ["Properties","Set Property","Opening Parts","Move","Copy","Rotate","Mirror","Match Props","Select Similar"]
+PASS  mixed selection hides the strip
+PASS  strip buttons run their command  — ngine; the fixture engine only simulates LINE, PLINE, CIRCLE, RECTANG and ERASE.
+PASS  deselecting hides the strip
+PASS  every contextual tab command is registered in the fixture engine
+PASS  clean screen hides the strip with the ribbon
+PASS  LAYOUTTABS OFF hides the Model / sheet tabs
+PASS  LAYOUTTABS toggles them back
+PASS  ZOOMXP on the plan: true size at 1:50  — NG and ERASE.Command: LAYOUTTABSCommand: LAYOUTTABSCommand: ZOOMXPPlan shown at 1:50 on paper, true size on this screen.
+PASS  SHEETIMAGE saves through sheet.image  — own at 1:50 on paper, true size on this screen.Command: SHEETIMAGESaved Model at 150 dpi (2480×1754 px) to Untitled.png.
+PASS  PSETUPIN with Enter asks for the drawing
+PASS  FILEVERSIONS needs a saved drawing
+PASS  Versions window: title, note, two versions  — {"title":"Versions — Cedar House.archi","note":"Each save keeps a version (up to 50). Open a copy to compare, or restore it.","rows":2,"buttons":["Open Copy (disabled)","Restore… (disabled)","Save Version Now"],"width":460}
+PASS  Open Copy and Restore… disabled until a version is chosen  — ["Open Copy (disabled)","Restore… (disabled)","Save Version Now"]
+PASS  Save Version Now adds a version  — {"rows":3,"msg":"Version saved."}
+PASS  Restore… asks first  — Restore the version of Sep 29, 2026 at 6:20:34 AM — DESKTOP-ARCHI?
+PASS  Restore restores and keeps the current file as a version  — Restored.
+PASS  no page errors
+27/27 checks passed
+SUITE PASS test/sheets.mjs (11 s)
+===== test/standards.mjs
+PASS  GRAPHICSTYLES opens the Graphic Styles window
+PASS  five pages like the Mac  — Line Styles|Layers|Lineweight by Scale|Pen Sets|Filters
+PASS  Add creates a line style row
+PASS  lineweight table rows
+PASS  a rule needs a value and an override
+PASS  Add Rule lists the rule with its condition and effect  — Rulelayer = A-WALL#FF0000layer=HalftoneHideAdd Rule
+PASS  Object Styles lists the 17 BIM categories  — 17
+PASS  invalid lineweights are refused like the Mac form
+PASS  Apply styles the category
+PASS  MATPATTERNDIALOG opens with a row per material
+PASS  Apply changes the pattern
+PASS  IMAGEADJUSTDIALOG opens with three sliders
+PASS  Apply adjusts the image
+PASS  the preview shows the image  — 64
+PASS  VISUALSTYLES Current shows the custom style in the 3D view  — {"mode":"3D","custom":["Ghost"],"current":"Ghost"}
+PASS  LWDISPLAYSCALE stores the screen scale
+PASS  PASTESPECIAL pastes the SVG another app copied  — ALELineweight display scale 2.Command: LWDISPLAYSCALELineweight display scale 1.Command: PASTESPECIALPasted SVG content.
+PASS  PASTESPECIAL with nothing from another app
+PASS  COPYPICTURE rasterises the picture (1600 px PNG) for the clipboard  — {"png":56266,"pdfPath":"C:\\Temp\\ArchiCopy.pdf","svg":336}
+PASS  SHARE hands the project and the PDF to the share sheet  — [["C:\\Temp\\ArchiShare\\Cedar House.archi","C:\\Temp\\ArchiShare\\Cedar House.pdf"]]
+PASS  the Share window offers Copy Files and Show in Explorer
+PASS  SPEAKDRAWING speaks the description  — Plan, level Ground Floor, layer 0. 465 drawing objects, 0 building elements. Selected: 1 object(s). Ready for a command. Crosshair at 0, 0.
+PASS  the description is announced to Narrator (live region)
+PASS  ARQUICKLOOK opens the real-scale glTF with the default app
+PASS  Tray lists the printer's input bins
+PASS  Media lists the printer's media types
+PASS  the print job carries the tray and media  — {"tray":"JobInputBin|ns|Manual","media":"PageMediaType|psk|Photographic"}
+PASS  the history names the tray  — RQuickLook\Cedar House.glbCommand: PRINTSETUPSent Cedar House to the default printer, tray Manual, Fit to Paper, 1 copy.
+PASS  no page errors
+29/29 checks passed
+SUITE PASS test/standards.mjs (15 s)
+===== test/render-extras-ui.mjs
+PASS  AODIALOG host action handled
+PASS  Ambient Occlusion window opens
+PASS  Ambient Occlusion window: the Mac's fields  — Ambient OcclusionDarkens corners, reveals and overhangs in the 3D viewport, renders, shaded elevations, sections and their PDF/SVG exports.Intensity0.80Radiusmm
+PASS  intensity slider 0–2
+PASS  MECHANISMPLAY host action handled
+PASS  mechanism poses drawn over the plan in the accent colour  — accent pixels 388 → 486
+PASS  mechanism stop handled
+PASS  stopping removes the overlay  — accent pixels 388
+PASS  RENDERPROMPT host action handled
+PASS  prompt preset saved and selected  — {"presets":[{"name":"Prompt: golden hour, soft shadows, 4K","width":3840,"height":2160,"antialias":true,"exposure":0,"background":"Sky","environment":"Sunset","shadowQuality":"High","shadowSoftness":1
+PASS  Render window opens on the prompt preset
+PASS  PROCMATERIAL host action handled
+PASS  procedural material reports the Windows-only texture writing on the web page
+PASS  MATFROMIMAGE host action handled
+PASS  no page errors
+15/15 passed
+SUITE PASS test/render-extras-ui.mjs (6 s)
+===== test/render-r4.mjs
+PASS  status bar Zoom in 3D is the plan's (Mac CanvasView keeps its scale)  — 2D "Zoom 1:201", 3D "Zoom 1:201"
+PASS  back in 2D the plan zoom is unchanged  — Zoom 1:201
+PASS  render.preset switches the 3D view to Realistic (was Shaded with Edges)  — {"style":"Realistic","preset":"Golden hour","explicit":true,"sunAlt":11}
+PASS  the view shows the Golden hour look (explicit preset: sun 11° high, sky, haze, meadow)  — {"style":"Realistic","preset":"Golden hour","explicit":true,"sunAlt":11}
+PASS  the frame turns warm (red over blue) like the Mac's golden hour  — mean before 50.6,53,50.6 → after 47,50.7,24.3; sky band 61.6,59,42.3
+PASS  the style picker shows Realistic
+PASS  setting a preset marks the drawing changed (as the Mac RENDERPRESET command)  — Cedar House • — Oanarina Archi Tool
+PASS  RENDERPRESET Off: Realistic without a preset (default daylight look)  — {"style":"Realistic","explicit":false}
+PASS  Overcast preset follows too
+PASS  Clear Sky map: zenith (0.24, 0.45, 0.78), horizon (0.78, 0.86, 0.94), ground (0.36, 0.35, 0.32)  — {"size":[1024,512],"zenith":[61,115,199],"horizonUp":[199,219,240],"horizonDown":[145,154,160],"nadir":[92,89,82],"glow":[182,207,235]}
+PASS  below the horizon: the horizon / ground mix  — [145,154,160]
+PASS  Sunset map: the sun glow left of centre above the horizon  — {"size":[1024,512],"zenith":[46,56,115],"horizonUp":[255,158,89],"horizonDown":[159,104,68],"nadir":[64,51,46],"glow":[254,201,126]}
+PASS  Night map: dark blue zenith (0.02, 0.03, 0.07)  — {"size":[1024,512],"zenith":[5,8,18],"horizonUp":[20,25,41],"horizonDown":[14,17,24],"nadir":[8,8,8],"glow":[19,23,38]}
+PASS  maps are 1024 × 512
+PASS  Physical Sky: blue zenith, grey ground (SkyModel)  — {"size":[1024,512],"zenith":[165,189,225],"ground":[142,140,135]}
+PASS  PANORAMA is 2:1  — 512×256
+PASS  panorama zenith is the Clear Sky map's (blue), not the Overcast preset's grey  — [30,60,105]
+PASS  compare overlay: added (green) and removed (red, dashed) outlines drawn over the plan  — {"green":1139,"red":598}
+PASS  the overlay follows the plan view (zoom)  — {"green":1139,"red":598} → {"green":1711,"red":946}
+PASS  Overlay off hides it  — {"green":0,"red":0}
+render window sky (top 12 %): {"Clear Sky":[71,84,100],"Sunset":[90,56,38],"Overcast":[93,93,93],"Studio":[92,92,92],"Night":[4,5,11],"Physical Sky":[73,83,96]}
+PASS  Render window renders with every environment  — {"Clear Sky":[71,84,100],"Sunset":[90,56,38],"Overcast":[93,93,93],"Studio":[92,92,92],"Night":[4,5,11],"Physical Sky":[73,83,96]}
+PASS  Clear Sky: blue gradient sky  — [71,84,100]
+PASS  Overcast and Studio: neutral grey skies  — 93,93,93 / 92,92,92
+PASS  Night: dark sky  — [4,5,11]
+PASS  Sunset: warm sky near the horizon (orange horizon and sun glow of the map)  — [90,56,38]
+PASS  no page errors
+26/26 passed
+SUITE PASS test/render-r4.mjs (121 s)
+===== test/shell-polish.mjs
+PASS  Cedar House.thumb.json is bundled with plan items  — 953 items
+PASS  Nordic House.thumb.json is bundled with plan items  — 1004 items
+PASS  every start card's thumbnail box spans the card (no dark strip beside the icon)  — [["Metric",160,160],["Metric Architectural",160,160],["Imperial",160,160],["Building",160,160],["Cedar House",254,254],["Nordic House",254,254]]
+PASS  Cedar House and Nordic House show plan thumbnails  — [{"name":"Cedar House","painted":3197,"w":254,"h":100,"starFill":"currentColor"},{"name":"Nordic House","painted":3747,"w":254,"h":100,"starFill":"currentColor"}]
+PASS  thumbnails fill the 100 px box (aspect-fill of the 320×200 plan picture)  — [[254,100],[254,100]]
+PASS  sample cards carry a solid star (star.fill)
+PASS  every menu has an access key and no two share one  — [["File","f","F"],["Edit","e","E"],["View","v","V"],["Draw","d","D"],["Modify","m","M"],["Annotate","n","n"],["Architecture","a","A"],["Model","o","o"],["Analyze","y","y"],["Tools","t","T"],["Window","w","W"],["Help","h","H"]]
+PASS  access keys: File F, Edit E, View V, Draw D, Modify M, Annotate N, Architecture A, Model O, Analyze Y, Tools T, Window W, Help H  — ["File:f","Edit:e","View:v","Draw:d","Modify:m","Annotate:n","Architecture:a","Model:o","Analyze:y","Tools:t","Window:w","Help:h"]
+PASS  holding Alt underlines each menu's access key under its letter, releasing it hides them  — []
+PASS  menu labels stay plain text ("Help", not split around the access key)
+PASS  Alt+A opens Architecture  — Architecture
+PASS  Alt+N opens Annotate  — Annotate
+PASS  Alt+Y opens Analyze  — Analyze
+PASS  Alt+O opens Model  — Model
+PASS  Alt+F opens File  — File
+PASS  1440×900: 14 tabs in 6 columns × 3 rows of 25×36 px cells, like the Mac  — {"n":14,"rows":3,"cols":6}
+PASS  1440×900: panel column 300 px with the tab grid and the float/close buttons centred  — panel 300, left 62, right 62
+PASS  1440×900: float and close buttons centred beside the grid (VStack in an HStack)  — 203 vs 203
+PASS  1440×900: tab labels shrink to fit (8.5 px down to 70 %) before truncating  — []
+PASS  1440×900: short labels show whole (Layers, Levels, Tools, Sheets, Alerts — cut to "Lay…" before)
+PASS  1440×900: long labels truncate like the Mac (Properties, Quick Props)  — [["Properties",5.94,true],["Layers",8.5,false],["Levels",8.5,false],["Browser",7.09,false],["Materials",6.19,false],["Tools",8.5,false],["Sheets",8.5,false],["History",7.98,false],["Selection",6.22,false],["Navigator",5.94,true],["Alerts",8.5,false],["Quick Props",5.94,true],["Inspector",6.09,false],["Content",7.06,false]]
+PASS  1440×900: tab icons follow the Mac symbols (Tools: square.grid.3x3.square, Quick Props: slider.horizontal.below.rectangle)  — {"Properties":"SlidersHorizontal","Layers":"Layers","Levels":"Building2","Browser":"ListTree","Materials":"Palette","Tools":"Grid3X3","Sheets":"GalleryVerticalEnd","History":"History","Selection":"Info","Navigator":"Map","Alerts":"BellDot","Quick Props":"Monitor","Inspector":"LayoutList","Content":"LibraryBig"}
+PASS  1920×1080: 14 tabs in 6 columns × 3 rows of 25×36 px cells, like the Mac  — {"n":14,"rows":3,"cols":6}
+PASS  1920×1080: panel column 300 px with the tab grid and the float/close buttons centred  — panel 300, left 62, right 62
+PASS  1920×1080: float and close buttons centred beside the grid (VStack in an HStack)  — 203 vs 203
+PASS  1920×1080: tab labels shrink to fit (8.5 px down to 70 %) before truncating  — []
+PASS  1920×1080: short labels show whole (Layers, Levels, Tools, Sheets, Alerts — cut to "Lay…" before)
+PASS  1920×1080: long labels truncate like the Mac (Properties, Quick Props)  — [["Properties",5.94,true],["Layers",8.5,false],["Levels",8.5,false],["Browser",7.09,false],["Materials",6.19,false],["Tools",8.5,false],["Sheets",8.5,false],["History",7.98,false],["Selection",6.22,false],["Navigator",5.94,true],["Alerts",8.5,false],["Quick Props",5.94,true],["Inspector",6.09,false],["Content",7.06,false]]
+PASS  1920×1080: tab icons follow the Mac symbols (Tools: square.grid.3x3.square, Quick Props: slider.horizontal.below.rectangle)  — {"Properties":"SlidersHorizontal","Layers":"Layers","Levels":"Building2","Browser":"ListTree","Materials":"Palette","Tools":"Grid3X3","Sheets":"GalleryVerticalEnd","History":"History","Selection":"Info","Navigator":"Map","Alerts":"BellDot","Quick Props":"Monitor","Inspector":"LayoutList","Content":"LibraryBig"}
+PASS  FLOATPANEL opens a separate window (window.open → BrowserWindow in Electron)
+PASS  its title is the panel name (NSPanel.title)
+PASS  floating window: 28 px header on the tab-bar colour, bold title, the panel's content, the app's fonts  — {"h":28,"bg":"rgb(35, 36, 40)","title":"Properties","weight":"600","body":"No selectionClick objects or drag a wind","font":"\"Segoe UI Variable Text\", \"Segoe UI Variable\", \"Segoe UI\", -apple-system, system-ui, Inter, \"Helvetica Neue\", Arial, sans-serif"}
+PASS  the floating tab leaves the docked strip
+PASS  tooltips of the floating window show in that window
+PASS  the window's frame is remembered (setFrameAutosaveName)  — {"x":500,"y":80,"w":360,"h":600}
+PASS  closing the window docks the panel and selects it
+PASS  floating it again reuses the remembered size  — {"width":360,"height":600}
+PASS  main.ts turns archi-float windows into owned, taskbar-less tool windows shown without focus
+PASS  no page errors
+all passed
+SUITE PASS test/shell-polish.mjs (15 s)
+===== test/system.mjs
+PASS  APPSELFTEST, HELPWINDOW, VRVIEW, SPACEMOUSE are commands
+PASS  HELPWINDOW opens the help browser
+PASS  window title
+PASS  index lists the commands  — 
+:host{all:initial}
+.page{font:13px "Segoe UI",system-ui,sans-serif;background:#1e1f22;color:#e6e6e6;margin:0;padding:18
+PASS  filter narrows the index  — 1043 → 2
+PASS  command page: aliases, category, where, undo, Run  — 
+:host{all:initial}
+.page{font:13px "Segoe UI",system-ui,sans-serif;background:#1e1f22;color:#e6e6e6;margin:0;padding:18px 26px;line-height:1.45;min-height:100%;box-sizing:border-box;-webkit-user-sele
+PASS  Run link runs the command  — {"active":true,"message":"Specify first point:","keywords":[],"kinds":["point"],"preview":[],"comman
+PASS  DOCS tutorials
+PASS  keyboard and mouse page
+PASS  scripting page with the archi API
+PASS  user guide rendered offline with anchors  — {"ids":53,"tables":35,"cmdline":true,"draw":true}
+PASS  contents link scrolls within the guide  — 2558
+PASS  HELPWINDOW <command> opens its page  — 
+:host{all:initial}
+.page{font:13px "Segoe UI",system-ui,sans-serif;background:#
+PASS  unknown topic refused
+PASS  no external page opened by the help browser
+PASS  APPSELFTEST prints the Mac report  — Command: HELPWINDOW | Command: LINE | *Cancel* | Command: DOCS tutorials | Command: MANUAL shortcuts | Command: HELPBROWSER scripting | Command: HELPWINDOW circle | Command: HELPWINDOW NOPE_NOT_A_CMD | Unknown command "NOPE_NOT_A_CMD". | Command: APPSELFTEST | Command coverage: 1043 in ribbon/menus, 0 in palettes (system variables), 0 without UI entry. | 20 check(s) passed, 0 failed.
+PASS  self-test checks pass on the fixture engine
+PASS  no Mac command pending on Windows (FILEPREVIEW is built)
+PASS  Ctrl+K search: prspl → PRESSPULL first  — PRESSPULL,PRESSPULLFACE,TRANSPARENCYDISPLAY
+PASS  VRVIEW Save writes the page (message)  — 20 check(s) passed, 0 failed. | Command: VRVIEW Save | VR page: 1200 triangles → C:\Users\Oana\Desktop\Drawing1-VR.html. Open it in the headset's browser (copy it to the headset, or host it over HTTPS) and choose Enter VR.
+PASS  VRVIEW Open without a headset: fallback message  — VR page: 1200 triangles → C:\Users\Oana\Desktop\Drawing1-VR.html. Open it in the headset's browser (copy it to the headset, or host it over HTTPS) and choose Enter VR. | Command: VRVIEW Open | VR page: 1200 triangles → C:\Users\Oana\Desktop\Drawing1-VR.html. Open it in the headset's browser (copy it to the headset, or host it over HTTPS) and choose Enter VR. | No VR headset is available to this window, so the page opens as a 3D preview. For VR, open it in Microsoft Edge or Chrome with an OpenXR headset (Windows Mixed Reality, Meta Quest Link, SteamVR) — the VR window has an Open in Browser button — or in the headset's own browser.
+PASS  SPACEMOUSE Fly: status line  — SpaceMouse on, Fly mode, sensitivity 1; devices: none connected.
+PASS  shell took the mode
+PASS  sensitivity
+PASS  SpaceMouse spin orbits the 3D camera at constant distance  — {"moved":19.90501164612508,"d0":32.01562118716424,"d1":32.01562118716424}
+PASS  SPACEMOUSE Off
+PASS  SPELL: the verdicts reach the engine before the command  — spell.verdicts | command.run:SPELL
+PASS  verdicts carry the misspelled words with suggestions  — [["spell.words",{"all":true}],["spell.verdicts",{"misspelled":{"Kitchn":["Kitchen"],"wiht":["with","wit"]}}]]
+PASS  no page errors
+all checks passed
+SUITE PASS test/system.mjs (11 s)
+===== test/view3d/tools.mjs
+PASS tool bar ruler + Off/Move/Rotate/Scale
+PASS gizmo X arrow hit 0
+PASS gizmo move preview xf dx 1305 mm, hint "Move X 1304.6"
+PASS gizmo move commit {"op":"move","axis":0,"amount":1304.5837383200562,"pivot":[3000,1500],"ids":["1"]}
+PASS gizmo preview reset 
+PASS gizmo ring hit 
+PASS gizmo rotate commit 90.0° (+X → +Y from above is +90°)
+PASS measure 3D Distance 21412.2 · ΔX 21288.2 · ΔY -2301.4 · ΔZ 0 · plan 21412.2
+PASS levels menu ✓ All levels | Only Ground Floor | Only First Floor | ✓ Not exploded | Explode levels by 1.5 m | Explode levels by 3 m | Explode levels by 6 m | Field of view 24° (56 mm) | Field of view 35° (38 mm) | Field of view 45° (29 mm) | Field of view 60° (21 mm) | Field of view 90° (12 mm)
+PASS isolate level 349 meshes hidden
+PASS explode levels 349 meshes lifted 6 m
+PASS field of view 
+PASS cameras menu Save Current Camera… | Front | Aerial | Corner | Front | Aerial | Corner
+PASS save camera sheet 
+PASS save camera (no engine) 
+PASS clipping plane panel {"on":true,"point":[0,0,3933.044189453125],"normal":[0,0,1]}
+PASS clipping plane Level cut at 1200
+PASS section caps rgb 140,31,26
+PASS section box grip hit (+Z) 5
+PASS section box grip drag top 8316 → 5462
+PASS Ctrl-click sub-object SUBOBJECT #316 Edge *23549.952931,13195.161618,6691.98582
+PASS sun study panel 21 June  15:00 · Altitude 50.9°, azimuth 251.2° · site 44.43°, 26.1°
+PASS sun study saves SUNSTUDY 
+PASS steering wheel zoom 24.2 → 14.7 m
+PASS steering wheel rewind 
+PASS door split + swing {"id":"21","parts":[[102,42],[30,42]],"rotated":true}
+PASS animation playback t = 0.50 s
+PASS snow cover mean 109,94,63 → 151,136,109
+PASS weather haze (rain) 
+PASS season tint / vegetation / water {"w":[0.5880000000000001,0.51,0.164],"v":true,"water":true}
+PASS two-point perspective Two-point perspective: verticals are vertical (lens shift 0.217).
+PASS VIEWIMAGE transparent PNG {"w":320,"h":200,"clear":20955,"solid":42252,"tiff":"II42","tiffBytes":10394}
+PASS VIEWIMAGE TIFF 
+PASS PANORAMA 2:1 [256,128]
+PASS STEREOPANORAMA over-under {"mono":[256,128],"stereo":[256,256],"bytes":68057}
+PASS bridge uses view3d.info {"style":"Sketchy","ortho":true,"caps":3,"cams":1,"snow":0.4}
+PASS bridge view3d host actions {"gizmo":"Off","measure":true,"fov":30}
+37/37 passed
+SUITE PASS test/view3d/tools.mjs (298 s)

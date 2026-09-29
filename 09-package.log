@@ -1,0 +1,68 @@
+version 1.0.0 (file version 1.0.0.3)
+  • electron-builder  version=25.1.8 os=10.0.26100
+  • loaded configuration  file=D:\a\archi_tool\archi_tool\windows\packaging\electron-builder.yml
+  • executing @electron/rebuild  electronVersion=33.4.11 arch=x64 buildFromSource=false appDir=./
+  • installing native dependencies  arch=x64
+  • completed installing native dependencies
+  • packaging       platform=win32 arch=x64 electron=33.4.11 appOutDir=out\win-unpacked
+  • downloading     url=https://github.com/electron/electron/releases/download/v33.4.11/electron-v33.4.11-win32-x64.zip size=115 MB parts=8
+  • downloaded      url=https://github.com/electron/electron/releases/download/v33.4.11/electron-v33.4.11-win32-x64.zip duration=346ms
+  • updating asar integrity executable resource  executablePath=out\win-unpacked\Oanarina Archi Tool.exe
+  • signing with signtool.exe  path=out\win-unpacked\resources\engine\archi-engine.exe
+  • no signing info identified, signing is skipped  signHook=false cscInfo=null
+  • downloading     url=https://github.com/electron-userland/electron-builder-binaries/releases/download/winCodeSign-2.6.0/winCodeSign-2.6.0.7z size=5.6 MB parts=1
+  • downloaded      url=https://github.com/electron-userland/electron-builder-binaries/releases/download/winCodeSign-2.6.0/winCodeSign-2.6.0.7z duration=284ms
+  • signing with signtool.exe  path=out\win-unpacked\Oanarina Archi Tool.exe
+  • no signing info identified, signing is skipped  signHook=false cscInfo=null
+  • building        target=nsis file=out\Oanarina-Archi-Tool-Setup-1.0.0.exe archs=x64 oneClick=false perMachine=false
+  • downloading     url=https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.1/nsis-3.0.4.1.7z size=1.3 MB parts=1
+  • downloaded      url=https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.1/nsis-3.0.4.1.7z duration=149ms
+  • signing with signtool.exe  path=out\win-unpacked\resources\elevate.exe
+  • no signing info identified, signing is skipped  signHook=false cscInfo=null
+  • downloading     url=https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-resources-3.4.1/nsis-resources-3.4.1.7z size=731 kB parts=1
+  • downloaded      url=https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-resources-3.4.1/nsis-resources-3.4.1.7z duration=141ms
+  • signing with signtool.exe  path=out\__uninstaller-nsis-oanarina-archi-tool.exe
+  • no signing info identified, signing is skipped  signHook=false cscInfo=null
+  • signing with signtool.exe  path=out\Oanarina-Archi-Tool-Setup-1.0.0.exe
+  • no signing info identified, signing is skipped  signHook=false cscInfo=null
+  • building block map  blockMapFile=out\Oanarina-Archi-Tool-Setup-1.0.0.exe.blockmap
+installers:
+  out/Oanarina-Archi-Tool-Setup-1.0.0.exe  132538627 bytes  sha256 5bdb9d9462c5a6f7fe6f4d346d8f91fad056b4872e46f19c07aa3f09ef908ad8
+packaged resources:
+resources
+resources/LICENSE.txt
+resources/app.asar
+resources/elevate.exe
+resources/engine
+resources/engine/BlocksRuntime.dll
+resources/engine/Foundation.dll
+resources/engine/FoundationEssentials.dll
+resources/engine/FoundationInternationalization.dll
+resources/engine/FoundationNetworking.dll
+resources/engine/FoundationXML.dll
+resources/engine/MSVCP140.dll
+resources/engine/VCRUNTIME140.dll
+resources/engine/VCRUNTIME140_1.dll
+resources/engine/_FoundationICU.dll
+resources/engine/archi-engine.exe
+resources/engine/dispatch.dll
+resources/engine/swiftCRT.dll
+resources/engine/swiftCore.dll
+resources/engine/swiftDispatch.dll
+resources/engine/swiftWinSDK.dll
+resources/engine/swift_Concurrency.dll
+resources/engine/swift_RegexParser.dll
+resources/engine/swift_StringProcessing.dll
+resources/icon.ico
+resources/samples
+resources/samples/Cedar House.archi
+resources/samples/Nordic House.archi
+resources/samples/textures
+resources/shellext
+resources/shellext/ArchiThumbnail-arm64.dll
+resources/shellext/ArchiThumbnail-x64.dll
+=== release files
+5bdb9d9462c5a6f7fe6f4d346d8f91fad056b4872e46f19c07aa3f09ef908ad8  Oanarina-Archi-Tool-Setup-1.0.0.exe  132538627 bytes (132.5 MB)  unsigned
+note: Oanarina-Archi-Tool-Setup-1.0.0.exe is over GitHub's 100 MiB file limit: upload it to the web host directly (windows/README.md "Publishing on the website")
+wrote out\SHA256SUMS.txt and release.json (version 1.0.0 build 3)
+OK    Oanarina-Archi-Tool-Setup-1.0.0.exe

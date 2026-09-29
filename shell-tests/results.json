@@ -1,0 +1,156 @@
+{
+ "date": "2026-09-29T07:16:25.434Z",
+ "results": [
+  {
+   "name": "start screen visible",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "start tiles",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "templates",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "start closes after opening",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "title shows document",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "11 ribbon tabs",
+   "ok": true,
+   "detail": "Home,Insert,Annotate,Architecture,Modeling,Analyze,Collaborate,View,Output,Manage,Script"
+  },
+  {
+   "name": "ORTHO toggles",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "toggle echoed in history",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "window selection selects objects",
+   "ok": true,
+   "detail": "201 selected: 201 objects"
+  },
+  {
+   "name": "properties show the selection",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Esc clears the selection",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "autocomplete shows LINE",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "LINE prompt",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "keyword chip Undo",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "line committed",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "panel Layers",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "panel Levels",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "panel Browser",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "panel Materials",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "panel Tools",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "panel Sheets",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "panel History",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "panel Properties",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "level switch",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "sheet mode",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "split shows plan and 3D",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3D view has a canvas",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "3D view shows the model",
+   "ok": true,
+   "detail": "63 meshes"
+  },
+  {
+   "name": "parity menus in the menu bar",
+   "ok": true,
+   "detail": "File,Edit,View,Draw,Modify,Annotate,Architecture,Model,Analyze,Tools,Window,Help"
+  },
+  {
+   "name": "no page errors",
+   "ok": true,
+   "detail": ""
+  }
+ ],
+ "errors": []
+}

@@ -1,0 +1,187 @@
+{
+ "results": [
+  {
+   "name": "status bar Zoom in 3D is the plan's (Mac CanvasView keeps its scale)",
+   "ok": true,
+   "detail": "2D \"Zoom 1:201\", 3D \"Zoom 1:201\""
+  },
+  {
+   "name": "back in 2D the plan zoom is unchanged",
+   "ok": true,
+   "detail": "Zoom 1:201"
+  },
+  {
+   "name": "render.preset switches the 3D view to Realistic (was Shaded with Edges)",
+   "ok": true,
+   "detail": "{\"style\":\"Realistic\",\"preset\":\"Golden hour\",\"explicit\":true,\"sunAlt\":11}"
+  },
+  {
+   "name": "the view shows the Golden hour look (explicit preset: sun 11° high, sky, haze, meadow)",
+   "ok": true,
+   "detail": "{\"style\":\"Realistic\",\"preset\":\"Golden hour\",\"explicit\":true,\"sunAlt\":11}"
+  },
+  {
+   "name": "the frame turns warm (red over blue) like the Mac's golden hour",
+   "ok": true,
+   "detail": "mean before 50.6,53,50.6 → after 47,50.7,24.3; sky band 61.6,59,42.3"
+  },
+  {
+   "name": "the style picker shows Realistic",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "setting a preset marks the drawing changed (as the Mac RENDERPRESET command)",
+   "ok": true,
+   "detail": "Cedar House • — Oanarina Archi Tool"
+  },
+  {
+   "name": "RENDERPRESET Off: Realistic without a preset (default daylight look)",
+   "ok": true,
+   "detail": "{\"style\":\"Realistic\",\"explicit\":false}"
+  },
+  {
+   "name": "Overcast preset follows too",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Clear Sky map: zenith (0.24, 0.45, 0.78), horizon (0.78, 0.86, 0.94), ground (0.36, 0.35, 0.32)",
+   "ok": true,
+   "detail": "{\"size\":[1024,512],\"zenith\":[61,115,199],\"horizonUp\":[199,219,240],\"horizonDown\":[145,154,160],\"nadir\":[92,89,82],\"glow\":[182,207,235]}"
+  },
+  {
+   "name": "below the horizon: the horizon / ground mix",
+   "ok": true,
+   "detail": "[145,154,160]"
+  },
+  {
+   "name": "Sunset map: the sun glow left of centre above the horizon",
+   "ok": true,
+   "detail": "{\"size\":[1024,512],\"zenith\":[46,56,115],\"horizonUp\":[255,158,89],\"horizonDown\":[159,104,68],\"nadir\":[64,51,46],\"glow\":[254,201,126]}"
+  },
+  {
+   "name": "Night map: dark blue zenith (0.02, 0.03, 0.07)",
+   "ok": true,
+   "detail": "{\"size\":[1024,512],\"zenith\":[5,8,18],\"horizonUp\":[20,25,41],\"horizonDown\":[14,17,24],\"nadir\":[8,8,8],\"glow\":[19,23,38]}"
+  },
+  {
+   "name": "maps are 1024 × 512",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Physical Sky: blue zenith, grey ground (SkyModel)",
+   "ok": true,
+   "detail": "{\"size\":[1024,512],\"zenith\":[165,189,225],\"ground\":[142,140,135]}"
+  },
+  {
+   "name": "PANORAMA is 2:1",
+   "ok": true,
+   "detail": "512×256"
+  },
+  {
+   "name": "panorama zenith is the Clear Sky map's (blue), not the Overcast preset's grey",
+   "ok": true,
+   "detail": "[30,60,105]"
+  },
+  {
+   "name": "compare overlay: added (green) and removed (red, dashed) outlines drawn over the plan",
+   "ok": true,
+   "detail": "{\"green\":1139,\"red\":598}"
+  },
+  {
+   "name": "the overlay follows the plan view (zoom)",
+   "ok": true,
+   "detail": "{\"green\":1139,\"red\":598} → {\"green\":1711,\"red\":946}"
+  },
+  {
+   "name": "Overlay off hides it",
+   "ok": true,
+   "detail": "{\"green\":0,\"red\":0}"
+  },
+  {
+   "name": "Render window renders with every environment",
+   "ok": true,
+   "detail": "{\"Clear Sky\":[71,84,100],\"Sunset\":[90,56,38],\"Overcast\":[93,93,93],\"Studio\":[92,92,92],\"Night\":[4,5,11],\"Physical Sky\":[73,83,96]}"
+  },
+  {
+   "name": "Clear Sky: blue gradient sky",
+   "ok": true,
+   "detail": "[71,84,100]"
+  },
+  {
+   "name": "Overcast and Studio: neutral grey skies",
+   "ok": true,
+   "detail": "93,93,93 / 92,92,92"
+  },
+  {
+   "name": "Night: dark sky",
+   "ok": true,
+   "detail": "[4,5,11]"
+  },
+  {
+   "name": "Sunset: warm sky near the horizon (orange horizon and sun glow of the map)",
+   "ok": true,
+   "detail": "[90,56,38]"
+  },
+  {
+   "name": "no page errors",
+   "ok": true,
+   "detail": ""
+  }
+ ],
+ "zoom": {
+  "plan": "Zoom 1:201",
+  "view3d": "Zoom 1:201"
+ },
+ "colours": {
+  "before": [
+   50.6,
+   53,
+   50.6
+  ],
+  "after": [
+   47,
+   50.7,
+   24.3
+  ],
+  "sky": [
+   61.6,
+   59,
+   42.3
+  ]
+ },
+ "renderWindowSky": {
+  "Clear Sky": [
+   71,
+   84,
+   100
+  ],
+  "Sunset": [
+   90,
+   56,
+   38
+  ],
+  "Overcast": [
+   93,
+   93,
+   93
+  ],
+  "Studio": [
+   92,
+   92,
+   92
+  ],
+  "Night": [
+   4,
+   5,
+   11
+  ],
+  "Physical Sky": [
+   73,
+   83,
+   96
+  ]
+ }
+}
