@@ -502,6 +502,48 @@ jobs:
           exit $fail
           } 2>&1 | tee "$LOGS/13-shell-tests.log"
 
+      - name: Publish the installer as the GitHub release windows-v<version> (once per version)
+        id: release
+        # Only a push to main whose package, install, thumbnail, smoke, uninstall and shell tests all passed. A version
+        # is published once and then never replaced, so the checksum on the website stays valid: to publish a new build,
+        # bump CFBundleShortVersionString (app/Info.plist). The website's deploy workflow copies the .exe from this
+        # release to www.oanarinaldi.com/downloads/archi-tool/ (the file is too big for the website's git repository).
+        if: >-
+          always() && github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+          steps.package.outcome == 'success' && steps.install.outcome == 'success' &&
+          steps.thumbnail.outcome == 'success' && steps.smoke.outcome == 'success' &&
+          steps.uninstall.outcome == 'success' && steps.shelltests.outcome == 'success'
+        timeout-minutes: 15
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -o pipefail
+          {
+          tag="windows-v$VERSION"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "release $tag already exists: not replaced (bump the version to publish a new build)"
+            gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets -q '.assets[] | "  \(.name)  \(.size) bytes"'
+            exit 0
+          fi
+          (cd windows && node packaging/release-files.mjs --verify out) || { echo "::error title=Checksum::SHA256SUMS.txt does not match the installer"; exit 1; }
+          inst="Oanarina-Archi-Tool-Setup-$VERSION.exe"
+          sha="$(sha256sum "windows/out/$inst" | cut -d' ' -f1)"
+          printf '%s\n' \
+            "Oanarina Archi Tool $VERSION for Windows 10 and 11 (64-bit). Free and open source (GPL-3.0)." \
+            "" \
+            "Download and guide: https://www.oanarinaldi.com/archi-tool.html" \
+            "" \
+            "The installer is not code-signed yet: Windows SmartScreen may show \"Windows protected your PC\". Click More info, then Run anyway." \
+            "" \
+            "SHA-256: $sha  $inst" \
+            "Built and tested by the Windows app workflow from commit $GITHUB_SHA." > "$RUNNER_TEMP/notes.md"
+          cd windows/out
+          gh release create "$tag" "$inst" SHA256SUMS.txt release.json --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "Oanarina Archi Tool $VERSION for Windows" --notes-file "$RUNNER_TEMP/notes.md"
+          echo "published https://github.com/$GITHUB_REPOSITORY/releases/download/$tag/$inst  sha256 $sha"
+          } 2>&1 | tee "$LOGS/14-release.log"
+
       - name: Summary
         if: always()
         timeout-minutes: 3
