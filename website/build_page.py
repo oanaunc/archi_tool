@@ -13,6 +13,7 @@ def sub1(pattern, repl, s):
 
 page = src
 page = sub1(r'<meta name="description" content="[^"]*">',
+            '<meta name="description" content="Oanarina Archi Tool: a free app for Mac and Windows for architectural drafting, building design (BIM), 3D modelling, rendering and printing, with an AutoCAD-style command line and scripting for AI agents.">' if REL.get('windows') else
             '<meta name="description" content="Oanarina Archi Tool: a free native Mac app for architectural drafting, building design (BIM), 3D modelling, rendering and printing, with an AutoCAD-style command line and scripting for AI agents.">', page)
 page = page.replace('js/motion-manifest.js?v=20260921-midjourney', f'js/motion-manifest.js?v={REL["asset_version"]}-archi')
 page = sub1(r'<title>.*?</title>', '<title>Oanarina Archi Tool — Oana Rinaldi</title>', page)
@@ -59,6 +60,25 @@ else:
     href = f'downloads/archi-tool/{REL["dmg"]}?v={REL["sha_short"]}'
     HEROBUTTON = f'<a class="pe-btn pe-btn-primary" id="download-button" href="{href}" download>{DL_SVG}<span>Download for Mac<small>Free · {REL["size_mb"]} MB · notarized by Apple</small></span></a>'
     FINALBUTTON = f'<a class="pe-btn pe-btn-primary" href="{href}" download><span>Download for Mac<small>Free · {REL["size_mb"]} MB</small></span></a>'
+WIN = REL.get('windows')
+if WIN and not REL.get('pending'):
+    whref = f'downloads/archi-tool/{WIN["exe"]}?v={WIN["sha_short"]}'
+    HEROBUTTON += f'<a class="pe-btn pe-btn-primary" id="download-button-windows" href="{whref}" download>{DL_SVG}<span>Download for Windows<small>Free · {WIN["size_mb"]} MB · Windows 10 and 11</small></span></a>'
+    FINALBUTTON += f'<a class="pe-btn pe-btn-primary" href="{whref}" download><span>Download for Windows<small>Free · {WIN["size_mb"]} MB</small></span></a>'
+    FINALBUTTON = f'<div class="at-final-buttons">{FINALBUTTON}</div>'
+    STATUS = (f'Version {REL["version"]}. Mac: Apple silicon and Intel, notarized by Apple. '
+              'Windows 10 and 11 (64-bit): the installer is not code-signed yet, so if Windows shows “Windows protected your PC”, click More info, then Run anyway.')
+    EYEBROW = 'Free for Mac and Windows · open source · no account'
+    CHIPS = '<li>macOS 14 or later</li><li>Windows 10 &amp; 11</li><li>DXF · IFC · PDF</li><li>GPL-3.0</li>'
+    PLATFORM = 'macOS 14 or later (Apple silicon and Intel) · Windows 10 and 11 (64-bit)'
+    DEVICE = 'computer'
+    OSVERSION = 'macOS or Windows version'
+else:
+    EYEBROW = 'Free for Mac · open source · no account'
+    CHIPS = '<li>macOS 14 or later</li><li>Apple silicon &amp; Intel</li><li>DXF · IFC · PDF</li><li>GPL-3.0</li>'
+    PLATFORM = 'macOS 14 or later · Apple silicon and Intel'
+    DEVICE = 'Mac'
+    OSVERSION = 'macOS version'
 ICONS = {
  'Start': '<rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/>',
  'Command': '<path d="m5 8 4 4-4 4M11 16h8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -87,7 +107,7 @@ for k, v in {'V': REL['asset_version'], 'FEATURES': str(REL['features']), 'TOTAL
              'COMMANDS': str(REL['commands']), 'TESTS': str(REL['tests']), 'FORMATS': str(REL['formats']),
              'STATUS': STATUS, 'NOTE': REL['note'], 'BUTTON': BUTTON, 'IMPORTS': REL['imports'], 'EXPORTS': REL['exports'],
              'LINKS': ' · '.join(links), 'GALLERY': gallery, 'TUTORIALS': ''.join(tut_cards), 'HEROBUTTON': HEROBUTTON, 'FINALBUTTON': FINALBUTTON,
-             'TOOLS': TOOLS, 'TUTDATA': TUTDATA, 'FIRSTVIDEO': TUT[0]['video'], 'FIRSTPOSTER': TUT[0]['poster']}.items():
+             'TOOLS': TOOLS, 'EYEBROW': EYEBROW, 'CHIPS': CHIPS, 'PLATFORM': PLATFORM, 'DEVICE': DEVICE, 'OSVERSION': OSVERSION, 'TUTDATA': TUTDATA, 'FIRSTVIDEO': TUT[0]['video'], 'FIRSTPOSTER': TUT[0]['poster']}.items():
     tpl = tpl.replace('{{' + k + '}}', v)
 assert '{{' not in tpl, re.findall(r'\{\{\w+\}\}', tpl)
 main = tpl

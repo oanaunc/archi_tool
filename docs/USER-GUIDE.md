@@ -35,7 +35,7 @@ This guide describes what the app does today. The full backlog, with the status 
 
 ## Getting started
 
-**Requirements:** macOS 14 or later, on Apple silicon or Intel.
+**Requirements:** macOS 14 or later, on Apple silicon or Intel, or Windows 10 or 11 (64-bit). The Windows version has the same tools and commands; where this guide says ⌘ (Command), use Ctrl on Windows, and ⌥ (Option) is Alt.
 
 When the app starts it shows the **start screen**:
 

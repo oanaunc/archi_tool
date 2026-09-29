@@ -73,5 +73,13 @@
    "Scripting and AI",
    "JavaScript, plugins and AI agents over MCP"
   ]
- ]
+ ],
+ "windows": {
+  "exe": "Oanarina-Archi-Tool-Setup-1.0.0.exe",
+  "size_mb": "132.5",
+  "sha_short": "5bdb9d9462c5",
+  "sha256": "5bdb9d9462c5a6f7fe6f4d346d8f91fad056b4872e46f19c07aa3f09ef908ad8",
+  "bytes": 132538627,
+  "release": "https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.0"
+ }
 }
