@@ -2202,7 +2202,7 @@ command inside the app. This table is generated from the command definitions in 
 <!-- END COMMAND REFERENCE -->
 
 
-## Mac display recovery and section print styles (1.0.1)
+## Mac display recovery and section print styles (1.0.2)
 
 The top ribbon repaints after activation, resizing, display changes and full-screen transitions.
 The 2D canvas paints its own opaque backing surface. If you have hidden or collapsed the
