@@ -1,0 +1,251 @@
+{
+ "date": "2026-10-09T16:00:25.589Z",
+ "results": [
+  {
+   "name": "Settings window opens from the ribbon",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "six settings pages",
+   "ok": true,
+   "detail": "General,Drafting,Display,Shortcuts,Toolbar,Agents"
+  },
+  {
+   "name": "General page sections",
+   "ok": true,
+   "detail": "AUTOSAVE AND RECOVERYAutosaveevery 5 minUnsaved changes are written to a recovery file; after a crash the Start screen o"
+  },
+  {
+   "name": "autosave default every 5 min",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "autosave stepper",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "autosave off",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "name": "light theme applies at once",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "accent colour",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Drafting page: 13 object snaps",
+   "ok": true,
+   "detail": "13 GRID AND SNAP (NEW DRAWINGS)Show gridGrid snapGrid spacing ("
+  },
+  {
+   "name": "recording state",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "shortcut assigned",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "command search lists MATCHPROP",
+   "ok": true,
+   "detail": "MATCHPROP"
+  },
+  {
+   "name": "quick access toolbar gains MATCHPROP",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "hidden ribbon tab",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "reset alert",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "reset restores quick access and accent",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "custom shortcut runs LINE",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "OPTIONS Display opens the Display page",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Drawing Units sheet",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "units sample updates",
+   "ok": true,
+   "detail": "Sample: 1079.50  ·  45° → Sample: 3'-6 1/2\"  ·  45°"
+  },
+  {
+   "name": "units applied",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "UNITS command opens the sheet (showPanel)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Esc cancels the sheet",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Drafting Settings sheet",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "13 snap toggles + Object snap",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "ortho on after OK",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Quick Select sheet",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "live match count",
+   "ok": true,
+   "detail": "Line: 20 object(s) match"
+  },
+  {
+   "name": "Select replaces the selection",
+   "ok": true,
+   "detail": "20"
+  },
+  {
+   "name": "Layer States Manager",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "layer state saved",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "layers panel rows",
+   "ok": true,
+   "detail": "12"
+  },
+  {
+   "name": "layer filter",
+   "ok": true,
+   "detail": "7 of 12 layers match the filter"
+  },
+  {
+   "name": "layer tree groups",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Page Setup — Model",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "exact fit disabled at a fixed scale",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "plot stamp fields",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Page Setup — sheet",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Customize Ribbon window",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "unknown command rejected",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "custom panel on Home",
+   "ok": true,
+   "detail": "Draw,Modify,Layers,Properties,Groups,More,My Tools"
+  },
+  {
+   "name": "hidden built-in panel",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "workspace 3D Modeling",
+   "ok": true,
+   "detail": "{\"mode\":\"3D\",\"tab\":\"View\",\"panel\":\"Materials\"}"
+  },
+  {
+   "name": "workspace from the View menu",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "keyboard reference with Windows keys",
+   "ok": true,
+   "detail": "Keyboard ShortcutsKeyboard & MouseDoneType anywhereStart a command on the comman"
+  },
+  {
+   "name": "New from Template menu",
+   "ok": true,
+   "detail": "Metric Drawing (mm)|Imperial Drawing (in)|Building (levels, grid, sheets)|Save Drawing as Template…|Show Templates Folder|Sample House"
+  },
+  {
+   "name": "start screen template gallery",
+   "ok": true,
+   "detail": "Metric,Metric Architectural,Imperial,Building"
+  },
+  {
+   "name": "Metric Architectural template",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "no page errors",
+   "ok": true,
+   "detail": ""
+  }
+ ],
+ "errors": []
+}

@@ -1,0 +1,307 @@
+[
+ {
+  "name": "a stroke of the plan is on screen",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "hover highlight under the cursor",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "click selects the object under the cursor",
+  "ok": true,
+  "detail": "39"
+ },
+ {
+  "name": "grips of the selection",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "hovered grip",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "grip drag previews in the accent colour",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "grip drag commits one Grip Edit step",
+  "ok": true,
+  "detail": "Grip Edit"
+ },
+ {
+  "name": "click on a grip makes it hot (not dragging)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "Space cycles Stretch → Move",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "Enter cycles Move → Rotate",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "typed SC switches to Scale",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "typed C turns Copy on",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "a typed distance in Move + Copy adds a copy",
+  "ok": true,
+  "detail": "Grip Move Copy"
+ },
+ {
+  "name": "Copy keeps the grip hot",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "Esc releases the hot grip",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "grip menu lists the grip options",
+  "ok": true,
+  "detail": "Stretch,Add Vertex,Remove Vertex"
+ },
+ {
+  "name": "grip menu option follows the cursor",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "crossing selects at least as much as window",
+  "ok": true,
+  "detail": "1 / 260"
+ },
+ {
+  "name": "counter-clockwise lasso selects (crossing)",
+  "ok": true,
+  "detail": "167"
+ },
+ {
+  "name": "shortcut menu (no selection) matches the Mac",
+  "ok": true,
+  "detail": "Repeat|Recent Input|Pan|Zoom Window|Zoom Extents|Select All|Quick Select…|Undo|Redo Grip Move Copy|Quick Properties|Properties"
+ },
+ {
+  "name": "shortcut menu with a selection lists the edit commands",
+  "ok": true,
+  "detail": "Repeat|Recent Input|Move|Copy Selection|Rotate|Scale|Mirror|Erase|Isolate Objects|Select Similar|Deselect All|Quick Select…|Undo|Redo Grip Move Copy|Quick Properties|Properties"
+ },
+ {
+  "name": "marking menu: 8 drafting commands clockwise from the top",
+  "ok": true,
+  "detail": "Line,Polyline,Wall,Door,Dimension,Window,Rectangle,Circle"
+ },
+ {
+  "name": "dragging up highlights Line",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "releasing runs the command",
+  "ok": true,
+  "detail": "Specify first point:"
+ },
+ {
+  "name": "object snap tracking along the base horizontal",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "dynamic input: length / angle fields at the cursor",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "Shift+right-click: snap override menu",
+  "ok": true,
+  "detail": "Temporary Track Point,From,Endpoint,Midpoint,Intersection,Extension,Center,Geometric Center,Quadrant,Tangent,Perpendicular,Parallel,Node,Insert,Nearest,None,Osnap Settings…"
+ },
+ {
+  "name": "Length Tab Angle Enter draws @1500<30",
+  "ok": true,
+  "detail": "Opened Cedar House.archi — 408 objects, 59 building elements.Undo Grip EditUndo Grip Move CopyCommand: LINE"
+ },
+ {
+  "name": "the new segment is 1500 long",
+  "ok": true,
+  "detail": "1500"
+ },
+ {
+  "name": "right-click during a command = Enter (ends LINE)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "typed-ahead LINE input is queued, not run as new commands",
+  "ok": true,
+  "detail": "Opened Cedar House.archi — 408 objects, 59 building elements.Undo Grip EditUndo Grip Move CopyCommand: LINECommand: LINE"
+ },
+ {
+  "name": "clicking again cycles to the overlapping object",
+  "ok": true,
+  "detail": "100004 → 100003"
+ },
+ {
+  "name": "cycling hint in the status bar",
+  "ok": true,
+  "detail": "-35005.49, -40000.00mm2 of 2: line #100003WCSGRIDSNAPORTHOPOLAROTRACKOSNAPDYNLWTGround Floor01 selected1:1mmZoom 1:31Agent: off"
+ },
+ {
+  "name": "arrow key nudges the selection (Nudge)",
+  "ok": true,
+  "detail": "Nudge"
+ },
+ {
+  "name": "double-click on text opens the in-place editor",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "Enter commits the edit (Edit Text)",
+  "ok": true,
+  "detail": "Edit Text"
+ },
+ {
+  "name": "editor closed",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "temporary dimension shown for the selected object",
+  "ok": true,
+  "detail": "1"
+ },
+ {
+  "name": "clicking the value opens its field",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "typing a value moves the object (Temporary Dimension)",
+  "ok": true,
+  "detail": "Temporary Dimension"
+ },
+ {
+  "name": "tool palette tabs",
+  "ok": true,
+  "detail": "Draw,Modify,Annotate,Build,Blocks,Components,My Tools"
+ },
+ {
+  "name": "component tiles with thumbnails",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "clicking a component starts placement",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "Space rotates the placement 90°",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "click places the component (Place Sofa)",
+  "ok": true,
+  "detail": "Place Sofa"
+ },
+ {
+  "name": "placement ends after a plain click",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "My Tools defaults",
+  "ok": true,
+  "detail": "Wall,Door,Window,Room,Dimlinear,Hatch"
+ },
+ {
+  "name": "dropping a palette component places it",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "dropping a drawing file opens it",
+  "ok": true,
+  "detail": "Opened Cedar House.archi — 408 objects, 59 building elements.Undo Grip EditUndo Grip Move CopyCommand: LINECommand: LINECommand: LINECommand: LINE*Cancel*Placed sofa at 541.72,-21326.26.Placed dining table at -12086.41,-10814.46.Opened Cedar House.archi — 408 objects, 59 building elements."
+ },
+ {
+  "name": "mouse wheel up zooms in by 1.2",
+  "ok": true,
+  "detail": "0.014079999999999999 → 0.016895999999999998"
+ },
+ {
+  "name": "touchpad pinch (Ctrl+wheel) zooms out",
+  "ok": true,
+  "detail": "0.016895999999999998 → 0.01528813301513557"
+ },
+ {
+  "name": "touchpad two-finger scroll pans",
+  "ok": true,
+  "detail": "11732.433427505206,461.1983981570893 → 13694.739745111116,-323.72412888527424"
+ },
+ {
+  "name": "twisted view: toView / toWorld round trip",
+  "ok": true,
+  "detail": "1234.0000000000018,5678.000000000001"
+ },
+ {
+  "name": "view twist is 30°",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "sheet viewports listed",
+  "ok": true,
+  "detail": "[{\"index\":0,\"rect\":[15,25,315,282]}]"
+ },
+ {
+  "name": "click selects the viewport",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "viewport menu (scales, lock, maximise, remove)",
+  "ok": true,
+  "detail": "Scale 1:20|Scale 1:50|Scale 1:100|Scale 1:200|Scale 1:500|Lock Viewport|Maximise (VPMAX)|Remove"
+ },
+ {
+  "name": "lock shows the badge state",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "a locked viewport pans instead of moving",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "dragging an unlocked viewport moves it (Move Viewport)",
+  "ok": true,
+  "detail": "15,25,315,282 → 47.51824817518248,8.740875912408761,347.51824817518246,265.74087591240874"
+ },
+ {
+  "name": "no page errors",
+  "ok": true,
+  "detail": ""
+ }
+]

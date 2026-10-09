@@ -1,0 +1,24 @@
+**********************
+PowerShell transcript start
+Start time: 20261009155825
+Username: runnervmfi6oq\runneradmin
+RunAs User: runnervmfi6oq\runneradmin
+Configuration Name: 
+Machine: runnervmfi6oq (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -command . 'D:\a\_temp\621044dd-daa9-42d3-8924-708029e3f557.ps1'
+Process ID: 8720
+PSVersion: 7.6.6
+PSEdition: Core
+GitCommitId: 7.6.6
+OS: Microsoft Windows 10.0.26100
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+PASS  uninstaller removed the app, shortcuts, the uninstall entry and the thumbnail handler registration
+**********************
+PowerShell transcript end
+End time: 20261009155826
+**********************

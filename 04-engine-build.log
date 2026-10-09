@@ -1,0 +1,183 @@
+Building for production...
+[0/5] Write auxiliary file D:\a\archi_tool\archi_tool\app\.build\x86_64-unknown-windows-msvc\release\archi_engine.build\sources
+[1/5] Write auxiliary file D:\a\archi_tool\archi_tool\app\.build\x86_64-unknown-windows-msvc\release\ArchiCore.build\sources
+[2/5] Write auxiliary file D:\a\archi_tool\archi_tool\app\.build\x86_64-unknown-windows-msvc\release\swift-version-65789A3F43C0AC0D.txt
+[4/6] Compiling ArchiCore APIReference.swift
+D:\a\archi_tool\archi_tool\app\Sources\ArchiCore\BIM\BIMExtCommands.swift:353:91: warning: trailing closure in this context is confusable with the body of the statement; pass as a parenthesized argument to silence this warning
+351 |             while true {
+
+352 |                 let cur = pts
+
+353 |                 guard let p = try await ed.getPoint("Specify next point", base: pts.last) { c in [.polyline(PolylineGeom(points: cur + [c]))] }.point else { break }
+
+    |                                                                                           `- warning: trailing closure in this context is confusable with the body of the statement; pass as a parenthesized argument to silence this warning
+354 |                 if !p.isClose(pts.last!, tol: 1e-9) { pts.append(p) }
+
+355 |             }
+
+
+D:\a\archi_tool\archi_tool\app\Sources\ArchiCore\BIM\RailingTypes.swift:44:13: warning: variable 'path' was never mutated; consider changing to 'let' constant
+ 42 |     static func groups(_ el: BIMElement, _ g: RailingGeom, elev: Double, doc: ArchiDocument) -> [MeshGroup] {
+
+ 43 |         let u = 1 / doc.units.mm
+
+ 44 |         var path = RG.dedupe(g.path, closed: false)
+
+    |             `- warning: variable 'path' was never mutated; consider changing to 'let' constant
+ 45 |         guard path.count >= 2 else { return [] }
+
+ 46 |         let zb = elev + g.baseOffset, zt = zb + g.height
+
+
+D:\a\archi_tool\archi_tool\app\Sources\ArchiCore\Commands\DraftDetailCommands.swift:574:76: warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
+572 |             guard let path = try await ed.getWord("Enter .pat file path") else { return }
+
+573 |             let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
+
+574 |             guard let text = try? String(contentsOf: url, encoding: .utf8) ?? String(contentsOf: url, encoding: .isoLatin1) else { throw CommandError.invalid("Cannot read \(url.path).") }
+
+    |                                                                            `- warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
+575 |             let pats = HatchPatterns.parsePat(text)
+
+576 |             guard !pats.isEmpty else { throw CommandError.invalid("No hatch patterns found in \(url.lastPathComponent).") }
+
+
+D:\a\archi_tool\archi_tool\app\Sources\ArchiCore\Drafting\BlockConstraints.swift:59:13: warning: variable 'set' was never mutated; consider changing to 'let' constant
+57 |     /// Moves the constraints among `ids` (block editor content) from the drawing's set into the block's set.
+
+58 |     public static func capture(_ block: String, ids: Set<EntityID>, doc: inout ArchiDocument) {
+
+59 |         var set = ConstraintSet.load(doc)
+
+   |             `- warning: variable 'set' was never mutated; consider changing to 'let' constant
+60 |         let mine = set.constraints.filter { c in !c.refs.isEmpty && c.refs.allSatisfy { ids.contains($0.entity) } }
+
+61 |         var bs = ConstraintSet()
+
+
+D:\a\archi_tool\archi_tool\app\Sources\ArchiCore\IO\CoEditing.swift:275:55: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused
+273 |             for op in outbox { chunk += try enc.encode(op); chunk.append(0x0A) }
+
+274 |             let mine = Self.logURL(folder, site)
+
+275 |             if !fm.fileExists(atPath: mine.path) { fm.createFile(atPath: mine.path, contents: nil) }
+
+    |                                                       `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused
+276 |             let h = try FileHandle(forWritingTo: mine)
+
+277 |             try h.seekToEnd(); try h.write(contentsOf: chunk); try h.close()
+
+
+D:\a\archi_tool\archi_tool\app\Sources\ArchiCore\IO\DWFx.swift:25:17: warning: result of call to 'parse()' is unused
+ 23 |             let xml = XMLParser(data: p.data)
+
+ 24 |             xml.delegate = r
+
+ 25 |             xml.parse()
+
+    |                 `- warning: result of call to 'parse()' is unused
+ 26 |             let shifted = r.entities.map { e -> Entity in var c = e; c.geometry = GeometryOps.transform(e.geometry, Transform2D.translation(Vec2(x0, 0))); return c }
+
+ 27 |             out += shifted
+
+
+D:\a\archi_tool\archi_tool\app\Sources\ArchiCore\IO\LAZConverter.swift:65:12: warning: result of call to 'createFile(atPath:contents:attributes:)' is unused
+63 |         p.arguments = arguments(t, input: url, output: out)
+
+64 |         let log = dir.appendingPathComponent("log.txt")
+
+65 |         fm.createFile(atPath: log.path, contents: nil)
+
+   |            `- warning: result of call to 'createFile(atPath:contents:attributes:)' is unused
+66 |         let h = try FileHandle(forWritingTo: log)
+
+67 |         p.standardOutput = h; p.standardError = h
+
+[5/7] Compiling archi_engine main.swift
+[5/7] Write auxiliary file D:\a\archi_tool\archi_tool\app\.build\x86_64-unknown-windows-msvc\release\archi-engine.product\Objects.LinkFileList
+[6/7] Linking D:\a\archi_tool\archi_tool\app\.build\x86_64-unknown-windows-msvc\release\archi-engine.exe
+Build of product 'archi-engine' complete! (2447.86s)
+Swift runtime: C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin
+archi-engine.exe                         -> Foundation.dll                                bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\Foundation.dll
+archi-engine.exe                         -> swiftCore.dll                                 bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\swiftCore.dll
+archi-engine.exe                         -> swift_Concurrency.dll                         bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\swift_Concurrency.dll
+archi-engine.exe                         -> swiftWinSDK.dll                               bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\swiftWinSDK.dll
+archi-engine.exe                         -> FoundationEssentials.dll                      bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\FoundationEssentials.dll
+archi-engine.exe                         -> swiftCRT.dll                                  bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\swiftCRT.dll
+archi-engine.exe                         -> swiftDispatch.dll                             bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\swiftDispatch.dll
+archi-engine.exe                         -> BlocksRuntime.dll                             bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\BlocksRuntime.dll
+archi-engine.exe                         -> FoundationXML.dll                             bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\FoundationXML.dll
+archi-engine.exe                         -> FoundationNetworking.dll                      bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\FoundationNetworking.dll
+archi-engine.exe                         -> KERNEL32.dll                                  system  c:\windows\System32\KERNEL32.dll
+archi-engine.exe                         -> VCRUNTIME140.dll                              bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\VCRUNTIME140.dll
+archi-engine.exe                         -> api-ms-win-crt-math-l1-1-0.dll                apiset  
+archi-engine.exe                         -> api-ms-win-crt-runtime-l1-1-0.dll             apiset  
+archi-engine.exe                         -> api-ms-win-crt-heap-l1-1-0.dll                apiset  
+archi-engine.exe                         -> api-ms-win-crt-stdio-l1-1-0.dll               apiset  
+archi-engine.exe                         -> api-ms-win-crt-locale-l1-1-0.dll              apiset  
+Foundation.dll                           -> FoundationInternationalization.dll            bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\FoundationInternationalization.dll
+Foundation.dll                           -> _FoundationICU.dll                            bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\_FoundationICU.dll
+Foundation.dll                           -> dispatch.dll                                  bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\dispatch.dll
+Foundation.dll                           -> ADVAPI32.dll                                  system  c:\windows\System32\ADVAPI32.dll
+Foundation.dll                           -> dbghelp.dll                                   system  c:\windows\System32\dbghelp.dll
+Foundation.dll                           -> api-ms-win-core-path-l1-1-0.dll               apiset  
+Foundation.dll                           -> SHLWAPI.dll                                   system  c:\windows\System32\SHLWAPI.dll
+Foundation.dll                           -> IPHLPAPI.DLL                                  system  c:\windows\System32\IPHLPAPI.DLL
+Foundation.dll                           -> WS2_32.dll                                    system  c:\windows\System32\WS2_32.dll
+Foundation.dll                           -> SHELL32.dll                                   system  c:\windows\System32\SHELL32.dll
+Foundation.dll                           -> api-ms-win-core-handle-l1-1-0.dll             apiset  
+Foundation.dll                           -> Secur32.dll                                   system  c:\windows\System32\Secur32.dll
+Foundation.dll                           -> api-ms-win-core-realtime-l1-1-1.dll           apiset  
+Foundation.dll                           -> USER32.dll                                    system  c:\windows\System32\USER32.dll
+Foundation.dll                           -> bcrypt.dll                                    system  c:\windows\System32\bcrypt.dll
+Foundation.dll                           -> USERENV.dll                                   system  c:\windows\System32\USERENV.dll
+Foundation.dll                           -> swift_StringProcessing.dll                    bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\swift_StringProcessing.dll
+Foundation.dll                           -> api-ms-win-crt-string-l1-1-0.dll              apiset  
+Foundation.dll                           -> api-ms-win-crt-environment-l1-1-0.dll         apiset  
+Foundation.dll                           -> api-ms-win-crt-filesystem-l1-1-0.dll          apiset  
+Foundation.dll                           -> api-ms-win-crt-utility-l1-1-0.dll             apiset  
+Foundation.dll                           -> api-ms-win-crt-convert-l1-1-0.dll             apiset  
+Foundation.dll                           -> api-ms-win-crt-time-l1-1-0.dll                apiset  
+swiftCore.dll                            -> api-ms-win-core-synch-l1-2-0.dll              apiset  
+swiftCore.dll                            -> MSVCP140.dll                                  bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\MSVCP140.dll
+swift_Concurrency.dll                    -> api-ms-win-core-synch-l1-1-0.dll              apiset  
+swift_Concurrency.dll                    -> api-ms-win-core-processthreads-l1-1-0.dll     apiset  
+swift_Concurrency.dll                    -> api-ms-win-core-errorhandling-l1-1-0.dll      apiset  
+swift_Concurrency.dll                    -> api-ms-win-core-libraryloader-l1-2-0.dll      apiset  
+swift_Concurrency.dll                    -> api-ms-win-core-libraryloader-l1-2-1.dll      apiset  
+swift_Concurrency.dll                    -> api-ms-win-core-rtlsupport-l1-1-0.dll         apiset  
+swift_Concurrency.dll                    -> api-ms-win-core-processthreads-l1-1-1.dll     apiset  
+swift_Concurrency.dll                    -> api-ms-win-core-debug-l1-1-0.dll              apiset  
+swift_Concurrency.dll                    -> api-ms-win-core-profile-l1-1-0.dll            apiset  
+swift_Concurrency.dll                    -> api-ms-win-core-sysinfo-l1-1-0.dll            apiset  
+swift_Concurrency.dll                    -> api-ms-win-core-interlocked-l1-1-0.dll        apiset  
+FoundationEssentials.dll                 -> ole32.dll                                     system  c:\windows\System32\ole32.dll
+FoundationNetworking.dll                 -> Normaliz.dll                                  system  c:\windows\System32\Normaliz.dll
+FoundationNetworking.dll                 -> CRYPT32.dll                                   system  c:\windows\System32\CRYPT32.dll
+dispatch.dll                             -> WINMM.dll                                     system  c:\windows\System32\WINMM.dll
+swift_StringProcessing.dll               -> swift_RegexParser.dll                         bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\swift_RegexParser.dll
+MSVCP140.dll                             -> VCRUNTIME140_1.dll                            bundle  C:\Users\runneradmin\AppData\Local\Programs\Swift\Runtimes\6.1.2\usr\bin\VCRUNTIME140_1.dll
+bundled: BlocksRuntime.dll, Foundation.dll, FoundationEssentials.dll, FoundationInternationalization.dll, FoundationNetworking.dll, FoundationXML.dll, MSVCP140.dll, VCRUNTIME140.dll, VCRUNTIME140_1.dll, _FoundationICU.dll, dispatch.dll, swiftCRT.dll, swiftCore.dll, swiftDispatch.dll, swiftWinSDK.dll, swift_Concurrency.dll, swift_RegexParser.dll, swift_StringProcessing.dll
+total 178645
+drwxr-xr-x 1 runneradmin 197121         0 Oct  9 15:54 .
+drwxr-xr-x 1 runneradmin 197121         0 Oct  9 15:12 ..
+-rwxr-xr-x 1 runneradmin 197121     11776 May 27  2025 BlocksRuntime.dll
+-rwxr-xr-x 1 runneradmin 197121   4803072 May 27  2025 Foundation.dll
+-rwxr-xr-x 1 runneradmin 197121   5096448 May 27  2025 FoundationEssentials.dll
+-rwxr-xr-x 1 runneradmin 197121   1641472 May 27  2025 FoundationInternationalization.dll
+-rwxr-xr-x 1 runneradmin 197121   1338368 May 27  2025 FoundationNetworking.dll
+-rwxr-xr-x 1 runneradmin 197121    824320 May 27  2025 FoundationXML.dll
+-rwxr-xr-x 1 runneradmin 197121    575592 Feb  6  2025 MSVCP140.dll
+-rw-r--r-- 1 runneradmin 197121       203 Oct  9 15:12 README.txt
+-rwxr-xr-x 1 runneradmin 197121    120432 Feb  6  2025 VCRUNTIME140.dll
+-rwxr-xr-x 1 runneradmin 197121     49744 Feb  6  2025 VCRUNTIME140_1.dll
+-rwxr-xr-x 1 runneradmin 197121  35851776 May 27  2025 _FoundationICU.dll
+-rwxr-xr-x 1 runneradmin 197121 124103680 Oct  9 15:54 archi-engine.exe
+-rwxr-xr-x 1 runneradmin 197121    234496 May 27  2025 dispatch.dll
+-rwxr-xr-x 1 runneradmin 197121     39936 May 27  2025 swiftCRT.dll
+-rwxr-xr-x 1 runneradmin 197121   5850112 May 27  2025 swiftCore.dll
+-rwxr-xr-x 1 runneradmin 197121    148480 May 27  2025 swiftDispatch.dll
+-rwxr-xr-x 1 runneradmin 197121     30720 May 27  2025 swiftWinSDK.dll
+-rwxr-xr-x 1 runneradmin 197121    495104 May 27  2025 swift_Concurrency.dll
+-rwxr-xr-x 1 runneradmin 197121    989184 May 27  2025 swift_RegexParser.dll
+-rwxr-xr-x 1 runneradmin 197121    688128 May 27  2025 swift_StringProcessing.dll

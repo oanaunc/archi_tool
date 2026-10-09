@@ -1,0 +1,42 @@
+**********************
+PowerShell transcript start
+Start time: 20261009155630
+Username: runnervmfi6oq\runneradmin
+RunAs User: runnervmfi6oq\runneradmin
+Configuration Name: 
+Machine: runnervmfi6oq (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -command . 'D:\a\_temp\6c6a7608-7e4e-44a4-b3d3-bc8ea1ff1d3e.ps1'
+Process ID: 2012
+PSVersion: 7.6.6
+PSEdition: Core
+GitCommitId: 7.6.6
+OS: Microsoft Windows 10.0.26100
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+{"jsonrpc":"2.0","id":1,"result":{"title":"Cedar House","path":"C:/Users/runneradmin/AppData/Local/Programs/Oanarina Archi Tool/resources/samples/Cedar House.archi","dirty":false,"units":"millimeters","unitAbbreviation":"mm","levels":[{"id":0,"name":"Ground Floor","elevation":0,"height":3200},{"id":
+{"jsonrpc":"2.0","id":2,"result":{"title":"Cedar House (picture)","path":"D:/a/_temp/thumbnail/Cedar House (picture).archi","dirty":false,"units":"millimeters","unitAbbreviation":"mm","levels":[{"id":0,"name":"Ground Floor","elevation":0,"height":3200},{"id":1,"name":"Upper Floor","elevation":3200,"
+{"jsonrpc":"2.0","id":3,"result":{"id":"F2F30D28-4DC8-4C13-BDC1-4A4E2B3D6AAD","folder":null,"versionsFolder":null,"keep":50}}
+{"jsonrpc":"2.0","id":4,"result":{"title":"Cedar House (no picture)","path":"D:/a/_temp/thumbnail/Cedar House (no picture).archi","dirty":false,"units":"millimeters","unitAbbreviation":"mm","levels":[{"id":0,"name":"Ground Floor","elevation":0,"height":3200},{"id":1,"name":"Upper Floor","elevation":
+PASS  archi-engine embeds the plan picture on save (and not with previewOnSave:false)
+PASS  finder: envelope picture found  0 bytes
+PASS  finder: a "preview" inside the document is ignored
+PASS  finder: JSON \/ escapes are decoded
+PASS  HKCU .archi ShellEx {e357fccd-...} = handler CLSID  {9D934CB7-4E6D-404F-A240-C5DBE6F0CAC0}
+PASS  HKCU CLSID InprocServer32 = installed DLL  C:\Users\runneradmin\AppData\Local\Programs\Oanarina Archi Tool\resources\shellext\ArchiThumbnail-x64.dll
+PASS  ThreadingModel = Apartment
+PASS  COM loads the handler and makes a thumbnail  0x00000000
+PASS  thumbnail fits 256 px  256x256
+PASS  thumbnail shows the plan (dark pixels on white)  4887 dark pixels
+PASS  thumbnail written  D:\a\archi_tool\archi_tool\winapp-logs\screenshots\explorer-thumbnail.bmp
+PASS  a drawing without a picture gives no thumbnail (document icon)  0x80004005
+INFO  shell IShellItemImageFactory: 0x80040154 (not required)
+thumbtest: all required checks passed
+
+**********************
+PowerShell transcript end
+End time: 20261009155632
+**********************

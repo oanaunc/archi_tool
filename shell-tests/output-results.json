@@ -1,0 +1,177 @@
+[
+  {
+    "name": "Plot Preview window with the Mac title",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "PLOT shows the active target (sheet A-102 in the fixture)",
+    "ok": true,
+    "detail": "Sheet — A-102 Plans"
+  },
+  {
+    "name": "sheet preview is the true-size A3 page with clipped viewports",
+    "ok": true,
+    "detail": "{\"w\":\"0 0 1190.55 841.89\",\"clips\":2}"
+  },
+  {
+    "name": "title block on the page (A-102, OANARINA ARCHI TOOL)",
+    "ok": true,
+    "detail": "Living|01  46.74 m²|Stair Hall|02  33.84 m²|Entry|03  22.04 m²|Kitchen & Dining|04  40.23 m²|Porch|05  18.00 m²|4°|UP"
+  },
+  {
+    "name": "page count",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "model target shows paper, orientation, plot area and scale",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "monochrome plot style regenerates the preview",
+    "ok": true,
+    "detail": "#000000"
+  },
+  {
+    "name": "Save PDF… plots the previewed file",
+    "ok": true,
+    "detail": "Command: PREVIEW | Plotted to Cedar House.pdf"
+  },
+  {
+    "name": "Print… prints the previewed pages with the system dialog",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Print window: printer, paper, tray, paper size, scale, copies",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "roll paper width with common sizes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "custom percentage slider",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Print sends the drawing with the options (Mac message)",
+    "ok": true,
+    "detail": "Sent Cedar House to the default printer, 100%, 2 copies."
+  },
+  {
+    "name": "Batch Publish lists the sheets with number, paper and plot style",
+    "ok": true,
+    "detail": "A-101Sheet 1A3 · ColorA-102A-102 PlansA3 · Color"
+  },
+  {
+    "name": "title shows the chosen count",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Publish… disabled with no sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Batch Publish publishes with bookmarks",
+    "ok": true,
+    "detail": "Published 2 sheet(s) with bookmarks to Cedar House — sheets.pdf"
+  },
+  {
+    "name": "PUBLISH with Enter asks for the file and publishes",
+    "ok": true,
+    "detail": "Published 2 sheet(s) to Cedar House — sheets.pdf"
+  },
+  {
+    "name": "plot style editor rows (Other, 1–9, 250–255)",
+    "ok": true,
+    "detail": "16"
+  },
+  {
+    "name": "Save in Drawing stores a copy",
+    "ok": true,
+    "detail": "Plot style table archi pens 2.ctb saved in the drawing. Choose it in Page Setup (or PLOTSTYLE Set)."
+  },
+  {
+    "name": "Export PDF plots the sheet or model",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Render window sections (Mac form)",
+    "ok": true,
+    "detail": "PRESET,OUTPUT,PHOTOGRAPHIC LOOK,ENVIRONMENT,SHADOWS & OCCLUSION,SUN,CAMERA,,ANIMATION & PANORAMA"
+  },
+  {
+    "name": "presets from the engine",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Draft preset sets 1280×720",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Render draws the image with the 3D renderer",
+    "ok": true,
+    "detail": "Rendered Beauty 1280×720 in 5."
+  },
+  {
+    "name": "render size",
+    "ok": true,
+    "detail": "[1280,720]"
+  },
+  {
+    "name": "region sliders and overlay",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "data passes come from the engine",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Save… writes a PNG",
+    "ok": true,
+    "detail": "[[\"Cedar House render.png\",7544]]"
+  },
+  {
+    "name": "walkthrough video: MP4 with ftyp, moov, mdat",
+    "ok": true,
+    "detail": "{\"bytes\":43978,\"boxes\":[\"ftyp\",\"moov\",\"mdat\"],\"codec\":\"avc1.640033\",\"frames\":10}"
+  },
+  {
+    "name": "render queue with the saved cameras",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "queue renders every job and keeps the history",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "camera path with two keys at 0 and 3 s",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "path tracer window renders progressively",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

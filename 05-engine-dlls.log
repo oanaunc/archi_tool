@@ -1,0 +1,103 @@
+**********************
+PowerShell transcript start
+Start time: 20261009155427
+Username: runnervmfi6oq\runneradmin
+RunAs User: runnervmfi6oq\runneradmin
+Configuration Name: 
+Machine: runnervmfi6oq (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -command . 'D:\a\_temp\c7012812-ba1a-4d0f-8f0d-d8d8ecc16bc1.ps1'
+Process ID: 9452
+PSVersion: 7.6.6
+PSEdition: Core
+GitCommitId: 7.6.6
+OS: Microsoft Windows 10.0.26100
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+
+Name                                  Length
+----                                  ------
+_FoundationICU.dll                  35851776
+archi-engine.exe                   124103680
+BlocksRuntime.dll                      11776
+dispatch.dll                          234496
+Foundation.dll                       4803072
+FoundationEssentials.dll             5096448
+FoundationInternationalization.dll   1641472
+FoundationNetworking.dll             1338368
+FoundationXML.dll                     824320
+MSVCP140.dll                          575592
+README.txt                               203
+swift_Concurrency.dll                 495104
+swift_RegexParser.dll                 989184
+swift_StringProcessing.dll            688128
+swiftCore.dll                        5850112
+swiftCRT.dll                           39936
+swiftDispatch.dll                     148480
+swiftWinSDK.dll                        30720
+VCRUNTIME140_1.dll                     49744
+VCRUNTIME140.dll                      120432
+--version (exit 0): archi-engine 1.0.0 (protocol 1.0)
+engine.hello: {"jsonrpc":"2.0","id":1,"result":{"name":"archi-engine","version":"1.0.0","protocol":"1.0","platform":"windows","methods":["engine.hello","doc.new","doc.open","doc.save","doc.info","command.run","command.complete","input.text","input.point","input.key","input.cursor","view.drawList","pick","select.window","select.set","select.get","grips.get","grips.drag","model.meshes","render.settings","render.p
+loaded modules:
+  C:\Windows\System32\ADVAPI32.dll
+  C:\Windows\SYSTEM32\bcrypt.dll
+  C:\Windows\System32\bcryptprimitives.dll
+  C:\Windows\System32\combase.dll
+  C:\Windows\System32\CRYPT32.dll
+  C:\Windows\SYSTEM32\dbghelp.dll
+  C:\Windows\System32\GDI32.dll
+  C:\Windows\System32\gdi32full.dll
+  C:\Windows\System32\IMM32.DLL
+  C:\Windows\SYSTEM32\IPHLPAPI.DLL
+  C:\Windows\SYSTEM32\kernel.appcore.dll
+  C:\Windows\System32\KERNEL32.DLL
+  C:\Windows\System32\KERNELBASE.dll
+  C:\Windows\System32\msvcp_win.dll
+  C:\Windows\System32\msvcrt.dll
+  C:\Windows\System32\Normaliz.dll
+  C:\Windows\SYSTEM32\ntdll.dll
+  C:\Windows\System32\ole32.dll
+  C:\Windows\System32\OLEAUT32.dll
+  C:\Windows\System32\RPCRT4.dll
+  C:\Windows\System32\sechost.dll
+  C:\Windows\SYSTEM32\Secur32.dll
+  C:\Windows\System32\shcore.dll
+  C:\Windows\System32\SHELL32.dll
+  C:\Windows\System32\SHLWAPI.dll
+  C:\Windows\SYSTEM32\SSPICLI.DLL
+  C:\Windows\System32\ucrtbase.dll
+  C:\Windows\System32\USER32.dll
+  C:\Windows\SYSTEM32\USERENV.dll
+  C:\Windows\System32\win32u.dll
+  C:\Windows\SYSTEM32\windows.storage.dll
+  C:\Windows\SYSTEM32\WINMM.dll
+  C:\Windows\System32\wintypes.dll
+  C:\Windows\System32\WS2_32.dll
+  D:\a\_temp\engine-isolated\_FoundationICU.dll
+  D:\a\_temp\engine-isolated\archi-engine.exe
+  D:\a\_temp\engine-isolated\BlocksRuntime.dll
+  D:\a\_temp\engine-isolated\dispatch.dll
+  D:\a\_temp\engine-isolated\Foundation.dll
+  D:\a\_temp\engine-isolated\FoundationEssentials.dll
+  D:\a\_temp\engine-isolated\FoundationInternationalization.dll
+  D:\a\_temp\engine-isolated\FoundationNetworking.dll
+  D:\a\_temp\engine-isolated\FoundationXML.dll
+  D:\a\_temp\engine-isolated\MSVCP140.dll
+  D:\a\_temp\engine-isolated\swift_Concurrency.dll
+  D:\a\_temp\engine-isolated\swift_RegexParser.dll
+  D:\a\_temp\engine-isolated\swift_StringProcessing.dll
+  D:\a\_temp\engine-isolated\swiftCore.dll
+  D:\a\_temp\engine-isolated\swiftCRT.dll
+  D:\a\_temp\engine-isolated\swiftDispatch.dll
+  D:\a\_temp\engine-isolated\swiftWinSDK.dll
+  D:\a\_temp\engine-isolated\VCRUNTIME140_1.dll
+  D:\a\_temp\engine-isolated\VCRUNTIME140.dll
+OK: archi-engine.exe runs from the bundle alone (18 bundled DLLs)
+**********************
+PowerShell transcript end
+End time: 20261009155427
+**********************
