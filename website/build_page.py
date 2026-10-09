@@ -58,16 +58,16 @@ if REL.get('pending'):
     HEROBUTTON = FINALBUTTON = '<a class="pe-btn pe-btn-primary" href="#studio"><span>Download coming soon<small>Notarization in progress</small></span></a>'
 else:
     href = f'downloads/archi-tool/{REL["dmg"]}?v={REL["sha_short"]}'
-    HEROBUTTON = f'<a class="pe-btn pe-btn-primary" id="download-button" href="{href}" download>{DL_SVG}<span>Download for Mac<small>Free · {REL["size_mb"]} MB · notarized by Apple</small></span></a>'
-    FINALBUTTON = f'<a class="pe-btn pe-btn-primary" href="{href}" download><span>Download for Mac<small>Free · {REL["size_mb"]} MB</small></span></a>'
+    HEROBUTTON = f'<a class="pe-btn pe-btn-primary" id="download-button" href="{href}" download>{DL_SVG}<span>Download for Mac<small>Free · v{REL["version"]} · {REL["size_mb"]} MB · notarized by Apple</small></span></a>'
+    FINALBUTTON = f'<a class="pe-btn pe-btn-primary" href="{href}" download><span>Download for Mac<small>Free · v{REL["version"]} · {REL["size_mb"]} MB</small></span></a>'
 WIN = REL.get('windows')
 if WIN and not REL.get('pending'):
     whref = f'downloads/archi-tool/{WIN["exe"]}?v={WIN["sha_short"]}'
-    HEROBUTTON += f'<a class="pe-btn pe-btn-primary" id="download-button-windows" href="{whref}" download>{DL_SVG}<span>Download for Windows<small>Free · {WIN["size_mb"]} MB · Windows 10 and 11</small></span></a>'
-    FINALBUTTON += f'<a class="pe-btn pe-btn-primary" href="{whref}" download><span>Download for Windows<small>Free · {WIN["size_mb"]} MB</small></span></a>'
+    HEROBUTTON += f'<a class="pe-btn pe-btn-primary" id="download-button-windows" href="{whref}" download>{DL_SVG}<span>Download for Windows<small>Free · v{WIN.get("version", REL["version"])} · {WIN["size_mb"]} MB · Windows 10 and 11</small></span></a>'
+    FINALBUTTON += f'<a class="pe-btn pe-btn-primary" href="{whref}" download><span>Download for Windows<small>Free · v{WIN.get("version", REL["version"])} · {WIN["size_mb"]} MB</small></span></a>'
     FINALBUTTON = f'<div class="at-final-buttons">{FINALBUTTON}</div>'
-    STATUS = (f'Version {REL["version"]}. Mac: Apple silicon and Intel, notarized by Apple. '
-              'Windows 10 and 11 (64-bit): the installer is not code-signed yet, so if Windows shows “Windows protected your PC”, click More info, then Run anyway.')
+    STATUS = (f'Mac version {REL["version"]}: Apple silicon and Intel, notarized by Apple. '
+              f'Windows version {WIN.get("version", REL["version"])} for Windows 10 and 11 (64-bit): the installer is not code-signed yet, so if Windows shows “Windows protected your PC”, click More info, then Run anyway.')
     EYEBROW = 'Free for Mac and Windows · open source · no account'
     CHIPS = '<li>macOS 14 or later</li><li>Windows 10 &amp; 11</li><li>DXF · IFC · PDF</li><li>GPL-3.0</li>'
     PLATFORM = 'macOS 14 or later (Apple silicon and Intel) · Windows 10 and 11 (64-bit)'

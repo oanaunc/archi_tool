@@ -1,21 +1,21 @@
 {
- "version": "1.0",
+ "version": "1.0.2",
  "asset_version": "20260927b",
- "commands": 1044,
+ "commands": 1046,
  "formats": 30,
- "size_mb": "83.1",
+ "size_mb": "92.1",
  "signing": "Developer ID-signed and notarized by Apple.",
- "note": "Version 1.0, build 3 (27 September): photographic rendering with Daylight, Golden hour, Overcast and Night presets, bump and roughness textures, twelve recorded tutorials and the full user guide.",
- "dmg": "Oanarina-Archi-Tool-1.0.0.dmg",
- "sha_short": "3ad649bd3079",
+ "note": "Version 1.0.2, build 5 (9 October): Mac ribbon and 2D canvas refresh fixes, RIBBON recovery, custom section print colours, lineweights and shading, reusable page setups, applying presets to selected or all sheets, and importing setups from other projects. Windows ribbon tabs scroll on smaller screens.",
+ "dmg": "Oanarina-Archi-Tool-1.0.2.dmg",
+ "sha_short": "fd4604890f77",
  "agent_doc": "downloads/archi-tool/AGENT-API.md",
- "imports": ".archi, DXF (R12–R2018), IFC 2x3/4, Rhino 3DM, SketchUp (with converter), SVG, OBJ, STL, 3MF, glTF, GeoJSON, point clouds (XYZ, PTS, PLY, E57, LAS), images",
- "exports": "PDF, DXF, SVG, PNG, IFC4 / IFC4.3, glTF (GLB), USDZ, OBJ, STL, 3MF, STEP, Collada, KML, Rhino 3DM, CSV and Excel schedules, BCF, MP4 walkthroughs, 360° panoramas",
+ "imports": ".archi, DXF (R12\u2013R2018), IFC 2x3/4, Rhino 3DM, SketchUp (with converter), SVG, OBJ, STL, 3MF, glTF, GeoJSON, point clouds (XYZ, PTS, PLY, E57, LAS), images",
+ "exports": "PDF, DXF, SVG, PNG, IFC4 / IFC4.3, glTF (GLB), USDZ, OBJ, STL, 3MF, STEP, Collada, KML, Rhino 3DM, CSV and Excel schedules, BCF, MP4 walkthroughs, 360\u00b0 panoramas",
  "pending": false,
  "guide": true,
- "features": 1114,
- "total_features": 1157,
- "tests": 945,
+ "features": 1117,
+ "total_features": 1160,
+ "tests": 951,
  "source_public": true,
  "gallery": [
   {
@@ -80,6 +80,7 @@
   "sha_short": "5bdb9d9462c5",
   "sha256": "5bdb9d9462c5a6f7fe6f4d346d8f91fad056b4872e46f19c07aa3f09ef908ad8",
   "bytes": 132538627,
-  "release": "https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.0"
+  "release": "https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.0",
+  "version": "1.0.0"
  }
 }
