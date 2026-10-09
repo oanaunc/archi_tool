@@ -102,6 +102,10 @@ struct SheetView: View {
                 .help("Sheet set manager: numbering, order, revisions, sheet index (SHEETSET)")
             Button { model.sheet = .titleBlock(layoutIndex) } label: { Label("Title Block", systemImage: "list.bullet.rectangle.portrait") }.disabled(layout == nil)
                 .help("Edit the title block (TITLEBLOCK)")
+            if layout?.viewports.contains(where: { $0.view == .section }) == true {
+                Button { model.sheet = .pageSetup(layoutIndex) } label: { Label("Section Style", systemImage: "paintpalette") }
+                    .help("Section line colours, cut fill, weights and shaded surfaces on this sheet")
+            }
             Button { model.sheet = .pageSetup(layoutIndex) } label: { Label("Page Setup", systemImage: "doc.badge.gearshape") }.disabled(layout == nil)
                 .help("Paper, plot style and plot stamp (PAGESETUP)")
             Button { PlotPreviewWindow.show(model: model) } label: { Label("Preview", systemImage: "eye") }.disabled(layout == nil)
@@ -349,7 +353,7 @@ final class SheetCanvasNSView: NSView {
                            entriesFor: { [unowned self] vp in
                                let key = "\(vp.view.rawValue)|\(vp.level ?? -999)|\(vp.scale)|\(ShadePlot.cacheKey(doc, vp))"
                                if let c = self.cache[key] { return c }
-                               let e = SheetComposer.viewportEntries(doc: doc, vp: vp)
+                               let e = SheetComposer.viewportEntries(doc: doc, vp: vp, layout: l.name)
                                self.cache[key] = e
                                return e
                            }, visible: dirtyRect, setup: PageSetup.load(doc, layoutIndex: layoutIndex))

@@ -717,6 +717,7 @@ final class PlanCanvasView: NSView {
         super.init(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         wantsLayer = true
         layerContentsRedrawPolicy = .onSetNeedsDisplay
+        layer?.masksToBounds = true
         for v in [content, overlay] {
             v.wantsLayer = true
             v.layerContentsRedrawPolicy = .onSetNeedsDisplay
@@ -777,6 +778,17 @@ final class PlanCanvasView: NSView {
 
     override var isFlipped: Bool { false }
     override var isOpaque: Bool { true }
+    // AppKit uses isOpaque to skip painting behind us. Paint our own backing layer as well as
+    // the drawing sublayer, including when macOS recreates it on a different display.
+    override func draw(_ dirtyRect: NSRect) {
+        Theme.nsCanvas.setFill()
+        dirtyRect.fill()
+    }
+    override func viewDidChangeBackingProperties() {
+        super.viewDidChangeBackingProperties()
+        needsDisplay = true
+        redraw()
+    }
     override var acceptsFirstResponder: Bool { true }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     func focus() { if window?.firstResponder !== self { window?.makeFirstResponder(self) } }
@@ -800,6 +812,7 @@ final class PlanCanvasView: NSView {
     override func setFrameSize(_ newSize: NSSize) {
         let old = frame.size
         super.setFrameSize(newSize)
+        needsDisplay = true
         content.needsDisplay = true
         overlay.needsDisplay = true
         // Split divider / window resize: a view the user never zoomed stays fitted to the drawing.

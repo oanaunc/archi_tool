@@ -612,3 +612,12 @@ tessellated geometry and assembly placements (mapped items, transformed represen
   variable or `ARCHI_SKP_CONVERTER` environment variable, run as `converter input.skp output.dae` (it may write .dae,
   .3dm, .obj, .fbx or .gltf); the output goes through the matching importer. Without one the error explains how to
   export COLLADA or 3DM from SketchUp. `SketchUpImport.preview(data)` returns the embedded PNG thumbnail if present.
+
+
+### Section sheet graphics (1.0.1)
+
+`SECTIONSTYLE` (`SECSTYLE`, `SSTYLE`) is a core command available through `archi.command`
+and `command.run`. Example: `SECTIONSTYLE Set "Sheet 1" "color:red;fill:0.7,0.7,0.7;cut:0.5;proj:0.25;shading:off"`.
+`List` reads the named sheet style; `Reset` restores project defaults. Each change is one undo step.
+Section viewports on the named sheet use these graphics in the Mac composer and portable plot
+writer; model views, plans and other sheets retain their own settings.

@@ -425,6 +425,8 @@ struct PageSetupSheet: View {
     @State private var paper = "A3"
     @State private var portrait = false
     @State private var scaleText = "Fit"
+    @State private var sectionOverride = false
+    @State private var sectionStyle = SectionSheetStyle()
 
     private var isSheet: Bool { model.doc.layouts.indices.contains(layoutIndex) }
 
@@ -446,6 +448,22 @@ struct PageSetupSheet: View {
                         Text("Portrait").tag(true)
                     }
                     .pickerStyle(.segmented)
+                    if model.doc.layouts[layoutIndex].viewports.contains(where: { $0.view == .section }) {
+                        Toggle("Customize section graphics on this sheet", isOn: $sectionOverride)
+                        if sectionOverride {
+                            Toggle("Shaded surfaces", isOn: $sectionStyle.shaded)
+                            ColorPicker("Section line colour", selection: sectionColor(fill: false), supportsOpacity: false)
+                            ColorPicker("Cut fill colour", selection: sectionColor(fill: true), supportsOpacity: false)
+                            HStack {
+                                Text("Cut weight (mm)")
+                                TextField("0.5", value: Binding(get: { sectionStyle.lines.cutLineweight ?? 0.5 }, set: { sectionStyle.lines.cutLineweight = min(5, max(0.01, $0)) }), format: .number).frame(width: 60)
+                                Text("Projection (mm)")
+                                TextField("0.25", value: Binding(get: { sectionStyle.lines.projectionLineweight ?? 0.25 }, set: { sectionStyle.lines.projectionLineweight = min(5, max(0.01, $0)) }), format: .number).frame(width: 60)
+                            }
+                            Text("Applies to section viewports on this sheet. Choose Color below to print the selected colours; Preview shows the final output.")
+                                .font(Theme.fontSmall).foregroundStyle(Theme.textDim).fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
                     Divider()
                 }
                 PageSetupForm(setup: $setup, showModel: !isSheet, scaleText: $scaleText, tables: PlotStyleTable.all(model.doc).map(\.name), displayBox: model.canvas?.visibleWorldBox, namedTables: NamedPlotStyles.tables(model.doc))
@@ -470,6 +488,11 @@ struct PageSetupSheet: View {
                 let p = model.doc.layouts[layoutIndex].paper
                 portrait = p.height > p.width
                 paper = PaperCatalog.builtIn.first { p.name.hasPrefix($0.name) }?.name ?? "A3"
+                if let style = SectionSheetStyle.load(model.doc.layouts[layoutIndex]) {
+                    sectionOverride = true; sectionStyle = style
+                } else {
+                    sectionStyle = SectionSheetStyle(lines: ObjectStyle(projectionLineweight: 0.25, cutLineweight: 0.5, color: .black, cutFill: RGBA(0.62, 0.62, 0.62)))
+                }
             }
         }
     }
@@ -481,7 +504,22 @@ struct PageSetupSheet: View {
         model.editor.transaction("Page Setup") { d in
             s.store(in: &d, layoutIndex: li)
             if isSheet, let i = li, d.layouts[i].paper != p { d.layouts[i].paper = p }
+            if let i = li {
+                if sectionOverride { sectionStyle.store(in: &d.layouts[i]) }
+                else { d.layouts[i].titleBlock[SectionSheetStyle.key] = nil }
+            }
         }
+    }
+
+    private func sectionColor(fill: Bool) -> Binding<Color> {
+        Binding(get: {
+            let c = (fill ? sectionStyle.lines.cutFill : sectionStyle.lines.color) ?? .black
+            return Color(red: c.r, green: c.g, blue: c.b)
+        }, set: { value in
+            guard let c = NSColor(value).usingColorSpace(.sRGB) else { return }
+            let rgba = RGBA(c.redComponent, c.greenComponent, c.blueComponent)
+            if fill { sectionStyle.lines.cutFill = rgba } else { sectionStyle.lines.color = rgba }
+        })
     }
 }
 

@@ -2200,3 +2200,30 @@ command inside the app. This table is generated from the command definitions in 
 *(app)*: available in the Mac app (command line, menus, scripts and the agent server), not in headless `archi-cli`.
 
 <!-- END COMMAND REFERENCE -->
+
+
+## Mac display recovery and section print styles (1.0.1)
+
+The top ribbon repaints after activation, resizing, display changes and full-screen transitions.
+The 2D canvas paints its own opaque backing surface. If you have hidden or collapsed the
+ribbon, type `RIBBON` (alias `RB`, also `CLEANSCREENOFF`) and press Return to restore and expand it.
+
+Open a sheet containing a section viewport and click **Section Style**, or open **Page Setup**.
+Enable **Customize section graphics on this sheet**, choose section line and cut fill colours,
+set cut and projection weights in millimetres, and switch **Shaded surfaces** off for linework.
+Use **Color** in Plot style to preserve the selected colours, or Monochrome/Grayscale for those
+outputs. A selected plot style table can override colours and weights. Click **Preview** to
+inspect the final output, then print or export PDF. These settings are saved in the drawing,
+are undoable, and apply only to section viewports on that sheet. Disable customization to
+return to project defaults.
+
+The command line, scripts and agent API use the same command:
+
+```text
+SECTIONSTYLE Set "Sheet 1" "color:black;fill:0.7,0.7,0.7;cut:0.5;proj:0.25;shading:off"
+SECTIONSTYLE List "Sheet 1"
+SECTIONSTYLE Reset "Sheet 1"
+```
+
+Aliases: `SECSTYLE`, `SSTYLE`. Existing `.archi` files open unchanged; the style uses the
+existing sheet metadata dictionary, with no format change.

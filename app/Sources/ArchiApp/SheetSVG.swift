@@ -17,7 +17,7 @@ enum SheetSVG {
             let clip = BBox2(points: SheetTools.clip(doc, layout: layout.name, viewport: i) ?? [vp.origin, vp.origin + vp.size])
             let s = 1 / max(vp.scale, 1e-12)
             func map(_ p: Vec2) -> Vec2 { SheetTools.paperPoint(p, in: vp) }
-            for e in SheetComposer.viewportEntries(doc: src, vp: vp) {
+            for e in SheetComposer.viewportEntries(doc: src, vp: vp, layout: layout.name) {
                 var items: [DrawItem] = []
                 for it in e.items {
                     switch it {

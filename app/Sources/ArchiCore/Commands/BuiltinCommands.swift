@@ -30,6 +30,7 @@ public enum BuiltinCommands {
         out += WorkflowCommands.all
         out += LayerToolCommands.all
         out += GraphicStyleCommands.all
+        out += [SectionSheetStyle.command]
         out += DimensionToolCommands.all
         out += SnapToolCommands.all
         out += DraftAnnotationCommands.all

@@ -253,7 +253,8 @@ enum SheetComposer {
     }
 
     /// Model-space draw entries shown by a viewport, in that view's 2D coordinates.
-    static func viewportEntries(doc: ArchiDocument, vp: Viewport) -> [DrawEntry] {
+    static func viewportEntries(doc: ArchiDocument, vp: Viewport, layout: String? = nil) -> [DrawEntry] {
+        let doc = SectionSheetStyle.document(doc, layout: layout, view: vp.view)
         // 3D viewports: shade plot of the model seen from the viewport's camera (always drawn on the main thread).
         if vp.view == .axonometric || vp.view == .perspective { return MainActor.assumeIsolated { ShadePlot.entries(doc: doc, vp: vp) } }
         switch vp.view {
@@ -483,9 +484,9 @@ enum SheetComposer {
             // Layers frozen in this viewport only (VPLAYER) bypass the caller's per-view cache.
             let entries: [DrawEntry]
             if ViewportLayers.frozen(doc, layout: layout.name, viewport: i).isEmpty {
-                entries = entriesFor?(vp) ?? viewportEntries(doc: doc, vp: vp)
+                entries = entriesFor?(vp) ?? viewportEntries(doc: doc, vp: vp, layout: layout.name)
             } else {
-                entries = viewportEntries(doc: ViewportLayers.document(for: doc, layout: layout.name, viewport: i), vp: vp)
+                entries = viewportEntries(doc: ViewportLayers.document(for: doc, layout: layout.name, viewport: i), vp: vp, layout: layout.name)
             }
             var r = PlotRenderer(transform: modelToPaper(vp).concatenating(paperToDevice), devicePerMM: devicePerMM, paper: true, minLineWidth: 0.12)
             if let setup { r.apply(setup, doc: doc) }

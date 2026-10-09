@@ -481,11 +481,18 @@ enum WindowRepaint {
         guard !observed.contains(id) else { return }
         observed.insert(id)
         let names: [Notification.Name] = [NSWindow.didChangeOcclusionStateNotification, NSWindow.didBecomeMainNotification,
+                                          NSWindow.didBecomeKeyNotification, NSWindow.didResizeNotification,
+                                          NSWindow.didEndLiveResizeNotification, NSWindow.didChangeScreenNotification,
+                                          NSWindow.didChangeBackingPropertiesNotification, NSWindow.didEnterFullScreenNotification,
+                                          NSWindow.didExitFullScreenNotification,
                                           NSWindow.didResignMainNotification, NSWindow.didResignKeyNotification, NSWindow.didDeminiaturizeNotification]
         for n in names {
             NotificationCenter.default.addObserver(forName: n, object: w, queue: .main) { note in
                 guard let win = note.object as? NSWindow else { return }
-                MainActor.assumeIsolated { repaint(win) }
+                MainActor.assumeIsolated {
+                    // Repaint after SwiftUI/AppKit have finished the new layout, not inside the notification.
+                    DispatchQueue.main.async { [weak win] in if let win { repaint(win) } }
+                }
             }
         }
         NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: w, queue: .main) { _ in
@@ -494,6 +501,8 @@ enum WindowRepaint {
     }
     static func repaint(_ w: NSWindow) {
         guard w.occlusionState.contains(.visible), let v = w.contentView else { return }
+        v.needsLayout = true
+        v.layoutSubtreeIfNeeded()
         func mark(_ x: NSView) { x.needsDisplay = true; x.subviews.forEach(mark) }
         mark(v)
         v.needsLayout = true

@@ -182,11 +182,14 @@ public enum ElevationBuilder {
             let t = min(max((p.key - d0) / span, 0), 1)
             switch p.prim {
             case .face(let pts, let c):
+                if doc.variable("SECTIONSHADING") == "0" { continue }
                 if curID == nil || curID! != p.id { flush(); curID = .some(p.id) }
                 cur.append(.fill(loops: [pts], color: gfx.depthCue ? ViewGraphics.cue(c, t) : c))
             case .edge(let pts):
-                let lw = gfx.lineWeights ? ViewGraphics.lineweight(depthFraction: t, cut: cut) : 0.25
-                let col = gfx.depthCue ? ViewGraphics.cue(edgeColor, t) : edgeColor
+                let os = p.id.flatMap { doc.element($0) }.flatMap { ObjectStyles.style(for: $0, doc: doc) }
+                let lw = os?.projectionLineweight ?? (gfx.lineWeights ? ViewGraphics.lineweight(depthFraction: t, cut: cut) : 0.25)
+                let base = os?.color ?? edgeColor
+                let col = gfx.depthCue ? ViewGraphics.cue(base, t) : base
                 if let occ = occluder {
                     let m = (pts[0] + pts[1]) / 2
                     if occ.isHidden(m, depth: p.key + bias, tolerance: bias * 20) {

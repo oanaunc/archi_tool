@@ -360,6 +360,7 @@ public enum EnginePlot {
 
     /// Model-space entries a viewport shows, in its view's 2D coordinates (SheetComposer.viewportEntries).
     public static func viewportEntries(doc: ArchiDocument, vp: Viewport, layout: String? = nil, index: Int? = nil) -> [DrawEntry] {
+        let doc = SectionSheetStyle.document(doc, layout: layout, view: vp.view)
         switch vp.view {
         case .axonometric, .perspective:
             return EngineShadePlot.entries(doc: doc, vp: vp, layout: layout, index: index)

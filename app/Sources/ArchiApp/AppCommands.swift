@@ -83,8 +83,11 @@ enum AppCommands {
             CommandDef("SCRIPTCONSOLE", aliases: ["JS", "JSCONSOLE", "CONSOLE"], category: "Scripting", summary: "Shows or hides the JavaScript console (⌥⌘J).", modifies: false) { ed in
                 let m = try ui(ed); m.showScriptConsole.toggle()
             },
-            CommandDef("CLEANSCREENOFF", category: "View", summary: "Restores the ribbon and panels after CLEANSCREENON.", modifies: false) { ed in
+            CommandDef("CLEANSCREENOFF", aliases: ["RIBBON", "RB"], category: "View", summary: "Restores and expands the ribbon, then repaints the window (RIBBON / RB).", modifies: false) { ed in
                 let m = try ui(ed); m.cleanScreen = false
+                UserDefaults.standard.set(false, forKey: "ribbonCollapsed")
+                if let w = m.window { DispatchQueue.main.async { WindowRepaint.repaint(w) } }
+                m.canvas?.redraw()
             },
             CommandDef("COMMANDSEARCH", aliases: ["CMDSEARCH", "SEARCHCOMMANDS"], category: "Help", summary: "Opens the command search palette (⌘K).", modifies: false) { ed in
                 try ui(ed).showCommandSearch = true

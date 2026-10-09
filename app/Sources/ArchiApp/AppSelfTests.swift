@@ -106,6 +106,7 @@ enum AppSelfTests {
         let cov = CommandCatalog.coverage(.shared)
         lastCoverage = cov
         check(cov.missing.isEmpty, "commands without a ribbon/menu/palette entry: \(cov.missing.joined(separator: ", "))")
+        macFeedbackChecks(check)
         extraChecks(check)
         reviewChecks(check)
         studioChecks(check)

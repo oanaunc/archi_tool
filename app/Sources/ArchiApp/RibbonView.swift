@@ -196,6 +196,7 @@ struct RibbonView: View {
         }
         // Opaque theme background: never transparent, also in inactive windows.
         .background(Theme.ribbonTabBar)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     /// Quick access toolbar: each button runs the same command as typing its name.
@@ -235,21 +236,24 @@ struct RibbonView: View {
                 .help("About Oanarina Archi Tool")
             quickAccessBar
             VSeparator().frame(height: 14).padding(.horizontal, 4)
-            ForEach(RibbonTab.allCases.filter { !prefs.hiddenRibbonTabs.contains($0.rawValue) || $0 == tab }) { t in
-                Button { tabRaw = t.rawValue; if collapsed { collapsed = false } } label: {
-                    Text(L10n.t(t.rawValue, language))
-                        .font(.system(size: 11, weight: tab == t ? .semibold : .regular))
-                        .foregroundStyle(tab == t ? Theme.text : Theme.textDim)
-                        .padding(.horizontal, 10)
-                        .frame(height: 26)
-                        .overlay(alignment: .bottom) {
-                            if tab == t { Rectangle().fill(Theme.accent).frame(height: 2) }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 2) {
+                    ForEach(RibbonTab.allCases.filter { !prefs.hiddenRibbonTabs.contains($0.rawValue) || $0 == tab }) { t in
+                        Button { tabRaw = t.rawValue; if collapsed { collapsed = false } } label: {
+                            Text(L10n.t(t.rawValue, language))
+                                .font(.system(size: 11, weight: tab == t ? .semibold : .regular))
+                                .foregroundStyle(tab == t ? Theme.text : Theme.textDim)
+                                .padding(.horizontal, 10)
+                                .frame(height: 26)
+                                .overlay(alignment: .bottom) {
+                                    if tab == t { Rectangle().fill(Theme.accent).frame(height: 2) }
+                                }
+                                .contentShape(Rectangle())
                         }
-                        .contentShape(Rectangle())
+                        .buttonStyle(.plain)
+                    }
                 }
-                .buttonStyle(.plain)
             }
-            Spacer()
             IconButton(symbol: "magnifyingglass", help: "Search commands (⌘K)") { model.showCommandSearch = true }
             IconButton(symbol: "rectangle.dashed", help: "Clean screen (⌃0)") { model.cleanScreen.toggle() }
             IconButton(symbol: "sidebar.right", help: model.showPanels ? "Hide panels" : "Show panels", active: model.showPanels) { model.showPanels.toggle() }

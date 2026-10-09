@@ -7033,6 +7033,19 @@
   "acceptance": "Page setup import produces output matching the preview."
  },
  {
+  "id": "SHT-041",
+  "area": "Sheets, Layouts & Plotting",
+  "group": "Plotting & Output",
+  "name": "Per-sheet section print graphics",
+  "command": "SECTIONSTYLE / SECSTYLE / SSTYLE",
+  "description": "Section Style in Page Setup: per-sheet section line colour, cut fill, cut/projection lineweights and shaded or linework presentation. Isolated from plans and other sheets; preview, PDF, SVG and print use the saved style.",
+  "reference": "AutoCAD",
+  "phase": 8,
+  "priority": "should",
+  "status": "done",
+  "acceptance": "Command and Mac Page Setup UI; undo/redo and .archi round-trip; section rendering and resolved PDF pens tested in SectionSheetStyleTests, Mac/engine parity in APPSELFTEST."
+ },
+ {
   "id": "BIM-001",
   "area": "BIM Building Elements",
   "group": "Levels & Grids",

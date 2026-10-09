@@ -166,6 +166,7 @@ extension CommandCatalog {
         c("Material Library", "books.vertical", "MATBROWSER"),
     ]
     static let outputMore: [CmdItem] = [
+        c("Section Sheet Style", "paintpalette", "SECTIONSTYLE"),
         c("Page Setup", "doc.badge.gearshape", "PAGESETUP"), c("Plot Preview", "eye", "PREVIEW"), c("Publish", "doc.on.doc", "PUBLISH"), c("Title Block", "list.bullet.rectangle.portrait", "TITLEBLOCK"),
         c("Sheet Set", "rectangle.stack", "SHEETSET"), c("Sheet Index", "list.number", "SHEETINDEX"), c("Revision", "clock.badge.checkmark", "SHEETREVISION"),
         c("Renumber Sheets", "number", "SHEETRENUMBER"), c("Editable View Titles", "textformat.size", "SHEETVIEWTITLES"), c("View Title", "textformat", "VIEWTITLE"),

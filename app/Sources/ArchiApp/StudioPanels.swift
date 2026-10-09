@@ -226,6 +226,7 @@ struct NavigatorPanel: View {
 enum WhatsNew {
     static let lastSeenKey = "whatsNew.lastSeenVersion"
     static let notes: [(String, [String])] = [
+        ("Mac display and section printing (1.0.1)", ["Ribbon repaint after window activation, resizing, display changes and full screen; opaque 2D canvas backing. Type RIBBON (RB) to restore and expand the toolbar.", "Section Style / Page Setup: per-sheet section line colour, cut fill colour, cut and projection lineweights, shaded or linework presentation. Saved with the drawing, undoable, and used by print/PDF preview — SECTIONSTYLE."]),
         ("3D", ["Move gizmo with a Z arrow: drag objects up and down (walls, slabs, columns, components, solids) — GIZMO3D, MOVEZ",
                 "Isolate one level or explode levels vertically in the 3D view — LEVELVIEW3D", "Field of view / focal length — FOV",
                 "Export the 3D view as PNG, JPEG or TIFF, optionally with a transparent background — VIEWIMAGE"]),
