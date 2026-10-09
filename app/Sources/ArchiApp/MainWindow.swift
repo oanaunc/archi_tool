@@ -27,7 +27,9 @@ struct MainWindow: View {
             HStack(spacing: 0) {
                 workspace
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .overlay(alignment: .topLeading) { ViewportBadge(model: model).padding(8) }
+                    .overlay(alignment: .topLeading) {
+                        if model.mode != .sheet { ViewportBadge(model: model).padding(8) }
+                    }
                     .overlay(alignment: .topTrailing) {
                         // Quick Properties (QP): shown while objects are selected, hidden otherwise (APP-025).
                         if model.showQuickProperties && !model.editor.selection.isEmpty && model.mode != .sheet {
