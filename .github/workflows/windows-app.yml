@@ -54,6 +54,7 @@ jobs:
           need windows/package.json "Electron shell, written by the shell engineer"
           need windows/packaging/electron-builder.yml "installer configuration"
           need windows/packaging/installer.nsh "installer additions (per-user install)"
+          need windows/packaging/prepare-nsis.cjs "bounded per-user known-folder read"
           need windows/packaging/sync-version.mjs "version from app/Info.plist"
           need windows/packaging/release-files.mjs "SHA256SUMS.txt and release.json for the installer"
           need windows/packaging/collect-dlls.py "Swift runtime DLL collector"
@@ -253,6 +254,7 @@ jobs:
           set -o pipefail
           {
           echo "version $VERSION (file version $BUILD)"
+          node --test test/nsis-template.cjs || { echo "::error title=NSIS template check failed::per-user startup fix (09-package.log)"; exit 1; }
           rm -rf out out-arm64
           npx --yes "$ELECTRON_BUILDER" --win --x64 --config packaging/electron-builder.yml --publish never "-c.buildVersion=$BUILD" \
             || { echo "::error title=electron-builder failed::x64 installer (09-package.log)"; exit 1; }
@@ -309,8 +311,21 @@ jobs:
           try {
             $inst = Resolve-Path "windows/out/Oanarina-Archi-Tool-Setup-$env:VERSION.exe"
             Write-Host "silent install (per-user, no elevation): $inst"
+            $started = Get-Date
             $p = Start-Process -FilePath $inst -ArgumentList "/S" -Wait -PassThru
             Check "installer exit code 0" ($p.ExitCode -eq 0) "exit $($p.ExitCode)"
+            if ($p.ExitCode -ne 0) {
+              # Preserve the faulting module/exception from Windows Error Reporting, rather than only an exit code.
+              Start-Sleep -Seconds 5
+              try {
+                $events = @(Get-WinEvent -FilterHashtable @{ LogName = 'Application'; Id = @(1000, 1001); StartTime = $started } -ErrorAction SilentlyContinue |
+                  Where-Object { $_.Message -like "*Oanarina-Archi-Tool-Setup*" } |
+                  Select-Object TimeCreated, Id, ProviderName, Message)
+                $events | ConvertTo-Json -Depth 4 | Set-Content "$env:LOGS/10-install-events.json"
+                $events | Format-List | Out-String | Write-Host
+              } catch { Write-Host "Installer event diagnostics unavailable: $_" }
+              throw "Installer failed before validation; installed-app checks cannot pass (exit $($p.ExitCode))."
+            }
             # The install folder: InstallLocation of the per-user uninstall entry (the assisted NSIS installer uses
             # %LOCALAPPDATA%\Programs\Oanarina Archi Tool), else the known candidates. The later steps read APPDIR.
             $entry = Get-ChildItem "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall" | ForEach-Object { Get-ItemProperty $_.PSPath } | Where-Object { $_.DisplayName -like "Oanarina Archi Tool*" } | Select-Object -First 1
@@ -351,7 +366,7 @@ jobs:
 
       - name: Explorer thumbnail of an .archi drawing (installed handler)
         id: thumbnail
-        if: always() && steps.install.outcome != 'skipped' && steps.native.outcome == 'success'
+        if: always() && steps.install.outcome == 'success' && steps.native.outcome == 'success'
         timeout-minutes: 10
         shell: pwsh
         run: |
@@ -428,7 +443,7 @@ jobs:
 
       - name: Smoke test the installed app (Playwright for Electron)
         id: smoke
-        if: always() && steps.package.outcome == 'success'
+        if: always() && steps.package.outcome == 'success' && steps.install.outcome == 'success'
         timeout-minutes: 20
         working-directory: windows
         run: |
@@ -436,8 +451,8 @@ jobs:
           {
           exe="$(cygpath -u "${APPDIR:-$LOCALAPPDATA/Programs/Oanarina Archi Tool}")/Oanarina Archi Tool.exe"
           if [ ! -f "$exe" ]; then
-            echo "::warning title=Installed app not found::$exe is missing; testing out/win-unpacked instead"
-            exe="$PWD/out/win-unpacked/Oanarina Archi Tool.exe"
+            echo "::error title=Installed app not found::$exe is missing; installed-app smoke test cannot run"
+            exit 1
           fi
           echo "app: $exe"
           timeout 900 node packaging/smoke-electron.mjs "$exe" "$LOGS/screenshots" \

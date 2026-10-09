@@ -27,6 +27,11 @@ Layout: `src/main` (Electron main, engine process + JSON-RPC client), `src/prelo
   jump list) set in `src/main/main.ts`.
 - **Per-user install, no administrator rights**: installs into `%LOCALAPPDATA%\Programs\Oanarina Archi Tool`
   (`packaging/installer.nsh` forces the current-user mode, so there is no UAC prompt). The folder can be changed.
+  The `beforePack` hook `packaging/prepare-nsis.cjs` fixes electron-builder 25.1.8's known-folder lookup: it measures the
+  returned Unicode string before reading it, preserves registers, and frees the shell allocation. The upstream fixed
+  array read can crash before copying files ([upstream issue 7921](https://github.com/electron-userland/electron-builder/issues/7921)).
+  The hook is idempotent for x64/ARM64 packaging and stops on an unexpected dependency version or template; review it
+  when upgrading electron-builder. `node --test test/nsis-template.cjs` checks the installed dependency and guard.
 - **Shortcuts**: Start menu and desktop, both "Oanarina Archi Tool".
 - **File associations**: `.archi`, `.dxf` and `.ifc` open in the app (double-click, "Open with", jump list).
 - **Explorer thumbnails**: `.archi` files show their plan in Explorer (FILEPREVIEW): archi-engine embeds the picture on
@@ -47,7 +52,9 @@ Layout: `src/main` (Electron main, engine process + JSON-RPC client), `src/prelo
 
 The CI smoke test (`packaging/smoke-electron.mjs`) installs the app silently, checks shortcuts, associations and the
 uninstall entry, then drives the installed app: start screen, Cedar House 2D, 3D Golden hour, LINE in the command line,
-save (Ctrl+Shift+S) and reopen from the command line, and a PDF plot; finally it uninstalls. Without Electron,
+save (Ctrl+Shift+S) and reopen from the command line, and a PDF plot; finally it uninstalls. A failed installation skips
+the installed-app smoke test; there is no unpacked-app fallback. Installer failures collect Windows Application Error
+and WER events in `10-install-events.json` alongside the transcript. Without Electron,
 `npm run test:win` runs the same scenario on the renderer with the fixture engine.
 
 ### Version and release files

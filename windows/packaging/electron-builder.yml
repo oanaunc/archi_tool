@@ -39,7 +39,10 @@ extraResources:
     to: icon.ico
   - from: ../LICENSE
     to: LICENSE.txt
+  - from: packaging/electron-builder-LICENSE.txt
+    to: electron-builder-LICENSE.txt
 asar: true
+beforePack: ./packaging/prepare-nsis.cjs
 win:
   icon: packaging/build/icon.ico
   target:
