@@ -17,7 +17,7 @@ page = sub1(r'<meta name="description" content="[^"]*">',
             '<meta name="description" content="Oanarina Archi Tool: a free native Mac app for architectural drafting, building design (BIM), 3D modelling, rendering and printing, with an AutoCAD-style command line and scripting for AI agents.">', page)
 page = page.replace('js/motion-manifest.js?v=20260921-midjourney', f'js/motion-manifest.js?v={REL["asset_version"]}-archi')
 page = sub1(r'<title>.*?</title>', '<title>Oanarina Archi Tool — Oana Rinaldi</title>', page)
-page = sub1(r'<link rel="canonical" href="[^"]*">', '<link rel="canonical" href="https://oanarinaldi.com/archi-tool.html">', page)
+page = sub1(r'<link rel="canonical" href="[^"]*">', '<link rel="canonical" href="https://www.oanarinaldi.com/archi-tool.html">', page)
 page = page.replace('</style>\n<link rel="canonical"', '''.archi-accent { color:#d9a400; }
 .archi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin:10px 0 60px; }
 .archi-grid div { background:#f5f5f5; padding:18px; text-align:center; }

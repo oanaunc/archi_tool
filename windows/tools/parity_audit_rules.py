@@ -439,3 +439,10 @@ ov("Tools ▸ Tutorial Videos ▸ Check Tutorial Scripts", "n/a (Oana's decision
 # Night: placed lamp light falls under the moon's shadow (renderer.ts LAMP_SUN_SHADOW, bollard shadow streaks in their pools) and up to
 # four spot lights cast shadow maps (test/view3d/night-lights.mjs); the pools stay dimmer than the Mac's at their outer edges.
 ov("Lighting preset Night", "partial", "cosmetic: 1.8 levels from the Mac; bollard shadows and spot-light shadows now match, the bollard pools stay about 20 levels dimmer at their outer edges")
+
+# Customer feedback: section printing and reusable page setups (sheet-feedback.mjs + NamedPageSetupTests).
+for control in ["Picker Setup", "Button Load", "Button Delete", "TextField Save current settings as…", "Button Save",
+                "Button Import…", "Menu Sheets ({targets.count})", "Button Apply to Selected", "Button Apply to All",
+                "Toggle Customize section graphics on this sheet", "Toggle Shaded surfaces", "ColorPicker Section line colour",
+                "ColorPicker Cut fill colour", "TextField 0.5", "TextField 0.25"]:
+    ov("PageSetupSheet ▸ " + control, "done")

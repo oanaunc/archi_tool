@@ -621,3 +621,9 @@ and `command.run`. Example: `SECTIONSTYLE Set "Sheet 1" "color:red;fill:0.7,0.7,
 `List` reads the named sheet style; `Reset` restores project defaults. Each change is one undo step.
 Section viewports on the named sheet use these graphics in the Mac composer and portable plot
 writer; model views, plans and other sheets retain their own settings.
+
+### Named page setups
+
+`PAGEPRESET` (`PSPRESET`, `NAMEDPAGESETUP`) supports Save, Apply, Import, Delete and List as shown in the User Guide. `Apply` accepts `All` or a quoted `|`-separated list of sheet names. It validates all targets before modifying the document. Saved presets include paper dimensions, plot settings, section graphics and referenced custom plot tables. Import reads `.archi` files; conflicting plot tables get unique names. All changes support undo and save/reopen.
+
+The portable engine exposes `pagepresets.list`, `pagepresets.apply` (`name` and `layouts: [index]` or `all: true`), `pagepresets.delete` (`name`) and `pagepresets.import` (`path`). `pagesetup.get` includes `presets`, `layouts`, `hasSection` and `sectionStyle`. `pagesetup.set` accepts `sectionStyle` (null removes an override), `presetName` (save current settings), `presetOnly: true` (save the draft without applying to the source sheet), and `presetSource` (resolve imported preset pens). Section style uses the Codable SectionSheetStyle object: `shaded` and `lines` with colour/fill RGBA and weights in millimetres.

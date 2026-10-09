@@ -427,6 +427,8 @@ struct PageSetupSheet: View {
     @State private var scaleText = "Fit"
     @State private var sectionOverride = false
     @State private var sectionStyle = SectionSheetStyle()
+    @State private var loadedPaper: PaperSize?
+    @State private var loadedPreset: NamedPageSetup?
 
     private var isSheet: Bool { model.doc.layouts.indices.contains(layoutIndex) }
 
@@ -438,10 +440,13 @@ struct PageSetupSheet: View {
             }
             .padding(14)
             HSeparator()
-            VStack(alignment: .leading, spacing: 10) {
+            ScrollView {
+              VStack(alignment: .leading, spacing: 10) {
                 if isSheet {
+                    NamedPageSetupControls(model: model, layoutIndex: layoutIndex, draft: draftDocument, load: loadPreset)
+                    Divider()
                     Picker("Paper", selection: $paper) {
-                        ForEach(PaperCatalog.builtIn, id: \.name) { p in Text("\(p.name) (\(fmt(p.width, 0))×\(fmt(p.height, 0)) mm)").tag(p.name) }
+                        ForEach(sheetPapers, id: \.name) { p in Text("\(p.name) (\(fmt(p.width, 0))×\(fmt(p.height, 0)) mm)").tag(p.name) }
                     }
                     Picker("Orientation", selection: $portrait) {
                         Text("Landscape").tag(false)
@@ -467,9 +472,11 @@ struct PageSetupSheet: View {
                     Divider()
                 }
                 PageSetupForm(setup: $setup, showModel: !isSheet, scaleText: $scaleText, tables: PlotStyleTable.all(model.doc).map(\.name), displayBox: model.canvas?.visibleWorldBox, namedTables: NamedPlotStyles.tables(model.doc))
+              }
+              .padding(14)
             }
-            .padding(14)
-            .frame(width: 420)
+            .frame(width: 450)
+            .frame(maxHeight: 580)
             HSeparator()
             HStack {
                 Button("Preview…") { apply(); model.sheet = nil; PlotPreviewWindow.show(model: model) }.buttonStyle(FlatButtonStyle())
@@ -487,7 +494,8 @@ struct PageSetupSheet: View {
             if isSheet {
                 let p = model.doc.layouts[layoutIndex].paper
                 portrait = p.height > p.width
-                paper = PaperCatalog.builtIn.first { p.name.hasPrefix($0.name) }?.name ?? "A3"
+                paper = PaperCatalog.all(model.doc).first { $0.name == p.name }?.name ?? PaperCatalog.builtIn.first { p.name.hasPrefix($0.name) }?.name ?? p.name
+                loadedPaper = p
                 if let style = SectionSheetStyle.load(model.doc.layouts[layoutIndex]) {
                     sectionOverride = true; sectionStyle = style
                 } else {
@@ -497,17 +505,54 @@ struct PageSetupSheet: View {
         }
     }
 
+    private var sheetPapers: [PaperSize] {
+        var papers = PaperCatalog.all(model.doc)
+        if let p = loadedPaper, !papers.contains(where: { $0.name == p.name }) { papers.append(p) }
+        return papers
+    }
+
+    private func draftDocument() -> ArchiDocument {
+        var d = model.doc
+        writeDraft(to: &d)
+        return d
+    }
+
     private func apply() {
-        let s = setup, li = isSheet ? layoutIndex : nil, isSheet = self.isSheet
-        let base = PaperCatalog.find(paper) ?? PaperSize.standard[1]
-        let p = portrait ? PaperSize(name: base.name + " portrait", width: base.height, height: base.width) : base
-        model.editor.transaction("Page Setup") { d in
-            s.store(in: &d, layoutIndex: li)
-            if isSheet, let i = li, d.layouts[i].paper != p { d.layouts[i].paper = p }
-            if let i = li {
-                if sectionOverride { sectionStyle.store(in: &d.layouts[i]) }
-                else { d.layouts[i].titleBlock[SectionSheetStyle.key] = nil }
-            }
+        model.editor.transaction("Page Setup") { writeDraft(to: &$0) }
+    }
+
+    private func loadPreset(_ preset: NamedPageSetup) {
+        if let value = try? JSONDecoder().decode(PageSetup.self, from: Data(preset.settings.utf8)) { setup = value }
+        loadedPreset = preset
+        loadedPaper = preset.paper
+        paper = preset.paper.name
+        portrait = preset.paper.height > preset.paper.width
+        sectionOverride = preset.sectionStyle != nil
+        if let style = preset.sectionStyle { sectionStyle = style }
+    }
+
+    private func writeDraft(to d: inout ArchiDocument) {
+        var s = setup
+        let li = isSheet ? layoutIndex : nil, isSheet = self.isSheet
+        if let preset = loadedPreset, let i = li {
+            try? NamedPageSetups.apply(preset, to: [i], doc: &d)
+            let resolved = PageSetup.load(d, layoutIndex: i)
+            let original = try? JSONDecoder().decode(PageSetup.self, from: Data(preset.settings.utf8))
+            if s.plotStyleTable == original?.plotStyleTable { s.plotStyleTable = resolved.plotStyleTable }
+            if s.namedStyleTable == original?.namedStyleTable { s.namedStyleTable = resolved.namedStyleTable }
+        }
+        let base = PaperCatalog.find(paper, doc: model.doc) ?? loadedPaper ?? PaperSize.standard[1]
+        let p: PaperSize
+        if let loadedPaper, loadedPaper.name == paper, (loadedPaper.height > loadedPaper.width) == portrait { p = loadedPaper }
+        else {
+            let name = base.name.replacingOccurrences(of: " portrait", with: "")
+            p = portrait ? PaperSize(name: name + " portrait", width: min(base.width, base.height), height: max(base.width, base.height)) : PaperSize(name: name, width: max(base.width, base.height), height: min(base.width, base.height))
+        }
+        s.store(in: &d, layoutIndex: li)
+        if isSheet, let i = li, d.layouts[i].paper != p { d.layouts[i].paper = p }
+        if let i = li {
+            if sectionOverride { sectionStyle.store(in: &d.layouts[i]) }
+            else { d.layouts[i].titleBlock[SectionSheetStyle.key] = nil }
         }
     }
 

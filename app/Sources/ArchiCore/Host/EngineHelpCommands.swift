@@ -34,8 +34,9 @@ enum EngineHelpCommands {
     }
 
     static var cleanScreenOff: CommandDef {
-        CommandDef("CLEANSCREENOFF", category: "View", summary: "Restores the ribbon and panels after CLEANSCREENON.", modifies: false) { ed in
+        CommandDef("CLEANSCREENOFF", aliases: ["RIBBON", "RB"], category: "View", summary: "Restores the ribbon and panels after CLEANSCREENON.", modifies: false) { ed in
             try EngineUICommands.host(ed, "cleanScreen", [("on", .bool(false))])
+            try EngineUICommands.host(ed, "ribbonExpand", [])
         }
     }
 

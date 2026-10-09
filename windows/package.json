@@ -1,7 +1,7 @@
 {
   "name": "oanarina-archi-tool",
   "productName": "Oanarina Archi Tool",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Oanarina Archi Tool for Windows: Electron shell around the archi-engine (ArchiCore).",
   "license": "GPL-3.0-or-later",
   "author": "Oana Rinaldi",
@@ -21,7 +21,8 @@
     "test:win": "node tools/gen-ui-data.mjs && node build.mjs --web && node test/windows-conventions.mjs && node packaging/smoke-electron.mjs --web test-results/smoke-web",
     "version:sync": "node packaging/sync-version.mjs",
     "dist": "node packaging/sync-version.mjs && npm run build && python packaging/make-ico.py .. packaging/build/icon.ico && electron-builder --win --x64 --config packaging/electron-builder.yml --publish never && node packaging/release-files.mjs",
-    "release:files": "node packaging/release-files.mjs"
+    "release:files": "node packaging/release-files.mjs",
+    "test:feedback": "node tools/gen-ui-data.mjs && node build.mjs --web && node test/sheet-feedback.mjs"
   },
   "devDependencies": {
     "electron": "^33.2.0",

@@ -4329,7 +4329,7 @@
        "symbol": "square.and.arrow.up",
        "command": "SHARE",
        "size": "small",
-       "help": "Share… — Shares the drawing through the macOS share sheet (Mail, Messages, AirDrop, Notes…): Project (.archi), Pdf of the drawing or active sheet, or Both.  [SHARE, SHAREDRAWING, SENDTO]",
+       "help": "Share… — Shares the drawing through the Windows share sheet (Mail, Teams, Nearby Sharing…): Project (.archi), Pdf of the drawing or active sheet, or Both.  [SHARE, SHAREDRAWING, SENDTO]",
        "rows": 3
       },
       {
@@ -5121,6 +5121,16 @@
         {
          "name": "Output",
          "items": [
+          {
+           "title": "Section Sheet Style",
+           "symbol": "paintpalette",
+           "command": "SECTIONSTYLE"
+          },
+          {
+           "title": "Named Page Setups",
+           "symbol": "doc.badge.gearshape",
+           "command": "PAGEPRESET"
+          },
           {
            "title": "Page Setup",
            "symbol": "doc.badge.gearshape",
@@ -10745,6 +10755,16 @@
      "title": "Output",
      "submenu": [
       {
+       "title": "Section Sheet Style",
+       "symbol": "paintpalette",
+       "command": "SECTIONSTYLE"
+      },
+      {
+       "title": "Named Page Setups",
+       "symbol": "doc.badge.gearshape",
+       "command": "PAGEPRESET"
+      },
+      {
        "title": "Page Setup",
        "symbol": "doc.badge.gearshape",
        "command": "PAGESETUP"
@@ -15334,14 +15354,63 @@
    "name": "PageSetupSheet",
    "view": "PageSetupSheet",
    "file": "PlotExtras.swift",
-   "sections": [],
+   "sections": [
+    "NAMED PAGE SETUPS"
+   ],
    "controls": [
+    {
+     "kind": "Picker",
+     "label": "Setup",
+     "binding": "selected",
+     "options": [
+      "Choose…",
+      "{NamedPageSetups.names(model.doc)}"
+     ]
+    },
+    {
+     "kind": "Button",
+     "label": "Load"
+    },
+    {
+     "kind": "Button",
+     "label": "Delete"
+    },
+    {
+     "kind": "TextField",
+     "label": "Save current settings as…",
+     "binding": "name"
+    },
+    {
+     "kind": "Button",
+     "label": "Save"
+    },
+    {
+     "kind": "Button",
+     "label": "Import…"
+    },
+    {
+     "kind": "Menu",
+     "label": "Sheets ({targets.count})",
+     "items": [
+      "Select All",
+      "Current Sheet",
+      "{Array(model.doc.layouts.enumerated())}"
+     ]
+    },
+    {
+     "kind": "Button",
+     "label": "Apply to Selected"
+    },
+    {
+     "kind": "Button",
+     "label": "Apply to All"
+    },
     {
      "kind": "Picker",
      "label": "Paper",
      "binding": "paper",
      "options": [
-      "{PaperCatalog.builtIn}"
+      "{sheetPapers}"
      ]
     },
     {
@@ -15352,6 +15421,36 @@
       "Landscape",
       "Portrait"
      ]
+    },
+    {
+     "kind": "Toggle",
+     "label": "Customize section graphics on this sheet",
+     "binding": "sectionOverride"
+    },
+    {
+     "kind": "Toggle",
+     "label": "Shaded surfaces",
+     "binding": "sectionStyle.shaded"
+    },
+    {
+     "kind": "ColorPicker",
+     "label": "Section line colour",
+     "binding": "sectionColor(fill: false)"
+    },
+    {
+     "kind": "ColorPicker",
+     "label": "Cut fill colour",
+     "binding": "sectionColor(fill: true)"
+    },
+    {
+     "kind": "TextField",
+     "label": "0.5",
+     "binding": "Binding(get: {…}, set: {…})"
+    },
+    {
+     "kind": "TextField",
+     "label": "0.25",
+     "binding": "Binding(get: {…}, set: {…})"
     },
     {
      "kind": "Picker",
@@ -18576,9 +18675,9 @@
   ]
  },
  "coverage": {
-  "registered": 1042,
-  "macCatalogCovered": 992,
-  "withUiEntry": 1042,
+  "registered": 1044,
+  "macCatalogCovered": 994,
+  "withUiEntry": 1044,
   "systemVariablesByRule": 50,
   "withoutUiEntry": [],
   "macSelfTestReference": "Command coverage: 1044 commands, 50 system variables in palettes, 0 without UI entry",
@@ -18603,7 +18702,7 @@
    ],
    "category": "Settings",
    "summary": "Opens Settings: units, grid and snaps, autosave, colors, shortcuts, toolbar, agents.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Manage ▸ More ▸ Settings ▸ Settings ▸ Options",
     "Manage ▸ Settings ▸ Options",
@@ -18617,7 +18716,7 @@
    "aliases": [],
    "category": "Settings",
    "summary": "Sets the crosshair size as a percentage of the view (1–100).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Manage ▸ More ▸ Settings ▸ Settings ▸ Cursor Size",
     "Tools ▸ Settings ▸ Cursor Size"
@@ -18631,7 +18730,7 @@
    ],
    "category": "Settings",
    "summary": "Sets the autosave interval in minutes (0 turns autosave off).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Manage ▸ More ▸ Settings ▸ Settings ▸ Autosave Interval",
     "Tools ▸ Settings ▸ Autosave Interval"
@@ -18645,7 +18744,7 @@
    ],
    "category": "File",
    "summary": "Shows documents recovered from autosave after a crash.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Insert ▸ More ▸ Exchange ▸ File ▸ Drawing Recovery",
     "Tools ▸ File ▸ Drawing Recovery"
@@ -18660,7 +18759,7 @@
    ],
    "category": "View",
    "summary": "Switches workspace (panels, views and ribbon tab), e.g. WSCURRENT 3D Modeling.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ View ▸ Workspace",
     "View ▸ More ▸ View ▸ View ▸ Workspace"
@@ -18672,7 +18771,7 @@
    "aliases": [],
    "category": "View",
    "summary": "Saves the current window arrangement as a named workspace.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ View ▸ Save Workspace",
     "View ▸ Interface ▸ Workspace ▸ Save Current Workspace…",
@@ -18688,7 +18787,7 @@
    ],
    "category": "View",
    "summary": "Clean screen: hides the ribbon and panels (Ctrl+0 toggles).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ View ▸ Clean Screen On",
     "View ▸ More ▸ View ▸ View ▸ Clean Screen On"
@@ -18703,8 +18802,8 @@
     "CONSOLE"
    ],
    "category": "Scripting",
-   "summary": "Shows or hides the JavaScript console (⌥⌘J).",
-   "appOnly": true,
+   "summary": "Shows or hides the JavaScript console (Ctrl+Alt+J).",
+   "appOnly": false,
    "entries": [
     "Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Script Console",
     "Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Script Console",
@@ -18714,10 +18813,13 @@
   },
   {
    "name": "CLEANSCREENOFF",
-   "aliases": [],
+   "aliases": [
+    "RIBBON",
+    "RB"
+   ],
    "category": "View",
    "summary": "Restores the ribbon and panels after CLEANSCREENON.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ View ▸ Clean Screen Off",
     "View ▸ More ▸ View ▸ View ▸ Clean Screen Off"
@@ -18731,8 +18833,8 @@
     "SEARCHCOMMANDS"
    ],
    "category": "Help",
-   "summary": "Opens the command search palette (⌘K).",
-   "appOnly": true,
+   "summary": "Opens the command search palette (Ctrl+K).",
+   "appOnly": false,
    "entries": [
     "Help ▸ Search Commands…",
     "Manage ▸ More ▸ Tools ▸ Help ▸ Search Commands",
@@ -18748,7 +18850,7 @@
    ],
    "category": "View",
    "summary": "Shows the undo history and command history panel.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ View ▸ History Panel",
     "View ▸ More ▸ View ▸ View ▸ History Panel"
@@ -18763,7 +18865,7 @@
    ],
    "category": "View",
    "summary": "Shows the tool palettes panel (grouped tools and My Tools).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ View ▸ Tool Palettes",
     "View ▸ More ▸ View ▸ View ▸ Tool Palettes"
@@ -18775,7 +18877,7 @@
    "aliases": [],
    "category": "View",
    "summary": "Hides the tool palettes panel.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ View ▸ Close Tool Palettes",
     "View ▸ More ▸ View ▸ View ▸ Close Tool Palettes"
@@ -18790,7 +18892,7 @@
    ],
    "category": "Select",
    "summary": "Quick Select dialog: type, property, operator and value with a live match count.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Edit ▸ Quick Select…",
     "Home ▸ More ▸ Modify ▸ Clipboard & Selection ▸ Quick Select…",
@@ -18803,11 +18905,11 @@
    "name": "LAYERSTATE",
    "aliases": [
     "LAS",
-    "-LAYERSTATE",
-    "LMAN"
+    "LMAN",
+    "-LAYERSTATE"
    ],
-   "category": "Settings",
-   "summary": "Saves, restores, deletes, imports and exports named layer states (on/off, freeze, lock, plot, color, linetype, lineweight).",
+   "category": "Layers",
+   "summary": "Layer states: Dialog, or ?/Save/Restore/Delete/Import/Export/Rename on the command line (saved in the drawing).",
    "appOnly": false,
    "entries": [
     "Home ▸ Layers ▸ States",
@@ -18824,7 +18926,7 @@
    ],
    "category": "Layers",
    "summary": "Filters the Layers panel (A-*, ~*TEXT*, #on #used); Save/Delete/List named filters kept in the drawing.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Home ▸ More ▸ Layers ▸ Layer Tools ▸ Layer Filter",
     "Tools ▸ Layers ▸ Layer Filter"
@@ -18841,7 +18943,7 @@
    ],
    "category": "View",
    "summary": "Opens the material editor panel (color, roughness, metalness, transparency, texture).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ View ▸ Materials",
     "View ▸ More ▸ View ▸ View ▸ Materials"
@@ -18856,7 +18958,7 @@
    ],
    "category": "View",
    "summary": "Section box in 3D: On/Off/Selection/Level/Reset; the box is saved with the drawing.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ View ▸ Section Box",
     "View ▸ 3D Tools ▸ Section Box",
@@ -18872,7 +18974,7 @@
    ],
    "category": "View",
    "summary": "Sun study panel in the 3D view: date and time sliders with a day animation.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ View ▸ Sun Study",
     "View ▸ 3D Tools ▸ Sun Study",
@@ -18889,7 +18991,7 @@
    ],
    "category": "View",
    "summary": "Orbits around (and zooms to) the selected elements in 3D.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ View ▸ Orbit Selection",
     "View ▸ 3D Tools ▸ Orbit Around Selection",
@@ -18906,7 +19008,7 @@
    ],
    "category": "View",
    "summary": "Saves the current 3D camera by name (restored with CAMERA).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ View ▸ Save Camera",
     "View ▸ 3D Tools ▸ Save Camera",
@@ -18923,7 +19025,7 @@
    ],
    "category": "View",
    "summary": "Restores a saved 3D camera (or lists them).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ View ▸ Cameras",
     "View ▸ More ▸ View ▸ View ▸ Cameras"
@@ -18938,7 +19040,7 @@
    ],
    "category": "Output",
    "summary": "Page setup of the active sheet or model: paper, plot style, lineweights, plot stamp, scale.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "File ▸ Page Setup…",
     "Output ▸ More ▸ Output ▸ Output ▸ Page Setup",
@@ -18957,7 +19059,7 @@
    ],
    "category": "Output",
    "summary": "Plot dialog with a live preview: prints or saves exactly what is shown.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "File ▸ Plot Preview…",
     "Output ▸ More ▸ Output ▸ Output ▸ Plot Preview",
@@ -18975,7 +19077,7 @@
    ],
    "category": "Output",
    "summary": "Publishes all sheets to one multi-page PDF (PUBLISH path.pdf, or Enter for a dialog).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "File ▸ Publish All Sheets to PDF…",
     "Output ▸ More ▸ Output ▸ Output ▸ Publish",
@@ -18992,7 +19094,7 @@
    ],
    "category": "Output",
    "summary": "Edits the active sheet's title block and the project information shown on all sheets.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "File ▸ Title Block…",
     "Output ▸ More ▸ Output ▸ Output ▸ Title Block",
@@ -19009,7 +19111,7 @@
    ],
    "category": "Output",
    "summary": "Locks or unlocks sheet viewports so their scale and position cannot change.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Output ▸ More ▸ Output ▸ Output ▸ Lock Viewports",
     "Tools ▸ Output ▸ Lock Viewports"
@@ -19024,7 +19126,7 @@
    ],
    "category": "Scripting",
    "summary": "Agent server settings: port, start/stop, token, auto-start.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Agent Settings",
     "Oanarina Archi Tool ▸ Agent Server…",
@@ -19041,8 +19143,8 @@
     "CLAUDE"
    ],
    "category": "Scripting",
-   "summary": "Explains how to connect Claude (archi-cli --mcp or the local agent server).",
-   "appOnly": true,
+   "summary": "Explains how to connect Claude (archi-engine --mcp or the local agent server).",
+   "appOnly": false,
    "entries": [
     "Help ▸ Connect Claude…",
     "Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Connect Claude",
@@ -19059,7 +19161,7 @@
    ],
    "category": "Scripting",
    "summary": "Opens the script library folder (startup.js runs in every new window).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Script Library",
     "Script ▸ Automation ▸ Tools ▸ Tools & Scripting ▸ Script Library",
@@ -19076,7 +19178,7 @@
    ],
    "category": "Output",
    "summary": "Sheet set manager: numbering, order, duplicate, revisions, sheet index.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Output ▸ More ▸ Output ▸ Output ▸ Sheet Set",
     "Tools ▸ Output ▸ Sheet Set"
@@ -19091,7 +19193,7 @@
    ],
    "category": "Output",
    "summary": "Places or refreshes the sheet list table (number, title, paper, revision) on the active sheet.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Output ▸ More ▸ Output ▸ Output ▸ Sheet Index",
     "Output ▸ Sheets ▸ Sheet Index",
@@ -19108,7 +19210,7 @@
    ],
    "category": "Output",
    "summary": "Adds a revision (next code, date, description, by) to the active sheet's revision table.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Output ▸ More ▸ Output ▸ Output ▸ Revision",
     "Tools ▸ Output ▸ Revision"
@@ -19122,7 +19224,7 @@
    ],
    "category": "Output",
    "summary": "Numbers all sheets in order with a prefix and start number (e.g. A- 101).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Output ▸ More ▸ Output ▸ Output ▸ Renumber Sheets",
     "Tools ▸ Output ▸ Renumber Sheets"
@@ -19137,7 +19239,7 @@
    ],
    "category": "Output",
    "summary": "Editable view titles (number bubble, title, scale) under every viewport of the active sheet; keeps edited titles.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Output ▸ More ▸ Output ▸ Output ▸ Editable View Titles",
     "Tools ▸ Output ▸ Editable View Titles"
@@ -19152,7 +19254,7 @@
    ],
    "category": "View",
    "summary": "Material library browser with rendered thumbnails: add to the drawing or assign to the selection.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Insert ▸ Content ▸ Materials",
     "Tools ▸ View ▸ Material Library",
@@ -19170,7 +19272,7 @@
    ],
    "category": "Scripting",
    "summary": "Visual node editor (number, point, line, circle, extrude, array…) with live preview; bakes geometry into the drawing.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Manage ▸ More ▸ Tools ▸ Tools & Scripting ▸ Node Editor",
     "Model ▸ Node Editor…",
@@ -19188,7 +19290,7 @@
    ],
    "category": "View",
    "summary": "Floats a panel (Properties, Layers, Levels, Browser, Materials, Tools, Sheets, History) in its own window.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ View ▸ Float Panel",
     "View ▸ Float Panel ▸ Alerts",
@@ -19204,7 +19306,7 @@
    "aliases": [],
    "category": "Help",
    "summary": "About Oanarina Archi Tool: version, license and credits.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Manage ▸ More ▸ Tools ▸ Help ▸ About",
     "Oanarina Archi Tool ▸ About Oanarina Archi Tool",
@@ -19220,7 +19322,7 @@
    ],
    "category": "Annotate",
    "summary": "Spelling dialog: lists misspelled words in text, leaders, tables and attributes with suggestions (Change / Ignore / Add).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Annotate ▸ More ▸ Text ▸ Text, Leaders & Tables ▸ Spelling Dialog",
     "Tools ▸ Text & Tables ▸ Spelling Dialog"
@@ -19236,7 +19338,7 @@
    ],
    "category": "View",
    "summary": "Live section plane in 3D with cap faces: Horizontal at a height, Vertical through two plan points, Flip, Off.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Animation & Export ▸ Section Plane",
     "View ▸ Presentation ▸ Animate ▸ Animation & Export ▸ Section Plane"
@@ -19252,7 +19354,7 @@
    ],
    "category": "View",
    "summary": "Exports an MP4 walkthrough along a smooth path through the saved cameras (in order).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Animation & Export ▸ Walkthrough Video",
     "View ▸ Presentation ▸ Animate ▸ Animation & Export ▸ Walkthrough Video"
@@ -19267,7 +19369,7 @@
    ],
    "category": "View",
    "summary": "Exports an MP4 sun-study time-lapse (shadows through the day) from the current 3D camera.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Animation & Export ▸ Sun Study Video",
     "View ▸ Presentation ▸ Animate ▸ Animation & Export ▸ Sun Study Video"
@@ -19283,7 +19385,7 @@
    ],
    "category": "View",
    "summary": "Renders a 360° equirectangular panorama (PNG/JPEG) from the 3D camera position or a picked plan point.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Animation & Export ▸ 360° Panorama",
     "View ▸ Presentation ▸ Animate ▸ Animation & Export ▸ 360° Panorama"
@@ -19299,7 +19401,7 @@
    ],
    "category": "Output",
    "summary": "Plot style tables (colour → pen colour, lineweight, screening): Edit, Set for the sheet/model, List.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "File ▸ Plot Style Tables…",
     "Output ▸ More ▸ Output ▸ Plot Styles ▸ Plot Styles",
@@ -19315,7 +19417,7 @@
    ],
    "category": "Output",
    "summary": "Publishes chosen sheets to one PDF with bookmarks (sheet number and name) and optional sheet index.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "File ▸ Batch Publish…",
     "Output ▸ More ▸ Output ▸ Plot Styles ▸ Batch Publish",
@@ -19331,7 +19433,7 @@
    ],
    "category": "File",
    "summary": "Shows the start screen: templates, samples and recent drawings.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Help ▸ Start Screen",
     "Tools ▸ Start & Templates ▸ Start Screen"
@@ -19346,7 +19448,7 @@
    ],
    "category": "File",
    "summary": "Starts a new drawing from a template (built-in or from the templates folder).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Start & Templates ▸ New from Template"
    ],
@@ -19360,7 +19462,7 @@
    ],
    "category": "File",
    "summary": "Saves the drawing's settings, layers, styles and content as a template in the templates folder.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "File ▸ New from Template ▸ Save Drawing as Template…",
     "Tools ▸ Start & Templates ▸ Save as Template"
@@ -19375,7 +19477,7 @@
    ],
    "category": "Help",
    "summary": "Exports the command reference (every registered command: name, aliases, category, summary, where it is in the UI) as Markdown or CSV.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Help ▸ Export Command Reference…",
     "Manage ▸ More ▸ Tools ▸ Help ▸ Export Command Reference",
@@ -19390,7 +19492,7 @@
    ],
    "category": "Output",
    "summary": "Shows the plot log (every plot, PDF export and publish with date, sheets and plot style) [List/Open/Clear].",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Output ▸ More ▸ Output ▸ Plot Styles ▸ Plot Log",
     "Tools ▸ Plot Styles ▸ Plot Log"
@@ -19405,7 +19507,7 @@
    ],
    "category": "Settings",
    "summary": "Switches the interface theme [Dark/Light].",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Start & Templates ▸ Theme"
    ],
@@ -19416,7 +19518,7 @@
    "aliases": [],
    "category": "View",
    "summary": "Shows the file tab bar with one tab per open drawing.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ File Tabs"
    ],
@@ -19427,7 +19529,7 @@
    "aliases": [],
    "category": "View",
    "summary": "Hides the file tab bar.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Hide File Tabs"
    ],
@@ -19441,7 +19543,7 @@
    ],
    "category": "View",
    "summary": "Shows or hides the Model / layout tabs under the drawing area.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Model/Layout Tabs"
    ],
@@ -19455,7 +19557,7 @@
    ],
    "category": "View",
    "summary": "Quick Properties: a compact editor of the selection's key properties over the drawing.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Quick Properties"
    ],
@@ -19469,7 +19571,7 @@
    ],
    "category": "Inquiry",
    "summary": "Opens the Inspector panel: every stored value of the selected objects, with ID and GUID.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Inspector"
    ],
@@ -19483,7 +19585,7 @@
    ],
    "category": "Insert",
    "summary": "Design Center: browses another drawing's blocks, layers, linetypes, styles and materials and adds them here.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Design Center"
    ],
@@ -19498,7 +19600,7 @@
    ],
    "category": "Help",
    "summary": "Opens the offline help browser (command pages, tutorials, shortcuts); F1 opens the running command's page.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Help Browser"
    ],
@@ -19512,7 +19614,7 @@
    ],
    "category": "Help",
    "summary": "Opens the step-by-step tutorials and the sample project in the help browser.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Tutorials"
    ],
@@ -19526,7 +19628,7 @@
    ],
    "category": "Help",
    "summary": "Opens the bundled sample house project in a new window.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Sample House"
    ],
@@ -19539,7 +19641,7 @@
    ],
    "category": "Select",
    "summary": "Selects the chain of walls joined to a picked wall (Tab over a wall does the same).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Select Wall Chain"
    ],
@@ -19553,7 +19655,7 @@
    ],
    "category": "View",
    "summary": "Rotates (twists) the 2D plan display; model coordinates are unchanged. DVIEW TWist 30, DVIEW Off.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Twist View"
    ],
@@ -19566,7 +19668,7 @@
    ],
    "category": "View",
    "summary": "3D projection: 1 = perspective, 0 = parallel (orthographic).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Perspective"
    ],
@@ -19579,7 +19681,7 @@
    ],
    "category": "View",
    "summary": "Maximises a sheet viewport: edits the model through it at full window size (VPMIN returns).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Maximise Viewport"
    ],
@@ -19592,7 +19694,7 @@
    ],
    "category": "View",
    "summary": "Returns from a maximised viewport to its sheet, keeping the new view centre (unless the viewport is locked).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Restore Viewport"
    ],
@@ -19603,7 +19705,7 @@
    "aliases": [],
    "category": "View",
    "summary": "Clips a sheet viewport to a polygon of paper points (x,y in mm), or Deletes the clip.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Clip Viewport"
    ],
@@ -19617,7 +19719,7 @@
    ],
    "category": "View",
    "summary": "Creates a polygonal sheet viewport from paper points (x,y in mm) showing the current level.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Polygonal Viewport"
    ],
@@ -19628,7 +19730,7 @@
    "aliases": [],
    "category": "View",
    "summary": "Aligns sheet viewports: pans one viewport so a model point lines up horizontally or vertically with a point in another.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Align Viewports"
    ],
@@ -19642,7 +19744,7 @@
    ],
    "category": "Output",
    "summary": "Guide grid on the current sheet (spacing in paper mm, 0 = off); viewports snap to it when moved.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Sheet Guide Grid"
    ],
@@ -19655,7 +19757,7 @@
    ],
    "category": "Output",
    "summary": "Adds a placeholder sheet (listed in the sheet set and index, never plotted) or toggles the current one.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Placeholder Sheet"
    ],
@@ -19669,7 +19771,7 @@
    ],
    "category": "Output",
    "summary": "Custom title block fields: Project fields appear on every sheet, Sheet fields override them on one sheet.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Custom Fields"
    ],
@@ -19683,7 +19785,7 @@
    ],
    "category": "View",
    "summary": "Visual styles manager: New/Edit a custom style from a base (edges, edge colour, face opacity, shadows, background), Delete, List, Current.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Visual Styles Manager"
    ],
@@ -19697,7 +19799,7 @@
    ],
    "category": "View",
    "summary": "Tiled model views: 2, 3 or 4 views (plan, 3D, section, elevations), each with its own zoom and pan.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Tiled Views"
    ],
@@ -19710,7 +19812,7 @@
    ],
    "category": "Output",
    "summary": "Model-space plot area (Extents/Display/Limits/Window) and fit (Standard scale or Exact) for PLOT, PREVIEW and PDF export.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Plot Area"
    ],
@@ -19724,7 +19826,7 @@
    ],
    "category": "Output",
    "summary": "Exports the current sheet (or All sheets) as true-size vector SVG with one layer per drawing layer.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Sheet to SVG"
    ],
@@ -19738,7 +19840,7 @@
    ],
    "category": "Output",
    "summary": "Named plot styles (STB): assign a style to a Layer or to Objects, choose the Table used by the current sheet (or model), or List styles.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Named Plot Styles"
    ],
@@ -19750,8 +19852,8 @@
     "SETTINGSOUT"
    ],
    "category": "Settings",
-   "summary": "Exports all preferences (theme, shortcuts, toolbar, workspaces, snippets…) to a .plist file for another Mac.",
-   "appOnly": true,
+   "summary": "Exports all preferences (theme, shortcuts, toolbar, workspaces, snippets…) to a settings file for another computer.",
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Export Settings"
    ],
@@ -19764,7 +19866,7 @@
    ],
    "category": "Settings",
    "summary": "Imports preferences exported by EXPORTSETTINGS (restart to apply everything).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Import Settings"
    ],
@@ -19776,8 +19878,8 @@
     "DOCTABS"
    ],
    "category": "View",
-   "summary": "Native window tabs: Merge all drawing windows into tabs, or open new drawings in Tabs / Windows.",
-   "appOnly": true,
+   "summary": "Window tabs: Merge all drawing windows into tabs, or open new drawings in Tabs / Windows.",
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Window Tabs"
    ],
@@ -19789,8 +19891,8 @@
     "FS"
    ],
    "category": "View",
-   "summary": "Enters or leaves full screen for this drawing window (⌃⌘F).",
-   "appOnly": true,
+   "summary": "Enters or leaves full screen for this drawing window.",
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Full Screen"
    ],
@@ -19803,7 +19905,7 @@
    ],
    "category": "Settings",
    "summary": "Screen display scale of lineweights (0.1–5, default 1); plotted widths are never changed.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Lineweight Display Scale"
    ],
@@ -19814,7 +19916,7 @@
    "aliases": [],
    "category": "Output",
    "summary": "Imports a page setup (plot style, colour mode, lineweights, stamp, paper) from another drawing into the current sheet or all sheets.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigation & Sheets ▸ Import Page Setup"
    ],
@@ -19828,7 +19930,7 @@
    ],
    "category": "Collaborate",
    "summary": "Opens the markup/issue panel: filter open/resolved, reply, resolve, zoom to, link to the selection, BCF.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Review Panels ▸ Markup Panel"
    ],
@@ -19841,7 +19943,7 @@
    ],
    "category": "Collaborate",
    "summary": "Compares with another version and draws the differences over the plan (added green, removed red, modified yellow).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Review Panels ▸ Compare Overlay"
    ],
@@ -19854,7 +19956,7 @@
    ],
    "category": "Output",
    "summary": "Sheet revision clouds: add a cloud with a revision triangle around a viewport or an area of a sheet, list, open, delete.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Collaborate ▸ Sheets ▸ Revision Clouds",
     "Tools ▸ Review Panels ▸ Revision Clouds"
@@ -19869,7 +19971,7 @@
    ],
    "category": "Blocks",
    "summary": "Block library panel: library folders with thumbnails, search, favourites and recents; drag blocks onto the drawing.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Review Panels ▸ Block Palette"
    ],
@@ -19883,7 +19985,7 @@
    ],
    "category": "Inquiry",
    "summary": "Measures in the 3D view: click two points on the model for distance and ΔX/ΔY/ΔZ.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Analyze ▸ 3D Measure ▸ Measure 3D",
     "Tools ▸ 3D, Render & Print ▸ Measure 3D"
@@ -19898,7 +20000,7 @@
    ],
    "category": "3D",
    "summary": "Shows a move (X/Y/Z arrows), rotate (ring) or uniform scale gizmo on the selection in the 3D view; drag it to transform (one undo step).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ 3D, Render & Print ▸ 3D Gizmo",
     "View ▸ Presentation ▸ Gizmo"
@@ -19913,7 +20015,7 @@
    ],
    "category": "View",
    "summary": "Camera path editor: keys from the 3D view or saved cameras at times, timeline scrubbing and playback, video export.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ 3D, Render & Print ▸ Camera Paths",
     "View ▸ Presentation ▸ Camera Paths"
@@ -19928,7 +20030,7 @@
    ],
    "category": "View",
    "summary": "Render queue: add the current view or saved cameras, render them in turn to PNG files; render history with thumbnails.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ 3D, Render & Print ▸ Render Queue",
     "View ▸ Presentation ▸ Render Queue"
@@ -19943,7 +20045,7 @@
    ],
    "category": "View",
    "summary": "Clipping plane panel in the 3D view: horizontal or vertical cut, live offset slider, flip, remove.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ 3D, Render & Print ▸ Clipping Plane"
    ],
@@ -19956,8 +20058,8 @@
     "SENDTO"
    ],
    "category": "Collaborate",
-   "summary": "Shares the drawing through the macOS share sheet (Mail, Messages, AirDrop, Notes…): Project (.archi), Pdf of the drawing or active sheet, or Both.",
-   "appOnly": true,
+   "summary": "Shares the drawing through the Windows share sheet (Mail, Teams, Nearby Sharing…): Project (.archi), Pdf of the drawing or active sheet, or Both.",
+   "appOnly": false,
    "entries": [
     "Collaborate ▸ Share ▸ Share",
     "Collaborate ▸ Share ▸ Share…",
@@ -19973,7 +20075,7 @@
    ],
    "category": "Output",
    "summary": "Prints with printer, paper, tray (input slot), media, scaling (fit, 1:1, percent) and copies.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Output ▸ Plot ▸ Print Setup",
     "Tools ▸ 3D, Render & Print ▸ Print Setup"
@@ -19990,7 +20092,7 @@
    ],
    "category": "View",
    "summary": "Progressive path-traced render of the 3D view (GGX materials, glass refraction, PBR maps, sun, sky, lights): Window, or File with size, samples and denoising.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ Path Tracer"
    ],
@@ -20004,7 +20106,7 @@
    ],
    "category": "View",
    "summary": "Light mix of path-traced renders: weights of the Sun, Sky and Artificial light groups, changeable after rendering (saved in the drawing).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ Light Mix"
    ],
@@ -20018,7 +20120,7 @@
    ],
    "category": "View",
    "summary": "PBR texture maps of a material: Normal, Roughness, Metallic, AO and Displacement images, normal strength and displacement height; List/Clear.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ PBR Maps"
    ],
@@ -20033,7 +20135,7 @@
    ],
    "category": "View",
    "summary": "Material assets kept apart from the render appearance: Identity (description, manufacturer, mark, cost), Graphics (shading colour, surface pattern) and Physical/thermal (density, conductivity, specific heat); List.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ Material Assets"
    ],
@@ -20048,7 +20150,7 @@
    ],
    "category": "View",
    "summary": "Procedural seamless material (Wood, Brick, Tile, Marble, Stone, Concrete, Terrazzo) with albedo, normal and roughness maps from colours, courses, joint width and a seed.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ Procedural Material"
    ],
@@ -20063,7 +20165,7 @@
    ],
    "category": "View",
    "summary": "Creates a seamless PBR material from a photo: de-lit albedo, normal, roughness and AO maps derived from the image, at a real-world tile size.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ Material from Photo"
    ],
@@ -20078,7 +20180,7 @@
    ],
    "category": "View",
    "summary": "Weather in the 3D view and renders: Clear, Rain, Snow or Fog with an intensity, snow cover on up-facing faces and wet surfaces.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ Weather"
    ],
@@ -20091,7 +20193,7 @@
    ],
    "category": "View",
    "summary": "Season of the vegetation in the 3D view and renders: Spring, Summer, Autumn or Winter colours for grass, trees and plants.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ Season"
    ],
@@ -20106,7 +20208,7 @@
    ],
    "category": "Architecture",
    "summary": "Water surface with animated waves (viewport and renders) inside a closed polyline or picked points, at a surface elevation and depth.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ Water"
    ],
@@ -20121,7 +20223,7 @@
    ],
    "category": "Architecture",
    "summary": "Scatters Grass, Flowers, Shrubs or Trees over closed boundaries with Poisson-disk spacing at a density per m² (reproducible seed); shown in the viewport and renders.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ Scatter Plants"
    ],
@@ -20136,7 +20238,7 @@
    ],
    "category": "View",
    "summary": "Object animation saved in the drawing: Door swings, Rotate about a pivot, Move by a vector (start time, duration, there and back); Play/Stop in 3D, List, Delete, Clear, Render a frame.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ Animate Objects"
    ],
@@ -20150,7 +20252,7 @@
    ],
    "category": "Tools",
    "summary": "Custom node packages (.archinodes): Create one from the drawing's node graph (a snippet per group), Install a file, Insert a snippet into the graph, List, Remove.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ Node Packages"
    ],
@@ -20164,7 +20266,7 @@
    ],
    "category": "3D",
    "summary": "Customizer panel: sliders, check boxes and choices for the parameters of the selected scripted object (OpenSCAD customizer comments), regenerating it on change.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ Customizer Panel"
    ],
@@ -20192,7 +20294,7 @@
    ],
    "category": "Settings",
    "summary": "Graphic styles manager: line styles and their layers, lineweights by view scale, pen sets and graphic override filters in one dialog.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ Graphic Styles"
    ],
@@ -20207,7 +20309,7 @@
    ],
    "category": "View",
    "summary": "3Dconnexion SpaceMouse: On/Off, Object (orbit) or Fly mode, Sensitivity, Status. Axes move the 3D camera; button 1 fits the view.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ SpaceMouse"
    ],
@@ -20222,7 +20324,7 @@
    ],
    "category": "Settings",
    "summary": "Customizes the ribbon: Dialog, Add a panel of commands to a tab, Remove, Hide/Show a built-in panel, List, Export/Import a customisation file, Reset.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ Customize Ribbon"
    ],
@@ -20236,8 +20338,8 @@
     "ARPREVIEW"
    ],
    "category": "View",
-   "summary": "AR Quick Look: exports the model as a real-scale USDZ and Previews it or Shares it to an iPhone/iPad (AirDrop) to place it in AR.",
-   "appOnly": true,
+   "summary": "AR view: exports the model as a real-scale glTF (GLB) and Previews it in the Windows 3D viewer (mixed reality) or Shares it to a phone or tablet.",
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ AR Quick Look"
    ],
@@ -20251,8 +20353,8 @@
     "REVERTTO"
    ],
    "category": "File",
-   "summary": "macOS Versions of the saved file (every save keeps one): Browse window, List, Restore a version, Open a copy, Save a version now, Keep count.",
-   "appOnly": true,
+   "summary": "Versions of the saved file (every save keeps one): Browse window, List, Restore a version, Open a copy, Save a version now, Keep count.",
+   "appOnly": false,
    "entries": [
     "Tools ▸ Files, Clipboard & Access ▸ Browse Versions"
    ],
@@ -20267,7 +20369,7 @@
    ],
    "category": "File",
    "summary": "Finder preview icon and Spotlight metadata of the saved drawing: Update now, Icons on/off, Versions on/off, Show the indexed metadata.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Files, Clipboard & Access ▸ File Preview & Spotlight"
    ],
@@ -20281,8 +20383,8 @@
     "PASTEFROMAPP"
    ],
    "category": "Edit",
-   "summary": "Pastes what another app copied — SVG or PDF vectors, pictures, DXF text, plain text or Finder files — at an insertion point.",
-   "appOnly": true,
+   "summary": "Pastes what another app copied — SVG or PDF vectors, pictures, DXF text, plain text or Explorer files — at an insertion point.",
+   "appOnly": false,
    "entries": [
     "Tools ▸ Files, Clipboard & Access ▸ Paste from Other App"
    ],
@@ -20297,7 +20399,7 @@
    ],
    "category": "Edit",
    "summary": "Copies the selected objects (or the whole drawing) to the clipboard as a vector PDF and a PNG picture for other apps.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Files, Clipboard & Access ▸ Copy as Picture"
    ],
@@ -20312,7 +20414,7 @@
    ],
    "category": "View",
    "summary": "ZOOM nXP: in a sheet sets the selected viewport to 1:n (1/100XP); on the plan shows the drawing at that paper scale at true size on the screen.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Files, Clipboard & Access ▸ Zoom to Paper Scale"
    ],
@@ -20326,7 +20428,7 @@
    ],
    "category": "3D",
    "summary": "Outliner window: the tree of groups, components, blocks and model groups; click selects, double-click zooms, filter by name.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Components & Surfaces ▸ Outliner Window"
    ],
@@ -20340,8 +20442,8 @@
     "A11YSUMMARY"
    ],
    "category": "Help",
-   "summary": "Describes the drawing, the selection and the current prompt (spoken by VoiceOver, printed on the command line).",
-   "appOnly": true,
+   "summary": "Describes the drawing, the selection and the current prompt (spoken by Narrator / Windows speech, printed on the command line).",
+   "appOnly": false,
    "entries": [
     "Tools ▸ Files, Clipboard & Access ▸ Describe Drawing"
    ],
@@ -20354,8 +20456,8 @@
     "KEYBOARDHELP"
    ],
    "category": "Help",
-   "summary": "Keyboard-only drawing: arrow keys move the crosshair at prompts (Shift ×10, Option ÷10; Option-arrows when idle), Return picks, Tab selects under the crosshair; sets the step.",
-   "appOnly": true,
+   "summary": "Keyboard-only drawing: arrow keys move the crosshair at prompts (Shift ×10, Alt ÷10; Alt+arrows when idle), Enter picks, Tab selects under the crosshair; sets the step.",
+   "appOnly": false,
    "entries": [
     "Tools ▸ Files, Clipboard & Access ▸ Keyboard Navigation"
    ],
@@ -20370,7 +20472,7 @@
    ],
    "category": "Parametric",
    "summary": "Animates a mechanism on the plan: steps a named driving dimension through a range (re-solving the constraints) and plays the poses Once, in a Loop or Bounce; Stop ends it. The drawing is not changed.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Files, Clipboard & Access ▸ Play Mechanism"
    ],
@@ -20384,7 +20486,7 @@
    ],
    "category": "Manage",
    "summary": "Object Styles dialog: projection/cut line weights, line colour, cut fill and cut pattern per BIM category for every plan and section.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Styles, Patterns & Occlusion ▸ Object Styles…"
    ],
@@ -20398,7 +20500,7 @@
    ],
    "category": "Annotate",
    "summary": "Text Style manager: font, height, width factor and oblique angle with a live preview; renaming a style updates its text.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Styles, Patterns & Occlusion ▸ Text Styles…"
    ],
@@ -20412,7 +20514,7 @@
    ],
    "category": "Blocks",
    "summary": "Image Adjust dialog: brightness, contrast and fade of the selected raster images with a preview (exact on screen and in PDF plots).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Styles, Patterns & Occlusion ▸ Image Adjust…"
    ],
@@ -20426,7 +20528,7 @@
    ],
    "category": "View",
    "summary": "Ambient Occlusion dialog: intensity, radius and rays per point for the 3D viewport, renders and shaded views.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Styles, Patterns & Occlusion ▸ Ambient Occlusion…"
    ],
@@ -20441,7 +20543,7 @@
    ],
    "category": "Annotate",
    "summary": "In-place text editor on the canvas: bold, italic, underline, font, height and colour (also opened by double-clicking text); exported to PDF and DXF MTEXT.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Styles, Patterns & Occlusion ▸ Edit Text In Place"
    ],
@@ -20456,7 +20558,7 @@
    ],
    "category": "View",
    "summary": "VR headset viewing: writes the model as a WebXR page (life-size, floor on the room floor, pinch/trigger steps forward) for Apple Vision Pro, Meta Quest or OpenXR browsers; Open, Reveal (AirDrop) or just Save.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Styles, Patterns & Occlusion ▸ VR Headset View"
    ],
@@ -20470,7 +20572,7 @@
    ],
    "category": "Settings",
    "summary": "Opt-in crash reports: On, Off, Status, Show the saved reports (reviewed and sent only by you), Clear.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Styles, Patterns & Occlusion ▸ Crash Reports"
    ],
@@ -20484,7 +20586,7 @@
    ],
    "category": "Annotate",
    "summary": "Material Fill Patterns dialog: cut and surface pattern of every material; bound hatches and floor patterns update.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Styles, Patterns & Occlusion ▸ Material Fill Patterns…"
    ],
@@ -20498,7 +20600,7 @@
    ],
    "category": "View",
    "summary": "Free flight in 3D: W A S D along the view direction, Q/E down/up, drag to look (no gravity or collisions).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Fly"
    ],
@@ -20512,7 +20614,7 @@
    ],
    "category": "View",
    "summary": "Looks around from the current eye point (drag or arrow keys turn the head; the camera does not move).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Look Around"
    ],
@@ -20526,7 +20628,7 @@
    ],
    "category": "View",
    "summary": "Places the camera at a plan point at eye height looking towards a second point, then looks around (SketchUp style).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Position Camera"
    ],
@@ -20541,7 +20643,7 @@
    ],
    "category": "View",
    "summary": "Two-point perspective: levels the 3D camera so vertical lines stay vertical, shifting the lens to keep the framing (On/Off).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Two-Point Perspective"
    ],
@@ -20556,7 +20658,7 @@
    ],
    "category": "View",
    "summary": "Steering wheel in 3D: Zoom, Orbit, Pan, Rewind (outer ring), Center, Walk, Up/Down, Look (inner ring).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Steering Wheel"
    ],
@@ -20572,7 +20674,7 @@
    ],
    "category": "View",
    "summary": "Places point, spot, area, line or IES lights (lumens, colour temperature, beam) that light the 3D view and renders; List, On/Off.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Lights"
    ],
@@ -20587,7 +20689,7 @@
    ],
    "category": "View",
    "summary": "Fog / atmospheric haze in the 3D view and renders: On/Off, start and end distance, colour and falloff (saved in the drawing).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Fog"
    ],
@@ -20602,7 +20704,7 @@
    ],
    "category": "View",
    "summary": "Makes a material self-illuminated (luminance factor 0–20; 0 turns it off): screens, lamps, signs glow in 3D and renders.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Emissive Material"
    ],
@@ -20618,7 +20720,7 @@
    ],
    "category": "View",
    "summary": "Texture mapping of a material: Box, Planar, Cylindrical, Spherical or UV, and texture positioning (offset, rotation, scale) on its faces; Reset.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Texture Mapping"
    ],
@@ -20633,7 +20735,7 @@
    ],
    "category": "View",
    "summary": "Places a 2D cutout that always faces the camera in 3D and renders: Person, Tree, Shrub or an image file (PNG with transparency).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Billboard"
    ],
@@ -20648,7 +20750,7 @@
    ],
    "category": "Output",
    "summary": "Vector PDF with one PDF layer (OCG) per drawing layer, searchable text and hyperlinks: current sheet, model or all sheets, at true scale.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Export PDF"
    ],
@@ -20663,7 +20765,7 @@
    ],
    "category": "Output",
    "summary": "Custom title blocks: Create a starter block (edit it with BEDIT: lines, logo images, {field} texts or attributes), Use a block on all or the current sheet, or go back to the Builtin one.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Title Block Design"
    ],
@@ -20677,7 +20779,7 @@
    ],
    "category": "Output",
    "summary": "Shade plot of a 3D (axonometric / perspective) sheet viewport: As Displayed, Wireframe, Hidden or Rendered, and the saved 3D view it shows.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Shade Plot"
    ],
@@ -20692,7 +20794,7 @@
    ],
    "category": "Output",
    "summary": "Exports the 3D model as one standalone HTML file with a WebGL viewer (orbit, pan, zoom, views) that opens in any browser.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Web Viewer Export"
    ],
@@ -20707,7 +20809,7 @@
    ],
    "category": "View",
    "summary": "Renders to an image file: any size up to 7680×4320 (tiled), a pass (Beauty, Alpha, Depth, Normal, Material ID), a style (Photographic, Sketch, Watercolour) and an optional region of the frame.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Render to File (Passes, Region, 8K)"
    ],
@@ -20722,7 +20824,7 @@
    ],
    "category": "View",
    "summary": "Stereo 360° panorama for VR viewers: left and right eye equirectangular images over-under (omni-directional stereo), from the 3D camera or a plan point.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Stereo 360° Panorama"
    ],
@@ -20737,7 +20839,7 @@
    ],
    "category": "View",
    "summary": "Construction sequence (4D) video from the phases (new elements appear bottom-up, demolished ones disappear) or from the work schedule (day by day), captioned (MP4).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Construction Sequence (4D)"
    ],
@@ -20752,7 +20854,7 @@
    ],
    "category": "Annotate",
    "summary": "Attaches a URL (web page or file) to objects; exported PDFs make them clickable. Empty removes the link.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Hyperlink"
    ],
@@ -20768,7 +20870,7 @@
    ],
    "category": "Scripting",
    "summary": "AI assistant panel: Claude or a local model (Ollama) edits the drawing with commands; bulk changes ask for confirmation; everything is undoable.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ AI Assistant"
    ],
@@ -20783,7 +20885,7 @@
    ],
    "category": "View",
    "summary": "Styles the render from a description (e.g. “golden hour, soft shadows, warm, 4K”): saves it as the “Prompt” render preset and opens the render window.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Render Prompt"
    ],
@@ -20798,7 +20900,7 @@
    ],
    "category": "Scripting",
    "summary": "Graph player: runs a saved node graph with its exposed Number inputs (clamped to their ranges) and bakes the result; Window opens the player panel.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Graph Player"
    ],
@@ -20813,7 +20915,7 @@
    ],
    "category": "View",
    "summary": "Arranges the open drawing windows: Vertical (side by side), Horizontal, Cascade, Tabs or Separate windows.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Arrange Windows"
    ],
@@ -20827,7 +20929,7 @@
    ],
    "category": "View",
    "summary": "Right-drag marking menu with the 8 most used commands for the context (On/Off/List).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Navigate, Light & Publish ▸ Radial Menu"
    ],
@@ -20841,7 +20943,7 @@
    ],
    "category": "Architecture",
    "summary": "Family Editor panel: families list, parameters and formulas, forms, types table, reference planes, profiles, live 3D preview and flex; Apply is one undo step.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Families, Views & Panels ▸ Family Editor Panel"
    ],
@@ -20855,7 +20957,7 @@
    ],
    "category": "3D",
    "summary": "Moves objects up or down: element base/top offsets and door/window sills change, solids move (one undo step).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Families, Views & Panels ▸ Move Up/Down (Z)"
    ],
@@ -20869,7 +20971,7 @@
    ],
    "category": "View",
    "summary": "3D view by level: show All levels, Isolate one level, or Explode levels apart by a gap.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Families, Views & Panels ▸ Levels in 3D"
    ],
@@ -20883,7 +20985,7 @@
    ],
    "category": "View",
    "summary": "Sets the 3D camera field of view in degrees (15–120), or a Lens length in mm (35 mm equivalent).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Families, Views & Panels ▸ Field of View"
    ],
@@ -20897,7 +20999,7 @@
    ],
    "category": "View",
    "summary": "Saves the 3D view as a PNG, JPEG or TIFF at a chosen size, optionally with a transparent background.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Families, Views & Panels ▸ Save 3D View Image"
    ],
@@ -20911,7 +21013,7 @@
    ],
    "category": "Output",
    "summary": "Exports a sheet (layout) or the Model view of the current level as a PNG, JPEG or TIFF image at a chosen resolution (dpi).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Families, Views & Panels ▸ Sheet to Image"
    ],
@@ -20925,7 +21027,7 @@
    ],
    "category": "Inquiry",
    "summary": "Selection info panel: count and types of the selected objects, layers, total length/area, keep-only/remove filters.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Families, Views & Panels ▸ Selection Info"
    ],
@@ -20939,7 +21041,7 @@
    ],
    "category": "Inquiry",
    "summary": "Notifications centre: model warnings (overlaps, unhosted openings, family errors, missing blocks) — click one to zoom to it.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Families, Views & Panels ▸ Notifications"
    ],
@@ -20953,7 +21055,7 @@
    ],
    "category": "View",
    "summary": "Navigator: overview map of the whole drawing with the visible area; drag the rectangle to pan.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Families, Views & Panels ▸ Navigator"
    ],
@@ -20966,7 +21068,7 @@
    ],
    "category": "Help",
    "summary": "Shows what is new in this version (also shown once after an update).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Families, Views & Panels ▸ What's New"
    ],
@@ -20979,7 +21081,7 @@
    ],
    "category": "Help",
    "summary": "Runs the app's built-in regression checks (node graph, sheet set, presets, clipboard, ribbon).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Help ▸ Check Command Coverage",
     "Manage ▸ More ▸ Tools ▸ Help ▸ Self Test",
@@ -21012,7 +21114,7 @@
    ],
    "category": "Output",
    "summary": "Renders offscreen to a PNG without the render window: RENDERSAVE <preset> <camera|Current> <width> <height> <path> (4× MSAA + supersampling, vertical correction for eye-level cameras).",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Photographic Render ▸ Render to PNG"
    ],
@@ -21027,7 +21129,7 @@
    ],
    "category": "Settings",
    "summary": "Command line appearance: text Size, history Lines shown, background Opacity; Float it over the canvas or Dock it at the bottom.",
-   "appOnly": true,
+   "appOnly": false,
    "entries": [
     "Tools ▸ Render, Materials & Environment ▸ Command Line Options"
    ],
@@ -21044,8 +21146,8 @@
     "LINGUA"
    ],
    "category": "Settings",
-   "summary": "Interface language of the ribbon: Auto (macOS), English, Română, Deutsch, Français, Español, Italiano. Commands stay English.",
-   "appOnly": true,
+   "summary": "Interface language of the ribbon: Auto (Windows), English, Română, Deutsch, Français, Español, Italiano. Commands stay English.",
+   "appOnly": false,
    "entries": [
     "Tools ▸ Files, Clipboard & Access ▸ Language"
    ],
@@ -21059,8 +21161,8 @@
     "TUTREC"
    ],
    "category": "Tools",
-   "summary": "Tutorial videos: plays the scripted tutorials (tutorials/*.tut) in a new window and records each as an MP4 with cursor, captions and typed keys; List, Record or Check (dry run).",
-   "appOnly": true,
+   "summary": "Tutorial videos: List the scripted tutorials, Check them, or Record (the videos are recorded by the Mac app; on Windows Record opens the tutorial videos on the website).",
+   "appOnly": false,
    "entries": [
     "Tools ▸ Tutorial Videos ▸ Check Tutorial Scripts",
     "Tools ▸ Tutorial Videos ▸ List Tutorials",
@@ -33039,6 +33141,36 @@
    "entryCount": 1
   },
   {
+   "name": "PAGEPRESET",
+   "aliases": [
+    "PSPRESET",
+    "NAMEDPAGESETUP"
+   ],
+   "category": "Output",
+   "summary": "Named page setups: Save from a sheet, Apply to one/selected/all sheets, Import from .archi, Delete, List. Preserves paper, pens and section style; one undo step.",
+   "appOnly": false,
+   "entries": [
+    "Output ▸ More ▸ Output ▸ Output ▸ Named Page Setups",
+    "Tools ▸ Output ▸ Named Page Setups"
+   ],
+   "entryCount": 2
+  },
+  {
+   "name": "SECTIONSTYLE",
+   "aliases": [
+    "SECSTYLE",
+    "SSTYLE"
+   ],
+   "category": "Output",
+   "summary": "Section graphics on one sheet: Set line/cut weights, colour, cut fill and Shading; Reset or List. SECTIONSTYLE Set \"Sheet 1\" \"color:black;fill:0.7,0.7,0.7;cut:0.5;proj:0.25;shading:off\".",
+   "appOnly": false,
+   "entries": [
+    "Output ▸ More ▸ Output ▸ Output ▸ Section Sheet Style",
+    "Tools ▸ Output ▸ Section Sheet Style"
+   ],
+   "entryCount": 2
+  },
+  {
    "name": "ORTHOMODE",
    "aliases": [],
    "category": "Settings",
@@ -33690,22 +33822,22 @@
   }
  ],
  "symbolsToLucide": {
-  "1.magnifyingglass": "SquareTerminal",
+  "1.magnifyingglass": "ScanSearch",
   "a.magnify": "TextSearch",
   "airplane": "Plane",
-  "align.horizontal.center": "SquareTerminal",
+  "align.horizontal.center": "AlignHorizontalJustifyCenter",
   "align.horizontal.left": "AlignHorizontalJustifyStart",
   "align.vertical.center": "AlignVerticalJustifyCenter",
   "angle": "Tangent",
   "antenna.radiowaves.left.and.right": "RadioTower",
-  "aqi.high": "SquareTerminal",
+  "aqi.high": "Radar",
   "aqi.low": "Wind",
   "aqi.medium": "Wind",
   "arkit": "Axis3D",
   "arrow.clockwise": "RotateCw",
   "arrow.clockwise.circle": "RotateCw",
   "arrow.counterclockwise": "RotateCcw",
-  "arrow.down": "ArrowRight",
+  "arrow.down": "ArrowDown",
   "arrow.down.right": "ArrowDownRight",
   "arrow.down.right.and.arrow.up.left": "Minimize2",
   "arrow.down.to.line": "ArrowDownToLine",
@@ -33725,17 +33857,17 @@
   "arrow.triangle.merge": "Merge",
   "arrow.triangle.swap": "ArrowRightLeft",
   "arrow.turn.up.right": "CornerUpRight",
-  "arrow.up": "ArrowRight",
+  "arrow.up": "ArrowUp",
   "arrow.up.and.down": "ArrowUpDown",
   "arrow.up.and.down.and.arrow.left.and.right": "Move",
   "arrow.up.and.down.square": "SquareArrowUp",
   "arrow.up.and.down.text.horizontal": "ArrowUpDown",
   "arrow.up.arrow.down.square": "ArrowUpDown",
   "arrow.up.backward.and.arrow.down.forward": "Maximize2",
-  "arrow.up.doc": "ArrowRight",
+  "arrow.up.doc": "FileUp",
   "arrow.up.forward.square": "SquareArrowOutUpRight",
   "arrow.up.left.and.arrow.down.right": "Scaling",
-  "arrow.up.left.and.arrow.down.right.square": "ArrowRight",
+  "arrow.up.left.and.arrow.down.right.square": "Maximize",
   "arrow.up.left.and.down.right.and.arrow.up.right.and.down.left": "Expand",
   "arrow.up.left.and.down.right.magnifyingglass": "ZoomIn",
   "arrow.up.right": "ArrowUpRight",
@@ -33770,7 +33902,7 @@
   "camera": "Camera",
   "camera.aperture": "Aperture",
   "camera.filters": "Filter",
-  "camera.macro": "Camera",
+  "camera.macro": "Sprout",
   "camera.on.rectangle": "SwitchCamera",
   "camera.viewfinder": "ScanLine",
   "car": "Car",
@@ -33781,7 +33913,7 @@
   "character.textbox": "TextCursorInput",
   "chart.xyaxis.line": "ChartLine",
   "checklist": "ListChecks",
-  "checkmark": "SquareTerminal",
+  "checkmark": "Check",
   "checkmark.circle": "CircleCheck",
   "checkmark.rectangle": "SquareCheck",
   "checkmark.rectangle.stack": "SquareCheckBig",
@@ -33802,7 +33934,7 @@
   "circle.hexagongrid.fill": "Hexagon",
   "circle.inset.filled": "CircleDot",
   "circle.lefthalf.filled": "Contrast",
-  "circle.lefthalf.filled.righthalf.striped.horizontal": "Circle",
+  "circle.lefthalf.filled.righthalf.striped.horizontal": "Blend",
   "circle.square": "Shapes",
   "clock": "Clock",
   "clock.arrow.2.circlepath": "History",
@@ -33834,7 +33966,7 @@
   "divide": "Divide",
   "doc": "File",
   "doc.badge.arrow.up": "FileUp",
-  "doc.badge.ellipsis": "File",
+  "doc.badge.ellipsis": "FileQuestion",
   "doc.badge.gearshape": "FileCog",
   "doc.badge.plus": "FilePlus",
   "doc.fill": "File",
@@ -33843,13 +33975,13 @@
   "doc.on.doc.fill": "Files",
   "doc.richtext": "FileText",
   "doc.text": "FileText",
-  "doc.text.magnifyingglass": "File",
+  "doc.text.magnifyingglass": "FileSearch",
   "doc.zipper": "FileArchive",
   "dollarsign.circle": "CircleDollarSign",
   "door.left.hand.closed": "DoorClosed",
   "door.left.hand.open": "DoorOpen",
   "drop": "Droplet",
-  "drop.triangle": "SquareTerminal",
+  "drop.triangle": "Droplets",
   "ellipsis": "Ellipsis",
   "ellipsis.circle": "CircleEllipsis",
   "equal": "Equal",
@@ -33864,7 +33996,7 @@
   "eye.slash.circle": "EyeOff",
   "eye.square": "ScanEye",
   "eye.trianglebadge.exclamationmark": "ScanEye",
-  "eyeglasses": "Eye",
+  "eyeglasses": "Glasses",
   "figure.roll": "Accessibility",
   "figure.walk": "Footprints",
   "figure.walk.departure": "Footprints",
@@ -33872,13 +34004,13 @@
   "film.stack": "Clapperboard",
   "flame": "Flame",
   "folder": "Folder",
-  "folder.badge.plus": "SquareTerminal",
+  "folder.badge.plus": "FolderPlus",
   "function": "SquareFunction",
   "gearshape": "Settings",
   "gearshape.2": "Settings2",
   "globe": "Globe",
   "globe.europe.africa": "Earth",
-  "graduationcap": "SquareTerminal",
+  "graduationcap": "GraduationCap",
   "grid": "Hash",
   "hand.draw": "Hand",
   "hexagon": "Hexagon",
@@ -33890,7 +34022,7 @@
   "info.square": "Info",
   "key": "Key",
   "keyboard": "Keyboard",
-  "ladybug": "SquareTerminal",
+  "ladybug": "Bug",
   "leaf": "Leaf",
   "lifepreserver": "LifeBuoy",
   "lightbulb": "Lightbulb",
@@ -33918,7 +34050,7 @@
   "lock.open": "LockOpen",
   "lock.rectangle": "Lock",
   "macwindow.on.rectangle": "AppWindow",
-  "macwindow.stack": "SquareTerminal",
+  "macwindow.stack": "PanelsTopLeft",
   "magnifyingglass": "Search",
   "map": "Map",
   "map.fill": "Map",
@@ -33926,11 +34058,11 @@
   "mappin.and.ellipse": "MapPinned",
   "memorychip": "Cpu",
   "minus": "Minus",
-  "minus.circle": "SquareTerminal",
+  "minus.circle": "CircleMinus",
   "minus.magnifyingglass": "ZoomOut",
   "minus.rectangle": "RectangleHorizontal",
   "minus.square": "SquareMinus",
-  "moon.stars": "SquareTerminal",
+  "moon.stars": "MoonStar",
   "mountain.2": "Mountain",
   "move.3d": "Move3D",
   "note.text": "StickyNote",
@@ -33941,9 +34073,9 @@
   "paintbrush": "Brush",
   "paintbrush.pointed": "Paintbrush",
   "paintpalette": "Palette",
-  "paintpalette.fill": "SquareTerminal",
+  "paintpalette.fill": "Palette",
   "pano": "Image",
-  "paperplane.fill": "SquareTerminal",
+  "paperplane.fill": "Send",
   "pencil": "Pencil",
   "pencil.and.outline": "PencilRuler",
   "pencil.and.ruler": "PencilRuler",
@@ -33951,17 +34083,17 @@
   "pencil.tip": "PenTool",
   "pentagon": "Pentagon",
   "person.2": "Users",
-  "person.2.wave.2": "User",
+  "person.2.wave.2": "UsersRound",
   "person.badge.shield.checkmark": "UserCheck",
   "person.crop.rectangle": "SquareUser",
   "perspective": "Box",
   "photo": "Image",
-  "photo.artframe": "SquareTerminal",
+  "photo.artframe": "FileImage",
   "photo.on.rectangle": "Images",
-  "photo.on.rectangle.angled": "SquareTerminal",
+  "photo.on.rectangle.angled": "Images",
   "photo.stack": "Images",
   "play.circle": "CirclePlay",
-  "play.fill": "SquareTerminal",
+  "play.fill": "Play",
   "play.rectangle": "SquarePlay",
   "play.square.stack": "ListVideo",
   "playpause": "Play",
@@ -34006,12 +34138,12 @@
   "rectangle.split.3x3": "Grid3X3",
   "rectangle.stack": "GalleryVerticalEnd",
   "rectangle.stack.badge.person.crop": "GalleryVerticalEnd",
-  "rectangle.topthird.inset.filled": "RectangleHorizontal",
+  "rectangle.topthird.inset.filled": "PanelTop",
   "refrigerator": "Refrigerator",
   "road.lanes": "Route",
   "rotate.3d": "Rotate3D",
   "rotate.left": "RotateCcwSquare",
-  "rotate.right": "SquareTerminal",
+  "rotate.right": "RotateCwSquare",
   "ruler": "Ruler",
   "ruler.fill": "Ruler",
   "scalemass": "Scale",
@@ -34024,18 +34156,18 @@
   "server.rack": "Server",
   "shadow": "Blend",
   "shippingbox": "Package",
-  "sidebar.left": "SquareTerminal",
+  "sidebar.left": "PanelLeft",
   "sidebar.right": "PanelRight",
   "signature": "Signature",
   "sink": "Droplet",
   "slider.horizontal.3": "SlidersHorizontal",
-  "slider.horizontal.below.rectangle": "SlidersHorizontal",
+  "slider.horizontal.below.rectangle": "Monitor",
   "slider.horizontal.below.square.filled.and.square": "SlidersHorizontal",
   "smallcircle.filled.circle": "CircleDot",
   "snowflake": "Snowflake",
   "sofa": "Sofa",
   "sparkles": "Sparkles",
-  "speaker.wave.2": "SquareTerminal",
+  "speaker.wave.2": "Volume2",
   "square": "Square",
   "square.2.layers.3d": "Layers2",
   "square.2.layers.3d.bottom.filled": "Layers2",
@@ -34060,7 +34192,7 @@
   "square.grid.3x3.bottomleft.filled": "Grid3X3",
   "square.grid.3x3.fill": "Grid3X3",
   "square.grid.3x3.middle.filled": "Grid3X3",
-  "square.grid.3x3.square": "LayoutGrid",
+  "square.grid.3x3.square": "Grid3X3",
   "square.grid.3x3.topleft.filled": "Grid3X3",
   "square.grid.4x3.fill": "Grid3X3",
   "square.lefthalf.filled": "PanelLeft",
@@ -34093,9 +34225,9 @@
   "sun.dust": "SunDim",
   "sun.haze": "Haze",
   "sun.max": "Sun",
-  "sun.max.circle": "Sun",
+  "sun.max.circle": "SunMedium",
   "sun.max.trianglebadge.exclamationmark": "SunSnow",
-  "sunset": "Sun",
+  "sunset": "Sunset",
   "swatchpalette": "SwatchBook",
   "table.furniture": "Table2",
   "tablecells": "Table",
@@ -34125,7 +34257,7 @@
   "tornado": "Tornado",
   "trash": "Trash2",
   "trash.slash": "Trash2",
-  "tray.and.arrow.down": "SquareTerminal",
+  "tray.and.arrow.down": "Inbox",
   "triangle": "Triangle",
   "triangle.bottomhalf.filled": "Triangle",
   "triangle.fill": "Triangle",
@@ -34140,7 +34272,7 @@
   "waveform.path": "AudioLines",
   "waveform.path.ecg": "Activity",
   "wind": "Wind",
-  "wind.circle": "SquareTerminal",
+  "wind.circle": "Wind",
   "window.vertical.closed": "AppWindow",
   "wrench.and.screwdriver": "Wrench",
   "xmark": "X",

@@ -11,32 +11,32 @@ to `done`, `partial`, `wip` or `n/a (reason)`: the generator keeps every non-tod
 | Ribbon tabs | 11 |
 | Ribbon groups | 66 |
 | Ribbon buttons | 274 |
-| Ribbon menu items | 550 |
+| Ribbon menu items | 552 |
 | Ribbon chrome | 6 |
 | Contextual tabs | 11 |
 | Menus | 13 |
-| Menu items | 1265 |
+| Menu items | 1267 |
 | Palettes | 7 |
 | Palette tiles | 50 |
 | Panels | 14 |
 | Panel controls | 94 |
 | Dialogs | 37 |
-| Dialog fields | 329 |
+| Dialog fields | 344 |
 | Status bar | 21 |
 | Shortcuts | 83 |
 | Render features | 23 |
 | Theme | 50 |
-| **Total checklist lines** | **2904** |
+| **Total checklist lines** | **2923** |
 
-Items not `todo`: 2904 — **done 2892 · partial 1 · todo 0 · n/a 11** (parity audit; open items in docs/WINDOWS-GAPS.md)
+Items not `todo`: 2923 — **done 2911 · partial 1 · todo 0 · n/a 11** (parity audit; open items in docs/WINDOWS-GAPS.md)
 
 ## Command coverage
 
-- Registered commands (CommandDef literals in app/Sources, incl. 50 system-variable commands): **1042**; in the Mac curated ribbon/menu catalogs: 992 (+ 50 system variables by rule = 1042)
+- Registered commands (CommandDef literals in app/Sources, incl. 50 system-variable commands): **1044**; in the Mac curated ribbon/menu catalogs: 994 (+ 50 system variables by rule = 1044)
 - Not registered (sub-steps of another command, excluded): `SCHEDULEDEF`, `SCHEDULEEDIT`, `SCHEDULEEXPORT`, `SCHEDULEIMPORT`, `SCHEDULEPLACE`
 - Static scan of CommandDef literals; the running Mac app reports 1044 (it also counts commands built at run time). Refresh the list from engine.hello once archi-engine runs.
 - Mac self-test reference: `Command coverage: 1044 commands, 50 system variables in palettes, 0 without UI entry`
-- Commands reachable from a ribbon button, ribbon menu, menu-bar item, palette or status bar in this catalogue: **1042**
+- Commands reachable from a ribbon button, ribbon menu, menu-bar item, palette or status bar in this catalogue: **1044**
 - System variables reached by rule (Manage ▸ More ▸ Settings ▸ System Variables, Tools ▸ System Variables): 50
 - Without any UI entry: **0** 
 - Registered but not in the Mac curated catalogs (CommandCatalog.coverage would report them): 0 
@@ -776,6 +776,8 @@ Items not `todo`: 2904 — **done 2892 · partial 1 · todo 0 · n/a 11** (parit
 | done | Output ▸ Sheets ▸ Sheet Index | `SHEETINDEX` |
 | done | Output ▸ More (group) |  |
 | done | Output ▸ More ▸ Output (menu) | Every output command, plot styles, batch publish |
+| done | Output ▸ More ▸ Output ▸ Output ▸ Section Sheet Style | `SECTIONSTYLE` |
+| done | Output ▸ More ▸ Output ▸ Output ▸ Named Page Setups | `PAGEPRESET` |
 | done | Output ▸ More ▸ Output ▸ Output ▸ Page Setup | `PAGESETUP` |
 | done | Output ▸ More ▸ Output ▸ Output ▸ Plot Preview | `PREVIEW` |
 | done | Output ▸ More ▸ Output ▸ Output ▸ Publish | `PUBLISH` |
@@ -1628,6 +1630,8 @@ Items not `todo`: 2904 — **done 2892 · partial 1 · todo 0 · n/a 11** (parit
 | done | Tools ▸ View ▸ Materials | `MATERIALS` |
 | done | Tools ▸ View ▸ Material Library | `MATBROWSER` |
 | done | Tools ▸ Output |  |
+| done | Tools ▸ Output ▸ Section Sheet Style | `SECTIONSTYLE` |
+| done | Tools ▸ Output ▸ Named Page Setups | `PAGEPRESET` |
 | done | Tools ▸ Output ▸ Page Setup | `PAGESETUP` |
 | done | Tools ▸ Output ▸ Plot Preview | `PREVIEW` |
 | done | Tools ▸ Output ▸ Publish | `PUBLISH` |
@@ -2481,8 +2485,23 @@ Items not `todo`: 2904 — **done 2892 · partial 1 · todo 0 · n/a 11** (parit
 | done | LayerStatesSheet ▸ Button Save Current Layers |  |
 | done | LayerStatesSheet ▸ Button Close |  |
 | done | PageSetupSheet (sheet PageSetupSheet) | `PAGESETUP` |
+| done | PageSetupSheet ▸ Picker Setup | selected |
+| done | PageSetupSheet ▸ Button Load |  |
+| done | PageSetupSheet ▸ Button Delete |  |
+| done | PageSetupSheet ▸ TextField Save current settings as… | name |
+| done | PageSetupSheet ▸ Button Save |  |
+| done | PageSetupSheet ▸ Button Import… |  |
+| done | PageSetupSheet ▸ Menu Sheets ({targets.count}) |  |
+| done | PageSetupSheet ▸ Button Apply to Selected |  |
+| done | PageSetupSheet ▸ Button Apply to All |  |
 | done | PageSetupSheet ▸ Picker Paper | paper |
 | done | PageSetupSheet ▸ Picker Orientation | portrait |
+| done | PageSetupSheet ▸ Toggle Customize section graphics on this sheet | sectionOverride |
+| done | PageSetupSheet ▸ Toggle Shaded surfaces | sectionStyle.shaded |
+| done | PageSetupSheet ▸ ColorPicker Section line colour | sectionColor(fill: false) |
+| done | PageSetupSheet ▸ ColorPicker Cut fill colour | sectionColor(fill: true) |
+| done | PageSetupSheet ▸ TextField 0.5 | Binding(get: {…}, set: {…}) |
+| done | PageSetupSheet ▸ TextField 0.25 | Binding(get: {…}, set: {…}) |
 | done | PageSetupSheet ▸ Picker Plot style | setup.colorMode |
 | done | PageSetupSheet ▸ Picker Plot style table | Binding(get: {…}, set: {…}) |
 | done | PageSetupSheet ▸ Picker Named plot styles | Binding(get: {…}, set: {…}) |

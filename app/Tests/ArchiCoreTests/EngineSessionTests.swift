@@ -747,7 +747,10 @@ extension EngineSessionTests {
         XCTAssertEqual(h?["on"], .bool(true))
         XCTAssertTrue(s.editor.log.contains("Clean screen on. CLEANSCREENOFF or Ctrl+0 restores the ribbon and panels."))
         _ = try await s.call("command.run", obj([("line", .string("CLEANSCREENOFF"))]))
-        XCTAssertEqual(hostActions(sink).last?["on"], .bool(false))
+        XCTAssertEqual(hostActions(sink).dropLast().last?["on"], .bool(false))
+        XCTAssertEqual(hostActions(sink).last?["action"]?.stringValue, "ribbonExpand")
+        _ = try await s.call("command.run", obj([("line", .string("RB"))]))
+        XCTAssertEqual(hostActions(sink).last?["action"]?.stringValue, "ribbonExpand")
         _ = try await s.call("command.run", obj([("line", .string("HISTORYPANEL"))]))
         h = hostActions(sink).last
         XCTAssertEqual(h?["action"]?.stringValue, "showPanel")

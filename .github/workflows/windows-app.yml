@@ -488,7 +488,7 @@ jobs:
               || echo "::warning title=Engine fixtures::archi-engine.exe --fixtures failed (13-shell-tests.log)"
           fi
           fail=0
-          for t in ui-snapshots dialogs partb-tools canvas output windows-conventions menus-keys audit-spot audit-ribbon doctools workspace sheets standards render-extras-ui render-r4 shell-polish system view3d/tools; do
+          for t in ui-snapshots dialogs sheet-feedback partb-tools canvas output windows-conventions menus-keys audit-spot audit-ribbon doctools workspace sheets standards render-extras-ui render-r4 shell-polish system view3d/tools; do
             [ -f "test/$t.mjs" ] || { echo "SUITE SKIP test/$t.mjs (not in this commit)"; continue; }
             if [ "$t" = view3d/tools ] && [ ! -f ../build/engine-fixtures/meshes-all-lod2.json ]; then
               echo "SUITE SKIP test/$t.mjs (no build/engine-fixtures/meshes-all-lod2.json: archi-engine.exe was not built)"; continue; fi

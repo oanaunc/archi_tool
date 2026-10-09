@@ -51,7 +51,10 @@ body.alt-cues .titlebar .menubar .mn { display: block; }
 .ribbon-tabs .tab { height: 26px; padding: 0 10px; font-size: 11px; color: var(--dim); position: relative; }
 .ribbon-tabs .tab.sel { color: var(--text); font-weight: 600; }
 .ribbon-tabs .tab.sel::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--accent); }
-.ribbon-tabs .spacer { flex: 1; }
+.ribbon-tab-scroll { display: flex; flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.ribbon-tab-scroll::-webkit-scrollbar { display: none; }
+.ribbon-tab-scroll .tab { flex: none; }
+.ribbon-tabs .app-btn { flex: none; }
 .ribbon-body { height: 90px; background: var(--ribbon); display: flex; align-items: stretch; overflow-x: auto; overflow-y: hidden; border-top: 1px solid var(--sep); scrollbar-width: none; }
 .ribbon-body::-webkit-scrollbar { display: none; }
 .rgroup { display: flex; flex: none; }

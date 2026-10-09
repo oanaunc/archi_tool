@@ -14,6 +14,7 @@ public enum EngineDialogMethods {
         "layerstate.list", "layerstate.save", "layerstate.restore", "layerstate.delete", "layerstate.rename",
         "layerfilter.list", "layerfilter.save", "layerfilter.delete", "layers.group",
         "pagesetup.get", "pagesetup.set",
+        "pagepresets.list", "pagepresets.apply", "pagepresets.delete", "pagepresets.import",
         "templates.list", "templates.new", "templates.save",
         "ui.prefs",
     ]
@@ -41,6 +42,8 @@ extension EngineSession {
         case "layers.group": return try layerGroupSet(p)
         case "pagesetup.get": return pageSetupGet(p)
         case "pagesetup.set": return try pageSetupSet(p)
+        case "pagepresets.list": return pagePresetList()
+        case "pagepresets.apply", "pagepresets.delete", "pagepresets.import": return try pagePresetEdit(method, p)
         case "templates.list": return templatesList(p)
         case "templates.new": return try await templatesNew(p)
         case "templates.save": return try templatesSave(p)
@@ -488,11 +491,14 @@ extension EngineSession {
         if let i = li {
             let paper = doc.layouts[i].paper
             o.set("portrait", paper.height > paper.width)
-            let name = EnginePaperCatalog.builtIn.first { paper.name.hasPrefix($0.name) }?.name ?? "A3"
+            let baseName = paper.name.hasSuffix(" portrait") ? String(paper.name.dropLast(" portrait".count)) : paper.name
+            let name = EnginePaperCatalog.all(doc).first { $0.name == baseName }?.name ?? EnginePaperCatalog.builtIn.first { paper.name.hasPrefix($0.name) }?.name ?? baseName
             o.set("paper", name)
+            o.set("hasSection", doc.layouts[i].viewports.contains { $0.view == .section })
+            o.set("sectionStyle", doc.layouts[i].titleBlock[SectionSheetStyle.key].flatMap { try? EngineJSON.parse($0) } ?? .null)
         }
         var papers: [EngineJSON] = []
-        for s in EnginePaperCatalog.builtIn {
+        for s in EnginePaperCatalog.all(doc) {
             var po = EngineObject()
             po.set("name", s.name)
             po.set("width", s.width)
@@ -516,7 +522,37 @@ extension EngineSession {
         o.set("scales", EngineJSON.array(scales))
         o.set("stampTemplate", EnginePageSetup.stampTemplate)
         o.set("stampFields", EngineJSON.strings(EnginePageSetup.stampFields))
+        o.set("presets", pagePresetList()["presets"] ?? .array([]))
+        o.set("layouts", .array(doc.layouts.enumerated().map { .object([EngineJSONField("index", .int($0.offset)), EngineJSONField("name", .string($0.element.name))]) }))
         return o.json
+    }
+
+    func pagePresetList() -> EngineJSON {
+        let presets = NamedPageSetups.all(editor.doc)
+        let values = presets.keys.sorted().compactMap { name -> EngineJSON? in
+            guard let value = presets[name], let data = try? JSONEncoder().encode(value), let json = try? EngineJSON.parse(String(decoding: data, as: UTF8.self)) else { return nil }
+            return .object([EngineJSONField("name", .string(name)), EngineJSONField("preset", json)])
+        }
+        return .object([EngineJSONField("presets", .array(values))])
+    }
+
+    func pagePresetEdit(_ method: String, _ p: EngineJSON) throws -> EngineJSON {
+        var updated = editor.doc
+        if method == "pagepresets.import" {
+            guard let path = p["path"]?.stringValue else { throw EngineError.params("path required") }
+            let source = try DocumentIO.read(URL(fileURLWithPath: (path as NSString).expandingTildeInPath))
+            NamedPageSetups.importFrom(source, doc: &updated)
+        } else {
+            guard let name = p["name"]?.stringValue, let preset = NamedPageSetups.find(name, doc: updated) else { throw EngineError.params("page setup not found") }
+            if method == "pagepresets.delete" { NamedPageSetups.delete(name, doc: &updated) }
+            else {
+                let targets = p["all"]?.boolValue == true ? Array(updated.layouts.indices) : p["layouts"]?.arrayValue?.compactMap(\.intValue) ?? []
+                try NamedPageSetups.apply(preset, to: targets, doc: &updated)
+            }
+        }
+        let result = updated
+        editor.transaction("Named Page Setup") { $0 = result }
+        return pagePresetList()
     }
 
     /// OK in the Page Setup sheet: stores the setup (removed when default) and, for a sheet, its paper — one
@@ -527,16 +563,48 @@ extension EngineSession {
         var s = EnginePageSetup.load(editor.doc, layoutIndex: li)
         if let v = p["setup"] { try s.apply(v) }
         if let t = p["scaleText"]?.stringValue { s.modelScale = t == "Fit" ? nil : Double(t.dropFirst(2)) }
+        var baseDocument = editor.doc
+        if let source = p["presetSource"]?.stringValue, let i = li {
+            guard let preset = NamedPageSetups.find(source, doc: baseDocument) else { throw EngineError.params("page setup not found") }
+            try NamedPageSetups.apply(preset, to: [i], doc: &baseDocument)
+            let resolved = EnginePageSetup.load(baseDocument, layoutIndex: i)
+            var original = EnginePageSetup(); try original.apply(EngineJSON.parse(preset.settings))
+            if s.plotStyleTable == original.plotStyleTable { s.plotStyleTable = resolved.plotStyleTable }
+            if s.namedStyleTable == original.namedStyleTable { s.namedStyleTable = resolved.namedStyleTable }
+        }
         var paper: PaperSize? = nil
         if let i = li, let name = p["paper"]?.stringValue {
-            guard let base = EnginePaperCatalog.find(name) else { throw EngineError.params("unknown paper '\(name)'") }
-            let portrait = p["portrait"]?.boolValue ?? (editor.doc.layouts[i].paper.height > editor.doc.layouts[i].paper.width)
-            paper = portrait ? PaperSize(name: base.name + " portrait", width: base.height, height: base.width) : base
+            guard let base = EnginePaperCatalog.all(baseDocument).first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) else { throw EngineError.params("unknown paper '\(name)'") }
+            let portrait = p["portrait"]?.boolValue ?? (baseDocument.layouts[i].paper.height > baseDocument.layouts[i].paper.width)
+            let w = portrait ? min(base.width, base.height) : max(base.width, base.height)
+            let h = portrait ? max(base.width, base.height) : min(base.width, base.height)
+            let n = name.replacingOccurrences(of: " portrait", with: "") + (portrait ? " portrait" : "")
+            paper = PaperSize(name: n, width: w, height: h)
         }
-        let setup = s
+        let setup = s, base = baseDocument, originalDocument = editor.doc
+        let section = p["sectionStyle"]
+        var sectionStyle: SectionSheetStyle?
+        if let section, !section.isNull {
+            guard let value = try? JSONDecoder().decode(SectionSheetStyle.self, from: Data(section.serialized.utf8)),
+                  [value.lines.cutLineweight, value.lines.projectionLineweight].compactMap({ $0 }).allSatisfy({ $0.isFinite && $0 > 0 && $0 <= 5 }),
+                  [value.lines.color, value.lines.cutFill].compactMap({ $0 }).allSatisfy({ [$0.r, $0.g, $0.b, $0.a].allSatisfy { $0.isFinite && (0...1).contains($0) } }) else { throw EngineError.params("invalid section style") }
+            sectionStyle = value
+        }
+        let presetName = p["presetName"]?.stringValue?.trimmingCharacters(in: .whitespaces)
+        if p["presetOnly"]?.boolValue == true && presetName == nil { throw EngineError.params("preset name required") }
+        if presetName != nil && (li == nil || presetName!.isEmpty) { throw EngineError.params("preset requires a name and sheet") }
         editor.transaction("Page Setup") { d in
+            d = base
             setup.store(in: &d, layoutIndex: li)
             if let i = li, let pp = paper, d.layouts[i].paper != pp { d.layouts[i].paper = pp }
+            if let i = li, section != nil {
+                if let style = sectionStyle { style.store(in: &d.layouts[i]) }
+                else { d.layouts[i].titleBlock[SectionSheetStyle.key] = nil }
+            }
+            if let name = presetName, let i = li, let preset = NamedPageSetups.capture(d, layoutIndex: i) {
+                if p["presetOnly"]?.boolValue == true { d = originalDocument }
+                NamedPageSetups.save(preset, name: name, doc: &d)
+            }
         }
         return pageSetupGet(p)
     }
@@ -834,6 +902,19 @@ enum EnginePaperCatalog {
         ]
         for e in extra where !out.contains(where: { $0.name == e.0 }) { out.append(PaperSize(name: e.0, width: e.1, height: e.2)) }
         return out
+    }
+    static func all(_ doc: ArchiDocument) -> [PaperSize] {
+        var values = builtIn
+        let custom = doc.variables.filter { $0.key.hasPrefix("CUSTOMPAPER:") }.compactMap { k, v -> PaperSize? in
+            let a = v.split(separator: ",").compactMap { Double($0) }
+            guard a.count == 2, a.allSatisfy({ $0.isFinite && $0 > 0 }) else { return nil }
+            return PaperSize(name: String(k.dropFirst("CUSTOMPAPER:".count)), width: a[0], height: a[1])
+        }
+        for p in custom.sorted(by: { $0.name < $1.name }) + doc.layouts.map(\.paper) {
+            let name = p.name.hasSuffix(" portrait") ? String(p.name.dropLast(" portrait".count)) : p.name
+            if !values.contains(where: { $0.name == name }) { values.append(PaperSize(name: name, width: max(p.width, p.height), height: min(p.width, p.height))) }
+        }
+        return values
     }
     static func find(_ name: String) -> PaperSize? {
         builtIn.first { $0.name.caseInsensitiveCompare(name) == .orderedSame }

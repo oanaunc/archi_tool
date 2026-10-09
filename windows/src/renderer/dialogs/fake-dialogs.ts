@@ -5,6 +5,7 @@
 // Never used inside the Electron app.
 
 const UI_COMMANDS: { name: string; aliases: string[]; category: string; summary: string }[] = [
+  { name: "CLEANSCREENOFF", aliases: ["RIBBON", "RB"], category: "View", summary: "Restore and expand the ribbon." },
   { name: "OPTIONS", aliases: ["OP", "PREFERENCES", "SETTINGS", "CONFIG"], category: "Settings", summary: "Opens Settings: units, grid and snaps, autosave, colors, shortcuts, toolbar, agents." },
   { name: "AGENTSETTINGS", aliases: ["AGENTS", "AGENTSERVER"], category: "Scripting", summary: "Agent server settings: port, start/stop, token, auto-start." },
   { name: "CURSORSIZE", aliases: [], category: "Settings", summary: "Sets the crosshair size as a percentage of the view (1–100)." },
@@ -90,6 +91,7 @@ export function fakeDialogCall(fe: any, method: string, p: any): any {
       fe.log(`Command: ${toks[0].toUpperCase()}`);
       const arg = toks.slice(1).join(" ");
       switch (def.name) {
+        case "CLEANSCREENOFF": emitHost({ action: "cleanScreen", on: false }); emitHost({ action: "ribbonExpand" }); break;
         case "OPTIONS": emitHost({ action: "dialog", dialog: "options", tab: arg || "General" }); break;
         case "AGENTSETTINGS": emitHost({ action: "dialog", dialog: "options", tab: "Agents" }); break;
         case "QSELECTDIALOG": emitHost({ action: "dialog", dialog: "quickSelect" }); break;

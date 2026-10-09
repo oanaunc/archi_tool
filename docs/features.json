@@ -7046,6 +7046,32 @@
   "acceptance": "Command and Mac Page Setup UI; undo/redo and .archi round-trip; section rendering and resolved PDF pens tested in SectionSheetStyleTests, Mac/engine parity in APPSELFTEST."
  },
  {
+  "id": "SHT-042",
+  "area": "Sheets, Layouts & Plotting",
+  "group": "Plotting & Output",
+  "name": "Named page setups",
+  "command": "PAGEPRESET",
+  "description": "Save named paper, orientation, plot and section style presets in the drawing; load, delete and apply to one, selected or all sheets.",
+  "reference": "AutoCAD",
+  "phase": 8,
+  "priority": "should",
+  "status": "done",
+  "acceptance": "PAGEPRESET has command, UI and agent/API entries; save/apply/delete undo and file round-trip tests pass."
+ },
+ {
+  "id": "SHT-043",
+  "area": "Sheets, Layouts & Plotting",
+  "group": "Plotting & Output",
+  "name": "Import named page setup libraries",
+  "command": "PAGEPRESET",
+  "description": "Import reusable page setups from another .archi drawing, including referenced CTB/STB tables with collision-safe names.",
+  "reference": "AutoCAD",
+  "phase": 8,
+  "priority": "should",
+  "status": "done",
+  "acceptance": "Import is accessible in Page Setup, command line and API; file import, pen-table collisions and undo are tested."
+ },
+ {
   "id": "BIM-001",
   "area": "BIM Building Elements",
   "group": "Levels & Grids",

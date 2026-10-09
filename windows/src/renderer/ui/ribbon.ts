@@ -73,12 +73,14 @@ export class Ribbon {
       .map((n) => ({ title: n, checked: prefs.quickAccess.includes(n), action: () => { const q = prefs.quickAccess; const i = q.indexOf(n); if (i >= 0) q.splice(i, 1); else q.push(n); prefs.set("quickAccess", q); } }) as MenuItem)
       .concat([{ separator: true }, { title: "More Commands…", action: () => openSettings("Toolbar") }]), more));
     this.tabsEl.append(more, h("div", { class: "vsep", style: { height: "14px", alignSelf: "center", margin: "0 4px" } }));
+    const tabScroll = h("div", { class: "ribbon-tab-scroll" });
+    tabScroll.addEventListener("wheel", (e) => { tabScroll.scrollLeft += e.deltaY; e.preventDefault(); }, { passive: false });
+    this.tabsEl.append(tabScroll);
     for (const t of RIBBON.filter((x) => !prefs.hiddenRibbonTabs.includes(x.tab) || x.tab === app.ribbonTab)) {
       const b = h("button", { class: "tab" + (t.tab === app.ribbonTab ? " sel" : ""), text: tr(t.tab) });
       b.addEventListener("click", () => { app.setUI("ribbonTab", t.tab); if (app.ribbonCollapsed) app.setUI("ribbonCollapsed", false); });
-      this.tabsEl.append(b);
+      tabScroll.append(b);
     }
-    this.tabsEl.append(h("div", { class: "spacer" }));
     const right: [string, string, () => void, boolean?][] = [
       ["magnifyingglass", "Search commands (Ctrl+K)", () => document.dispatchEvent(new CustomEvent("archi:commandSearch"))],
       ["rectangle.dashed", "Clean screen (Ctrl+0)", () => app.action("@cleanScreen")],

@@ -2227,3 +2227,20 @@ SECTIONSTYLE Reset "Sheet 1"
 
 Aliases: `SECSTYLE`, `SSTYLE`. Existing `.archi` files open unchanged; the style uses the
 existing sheet metadata dictionary, with no format change.
+
+### Reusable page setups (PAGEPRESET)
+
+Page Setup includes **Named Page Setups**. Set paper, orientation, plot pens and section appearance, enter a name and click **Save**. **Load** brings a preset into the current form. Choose target sheets and **Apply to Selected**, or **Apply to All**. **Import…** reads setups saved in another `.archi` project. Imported pen tables with conflicting names receive a unique name so other sheets keep their output. Each operation can be undone; presets persist in the drawing.
+
+Commands (quote each preset name when another argument follows, and sheet names containing spaces):
+
+```text
+PAGEPRESET Save "Presentation" "Sheet 1"
+PAGEPRESET Apply "Presentation" "Sheet 1|Sheet 2"
+PAGEPRESET Apply "Presentation" All
+PAGEPRESET Import "/path/to/project.archi"
+PAGEPRESET List
+PAGEPRESET Delete "Presentation"
+```
+
+Aliases: `PSPRESET`, `NAMEDPAGESETUP`. Viewport positions/scales, geometry and title-block text stay intact. Presets include section graphics when present; use **Customize section graphics on this sheet** to edit those settings.

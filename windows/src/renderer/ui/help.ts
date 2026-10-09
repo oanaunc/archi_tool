@@ -183,7 +183,7 @@ export function installHelp(app: App, o: { commandSearch: () => void }) {
   registerShellCommand(["ABOUT"], () => showAbout(app));
   registerShellCommand(["COMMANDSEARCH", "CMDSEARCH", "SEARCHCOMMANDS"], () => o.commandSearch());
   registerShellCommand(["CLEANSCREENON", "CLEANSCREEN"], () => { setClean(true); app.print("Clean screen on. CLEANSCREENOFF or Ctrl+0 restores the ribbon and panels."); });
-  registerShellCommand(["CLEANSCREENOFF"], () => setClean(false));
+  registerShellCommand(["CLEANSCREENOFF", "RIBBON", "RB"], () => { setClean(false); app.setUI("ribbonCollapsed", false); });
   registerShellCommand(["HISTORYPANEL", "UNDOHISTORY"], () => app.action("@panel:History"));
   registerShellCommand(["STARTSCREEN", "WELCOME"], startScreen);
   registerShellCommand(["SAMPLEHOUSE", "OPENSAMPLE"], () => app.action("@newWindow:sample"));
@@ -215,6 +215,7 @@ export function installHelp(app: App, o: { commandSearch: () => void }) {
         if (p.dialog === "whatsNew") { showWhatsNew(); return true; }
         break;
       case "cleanScreen": setClean(!!p.on); return true;
+      case "ribbonExpand": app.setUI("ribbonCollapsed", false); return true;
       case "startScreen": startScreen(); return true;
       case "newWindow": if (p.kind === "sample") { void app.action("@newWindow:sample"); return true; } break;
       case "exportCommands": void exportCommandReference(app, String(p.path ?? "")); return true;

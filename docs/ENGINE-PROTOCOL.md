@@ -247,6 +247,13 @@ Same fields, defaults, validation and undo labels as the Mac (`UnitsSheet`, `Dra
   namedStyleTable?, plotArea, plotWindow?, exactFit}, scaleText, colorModes, plotAreas, tables, namedTables, scales, stampTemplate, stampFields}`.
   `pagesetup.set {layout?, setup:{…}, scaleText?, paper?, portrait?}`: one "Page Setup" undo step; stored as the Mac PageSetup JSON in
   `PAGESETUP:<SHEET>` / `PAGESETUP:*MODEL*` (removed when default); a sheet also gets its paper ("A1 portrait" swaps the sides).
+  Sheet results also include `hasSection`, `sectionStyle`, `presets:[{name,preset}]`, and `layouts:[{index,name}]`.
+  `pagesetup.set` accepts `sectionStyle` (Codable SectionSheetStyle; null resets), `presetSource` (resolve imported pens),
+  `presetName` (save the draft) and `presetOnly:true` (save a preset without applying the draft to the source sheet).
+- `pagepresets.list` → `{presets:[{name,preset}]}`; `pagepresets.apply {name, layouts:[index]}` or `{name, all:true}`;
+  `pagepresets.delete {name}`; `pagepresets.import {path}` reads a `.archi` document. Every edit is undoable, persisted in
+  `NAMEDPAGESETUPS`; presets carry paper, page setup, section style and referenced plot tables. Applying validates all
+  targets before editing; imported plot tables are renamed on collisions so unrelated sheets keep their output.
 - `templates.list {folder?, recent?}` → `{folder, templates:[{id, name, subtitle, symbol, recent?}]}`: `builtin:metric`,
   `builtin:metricArchitectural`, `builtin:imperial`, `builtin:building`, the .archi/.architemplate files of the folder, then the
   recent template files that still exist ("Recent · <folder>"). `templates.new {id}` → doc info (new untitled drawing);
@@ -271,7 +278,7 @@ window they send a `host` notification the shell answers with its dialogs:
 Portable versions of the Mac UI-layer commands for the app chrome, same names, aliases and messages:
 `ABOUT` → `{"action":"dialog","dialog":"about"}` (About window); `COMMANDSEARCH` (`CMDSEARCH`, `SEARCHCOMMANDS`) →
 `dialog:"commandSearch"` (Ctrl+K palette); `WHATSNEW` (`RELEASENOTES`) → `dialog:"whatsNew"`; `CLEANSCREENON` (`CLEANSCREEN`) /
-`CLEANSCREENOFF` → `{"action":"cleanScreen","on":true|false}`; `HISTORYPANEL` (`UNDOHISTORY`, `HISTORY` — the core `HISTORY`
+`CLEANSCREENOFF` (`RIBBON`, `RB`; also emits `ribbonExpand`) → `{"action":"cleanScreen","on":true|false}`; `HISTORYPANEL` (`UNDOHISTORY`, `HISTORY` — the core `HISTORY`
 command keeps its name) → `{"action":"showPanel","panel":"History"}`; `STARTSCREEN` (`START`, `WELCOME`) →
 `{"action":"startScreen"}`; `SAMPLEHOUSE` (`SAMPLE`, `OPENSAMPLE`) → `{"action":"newWindow","kind":"sample"}`;
 `EXPORTCOMMANDS` (`COMMANDREFEXPORT`, `CMDEXPORT`; prompt "Output file (.md or .csv) <choose>") →
