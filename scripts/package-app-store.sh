@@ -35,6 +35,9 @@ cp "$ROOT/app/Resources/PrivacyInfo.xcprivacy" "$APP/Contents/Resources/PrivacyI
 cp "$ROOT/docs/APP-STORE-PERMISSION.txt" "$APP/Contents/Resources/AppStoreDistributionPermission.txt"
 if [[ "$MODE" == package ]]; then cp "$APP_STORE_PROFILE" "$APP/Contents/embedded.provisionprofile"; fi
 
+# Source files can be owner-only on the development Mac; installed app resources must be readable by every user.
+chmod -R a+rX "$APP"
+
 SIGN=(--force --options runtime --sign "$IDENTITY")
 if [[ "$MODE" == package ]]; then SIGN+=(--timestamp); fi
 codesign "${SIGN[@]}" \

@@ -62,5 +62,5 @@
   "appleValidation": "Only remaining listing validation error: You must choose a build. The two corrected JPEG screenshots finished processing.",
   "signedPackage": "dist/app-store/Oanarina-Archi-Tool-1.0.2-7.pkg",
   "signingStatus": "Application and installer signed successfully on 15 October 2026 after human keychain approval; bundle, certificate/profile match and installer signature verified",
-  "uploadStatus": "Xcode upload of actual signed build 7 archive started; server result pending"
+  "uploadStatus": "First Apple validation rejected owner-only bundled file modes; permissions normalized and verified, matching dSYMs included, corrected build 7 upload in progress"
 }

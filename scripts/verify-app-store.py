@@ -2,6 +2,7 @@
 """Check the built bundle, including both architectures and actual signed entitlements."""
 import plistlib
 import re
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -13,6 +14,11 @@ def read_entitlements(path):
 
 
 def verify(app):
+    for entry in [app, *app.rglob("*")]:
+        mode = entry.stat().st_mode
+        assert mode & stat.S_IROTH, "Bundle entry is not readable by all users: " + str(entry)
+        if entry.is_dir():
+            assert mode & stat.S_IXOTH, "Bundle directory is not traversable by all users: " + str(entry)
     info = plistlib.loads((app / "Contents/Info.plist").read_bytes())
     assert info["ArchiDistributionChannel"] == "app-store", "Missing store channel"
     assert info["CFBundleSupportedPlatforms"] == ["MacOSX"], "Store build must be Mac-only"
