@@ -1,5 +1,8 @@
 # Mac App Store edition
 
+**Current status — 15 October 2026:** macOS version **1.0.2 (7)** was successfully uploaded, processed, selected and submitted to Apple. App Store Connect confirms **Waiting for Review**, submission ID `828a79cc-0290-4243-a979-f28df5571438`. Automatic release after approval is selected. This is a completed review submission, not an approval or a live listing. Existing website downloads are unchanged. [Open the review submission](https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/828a79cc-0290-4243-a979-f28df5571438).
+
+
 The Mac App Store candidate is a separate, sandboxed macOS build. The existing signed/notarized website DMG and its download links remain available. The store preparation scripts never replace `build/Oanarina Archi Tool.app`, the website DMG, or `dist/SHA256SUMS.txt`.
 
 ## Build and verify locally
@@ -68,7 +71,7 @@ scripts/package-app-store.sh package
 
 Use the certificate names actually installed in your keychain. The script rejects expired, development, Developer ID, mismatched-platform, mismatched-team and mismatched-bundle profiles, validates the application's signing certificate against the profile, verifies both signed universal binaries and entitlements, and checks the installer signature. The resulting `.pkg` can be uploaded using Apple's Transporter app after the remaining submission items below are resolved. The script does not upload, enroll an account, purchase membership, or accept agreements.
 
-## Submission items still required
+## Earlier submission preparation
 
 **Licensing:** the repository remains GPL-3.0-or-later. On the owner’s instruction to remove incompatible copied material, the LibreCAD ACI table was replaced by the MIT-licensed ezdxf palette, pinned to commit `7c64bce52c9d60b9db2dad4d2793c1168c8d3f64`. Its full notice is preserved in the Swift file and app resources; `docs/THIRD-PARTY.md` records the change and the original table’s historical credit. Color indices and document schemas remain unchanged, while some indexed shades use the newer default display palette. Source/header and recorded-credit inspection found no other declared copied GPL material in the current native app; study references and independently implemented algorithms retain their credits. This is a source audit, not proof of every copyright interest. Git records Oana Rinaldi as the sole committing author. The owner expressly approved the alternative permission for original code/assets in `docs/APP-STORE-PERMISSION.txt` on 15 October 2026; it is bundled in the store candidate. No original-code license or third-party license has been silently changed.
 
@@ -112,7 +115,7 @@ These are local preview checks. The distribution-signed installer, App Store Con
 - [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)
 - [FSF's explanation of GPL/App Store conflicts](https://www.fsf.org/blogs/licensing/more-about-the-app-store-gpl-enforcement) (historical context; confirm current terms for this submission)
 
-## Current continuation
+## Earlier continuation (before keychain approval)
 
 The most recent distribution packaging attempt built the app but failed at helper signing with `errSecInternalComponent` when human keychain authorization timed out. The protected dialog cannot be operated by computer-use tools. A fresh attempt should be made with the human ready to approve it. Build 6 is superseded locally by revised build 7 (MIT palette replacement and explicit confirmation before each Anthropic request). No build is uploaded or submitted.
 
@@ -144,3 +147,7 @@ A new archive under `build/app-store/upload-7/` contains the actual signed build
 Apple’s first upload validation rejected owner-only read permissions inherited from several source resources and the Info.plist. Store packaging now normalizes bundle readability/traversal for all installed users before signing, and the bundle verifier rejects unreadable entries. The complete corrected packaging command passed. The upload archive now also includes both available universal dSYM bundles, with UUIDs confirmed against the app and CLI binaries. A corrected build 7 upload was started; its Apple result remains pending.
 
 The corrected upload succeeded: Xcode reported **Upload succeeded**, **Uploaded Oanarina Archi Tool** and **EXPORT SUCCEEDED** on 15 October 2026. Apple reports the uploaded package is processing (`build/app-store/upload-7-retry.log`). Build selection and final review submission are the next steps; successful upload alone is not review submission or approval.
+
+## Review submission completed
+
+Apple processed build **1.0.2 (7)** and marked it Ready to Submit. The actual build was selected and saved in the macOS version, Add for Review completed without validation errors, and Submit for Review returned **1 Item Submitted**. The submission detail page confirms **Waiting for Review** for macOS App 1.0.2 and build 7. Submission ID: `828a79cc-0290-4243-a979-f28df5571438`. Automatic release after Apple approval remains selected; no manual release action is required if Apple approves and availability requirements remain satisfied. Apple review approval and public availability have not occurred yet. Local evidence: `build/app-store/evidence/submitted-7.jpg` and `build/app-store/evidence/waiting-review-7.jpg`.

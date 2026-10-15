@@ -1,5 +1,5 @@
 {
-  "status": "build-7-uploaded-awaiting-apple-processing",
+  "status": "submitted-waiting-for-review",
   "platform": "macOS only",
   "bundleIdentifier": "com.oanarina.architool",
   "developerTeam": "HBD3XXQK45",
@@ -20,10 +20,7 @@
   "description": "Oanarina Archi Tool is a native Mac workspace for architectural drawing, 3D modeling and building information modeling. Draw with precise coordinates, snaps and familiar command aliases. Build projects with levels, walls, doors, windows, floors, roofs, stairs and rooms, then arrange sheets and export drawings or schedules.\n\nWork in 2D and 3D, edit materials, render views, and exchange models using implemented formats including DXF, IFC, OBJ, STL and GLB. Save projects in the native .archi format. Automate work through the built-in JavaScript console and opt-in local agent API.\n\nCore drawing and modeling work offline. Online lookups and a configured AI provider require a connection. Select project folders to access linked resources and multi-file exports in the sandboxed Mac App Store edition. Standalone command-line MCP and Python tooling are available in the website edition.",
   "keywords": "architecture,CAD,BIM,drafting,3D,design,DXF,IFC,floorplan,modeling",
   "reviewNotes": "Native macOS application for macOS 14 or later, with Apple silicon and Intel support. No login is required for local CAD/BIM work. Open the bundled Cedar House from the start screen to inspect a sample project. File > Allow Project Folder Access selects a project folder for linked assets, backups and batch exports. Settings > Agents enables the opt-in token-protected loopback server. Online AI is optional and uses the user's own configured provider; core modeling does not require an AI service. The standalone CLI/Python tools are available in the website edition.",
-  "remainingBeforeSubmission": [
-    "Select uploaded build and finish export-compliance answers",
-    "Validate revised build with Apple, submit for review, and let automatic release publish after approval"
-  ],
+  "remainingBeforeSubmission": [],
   "appleID": "6823133541",
   "appStoreConnectURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/macos/version/inflight",
   "SKU": "oanarina-archi-tool-macos",
@@ -52,15 +49,21 @@
     "Free pricing",
     "all 175 countries/regions availability",
     "published five-type App Privacy declaration",
-    "Content Rights Information: necessary rights to third-party content"
+    "Content Rights Information: necessary rights to third-party content",
+    "processed build 1.0.2 (7)",
+    "completed review submission"
   ],
   "appReviewContact": "Saved in App Store Connect using the contact details supplied by the owner; personal contact values are not stored in this repository.",
   "price": "Free (0.00)",
   "availability": "All 175 current countries/regions and future storefronts",
   "privacyDeclarationStatus": "Five-type declaration expressly approved by owner and published in App Store Connect on 15 October 2026",
   "distributionPermissionStatus": "Owner expressly approved docs/APP-STORE-PERMISSION.txt on 15 October 2026; former LibreCAD table removed and replaced by attributed MIT palette",
-  "appleValidation": "Only remaining listing validation error: You must choose a build. The two corrected JPEG screenshots finished processing.",
+  "appleValidation": "Complete submission accepted; macOS version 1.0.2 (7) is Waiting for Review",
   "signedPackage": "dist/app-store/Oanarina-Archi-Tool-1.0.2-7.pkg",
   "signingStatus": "Application and installer signed successfully on 15 October 2026 after human keychain approval; bundle, certificate/profile match and installer signature verified",
-  "uploadStatus": "Xcode reported Upload succeeded and EXPORT SUCCEEDED on 15 October 2026; uploaded package is processing"
+  "uploadStatus": "Build 7 uploaded successfully, processed by Apple and attached to version 1.0.2",
+  "reviewStatus": "Waiting for Review",
+  "submissionID": "828a79cc-0290-4243-a979-f28df5571438",
+  "submissionDate": "2026-10-15",
+  "reviewSubmissionURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/828a79cc-0290-4243-a979-f28df5571438"
 }
