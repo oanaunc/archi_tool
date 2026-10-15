@@ -45,10 +45,11 @@ python3 "$ROOT/scripts/verify-app-store.py" "$APP"
 
 if [[ "$MODE" == package ]]; then
   # Developer ID is a different distribution channel and cannot sign an App Store upload.
-  codesign -dvv "$APP" 2>&1 | grep -Eq '^Authority=(Apple Distribution:|3rd Party Mac Developer Application:|Mac App Distribution:)' || {
+  codesign -dvv "$APP" > "$WORK/application-signature.txt" 2>&1
+  grep -Eq '^Authority=(Apple Distribution:|3rd Party Mac Developer Application:|Mac App Distribution:)' "$WORK/application-signature.txt" || {
     echo 'The application signature is not a Mac App Store distribution identity.' >&2; exit 1;
   }
-  codesign --display --extract-certificates "$WORK/signing-cert" "$APP"
+  codesign --display --extract-certificates="$WORK/signing-cert" "$APP"
   python3 "$ROOT/scripts/app-store-profile.py" "$WORK/profile.plist" "$ROOT/app/Info.plist" "$ENTITLEMENTS" "$WORK/signing-cert0"
   PKG="$OUT/Oanarina-Archi-Tool-$VERSION-$BUILD.pkg"
   productbuild --component "$APP" /Applications --sign "$APP_STORE_INSTALLER_IDENTITY" "$PKG"
