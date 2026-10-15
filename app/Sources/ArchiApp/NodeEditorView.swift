@@ -97,7 +97,7 @@ struct NodeEditorView: View {
         let p = NSSavePanel()
         p.allowedContentTypes = [.javaScript]
         p.nameFieldStringValue = "graph.js"
-        guard p.runModal() == .OK, let u = p.url else { return }
+        guard p.runWithFileAccess() == .OK, let u = p.url else { return }
         do { try NodeGraphScript.javascript(graph, name: u.deletingPathExtension().lastPathComponent).write(to: u, atomically: true, encoding: .utf8); status = "Exported \(u.lastPathComponent)." }
         catch { status = error.localizedDescription }
     }
@@ -253,14 +253,14 @@ struct NodeEditorView: View {
         let p = NSSavePanel()
         p.allowedContentTypes = [.json]
         p.nameFieldStringValue = "graph.json"
-        guard p.runModal() == .OK, let u = p.url else { return }
+        guard p.runWithFileAccess() == .OK, let u = p.url else { return }
         do { try graph.json().write(to: u); status = "Exported \(u.lastPathComponent)." } catch { status = error.localizedDescription }
     }
 
     private func importJSON() {
         let p = NSOpenPanel()
         p.allowedContentTypes = [.json]
-        guard p.runModal() == .OK, let u = p.url else { return }
+        guard p.runWithFileAccess() == .OK, let u = p.url else { return }
         if let d = try? Data(contentsOf: u), let g = try? JSONDecoder().decode(NodeGraph.self, from: d) { graph = g; status = "Imported \(u.lastPathComponent)." }
         else { status = "Not a node graph file."; NSSound.beep() }
     }

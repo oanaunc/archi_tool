@@ -229,7 +229,7 @@ struct SheetView: View {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.pdf]
         panel.nameFieldStringValue = (layout?.name ?? "Sheet") + ".pdf"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard panel.runWithFileAccess() == .OK, let url = panel.url else { return }
         do { try Plotter.exportPDF(model: model, to: url, layoutIndex: layoutIndex) }
         catch { NSAlert(error: error).runModal() }
     }

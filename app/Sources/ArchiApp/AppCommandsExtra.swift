@@ -33,7 +33,7 @@ enum AppCommandsExtra {
         p.allowedContentTypes = types
         p.nameFieldStringValue = suggested
         if let d = FileLocations.exportFolder { p.directoryURL = d }
-        return p.runModal() == .OK ? p.url : nil
+        return p.runWithFileAccess() == .OK ? p.url : nil
     }
 
     static var all: [CommandDef] {

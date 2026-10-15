@@ -328,19 +328,19 @@ struct ComparePanel: View {
     private func choose() {
         let p = NSOpenPanel()
         p.message = "Choose the other (older) version of the drawing"
-        guard p.runModal() == .OK, let u = p.url else { return }
+        guard p.runWithFileAccess() == .OK, let u = p.url else { return }
         do { try overlay.load(u, model: model); error = ""; model.revision &+= 1 } catch { self.error = "Cannot read \(u.lastPathComponent): \(error.localizedDescription)" }
     }
     private func saveOverlay() {
         guard let u = overlay.other, let old = try? FileImport.load(u, reference: model.doc).0 else { return }
         let p = NSSavePanel(); p.nameFieldStringValue = "compare-overlay.archi"
-        guard p.runModal() == .OK, let out = p.url else { return }
+        guard p.runWithFileAccess() == .OK, let out = p.url else { return }
         do { try ArchiFile.encode(DocumentCompare.overlay(old, model.doc, diff: overlay.diff)).write(to: out, options: .atomic); model.editor.print("Wrote overlay \(out.path).") }
         catch { self.error = "Cannot write \(out.path)" }
     }
     private func saveCSV(_ d: DocumentDiff) {
         let p = NSSavePanel(); p.nameFieldStringValue = "compare.csv"
-        guard p.runModal() == .OK, let out = p.url else { return }
+        guard p.runWithFileAccess() == .OK, let out = p.url else { return }
         do { try d.csv.write(to: out, atomically: true, encoding: .utf8) } catch { self.error = "Cannot write \(out.path)" }
     }
 }

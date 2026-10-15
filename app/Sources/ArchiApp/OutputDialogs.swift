@@ -94,7 +94,7 @@ struct BatchPublishSheet: View {
         p.allowedContentTypes = [.pdf]
         p.nameFieldStringValue = "\(model.displayName) — sheets.pdf"
         if let d = FileLocations.exportFolder ?? model.editor.fileURL?.deletingLastPathComponent() { p.directoryURL = d }
-        guard p.runModal() == .OK, let url = p.url else { return }
+        guard p.runWithFileAccess() == .OK, let url = p.url else { return }
         do {
             try Plotter.publishPDF(doc: model.doc, layouts: chosen.sorted(), to: url, bookmarks: bookmarks)
             model.editor.print("Published \(chosen.count) sheet(s)\(bookmarks ? " with bookmarks" : "") to \(url.path)")

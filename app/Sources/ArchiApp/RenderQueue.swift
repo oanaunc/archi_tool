@@ -207,7 +207,7 @@ struct CameraPathEditor: View {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.mpeg4Movie]
         panel.nameFieldStringValue = "\(model.doc.info.name) \(p.name).mp4"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard panel.runWithFileAccess() == .OK, let url = panel.url else { return }
         exporting = true; progress = 0
         var s = RenderSettings(); s.width = 1280; s.height = 720
         let doc = model.doc, frames = max(2, Int(p.duration * Double(p.fps)) + 1), fps = p.fps
@@ -418,7 +418,7 @@ struct RenderQueueView: View {
     private func chooseFolder() {
         let p = NSOpenPanel(); p.canChooseDirectories = true; p.canChooseFiles = false; p.canCreateDirectories = true
         p.message = "Choose the folder for queued renders"
-        if p.runModal() == .OK, let u = p.url { queue.outputFolder = u }
+        if p.runWithFileAccess() == .OK, let u = p.url { queue.outputFolder = u }
     }
 }
 

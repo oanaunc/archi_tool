@@ -37,7 +37,7 @@ struct NamedPageSetupControls: View {
                 }.disabled(name.trimmingCharacters(in: .whitespaces).isEmpty).buttonStyle(FlatButtonStyle(compact: true))
                 Button("Import…") {
                     let panel = NSOpenPanel(); panel.allowedContentTypes = [.init(filenameExtension: "archi")!]
-                    guard panel.runModal() == .OK, let url = panel.url else { return }
+                    guard panel.runWithFileAccess() == .OK, let url = panel.url else { return }
                     do {
                         let source = try DocumentIO.read(url)
                         var count = 0

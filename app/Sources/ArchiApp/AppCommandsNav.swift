@@ -44,6 +44,15 @@ enum AppCommandsNav {
 
     static var all: [CommandDef] {
         [
+            CommandDef("FILEACCESS", aliases: ["FA", "GRANTFOLDER"], category: "File", summary: "Choose a project folder for drawings, linked assets, scripts and batch exports. Remembers access in the Mac App Store edition.", modifies: false) { ed in
+                _ = try ui(ed)
+                let panel = NSOpenPanel()
+                panel.canChooseDirectories = true; panel.canChooseFiles = false
+                panel.prompt = "Allow Access"
+                panel.message = "Choose a project folder to use its drawings, linked assets, scripts and exports."
+                guard panel.runWithFileAccess() == .OK, let url = panel.url else { return }
+                ed.print("Project folder selected: \(url.path)")
+            },
             CommandDef("FILETAB", category: "View", summary: "Shows the file tab bar with one tab per open drawing.", modifies: false) { ed in
                 FileTabs.visible = true; ed.print("File tabs on.")
             },
@@ -271,7 +280,7 @@ enum AppCommandsNav {
                 var path = try await ed.getString("Folder or file path (Enter = choose)", defaultValue: "") ?? ""
                 if path.isEmpty {
                     let p = NSOpenPanel(); p.canChooseDirectories = true; p.canChooseFiles = false; p.canCreateDirectories = true; p.prompt = "Export"
-                    guard p.runModal() == .OK, let u = p.url else { return }
+                    guard p.runWithFileAccess() == .OK, let u = p.url else { return }
                     path = u.path
                 }
                 var base = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
@@ -321,13 +330,13 @@ enum AppCommandsNav {
             },
             CommandDef("EXPORTSETTINGS", aliases: ["SETTINGSOUT"], category: "Settings", summary: "Exports all preferences (theme, shortcuts, toolbar, workspaces, snippets…) to a .plist file for another Mac.", modifies: false) { ed in
                 let p = NSSavePanel(); p.nameFieldStringValue = "Oanarina Archi Tool Settings.plist"; p.allowedContentTypes = [.propertyList]
-                guard p.runModal() == .OK, let u = p.url else { return }
+                guard p.runWithFileAccess() == .OK, let u = p.url else { return }
                 do { try SettingsTransfer.write(to: u) } catch { throw CommandError.invalid("Cannot write \(u.path).") }
                 ed.print("Settings exported to \(u.path) (\(SettingsTransfer.export().count) values).")
             },
             CommandDef("IMPORTSETTINGS", aliases: ["SETTINGSIN"], category: "Settings", summary: "Imports preferences exported by EXPORTSETTINGS (restart to apply everything).", modifies: false) { ed in
                 let p = NSOpenPanel(); p.allowedContentTypes = [.propertyList]
-                guard p.runModal() == .OK, let u = p.url else { return }
+                guard p.runWithFileAccess() == .OK, let u = p.url else { return }
                 let n: Int
                 do { n = try SettingsTransfer.read(from: u) } catch { throw CommandError.invalid("Cannot read \(u.lastPathComponent).") }
                 ed.print("Imported \(n) setting(s). Restart the app to apply all of them.")
@@ -355,7 +364,7 @@ enum AppCommandsNav {
                 var path = try await ed.getString("Drawing file (.archi) (Enter = choose)", defaultValue: "") ?? ""
                 if path.isEmpty {
                     let p = NSOpenPanel(); p.allowedContentTypes = [.init(filenameExtension: "archi") ?? .data]
-                    guard p.runModal() == .OK, let u = p.url else { return }
+                    guard p.runWithFileAccess() == .OK, let u = p.url else { return }
                     path = u.path
                 }
                 guard let data = try? Data(contentsOf: URL(fileURLWithPath: (path as NSString).expandingTildeInPath)), let src = try? ArchiFile.decode(data) else { throw CommandError.invalid("Cannot read \(path).") }

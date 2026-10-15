@@ -55,7 +55,7 @@ struct StartView: View {
                                 let p = NSOpenPanel()
                                 p.allowedContentTypes = [UTType(filenameExtension: TemplateLibrary.fileExtension) ?? .data, UTType(filenameExtension: ArchiFile.fileExtension) ?? .data]
                                 p.message = "Choose a template (.architemplate) to start a new drawing from"
-                                if p.runModal() == .OK, let u = p.url { TemplateLibrary.apply(TemplateLibrary.template(for: u), to: model) }
+                                if p.runWithFileAccess() == .OK, let u = p.url { TemplateLibrary.apply(TemplateLibrary.template(for: u), to: model) }
                             }
                             .buttonStyle(FlatButtonStyle(compact: true)).help("Start a new drawing from any .architemplate file")
                         }

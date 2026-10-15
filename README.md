@@ -62,8 +62,11 @@ Requires macOS 14 or later and Xcode 16 or later (Swift 5.10+).
 ./scripts/build.sh          # builds build/Oanarina Archi Tool.app
 ./scripts/test.sh           # runs the core test suite
 ./scripts/package.sh        # universal signed DMG in dist/
+./scripts/package-app-store.sh prepare  # separate local sandbox preview in dist/app-store/
 ./scripts/make-tutorials.sh record   # tutorial videos → build/tutorials/*.mp4
 ```
+
+The [Mac App Store preparation guide](docs/MAC-APP-STORE.md) covers sandbox access, store signing and remaining submission requirements. The website DMG remains a separate release channel.
 
 ## Project layout
 

@@ -365,7 +365,7 @@ struct DesignCenterPanel: View {
     private func load(_ d: ArchiDocument, _ name: String) { source = d; sourceName = name; chosen = []; message = "" }
     private func openFile() {
         let p = NSOpenPanel(); p.allowedContentTypes = [UTType(filenameExtension: "archi") ?? .data]
-        guard p.runModal() == .OK, let u = p.url, let data = try? Data(contentsOf: u), let d = try? ArchiFile.decode(data) else { return }
+        guard p.runWithFileAccess() == .OK, let u = p.url, let data = try? Data(contentsOf: u), let d = try? ArchiFile.decode(data) else { return }
         load(d, u.deletingPathExtension().lastPathComponent)
     }
     private func add(_ names: [String]) {
@@ -531,6 +531,7 @@ final class HelpBrowser: NSObject, WKNavigationDelegate {
 extension CommandCatalog {
     private static func n(_ t: String, _ s: String, _ names: String...) -> CmdItem { CmdItem(title: t, symbol: s, names: names) }
     static let navigationItems: [CmdItem] = [
+        n("Allow Project Folder Access…", "folder.badge.plus", "FILEACCESS"),
         n("File Tabs", "rectangle.topthird.inset.filled", "FILETAB"), n("Hide File Tabs", "rectangle", "FILETABCLOSE"), n("Model/Layout Tabs", "rectangle.bottomthird.inset.filled", "LAYOUTTABS"),
         n("Quick Properties", "slider.horizontal.below.rectangle", "QUICKPROPS"), n("Inspector", "list.bullet.rectangle", "INSPECT"), n("Design Center", "books.vertical.circle", "ADCENTER"),
         n("Help Browser", "questionmark.circle", "HELPWINDOW"), n("Tutorials", "graduationcap", "TUTORIALS"), n("Sample House", "house", "SAMPLEHOUSE"),

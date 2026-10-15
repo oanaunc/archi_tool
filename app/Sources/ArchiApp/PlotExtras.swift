@@ -165,7 +165,7 @@ extension Plotter {
             panel.allowedContentTypes = [.pdf]
             panel.nameFieldStringValue = "\(model.displayName) — sheets.pdf"
             if let dir = FileLocations.exportFolder ?? model.editor.fileURL?.deletingLastPathComponent() { panel.directoryURL = dir }
-            guard panel.runModal() == .OK, let u = panel.url else { return }
+            guard panel.runWithFileAccess() == .OK, let u = panel.url else { return }
             url = u
         }
         do {
@@ -327,7 +327,7 @@ struct PlotPreviewView: View {
         case .allSheets: name = "\(model.displayName) — sheets"
         }
         panel.nameFieldStringValue = name + ".pdf"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard panel.runWithFileAccess() == .OK, let url = panel.url else { return }
         do {
             try? FileManager.default.removeItem(at: url)
             try FileManager.default.copyItem(at: src, to: url)
@@ -608,7 +608,7 @@ struct TitleBlockSheet: View {
                         Text(logo.isEmpty ? "None" : (logo as NSString).lastPathComponent).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
                         Button("Choose…") {
                             let p = NSOpenPanel(); p.allowedContentTypes = [.image]
-                            if p.runModal() == .OK, let u = p.url { logo = u.path }
+                            if p.runWithFileAccess() == .OK, let u = p.url { logo = u.path }
                         }.buttonStyle(FlatButtonStyle(compact: true))
                         if !logo.isEmpty { Button("Remove") { logo = "" }.buttonStyle(FlatButtonStyle(compact: true)) }
                     }

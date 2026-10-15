@@ -153,13 +153,13 @@ struct NodePackagesMenu: View {
     }
     private func savePackage() {
         let p = NSSavePanel(); p.nameFieldStringValue = "My Nodes." + NodePackage.fileExtension
-        guard p.runModal() == .OK, let u = p.url else { return }
+        guard p.runWithFileAccess() == .OK, let u = p.url else { return }
         let pkg = NodePackages.make(from: graph, name: u.deletingPathExtension().lastPathComponent, author: NSFullUserName())
         do { try pkg.data().write(to: u); try NodePackages.install(pkg); status = "Package \(pkg.name): \(pkg.snippets.count) snippet(s)." } catch { status = error.localizedDescription }
     }
     private func installPackage() {
         let p = NSOpenPanel()
-        guard p.runModal() == .OK, let u = p.url else { return }
+        guard p.runWithFileAccess() == .OK, let u = p.url else { return }
         do { let pkg = try NodePackages.install(u); status = "Installed \(pkg.name) \(pkg.version)." } catch { status = error.localizedDescription }
     }
 }

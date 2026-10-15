@@ -24,6 +24,7 @@ enum WindowRouter {
         if let o = openWindow { o(r) } else if let p = r.path { pendingURLs.append(URL(fileURLWithPath: p)) }
     }
     static func openFile(_ url: URL) {
+        FileAccessBookmarks.shared.remember(url)
         // A template file opens as a new untitled drawing based on it (the template itself is not edited).
         if url.pathExtension.lowercased() == TemplateLibrary.fileExtension {
             MainActor.assumeIsolated {
@@ -270,7 +271,7 @@ final class FileController: EditorHost {
         p.allowedContentTypes = [.archiDocument, .dxfDrawing]
         p.allowsMultipleSelection = true
         p.message = "Open an Oanarina Archi project (.archi) or a DXF drawing"
-        guard p.runModal() == .OK else { return }
+        guard p.runWithFileAccess() == .OK else { return }
         for url in p.urls { openURL(url) }
     }
 
@@ -293,6 +294,7 @@ final class FileController: EditorHost {
     @discardableResult
     func load(_ url: URL) -> Bool {
         guard let model else { return false }
+        FileAccessBookmarks.shared.remember(url)
         do {
             let d = try FileController.readDocument(url)
             model.editor.replaceDocument(d, url: url)
@@ -333,7 +335,7 @@ final class FileController: EditorHost {
             p.directoryURL = u.deletingLastPathComponent()
             p.nameFieldStringValue = u.deletingPathExtension().lastPathComponent + " (recovered)." + ArchiFile.fileExtension
         }
-        guard p.runModal() == .OK, let url = p.url else { return false }
+        guard p.runWithFileAccess() == .OK, let url = p.url else { return false }
         return write(to: url)
     }
 
@@ -353,6 +355,7 @@ final class FileController: EditorHost {
             model.editor.isDirty = false
             model.autosave?.discard()
             model.recoveredOriginalPath = nil
+            FileAccessBookmarks.shared.remember(u)
             RecentFiles.add(u)
             SaveExtras.afterSave(model.doc, url: u, level: model.doc.currentLevel)
             SyncWatcher.track(model, url: u, doc: model.doc)
@@ -372,7 +375,7 @@ final class FileController: EditorHost {
         p.allowedContentTypes = [.dxfDrawing, .archiDocument] + FileImport.importFormats.compactMap { UTType(filenameExtension: $0) }
         p.allowsMultipleSelection = false
         p.message = "Import a drawing, model or data file (DXF, Archi, IFC, SVG, OBJ, STL, 3MF, GeoJSON, CSV/XYZ points) into the current document"
-        guard p.runModal() == .OK, let url = p.url else { return }
+        guard p.runWithFileAccess() == .OK, let url = p.url else { return }
         importFile(url)
     }
 
@@ -440,7 +443,7 @@ final class FileController: EditorHost {
         p.nameFieldStringValue = suggested + "." + ext
         p.canCreateDirectories = true
         if let dir = FileLocations.exportFolder ?? model?.editor.fileURL?.deletingLastPathComponent() { p.directoryURL = dir }
-        guard p.runModal() == .OK else { return nil }
+        guard p.runWithFileAccess() == .OK else { return nil }
         return p.url
     }
 

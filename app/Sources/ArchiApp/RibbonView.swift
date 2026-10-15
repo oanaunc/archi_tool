@@ -789,7 +789,7 @@ struct RibbonView: View {
                     let p = NSOpenPanel()
                     p.allowedContentTypes = [.javaScript, UTType(filenameExtension: "scr") ?? .plainText, .plainText]
                     p.message = "Choose a JavaScript file (archi API) or a command script (one command line per line)"
-                    if p.runModal() == .OK, let u = p.url { model.runScriptFile(u) }
+                    if p.runWithFileAccess() == .OK, let u = p.url { model.runScriptFile(u) }
                 }
                 Menu {
                     let scripts = ScriptLibrary.scripts()

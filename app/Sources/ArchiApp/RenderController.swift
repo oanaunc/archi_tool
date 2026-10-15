@@ -608,7 +608,7 @@ private struct RenderPanel: View {
         let p = NSOpenPanel()
         p.allowedContentTypes = ["hdr", "exr", "jpg", "jpeg", "png", "tif", "tiff"].compactMap { UTType(filenameExtension: $0) }
         p.message = "Choose an equirectangular (2:1) environment image"
-        if p.runModal() == .OK, let u = p.url { settings.hdriPath = u.path }
+        if p.runWithFileAccess() == .OK, let u = p.url { settings.hdriPath = u.path }
     }
 
     private var hourOfDay: Double {
@@ -665,7 +665,7 @@ private struct RenderPanel: View {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.png, .jpeg]
         panel.nameFieldStringValue = "\(model.doc.info.name) render.png"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard panel.runWithFileAccess() == .OK, let url = panel.url else { return }
         let jpeg = ["jpg", "jpeg"].contains(url.pathExtension.lowercased())
         let data = jpeg ? rep.representation(using: .jpeg, properties: [.compressionFactor: 0.92]) : rep.representation(using: .png, properties: [:])
         do { try data?.write(to: url); status = "Saved \(url.lastPathComponent)" } catch { status = error.localizedDescription }
@@ -683,7 +683,7 @@ private struct RenderPanel: View {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.mpeg4Movie]
         panel.nameFieldStringValue = "\(model.doc.info.name) \(suffix).mp4"
-        guard panel.runModal() == .OK, let url = panel.url else { return nil }
+        guard panel.runWithFileAccess() == .OK, let url = panel.url else { return nil }
         return url
     }
 
@@ -724,7 +724,7 @@ private struct RenderPanel: View {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.png, .jpeg]
         panel.nameFieldStringValue = "\(model.doc.info.name) 360.jpg"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard panel.runWithFileAccess() == .OK, let url = panel.url else { return }
         busy = true; progress = 0
         let doc = model.doc, s = settings
         let eye = Viewport3DController.active?.currentCamera.eye ?? PanoramaDefaults.eye(doc)
@@ -743,7 +743,7 @@ private struct RenderPanel: View {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.mpeg4Movie]
         panel.nameFieldStringValue = "\(model.doc.info.name) turntable.mp4"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard panel.runWithFileAccess() == .OK, let url = panel.url else { return }
         busy = true; progress = 0
         var s = settings
         if s.width > 1920 { s.width = 1920; s.height = 1080 }

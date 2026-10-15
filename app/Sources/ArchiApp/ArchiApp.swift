@@ -10,6 +10,11 @@ struct ArchiToolApp: App {
 
     /// `--selftest`: runs APPSELFTEST headless (no window), prints the report and exits with 0 (pass) or 1 (fail).
     init() {
+        FileAccessBookmarks.shared.restore()
+        if CommandLine.arguments.contains("--sandbox-selftest") {
+            let failures = MainActor.assumeIsolated { AppStoreChecks.run() }
+            exit(failures == 0 ? 0 : 1)
+        }
         MainActor.assumeIsolated { BeautyCLI.runIfRequested() }   // --render-cedar: headless sample renders, then exit
         guard CommandLine.arguments.contains("--selftest") else { return }
         let failed: Bool = MainActor.assumeIsolated {
@@ -85,6 +90,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        FileAccessBookmarks.shared.stop()
         CrashReporter.uninstall()
         MainActor.assumeIsolated {
             // A normal quit: the user already decided about unsaved changes.
@@ -232,7 +238,7 @@ struct ArchiCommands: Commands {
         let p = NSOpenPanel()
         p.allowedContentTypes = [.archiDocument, .dxfDrawing]
         p.allowsMultipleSelection = true
-        guard p.runModal() == .OK else { return }
+        guard p.runWithFileAccess() == .OK else { return }
         for u in p.urls { openWindow(value: DocumentRequest(kind: .open, path: u.path)) }
     }
 
@@ -278,6 +284,7 @@ struct ArchiCommands: Commands {
             }
             Button("Open…") { openFromMenu() }
                 .keyboardShortcut("o")
+            Button("Allow Project Folder Access…") { model?.runCommand("FILEACCESS") }.disabled(model == nil)
             Menu(L10n.t("Open Recent")) {
                 ForEach(RecentFiles.urls, id: \.self) { u in
                     Button(u.lastPathComponent) {

@@ -94,7 +94,7 @@ struct MaterialMapsSection: View {
         let p = NSOpenPanel()
         p.allowedContentTypes = [.image]
         p.message = "Choose the \(title.lowercased()) map (it tiles like the albedo texture)"
-        guard p.runModal() == .OK, let u = p.url else { return }
+        guard p.runWithFileAccess() == .OK, let u = p.url else { return }
         var path = u.path
         if let dir = model.editor.fileURL?.deletingLastPathComponent().path, path.hasPrefix(dir + "/") { path = String(path.dropFirst(dir.count + 1)) }
         edit("Map") { m in
@@ -106,7 +106,7 @@ struct MaterialMapsSection: View {
         let p = NSOpenPanel()
         p.allowedContentTypes = [.image]
         p.message = "Choose a photo of the surface"
-        guard p.runModal() == .OK, let u = p.url else { return }
+        guard p.runWithFileAccess() == .OK, let u = p.url else { return }
         let n = u.deletingPathExtension().lastPathComponent.capitalized
         do { try model.editor.transaction("Material from Photo") { _ = try PhotoMaterial.create(from: u, name: n, tileSize: 1000, in: &$0) } }
         catch { model.editor.print("Material from photo failed: \(error.localizedDescription)") }

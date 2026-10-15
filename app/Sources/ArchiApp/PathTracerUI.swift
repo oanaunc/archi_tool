@@ -204,7 +204,7 @@ final class PathTraceController: ObservableObject {
     func save() {
         guard let img = image, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:]) else { return }
         let p = NSSavePanel(); p.allowedContentTypes = [.png]; p.nameFieldStringValue = "Path Traced.png"
-        if p.runModal() == .OK, let u = p.url { try? png.write(to: u) }
+        if p.runWithFileAccess() == .OK, let u = p.url { try? png.write(to: u) }
     }
 }
 

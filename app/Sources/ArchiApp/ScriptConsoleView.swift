@@ -200,7 +200,7 @@ struct ScriptConsoleView: View {
     private func open() {
         let p = NSOpenPanel()
         p.allowedContentTypes = [.javaScript, .plainText]
-        guard p.runModal() == .OK, let url = p.url, let s = try? String(contentsOf: url, encoding: .utf8) else { return }
+        guard p.runWithFileAccess() == .OK, let url = p.url, let s = try? String(contentsOf: url, encoding: .utf8) else { return }
         code = s
     }
 
@@ -208,7 +208,7 @@ struct ScriptConsoleView: View {
         let p = NSSavePanel()
         p.allowedContentTypes = [.javaScript]
         p.nameFieldStringValue = "script.js"
-        guard p.runModal() == .OK, let url = p.url else { return }
+        guard p.runWithFileAccess() == .OK, let url = p.url else { return }
         do { try code.write(to: url, atomically: true, encoding: .utf8) }
         catch { lines.append(ConsoleLine(kind: .error, text: "✖ " + error.localizedDescription)) }
     }

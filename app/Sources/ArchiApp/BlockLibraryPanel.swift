@@ -237,7 +237,7 @@ struct BlockLibraryView: View {
         let p = NSOpenPanel()
         p.canChooseDirectories = true; p.canChooseFiles = false; p.allowsMultipleSelection = false
         p.message = "Choose a folder of drawings (.archi, .dxf) to browse as a block library"
-        if p.runModal() == .OK, let u = p.url {
+        if p.runWithFileAccess() == .OK, let u = p.url {
             store.addFolder(u)
         }
     }

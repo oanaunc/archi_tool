@@ -17,7 +17,9 @@ struct AgentPrefs: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("CONNECT CLAUDE").font(.system(size: 10, weight: .semibold)).tracking(0.6).foregroundStyle(Theme.textDim)
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Claude Desktop and Claude Code talk to Oanarina Archi Tool through the bundled archi-cli in MCP mode, or to this running window through the local agent server.")
+                    Text(AppDistribution.isAppStore
+                         ? "Connect agents to this running window through the local agent server. For a standalone archi-cli MCP server or the Python bridge, use the website edition."
+                         : "Claude Desktop and Claude Code talk to Oanarina Archi Tool through the bundled archi-cli in MCP mode, or to this running window through the local agent server.")
                         .fixedSize(horizontal: false, vertical: true)
                     Button("Show Setup Instructions…") { showHelp = true }.buttonStyle(FlatButtonStyle(prominent: true))
                 }
@@ -143,6 +145,11 @@ struct ConnectClaudeSheet: View {
             HSeparator()
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    if AppDistribution.isAppStore {
+                        step("1", "Connect to the open drawing", "Start the local agent server (Settings ▸ Agents or Script ▸ Start Server), then send JSON-RPC commands using the session token. Choose File ▸ Allow Project Folder Access for linked assets and exports outside the app's private folder.")
+                        code(ConnectClaudeSheet.curlExample)
+                        step("2", "Standalone MCP and Python", "The Mac App Store helper inherits the app's sandbox and cannot be launched as an independent MCP server. Install the website edition from https://www.oanarinaldi.com for standalone archi-cli --mcp and the Python bridge.")
+                    } else {
                     step("1", "What archi-cli --mcp does",
                          "archi-cli is bundled inside the app. With --mcp it becomes a Model Context Protocol server on stdin/stdout that opens (or creates) one .archi file and exposes tools: run_command (any command line such as WALL 0,0 6000,0), get_document, list_entities, add_entity, update_entity, delete_entities, add_element, export and screenshot. Every change is saved back to the file, so you can open it here afterwards.")
                     step("2", "Claude Desktop", "Settings ▸ Developer ▸ Edit Config, then add this to claude_desktop_config.json and restart Claude Desktop:")
@@ -151,6 +158,7 @@ struct ConnectClaudeSheet: View {
                     code(ConnectClaudeSheet.claudeCodeCommand)
                     step("4", "Drive this open window instead", "Start the local agent server (Settings ▸ Agents or Script ▸ Start Server). Agents send JSON-RPC 2.0 to 127.0.0.1 with the session token; the same methods are available and you watch the edits live:")
                     code(ConnectClaudeSheet.curlExample)
+                    }
                     Text("Replace MyProject.archi with your own file. Keep the token private: anyone with it can edit the open drawing while the server runs. The server only accepts connections from this Mac.")
                         .font(Theme.fontSmall).foregroundStyle(Theme.textDim).fixedSize(horizontal: false, vertical: true)
                     if !copied.isEmpty { Text(copied).font(Theme.fontSmall).foregroundStyle(Theme.accent) }

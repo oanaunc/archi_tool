@@ -237,7 +237,7 @@ private struct MaterialEditor: View {
         let p = NSOpenPanel()
         p.allowedContentTypes = [.image]
         p.message = "Choose a texture image (it tiles at the tile size on 3D faces)"
-        guard p.runModal() == .OK, let u = p.url else { return }
+        guard p.runWithFileAccess() == .OK, let u = p.url else { return }
         var path = u.path
         if let dir = model.editor.fileURL?.deletingLastPathComponent().path, path.hasPrefix(dir + "/") { path = String(path.dropFirst(dir.count + 1)) }
         update("Texture") { $0.texture = path }

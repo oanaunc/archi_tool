@@ -593,7 +593,7 @@ private struct ShortcutPrefs: View {
         let p = NSSavePanel()
         p.allowedContentTypes = [.json]
         p.nameFieldStringValue = "Archi Shortcuts.json"
-        guard p.runModal() == .OK, let u = p.url else { return }
+        guard p.runWithFileAccess() == .OK, let u = p.url else { return }
         let e = JSONEncoder(); e.outputFormatting = [.prettyPrinted, .sortedKeys]
         do { try e.encode(prefs.shortcuts).write(to: u); message = "Exported \(prefs.shortcuts.count) shortcut(s)." }
         catch { message = error.localizedDescription }
@@ -602,7 +602,7 @@ private struct ShortcutPrefs: View {
     private func importShortcuts() {
         let p = NSOpenPanel()
         p.allowedContentTypes = [.json]
-        guard p.runModal() == .OK, let u = p.url, let d = try? Data(contentsOf: u),
+        guard p.runWithFileAccess() == .OK, let u = p.url, let d = try? Data(contentsOf: u),
               let map = try? JSONDecoder().decode([String: String].self, from: d) else { message = "Not a shortcuts file."; return }
         var n = 0
         for (k, v) in map { if let c = KeyCombo(k), c.isAssignable { prefs.shortcuts[c.normalized] = v; n += 1 } }
@@ -711,7 +711,7 @@ private struct FolderRow: View {
             Button("Choose…") {
                 let p = NSOpenPanel()
                 p.canChooseDirectories = true; p.canChooseFiles = false; p.canCreateDirectories = true
-                if p.runModal() == .OK, let u = p.url { path = u.path }
+                if p.runWithFileAccess() == .OK, let u = p.url { path = u.path }
             }
             .buttonStyle(FlatButtonStyle(compact: true))
             if let u = path.isEmpty ? defaultURL : URL(fileURLWithPath: path) {

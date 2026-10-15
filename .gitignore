@@ -8,3 +8,6 @@
 .swiftpm/
 *.xcuserstate
 xcuserdata/
+__pycache__/
+*.provisionprofile
+*.mobileprovision

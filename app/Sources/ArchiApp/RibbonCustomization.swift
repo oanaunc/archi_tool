@@ -220,11 +220,11 @@ private struct CUIView: View {
     }
     private func exportFile() {
         let p = NSSavePanel(); p.allowedContentTypes = [.json]; p.nameFieldStringValue = "Ribbon.archicui.json"
-        if p.runModal() == .OK, let u = p.url { do { try RibbonCustom.export(to: u); message = "Exported." } catch { message = error.localizedDescription } }
+        if p.runWithFileAccess() == .OK, let u = p.url { do { try RibbonCustom.export(to: u); message = "Exported." } catch { message = error.localizedDescription } }
     }
     private func importFile() {
         let p = NSOpenPanel(); p.allowedContentTypes = [.json]
-        guard p.runModal() == .OK, let u = p.url else { return }
+        guard p.runWithFileAccess() == .OK, let u = p.url else { return }
         do {
             let unknown = try RibbonCustom.importFile(u)
             custom = RibbonCustom.current
