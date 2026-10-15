@@ -1,9 +1,8 @@
 {
-  "status": "draft-not-submitted",
+  "status": "app-store-connect-draft-saved-not-submitted",
   "platform": "macOS only",
   "bundleIdentifier": "com.oanarina.architool",
   "developerTeam": "HBD3XXQK45",
-  "proposedSKU": "oanarina-archi-tool-macos",
   "primaryLanguage": "English (U.S.)",
   "name": "Oanarina Archi Tool",
   "subtitle": "Architecture, CAD and BIM",
@@ -11,7 +10,10 @@
   "version": "1.0.2",
   "build": "6",
   "minimumMacOS": "14.0",
-  "architectures": ["Apple silicon", "Intel"],
+  "architectures": [
+    "Apple silicon",
+    "Intel"
+  ],
   "marketingURL": "https://www.oanarinaldi.com/archi-tool.html",
   "supportURL": "https://www.oanarinaldi.com/archi-tool.html",
   "privacyPolicyURL": null,
@@ -20,11 +22,32 @@
   "reviewNotes": "Native macOS application for macOS 14 or later, with Apple silicon and Intel support. No login is required for local CAD/BIM work. Open the bundled Cedar House from the start screen to inspect a sample project. File > Allow Project Folder Access selects a project folder for linked assets, backups and batch exports. Settings > Agents enables the opt-in token-protected loopback server. Online AI is optional and uses the user's own configured provider; core modeling does not require an AI service. The standalone CLI/Python tools are available in the website edition.",
   "remainingBeforeSubmission": [
     "Approve use of the distribution signing key in macOS and complete signed-package verification",
-    "Sign into App Store Connect and check for an existing app record before creating a new macOS record",
+    "Account holder must review and accept the updated Paid Applications Schedule in App Store Connect Business; no agreement accepted by this preparation",
     "Resolve GPL/App Store distribution rights and terms before submission",
     "Publish an accurate app privacy policy and complete the data-collection questionnaire",
     "Supply current macOS screenshots and complete age-rating, content-rights and export-compliance answers",
     "Choose the store price and availability in App Store Connect",
     "Validate the uploaded build with Apple's servers and submit for review"
+  ],
+  "appleID": "6823133541",
+  "appStoreConnectURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/macos/version/inflight",
+  "SKU": "oanarina-archi-tool-macos",
+  "releaseType": "manual",
+  "savedInAppStoreConnect": [
+    "macOS-only app record",
+    "name",
+    "primaryLanguage",
+    "bundleIdentifier",
+    "SKU",
+    "version",
+    "subtitle",
+    "primaryCategory",
+    "description",
+    "keywords",
+    "supportURL",
+    "marketingURL",
+    "reviewNotes",
+    "sign-in not required",
+    "manual release"
   ]
 }

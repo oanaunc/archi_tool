@@ -47,7 +47,13 @@ APP_STORE_PROFILE="$PWD/build/app-store/profiles/ArchiTool-MacAppStore.provision
 scripts/package-app-store.sh package
 ```
 
-The Apple Developer website separately requires browser sign-in before the App Store Connect listing can be configured. Draft listing fields are in `docs/APP-STORE-METADATA.json`; draft privacy text is in `docs/ARCHI-TOOL-PRIVACY-DRAFT.md`. Neither draft has been submitted or published.
+Browser sign-in was subsequently completed. The macOS-only App Store Connect record was created successfully: **Oanarina Archi Tool**, Apple ID **6823133541**, bundle ID `com.oanarina.architool`, SKU `oanarina-archi-tool-macos`, primary language English (U.S.). [Open the draft](https://appstoreconnect.apple.com/apps/6823133541/distribution/macos/version/inflight).
+
+Version **1.0.2** is in **Prepare for Submission**. Its description, keywords, support/marketing URLs, reviewer notes, no-sign-in setting and manual release setting were saved. General App Information confirmed **Saved** for the subtitle and Graphics & Design category. No build was uploaded and Add for Review was not used. A local screenshot of the saved version header is at `build/app-store/evidence/app-store-draft.jpg` (ignored by Git).
+
+App Store Connect displays an account-level requirement to review and accept the updated **Paid Applications Schedule (Schedule 2)** in Business. The account holder must review this binding agreement; no agreement was accepted here. The actual packaging command was also retried with the new profile, reached signing, and failed with `errSecInternalComponent` after protected keychain authorization timed out. A fresh signing attempt needs the human present to approve that macOS dialog. No signing-key permissions were bypassed or weakened.
+
+Saved listing fields and remaining requirements are recorded in `docs/APP-STORE-METADATA.json`; draft privacy text is in `docs/ARCHI-TOOL-PRIVACY-DRAFT.md`. Privacy text is not published and the app is not submitted.
 
 In Xcode → Settings → Accounts, select the enrolled team and manage the distribution certificates. Create/download the Mac App Store distribution profile from Certificates, Identifiers & Profiles. Keep private keys and profiles out of Git.
 
@@ -67,7 +73,7 @@ Use the certificate names actually installed in your keychain. The script reject
 
 **Privacy:** `PrivacyInfo.xcprivacy` declares no tracking and the reasons for app-specific preferences, document/container timestamps and event timing. It does not assert a completed App Store Connect data-collection questionnaire. Review the optional Anthropic assistant (which sends prompts and drawing summaries to the user's provider account), configured BCF servers/webhooks, online dictionary queries and any server retention before finalizing privacy labels and a public privacy-policy URL. Local modeling needs no cloud account; crash reports are stored locally and are not sent automatically.
 
-**Review:** create a macOS-only App Store Connect record, supply the description, category, icon, supported-language screenshots, age rating, content rights, support/privacy URLs and export-compliance answers, then validate/upload the signed package. Test outside-container files across an actual quit/relaunch, moved/deleted files, linked assets, Save As, backups, sidecar export, custom script folders, printing, local/cloud AI and loopback agents. Local checks cannot confirm Apple's server validation or review approval.
+**Review:** the macOS-only record and factual text metadata are saved. Supply the build-derived icon, supported-language screenshots, age rating, content rights, public privacy URL, review contact and export-compliance answers, choose price/availability, then validate/upload the signed package. Resolve the agreement and distribution-rights requirements first. Test outside-container files across an actual quit/relaunch, moved/deleted files, linked assets, Save As, backups, sidecar export, custom script folders, printing, local/cloud AI and loopback agents. Local checks cannot confirm Apple's server validation or review approval.
 
 ## Draft listing
 
