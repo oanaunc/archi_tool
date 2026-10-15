@@ -9,7 +9,9 @@ final class IODXFFidelityTests: XCTestCase {
         XCTAssertEqual(DXFColors.rgba(aci: 1), RGBA(1, 0, 0))
         XCTAssertEqual(DXFColors.aci[8], 0x808080)
         XCTAssertEqual(DXFColors.aci[30], 0xFF7F00)      // orange
-        XCTAssertEqual(DXFColors.aci[250], 0x333333)
+        XCTAssertEqual(DXFColors.aci[12], 0xA50000)      // default model-space dark red
+        XCTAssertEqual(DXFColors.aci[250], 0x000000)
+        XCTAssertEqual(DXFColors.aci[254], 0xCCCCCC)
         for i in [1, 5, 7, 30, 94, 171, 250, 254] { XCTAssertEqual(DXFColors.nearest(DXFColors.rgba(aci: i)), i, "ACI \(i) maps to itself") }
         XCTAssertTrue(DXFColors.isExact(RGBA(1, 0, 0)))
         XCTAssertFalse(DXFColors.isExact(RGBA(0.1, 0.2, 0.3)))
