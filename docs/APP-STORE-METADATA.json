@@ -21,7 +21,6 @@
   "keywords": "architecture,CAD,BIM,drafting,3D,design,DXF,IFC,floorplan,modeling",
   "reviewNotes": "Native macOS application for macOS 14 or later, with Apple silicon and Intel support. No login is required for local CAD/BIM work. Open the bundled Cedar House from the start screen to inspect a sample project. File > Allow Project Folder Access selects a project folder for linked assets, backups and batch exports. Settings > Agents enables the opt-in token-protected loopback server. Online AI is optional and uses the user's own configured provider; core modeling does not require an AI service. The standalone CLI/Python tools are available in the website edition.",
   "remainingBeforeSubmission": [
-    "Retry distribution signing with the human present to approve macOS key access; latest revised build 7 attempt timed out with errSecInternalComponent",
     "Select uploaded build and finish export-compliance answers",
     "Validate revised build with Apple, submit for review, and let automatic release publish after approval"
   ],
@@ -60,5 +59,8 @@
   "availability": "All 175 current countries/regions and future storefronts",
   "privacyDeclarationStatus": "Five-type declaration expressly approved by owner and published in App Store Connect on 15 October 2026",
   "distributionPermissionStatus": "Owner expressly approved docs/APP-STORE-PERMISSION.txt on 15 October 2026; former LibreCAD table removed and replaced by attributed MIT palette",
-  "appleValidation": "Only remaining listing validation error: You must choose a build. The two corrected JPEG screenshots finished processing."
+  "appleValidation": "Only remaining listing validation error: You must choose a build. The two corrected JPEG screenshots finished processing.",
+  "signedPackage": "dist/app-store/Oanarina-Archi-Tool-1.0.2-7.pkg",
+  "signingStatus": "Application and installer signed successfully on 15 October 2026 after human keychain approval; bundle, certificate/profile match and installer signature verified",
+  "uploadStatus": "Xcode upload of actual signed build 7 archive started; server result pending"
 }
