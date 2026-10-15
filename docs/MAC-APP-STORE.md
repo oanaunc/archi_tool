@@ -30,6 +30,25 @@ An App Store purchasing account alone does not establish Apple Developer Program
 
 Local account inspection on 15 October 2026: Xcode is already signed into the **OANA RINALDI Developer Team**, with Admin access. No macOS provisioning profiles or usable Mac App Store distribution signing identities were found on this Mac. No membership purchase, new account, certificate creation, agreement acceptance or store upload was performed.
 
+### Signing setup created after authorization
+
+Later on 15 October 2026, the user authorized creating the signing setup. Xcode created **Apple Distribution: OANA RINALDI (HBD3XXQK45)** and **3rd Party Mac Developer Installer: OANA RINALDI (HBD3XXQK45)**. Their private keys remain in the macOS keychain.
+
+Xcode-managed export of an archive of the actual app obtained **Mac Team Store Provisioning Profile: com.oanarina.architool**, for platform `OSX` and explicit application identifier `HBD3XXQK45.com.oanarina.architool`. Local checks confirmed the profile authorizes the new application distribution certificate and expires on 15 October 2027. A local copy is at `build/app-store/profiles/ArchiTool-MacAppStore.provisionprofile`; it is ignored by Git.
+
+The first local export reached code signing but failed with `errSecInternalComponent` while waiting for keychain authorization. The computer-use tool cannot operate the protected macOS SecurityAgent dialog. The human needs to approve the system's request to use the new signing key before retrying. No store upload or agreement acceptance occurred.
+
+To generate the real signed installer after that authorization:
+
+```sh
+APP_STORE_APPLICATION_IDENTITY='Apple Distribution: OANA RINALDI (HBD3XXQK45)' \
+APP_STORE_INSTALLER_IDENTITY='3rd Party Mac Developer Installer: OANA RINALDI (HBD3XXQK45)' \
+APP_STORE_PROFILE="$PWD/build/app-store/profiles/ArchiTool-MacAppStore.provisionprofile" \
+scripts/package-app-store.sh package
+```
+
+The Apple Developer website separately requires browser sign-in before the App Store Connect listing can be configured. Draft listing fields are in `docs/APP-STORE-METADATA.json`; draft privacy text is in `docs/ARCHI-TOOL-PRIVACY-DRAFT.md`. Neither draft has been submitted or published.
+
 In Xcode → Settings → Accounts, select the enrolled team and manage the distribution certificates. Create/download the Mac App Store distribution profile from Certificates, Identifiers & Profiles. Keep private keys and profiles out of Git.
 
 ```sh
