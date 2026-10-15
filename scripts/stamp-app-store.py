@@ -17,6 +17,8 @@ version += [0] * (3 - len(version))
 info.update({
     "CFBundleVersion": sys.argv[2], "CFBundleInfoDictionaryVersion": "6.0",
     "CFBundleSupportedPlatforms": ["MacOSX"], "ArchiDistributionChannel": "app-store",
+    # Current native code uses OS-provided HTTPS/keychain services and no bundled cryptographic implementation.
+    "ITSAppUsesNonExemptEncryption": False,
     "DTPlatformName": "macosx", "DTPlatformVersion": sdk, "DTPlatformBuild": sdk_build,
     "DTSDKName": "macosx" + sdk, "DTSDKBuild": sdk_build,
     "DTXcode": str(version[0] * 100 + version[1] * 10 + version[2]),

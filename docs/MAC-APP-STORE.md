@@ -44,16 +44,17 @@ To generate the real signed installer after that authorization:
 APP_STORE_APPLICATION_IDENTITY='Apple Distribution: OANA RINALDI (HBD3XXQK45)' \
 APP_STORE_INSTALLER_IDENTITY='3rd Party Mac Developer Installer: OANA RINALDI (HBD3XXQK45)' \
 APP_STORE_PROFILE="$PWD/build/app-store/profiles/ArchiTool-MacAppStore.provisionprofile" \
+APP_STORE_BUILD_NUMBER=7 \
 scripts/package-app-store.sh package
 ```
 
 Browser sign-in was subsequently completed. The macOS-only App Store Connect record was created successfully: **Oanarina Archi Tool**, Apple ID **6823133541**, bundle ID `com.oanarina.architool`, SKU `oanarina-archi-tool-macos`, primary language English (U.S.). [Open the draft](https://appstoreconnect.apple.com/apps/6823133541/distribution/macos/version/inflight).
 
-Version **1.0.2** is in **Prepare for Submission**. Its description, keywords, support/marketing URLs, reviewer notes, no-sign-in setting and manual release setting were saved. General App Information confirmed **Saved** for the subtitle and Graphics & Design category. App Review contact information was subsequently supplied by the owner and saved in App Store Connect. The personal phone and email values are kept in Apple’s review form rather than the repository. No build was uploaded and Add for Review was not used. A local screenshot of the saved version header is at `build/app-store/evidence/app-store-draft.jpg` (ignored by Git).
+Version **1.0.2** is in **Prepare for Submission**. Its description, keywords, support/marketing URLs, reviewer notes and no-sign-in setting were saved. At the owner’s subsequent request, the release setting was changed to automatic release after Apple approval. General App Information confirmed **Saved** for the subtitle and Graphics & Design category. App Review contact information was subsequently supplied by the owner and saved in App Store Connect. The personal phone and email values are kept in Apple’s review form rather than the repository. No build was uploaded. Add for Review was used only to obtain validation errors; Apple did not add the incomplete submission for review. A local screenshot of the saved version header is at `build/app-store/evidence/app-store-draft.jpg` (ignored by Git).
 
 App Store Connect displays an account-level requirement to review and accept the updated **Paid Applications Schedule (Schedule 2)** in Business. The account holder must review this binding agreement; no agreement was accepted here. The actual packaging command was also retried with the new profile, reached signing, and failed with `errSecInternalComponent` after protected keychain authorization timed out. A fresh signing attempt needs the human present to approve that macOS dialog. No signing-key permissions were bypassed or weakened.
 
-Saved listing fields and remaining requirements are recorded in `docs/APP-STORE-METADATA.json`; draft privacy text is in `docs/ARCHI-TOOL-PRIVACY-DRAFT.md`. Privacy text is not published and the app is not submitted.
+Saved listing fields and remaining requirements are recorded in `docs/APP-STORE-METADATA.json`; draft privacy text is in `docs/ARCHI-TOOL-PRIVACY.md`. The public privacy policy is now published and verified; the app is not submitted.
 
 In Xcode → Settings → Accounts, select the enrolled team and manage the distribution certificates. Create/download the Mac App Store distribution profile from Certificates, Identifiers & Profiles. Keep private keys and profiles out of Git.
 
@@ -61,7 +62,7 @@ In Xcode → Settings → Accounts, select the enrolled team and manage the dist
 APP_STORE_APPLICATION_IDENTITY='3rd Party Mac Developer Application: YOUR NAME (TEAMID)' \
 APP_STORE_INSTALLER_IDENTITY='3rd Party Mac Developer Installer: YOUR NAME (TEAMID)' \
 APP_STORE_PROFILE='/absolute/path/to/store.provisionprofile' \
-APP_STORE_BUILD_NUMBER=6 \
+APP_STORE_BUILD_NUMBER=7 \
 scripts/package-app-store.sh package
 ```
 
@@ -69,11 +70,11 @@ Use the certificate names actually installed in your keychain. The script reject
 
 ## Submission items still required
 
-**Licensing:** the repository remains GPL-3.0-or-later. `docs/THIRD-PARTY.md` records GPL source material, including the credited LibreCAD ACI table. GPL distribution and App Store restrictions require a rights/terms review before submitting. Do not assume sole ownership of every incorporated contribution or silently relicense third-party material. No license change or App Store distribution permission is asserted by this preparation work.
+**Licensing:** the repository remains GPL-3.0-or-later. On the owner’s instruction to remove incompatible copied material, the LibreCAD ACI table was replaced by the MIT-licensed ezdxf palette, pinned to commit `7c64bce52c9d60b9db2dad4d2793c1168c8d3f64`. Its full notice is preserved in the Swift file and app resources; `docs/THIRD-PARTY.md` records the change and the original table’s historical credit. Color indices and document schemas remain unchanged, while some indexed shades use the newer default display palette. Source/header and recorded-credit inspection found no other declared copied GPL material in the current native app; study references and independently implemented algorithms retain their credits. This is a source audit, not proof of every copyright interest. Git records Oana Rinaldi as the sole committing author. The owner expressly approved the alternative permission for original code/assets in `docs/APP-STORE-PERMISSION.txt` on 15 October 2026; it is bundled in the store candidate. No original-code license or third-party license has been silently changed.
 
 **Privacy:** `PrivacyInfo.xcprivacy` declares no tracking and the reasons for app-specific preferences, document/container timestamps and event timing. It does not assert a completed App Store Connect data-collection questionnaire. Review the optional Anthropic assistant (which sends prompts and drawing summaries to the user's provider account), configured BCF servers/webhooks, online dictionary queries and any server retention before finalizing privacy labels and a public privacy-policy URL. Local modeling needs no cloud account; crash reports are stored locally and are not sent automatically.
 
-**Review:** the macOS-only record and factual text metadata are saved. Supply the build-derived icon, supported-language screenshots, age rating, content rights, public privacy URL and export-compliance answers, choose price/availability, then validate/upload the signed package. Resolve the agreement and distribution-rights requirements first. Test outside-container files across an actual quit/relaunch, moved/deleted files, linked assets, Save As, backups, sidecar export, custom script folders, printing, local/cloud AI and loopback agents. Local checks cannot confirm Apple's server validation or review approval.
+**Review:** the macOS-only record and factual text metadata are saved. The English (U.S.) listing now has two actual 2880 × 1800 Mac screenshots and a calculated 4+ rating (collaboration messaging is disclosed). Free pricing and availability in all 175 current/future storefronts are configured to match the free website edition. The policy URL is saved; five conservative online-data disclosures were expressly approved by the owner and published. Supply the build-derived icon by uploading revised build 7, complete content rights after owner permission and finish export-compliance answers, then validate and submit. Resolve the agreement and distribution-rights requirements first. Test outside-container files across an actual quit/relaunch, moved/deleted files, linked assets, Save As, backups, sidecar export, custom script folders, printing, local/cloud AI and loopback agents. Local checks cannot confirm Apple's server validation or review approval.
 
 ## Draft listing
 
@@ -100,7 +101,7 @@ Draft review notes: Mac-only app, macOS 14+, Apple silicon and Intel. Start with
 - The bundled Cedar House opened with 408 drawing objects and 59 building elements, and its textured SceneKit 3D viewport rendered inside the sandbox.
 - The website `Oanarina-Archi-Tool-1.0.2.dmg` still matches its existing published SHA-256 checksum.
 
-These are local preview checks. The distribution-signed installer, App Store Connect validation, TestFlight, final privacy labels, cloud-provider behavior, and Apple review remain unverified.
+These are local preview checks. The distribution-signed installer, App Store Connect validation, TestFlight, cloud-provider behavior, and Apple review remain unverified.
 
 ## Apple references
 
@@ -110,3 +111,20 @@ These are local preview checks. The distribution-signed installer, App Store Con
 - [Developer Program enrollment](https://developer.apple.com/programs/enroll/)
 - [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)
 - [FSF's explanation of GPL/App Store conflicts](https://www.fsf.org/blogs/licensing/more-about-the-app-store-gpl-enforcement) (historical context; confirm current terms for this submission)
+
+## Current continuation
+
+The most recent distribution packaging attempt built the app but failed at helper signing with `errSecInternalComponent` when human keychain authorization timed out. The protected dialog cannot be operated by computer-use tools. A fresh attempt should be made with the human ready to approve it. Build 6 is superseded locally by revised build 7 (MIT palette replacement and explicit confirmation before each Anthropic request). No build is uploaded or submitted.
+
+The account Business screen shows **Free Apps Agreement: Active** through 19 July 2027. The paid agreement has a new version available, but no paid agreement was accepted; this candidate is priced Free.
+
+The owner expressly approved both the five-type privacy publishing declaration and the separate copyright permission on 15 October 2026. The privacy declaration is published and the permission is recorded in `docs/APP-STORE-PERMISSION.txt`.
+
+The revised store bundle declares `ITSAppUsesNonExemptEncryption = false`. Source inspection found OS-provided URLSession HTTPS and keychain access, with no embedded custom encryption implementation; see [Apple’s OS-encryption guidance](https://developer.apple.com/documentation/Security/complying-with-encryption-export-regulations). This records the current implementation; Apple’s server processing and any additional export questions still need completion after upload. Bundle verification also requires the full ezdxf MIT notice.
+
+## Revised-candidate checks
+
+- Fourteen release-mode DXF tests passed after the palette replacement, including indexed/true-color, transparency, XDATA and layout round trips (`build/app-store/test-dxf-mit-palette.log`).
+- The current native app binary passed all 955 in-app checks in an isolated local test bundle. The new checks confirm denied Anthropic sharing queues no request/history entry, asks again on a later request, and leaves loopback model requests free of cloud permission prompts (`build/app-store/selftest-7.log`). No cloud request is sent by these checks.
+- All eight provisioning-profile regression tests passed again.
+- Production universal build 7 completed successfully. All 955 in-app checks and 18 sandbox runtime checks passed on the actual universal sandbox bundle; manual cancellation of Anthropic sharing retained the unsent draft. Logs: `build/app-store/selftest-7-sandbox.log` and `build/app-store/sandbox-runtime-7.log`. These results do not assert distribution signing, upload or Apple review succeeded.

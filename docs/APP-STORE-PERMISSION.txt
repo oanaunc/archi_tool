@@ -1,0 +1,22 @@
+MAC APP STORE DISTRIBUTION PERMISSION
+Expressly approved by Oana Rinaldi on 15 October 2026.
+
+Scope: Oanarina Archi Tool 1.0.2, the macOS application identified by
+com.oanarina.architool, after removal of the former LibreCAD palette.
+
+Approved permission:
+
+I, Oana Rinaldi, confirm that I control the copyright in the original code
+and original bundled assets to which this permission applies. For those
+portions only, I grant Apple and recipients permission to distribute and
+use this macOS application through the Mac App Store under Apple's
+Standard Licensed Application End User License Agreement, as an alternative
+to the GPL-3.0-or-later license offered with the public source repository.
+
+The public repository remains GPL-3.0-or-later. This permission does not
+revoke any rights already granted under that license and does not claim
+ownership of third-party material. Third-party portions retain their own
+licenses, including the MIT license and attribution for the ezdxf palette.
+It does not apply to reference checkouts under other_projects/ or to the
+removed LibreCAD palette present in older commits or releases.
+

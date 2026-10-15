@@ -32,6 +32,7 @@ fi
 CONFIG=release APP_STORE_SDK_BUILD=1 APP_BUILD_SCRATCH_PATH="$ROOT/build/app-store/swift" APP_OUTPUT_DIR="$WORK" "$ROOT/scripts/build.sh"
 python3 "$ROOT/scripts/stamp-app-store.py" "$APP/Contents/Info.plist" "$BUILD"
 cp "$ROOT/app/Resources/PrivacyInfo.xcprivacy" "$APP/Contents/Resources/PrivacyInfo.xcprivacy"
+cp "$ROOT/docs/APP-STORE-PERMISSION.txt" "$APP/Contents/Resources/AppStoreDistributionPermission.txt"
 if [[ "$MODE" == package ]]; then cp "$APP_STORE_PROFILE" "$APP/Contents/embedded.provisionprofile"; fi
 
 SIGN=(--force --options runtime --sign "$IDENTITY")

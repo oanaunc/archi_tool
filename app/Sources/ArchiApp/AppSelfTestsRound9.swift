@@ -350,8 +350,8 @@ extension AppSelfTests {
         session.config.provider = .anthropic
         var cloudPermissionRequests = 0
         session.confirmCloudSharing = { cloudPermissionRequests += 1; return false }
-        session.send("private drawing request")
-        check(cloudPermissionRequests == 1 && session.messages.isEmpty && !session.busy,
+        let cloudRequestAccepted = session.send("private drawing request")
+        check(!cloudRequestAccepted && cloudPermissionRequests == 1 && session.messages.isEmpty && !session.busy,
               "assistant: declined cloud sharing leaves no queued request or conversation entry")
         session.send("second private request")
         check(cloudPermissionRequests == 2 && session.messages.isEmpty && !session.busy,

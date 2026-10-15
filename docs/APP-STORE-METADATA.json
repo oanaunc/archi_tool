@@ -8,7 +8,7 @@
   "subtitle": "Architecture, CAD and BIM",
   "primaryCategory": "Graphics & Design",
   "version": "1.0.2",
-  "build": "6",
+  "build": "7",
   "minimumMacOS": "14.0",
   "architectures": [
     "Apple silicon",
@@ -16,23 +16,19 @@
   ],
   "marketingURL": "https://www.oanarinaldi.com/archi-tool.html",
   "supportURL": "https://www.oanarinaldi.com/archi-tool.html",
-  "privacyPolicyURL": null,
+  "privacyPolicyURL": "https://www.oanarinaldi.com/archi-tool-privacy.html",
   "description": "Oanarina Archi Tool is a native Mac workspace for architectural drawing, 3D modeling and building information modeling. Draw with precise coordinates, snaps and familiar command aliases. Build projects with levels, walls, doors, windows, floors, roofs, stairs and rooms, then arrange sheets and export drawings or schedules.\n\nWork in 2D and 3D, edit materials, render views, and exchange models using implemented formats including DXF, IFC, OBJ, STL and GLB. Save projects in the native .archi format. Automate work through the built-in JavaScript console and opt-in local agent API.\n\nCore drawing and modeling work offline. Online lookups and a configured AI provider require a connection. Select project folders to access linked resources and multi-file exports in the sandboxed Mac App Store edition. Standalone command-line MCP and Python tooling are available in the website edition.",
   "keywords": "architecture,CAD,BIM,drafting,3D,design,DXF,IFC,floorplan,modeling",
   "reviewNotes": "Native macOS application for macOS 14 or later, with Apple silicon and Intel support. No login is required for local CAD/BIM work. Open the bundled Cedar House from the start screen to inspect a sample project. File > Allow Project Folder Access selects a project folder for linked assets, backups and batch exports. Settings > Agents enables the opt-in token-protected loopback server. Online AI is optional and uses the user's own configured provider; core modeling does not require an AI service. The standalone CLI/Python tools are available in the website edition.",
   "remainingBeforeSubmission": [
-    "Approve use of the distribution signing key in macOS and complete signed-package verification",
-    "Account holder must review and accept the updated Paid Applications Schedule in App Store Connect Business; no agreement accepted by this preparation",
-    "Resolve GPL/App Store distribution rights and terms before submission",
-    "Publish an accurate app privacy policy and complete the data-collection questionnaire",
-    "Supply current macOS screenshots and complete age-rating, content-rights and export-compliance answers",
-    "Choose the store price and availability in App Store Connect",
-    "Validate the uploaded build with Apple's servers and submit for review"
+    "Approve use of the distribution signing key in macOS and complete revised build 7 signed-package verification",
+    "Select uploaded build and finish export-compliance answers",
+    "Validate revised build with Apple, submit for review, and let automatic release publish after approval"
   ],
   "appleID": "6823133541",
   "appStoreConnectURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/macos/version/inflight",
   "SKU": "oanarina-archi-tool-macos",
-  "releaseType": "manual",
+  "releaseType": "automatic-after-approval",
   "savedInAppStoreConnect": [
     "macOS-only app record",
     "name",
@@ -48,8 +44,20 @@
     "marketingURL",
     "reviewNotes",
     "sign-in not required",
-    "manual release",
-    "App Review contact information"
+    "automatic release after approval",
+    "App Review contact information",
+    "4+ age rating questionnaire",
+    "two 2880 x 1800 Mac screenshots",
+    "copyright notice",
+    "public privacy policy URL",
+    "Free pricing",
+    "all 175 countries/regions availability",
+    "published five-type App Privacy declaration",
+    "Content Rights Information: necessary rights to third-party content"
   ],
-  "appReviewContact": "Saved in App Store Connect using the contact details supplied by the owner; personal contact values are not stored in this repository."
+  "appReviewContact": "Saved in App Store Connect using the contact details supplied by the owner; personal contact values are not stored in this repository.",
+  "price": "Free (0.00)",
+  "availability": "All 175 current countries/regions and future storefronts",
+  "privacyDeclarationStatus": "Five-type declaration expressly approved by owner and published in App Store Connect on 15 October 2026",
+  "distributionPermissionStatus": "Owner expressly approved docs/APP-STORE-PERMISSION.txt on 15 October 2026; former LibreCAD table removed and replaced by attributed MIT palette"
 }

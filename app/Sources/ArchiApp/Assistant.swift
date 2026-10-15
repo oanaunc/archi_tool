@@ -208,9 +208,10 @@ final class AssistantSession: ObservableObject {
     }
     init(model: AppModel) { self.model = model }
 
-    func send(_ text: String) {
-        guard let model, !text.trimmingCharacters(in: .whitespaces).isEmpty, !busy else { return }
-        if config.provider == .anthropic && !confirmCloudSharing() { return }
+    @discardableResult
+    func send(_ text: String) -> Bool {
+        guard let model, !text.trimmingCharacters(in: .whitespaces).isEmpty, !busy else { return false }
+        if config.provider == .anthropic && !confirmCloudSharing() { return false }
         messages.append(AssistantMessage(role: .user, text: text))
         busy = true
         let system = AssistantProtocol.systemPrompt(model.doc, selection: model.editor.selection)
@@ -229,6 +230,7 @@ final class AssistantSession: ObservableObject {
                 self.messages.append(AssistantMessage(role: .system, text: "Request failed: \(why)"))
             }
         }
+        return true
     }
 
     /// Local models must run on this Mac (the drawing never leaves it).
@@ -344,8 +346,8 @@ struct AssistantPanel: View {
             HStack {
                 TextField("Ask or describe a change (e.g. “add a 5 m wall from 0,0 to the east”)", text: $input, axis: .vertical)
                     .textFieldStyle(.roundedBorder).lineLimit(1...4)
-                    .onSubmit { let t = input; input = ""; session.send(t) }
-                Button { let t = input; input = ""; session.send(t) } label: { Image(systemName: "paperplane.fill") }
+                    .onSubmit { if session.send(input) { input = "" } }
+                Button { if session.send(input) { input = "" } } label: { Image(systemName: "paperplane.fill") }
                     .disabled(session.busy || input.trimmingCharacters(in: .whitespaces).isEmpty)
             }.padding(8)
         }

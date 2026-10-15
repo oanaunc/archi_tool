@@ -20,6 +20,12 @@ def verify(app):
     assert info["CFBundleIdentifier"] == "com.oanarina.architool", "Unexpected bundle identifier"
     assert info["LSApplicationCategoryType"], "Missing store category"
     assert info["NSHumanReadableCopyright"], "Missing copyright"
+    assert info.get("ITSAppUsesNonExemptEncryption") is False, "Missing OS-only encryption declaration"
+    palette_license = (app / "Contents/Resources/ThirdPartyLicenses/ezdxf-MIT.txt").read_text()
+    assert "MIT License" in palette_license and "Copyright (c) 2020 Manfred Moitzi" in palette_license, "Missing palette license notice"
+    assert "Permission is hereby granted" in palette_license and "THE SOFTWARE IS PROVIDED" in palette_license, "Incomplete palette license notice"
+    permission = (app / "Contents/Resources/AppStoreDistributionPermission.txt").read_text()
+    assert "Expressly approved by Oana Rinaldi on 15 October 2026" in permission, "Missing approved store distribution permission"
     executable = app / "Contents/MacOS" / info["CFBundleExecutable"]
     helper = app / "Contents/MacOS/archi-cli"
     for binary in (executable, helper):
