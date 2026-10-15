@@ -1,0 +1,17 @@
+Visual Studio: C:\Program Files\Microsoft Visual Studio\18\Enterprise
+=== ArchiThumbnail-x64.dll
+ArchiThumbnail.cpp
+ArchiPreview.cpp
+Generating Code...
+   Creating library D:\a\archi_tool\archi_tool\build\native\x64\ArchiThumbnail.lib and object D:\a\archi_tool\archi_tool\build\native\x64\ArchiThumbnail.exp
+=== thumbtest.exe
+thumbtest.cpp
+ArchiPreview.cpp
+Generating Code...
+=== ArchiThumbnail-arm64.dll
+ArchiThumbnail.cpp
+ArchiPreview.cpp
+Generating Code...
+   Creating library D:\a\archi_tool\archi_tool\build\native\arm64\ArchiThumbnail.lib and object D:\a\archi_tool\archi_tool\build\native\arm64\ArchiThumbnail.exp
+ArchiThumbnail-arm64.dll
+ArchiThumbnail-x64.dll

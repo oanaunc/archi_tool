@@ -1,0 +1,77 @@
+[
+ {
+  "name": "AODIALOG host action handled",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "Ambient Occlusion window opens",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "Ambient Occlusion window: the Mac's fields",
+  "ok": true,
+  "detail": "Ambient OcclusionDarkens corners, reveals and overhangs in the 3D viewport, renders, shaded elevations, sections and their PDF/SVG exports.Intensity0.80Radiusmm"
+ },
+ {
+  "name": "intensity slider 0–2",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "MECHANISMPLAY host action handled",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "mechanism poses drawn over the plan in the accent colour",
+  "ok": true,
+  "detail": "accent pixels 388 → 486"
+ },
+ {
+  "name": "mechanism stop handled",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "stopping removes the overlay",
+  "ok": true,
+  "detail": "accent pixels 388"
+ },
+ {
+  "name": "RENDERPROMPT host action handled",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "prompt preset saved and selected",
+  "ok": true,
+  "detail": "{\"presets\":[{\"name\":\"Prompt: golden hour, soft shadows, 4K\",\"width\":3840,\"height\":2160,\"antialias\":true,\"exposure\":0,\"background\":\"Sky\",\"environment\":\"Sunset\",\"shadowQuality\":\"High\",\"shadowSoftness\":1"
+ },
+ {
+  "name": "Render window opens on the prompt preset",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "PROCMATERIAL host action handled",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "procedural material reports the Windows-only texture writing on the web page",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "MATFROMIMAGE host action handled",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "no page errors",
+  "ok": true,
+  "detail": ""
+ }
+]
