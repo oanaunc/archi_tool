@@ -1,0 +1,32 @@
+commit addb6a8a0b4d47e6b8fab2cceb895edbd5ae11f2 · run 38724751746 · outcome failure
+=== building tests
+Build complete! (71.32s)
+=== running tests (parallel, 120 min limit)
+/home/runner/work/archi_tool/archi_tool/app/Tests/ArchiCoreTests/AnalysisAgentAPITests.swift:182: error: AnalysisAgentAPITests.testEverySourceFileCarriesTheGPLHeader : XCTAssertEqual failed: ("["DXFACIPalette.swift"]") is not equal to ("[]") - source files without the GPL-3.0-or-later header
+Test Case 'AnalysisAgentAPITests.testEverySourceFileCarriesTheGPLHeader' failed (0.023 seconds)
+--- last lines
+[1035/1045] Testing ArchiCoreTests.RenderViewGraphicsTests/testHiddenLinesLineWeightsDepthCueAndFarClip
+[1036/1045] Testing ArchiCoreTests.RenderViewGraphicsTests/testLegendsDraftingViewsAndTemplates
+[1037/1045] Testing ArchiCoreTests.RenderViewRangeTests/testViewRangeUnderlayRevealAndCategoryHide
+[1038/1045] Testing ArchiCoreTests.RenderVisibilityTests/testCategoryOverridesAndFilters
+[1039/1045] Testing ArchiCoreTests.RenderVisibilityTests/testDetailLevelChangesWallAndOpeningGraphics
+[1040/1045] Testing ArchiCoreTests.SectionSheetStyleTests/testCommandUndoPersistenceAndIsolation
+[1041/1045] Testing ArchiCoreTests.SectionSheetStyleTests/testMalformedStylesAndLegacyDefaults
+[1042/1045] Testing ArchiCoreTests.SectionSheetStyleTests/testSectionRenderingAndPDFUseSheetStyle
+[1043/1045] Testing ArchiCoreTests.EngineSessionTests/testView3DCapsGizmoAndBinaryMeshes
+[1044/1045] Testing ArchiCoreTests.EngineOutputTests/testPathTracerAndPasses
+[1045/1045] Testing ArchiCoreTests.IOInteropCorpusTests/testWriteDXFCorpusAndReadBack
+Test Suite 'Selected tests' started at 2026-10-15 11:10:16.919
+Test Suite 'AnalysisAgentAPITests' started at 2026-10-15 11:10:16.920
+Test Case 'AnalysisAgentAPITests.testEverySourceFileCarriesTheGPLHeader' started at 2026-10-15 11:10:16.920
+/home/runner/work/archi_tool/archi_tool/app/Tests/ArchiCoreTests/AnalysisAgentAPITests.swift:182: error: AnalysisAgentAPITests.testEverySourceFileCarriesTheGPLHeader : XCTAssertEqual failed: ("["DXFACIPalette.swift"]") is not equal to ("[]") - source files without the GPL-3.0-or-later header
+Test Case 'AnalysisAgentAPITests.testEverySourceFileCarriesTheGPLHeader' failed (0.023 seconds)
+Test Suite 'AnalysisAgentAPITests' failed at 2026-10-15 11:10:16.943
+	 Executed 1 test, with 1 failure (0 unexpected) in 0.023 (0.023) seconds
+Test Suite 'Selected tests' failed at 2026-10-15 11:10:16.943
+	 Executed 1 test, with 1 failure (0 unexpected) in 0.023 (0.023) seconds
+
+◇ Test run started.
+↳ Testing Library Version: 6.1.3 (1d1f7e489c9c606)
+↳ Target Platform: x86_64-unknown-linux-gnu
+✔ Test run with 0 tests passed after 0.001 seconds.
