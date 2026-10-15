@@ -48,6 +48,8 @@
     "marketingURL",
     "reviewNotes",
     "sign-in not required",
-    "manual release"
-  ]
+    "manual release",
+    "App Review contact information"
+  ],
+  "appReviewContact": "Saved in App Store Connect using the contact details supplied by the owner; personal contact values are not stored in this repository."
 }
