@@ -339,10 +339,13 @@ extension AppSelfTests {
         model.editor.replaceDocument(ArchiDocument(), url: nil)
         let session = AssistantSession(model: model)
         session.config = AssistantConfig(provider: .local, model: "mock", endpoint: "http://127.0.0.1:\(port)/v1/chat/completions")
+        var cloudPermissionRequests = 0
+        session.confirmCloudSharing = { cloudPermissionRequests += 1; return false }
         // 1. A small edit runs directly and is undoable.
         server.replies = [reply(["LINE 0,0 1000,0 ", "CIRCLE 0,0 300"])]
         session.send("draw a line and a circle")
         spin(10) { !session.busy }
+        check(cloudPermissionRequests == 0, "local model: no cloud permission prompt for a loopback request")
         check(server.requests.count == 1 && (server.requests.first?["model"] as? String) == "mock" && ((server.requests.first?["tools"] as? [Any])?.isEmpty == false),
               "local model: OpenAI-compatible request with the command tool sent to localhost")
         check(model.doc.entities.count == 2 && session.pending == nil, "local model: small edits run on the drawing (+\(model.doc.entities.count))")

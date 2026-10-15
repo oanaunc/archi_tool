@@ -347,6 +347,16 @@ extension AppSelfTests {
         let am = AppModel()
         am.editor.transaction("t") { d in for i in 0..<10 { _ = d.add(.line(LineGeom(Vec2(0, Double(i) * 100), Vec2(1000, Double(i) * 100)))) } }
         let session = AssistantSession(model: am)
+        session.config.provider = .anthropic
+        var cloudPermissionRequests = 0
+        session.confirmCloudSharing = { cloudPermissionRequests += 1; return false }
+        session.send("private drawing request")
+        check(cloudPermissionRequests == 1 && session.messages.isEmpty && !session.busy,
+              "assistant: declined cloud sharing leaves no queued request or conversation entry")
+        session.send("second private request")
+        check(cloudPermissionRequests == 2 && session.messages.isEmpty && !session.busy,
+              "assistant: cloud permission is required again for a later request")
+        session.config.provider = .local
         var imp: AssistantImpact?
         Task { @MainActor in imp = await AssistantImpact.assess(["LINE 0,0 500,500 "], doc: am.doc) }
         spin(10) { imp != nil }

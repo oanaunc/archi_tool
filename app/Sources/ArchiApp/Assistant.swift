@@ -197,10 +197,20 @@ final class AssistantSession: ObservableObject {
     /// Commands waiting for confirmation (bulk change) and their measured impact.
     @Published var pending: (commands: [String], impact: AssistantImpact)?
     weak var model: AppModel?
+    /// Explicit permission before each cloud request; denial returns before keychain or network access.
+    var confirmCloudSharing: () -> Bool = {
+        let alert = NSAlert()
+        alert.messageText = "Send project information to Anthropic?"
+        alert.informativeText = "Your message, previous messages in this conversation, and a drawing summary will be sent to Anthropic using your API account. The summary includes the drawing name, units, layer and level names, object counts, and selected object IDs. Anthropic’s privacy and retention terms apply. Choose Cancel to keep this request on your Mac; you can select a local model in the assistant settings."
+        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: "Send to Anthropic")
+        return alert.runModal() == .alertSecondButtonReturn
+    }
     init(model: AppModel) { self.model = model }
 
     func send(_ text: String) {
         guard let model, !text.trimmingCharacters(in: .whitespaces).isEmpty, !busy else { return }
+        if config.provider == .anthropic && !confirmCloudSharing() { return }
         messages.append(AssistantMessage(role: .user, text: text))
         busy = true
         let system = AssistantProtocol.systemPrompt(model.doc, selection: model.editor.selection)
