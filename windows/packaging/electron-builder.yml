@@ -39,6 +39,9 @@ extraResources:
     to: icon.ico
   - from: ../LICENSE
     to: LICENSE.txt
+  - from: ../app/Resources/ThirdPartyLicenses
+    to: ThirdPartyLicenses
+    filter: ["**/*.txt"]
   - from: packaging/electron-builder-LICENSE.txt
     to: electron-builder-LICENSE.txt
 asar: true
