@@ -23,6 +23,7 @@
   "remainingBeforeSubmission": [
     "Approve use of the distribution signing key in macOS and complete revised build 7 signed-package verification",
     "Select uploaded build and finish export-compliance answers",
+    "Wait for the two revised-build screenshots to finish Apple processing",
     "Validate revised build with Apple, submit for review, and let automatic release publish after approval"
   ],
   "appleID": "6823133541",
