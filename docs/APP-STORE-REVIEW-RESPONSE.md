@@ -2,11 +2,11 @@
 
 ## Current issue — Guideline 4.3(a), 16 October 2026
 
-The owner supplied Apple's rejection message for version **1.0.2**, submission `828a79cc-0290-4243-a979-f28df5571438`. Apple alleges similar binary, metadata and/or concept, but identifies no comparison app or specific matching element. The message also includes an extended-review warning. This record is based on that message; the current App Store Connect status has not been independently inspected in this session.
+The owner supplied Apple's rejection message for version **1.0.2**, submission `828a79cc-0290-4243-a979-f28df5571438`. Apple alleges similar binary, metadata and/or concept, but identifies no comparison app or specific matching element. The message also includes an extended-review warning. App Store Connect was inspected after owner authorization to reply: version **1.0.2 (7)** shows **Rejected**, the submission shows **Unresolved Issues**, and the issue is listed as **4.3.0 Design: Spam**.
 
-**Delivery status:** the following response is a draft. It has not been sent to Apple, no appeal has been filed, and no new build has been uploaded or resubmitted for this issue. The earlier entitlement reply below remains a historical record of a separate issue.
+**Delivery status:** sent after the owner instructed “reply”, on **16 October 2026 at 9:56 PM Europe/Bucharest**. App Store Connect displays **Messages (4)** and the new **Oana Rinaldi — Today 9:56 PM** message with the response below. The submission remains **Unresolved Issues** and build **1.0.2 (7)** remains **Rejected** pending Apple's response. No appeal was filed and no new build was uploaded or resubmitted for this issue. The earlier entitlement reply below remains a historical record of a separate issue.
 
-### Proposed reply to App Review
+### Reply to App Review (sent as plain text)
 
 Hello App Review,
 
@@ -36,7 +36,7 @@ Oana Rinaldi
 - `app/Sources/ArchiApp/AgentServer.swift` and the earlier entitlement response below: authenticated local command execution and undo. Prior sandbox runtime evidence is historical; no fresh runtime test was performed for this documentation change.
 - `scripts/build.sh` and `scripts/package-app-store.sh`: explicit native target builds and resource copying, without bundling `other_projects/`. `docs/THIRD-PARTY.md` records references and adapted material. Do not claim the app has no third-party material.
 - Apple's comparison target and the owner's full submission history across accounts are unknown. Do not assert that no similar app has ever been submitted or that Apple has made a proven error.
-- The demo steps above are supported by source inspection; they have not been repeated interactively in this session. A short recording of the submitted build would strengthen a later reply or appeal; none is attached or promised in this draft.
+- The demo steps above are supported by source inspection; they have not been repeated interactively in this session. A short recording of the submitted build would strengthen a later reply or appeal; none was attached or promised in this reply.
 - [Guideline 4.3](https://developer.apple.com/app-store/review/guidelines/#spam) addresses duplicate and insufficiently differentiated apps. [Apple's review guidance](https://developer.apple.com/distribute/app-review/#contacting-us) permits correspondence before resubmission and an appeal with specific compliance reasons. Obtain clarification before choosing changes or another submission; a cosmetic change alone would not establish a distinct product.
 
 ## Previous issue — network server entitlement

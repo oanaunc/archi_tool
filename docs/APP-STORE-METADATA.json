@@ -1,5 +1,5 @@
 {
-  "status": "rejected-guideline-4.3a-owner-reported",
+  "status": "rejected-guideline-4.3a-reply-sent-awaiting-apple",
   "platform": "macOS only",
   "bundleIdentifier": "com.oanarina.architool",
   "developerTeam": "HBD3XXQK45",
@@ -66,7 +66,7 @@
   "signedPackage": "dist/app-store/Oanarina-Archi-Tool-1.0.2-7.pkg",
   "signingStatus": "Application and installer signed successfully on 15 October 2026 after human keychain approval; bundle, certificate/profile match and installer signature verified",
   "uploadStatus": "Build 7 uploaded successfully, processed by Apple and attached to version 1.0.2",
-  "reviewStatus": "Guideline 4.3(a) rejection supplied by owner on 16 October 2026; live App Store Connect status not independently checked in this session.",
+  "reviewStatus": "Rejected \u2014 4.3.0 Design: Spam; submission Unresolved Issues. Verified in App Store Connect on 16 October 2026 after sending the reply at 9:56 PM Europe/Bucharest.",
   "submissionID": "828a79cc-0290-4243-a979-f28df5571438",
   "submissionDate": "2026-10-15",
   "reviewSubmissionURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/828a79cc-0290-4243-a979-f28df5571438",
@@ -75,8 +75,7 @@
   "reviewResponseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
   "reviewResponseDeliveryStatus": "Sent in App Store Connect on 16 October 2026 at 11:05 AM Europe/Bucharest; Messages (2) displays the Oana Rinaldi reply.",
   "remainingToResolveReview": [
-    "Send the prepared 4.3(a) clarification and reconsideration response only after owner authorization.",
-    "Obtain specific similarity details from Apple and address substantiated findings; consider an evidence-based appeal if needed."
+    "Await Apple clarification or reconsideration of the 4.3(a) finding; address specific substantiated findings or consider an evidence-based appeal when appropriate."
   ],
   "resubmissionDate": "2026-10-16",
   "resubmissionTimeZone": "Europe/Bucharest",
@@ -91,7 +90,13 @@
     "source": "Apple rejection message supplied by owner in chat",
     "summary": "Apple alleges similar binary, metadata and/or concept; no comparison app or specific matching element identified. Includes extended-review warning.",
     "responseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
-    "responseDeliveryStatus": "Draft only; not sent. No appeal filed or further resubmission performed.",
-    "priorResponseContext": "Existing reviewResponseDeliveryStatus and resubmission fields describe the earlier network.server entitlement issue, not a reply to this rejection."
+    "responseDeliveryStatus": "Sent after owner authorization on 16 October 2026 at 9:56 PM Europe/Bucharest; verified as the fourth message in App Store Connect. No appeal filed or further resubmission performed.",
+    "priorResponseContext": "Existing reviewResponseDeliveryStatus and resubmission fields describe the earlier network.server entitlement issue, not a reply to this rejection.",
+    "responseDate": "2026-10-16",
+    "responseDisplayedTime": "9:56 PM",
+    "responseTimeZone": "Europe/Bucharest",
+    "verifiedMessageCount": 4,
+    "liveSubmissionStatus": "Unresolved Issues",
+    "liveAppVersionStatus": "1.0.2 (7) \u2014 Rejected \u2014 4.3.0 Design: Spam"
   }
 }
