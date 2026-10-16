@@ -1,4 +1,45 @@
-# Network server entitlement — review response
+# App Review responses
+
+## Current issue — Guideline 4.3(a), 16 October 2026
+
+The owner supplied Apple's rejection message for version **1.0.2**, submission `828a79cc-0290-4243-a979-f28df5571438`. Apple alleges similar binary, metadata and/or concept, but identifies no comparison app or specific matching element. The message also includes an extended-review warning. This record is based on that message; the current App Store Connect status has not been independently inspected in this session.
+
+**Delivery status:** the following response is a draft. It has not been sent to Apple, no appeal has been filed, and no new build has been uploaded or resubmitted for this issue. The earlier entitlement reply below remains a historical record of a separate issue.
+
+### Proposed reply to App Review
+
+Hello App Review,
+
+Thank you for reviewing Oanarina Archi Tool 1.0.2. I would appreciate clarification and reconsideration of the Guideline 4.3(a) finding for submission 828a79cc-0290-4243-a979-f28df5571438.
+
+Oanarina Archi Tool is a native macOS architectural authoring application. Its Swift ArchiCore engine implements the drawing and building model, geometry, command execution and document persistence; its macOS interface uses SwiftUI, AppKit and SceneKit. The Swift package has no external package dependencies. The application combines editable 2D drafting and 3D building elements, model-derived schedules, native .archi project files, and JavaScript and local agent automation operating on the same open drawing.
+
+To inspect the implemented workflow in the submitted build:
+
+1. Open the bundled Cedar House from the start screen and inspect the editable building in plan and 3D.
+2. Enter SCHEDULE in the in-app command line, choose Doors, and press Return at the insertion-point prompt to print a schedule derived from the current model.
+3. Enter CIRCLE 0,0 500 in the command line. The circle appears in the drawing; Edit > Undo removes it. The same command can be executed through the opt-in authenticated local agent API using the steps already provided in our review notes.
+4. Save a project as .archi and reopen it to inspect its stored drawing and building data. Core authoring does not require an account or cloud service.
+
+The project documents its open-source references and third-party attribution in THIRD-PARTY.md, included in the app's resources. Reference checkouts are not included by the app's build scripts. I can provide the relevant source and implementation details to help investigate a specific similarity.
+
+Could you identify the app or apps being compared, if possible, and the particular binary components, assets, metadata or workflows considered substantially similar? This would help me address the finding with specific evidence or appropriate changes. Please also clarify whether the extended-review notice refers solely to this 4.3(a) finding or to any additional issue requiring action.
+
+Thank you,
+Oana Rinaldi
+
+### Evidence and limits
+
+- `app/Package.swift`: ArchiCore, ArchiApp and command-line targets; no external package dependencies. This alone does not establish originality of every source file or asset.
+- `app/Sources/ArchiApp/StartView.swift`: bundled Cedar House entry and command-driven sample building.
+- `app/Sources/ArchiCore/Commands/ArchitectureCommands.swift`: model-derived SCHEDULE command; `app/Tests/ArchiCoreTests/BIMSchedulesTests.swift` covers schedule behavior.
+- `app/Sources/ArchiApp/AgentServer.swift` and the earlier entitlement response below: authenticated local command execution and undo. Prior sandbox runtime evidence is historical; no fresh runtime test was performed for this documentation change.
+- `scripts/build.sh` and `scripts/package-app-store.sh`: explicit native target builds and resource copying, without bundling `other_projects/`. `docs/THIRD-PARTY.md` records references and adapted material. Do not claim the app has no third-party material.
+- Apple's comparison target and the owner's full submission history across accounts are unknown. Do not assert that no similar app has ever been submitted or that Apple has made a proven error.
+- The demo steps above are supported by source inspection; they have not been repeated interactively in this session. A short recording of the submitted build would strengthen a later reply or appeal; none is attached or promised in this draft.
+- [Guideline 4.3](https://developer.apple.com/app-store/review/guidelines/#spam) addresses duplicate and insufficiently differentiated apps. [Apple's review guidance](https://developer.apple.com/distribute/app-review/#contacting-us) permits correspondence before resubmission and an appeal with specific compliance reasons. Obtain clarification before choosing changes or another submission; a cosmetic change alone would not establish a distinct product.
+
+## Previous issue — network server entitlement
 
 Sent on 16 October 2026 at **11:05 AM Europe/Bucharest** for macOS version **1.0.2 (7)**, submission `828a79cc-0290-4243-a979-f28df5571438`.
 

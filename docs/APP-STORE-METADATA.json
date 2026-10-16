@@ -1,5 +1,5 @@
 {
-  "status": "resubmitted-waiting-for-review",
+  "status": "rejected-guideline-4.3a-owner-reported",
   "platform": "macOS only",
   "bundleIdentifier": "com.oanarina.architool",
   "developerTeam": "HBD3XXQK45",
@@ -66,7 +66,7 @@
   "signedPackage": "dist/app-store/Oanarina-Archi-Tool-1.0.2-7.pkg",
   "signingStatus": "Application and installer signed successfully on 15 October 2026 after human keychain approval; bundle, certificate/profile match and installer signature verified",
   "uploadStatus": "Build 7 uploaded successfully, processed by Apple and attached to version 1.0.2",
-  "reviewStatus": "Waiting for Review",
+  "reviewStatus": "Guideline 4.3(a) rejection supplied by owner on 16 October 2026; live App Store Connect status not independently checked in this session.",
   "submissionID": "828a79cc-0290-4243-a979-f28df5571438",
   "submissionDate": "2026-10-15",
   "reviewSubmissionURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/828a79cc-0290-4243-a979-f28df5571438",
@@ -75,7 +75,8 @@
   "reviewResponseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
   "reviewResponseDeliveryStatus": "Sent in App Store Connect on 16 October 2026 at 11:05 AM Europe/Bucharest; Messages (2) displays the Oana Rinaldi reply.",
   "remainingToResolveReview": [
-    "Await Apple review; approval and public availability are not yet confirmed."
+    "Send the prepared 4.3(a) clarification and reconsideration response only after owner authorization.",
+    "Obtain specific similarity details from Apple and address substantiated findings; consider an evidence-based appeal if needed."
   ],
   "resubmissionDate": "2026-10-16",
   "resubmissionTimeZone": "Europe/Bucharest",
@@ -83,5 +84,14 @@
   "resubmissionStatus": "Confirmed Waiting for Review for submission and macOS App 1.0.2, build 7; original submission ID retained.",
   "sandboxUsageInformation": {
     "com.apple.security.network.server": "Required by the built-in opt-in local agent server. Network.framework NWListener accepts incoming HTTP connections only on 127.0.0.1:47800 (configurable port), with acceptLocalOnly enabled, and responds to JSON-RPC 2.0 at /rpc. Local automation tools inspect the open drawing, run CAD/BIM commands and undo edits, visible live in the app. Off by default; every RPC request requires a random per-launch bearer token. No LAN/internet listener. To test: open a drawing, choose Oanarina Archi Tool > Settings > Agents > Start, then run curl http://127.0.0.1:47800/health in Terminal. The app responds with status ok. Copy Token in the same panel to exercise the authenticated CIRCLE command documented in App Review Notes; Undo reverses it. Stop ends incoming connections. No AI account or external service is required."
+  },
+  "currentReviewIssue": {
+    "guideline": "4.3(a) - Design - Spam",
+    "reportedDate": "2026-10-16",
+    "source": "Apple rejection message supplied by owner in chat",
+    "summary": "Apple alleges similar binary, metadata and/or concept; no comparison app or specific matching element identified. Includes extended-review warning.",
+    "responseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
+    "responseDeliveryStatus": "Draft only; not sent. No appeal filed or further resubmission performed.",
+    "priorResponseContext": "Existing reviewResponseDeliveryStatus and resubmission fields describe the earlier network.server entitlement issue, not a reply to this rejection."
   }
 }
