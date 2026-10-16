@@ -1,5 +1,5 @@
 {
-  "status": "review-blocked-entitlement-explanation-prepared",
+  "status": "resubmitted-waiting-for-review",
   "platform": "macOS only",
   "bundleIdentifier": "com.oanarina.architool",
   "developerTeam": "HBD3XXQK45",
@@ -51,29 +51,37 @@
     "published five-type App Privacy declaration",
     "Content Rights Information: necessary rights to third-party content",
     "processed build 1.0.2 (7)",
-    "completed review submission"
+    "completed review submission",
+    "expanded server-entitlement reviewNotes",
+    "App Sandbox Information: network.server usage",
+    "entitlement explanation reply to App Review",
+    "resubmission on 16 October 2026"
   ],
   "appReviewContact": "Saved in App Store Connect using the contact details supplied by the owner; personal contact values are not stored in this repository.",
   "price": "Free (0.00)",
   "availability": "All 175 current countries/regions and future storefronts",
   "privacyDeclarationStatus": "Five-type declaration expressly approved by owner and published in App Store Connect on 15 October 2026",
   "distributionPermissionStatus": "Owner expressly approved docs/APP-STORE-PERMISSION.txt on 15 October 2026; former LibreCAD table removed and replaced by attributed MIT palette",
-  "appleValidation": "Apple automated review email supplied by the owner on 16 October 2026 says review cannot proceed until the network.server entitlement is removed or its implemented functionality is explained. App Store Connect has not been rechecked in this session.",
+  "appleValidation": "After saving expanded review notes and dedicated network.server sandbox usage information, Update Review marked build 1.0.2 (7) Ready for Review. Resubmit to App Review completed on 16 October 2026 at 11:05 AM Europe/Bucharest; the submission and item both show Waiting for Review.",
   "signedPackage": "dist/app-store/Oanarina-Archi-Tool-1.0.2-7.pkg",
   "signingStatus": "Application and installer signed successfully on 15 October 2026 after human keychain approval; bundle, certificate/profile match and installer signature verified",
   "uploadStatus": "Build 7 uploaded successfully, processed by Apple and attached to version 1.0.2",
-  "reviewStatus": "Automated review blocked; entitlement explanation prepared locally, not sent",
+  "reviewStatus": "Waiting for Review",
   "submissionID": "828a79cc-0290-4243-a979-f28df5571438",
   "submissionDate": "2026-10-15",
   "reviewSubmissionURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/828a79cc-0290-4243-a979-f28df5571438",
-  "reviewNotesSyncStatus": "Expanded entitlement explanation authorized for saving on 16 October 2026; not yet saved because App Store Connect requires sign-in. The savedInAppStoreConnect reviewNotes entry records the earlier short notes.",
+  "reviewNotesSyncStatus": "Expanded entitlement explanation saved in App Store Connect on 16 October 2026 and verified after navigating away and reopening the version.",
   "reviewIssueDate": "2026-10-16",
   "reviewResponseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
-  "reviewResponseDeliveryStatus": "Owner authorized replying and resubmitting on 16 October 2026; not sent because the App Store Connect session expired and Apple sign-in requires owner authentication.",
+  "reviewResponseDeliveryStatus": "Sent in App Store Connect on 16 October 2026 at 11:05 AM Europe/Bucharest; Messages (2) displays the Oana Rinaldi reply.",
   "remainingToResolveReview": [
-    "Owner completes Apple sign-in in the open Chrome App Store Connect tab, including any two-factor check.",
-    "Save the authorized expanded reviewNotes in App Review Information.",
-    "Send the authorized docs/APP-STORE-REVIEW-RESPONSE.md reply to Apple.",
-    "Resubmit the existing build if required by App Store Connect and confirm the resulting review state."
-  ]
+    "Await Apple review; approval and public availability are not yet confirmed."
+  ],
+  "resubmissionDate": "2026-10-16",
+  "resubmissionTimeZone": "Europe/Bucharest",
+  "resubmissionDisplayedTime": "11:05 AM",
+  "resubmissionStatus": "Confirmed Waiting for Review for submission and macOS App 1.0.2, build 7; original submission ID retained.",
+  "sandboxUsageInformation": {
+    "com.apple.security.network.server": "Required by the built-in opt-in local agent server. Network.framework NWListener accepts incoming HTTP connections only on 127.0.0.1:47800 (configurable port), with acceptLocalOnly enabled, and responds to JSON-RPC 2.0 at /rpc. Local automation tools inspect the open drawing, run CAD/BIM commands and undo edits, visible live in the app. Off by default; every RPC request requires a random per-launch bearer token. No LAN/internet listener. To test: open a drawing, choose Oanarina Archi Tool > Settings > Agents > Start, then run curl http://127.0.0.1:47800/health in Terminal. The app responds with status ok. Copy Token in the same panel to exercise the authenticated CIRCLE command documented in App Review Notes; Undo reverses it. Stop ends incoming connections. No AI account or external service is required."
+  }
 }

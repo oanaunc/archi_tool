@@ -1,10 +1,10 @@
 # Network server entitlement — review response
 
-Prepared on 16 October 2026 for macOS version **1.0.2 (7)**, submission `828a79cc-0290-4243-a979-f28df5571438`.
+Sent on 16 October 2026 at **11:05 AM Europe/Bucharest** for macOS version **1.0.2 (7)**, submission `828a79cc-0290-4243-a979-f28df5571438`.
 
-**Delivery status:** the owner authorized saving the notes, replying to Apple and resubmitting on 16 October 2026. The existing Chrome App Store Connect session expired; reloading the version page redirected to Apple sign-in, which requires the owner to enter the password and complete any two-factor check. Neither the reply nor the expanded reviewer notes has been sent/saved, and no resubmission has occurred. Continue after the owner completes sign-in. Keep the server entitlement: the submitted app implements an incoming TCP listener for its opt-in local agent API. No replacement binary is needed for this explanation; Apple determines whether it resolves the review blocker.
+**Delivery status:** sent after owner authorization and sign-in. App Store Connect displays the reply as the second message. Expanded reviewer notes and dedicated `com.apple.security.network.server` usage information were saved and verified after reopening the version. Update Review and Resubmit to App Review succeeded; both the submission and macOS App 1.0.2 (7) now show **Waiting for Review**. The original submission ID is retained. Apple approval and public availability are not yet confirmed.
 
-## Reply to App Review
+## Reply to App Review (sent as plain text)
 
 Hello App Review,
 
@@ -28,13 +28,15 @@ curl http://127.0.0.1:47800/rpc \
 
 The app returns a JSON-RPC result and adds a circle to the open drawing. Undo it with Edit > Undo. Click Stop in Settings > Agents to stop accepting connections. If a different port is configured in the panel, use that port in the examples.
 
-This demonstration requires no account, cloud service, API key or external AI software. Please continue review with the server entitlement retained for this implemented feature.
+This demonstration requires no account, cloud service, API key or external AI software. We have saved these reproduction steps in App Review Information > Notes and added a dedicated com.apple.security.network.server usage explanation in App Sandbox Information.
+
+Please continue review with the server entitlement retained for this implemented feature.
 
 Thank you.
 
 ## App Review Information — replacement notes
 
-The full replacement text is the `reviewNotes` value in [APP-STORE-METADATA.json](APP-STORE-METADATA.json). Preserve the existing reviewer contact details and no-login setting. After sign-in, save those notes and send the authorized reply in the [existing review submission](https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/828a79cc-0290-4243-a979-f28df5571438). Resubmit the existing build if App Store Connect requires it. Do not claim any action is complete until confirmed by App Store Connect.
+The saved replacement text is the `reviewNotes` value in [APP-STORE-METADATA.json](APP-STORE-METADATA.json); the dedicated entitlement text is recorded under `sandboxUsageInformation`. The existing reviewer contact details, no-login setting and automatic release after approval were preserved. The [existing review submission](https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/828a79cc-0290-4243-a979-f28df5571438) confirms resubmission of build 7 on 16 October 2026 at 11:05 AM and Waiting for Review.
 
 ## Verification and implementation evidence
 
