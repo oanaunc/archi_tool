@@ -1,5 +1,5 @@
 {
-  "status": "submitted-waiting-for-review",
+  "status": "review-blocked-entitlement-explanation-prepared",
   "platform": "macOS only",
   "bundleIdentifier": "com.oanarina.architool",
   "developerTeam": "HBD3XXQK45",
@@ -19,7 +19,7 @@
   "privacyPolicyURL": "https://www.oanarinaldi.com/archi-tool-privacy.html",
   "description": "Oanarina Archi Tool is a native Mac workspace for architectural drawing, 3D modeling and building information modeling. Draw with precise coordinates, snaps and familiar command aliases. Build projects with levels, walls, doors, windows, floors, roofs, stairs and rooms, then arrange sheets and export drawings or schedules.\n\nWork in 2D and 3D, edit materials, render views, and exchange models using implemented formats including DXF, IFC, OBJ, STL and GLB. Save projects in the native .archi format. Automate work through the built-in JavaScript console and opt-in local agent API.\n\nCore drawing and modeling work offline. Online lookups and a configured AI provider require a connection. Select project folders to access linked resources and multi-file exports in the sandboxed Mac App Store edition. Standalone command-line MCP and Python tooling are available in the website edition.",
   "keywords": "architecture,CAD,BIM,drafting,3D,design,DXF,IFC,floorplan,modeling",
-  "reviewNotes": "Native macOS application for macOS 14 or later, with Apple silicon and Intel support. No login is required for local CAD/BIM work. Open the bundled Cedar House from the start screen to inspect a sample project. File > Allow Project Folder Access selects a project folder for linked assets, backups and batch exports. Settings > Agents enables the opt-in token-protected loopback server. Online AI is optional and uses the user's own configured provider; core modeling does not require an AI service. The standalone CLI/Python tools are available in the website edition.",
+  "reviewNotes": "Native macOS app for macOS 14+, Apple silicon and Intel. No login is required. Open the bundled Cedar House from the start screen. File > Allow Project Folder Access selects a folder for linked assets, backups and exports. Online AI is optional and uses the user's own provider; local CAD/BIM and the following server demonstration require no AI account. Standalone CLI/Python tools are available in the website edition.\n\nNETWORK SERVER ENTITLEMENT: com.apple.security.network.server is required by the implemented opt-in local agent server in this submitted build. Network.framework NWListener accepts incoming HTTP connections on IPv4 loopback 127.0.0.1 (default port 47800), with acceptLocalOnly enabled. Local automation clients send JSON-RPC 2.0 requests to /rpc to inspect the open drawing, execute CAD/BIM commands and undo edits. The server is off by default; every /rpc request needs a random per-launch bearer token. It does not listen on LAN or internet interfaces. network.client supports outgoing requests and does not replace permission to accept incoming connections.\n\nREPRODUCTION:\n1. Open a drawing or the bundled Cedar House. Choose Oanarina Archi Tool > Settings... (Command-comma), select Agents, and click Start under LOCAL AGENT SERVER. Oanarina Archi Tool > Agent Server... or the in-app command AGENTS opens the same panel.\n2. In Terminal run: curl http://127.0.0.1:47800/health\nThe app responds with JSON containing \"status\":\"ok\" and \"rpc\":\"/rpc\". This health endpoint requires no token.\n3. Click Copy Token in the panel. Replace PASTE_TOKEN_HERE in this Terminal command:\ncurl http://127.0.0.1:47800/rpc -H 'Authorization: Bearer PASTE_TOKEN_HERE' -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"run_command\",\"params\":{\"command\":\"CIRCLE 0,0 500\"}}'\nThe response contains a JSON-RPC result and a circle appears in the drawing. Edit > Undo reverses it. Click Stop in Agents to stop accepting connections. Use the displayed port if changed from 47800.\n\nNo external AI software, account, API key or cloud service is needed to test this incoming server functionality.",
   "remainingBeforeSubmission": [],
   "appleID": "6823133541",
   "appStoreConnectURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/macos/version/inflight",
@@ -58,12 +58,21 @@
   "availability": "All 175 current countries/regions and future storefronts",
   "privacyDeclarationStatus": "Five-type declaration expressly approved by owner and published in App Store Connect on 15 October 2026",
   "distributionPermissionStatus": "Owner expressly approved docs/APP-STORE-PERMISSION.txt on 15 October 2026; former LibreCAD table removed and replaced by attributed MIT palette",
-  "appleValidation": "Complete submission accepted; macOS version 1.0.2 (7) is Waiting for Review",
+  "appleValidation": "Apple automated review email supplied by the owner on 16 October 2026 says review cannot proceed until the network.server entitlement is removed or its implemented functionality is explained. App Store Connect has not been rechecked in this session.",
   "signedPackage": "dist/app-store/Oanarina-Archi-Tool-1.0.2-7.pkg",
   "signingStatus": "Application and installer signed successfully on 15 October 2026 after human keychain approval; bundle, certificate/profile match and installer signature verified",
   "uploadStatus": "Build 7 uploaded successfully, processed by Apple and attached to version 1.0.2",
-  "reviewStatus": "Waiting for Review",
+  "reviewStatus": "Automated review blocked; entitlement explanation prepared locally, not sent",
   "submissionID": "828a79cc-0290-4243-a979-f28df5571438",
   "submissionDate": "2026-10-15",
-  "reviewSubmissionURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/828a79cc-0290-4243-a979-f28df5571438"
+  "reviewSubmissionURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/828a79cc-0290-4243-a979-f28df5571438",
+  "reviewNotesSyncStatus": "Expanded entitlement explanation prepared locally on 16 October 2026; not yet saved in App Store Connect. The savedInAppStoreConnect reviewNotes entry records the earlier short notes.",
+  "reviewIssueDate": "2026-10-16",
+  "reviewResponseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
+  "reviewResponseDeliveryStatus": "Not sent; owner authorization required to message Apple",
+  "remainingToResolveReview": [
+    "Save the prepared expanded reviewNotes in App Review Information.",
+    "Send docs/APP-STORE-REVIEW-RESPONSE.md reply to Apple after owner authorization.",
+    "Confirm Apple resumes review; do not claim approval or public availability."
+  ]
 }
