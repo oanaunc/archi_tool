@@ -66,13 +66,14 @@
   "submissionID": "828a79cc-0290-4243-a979-f28df5571438",
   "submissionDate": "2026-10-15",
   "reviewSubmissionURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/828a79cc-0290-4243-a979-f28df5571438",
-  "reviewNotesSyncStatus": "Expanded entitlement explanation prepared locally on 16 October 2026; not yet saved in App Store Connect. The savedInAppStoreConnect reviewNotes entry records the earlier short notes.",
+  "reviewNotesSyncStatus": "Expanded entitlement explanation authorized for saving on 16 October 2026; not yet saved because App Store Connect requires sign-in. The savedInAppStoreConnect reviewNotes entry records the earlier short notes.",
   "reviewIssueDate": "2026-10-16",
   "reviewResponseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
-  "reviewResponseDeliveryStatus": "Not sent; owner authorization required to message Apple",
+  "reviewResponseDeliveryStatus": "Owner authorized replying and resubmitting on 16 October 2026; not sent because the App Store Connect session expired and Apple sign-in requires owner authentication.",
   "remainingToResolveReview": [
-    "Save the prepared expanded reviewNotes in App Review Information.",
-    "Send docs/APP-STORE-REVIEW-RESPONSE.md reply to Apple after owner authorization.",
-    "Confirm Apple resumes review; do not claim approval or public availability."
+    "Owner completes Apple sign-in in the open Chrome App Store Connect tab, including any two-factor check.",
+    "Save the authorized expanded reviewNotes in App Review Information.",
+    "Send the authorized docs/APP-STORE-REVIEW-RESPONSE.md reply to Apple.",
+    "Resubmit the existing build if required by App Store Connect and confirm the resulting review state."
   ]
 }

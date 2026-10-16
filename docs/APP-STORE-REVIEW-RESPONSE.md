@@ -2,7 +2,7 @@
 
 Prepared on 16 October 2026 for macOS version **1.0.2 (7)**, submission `828a79cc-0290-4243-a979-f28df5571438`.
 
-**Delivery status:** prepared locally; neither this reply nor the expanded reviewer notes have been sent/saved in App Store Connect. The owner must authorize sending the reply. Keep the server entitlement: the submitted app implements an incoming TCP listener for its opt-in local agent API. No replacement binary is needed for this explanation; Apple determines whether it resolves the review blocker.
+**Delivery status:** the owner authorized saving the notes, replying to Apple and resubmitting on 16 October 2026. The existing Chrome App Store Connect session expired; reloading the version page redirected to Apple sign-in, which requires the owner to enter the password and complete any two-factor check. Neither the reply nor the expanded reviewer notes has been sent/saved, and no resubmission has occurred. Continue after the owner completes sign-in. Keep the server entitlement: the submitted app implements an incoming TCP listener for its opt-in local agent API. No replacement binary is needed for this explanation; Apple determines whether it resolves the review blocker.
 
 ## Reply to App Review
 
@@ -34,7 +34,7 @@ Thank you.
 
 ## App Review Information — replacement notes
 
-The full replacement text is the `reviewNotes` value in [APP-STORE-METADATA.json](APP-STORE-METADATA.json). Preserve the existing reviewer contact details and no-login setting. Save those notes and send the reply in the [existing review submission](https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/828a79cc-0290-4243-a979-f28df5571438) after owner authorization. Do not claim either action is complete until confirmed by App Store Connect.
+The full replacement text is the `reviewNotes` value in [APP-STORE-METADATA.json](APP-STORE-METADATA.json). Preserve the existing reviewer contact details and no-login setting. After sign-in, save those notes and send the authorized reply in the [existing review submission](https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/828a79cc-0290-4243-a979-f28df5571438). Resubmit the existing build if App Store Connect requires it. Do not claim any action is complete until confirmed by App Store Connect.
 
 ## Verification and implementation evidence
 
