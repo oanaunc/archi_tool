@@ -1,5 +1,7 @@
 # Windows port — open gaps after round 5
 
+**22 October 2026 sheet follow-up:** the shared engine includes the 1.0.3 per-view/level framing fix and `VPFIT` (`VPF`, `FITVIEWPORT`). The Windows sheet viewport right-click menu now exposes **Fit Content (VPFIT)** and disables it for locked or camera viewports. Three core regression tests, TypeScript checking and all 63 browser canvas checks pass locally; the UI tests verify selected-viewport command forwarding and lock state. Regression-test setup constructs the engine directly, avoiding the macOS-only no-argument XCTestCase initializer that failed on Windows/Linux CI. Native Windows installer validation is pending; the website still distributes Windows 1.0.2. The parity audit and green workflow references below describe the earlier September baseline.
+
 Parity audit of 29 Sep 2026 (round 5) over the 2904 lines of `docs/WINDOWS-PARITY.md`: **2892 done · 1 partial · 0 todo · 11 n/a**
 (round 4: 2882 · 14 · 1 · 7; round 3: 2869 · 21 · 7 · 7; round 2: 2450 · 171 · 275 · 8). "Done" means the Windows entry exists
 and runs the same engine code, or a tested shell port, as the Mac. Round 5 is committed (df18551, CI fix 911f239) and has

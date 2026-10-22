@@ -556,6 +556,7 @@ export class PlanCanvas {
     for (const s of [20, 50, 100, 200, 500]) items.push({ title: `Scale 1:${s}`, disabled: locked, action: () => this.sheetViewportOp(vp.index, "scale", { ratio: s }) });
     items.push({ separator: true });
     items.push({ title: locked ? "Unlock Viewport" : "Lock Viewport", action: () => this.sheetViewportOp(vp.index, locked ? "unlock" : "lock") });
+    items.push({ title: "Fit Content (VPFIT)", disabled: locked || vp.view === "axonometric" || vp.view === "perspective", action: () => this.app.runCommand(`VPFIT ${vp.index + 1}`) });
     items.push({ title: "Maximise (VPMAX)", disabled: vp.view !== "plan" && vp.view !== "ceiling", action: () => this.app.runCommand(`VPMAX ${vp.index + 1}`) });
     if (vp.clip) items.push({ title: "Remove Clip", disabled: locked, action: () => this.sheetViewportOp(vp.index, "removeClip") });
     items.push({ title: "Remove", disabled: locked, action: () => this.sheetViewportOp(vp.index, "remove") });

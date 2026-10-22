@@ -6549,7 +6549,7 @@
   "phase": 1,
   "priority": "must",
   "status": "done",
-  "acceptance": "Rectangular viewport displays correctly in layout view and plots at the stated scale. New viewports centre on the plotted content of their own level/view. VPFIT fits an existing unlocked viewport without moving its paper frame; undo and file round-trip preserve framing (ViewportFramingTests, AppSelfTestsMacFeedback)."
+  "acceptance": "Rectangular viewport displays correctly in layout view and plots at the stated scale. New viewports centre on the plotted content of their own level/view. VPFIT fits an existing unlocked viewport without moving its paper frame; undo and file round-trip preserve framing (ViewportFramingTests, AppSelfTestsMacFeedback). The Windows context menu forwards VPFIT for the selected viewport and disables it when locked (windows/test/canvas.mjs)."
  },
  {
   "id": "SHT-004",

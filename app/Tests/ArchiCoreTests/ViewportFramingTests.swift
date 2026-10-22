@@ -43,21 +43,35 @@ final class ViewportFramingTests: XCTestCase {
         XCTAssertEqual(bounds.center.x, 102500, accuracy: 1)
     }
 
+    @MainActor private func feed(_ session: EngineSession, _ line: String, _ answers: [String]) async throws {
+        func params(_ key: String, _ value: String) -> EngineJSON {
+            var p = EngineObject(); p.set(key, .string(value)); return p.json
+        }
+        var state = try await session.call("command.run", params("line", line))
+        for answer in answers where state["active"]?.boolValue == true {
+            state = try await session.call("input.text", params("text", answer))
+        }
+        if state["active"]?.boolValue == true { _ = try await session.call("input.key", params("key", "Escape")) }
+    }
+
     @MainActor func testMviewFitCommandUndoPersistenceAndLock() async throws {
-        let (session, _) = EngineSheetsRecoveryTests().session()
+        // Construct the engine directly: XCTestCase's no-argument initializer is macOS-only.
+        let registry = CommandRegistry()
+        EngineSession.registerPortableAppCommands(registry)
+        EngineSession.registerToolCommands(registry)
+        let session = EngineSession(editor: Editor(registry: registry), emit: { _ in })
         session.editor.doc = drawing()
-        let runner = EngineSheetsRecoveryTests()
-        try await runner.feed(session, "MVIEW", ["24,62", "406,283", "1:200", "Plan", "Plan"])
+        try await feed(session, "MVIEW", ["24,62", "406,283", "1:200", "Plan", "Plan"])
         XCTAssertEqual(session.editor.doc.layouts[0].viewports.count, 1)
         let created = session.editor.doc.layouts[0].viewports[0]
         XCTAssertEqual(created.viewCenter.x, 102500, accuracy: 1)
         XCTAssertEqual(created.scale, 200)
-        try await runner.feed(session, "MVIEWPOLY", ["24,62", "406,62", "406,283", "", "200"])
+        try await feed(session, "MVIEWPOLY", ["24,62", "406,62", "406,283", "", "200"])
         XCTAssertEqual(session.editor.doc.layouts[0].viewports.count, 2)
         XCTAssertEqual(session.editor.doc.layouts[0].viewports[1].viewCenter.x, 102500, accuracy: 1)
         session.editor.doc.layouts[0].viewports[0].viewCenter = .zero
         let before = session.editor.doc.layouts[0].viewports[0]
-        try await runner.feed(session, "VPF", ["1"])
+        try await feed(session, "VPF", ["1"])
         let fitted = session.editor.doc.layouts[0].viewports[0]
         XCTAssertEqual(fitted.viewCenter.x, 102500, accuracy: 1)
         XCTAssertNotEqual(fitted.scale, before.scale)
@@ -66,13 +80,13 @@ final class ViewportFramingTests: XCTestCase {
         session.editor.undo()
         XCTAssertEqual(session.editor.doc.layouts[0].viewports[0], before)
         EngineViewports.setLocked(&session.editor.doc, 0, 0, true)
-        try await runner.feed(session, "VPFIT", ["1"])
+        try await feed(session, "VPFIT", ["1"])
         XCTAssertEqual(session.editor.doc.layouts[0].viewports[0], before)
         XCTAssertTrue(session.editor.log.contains { $0.contains("locked") })
         EngineViewports.setLocked(&session.editor.doc, 0, 0, false)
         session.editor.doc.layouts[0].viewports[0].level = 98
         let empty = session.editor.doc.layouts[0].viewports[0]
-        try await runner.feed(session, "VPFIT", ["1"])
+        try await feed(session, "VPFIT", ["1"])
         XCTAssertEqual(session.editor.doc.layouts[0].viewports[0], empty)
         XCTAssertTrue(session.editor.log.contains { $0.contains("No plotted content") })
     }

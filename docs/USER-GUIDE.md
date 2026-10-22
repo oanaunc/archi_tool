@@ -712,6 +712,7 @@ renders and shaded elevations, sections and axonometric/perspective views (and t
 - **Sheets:** `LAYOUT` creates and manages sheets and their paper size. `MVIEW` places viewports (plan, elevation,
   section, 3D) at a scale such as 1:100, and `VPLOCK` locks a viewport's scale and position.
 - **Blank or off-centre viewport:** open the sheet’s **Viewports** menu, choose the viewport and **Fit Content (VPFIT)**, or type `VPFIT` (`VPF`) and its number. This centres the plotted content and changes its scale to fit the existing frame; undo restores the previous framing. Locked viewports must be unlocked first. If no content is found, check the level named below the viewport and the layers’ visibility/Plot settings. To show another level, make it current in Model and add its plan from **Add Viewport**.
+- **Windows viewport recovery (1.0.3):** right-click the sheet viewport and choose **Fit Content (VPFIT)**, or type `VPFIT` and its number. The shared command centres and scales plotted content, respects locks, and supports undo and persistence.
 - **Title blocks:** `TITLEBLOCK` edits the sheet's title block fields (sheet title and number, scale, date, revision)
   and the project information shared by all sheets.
 - **Page setup** (`PAGESETUP`, ⇧⌘P): paper, scale, lineweights, colour/monochrome/greyscale plotting and a plot

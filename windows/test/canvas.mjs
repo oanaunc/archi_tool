@@ -440,7 +440,16 @@ if (vps.length) {
   await page.mouse.click(...at(vc), { button: "right" });
   await wait(200);
   const vmenu = await menuTitles();
-  check("viewport menu (scales, lock, maximise, remove)", ["Scale 1:50", "Scale 1:100", "Lock Viewport", "Maximise (VPMAX)", "Remove"].every((t) => vmenu.includes(t)), vmenu.join("|"));
+  check("viewport menu (scales, lock, maximise, remove)", ["Scale 1:50", "Scale 1:100", "Lock Viewport", "Fit Content (VPFIT)", "Maximise (VPMAX)", "Remove"].every((t) => vmenu.includes(t)), vmenu.join("|"));
+  await C(() => {
+    window.__fitRun = window.archiApp.runCommand;
+    window.archiApp.runCommand = async (line) => { window.__fitLine = line; };
+  });
+  await page.click('.menu .mi:has-text("Fit Content (VPFIT)")');
+  check("Fit Content sends the selected viewport to the shared command", (await C(() => window.__fitLine)) === `VPFIT ${vps[0].index + 1}`);
+  await C(() => { window.archiApp.runCommand = window.__fitRun; delete window.__fitRun; delete window.__fitLine; });
+  await page.mouse.click(...at(vc), { button: "right" });
+  await wait(100);
   await page.click('.menu .mi:has-text("Lock Viewport")');
   await wait(300);
   check("lock shows the badge state", await C(() => window.archiCanvas.viewports[0].locked === true));
@@ -451,6 +460,7 @@ if (vps.length) {
   check("a locked viewport pans instead of moving", JSON.stringify(await C(() => window.archiCanvas.viewports[0].rect)) === JSON.stringify(r0));
   await page.mouse.click(...at(vc), { button: "right" });
   await wait(200);
+  check("Fit Content is disabled on locked viewports", await page.locator('.menu .mi:has-text("Fit Content (VPFIT)")').evaluate(el => el.classList.contains("disabled")));
   await page.click('.menu .mi:has-text("Unlock Viewport")');
   await wait(300);
   const vc2 = await C((r) => window.archiCanvas.toView([(r[0] + r[2]) / 2, (r[1] + r[3]) / 2]), (await C(() => window.archiCanvas.viewports[0].rect)));
