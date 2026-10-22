@@ -178,6 +178,20 @@ enum FileViewCommands {
     }
 
     static var sheets: [CommandDef] { [
+        CommandDef("VPFIT", aliases: ["VPF", "FITVIEWPORT"], category: "View", summary: "Centres and fits the plotted content of a sheet viewport; preserves its paper frame and level.") { ed in
+            guard let li = currentLayoutIndex(ed), !ed.doc.layouts[li].viewports.isEmpty else { throw CommandError.invalid("The sheet has no viewports.") }
+            let count = ed.doc.layouts[li].viewports.count
+            guard let number = try await ed.getInteger("Viewport number (1–\(count))", defaultValue: 1) else { return }
+            let vi = number - 1
+            guard ed.doc.layouts[li].viewports.indices.contains(vi) else { throw CommandError.invalid("No viewport \(number).") }
+            guard !EngineViewports.isLocked(ed.doc, li, vi) else { throw CommandError.invalid("The viewport is locked (VPLOCK Off to unlock).") }
+            let vp = ed.doc.layouts[li].viewports[vi]
+            guard vp.view != .axonometric && vp.view != .perspective else { throw CommandError.invalid("Fit Content supports plan, ceiling, section and elevation viewports.") }
+            let bounds = ViewportFraming.bounds(doc: ed.doc, viewport: vp, layoutIndex: li, index: vi)
+            guard let fitted = ViewportFraming.fitted(vp, bounds: bounds) else { throw CommandError.invalid("No plotted content at this level. Check the viewport level, layer visibility and Plot settings.") }
+            ed.doc.layouts[li].viewports[vi] = fitted
+            ed.print("Viewport \(number) fitted at 1:\(fmt(fitted.scale * ed.doc.units.mm, 2)).")
+        },
         CommandDef("LAYOUT", aliases: ["LO", "-LAYOUT", "SHEET"], category: "View", summary: "Creates, sets, renames and deletes sheets (layouts); sets paper size and title block.") { ed in
             let k = try await ed.getKeyword("Enter layout option", ["?", "New", "Set", "Delete", "Rename", "Paper", "Titleblock"], defaultValue: "Set") ?? "Set"
             switch k {
@@ -237,7 +251,8 @@ enum FileViewCommands {
             let k = try await ed.getKeyword("View", kinds, defaultValue: "Plan") ?? "Plan"
             let view: ViewKind = ["Plan": .plan, "Ceiling": .ceiling, "North": .elevationNorth, "South": .elevationSouth, "East": .elevationEast, "West": .elevationWest,
                                   "SEction": .section, "Axonometric": .axonometric, "PErspective": .perspective][k] ?? .plan
-            let ext = GeometryOps.bounds(of: ed.doc)
+            let framing = Viewport(origin: box.min, size: Vec2(box.width, box.height), viewCenter: .zero, scale: scale, view: view, level: ed.doc.currentLevel)
+            let ext = view == .axonometric || view == .perspective ? GeometryOps.bounds(of: ed.doc) : ViewportFraming.bounds(doc: ed.doc, viewport: framing, layoutIndex: li)
             let center = ext.isEmpty ? Vec2.zero : ext.center
             let title = try await ed.getString("Enter viewport title", defaultValue: ed.doc.level(ed.doc.currentLevel)?.name ?? "") ?? ""
             ed.doc.layouts[li].viewports.append(Viewport(origin: box.min, size: Vec2(box.width, box.height), viewCenter: center, scale: scale, view: view, level: ed.doc.currentLevel, title: title))

@@ -816,7 +816,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | --- | --- | --- | --- | --- | --- |
 | SHT-001 | Layouts (paper space) | LAYOUT | 1 | must | ✅ done |
 | SHT-002 | Paper sizes | — | 1 | must | ✅ done |
-| SHT-003 | Rectangular viewport | MVIEW (MV) | 1 | must | ✅ done |
+| SHT-003 | Rectangular viewport | MVIEW (MV), VPFIT (VPF) | 1 | must | ✅ done |
 | SHT-004 | Polygonal/object viewport | MVIEW Polygonal/Object | 2 | should | ✅ done |
 | SHT-005 | Viewport scale | — | 1 | must | ✅ done |
 | SHT-006 | Lock viewport | — | 2 | must | ✅ done |

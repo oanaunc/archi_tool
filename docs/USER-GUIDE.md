@@ -711,6 +711,7 @@ renders and shaded elevations, sections and axonometric/perspective views (and t
 
 - **Sheets:** `LAYOUT` creates and manages sheets and their paper size. `MVIEW` places viewports (plan, elevation,
   section, 3D) at a scale such as 1:100, and `VPLOCK` locks a viewport's scale and position.
+- **Blank or off-centre viewport:** open the sheet’s **Viewports** menu, choose the viewport and **Fit Content (VPFIT)**, or type `VPFIT` (`VPF`) and its number. This centres the plotted content and changes its scale to fit the existing frame; undo restores the previous framing. Locked viewports must be unlocked first. If no content is found, check the level named below the viewport and the layers’ visibility/Plot settings. To show another level, make it current in Model and add its plan from **Add Viewport**.
 - **Title blocks:** `TITLEBLOCK` edits the sheet's title block fields (sheet title and number, scale, date, revision)
   and the project information shared by all sheets.
 - **Page setup** (`PAGESETUP`, ⇧⌘P): paper, scale, lineweights, colour/monochrome/greyscale plotting and a plot
@@ -1056,7 +1057,7 @@ command inside the app. This table is generated from the command definitions in 
 (`python3 docs/gen_command_reference.py`).
 
 <!-- BEGIN COMMAND REFERENCE -->
-994 commands.
+995 commands.
 
 ### Draw
 
@@ -1808,6 +1809,7 @@ command inside the app. This table is generated from the command definitions in 
 | `MATMAPPING` | `TEXTUREMAPPING`, `UVMAPPING`, `MATERIALMAPPING`, `POSITIONTEXTURE` | Texture mapping of a material: Box, Planar, Cylindrical, Spherical or UV, and texture positioning (offset, rotation, scale) on its faces; Reset. *(app)* |
 | `MATMAPS` | `PBRMAPS`, `MATERIALMAPS` | PBR texture maps of a material: Normal, Roughness, Metallic, AO and Displacement images, normal strength and displacement height; List/Clear. *(app)* |
 | `MVIEW` | `MV`, `VIEWPORT` | Places a viewport on the current sheet (corners in paper mm, scale 1:n, view kind, level). |
+| `VPFIT` | `VPF`, `FITVIEWPORT` | Centres and fits the plotted content of a sheet viewport; preserves its paper frame and level. |
 | `MVIEWPOLY` | `MVPOLY`, `POLYVIEWPORT` | Creates a polygonal sheet viewport from paper points (x,y in mm) showing the current level. *(app)* |
 | `MVSETUP` |  | Aligns sheet viewports: pans one viewport so a model point lines up horizontally or vertically with a point in another. *(app)* |
 | `NAVIGATOR` | `OVERVIEW`, `MINIMAP` | Navigator: overview map of the whole drawing with the visible area; drag the rectangle to pan. *(app)* |

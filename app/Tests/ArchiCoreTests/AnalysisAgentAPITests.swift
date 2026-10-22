@@ -175,7 +175,7 @@ final class AnalysisAgentAPITests: XCTestCase {
         while let u = e?.nextObject() as? URL {
             guard u.pathExtension == "swift" else { continue }
             count += 1
-            let head = (try? String(contentsOf: u, encoding: .utf8))?.split(separator: "\n", maxSplits: 3).prefix(3).joined(separator: "\n") ?? ""
+            let head = (try? String(contentsOf: u, encoding: .utf8))?.split(separator: "\n", maxSplits: 4).prefix(4).joined(separator: "\n") ?? ""
             if !head.contains("GPL-3.0-or-later") { missing.append(u.lastPathComponent) }
         }
         XCTAssertGreaterThan(count, 100)

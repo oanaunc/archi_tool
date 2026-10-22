@@ -111,7 +111,8 @@ enum EngineSheetCommands {
             while let p = try await ed.getPoint(pts.isEmpty ? "Specify first paper point" : "Specify next paper point (Enter to close)").point { pts.append(p) }
             guard pts.count >= 3 else { throw CommandError.invalid("A polygonal viewport needs at least 3 points.") }
             let ratio = try await ed.getInteger("Scale 1:n <100>", defaultValue: 100) ?? 100
-            let bounds = GeometryOps.bounds(of: ed.doc)
+            let framing = Viewport(origin: .zero, size: Vec2(100, 80), viewCenter: .zero, level: ed.doc.currentLevel)
+            let bounds = ViewportFraming.bounds(doc: ed.doc, viewport: framing, layoutIndex: li)
             let center = bounds.isEmpty ? Vec2.zero : bounds.center
             let scale = viewportScale(ratio: Double(max(ratio, 1)), units: ed.doc.units)
             let i = addPolygonal(&ed.doc, layoutIndex: li, pts, center: center, scale: scale, level: ed.doc.currentLevel)

@@ -162,7 +162,9 @@ enum AppCommandsNav {
                 while let p = try await ed.getPoint(pts.isEmpty ? "Specify first paper point" : "Specify next paper point (Enter to close)").point { pts.append(p) }
                 guard pts.count >= 3 else { throw CommandError.invalid("A polygonal viewport needs at least 3 points.") }
                 let ratio = try await ed.getInteger("Scale 1:n <100>", defaultValue: 100) ?? 100
-                let center = GeometryOps.bounds(of: ed.doc).isEmpty ? .zero : GeometryOps.bounds(of: ed.doc).center
+                let framing = Viewport(origin: .zero, size: Vec2(100, 80), viewCenter: .zero, level: ed.doc.currentLevel)
+                let bounds = ViewportFraming.bounds(doc: ed.doc, viewport: framing, layoutIndex: li)
+                let center = bounds.isEmpty ? Vec2.zero : bounds.center
                 let i = SheetTools.addPolygonal(&ed.doc, layoutIndex: li, pts, center: center, scale: SheetTools.scale(ratio: Double(max(ratio, 1)), units: ed.doc.units), level: ed.doc.currentLevel)
                 ed.print("Polygonal viewport \((i ?? 0) + 1) at 1:\(ratio).")
             },

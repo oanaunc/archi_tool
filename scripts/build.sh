@@ -30,5 +30,7 @@ cp "$ROOT/LICENSE" "$APP/Contents/Resources/LICENSE.txt"
 mkdir -p "$APP/Contents/Resources/Samples" && cp -R "$ROOT/assets/demo/." "$APP/Contents/Resources/Samples/"
 mkdir -p "$APP/Contents/Resources/tutorials" && cp -R "$ROOT/tutorials/." "$APP/Contents/Resources/tutorials/"
 cp "$ROOT"/docs/*.md "$APP/Contents/Resources/" 2>/dev/null || true
+# Bundle resources must be readable by the user installing the DMG, regardless of source file permissions.
+chmod -R a+rX "$APP"
 codesign --force --sign - "$APP" >/dev/null 2>&1 || true
 echo "BUILD OK: $APP"

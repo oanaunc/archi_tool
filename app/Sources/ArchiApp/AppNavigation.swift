@@ -718,7 +718,8 @@ enum ViewDrop {
     static func place(_ s: String, at paper: Vec2, layoutIndex li: Int, doc: inout ArchiDocument) -> Int? {
         guard let (kind, level) = parse(s), doc.layouts.indices.contains(li) else { return nil }
         let scale = viewScale(doc, level: level)
-        var ext = GeometryOps.bounds(of: doc)
+        let framing = Viewport(origin: .zero, size: Vec2(100, 80), viewCenter: .zero, scale: scale, view: kind, level: level)
+        var ext = kind == .axonometric || kind == .perspective ? GeometryOps.bounds(of: doc) : ViewportFraming.bounds(doc: doc, viewport: framing, layoutIndex: li)
         if ext.isEmpty { ext = BBox2(min: Vec2(-5000, -5000), max: Vec2(5000, 5000)) / doc.units.mm }
         let area = SheetComposer.drawingArea(doc.layouts[li].paper)
         let size = Vec2(min(ext.width / scale + 20, area.width), min(ext.height / scale + 20, area.height))

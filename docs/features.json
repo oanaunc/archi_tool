@@ -6543,13 +6543,13 @@
   "area": "Sheets, Layouts & Plotting",
   "group": "Layouts & Viewports",
   "name": "Rectangular viewport",
-  "command": "MVIEW (MV)",
+  "command": "MVIEW (MV), VPFIT (VPF)",
   "description": "Viewports showing model at a scale.",
   "reference": "AutoCAD",
   "phase": 1,
   "priority": "must",
   "status": "done",
-  "acceptance": "Rectangular viewport displays correctly in layout view and plots at the stated scale."
+  "acceptance": "Rectangular viewport displays correctly in layout view and plots at the stated scale. New viewports centre on the plotted content of their own level/view. VPFIT fits an existing unlocked viewport without moving its paper frame; undo and file round-trip preserve framing (ViewportFramingTests, AppSelfTestsMacFeedback)."
  },
  {
   "id": "SHT-004",

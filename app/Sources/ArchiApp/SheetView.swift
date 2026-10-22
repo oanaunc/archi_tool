@@ -85,6 +85,7 @@ struct SheetView: View {
                                 let li = layoutIndex
                                 model.editor.transaction(locked ? "Unlock Viewport" : "Lock Viewport") { ViewportLock.set(&$0, layoutIndex: li, viewport: i, locked: !locked) }
                             }
+                            Button("Fit Content (VPFIT)") { model.runCommand("VPFIT \(i + 1)") }.disabled(locked || vp.view == .axonometric || vp.view == .perspective)
                             Button("Maximise (VPMAX)") { model.selectedSheetViewport = i; model.runCommand("VPMAX \(i + 1)") }.disabled(vp.view != .plan && vp.view != .ceiling)
                             if SheetTools.clip(model.doc, layout: l.name, viewport: i) != nil {
                                 Button("Remove Clip") { let li = layoutIndex; model.editor.transaction("Remove Clip") { SheetTools.setClip(&$0, layoutIndex: li, viewport: i, nil) } }.disabled(locked)
