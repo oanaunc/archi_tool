@@ -1,0 +1,18 @@
+{
+  "product": "Oanarina Archi Tool",
+  "platform": "windows",
+  "version": "1.0.3",
+  "build": 8,
+  "fileVersion": "1.0.3.8",
+  "minimumOS": "Windows 10 64-bit",
+  "installers": [
+    {
+      "file": "Oanarina-Archi-Tool-Setup-1.0.3.exe",
+      "bytes": 132654238,
+      "mb": 132.7,
+      "sha256": "4595f1137d084bfb3adf37b041f34723711e93abb79de195c5fc833049d7222e",
+      "signed": false,
+      "url": "https://www.oanarinaldi.com/downloads/archi-tool/Oanarina-Archi-Tool-Setup-1.0.3.exe"
+    }
+  ]
+}
