@@ -1,6 +1,51 @@
 # App Review responses
 
-## Current issue — Guideline 4.3(a), 16 October 2026
+## Current issue — Guideline 2.4.5(i), 22 October 2026
+
+Verified directly in App Store Connect on **23 October 2026**: version **1.0.2 (7)** is **Rejected**, submission `828a79cc-0290-4243-a979-f28df5571438` is **Unresolved Issues**, and the item lists **2.4.5 Performance: Hardware Compatibility (macOS)**. The conversation contains **six messages**. Apple acknowledged the previous information on **22 October at 7:37 PM Europe/Bucharest**, saying review would continue, then requested the network-server explanation again at **7:56 PM**. The currently listed issue is 2.4.5; this does not independently establish the disposition of every earlier finding.
+
+The version page still contains the expanded local-server reviewer notes and the dedicated `com.apple.security.network.server` sandbox usage explanation saved on 16 October. Build 7, uploaded on 15 October, remains selected. The prior remedy was an explanation and same-build resubmission, not removal of the entitlement. The **1.0.3 (8)** website release fixes sheet viewport framing; its Developer ID notarization does not update the selected App Store build or resolve this entitlement question.
+
+**Follow-up delivery status: draft only; not sent.** No store metadata was changed, no binary was uploaded and no review was restarted during this investigation.
+
+### Follow-up reply to App Review (draft)
+
+Hello App Review,
+
+Thank you for continuing the review of Oanarina Archi Tool 1.0.2 (7). Following your October 22 request under Guideline 2.4.5(i), could you help us identify which step of the local agent server verification is failing?
+
+The submitted build uses com.apple.security.network.server for an implemented, optional HTTP/JSON-RPC server. A local automation client connects to the app to inspect the drawing, run drawing commands and undo changes. The app accepts incoming connections on IPv4 loopback 127.0.0.1 only, default port 47800. The server is off by default and requires no AI provider, Claude installation, account or API key. Authenticated RPC requests use the random per-launch token shown in the app.
+
+To find and test it in the submitted build:
+
+1. Open the bundled Cedar House or a new drawing. A document window must be open.
+2. Choose Oanarina Archi Tool > Agent Server... to open the agent settings, then click Start under LOCAL AGENT SERVER. Alternatively, use Settings > Agents or enter AGENTS in the in-app command line.
+3. In Terminal run: curl http://127.0.0.1:47800/health
+   The app returns JSON containing "status":"ok" and "rpc":"/rpc". This health check needs no token.
+4. Click Copy Token in the same panel. Substitute it for PASTE_TOKEN_HERE below:
+
+```sh
+curl http://127.0.0.1:47800/rpc -H 'Authorization: Bearer PASTE_TOKEN_HERE' -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"run_command","params":{"command":"CIRCLE 0,0 500"}}'
+```
+
+A circle is added to the drawing. Edit > Undo removes it. Click Stop in the agent panel to end incoming connections. If the port has been changed, use the port displayed in that panel.
+
+These steps are also saved in App Review Information > Notes and App Sandbox Information. We rechecked the sandbox preview with matching executable UUIDs to the uploaded build on October 23: incoming HTTP drawing commands and undo both passed. This was a local sandbox preview test, not an App Store-installed test.
+
+The server entitlement is required to accept these incoming connections. Please let us know whether the difficulty is locating the panel, starting the listener, or receiving the response, and share any error you see so we can address it precisely.
+
+Thank you,
+Oana Rinaldi
+
+### Fresh verification — 23 October 2026
+
+- Archived distribution build `1.0.2 (7)` passes `scripts/verify-app-store.py` and strict deep signature verification. Its signed entitlements include `com.apple.security.network.server`.
+- The existing ad-hoc signed sandbox preview has matching app executable UUIDs for both architectures: arm64 `A1AB3F1C-144D-3383-B520-6F31B2C3695E`; x86_64 `EF89DA89-8329-386C-9EAA-CE28FA01E641`.
+- All **17 sandbox checks** passed again, including HTTP drawing commands and RPC undo. Log: `build/app-store/sandbox-runtime-review-2026-10-23.log` (ignored by Git). The optional outside-container denied-write probe was omitted. Runtime execution was on this Mac, not Apple's review device or an App Store-installed copy.
+- Source inspection confirms `NWListener` binds IPv4 loopback with `acceptLocalOnly`; agent settings expose Start/Stop and Copy Token. Removing the entitlement would break the retained server feature in the sandbox.
+- [Apple's entitlement reference](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.security.network.server) defines permission to listen for incoming connections. [Apple's review-status guidance](https://developer.apple.com/help/app-review/after-submitting-for-review/review-status) says an information request can be answered directly without restarting review when there are no other issues to resolve.
+
+## Previous issue — Guideline 4.3(a), 16 October 2026
 
 The owner supplied Apple's rejection message for version **1.0.2**, submission `828a79cc-0290-4243-a979-f28df5571438`. Apple alleges similar binary, metadata and/or concept, but identifies no comparison app or specific matching element. The message also includes an extended-review warning. App Store Connect was inspected after owner authorization to reply: version **1.0.2 (7)** shows **Rejected**, the submission shows **Unresolved Issues**, and the issue is listed as **4.3.0 Design: Spam**.
 
@@ -43,7 +88,7 @@ Oana Rinaldi
 
 Sent on 16 October 2026 at **11:05 AM Europe/Bucharest** for macOS version **1.0.2 (7)**, submission `828a79cc-0290-4243-a979-f28df5571438`.
 
-**Delivery status:** sent after owner authorization and sign-in. App Store Connect displays the reply as the second message. Expanded reviewer notes and dedicated `com.apple.security.network.server` usage information were saved and verified after reopening the version. Update Review and Resubmit to App Review succeeded; both the submission and macOS App 1.0.2 (7) now show **Waiting for Review**. The original submission ID is retained. Apple approval and public availability are not yet confirmed.
+**Delivery status:** sent after owner authorization and sign-in. App Store Connect displays the reply as the second message. Expanded reviewer notes and dedicated `com.apple.security.network.server` usage information were saved and verified after reopening the version. Update Review and Resubmit to App Review succeeded; both the submission and macOS App 1.0.2 (7) then showed **Waiting for Review**. The original submission ID is retained. Apple approval and public availability are not yet confirmed.
 
 ## Reply to App Review (sent as plain text)
 

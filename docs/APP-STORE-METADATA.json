@@ -1,5 +1,5 @@
 {
-  "status": "rejected-guideline-4.3a-reply-sent-awaiting-apple",
+  "status": "rejected-guideline-2.4.5i-follow-up-drafted",
   "platform": "macOS only",
   "bundleIdentifier": "com.oanarina.architool",
   "developerTeam": "HBD3XXQK45",
@@ -66,16 +66,16 @@
   "signedPackage": "dist/app-store/Oanarina-Archi-Tool-1.0.2-7.pkg",
   "signingStatus": "Application and installer signed successfully on 15 October 2026 after human keychain approval; bundle, certificate/profile match and installer signature verified",
   "uploadStatus": "Build 7 uploaded successfully, processed by Apple and attached to version 1.0.2",
-  "reviewStatus": "Rejected \u2014 4.3.0 Design: Spam; submission Unresolved Issues. Verified in App Store Connect on 16 October 2026 after sending the reply at 9:56 PM Europe/Bucharest.",
+  "reviewStatus": "Rejected — 2.4.5 Performance: Hardware Compatibility (macOS); submission Unresolved Issues. Verified live in App Store Connect on 23 October 2026; Messages (6).",
   "submissionID": "828a79cc-0290-4243-a979-f28df5571438",
   "submissionDate": "2026-10-15",
   "reviewSubmissionURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/828a79cc-0290-4243-a979-f28df5571438",
   "reviewNotesSyncStatus": "Expanded entitlement explanation saved in App Store Connect on 16 October 2026 and verified after navigating away and reopening the version.",
-  "reviewIssueDate": "2026-10-16",
+  "reviewIssueDate": "2026-10-22",
   "reviewResponseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
   "reviewResponseDeliveryStatus": "Sent in App Store Connect on 16 October 2026 at 11:05 AM Europe/Bucharest; Messages (2) displays the Oana Rinaldi reply.",
   "remainingToResolveReview": [
-    "Await Apple clarification or reconsideration of the 4.3(a) finding; address specific substantiated findings or consider an evidence-based appeal when appropriate."
+    "Send the prepared entitlement follow-up after owner instruction; obtain the reviewer’s exact failed step or additional evidence request. No new binary is required solely to explain the implemented server."
   ],
   "resubmissionDate": "2026-10-16",
   "resubmissionTimeZone": "Europe/Bucharest",
@@ -85,18 +85,36 @@
     "com.apple.security.network.server": "Required by the built-in opt-in local agent server. Network.framework NWListener accepts incoming HTTP connections only on 127.0.0.1:47800 (configurable port), with acceptLocalOnly enabled, and responds to JSON-RPC 2.0 at /rpc. Local automation tools inspect the open drawing, run CAD/BIM commands and undo edits, visible live in the app. Off by default; every RPC request requires a random per-launch bearer token. No LAN/internet listener. To test: open a drawing, choose Oanarina Archi Tool > Settings > Agents > Start, then run curl http://127.0.0.1:47800/health in Terminal. The app responds with status ok. Copy Token in the same panel to exercise the authenticated CIRCLE command documented in App Review Notes; Undo reverses it. Stop ends incoming connections. No AI account or external service is required."
   },
   "currentReviewIssue": {
-    "guideline": "4.3(a) - Design - Spam",
-    "reportedDate": "2026-10-16",
-    "source": "Apple rejection message supplied by owner in chat",
-    "summary": "Apple alleges similar binary, metadata and/or concept; no comparison app or specific matching element identified. Includes extended-review warning.",
+    "guideline": "2.4.5(i) - Performance",
+    "reportedDate": "2026-10-22",
+    "verifiedDate": "2026-10-23",
+    "source": "Owner-supplied Apple message and live App Store Connect inspection",
+    "summary": "Apple again requests the purpose and location of com.apple.security.network.server functionality after acknowledging prior information on 22 October at 7:37 PM Europe/Bucharest.",
     "responseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
-    "responseDeliveryStatus": "Sent after owner authorization on 16 October 2026 at 9:56 PM Europe/Bucharest; verified as the fourth message in App Store Connect. No appeal filed or further resubmission performed.",
-    "priorResponseContext": "Existing reviewResponseDeliveryStatus and resubmission fields describe the earlier network.server entitlement issue, not a reply to this rejection.",
-    "responseDate": "2026-10-16",
-    "responseDisplayedTime": "9:56 PM",
-    "responseTimeZone": "Europe/Bucharest",
-    "verifiedMessageCount": 4,
+    "responseDeliveryStatus": "Follow-up drafted only; not sent. Earlier replies from 16 October remain visible.",
+    "verifiedMessageCount": 6,
     "liveSubmissionStatus": "Unresolved Issues",
-    "liveAppVersionStatus": "1.0.2 (7) \u2014 Rejected \u2014 4.3.0 Design: Spam"
-  }
+    "liveAppVersionStatus": "1.0.2 (7) — Rejected — 2.4.5 Performance: Hardware Compatibility (macOS)",
+    "savedExplanationVerified": true,
+    "freshSandboxChecks": "17 passed; incoming HTTP drawing command and RPC undo included. Preview UUIDs match archived build 7; not an App Store-installed test.",
+    "localEvidenceLog": "build/app-store/sandbox-runtime-review-2026-10-23.log",
+    "storeChangesThisInvestigation": "None; no message sent, metadata changed, binary uploaded or review restarted."
+  },
+  "previousReviewIssues": [
+    {
+      "guideline": "4.3(a) - Design - Spam",
+      "reportedDate": "2026-10-16",
+      "source": "Apple rejection message supplied by owner in chat",
+      "summary": "Apple alleges similar binary, metadata and/or concept; no comparison app or specific matching element identified. Includes extended-review warning.",
+      "responseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
+      "responseDeliveryStatus": "Sent after owner authorization on 16 October 2026 at 9:56 PM Europe/Bucharest; verified as the fourth message in App Store Connect. No appeal filed or further resubmission performed.",
+      "priorResponseContext": "Existing reviewResponseDeliveryStatus and resubmission fields describe the earlier network.server entitlement issue, not a reply to this rejection.",
+      "responseDate": "2026-10-16",
+      "responseDisplayedTime": "9:56 PM",
+      "responseTimeZone": "Europe/Bucharest",
+      "verifiedMessageCount": 4,
+      "liveSubmissionStatus": "Unresolved Issues",
+      "liveAppVersionStatus": "1.0.2 (7) — Rejected — 4.3.0 Design: Spam"
+    }
+  ]
 }
