@@ -1,5 +1,5 @@
 {
-  "status": "1.0.3-build-9-uploaded-apple-processing",
+  "status": "1.0.3-build-9-submitted-waiting-for-review",
   "platform": "macOS only",
   "bundleIdentifier": "com.oanarina.architool",
   "developerTeam": "HBD3XXQK45",
@@ -55,18 +55,22 @@
     "expanded server-entitlement reviewNotes",
     "App Sandbox Information: network.server usage",
     "entitlement explanation reply to App Review",
-    "resubmission on 16 October 2026"
+    "resubmission on 16 October 2026",
+    "processed build 1.0.3 (9)",
+    "version 1.0.3 and viewport-fix reviewer-note context",
+    "follow-up entitlement reply on 23 October 2026",
+    "build 9 resubmission on 23 October 2026; Waiting for Review"
   ],
   "appReviewContact": "Saved in App Store Connect using the contact details supplied by the owner; personal contact values are not stored in this repository.",
   "price": "Free (0.00)",
   "availability": "All 175 current countries/regions and future storefronts",
   "privacyDeclarationStatus": "Five-type declaration expressly approved by owner and published in App Store Connect on 15 October 2026",
   "distributionPermissionStatus": "Owner expressly approved docs/APP-STORE-PERMISSION.txt on 15 October 2026; former LibreCAD table removed and replaced by attributed MIT palette",
-  "appleValidation": "Upload succeeded and package processing confirmed by Xcode and live TestFlight. Final review submission has not yet occurred.",
+  "appleValidation": "Xcode upload and Apple processing succeeded. Selected build 1.0.3 (9) saved, Update Review succeeded, and Resubmit to App Review completed. Submission and app item both show Waiting for Review. Approval and public App Store availability remain unconfirmed.",
   "signedPackage": "dist/app-store/Oanarina-Archi-Tool-1.0.3-9.pkg",
   "signingStatus": "Application and installer distribution-signed on 23 October 2026; strict signatures, provisioning-profile/certificate match, universal macOS 14 metadata and installer signature verified.",
-  "uploadStatus": "Xcode reported Upload succeeded, Uploaded Oanarina Archi Tool and EXPORT SUCCEEDED on 23 October 2026 at 11:42:48 Europe/Bucharest. TestFlight confirms Version 1.0.3, Build (9), Processing.",
-  "reviewStatus": "Version 1.0.3 saved with server explanation retained; old build 7 selection removed and saved. New build 9 awaits Apple processing before selection and final submission.",
+  "uploadStatus": "Build 1.0.3 (9) uploaded successfully on 23 October 2026 at 11:42:48 Europe/Bucharest, processed by Apple, selected and saved in version 1.0.3.",
+  "reviewStatus": "Waiting for Review for both submission and macOS App 1.0.3 (9); verified live on 23 October 2026 after successful resubmission at 11:46 AM Europe/Bucharest.",
   "submissionID": "828a79cc-0290-4243-a979-f28df5571438",
   "submissionDate": "2026-10-15",
   "reviewSubmissionURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/828a79cc-0290-4243-a979-f28df5571438",
@@ -75,12 +79,12 @@
   "reviewResponseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
   "reviewResponseDeliveryStatus": "Follow-up sent on 23 October 2026 at 11:27 AM Europe/Bucharest; verified sent message and Messages (7).",
   "remainingToResolveReview": [
-    "Wait for Apple processing, select build 1.0.3 (9), verify saved reviewer information and submit to App Review."
+    "Await Apple review of version 1.0.3 (9); no further owner action is currently requested by App Store Connect."
   ],
-  "resubmissionDate": "2026-10-16",
+  "resubmissionDate": "2026-10-23",
   "resubmissionTimeZone": "Europe/Bucharest",
-  "resubmissionDisplayedTime": "11:05 AM",
-  "resubmissionStatus": "Confirmed Waiting for Review for submission and macOS App 1.0.2, build 7; original submission ID retained.",
+  "resubmissionDisplayedTime": "11:46 AM",
+  "resubmissionStatus": "Confirmed Waiting for Review for submission and macOS App 1.0.3 (9); original submission ID retained. Reviewer reply was sent first at 11:27 AM.",
   "sandboxUsageInformation": {
     "com.apple.security.network.server": "Required by the built-in opt-in local agent server. Network.framework NWListener accepts incoming HTTP connections only on 127.0.0.1:47800 (configurable port), with acceptLocalOnly enabled, and responds to JSON-RPC 2.0 at /rpc. Local automation tools inspect the open drawing, run CAD/BIM commands and undo edits, visible live in the app. Off by default; every RPC request requires a random per-launch bearer token. No LAN/internet listener. To test: open a drawing, choose Oanarina Archi Tool > Settings > Agents > Start, then run curl http://127.0.0.1:47800/health in Terminal. The app responds with status ok. Copy Token in the same panel to exercise the authenticated CIRCLE command documented in App Review Notes; Undo reverses it. Stop ends incoming connections. No AI account or external service is required."
   },
@@ -93,12 +97,13 @@
     "responseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
     "responseDeliveryStatus": "Follow-up sent on 23 October 2026 at 11:27 AM Europe/Bucharest; verified sent message and Messages (7).",
     "verifiedMessageCount": 7,
-    "liveSubmissionStatus": "Unresolved Issues",
-    "liveAppVersionStatus": "1.0.2 (7) — Rejected — 2.4.5 Performance: Hardware Compatibility (macOS)",
+    "liveSubmissionStatus": "Waiting for Review",
+    "liveAppVersionStatus": "1.0.3 (9) — Waiting for Review",
     "savedExplanationVerified": true,
     "freshSandboxChecks": "17 passed; incoming HTTP drawing command and RPC undo included. Preview UUIDs match archived build 7; not an App Store-installed test.",
     "localEvidenceLog": "build/app-store/sandbox-runtime-review-2026-10-23.log",
-    "storeChangesThisInvestigation": "Authorized follow-up reply sent first. Preparing new build 1.0.3 (9); upload and submission pending."
+    "storeChangesThisInvestigation": "Reply sent at 11:27 AM first; version 1.0.3 and updated review notes saved; tested and signed build 9 uploaded, processed, selected and submitted at 11:46 AM. Server sandbox explanation and automatic release retained.",
+    "disposition": "Explanation supplied; awaiting Apple review. No claim of issue acceptance or final app approval."
   },
   "previousReviewIssues": [
     {
@@ -135,5 +140,15 @@
       "build/app-store/upload-9.log"
     ],
     "runtimeLimit": "Runtime checks on the ad-hoc signed sandbox preview on Apple silicon; distribution executable UUIDs match. Not an App Store-installed or Intel runtime test."
-  }
+  },
+  "resubmissionHistory": [
+    {
+      "date": "2026-10-16",
+      "displayedTime": "11:05 AM",
+      "timeZone": "Europe/Bucharest",
+      "version": "1.0.2",
+      "build": "7",
+      "statusAtTime": "Confirmed Waiting for Review for submission and macOS App 1.0.2, build 7; original submission ID retained."
+    }
+  ]
 }
