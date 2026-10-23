@@ -1,5 +1,5 @@
 {
-  "status": "1.0.3-build-9-signed-upload-in-progress",
+  "status": "1.0.3-build-9-uploaded-apple-processing",
   "platform": "macOS only",
   "bundleIdentifier": "com.oanarina.architool",
   "developerTeam": "HBD3XXQK45",
@@ -62,11 +62,11 @@
   "availability": "All 175 current countries/regions and future storefronts",
   "privacyDeclarationStatus": "Five-type declaration expressly approved by owner and published in App Store Connect on 15 October 2026",
   "distributionPermissionStatus": "Owner expressly approved docs/APP-STORE-PERMISSION.txt on 15 October 2026; former LibreCAD table removed and replaced by attributed MIT palette",
-  "appleValidation": "After saving expanded review notes and dedicated network.server sandbox usage information, Update Review marked build 1.0.2 (7) Ready for Review. Resubmit to App Review completed on 16 October 2026 at 11:05 AM Europe/Bucharest; the submission and item both show Waiting for Review.",
+  "appleValidation": "Upload succeeded and package processing confirmed by Xcode and live TestFlight. Final review submission has not yet occurred.",
   "signedPackage": "dist/app-store/Oanarina-Archi-Tool-1.0.3-9.pkg",
   "signingStatus": "Application and installer distribution-signed on 23 October 2026; strict signatures, provisioning-profile/certificate match, universal macOS 14 metadata and installer signature verified.",
-  "uploadStatus": "Xcode archive export with destination upload started on 23 October 2026; Apple validation and processing pending.",
-  "reviewStatus": "Listing version changed to 1.0.3 and saved with expanded review notes. Previous build 1.0.2 (7) remains selected until the uploaded build is processed.",
+  "uploadStatus": "Xcode reported Upload succeeded, Uploaded Oanarina Archi Tool and EXPORT SUCCEEDED on 23 October 2026 at 11:42:48 Europe/Bucharest. TestFlight confirms Version 1.0.3, Build (9), Processing.",
+  "reviewStatus": "Version 1.0.3 saved with server explanation retained; old build 7 selection removed and saved. New build 9 awaits Apple processing before selection and final submission.",
   "submissionID": "828a79cc-0290-4243-a979-f28df5571438",
   "submissionDate": "2026-10-15",
   "reviewSubmissionURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/828a79cc-0290-4243-a979-f28df5571438",
@@ -75,7 +75,7 @@
   "reviewResponseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
   "reviewResponseDeliveryStatus": "Follow-up sent on 23 October 2026 at 11:27 AM Europe/Bucharest; verified sent message and Messages (7).",
   "remainingToResolveReview": [
-    "Wait for successful Apple upload and processing, select build 1.0.3 (9), verify saved reviewer information and submit to App Review."
+    "Wait for Apple processing, select build 1.0.3 (9), verify saved reviewer information and submit to App Review."
   ],
   "resubmissionDate": "2026-10-16",
   "resubmissionTimeZone": "Europe/Bucharest",
