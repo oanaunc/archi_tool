@@ -6,33 +6,32 @@ Verified directly in App Store Connect on **23 October 2026**: version **1.0.2 (
 
 The version page still contains the expanded local-server reviewer notes and the dedicated `com.apple.security.network.server` sandbox usage explanation saved on 16 October. Build 7, uploaded on 15 October, remains selected. The prior remedy was an explanation and same-build resubmission, not removal of the entitlement. The **1.0.3 (8)** website release fixes sheet viewport framing; its Developer ID notarization does not update the selected App Store build or resolve this entitlement question.
 
-**Follow-up delivery status: sent on 23 October 2026 at 11:27 AM Europe/Bucharest**, after the owner instructed replying first and submitting the updated build afterward. App Store Connect shows **Messages (7)** and the sent Oana Rinaldi message. It includes the local-server reproduction steps and states that version 1.0.3 is being prepared with the separate viewport framing fix. New store build **1.0.3 (9)** preparation is underway; upload and review submission are not yet confirmed.
+**Follow-up delivery status: sent on 23 October 2026 at 11:27 AM Europe/Bucharest**, after the owner instructed replying first and submitting the updated build afterward. App Store Connect shows **Messages (7)** and the sent Oana Rinaldi message. It includes the local-server reproduction steps and states that version 1.0.3 is being prepared with the separate viewport framing fix. New store build **1.0.3 (9)** passed 958 in-app checks, 17 sandbox checks and 8 packaging tests. Distribution signing and matching universal symbols passed; upload is underway, with Apple processing and final review submission pending.
 
-### Follow-up reply to App Review (prepared text; sent with the additions recorded above)
+### Follow-up reply to App Review (sent as plain text)
 
 Hello App Review,
 
-Thank you for continuing the review of Oanarina Archi Tool 1.0.2 (7). Following your October 22 request under Guideline 2.4.5(i), could you help us identify which step of the local agent server verification is failing?
+Oanarina Archi Tool 1.0.2 (7) uses com.apple.security.network.server for its implemented, optional local automation server. Local clients connect to the app to inspect the open drawing, execute CAD/BIM commands and undo changes.
 
-The submitted build uses com.apple.security.network.server for an implemented, optional HTTP/JSON-RPC server. A local automation client connects to the app to inspect the drawing, run drawing commands and undo changes. The app accepts incoming connections on IPv4 loopback 127.0.0.1 only, default port 47800. The server is off by default and requires no AI provider, Claude installation, account or API key. Authenticated RPC requests use the random per-launch token shown in the app.
+To locate and verify this functionality in the submitted build:
 
-To find and test it in the submitted build:
-
-1. Open the bundled Cedar House or a new drawing. A document window must be open.
-2. Choose Oanarina Archi Tool > Agent Server... to open the agent settings, then click Start under LOCAL AGENT SERVER. Alternatively, use Settings > Agents or enter AGENTS in the in-app command line.
-3. In Terminal run: curl http://127.0.0.1:47800/health
-   The app returns JSON containing "status":"ok" and "rpc":"/rpc". This health check needs no token.
-4. Click Copy Token in the same panel. Substitute it for PASTE_TOKEN_HERE below:
-
-```sh
+1. Open a new drawing or the bundled Cedar House sample. A document window must be open.
+2. Choose Oanarina Archi Tool > Agent Server... and click Start under LOCAL AGENT SERVER. Alternatively, use Settings > Agents or enter AGENTS in the in-app command line.
+3. In Terminal, run:
+curl http://127.0.0.1:47800/health
+The app returns JSON containing "status":"ok" and "rpc":"/rpc". This health check needs no token.
+4. Click Copy Token in the same panel. Replace PASTE_TOKEN_HERE below with the copied token:
 curl http://127.0.0.1:47800/rpc -H 'Authorization: Bearer PASTE_TOKEN_HERE' -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"run_command","params":{"command":"CIRCLE 0,0 500"}}'
-```
+A circle appears in the open drawing. Edit > Undo removes it. Click Stop in the agent panel to stop accepting connections. If the port has been changed, use the displayed port.
 
-A circle is added to the drawing. Edit > Undo removes it. Click Stop in the agent panel to end incoming connections. If the port has been changed, use the port displayed in that panel.
+The server is off by default, binds only to IPv4 loopback 127.0.0.1, and uses Network.framework NWListener with acceptLocalOnly enabled. Every drawing RPC request requires a random per-launch bearer token. No account, AI provider, API key, Claude installation or cloud service is needed. The server entitlement is required to accept these incoming connections.
 
-These steps are also saved in App Review Information > Notes and App Sandbox Information. We rechecked the sandbox preview with matching executable UUIDs to the uploaded build on October 23: incoming HTTP drawing commands and undo both passed. This was a local sandbox preview test, not an App Store-installed test.
+These steps are also saved in App Review Information > Notes and App Sandbox Information. On October 23, all 17 local sandbox preview checks passed, including incoming HTTP drawing commands and undo. The preview executable UUIDs match the archived build 7; this was not an App Store-installed test.
 
-The server entitlement is required to accept these incoming connections. Please let us know whether the difficulty is locating the panel, starting the listener, or receiving the response, and share any error you see so we can address it precisely.
+Please let us know if you cannot locate the panel, start the listener or receive the response, and share any error so we can investigate precisely.
+
+We are also preparing version 1.0.3 with a separate fix for sheet viewport framing and will submit the updated build after sending this explanation. The local automation functionality and its entitlement remain required.
 
 Thank you,
 Oana Rinaldi
