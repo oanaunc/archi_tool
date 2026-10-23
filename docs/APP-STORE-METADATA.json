@@ -1,5 +1,5 @@
 {
-  "status": "rejected-guideline-2.4.5i-follow-up-drafted",
+  "status": "entitlement-reply-sent-preparing-1.0.3-build-9",
   "platform": "macOS only",
   "bundleIdentifier": "com.oanarina.architool",
   "developerTeam": "HBD3XXQK45",
@@ -73,9 +73,9 @@
   "reviewNotesSyncStatus": "Expanded entitlement explanation saved in App Store Connect on 16 October 2026 and verified after navigating away and reopening the version.",
   "reviewIssueDate": "2026-10-22",
   "reviewResponseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
-  "reviewResponseDeliveryStatus": "Sent in App Store Connect on 16 October 2026 at 11:05 AM Europe/Bucharest; Messages (2) displays the Oana Rinaldi reply.",
+  "reviewResponseDeliveryStatus": "Follow-up sent on 23 October 2026 at 11:27 AM Europe/Bucharest; verified sent message and Messages (7).",
   "remainingToResolveReview": [
-    "Send the prepared entitlement follow-up after owner instruction; obtain the reviewer’s exact failed step or additional evidence request. No new binary is required solely to explain the implemented server."
+    "Validate, distribution-sign and upload 1.0.3 (9), select it in the store version, retain the server-entitlement explanation and submit to App Review as instructed by the owner."
   ],
   "resubmissionDate": "2026-10-16",
   "resubmissionTimeZone": "Europe/Bucharest",
@@ -91,14 +91,14 @@
     "source": "Owner-supplied Apple message and live App Store Connect inspection",
     "summary": "Apple again requests the purpose and location of com.apple.security.network.server functionality after acknowledging prior information on 22 October at 7:37 PM Europe/Bucharest.",
     "responseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
-    "responseDeliveryStatus": "Follow-up drafted only; not sent. Earlier replies from 16 October remain visible.",
-    "verifiedMessageCount": 6,
+    "responseDeliveryStatus": "Follow-up sent on 23 October 2026 at 11:27 AM Europe/Bucharest; verified sent message and Messages (7).",
+    "verifiedMessageCount": 7,
     "liveSubmissionStatus": "Unresolved Issues",
     "liveAppVersionStatus": "1.0.2 (7) — Rejected — 2.4.5 Performance: Hardware Compatibility (macOS)",
     "savedExplanationVerified": true,
     "freshSandboxChecks": "17 passed; incoming HTTP drawing command and RPC undo included. Preview UUIDs match archived build 7; not an App Store-installed test.",
     "localEvidenceLog": "build/app-store/sandbox-runtime-review-2026-10-23.log",
-    "storeChangesThisInvestigation": "None; no message sent, metadata changed, binary uploaded or review restarted."
+    "storeChangesThisInvestigation": "Authorized follow-up reply sent first. Preparing new build 1.0.3 (9); upload and submission pending."
   },
   "previousReviewIssues": [
     {

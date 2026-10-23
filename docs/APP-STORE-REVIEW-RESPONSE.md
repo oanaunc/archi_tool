@@ -6,9 +6,9 @@ Verified directly in App Store Connect on **23 October 2026**: version **1.0.2 (
 
 The version page still contains the expanded local-server reviewer notes and the dedicated `com.apple.security.network.server` sandbox usage explanation saved on 16 October. Build 7, uploaded on 15 October, remains selected. The prior remedy was an explanation and same-build resubmission, not removal of the entitlement. The **1.0.3 (8)** website release fixes sheet viewport framing; its Developer ID notarization does not update the selected App Store build or resolve this entitlement question.
 
-**Follow-up delivery status: draft only; not sent.** No store metadata was changed, no binary was uploaded and no review was restarted during this investigation.
+**Follow-up delivery status: sent on 23 October 2026 at 11:27 AM Europe/Bucharest**, after the owner instructed replying first and submitting the updated build afterward. App Store Connect shows **Messages (7)** and the sent Oana Rinaldi message. It includes the local-server reproduction steps and states that version 1.0.3 is being prepared with the separate viewport framing fix. New store build **1.0.3 (9)** preparation is underway; upload and review submission are not yet confirmed.
 
-### Follow-up reply to App Review (draft)
+### Follow-up reply to App Review (prepared text; sent with the additions recorded above)
 
 Hello App Review,
 
