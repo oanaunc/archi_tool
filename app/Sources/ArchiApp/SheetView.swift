@@ -275,6 +275,7 @@ final class SheetCanvasNSView: NSView {
     private var dragMode: DragMode = .none
     private var dragOffset = CGSize.zero
     private var lastPaperSize: Vec2?
+    private var lastCanvasSize: NSSize?
     private enum DragMode { case none, pan, moveViewport(Int) }
 
     override var isFlipped: Bool { false }
@@ -327,7 +328,9 @@ final class SheetCanvasNSView: NSView {
         ctx.fill(bounds)
         guard let model, let l = layout else { return }
         let ps = Vec2(l.paper.width, l.paper.height)
-        if needsFit || lastPaperSize != ps { fit(); lastPaperSize = ps }
+        if needsFit || lastPaperSize != ps || lastCanvasSize != bounds.size {
+            fit(); lastPaperSize = ps; lastCanvasSize = bounds.size
+        }
         var doc = model.doc
         if let mp = movePreview, case .moveViewport(let i) = dragMode, doc.layouts[layoutIndex].viewports.indices.contains(i) {
             doc.layouts[layoutIndex].viewports[i].origin = mp

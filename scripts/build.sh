@@ -10,9 +10,9 @@ mkdir -p "$OUTPUT_DIR"
 LOG="$OUTPUT_DIR/build.log"
 if [[ "$CONFIG" == release ]]; then ARGS=(-c release --arch arm64 --arch x86_64); else ARGS=(-c debug); fi
 if [[ -n "${APP_BUILD_SCRATCH_PATH:-}" ]]; then ARGS+=(--scratch-path "$APP_BUILD_SCRATCH_PATH"); fi
-# SwiftPM's universal linker can stamp the minimum OS as the SDK version. For store builds,
-# pass the actual selected SDK to the linker, while keeping the declared macOS 14 deployment target.
-if [[ "${APP_STORE_SDK_BUILD:-0}" == 1 ]]; then
+# SwiftPM's universal linker can stamp the minimum OS as the SDK version. Every universal
+# distribution build must retain the declared macOS 14 target (website DMG as well as App Store).
+if [[ "$CONFIG" == release || "${APP_STORE_SDK_BUILD:-0}" == 1 ]]; then
   SDK_VERSION="$(xcrun --sdk macosx --show-sdk-version)"
   ARGS+=(-Xlinker -platform_version -Xlinker macos -Xlinker 14.0 -Xlinker "$SDK_VERSION")
 fi

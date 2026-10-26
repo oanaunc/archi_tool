@@ -100,6 +100,7 @@ struct SheetCustomizationView: View {
                 if !error.isEmpty { Text(error).foregroundStyle(.red).font(.caption) }
             }.padding(14)
         }
+        .tint(Theme.accent)
         .frame(width: 310).frame(maxHeight: .infinity)
         .onAppear { viewportIndex = model.selectedSheetViewport ?? 0; loadOffset(); loadViewport() }
         .onChange(of: model.revision) { _ in loadOffset(); loadViewport() }
