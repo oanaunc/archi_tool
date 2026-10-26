@@ -9,8 +9,8 @@
  "dmg": "Oanarina-Archi-Tool-1.0.4.dmg",
  "sha_short": "8ed26337af32",
  "agent_doc": "downloads/archi-tool/AGENT-API.md",
- "imports": ".archi, DXF (R12–R2018), IFC 2x3/4, Rhino 3DM, SketchUp (with converter), SVG, OBJ, STL, 3MF, glTF, GeoJSON, point clouds (XYZ, PTS, PLY, E57, LAS), images",
- "exports": "PDF, DXF, SVG, PNG, IFC4 / IFC4.3, glTF (GLB), USDZ, OBJ, STL, 3MF, STEP, Collada, KML, Rhino 3DM, CSV and Excel schedules, BCF, MP4 walkthroughs, 360° panoramas",
+ "imports": ".archi, DXF (R12\u2013R2018), IFC 2x3/4, Rhino 3DM, SketchUp (with converter), SVG, OBJ, STL, 3MF, glTF, GeoJSON, point clouds (XYZ, PTS, PLY, E57, LAS), images",
+ "exports": "PDF, DXF, SVG, PNG, IFC4 / IFC4.3, glTF (GLB), USDZ, OBJ, STL, 3MF, STEP, Collada, KML, Rhino 3DM, CSV and Excel schedules, BCF, MP4 walkthroughs, 360\u00b0 panoramas",
  "pending": false,
  "guide": true,
  "features": 1120,
@@ -75,13 +75,13 @@
   ]
  ],
  "windows": {
-  "exe": "Oanarina-Archi-Tool-Setup-1.0.2.exe",
-  "size_mb": "132.6",
-  "sha_short": "a0ff1c5d3859",
-  "sha256": "a0ff1c5d3859bb91db116aff180bb74fa169dc6dfa0f0f7f110f7a07ad0fbb30",
-  "bytes": 132643561,
-  "release": "https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.2",
-  "version": "1.0.2"
+  "exe": "Oanarina-Archi-Tool-Setup-1.0.4.exe",
+  "size_mb": "132.7",
+  "sha_short": "7927c790c582",
+  "sha256": "7927c790c582c28dcc9e5a2285ee6cd700d44612da8871071e29a93951eaa647",
+  "bytes": 132694081,
+  "release": "https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.4",
+  "version": "1.0.4"
  },
  "sheet_tutorial": "https://youtu.be/7runIxmvS-E"
 }
