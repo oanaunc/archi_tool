@@ -81,6 +81,26 @@ final class SheetCustomizationTests: XCTestCase {
         let final = ed.doc.layouts[0].viewports[0]
         XCTAssertEqual(final.origin, (Vec2(420, 297) - final.size) / 2)
         XCTAssertEqual(try ArchiFile.decode(ArchiFile.encode(ed.doc)).layouts[0].viewports[0], final)
+        try await feed("SHEETTEXT", ["Add", "195,30", "3", "Testo libero al posto del Nord"])
+        let text = SheetTextEditing.texts(ed.doc.layouts[0]).first!
+        XCTAssertEqual(SheetTextEditing.texts(ed.doc.layouts[0]).count, 1)
+        ed.undo()
+        XCTAssertTrue(SheetTextEditing.texts(ed.doc.layouts[0]).isEmpty)
+        try await feed("PAPERTEXT", ["Add", "195,30", "3", "Testo libero al posto del Nord"])
+        try await feed("SHEETTEXT", ["Edit", "1", "180,35", "4", "Qualsiasi testo\nSeconda riga"])
+        let savedText = SheetTextEditing.texts(ed.doc.layouts[0]).first!
+        if case .text(let t) = savedText.geometry {
+            XCTAssertEqual(t.content, "Qualsiasi testo\nSeconda riga")
+            XCTAssertEqual(t.position, Vec2(180, 35)); XCTAssertEqual(t.height, 4)
+        } else { XCTFail("Expected sheet text") }
+        let restored = try ArchiFile.decode(ArchiFile.encode(ed.doc))
+        XCTAssertEqual(SheetTextEditing.texts(restored.layouts[0]), [savedText])
+        XCTAssertFalse(ed.doc.entities.contains { $0.id == savedText.id })
+        try await feed("SHEETTEXT", ["Delete", "1"])
+        XCTAssertTrue(SheetTextEditing.texts(ed.doc.layouts[0]).isEmpty)
+        ed.undo()
+        XCTAssertEqual(SheetTextEditing.texts(ed.doc.layouts[0]), [savedText])
+        XCTAssertGreaterThanOrEqual(savedText.id, text.id)
         EngineViewports.setLocked(&ed.doc, 0, 0, true)
         try await feed("VPEDIT", ["1", "Position", "0,0"])
         XCTAssertEqual(ed.doc.layouts[0].viewports[0], final)

@@ -5,9 +5,9 @@ summary: Nuova versione, planimetria centrata, cartiglio personalizzato e Nord n
 open sample "Cedar House"
 run LAYOUT New "Tavola personalizzata"
 run MVIEW 35,70 340,265 1:100 Plan "Ground Floor"
-speed 24
+speed 30
 caption "Prima installa la versione 1.0.4" "Chiudi l'app, scarica il DMG da www.oanarinaldi.com/archi-tool.html e sostituisci la copia in Applicazioni"
-click mode Sheet
+type LAYOUT Set "Tavola personalizzata"
 wait 5
 caption "Personalizzazione del foglio" "Customize Sheet resta visibile sotto la barra. Ogni modifica si salva nel progetto e si annulla con Cmd+Z"
 click button "Customize Sheet"
@@ -25,11 +25,24 @@ wait 2
 caption "Nascondere il Nord" "In Customize Sheet togli la spunta a North arrow / Nord. Lo stesso comando e SHEETSTYLE North Hide"
 type SHEETSTYLE North Hide
 wait 3
+caption "Scrivere liberamente sul foglio" "Customize Sheet: Free text on this sheet. Testo, posizione e altezza sono indipendenti dalla planimetria"
+type SHEETTEXT Add 175,30 3 "Il mio testo libero"
+wait 3
 caption "Personalizzare il cartiglio" "TITLEBLOCK apre i campi: studio, progetto, cliente, titolo, numero, data, revisione e logo"
 type LAYOUT Titleblock office "Studio Maglione" sheetName "Pianta piano terra" sheetNumber "A-101" ;
 type TITLEBLOCK
 wait 5
 close sheet
+caption "Ridisegnare il cartiglio" "Redesign Cartiglio Drawing apre il blocco in 2D. Puoi cambiare linee, testi, logo e disposizione"
+type TITLEBLOCKDESIGN Create
+run SHOW2D
+type BEDIT TB-CUSTOM
+wait 2
+type TEXT -170,24 3 0 "Studio Maglione" ;
+type LINE -180,22 0,22 ;
+type BCLOSE Save
+type LAYOUT Set "Tavola personalizzata"
+wait 3
 caption "Spostare o nascondere il cartiglio" "Customize Sheet: Title block / cartiglio. Gli offset sono in mm rispetto alla posizione iniziale"
 type SHEETSTYLE TitleBlock Move -20,5
 wait 3

@@ -24,13 +24,19 @@ Premi **Edit Title Block…** oppure **Title Block** nella barra del foglio. Puo
 
 In **Customize Sheet**, la spunta **Title block / cartiglio** mostra o nasconde il cartiglio standard o personalizzato, comprese le sue righe di revisione. Per spostarlo scegli **Move element → Title block / cartiglio**, inserisci **ΔX mm / ΔY mm**, quindi premi **Apply Element Offset**. Gli offset partono dalla posizione predefinita: -20,5 significa 20 mm a sinistra e 5 mm in alto.
 
-Per ridisegnare anche linee, impaginazione ed etichette del cartiglio, usa il comando **TITLEBLOCKDESIGN**: **Create** prepara un blocco modificabile con **BEDIT**; **Use** lo applica al foglio; **Builtin** ripristina il cartiglio standard. I testi `{project}`, `{sheetName}`, `{sheetNumber}` ecc. usano i valori del progetto/foglio.
+Per ridisegnare anche linee, impaginazione ed etichette del cartiglio, premi **Redesign Cartiglio Drawing…** in Customize Sheet: viene preparato un blocco per questo foglio, aperto in 2D. Modifica linee, testi e immagini con gli strumenti normali; termina con **BCLOSE Save** e torna a Sheet. Se il blocco era già condiviso, le modifiche si vedono su ogni foglio che lo usa. In alternativa, usa il comando **TITLEBLOCKDESIGN**: **Create** prepara un blocco modificabile con **BEDIT**; **Use** lo applica al foglio; **Builtin** ripristina il cartiglio standard. I testi `{project}`, `{sheetName}`, `{sheetNumber}` ecc. usano i valori del progetto/foglio.
 
 ## Nord, scala grafica e bordo
 
 Disattiva **North arrow / Nord** per eliminare l'indicatore automatico del Nord da questo foglio. Le spunte **Scale bar**, **Page border** e **Automatic view captions** controllano separatamente scala grafica, bordo e didascalie automatiche. Nord e scala grafica si possono anche spostare con **Move element** e gli offset.
 
 Questi controlli riguardano gli elementi automatici. Un simbolo del Nord disegnato manualmente o contenuto nel modello resta un oggetto del disegno da modificare o eliminare nel modello. Le didascalie convertite in entità modificabili con SHEETVIEWTITLES si gestiscono come entità del foglio.
+
+## Testo libero al posto del Nord, o in qualsiasi punto del foglio
+
+In **Customize Sheet → Free text on this sheet**, lascia **New text**, scrivi quello che vuoi (anche su più righe), imposta **Text X mm**, **Text Y mm** e **Height mm**, poi premi **Add Sheet Text**. Per esempio, su un A3 il Nord standard è vicino a X=195, Y=30: puoi nasconderlo e inserire lì la tua nota, cambiando le coordinate a piacere.
+
+Per modificare il testo, selezionalo dal menu **Text**, cambia contenuto/posizione/altezza e premi **Update Sheet Text**. **Delete Text** lo elimina. Tutto si salva nel progetto, viene esportato nel PDF e si può annullare con ⌘Z. Il testo resta sul foglio anche quando sposti o cambi scala alla planimetria.
 
 ## Salvataggio e PDF
 
@@ -45,6 +51,7 @@ VPEDIT 1 Size 280,180
 VPEDIT 1 Scale 1:100
 VPEDIT 1 CenterOnSheet
 SHEETSTYLE North Hide
+SHEETTEXT Add 195,30 3 "Qualsiasi testo"
 SHEETSTYLE TitleBlock Move -20,5
 SHEETSTYLE ScaleBar Hide
 SHEETSTYLE North Reset

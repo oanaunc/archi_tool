@@ -2,7 +2,7 @@
 import Foundation
 
 enum FileViewCommands {
-    static var all: [CommandDef] { files + views + sheets + SheetCustomizationCommands.all + help }
+    static var all: [CommandDef] { files + views + sheets + SheetCustomizationCommands.all + [SheetTextEditing.command] + help }
 
     /// Performs a host action, or explains that it needs the application.
     @MainActor static func host(_ ed: Editor, _ a: HostAction) {

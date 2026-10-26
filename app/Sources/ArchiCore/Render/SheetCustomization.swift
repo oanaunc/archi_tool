@@ -110,3 +110,51 @@ enum SheetCustomizationCommands {
         }
     ] }
 }
+
+/// Free text in paper millimetres, independent of model viewports and automatic decorations.
+public enum SheetTextEditing {
+    public static func texts(_ layout: Layout) -> [Entity] { layout.entities.filter { $0.props["sheetText"] == "1" } }
+    @discardableResult public static func set(_ doc: inout ArchiDocument, layoutIndex: Int, id: EntityID? = nil,
+                                               position: Vec2, height: Double, content: String) throws -> EntityID {
+        guard doc.layouts.indices.contains(layoutIndex), position.x.isFinite, position.y.isFinite,
+              height.isFinite, height > 0, !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw CommandError.invalid("Enter text, a finite position and a positive paper text height.") }
+        let geometry = Geometry.text(TextGeom(position: position, height: height, content: content))
+        if let id {
+            guard let i = doc.layouts[layoutIndex].entities.firstIndex(where: { $0.id == id && $0.props["sheetText"] == "1" }) else { throw CommandError.invalid("Sheet text not found.") }
+            doc.layouts[layoutIndex].entities[i].geometry = geometry
+            return id
+        }
+        let newID = doc.allocateID()
+        doc.ensureLayer("0")
+        var entity = Entity(id: newID, layer: "0", color: .rgb(0, 0, 0), geometry: geometry)
+        entity.props["sheetText"] = "1"
+        doc.layouts[layoutIndex].entities.append(entity)
+        return newID
+    }
+    public static func remove(_ doc: inout ArchiDocument, layoutIndex: Int, id: EntityID) {
+        guard doc.layouts.indices.contains(layoutIndex) else { return }
+        doc.layouts[layoutIndex].entities.removeAll { $0.id == id && $0.props["sheetText"] == "1" }
+    }
+    static var command: CommandDef {
+        CommandDef("SHEETTEXT", aliases: ["SHTTEXT", "PAPERTEXT"], category: "Output", summary: "Adds, edits, moves or deletes free text on the current sheet, in paper mm, independently of viewports and automatic decorations.") { ed in
+            guard let li = FileViewCommands.currentLayoutIndex(ed) else { throw CommandError.invalid("No sheet.") }
+            let action = try await ed.getKeyword("Sheet text", ["Add", "Edit", "Delete", "List"], defaultValue: "Add") ?? "Add"
+            let texts = texts(ed.doc.layouts[li])
+            if action == "List" {
+                for (i, e) in texts.enumerated() { if case .text(let t) = e.geometry { ed.print("\(i + 1): \(t.content) at \(fmt(t.position.x)),\(fmt(t.position.y)) mm, height \(fmt(t.height)) mm") } }; return
+            }
+            var id: EntityID?, previous: TextGeom?
+            if action != "Add" {
+                guard let number = try await ed.getInteger("Sheet text number (SHEETTEXT List)", defaultValue: 1), texts.indices.contains(number - 1) else { throw CommandError.invalid("No such sheet text.") }
+                id = texts[number - 1].id
+                if case .text(let t) = texts[number - 1].geometry { previous = t }
+                if action == "Delete", let id { remove(&ed.doc, layoutIndex: li, id: id); return }
+            }
+            guard let position = try await ed.getPoint("Text position x,y (paper mm)").point,
+                  let height = try await ed.getReal("Text height (paper mm)", defaultValue: previous?.height ?? 3).value,
+                  let content = try await ed.getString("Text (\\P = new paragraph)", defaultValue: previous?.content), !content.isEmpty else { return }
+            _ = try set(&ed.doc, layoutIndex: li, id: id, position: position, height: height, content: content)
+            ed.print("Sheet text saved.")
+        }
+    }
+}

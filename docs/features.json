@@ -7098,6 +7098,19 @@
   "acceptance": "VPEDIT / VPE tests cover positions, sizes, scale preserving frame, centring preserving scale, locked viewport rejection, undo/API and file persistence."
  },
  {
+  "id": "SHT-046",
+  "area": "Sheets, Layouts & Plotting",
+  "group": "Paper Space & Viewports",
+  "name": "Free sheet text",
+  "command": "SHEETTEXT",
+  "description": "Add, edit, move and delete arbitrary multiline text anywhere on a sheet in paper mm, including the space left by hidden automatic decorations. Inspector, CLI aliases and agent API.",
+  "reference": "Native (new)",
+  "phase": 8,
+  "priority": "must",
+  "status": "done",
+  "acceptance": "SHEETTEXT / PAPERTEXT tests cover add/edit/delete, multiline content, paper positions and heights, undo, persistence, and separation from model objects."
+ },
+ {
   "id": "BIM-001",
   "area": "BIM Building Elements",
   "group": "Levels & Grids",

@@ -1058,7 +1058,7 @@ command inside the app. This table is generated from the command definitions in 
 (`python3 docs/gen_command_reference.py`).
 
 <!-- BEGIN COMMAND REFERENCE -->
-997 commands.
+998 commands.
 
 ### Draw
 
@@ -1920,6 +1920,7 @@ command inside the app. This table is generated from the command definitions in 
 | `WEBVIEWEREXPORT` | `WEBEXPORT`, `EXPORTWEB`, `WEBVIEWER` | Exports the 3D model as one standalone HTML file with a WebGL viewer (orbit, pan, zoom, views) that opens in any browser. *(app)* |
 | `SHEETSTYLE` | `SHTSTYLE`, `SHEETCUSTOMIZE` | Shows, hides or moves the current sheet's frame, title block, north arrow, scale bar or captions. Offsets are paper mm. |
 | `VPEDIT` | `VPE`, `VIEWPORTEDIT` | Edits a viewport's paper Position/Size, model Center, print Scale, or centres content without changing scale (CenterContent), or centres its frame on the page (CenterOnSheet). |
+| `SHEETTEXT` | `SHTTEXT`, `PAPERTEXT` | Adds, edits, moves or deletes free text on the current sheet in paper millimetres. |
 
 ### Layout
 
