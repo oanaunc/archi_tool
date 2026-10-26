@@ -21,7 +21,6 @@ struct SheetView: View {
             ScrollView(.horizontal, showsIndicators: true) { toolbar.fixedSize(horizontal: true, vertical: false) }
             HStack(spacing: 12) {
                 Button("Customize Sheet…") { model.showSheetCustomization.toggle() }
-                    .popover(isPresented: $model.showSheetCustomization) { SheetCustomizationView(model: model, layoutIndex: layoutIndex).id(layoutIndex) }
                     .disabled(layout == nil)
                 Text("Move the plan: drag its frame. Precise position, scale, title block and North: Customize Sheet.")
                     .font(.caption).foregroundStyle(.secondary).lineLimit(2)
@@ -29,7 +28,14 @@ struct SheetView: View {
             }.padding(.horizontal, 10).padding(.vertical, 5)
             Divider()
             if layout != nil {
-                SheetCanvas(model: model, layoutIndex: layoutIndex, revision: model.revision)
+                HStack(spacing: 0) {
+                    SheetCanvas(model: model, layoutIndex: layoutIndex, revision: model.revision)
+                    if model.showSheetCustomization {
+                        Divider()
+                        SheetCustomizationView(model: model, layoutIndex: layoutIndex).id(layoutIndex)
+                            .background(Theme.panel)
+                    }
+                }
             } else {
                 VStack(spacing: 12) {
                     Text("No sheets yet").font(.title3).foregroundStyle(.secondary)

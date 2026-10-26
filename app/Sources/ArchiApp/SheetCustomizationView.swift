@@ -30,7 +30,11 @@ struct SheetCustomizationView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Customize Sheet").font(.headline)
+                HStack {
+                    Text("Customize Sheet").font(.headline)
+                    Spacer()
+                    Button { model.showSheetCustomization = false } label: { Image(systemName: "xmark") }.help("Close customization")
+                }
                 Text("Changes apply to this sheet and its PDF. ⌘Z undoes each change.").font(.caption).foregroundStyle(.secondary)
                 if let l = layout {
                     ForEach(SheetCustomization.Part.allCases, id: \.self) { p in
@@ -96,7 +100,7 @@ struct SheetCustomizationView: View {
                 if !error.isEmpty { Text(error).foregroundStyle(.red).font(.caption) }
             }.padding(14)
         }
-        .frame(width: 310, height: 620)
+        .frame(width: 310).frame(maxHeight: .infinity)
         .onAppear { viewportIndex = model.selectedSheetViewport ?? 0; loadOffset(); loadViewport() }
         .onChange(of: model.revision) { _ in loadOffset(); loadViewport() }
     }
