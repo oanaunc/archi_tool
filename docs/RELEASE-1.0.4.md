@@ -23,6 +23,12 @@ SHA-256: `8ed26337af32f37dbdff0f15dc4242deefc1626263d7708215f73a3d91783f2b`.
 
 Italian instructions: [SHEET-CUSTOMIZATION-IT.md](SHEET-CUSTOMIZATION-IT.md). Tutorial source: `tutorials/13-personalizzare-sheet-it.tut`. Website: https://www.oanarinaldi.com/archi-tool.html.
 
-The user's own project was not provided; the guide and recording use the Cedar House sample. The website's Windows download remains 1.0.2.
+The user's own project was not provided; the guide and recording use the Cedar House sample.
 
 Video guide: https://youtu.be/7runIxmvS-E. Native GUI verification confirmed multiline text creation, persistent controls after edits, per-sheet cartiglio block editing and full sheet visibility with the panel open.
+
+## Windows 1.0.4 (build 10)
+
+Windows 10/11 x64 installer: `Oanarina-Archi-Tool-Setup-1.0.4.exe` (132,694,081 bytes). SHA-256: `7927c790c582c28dcc9e5a2285ee6cd700d44612da8871071e29a93951eaa647`. The installer is unsigned; the website retains that disclosure.
+
+[Windows workflow 40379535252](https://github.com/oanaunc/archi_tool/actions/runs/40379535252), built from `3427e6db6afc27fbe388380d21eebf20ef47ccf7`, passed the isolated bundled-DLL check, per-user install and associations, Explorer thumbnail handler, installed-app drawing/save/reopen/PDF smoke tests, uninstall and all 19 shell test suites. The immutable [Windows 1.0.4 release](https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.4) and the live hosted installer both match this checksum and size. This is an x64 installer, with x64 engine execution under Windows on Arm emulation where supported; a native arm64 engine is not claimed.
