@@ -52,6 +52,9 @@ if [[ "$MODE" == package ]]; then
   grep -Eq '^Authority=(Apple Distribution:|3rd Party Mac Developer Application:|Mac App Distribution:)' "$WORK/application-signature.txt" || {
     echo 'The application signature is not a Mac App Store distribution identity.' >&2; exit 1;
   }
+  # codesign can report write errors yet exit successfully when old extracted certificates exist.
+  # Always validate certificates freshly extracted from this bundle.
+  rm -f "$WORK"/signing-cert[0-9]*
   codesign --display --extract-certificates="$WORK/signing-cert" "$APP"
   python3 "$ROOT/scripts/app-store-profile.py" "$WORK/profile.plist" "$ROOT/app/Info.plist" "$ENTITLEMENTS" "$WORK/signing-cert0"
   PKG="$OUT/Oanarina-Archi-Tool-$VERSION-$BUILD.pkg"
