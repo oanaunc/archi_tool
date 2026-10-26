@@ -241,6 +241,7 @@ public enum EngineSheets {
         guard doc.layouts.indices.contains(i) else { return "" }
         let l = doc.layouts[i]
         switch k {
+        case "office": return "OANARINA ARCHI TOOL"
         case "sheetName": return l.name
         case "sheetNumber": return "A-" + pad(i + 101, 3)
         case "scale":
@@ -256,6 +257,6 @@ public enum EngineSheets {
         }
     }
 
-    public static let sheetKeys: [(String, String)] = [("sheetName", "Sheet title"), ("sheetNumber", "Sheet number"), ("scale", "Scale"), ("date", "Date"), ("revision", "Revision")]
+    public static let sheetKeys: [(String, String)] = [("office", "Office / studio"), ("sheetName", "Sheet title"), ("sheetNumber", "Sheet number"), ("scale", "Scale"), ("date", "Date"), ("revision", "Revision")]
     public static let projectOverrideKeys: [(String, String)] = [("project", "Project"), ("client", "Client"), ("author", "Drawn by"), ("number", "Project no.")]
 }

@@ -1,0 +1,44 @@
+# Italian guide for the 1.0.4 Mac release. Recorded against the actual app.
+title: Personalizzare lo sheet
+summary: Nuova versione, planimetria centrata, cartiglio personalizzato e Nord nascosto
+---
+open sample "Cedar House"
+run LAYOUT New "Tavola personalizzata"
+run MVIEW 35,70 340,265 1:100 Plan "Ground Floor"
+speed 24
+caption "Prima installa la versione 1.0.4" "Chiudi l'app, scarica il DMG da www.oanarinaldi.com/archi-tool.html e sostituisci la copia in Applicazioni"
+click mode Sheet
+wait 5
+caption "Personalizzazione del foglio" "Customize Sheet resta visibile sotto la barra. Ogni modifica si salva nel progetto e si annulla con Cmd+Z"
+click button "Customize Sheet"
+wait 5
+click button "Customize Sheet"
+caption "Centrare senza cambiare scala" "VPEDIT 1 CenterContent centra il disegno dentro la sua cornice e mantiene la scala di stampa"
+type VPEDIT 1 CenterContent
+wait 3
+caption "Posizione precisa sulla pagina" "Position usa millimetri del foglio: X verso destra, Y verso l'alto, origine nell'angolo in basso a sinistra"
+type VPEDIT 1 Position 55,75
+wait 3
+caption "Scala indipendente dalla cornice" "Scale cambia la scala senza cambiare posizione e dimensioni della viewport"
+type VPEDIT 1 Scale 1:100
+wait 2
+caption "Nascondere il Nord" "In Customize Sheet togli la spunta a North arrow / Nord. Lo stesso comando e SHEETSTYLE North Hide"
+type SHEETSTYLE North Hide
+wait 3
+caption "Personalizzare il cartiglio" "TITLEBLOCK apre i campi: studio, progetto, cliente, titolo, numero, data, revisione e logo"
+type LAYOUT Titleblock office "Studio Maglione" sheetName "Pianta piano terra" sheetNumber "A-101" ;
+type TITLEBLOCK
+wait 5
+close sheet
+caption "Spostare o nascondere il cartiglio" "Customize Sheet: Title block / cartiglio. Gli offset sono in mm rispetto alla posizione iniziale"
+type SHEETSTYLE TitleBlock Move -20,5
+wait 3
+caption "Nascondere anche gli altri elementi" "Page border, Scale bar e Automatic view captions hanno ciascuno la propria spunta"
+type SHEETSTYLE ScaleBar Hide
+wait 2
+caption "Salva ed esporta" "SAVEAS conserva la personalizzazione nel file .archi; PLOT esporta lo stesso foglio in PDF"
+type SAVEAS $TMP/Sheet-personalizzato.archi
+type PLOT $TMP/Sheet-personalizzato.pdf
+wait 3
+caption "Due centraggi diversi" "Centre Content mantiene la scala. Fit Content / VPFIT centra e cambia la scala per far entrare tutto"
+wait 5

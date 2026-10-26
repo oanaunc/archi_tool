@@ -1058,7 +1058,7 @@ command inside the app. This table is generated from the command definitions in 
 (`python3 docs/gen_command_reference.py`).
 
 <!-- BEGIN COMMAND REFERENCE -->
-995 commands.
+997 commands.
 
 ### Draw
 
@@ -1918,6 +1918,8 @@ command inside the app. This table is generated from the command definitions in 
 | `TITLEBLOCKDESIGN` | `TBDESIGN`, `CUSTOMTITLEBLOCK`, `TITLEBLOCKBLOCK` | Custom title blocks: Create a starter block (edit it with BEDIT: lines, logo images, {field} texts or attributes), Use a block on all or the current sheet, or go back to the Builtin one. *(app)* |
 | `VPLOCK` | `VPORTLOCK`, `LOCKVIEWPORT` | Locks or unlocks sheet viewports so their scale and position cannot change. *(app)* |
 | `WEBVIEWEREXPORT` | `WEBEXPORT`, `EXPORTWEB`, `WEBVIEWER` | Exports the 3D model as one standalone HTML file with a WebGL viewer (orbit, pan, zoom, views) that opens in any browser. *(app)* |
+| `SHEETSTYLE` | `SHTSTYLE`, `SHEETCUSTOMIZE` | Shows, hides or moves the current sheet's frame, title block, north arrow, scale bar or captions. Offsets are paper mm. |
+| `VPEDIT` | `VPE`, `VIEWPORTEDIT` | Edits a viewport's paper Position/Size, model Center, print Scale, or centres content without changing scale (CenterContent), or centres its frame on the page (CenterOnSheet). |
 
 ### Layout
 

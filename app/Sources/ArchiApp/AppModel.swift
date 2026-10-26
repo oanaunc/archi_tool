@@ -79,6 +79,7 @@ final class AppModel: ObservableObject {
     @Published var showLayers = true
     @Published var showProperties = true
     @Published var showScriptConsole = false
+    @Published var showSheetCustomization = false
     @Published var activeLayout: Int = 0
 
     /// Keeps the core CTAB variable (read by VIEWTITLE, LAYOUT and other sheet commands) in step with the sheet shown in the window.

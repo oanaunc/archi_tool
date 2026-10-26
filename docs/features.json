@@ -7072,6 +7072,32 @@
   "acceptance": "Import is accessible in Page Setup, command line and API; file import, pen-table collisions and undo are tested."
  },
  {
+  "id": "SHT-044",
+  "area": "Sheets, Layouts & Plotting",
+  "group": "Paper Space & Viewports",
+  "name": "Per-sheet presentation controls",
+  "command": "SHEETSTYLE",
+  "description": "Show, hide and offset the page border, title block, North, scale bar and automatic captions; editable studio name in TITLEBLOCK. Native Customize Sheet inspector and matching screen/PDF/SVG/API output.",
+  "reference": "Native (new)",
+  "phase": 8,
+  "priority": "must",
+  "status": "done",
+  "acceptance": "SHEETSTYLE / SHTSTYLE and scripting/agent command API support per-sheet visibility, offsets, reset, undo and file round-trip; decoration tests and native/portable checks pass."
+ },
+ {
+  "id": "SHT-045",
+  "area": "Sheets, Layouts & Plotting",
+  "group": "Paper Space & Viewports",
+  "name": "Precise viewport editing and centring at scale",
+  "command": "VPEDIT",
+  "description": "Set paper position and size, model centre and print scale independently. Centre content while preserving scale, or centre the frame on the page, from Customize Sheet and command/API.",
+  "reference": "Native (new)",
+  "phase": 8,
+  "priority": "must",
+  "status": "done",
+  "acceptance": "VPEDIT / VPE tests cover positions, sizes, scale preserving frame, centring preserving scale, locked viewport rejection, undo/API and file persistence."
+ },
+ {
   "id": "BIM-001",
   "area": "BIM Building Elements",
   "group": "Levels & Grids",

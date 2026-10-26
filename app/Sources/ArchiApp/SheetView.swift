@@ -18,7 +18,15 @@ struct SheetView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            toolbar
+            ScrollView(.horizontal, showsIndicators: true) { toolbar.fixedSize(horizontal: true, vertical: false) }
+            HStack(spacing: 12) {
+                Button("Customize Sheet…") { model.showSheetCustomization.toggle() }
+                    .popover(isPresented: $model.showSheetCustomization) { SheetCustomizationView(model: model, layoutIndex: layoutIndex).id(layoutIndex) }
+                    .disabled(layout == nil)
+                Text("Move the plan: drag its frame. Precise position, scale, title block and North: Customize Sheet.")
+                    .font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                Spacer(minLength: 0)
+            }.padding(.horizontal, 10).padding(.vertical, 5)
             Divider()
             if layout != nil {
                 SheetCanvas(model: model, layoutIndex: layoutIndex, revision: model.revision)
@@ -179,21 +187,12 @@ struct SheetView: View {
     private func setViewportScale(_ v: Int, _ ratio: Double) {
         let i = layoutIndex
         guard i >= 0 else { return }
-        let scale = ratio / model.doc.units.mm
-        guard !ViewportLock.isLocked(model.doc, layoutIndex: i, viewport: v) else { model.editor.print("The viewport is locked (VPLOCK Off to unlock)."); return }
-        model.editor.transaction("Viewport Scale") { d in
-            guard d.layouts[i].viewports.indices.contains(v) else { return }
-            var vp = d.layouts[i].viewports[v]
-            let entries = SheetComposer.viewportEntries(doc: d, vp: vp)
-            let b = entries.unionBounds
-            let area = SheetComposer.drawingArea(d.layouts[i].paper)
-            vp.scale = scale
-            if !b.isEmpty {
-                vp.size = Vec2(min(b.width / scale + 16, area.width), min(b.height / scale + 16, area.height))
-                vp.origin = Vec2(min(vp.origin.x, area.max.x - vp.size.x), min(vp.origin.y, area.max.y - vp.size.y))
-            }
-            d.layouts[i].viewports[v] = vp
-        }
+        guard model.doc.layouts[i].viewports.indices.contains(v) else { return }
+        do {
+            let updated = try SheetViewportEditing.updated(model.doc.layouts[i].viewports[v], property: "Scale", ratio: ratio,
+                                                           doc: model.doc, layoutIndex: i, index: v)
+            model.editor.transaction("Viewport Scale") { $0.layouts[i].viewports[v] = updated }
+        } catch { model.editor.print(error.localizedDescription) }
     }
 
     private func addViewport(_ kind: ViewKind, scale ratio: Double) {

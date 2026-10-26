@@ -37,6 +37,28 @@ extension AppSelfTests {
         let engine = EnginePlot.viewportEntries(doc: doc, vp: vp, layout: doc.layouts[0].name)
         check(mac == engine, "Mac sheet and portable plot share section style rendering")
 
+        // Presentation must match on screen, native PDF/SVG, and the portable API plotter.
+        var customized = doc
+        customized.layouts[0].viewports = [vp]
+        customized.layouts[0].titleBlock["office"] = "Studio Maglione"
+        SheetCustomization.set(.north, visible: false, offset: .zero, in: &customized.layouts[0])
+        SheetCustomization.set(.scaleBar, visible: false, offset: .zero, in: &customized.layouts[0])
+        SheetCustomization.set(.titleBlock, visible: true, offset: Vec2(-15, 30), in: &customized.layouts[0])
+        func strings(_ entries: [DrawEntry]) -> [String] {
+            entries.flatMap(\.items).compactMap { if case .text(let t, _, _) = $0 { return t.content }; return nil }
+        }
+        let native = SheetComposer.decorations(doc: customized, layout: customized.layouts[0], layoutIndex: 0)
+        let portable = EnginePlot.decorations(doc: customized, layout: customized.layouts[0], layoutIndex: 0)
+        check(strings(native) == strings(portable), "sheet presentation native/portable text parity")
+        check(!strings(native).contains("N"), "custom sheet hides automatic north arrow")
+        check(!strings(native).contains { $0.hasPrefix("SCALE ") }, "custom sheet hides scale bar")
+        check(strings(native).contains("Studio Maglione"), "custom sheet office name replaces branding")
+        let originalNative = SheetComposer.decorations(doc: doc, layout: doc.layouts[0], layoutIndex: 0)
+        SheetCustomization.set(.titleBlock, visible: false, offset: .zero, in: &customized.layouts[0])
+        let noTitle = SheetComposer.decorations(doc: customized, layout: customized.layouts[0], layoutIndex: 0)
+        check(!strings(noTitle).contains("Studio Maglione"), "custom sheet hides title block")
+        check(strings(originalNative).contains("N"), "legacy sheet still shows default north arrow")
+
         // A different level far from the current plan must not move a dropped viewport off its contents.
         var sheetDoc = ArchiDocument()
         sheetDoc.levels.append(Level(id: 99, name: "Remote storey", elevation: 10000))

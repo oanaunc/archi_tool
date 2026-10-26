@@ -403,6 +403,8 @@ public enum EnginePlot {
         let W = layout.paper.width, H = layout.paper.height
         var out: [DrawEntry] = []
         out.append(DrawEntry(id: nil, items: [rect(Vec2(bindingMargin, margin), Vec2(W - margin, H - margin), 0.5)]))
+        SheetCustomization.finish(&out, from: 0, part: .frame, layout: layout)
+        let titleStart = out.count
         let tb = titleBlockSize
         let x0 = W - margin - tb.x, y0 = margin, x1 = W - margin, y1 = margin + tb.y
         var tbv = layout.titleBlock
@@ -435,13 +437,22 @@ public enum EnginePlot {
         } else {
             out += builtInTitleBlock(doc: doc, layout: layout, tbv: tbv, box: (x0, y0, x1, y1), scaleText: scaleText, sheetNo: sheetNo, dateText: dateText, custom: custom)
         }
+        SheetCustomization.finish(&out, from: titleStart, part: .titleBlock, layout: layout)
+        let northStart = out.count
         out.append(northArrow(center: Vec2(x0 - 16, margin + 20), angle: info.northAngle))
+        SheetCustomization.finish(&out, from: northStart, part: .north, layout: layout)
+        let scaleStart = out.count
         if let vp = layout.viewports.first, vp.scale > 0 { out.append(scaleBar(vp, doc: doc)) }
+        SheetCustomization.finish(&out, from: scaleStart, part: .scaleBar, layout: layout)
+        let revisionStart = out.count
         let revs = EngineSheets.revisions(layout)
         if !revs.isEmpty { out.append(revisionTable(revs, x0: x0, x1: x1, y1: y1)) }
+        SheetCustomization.finish(&out, from: revisionStart, part: .titleBlock, layout: layout)
+        let captionStart = out.count
         if !EngineSheets.hasViewTitleEntities(layout) {
             for vp in layout.viewports { out.append(viewportCaption(vp, doc: doc)) }
         }
+        SheetCustomization.finish(&out, from: captionStart, part: .captions, layout: layout)
         return out
     }
 
@@ -466,7 +477,7 @@ public enum EnginePlot {
             nameX += 28
         }
         items.append(text(Vec2(nameX, y1 - 7), 4.5, tbv["project"] ?? info.name, .left, .middle))
-        items.append(text(Vec2(x1 - 3, y1 - 4.5), 2.2, "OANARINA ARCHI TOOL", .right, .middle))
+        items.append(text(Vec2(x1 - 3, y1 - 4.5), 2.2, tbv["office"] ?? "OANARINA ARCHI TOOL", .right, .middle))
         items.append(text(Vec2(x1 - 3, y1 - 10), 2, info.address, .right, .middle))
         func field(_ x: Double, _ row: Int, _ label: String, _ value: String, big: Bool = false) {
             let yb = y0 + Double(2 - row) * rowH

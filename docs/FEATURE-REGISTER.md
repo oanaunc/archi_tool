@@ -15,7 +15,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 ## Summary
 
-**1160 features** — done: 1117, partial: 39, planned: 4. Priority: must 480, should 421, could 259.
+**1162 features** — done: 1119, partial: 39, planned: 4. Priority: must 482, should 421, could 259.
 
 | Area | Prefix | Features | Done | Partial | P1 | P2 | P3 | P4 | P5 | P6 | P7 | P8 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -28,7 +28,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | [Layers & Properties](#lay--layers--properties) | LAY | 37 | 37 | 0 | 12 | 18 | 5 | · | · | 2 | · | · |
 | [Annotation](#ann--annotation) | ANN | 80 | 80 | 0 | 15 | 51 | 12 | · | · | 1 | · | 1 |
 | [Blocks & Content](#blk--blocks--content) | BLK | 42 | 41 | 0 | 7 | 26 | 5 | 1 | · | 3 | · | · |
-| [Sheets, Layouts & Plotting](#sht--sheets-layouts--plotting) | SHT | 43 | 43 | 0 | 11 | 13 | 15 | 1 | · | · | · | 3 |
+| [Sheets, Layouts & Plotting](#sht--sheets-layouts--plotting) | SHT | 45 | 45 | 0 | 11 | 13 | 15 | 1 | · | · | · | 5 |
 | [BIM Building Elements](#bim--bim-building-elements) | BIM | 131 | 131 | 0 | 34 | 3 | 84 | 3 | 1 | 2 | 4 | · |
 | [Parametric Families](#par--parametric-families) | PAR | 36 | 36 | 0 | · | · | 32 | 4 | · | · | · | · |
 | [Documentation & Views](#doc--documentation--views) | DOC | 55 | 55 | 0 | 7 | 2 | 44 | · | 1 | · | 1 | · |
@@ -39,7 +39,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | [Collaboration & Versioning](#col--collaboration--versioning) | COL | 22 | 22 | 0 | · | 1 | · | · | · | 20 | · | 1 |
 | [Scripting, Automation & AI](#scr--scripting-automation--ai) | SCR | 35 | 34 | 1 | 6 | 3 | · | · | · | · | · | 26 |
 | [System & Platform](#sys--system--platform) | SYS | 34 | 23 | 8 | 18 | 8 | 3 | · | 1 | · | · | 4 |
-| **Total** | | **1160** | **1117** | **39** | **266** | **328** | **222** | **116** | **65** | **74** | **37** | **52** |
+| **Total** | | **1162** | **1119** | **39** | **266** | **328** | **222** | **116** | **65** | **74** | **37** | **54** |
 
 ### Phases
 
@@ -52,7 +52,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | 5 | Rendering & visualization | 65 | 21 |
 | 6 | Interoperability & collaboration | 74 | 15 |
 | 7 | Analysis & simulation | 37 | 3 |
-| 8 | Automation, AI & platform polish | 52 | 0 |
+| 8 | Automation, AI & platform polish | 54 | 2 |
 
 ## APP — Application Shell & UI
 
@@ -807,7 +807,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 
 ## SHT — Sheets, Layouts & Plotting
 
-43 features.
+45 features.
 
 
 ### Layouts & Viewports
@@ -867,6 +867,13 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | SHT-041 | Per-sheet section print graphics | SECTIONSTYLE / SECSTYLE / SSTYLE | 8 | should | ✅ done |
 | SHT-042 | Named page setups | PAGEPRESET | 8 | should | ✅ done |
 | SHT-043 | Import named page setup libraries | PAGEPRESET | 8 | should | ✅ done |
+
+### Paper Space & Viewports
+
+| ID | Feature | Command | Phase | Priority | Status |
+| --- | --- | --- | --- | --- | --- |
+| SHT-044 | Per-sheet presentation controls | SHEETSTYLE | 8 | must | ✅ done |
+| SHT-045 | Precise viewport editing and centring at scale | VPEDIT | 8 | must | ✅ done |
 
 ## BIM — BIM Building Elements
 

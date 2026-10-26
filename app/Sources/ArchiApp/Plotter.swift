@@ -317,6 +317,8 @@ enum SheetComposer {
         // Drawing frame.
         out.append(DrawEntry(id: nil, items: [rect(Vec2(bindingMargin, margin), Vec2(W - margin, H - margin), 0.5)]))
         // Title block.
+        SheetCustomization.finish(&out, from: 0, part: .frame, layout: layout)
+        let titleStart = out.count
         let tb = titleBlockSize
         let x0 = W - margin - tb.x, y0 = margin, x1 = W - margin, y1 = margin + tb.y
         // Keys are lower camel case; files made by earlier templates used "Project"/"Sheet"/"Scale".
@@ -353,7 +355,7 @@ enum SheetComposer {
             nameX += lw + 2
         }
         items.append(text(Vec2(nameX, y1 - 7), 4.5, tbv["project"] ?? info.name, .left, .middle))
-        items.append(text(Vec2(x1 - 3, y1 - 4.5), 2.2, "OANARINA ARCHI TOOL", .right, .middle))
+        items.append(text(Vec2(x1 - 3, y1 - 4.5), 2.2, tbv["office"] ?? "OANARINA ARCHI TOOL", .right, .middle))
         items.append(text(Vec2(x1 - 3, y1 - 10), 2, info.address, .right, .middle))
         func field(_ x: Double, _ row: Int, _ label: String, _ value: String, big: Bool = false) {
             let yb = y0 + Double(2 - row) * rowH
@@ -385,6 +387,8 @@ enum SheetComposer {
         }
         }
 
+        SheetCustomization.finish(&out, from: titleStart, part: .titleBlock, layout: layout)
+        let northStart = out.count
         // North arrow (left of the title block).
         let nc = Vec2(x0 - 16, margin + 20)
         let north = rad(info.northAngle)
@@ -397,6 +401,8 @@ enum SheetComposer {
             text(nc + Vec2(0, 14).rotated(by: north), 3, "N", .center, .middle),
         ]))
 
+        SheetCustomization.finish(&out, from: northStart, part: .north, layout: layout)
+        let scaleStart = out.count
         // Scale bar for the first viewport.
         if let vp = layout.viewports.first, vp.scale > 0 {
             let unitsPerMM = vp.scale * doc.units.mm           // real mm per paper mm
@@ -419,6 +425,8 @@ enum SheetComposer {
             out.append(DrawEntry(id: nil, items: sb))
         }
 
+        SheetCustomization.finish(&out, from: scaleStart, part: .scaleBar, layout: layout)
+        let revisionStart = out.count
         // Revision table stacked on the title block (header row at the bottom, latest revision on top).
         let revs = SheetSet.revisions(layout)
         if !revs.isEmpty {
@@ -444,6 +452,8 @@ enum SheetComposer {
             out.append(DrawEntry(id: nil, items: ri))
         }
 
+        SheetCustomization.finish(&out, from: revisionStart, part: .titleBlock, layout: layout)
+        let captionStart = out.count
         // Viewport captions (unless the sheet has editable view titles, see SheetSet.refreshViewTitles).
         for vp in layout.viewports where !SheetSet.hasViewTitleEntities(layout) {
             let p = vp.origin + Vec2(0, -6)
@@ -455,6 +465,7 @@ enum SheetComposer {
                 text(p + Vec2(7, -5), 2, ratioText(vp.scale, units: doc.units), .left, .baseline),
             ]))
         }
+        SheetCustomization.finish(&out, from: captionStart, part: .captions, layout: layout)
         return out
     }
 

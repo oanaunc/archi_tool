@@ -582,7 +582,7 @@ struct TitleBlockSheet: View {
     @State private var newLabel = ""
     @State private var logo = ""
 
-    static let sheetKeys: [(String, String)] = [("sheetName", "Sheet title"), ("sheetNumber", "Sheet number"), ("scale", "Scale"), ("date", "Date"), ("revision", "Revision")]
+    static let sheetKeys: [(String, String)] = [("office", "Office / studio"), ("sheetName", "Sheet title"), ("sheetNumber", "Sheet number"), ("scale", "Scale"), ("date", "Date"), ("revision", "Revision")]
     static let projectOverrideKeys: [(String, String)] = [("project", "Project"), ("client", "Client"), ("author", "Drawn by"), ("number", "Project no.")]
 
     var body: some View {
@@ -669,6 +669,7 @@ struct TitleBlockSheet: View {
         guard d.layouts.indices.contains(layoutIndex) else { return "" }
         let l = d.layouts[layoutIndex]
         switch k {
+        case "office": return "OANARINA ARCHI TOOL"
         case "sheetName": return l.name
         case "sheetNumber": return String(format: "A-%03d", layoutIndex + 101)
         case "scale":

@@ -855,6 +855,7 @@ final class TutorialRecorder {
             case "cedar house", "nordic house":
                 let name = label.lowercased().hasPrefix("cedar") ? "Cedar House" : "Nordic House"
                 if let u = SampleProjects.prepare(name) ?? SampleProjects.bundled(name) { model.files.openURL(u) }
+            case "customize sheet": model.showSheetCustomization.toggle()
             case "new drawing": model.newDocument(.blankMetric)
             case "build sample house": model.newDocument(.sample); model.buildSampleHouse()
             case "run", "render":
@@ -958,7 +959,7 @@ final class TutorialRecorder {
     private func uiState() -> String {
         let d = model.doc
         let wins = NSApp.windows.filter(\.isVisible).count
-        return "\(model.editor.fileURL?.path ?? "")|\(d.entities.count)|\(d.elements.count)|\(model.showStart)|\(model.sheet?.id ?? "")|\(wins)|\(model.mode.rawValue)|\(model.panelTab.rawValue)|\(model.showPanels)|\(d.layouts.count)|\(model.editor.activeCommand?.name ?? "")|\(model.commandLog.count)|\(UserDefaults.standard.string(forKey: "ribbonTab") ?? "")"
+        return "\(model.showSheetCustomization)|\(model.editor.fileURL?.path ?? "")|\(d.entities.count)|\(d.elements.count)|\(model.showStart)|\(model.sheet?.id ?? "")|\(wins)|\(model.mode.rawValue)|\(model.panelTab.rawValue)|\(model.showPanels)|\(d.layouts.count)|\(model.editor.activeCommand?.name ?? "")|\(model.commandLog.count)|\(UserDefaults.standard.string(forKey: "ribbonTab") ?? "")"
     }
 
     /// Whether pressing a target had its effect (otherwise the recorder performs the action directly).
