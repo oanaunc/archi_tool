@@ -6,7 +6,7 @@
 - Revision history can sit above or inside the cartiglio, or be suppressed in favour of cartiglio fields only. Width, row height, independent visibility and offsets are configurable per sheet. Built-in cartigli reserve space for the integrated band. Native and portable plots share the same revision renderer.
 - Choose a user's existing drawing block per sheet. Custom blocks support current revision date, description and author, plus indexed history fields. Empty indexed rows clear automatically when revisions are removed. Existing title-block blocks and per-sheet variables remain compatible.
 - OPENINGSIZES (DOORWINDOWSIZES, QUOTAINFISSI) places live width × height labels on current-level BIM doors/windows, with configurable units and text height. Repeated commands update rather than duplicate labels. Automatic mode labels future openings; existing mark tags are retained and size labels use a different default position.
-- Every document change supports Undo and uses existing extensible metadata, entities or variables. No schema change, format-version bump or migration is needed. Windows remains at its separately tested 1.0.4 installer.
+- Every document change supports Undo and uses existing extensible metadata, entities or variables. No schema change, format-version bump or migration is needed. Windows 1.0.5 is also built and tested; see the Windows validation below.
 
 Validation:
 
@@ -28,3 +28,9 @@ The customer's own project was not provided. Verification and recording use the 
 ## Publication verification
 
 Website commit `137bf0010f9061a7f4f1c1f9d18a452c7922b5ba` deployed successfully in [hosting run 40484554463](https://github.com/oanaunc/oanarina_website/actions/runs/40484554463). The live page shows Mac 1.0.5 build 12, the new revision controls, opening size labels and the Italian video. A complete HTTPS read of the live DMG matched the 91,821,415-byte notarized artifact and SHA-256 above. The Italian instructions, video, poster and updated user guide each returned HTTP 200. The original support conversation received an Italian reply with the update link and steps for all three requests after publication verification.
+
+## Windows 1.0.5 (build 12)
+
+The [Windows build 40482871629](https://github.com/oanaunc/archi_tool/actions/runs/40482871629), from fix commit `047fec402c996439df1506080dc59c25d1b9ceb6`, completed successfully. The release engine, isolated bundled-DLL launch, Electron shell, NSIS packaging, per-user installation and file associations, installed Explorer thumbnail handler, installed-app drawing/save/reopen/PDF smoke tests, uninstall, and all 19 Chromium shell test suites passed. The [immutable Windows release](https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.5) contains the resulting installer and checksums. Portable engine CI for the same commit also passed on Windows and Linux.
+
+Installer: `Oanarina-Archi-Tool-Setup-1.0.5.exe` (132,729,525 bytes), file version 1.0.5.12. SHA-256: `28c4c6a46f01c5fcdb9bd3bdb93c5fee24ac559e6d26aada87681b4e5917e254`. It remains unsigned. This is the Windows 10/11 x64 build; native arm64 engine execution is not claimed. The shared engine includes configurable revision history and live opening-size commands; Mac-specific in-place text controls remain native Mac UI.

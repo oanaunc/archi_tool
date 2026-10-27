@@ -5,7 +5,7 @@
  "formats": 30,
  "size_mb": "91.8",
  "signing": "Developer ID-signed and notarized by Apple.",
- "note": "Mac 1.0.5, build 12 (27 October): fixed text font/height saving, configurable revision history inside or above your own cartiglio or fields only, and live door/window width × height labels with QUOTAINFISSI. Windows remains at 1.0.4.",
+ "note": "Mac 1.0.5, build 12 (27 October): fixed text font/height saving, configurable revision history inside or above your own cartiglio or fields only, and live door/window width × height labels with QUOTAINFISSI. Windows 1.0.5 includes the shared engine updates and has passed installer and installed-app checks.",
  "dmg": "Oanarina-Archi-Tool-1.0.5.dmg",
  "sha_short": "57e579f83043",
  "agent_doc": "downloads/archi-tool/AGENT-API.md",
@@ -75,13 +75,13 @@
   ]
  ],
  "windows": {
-  "exe": "Oanarina-Archi-Tool-Setup-1.0.4.exe",
+  "exe": "Oanarina-Archi-Tool-Setup-1.0.5.exe",
   "size_mb": "132.7",
-  "sha_short": "7927c790c582",
-  "sha256": "7927c790c582c28dcc9e5a2285ee6cd700d44612da8871071e29a93951eaa647",
-  "bytes": 132694081,
-  "release": "https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.4",
-  "version": "1.0.4"
+  "sha_short": "28c4c6a46f01",
+  "sha256": "28c4c6a46f01c5fcdb9bd3bdb93c5fee24ac559e6d26aada87681b4e5917e254",
+  "bytes": 132729525,
+  "release": "https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.5",
+  "version": "1.0.5"
  },
  "sheet_tutorial": "https://youtu.be/7runIxmvS-E",
  "feedback_tutorial": "videos/archi-tool/14-testi-revisioni-misure-it.mp4"
