@@ -2271,3 +2271,11 @@ Use **Annotate → Door / Window Sizes**, or type `QUOTAINFISSI` (`OPENINGSIZES`
 - `QUOTAINFISSI Off` disables labels on future openings and keeps existing labels.
 
 Repeating the bulk command updates the size labels without duplicating them or replacing existing marks. Labels follow changes to the opening's width and height in the plan and plotted output. They support Undo and save in `.archi`. These labels measure BIM openings; arbitrary lines or blocks in an imported 2D drawing must first be modelled as doors/windows, or dimensioned with the normal dimension tools. The commands also run through the scripting/agent command API.
+
+### Hatch and sheet support corrections (1.0.6)
+
+MATCHPROP / MA applies each target immediately; Enter finishes and Undo restores the whole command. Click inside a hatch, including between sparse pattern lines. Settings → All enables all appearance properties. SCALE / SC and grip scaling preserve pattern origin; copies associate with their copied boundaries.
+
+Customize Sheet → View titles controls stored and generated viewport captions. Text from drawing on this sheet hides a chosen standalone model text on this sheet and its exports; the model and other sheets retain it. Commands: SHEETTEXT ListModel, HideModel #ID, ShowModel #ID.
+
+Link custom cartiglio text selects an existing text and binds it to the current revision code, count, date, description or author. TITLEBLOCKDESIGN / TBDESIGN Bind exposes the same action to command scripts and agents. Nested blocks are supported; shared block edits affect every use. `{revision}` is the code; `{revisionCount}` is the number of history rows. See [Italian step-by-step guide](https://www.oanarinaldi.com/downloads/archi-tool/Retini-titoli-revisioni-Mac-1.0.6.md).

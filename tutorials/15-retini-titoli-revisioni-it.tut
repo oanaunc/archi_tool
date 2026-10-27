@@ -34,13 +34,22 @@ type SHEETSTYLE Captions Hide
 wait 3
 caption "Togliere il titolo dentro la pianta" "Customize Sheet > Text from drawing: scegli PIANTA PIANO PRIMO e premi Hide Text on This Sheet"
 type SHEETTEXT ListModel
-wait 4
+wait 2
+type SHEETTEXT HideModel #5
+wait 3
 caption "Il disegno 2D rimane intatto" "La scelta vale solo per questa tavola e i suoi PDF/SVG. Show Text on This Sheet ripristina il testo"
 wait 3
 caption "Revisione nel tuo cartiglio" "Aggiungi una revisione, poi collega il testo del cartiglio a un campo automatico"
 type SHEETREVISION "Prima emissione" "NM"
 type TITLEBLOCKDESIGN Create
 type SHEETREVTABLE Fields 180 5
+run SHOW2D
+run BEDIT TB-CUSTOM
+run TEXT -175,24 2.5 0 "Totale revisioni" ;
+run BCLOSE Save
+run LAYOUT Set "Retini e titoli"
+caption "Collegamento del testo nel cartiglio" "TBDESIGN Bind: scegli il blocco, il testo elencato e revisionCount per il conteggio numerico"
+type TBDESIGN Bind TB-CUSTOM 13 revisionCount
 wait 3
 type SHEETREVISION "Aggiornamento retini" "NM"
 wait 3
