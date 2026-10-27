@@ -65,8 +65,9 @@ import XCTest
         XCTAssertEqual(try ArchiFile.decode(ArchiFile.encode(ed.doc)).entity(hatch), ed.doc.entity(hatch))
         ed.undo(); XCTAssertEqual(ed.doc, before)
         await ed.run("SCALE #\(boundary),#\(hatch)  0,1000 Copy 0.5")
-        let copiedHatch = ed.doc.entities.last!.id
-        let copiedBoundary = ed.doc.entities[ed.doc.entities.count - 2].id
+        let copies = ed.doc.entities.filter { $0.id != hatch && $0.id != boundary }
+        let copiedHatch = try XCTUnwrap(copies.first { if case .hatch = $0.geometry { return true }; return false }).id
+        let copiedBoundary = try XCTUnwrap(copies.first { if case .polyline = $0.geometry { return true }; return false }).id
         XCTAssertEqual(AssociativeHatch.ids(ed.doc.entity(copiedHatch)!), [copiedBoundary])
         XCTAssertFalse(items(ed.doc, copiedHatch).isEmpty)
         XCTAssertEqual(ed.doc.entity(hatch), before.entity(hatch))
@@ -80,6 +81,28 @@ import XCTest
         let lines = HatchPatterns.lines(loops: loops, pattern: "LINE", scale: 0.001, angle: 0)
         XCTAssertFalse(lines.isEmpty)
         XCTAssertLessThanOrEqual(lines.count, HatchPatterns.maxSegments)
+    }
+    func testWindowsGripAPIKeepsHatchOriginAndCopiedBoundary() async throws {
+        let session = EngineSession(emit: { _ in })
+        let ed = session.editor
+        let loop = square(90, -1, 2)
+        let boundary = ed.doc.add(.polyline(PolylineGeom(loop, closed: true)))
+        let hatch = ed.doc.add(.hatch(HatchGeom(loops: [loop], pattern: "LINE", scale: 100)))
+        AssociativeHatch.attach(&ed.doc, hatch: hatch, boundary: [boundary], seed: nil)
+        ed.selection = [boundary, hatch]
+        let before = ed.doc
+        var p = EngineObject(); p.set("id", boundary); p.set("index", 0); p.set("mode", "SC"); p.set("value", 0.5)
+        p.set("x", 100); p.set("y", 0); p.set("copy", true)
+        _ = try await session.call("grips.typed", p.json)
+        let copies = ed.doc.entities.filter { $0.id != boundary && $0.id != hatch }
+        let h = try XCTUnwrap(copies.first { if case .hatch = $0.geometry { return true }; return false })
+        let b = try XCTUnwrap(copies.first { if case .polyline = $0.geometry { return true }; return false })
+        XCTAssertEqual(AssociativeHatch.ids(h), [b.id])
+        XCTAssertEqual(DraftProps.point(h.props[DraftRendering.hatchOriginProp]), Vec2(45, -0.5))
+        XCTAssertFalse(items(ed.doc, h.id).isEmpty)
+        XCTAssertEqual(ed.doc.entity(hatch), before.entity(hatch))
+        XCTAssertEqual(try ArchiFile.decode(ArchiFile.encode(ed.doc)).entity(h.id), h)
+        ed.undo(); XCTAssertEqual(ed.doc, before)
     }
     func testStoredViewTitlesHideMoveUndoAndRoundTrip() async throws {
         let session = EngineSession(emit: { _ in })

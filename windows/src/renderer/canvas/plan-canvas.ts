@@ -943,14 +943,18 @@ export class PlanCanvas {
     if (req.active) {
       // The engine applies running snaps, grid snap and ortho/polar from the base point (input.point snap:true).
       if (req.kinds.includes("point")) {
-        const tok = this.dynToken(true);
+        const objectPick = req.kinds.includes("entity");
+        const tok = objectPick ? null : this.dynToken(true);
         if (tok) { void app.submitLine(tok); return; }
-        app.tryCall("input.point", { x: w[0], y: w[1], snap: true, pixelsPerUnit: this.v.scale }).then((st) => st && app.setPrompt(st)); return;
+        app.tryCall("input.point", { x: w[0], y: w[1], snap: !objectPick, pixelsPerUnit: this.v.scale }).then((st) => st && app.setPrompt(st)); return;
       }
       if (req.kinds.some((k) => k === "selection" || k === "entity")) {
-        const hit = pick(this.entries, w, 6 / this.v.scale);
-        if (hit) { app.tryCall("pick", { x: w[0], y: w[1], tolerance: 6 / this.v.scale, add: true, toggle: e.shiftKey }).then((r) => { if (r?.prompt) app.setPrompt(r.prompt); app.refresh(["selection"]); }); }
-        else if (req.kinds.includes("selection")) this.win = { start: v, current: v, moved: false, purpose: "request", shift: e.shiftKey, lasso: e.altKey ? [v] : null };
+        // The engine knows the hatch region, including empty space between strokes and holes.
+        app.tryCall("pick", { x: w[0], y: w[1], tolerance: 6 / this.v.scale, add: true, toggle: e.shiftKey }).then((r) => {
+          if (r?.prompt) app.setPrompt(r.prompt);
+          if (r?.hit != null) { void app.refresh(["drawing", "selection", "properties"]); }
+          else if (req.kinds.includes("selection")) this.win = { start: v, current: v, moved: false, purpose: "request", shift: e.shiftKey, lasso: e.altKey ? [v] : null };
+        });
       }
       return;
     }
@@ -977,7 +981,16 @@ export class PlanCanvas {
       });
       return;
     }
-    this.win = { start: v, current: v, moved: false, purpose: "select", shift: e.shiftKey, lasso: e.altKey ? [v] : null };
+    const pendingWindow: WindowSel = { start: v, current: v, moved: false, purpose: "select", shift: e.shiftKey, lasso: e.altKey ? [v] : null };
+    this.win = pendingWindow;
+    void app.tryCall("pick.candidates", { x: w[0], y: w[1], tolerance: 6 / this.v.scale }).then(async (candidates) => {
+      if (!candidates?.ids?.length || this.win !== pendingWindow || !app.isIdle) return;
+      this.win = null;
+      if (e.detail === 2) { void this.editObject(Number(candidates.ids[0])); return; }
+      const result = await app.tryCall("pick", { x: w[0], y: w[1], tolerance: 6 / this.v.scale, add: true, toggle: e.shiftKey });
+      await app.refresh(["selection", "properties"]);
+      if (result?.hit != null) await this.startCycle(w, String(result.hit));
+    });
   }
   private up(v: V2, e: MouseEvent) {
     if (e.button === 2) { this.rightUp(v, e); return; }

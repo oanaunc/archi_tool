@@ -471,6 +471,58 @@ if (vps.length) {
   await shot("sheet-moved-viewport");
 }
 
+// Regression: object picks use raw coordinates, and sparse hatch selection consults the engine even without a drawn stroke.
+await C(async () => {
+  const a = window.archiApp;
+  a.activeLayout = 0; a.setUI("mode", "2D");
+  await a.engine.call("select.set", { ids: [] }); await a.refresh(["document"]);
+});
+await wait(300);
+await C(() => {
+  const a = window.archiApp, cv = window.archiCanvas;
+  window.feedbackOriginalCall = a.tryCall; window.feedbackCalls = [];
+  a.tryCall = async (method, p) => {
+    if (["grips.get", "flips.get", "tempdims.get"].includes(method)) return [];
+    if (method === "view.drawList") return { items: [] };
+    if (method === "input.cursor") return { ...a.prompt };
+    if (["input.point", "pick", "pick.candidates"].includes(method)) {
+      window.feedbackCalls.push({ method, p });
+      if (method === "pick.candidates") return { ids: [123], types: ["hatch"] };
+      if (method === "pick") return { hit: 123, ids: [123], prompt: a.prompt };
+      return a.prompt;
+    }
+    return window.feedbackOriginalCall.call(a, method, p);
+  };
+  cv.paper = false; cv.win = null; cv.hot = null; cv.entries = []; cv.placement = null;
+  a.setPrompt({ active: true, name: "MATCHPROP", kinds: ["entity", "point"], keywords: [] });
+});
+await wait(120);
+await page.mouse.click(box.x + 300, box.y + 200); await wait(200);
+let feedback = await C(() => window.feedbackCalls);
+check("MATCHPROP source click bypasses running snaps", feedback.some(x => x.method === "input.point" && x.p.snap === false), JSON.stringify(feedback));
+await C(() => {
+  const a = window.archiApp, cv = window.archiCanvas;
+  cv.win = null; cv.hot = null; cv.entries = [];
+  window.feedbackCalls = []; a.setPrompt({ active: true, name: "MATCHPROP", kinds: ["selection"], keywords: [] });
+});
+await wait(120);
+await page.mouse.click(box.x + 300, box.y + 200); await wait(250);
+feedback = await C(() => window.feedbackCalls);
+check("MATCHPROP target is picked between pattern strokes", feedback.some(x => x.method === "pick") && await C(() => window.archiCanvas.win === null));
+await C(() => {
+  const a = window.archiApp, cv = window.archiCanvas;
+  window.feedbackCalls = []; cv.win = null; cv.hot = null; cv.entries = []; cv.cycle = null;
+  a.setPrompt({ active: false, kinds: [], keywords: [] });
+});
+await wait(120);
+await page.mouse.click(box.x + 360, box.y + 230); await wait(250);
+feedback = await C(() => window.feedbackCalls);
+check("idle sparse hatch selection consults the engine region", feedback.some(x => x.method === "pick.candidates") && feedback.some(x => x.method === "pick"), JSON.stringify(feedback));
+await C(() => {
+  const a = window.archiApp;
+  a.tryCall = window.feedbackOriginalCall; a.setPrompt({ active: false, kinds: [], keywords: [] });
+});
+
 check("no page errors", errors.length === 0, errors.slice(0, 3).join(" | "));
 const failed = results.filter((r) => !r.ok);
 console.log(`${results.length - failed.length}/${results.length} checks passed`);

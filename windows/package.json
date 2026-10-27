@@ -1,7 +1,7 @@
 {
   "name": "oanarina-archi-tool",
   "productName": "Oanarina Archi Tool",
-  "version": "1.0.2",
+  "version": "1.0.7",
   "description": "Oanarina Archi Tool for Windows: Electron shell around the archi-engine (ArchiCore).",
   "license": "GPL-3.0-or-later",
   "author": "Oana Rinaldi",
