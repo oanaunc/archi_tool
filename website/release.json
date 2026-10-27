@@ -1,11 +1,11 @@
 {
  "version": "1.0.6",
- "asset_version": "20261027c",
+ "asset_version": "20261027d",
  "commands": 1053,
  "formats": 30,
  "size_mb": "92.1",
  "signing": "Developer ID-signed and notarized by Apple.",
- "note": "Mac 1.0.6, build 14 (27 October): immediate hatch property matching, hatch scaling that preserves the pattern origin, controls for stored viewport titles and individual drawing texts on a sheet, and live revision code/count fields in custom and nested cartigli. Includes an Italian video and step-by-step guide. Windows 1.0.5 remains available below.",
+ "note": "Mac 1.0.6, build 14 (27 October): immediate hatch property matching, hatch scaling that preserves the pattern origin, controls for stored viewport titles and individual drawing texts on a sheet, and live revision code/count fields in custom and nested cartigli. Includes an Italian video and step-by-step guide. Windows 1.0.7, build 15 includes the same engine fixes, plus sparse hatch selection and grip scaling corrections for Windows. Windows instructions are available in the guide; some Mac panel controls use the Windows command line.",
  "dmg": "Oanarina-Archi-Tool-1.0.6.dmg",
  "sha_short": "2794462acc2d",
  "agent_doc": "downloads/archi-tool/AGENT-API.md",
@@ -75,13 +75,13 @@
   ]
  ],
  "windows": {
-  "exe": "Oanarina-Archi-Tool-Setup-1.0.5.exe",
-  "size_mb": "132.7",
-  "sha_short": "28c4c6a46f01",
-  "sha256": "28c4c6a46f01c5fcdb9bd3bdb93c5fee24ac559e6d26aada87681b4e5917e254",
-  "bytes": 132729525,
-  "release": "https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.5",
-  "version": "1.0.5"
+  "exe": "Oanarina-Archi-Tool-Setup-1.0.7.exe",
+  "size_mb": "132.8",
+  "sha_short": "b82bd1b5881e",
+  "sha256": "b82bd1b5881e6b7d4b67f2ca4d206445f9cace14e0f319e28a349f10680fbda9",
+  "bytes": 132774785,
+  "release": "https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.7",
+  "version": "1.0.7"
  },
  "sheet_tutorial": "https://youtu.be/7runIxmvS-E",
  "feedback_tutorial": "videos/archi-tool/15-retini-titoli-revisioni-it.mp4"
