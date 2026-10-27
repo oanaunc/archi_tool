@@ -18,3 +18,7 @@ Guide: [HATCH-SHEET-REVISIONS-IT.md](HATCH-SHEET-REVISIONS-IT.md). Recording sou
 - App notarization accepted: `f49cdf6e-7f11-4f4b-836a-01315a1cd032`. DMG notarization accepted: `9aa562fb-748c-45c5-8f63-f1c0e62502f4`. Both tickets stapled; Gatekeeper accepted the app and DMG as Notarized Developer ID.
 - `Oanarina-Archi-Tool-1.0.6.dmg`: 92,118,660 bytes. SHA-256: `2794462acc2db2d7e9ff61c429f48f207205fbd459e509bc2f62dddee11dfba0`.
 - The website video is 94.8 seconds, 1440 × 900, 3,378,335 bytes.
+
+## Publication verification
+
+The notarized DMG, Italian guide and video were staged in website commit `62beec2` and deployed successfully in [hosting run 40520427037](https://github.com/oanaunc/oanarina_website/actions/runs/40520427037). A full HTTPS read of the hosted DMG matched all 92,118,660 bytes and the SHA-256 above. The video, poster, guide and checksum returned HTTP 200 with the expected content lengths and MIME types. The download page is published only after these artifact checks.
