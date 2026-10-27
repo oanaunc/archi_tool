@@ -1,5 +1,5 @@
 {
-  "status": "1.0.5-build-13-preparing-submission",
+  "status": "1.0.5-build-13-uploaded-processing",
   "platform": "macOS only",
   "bundleIdentifier": "com.oanarina.architool",
   "developerTeam": "HBD3XXQK45",
@@ -21,7 +21,7 @@
   "keywords": "architecture,CAD,BIM,drafting,3D,design,DXF,IFC,floorplan,modeling",
   "reviewNotes": "VERSION 1.0.5 (13): Fixes text editor font/height saving, adds configurable revision history and automatic door/window size labels. Open Cedar House. In 2D, double-click drawing text: change Font or Height, then Apply (on the second toolbar row); Command-S also commits a pending text edit. Enter QUOTAINFISSI All Centimetres 180 to label current-level BIM doors/windows with live width x height values; QUOTAINFISSI Automatic Centimetres 180 labels new openings. In Sheet, open Customize Sheet: choose a custom block in Cartiglio drawing, and choose Above/Inside/Cartiglio fields only under Revision history. SHEETREVTABLE Fields 180 5 hides the separate history table while keeping the revision in the cartiglio; Inside adds a history band. In Sheets > Revisions add Description and By then Add. Custom blocks support {revision}, {revisionDate}, {revisionDescription}, {revisionBy} and indexed history rows. These edits support Undo and .archi persistence. Previous sheet customization and VPFIT recovery remain implemented. The local agent server below remains implemented and requires network.server.\n\nNative macOS app for macOS 14+, Apple silicon and Intel. No login is required. Open the bundled Cedar House from the start screen. File > Allow Project Folder Access selects a folder for linked assets, backups and exports. Online AI is optional and uses the user's own provider; local CAD/BIM and the following server demonstration require no AI account. Standalone CLI/Python tools are available in the website edition.\n\nNETWORK SERVER ENTITLEMENT: com.apple.security.network.server is required by the implemented opt-in local agent server in this submitted build. Network.framework NWListener accepts incoming HTTP connections on IPv4 loopback 127.0.0.1 (default port 47800), with acceptLocalOnly enabled. Local automation clients send JSON-RPC 2.0 requests to /rpc to inspect the open drawing, execute CAD/BIM commands and undo edits. The server is off by default; every /rpc request needs a random per-launch bearer token. It does not listen on LAN or internet interfaces. network.client supports outgoing requests and does not replace permission to accept incoming connections.\n\nREPRODUCTION:\n1. Open a drawing or the bundled Cedar House. Choose Oanarina Archi Tool > Settings... (Command-comma), select Agents, and click Start under LOCAL AGENT SERVER. Oanarina Archi Tool > Agent Server... or the in-app command AGENTS opens the same panel.\n2. In Terminal run: curl http://127.0.0.1:47800/health\nThe app responds with JSON containing \"status\":\"ok\" and \"rpc\":\"/rpc\". This health endpoint requires no token.\n3. Click Copy Token in the panel. Replace PASTE_TOKEN_HERE in this Terminal command:\ncurl http://127.0.0.1:47800/rpc -H 'Authorization: Bearer PASTE_TOKEN_HERE' -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"run_command\",\"params\":{\"command\":\"CIRCLE 0,0 500\"}}'\nThe response contains a JSON-RPC result and a circle appears in the drawing. Edit > Undo reverses it. Click Stop in Agents to stop accepting connections. Use the displayed port if changed from 47800.\n\nNo external AI software, account, API key or cloud service is needed to test this incoming server functionality.",
   "remainingBeforeSubmission": [
-    "Confirm Apple upload and build processing",
+    "Wait for Apple build processing",
     "Replace the older waiting submission, save version 1.0.5 metadata and select build 13",
     "Submit 1.0.5 for review"
   ],
@@ -73,10 +73,10 @@
   "availability": "All 175 current countries/regions and future storefronts",
   "privacyDeclarationStatus": "Five-type declaration expressly approved by owner and published in App Store Connect on 15 October 2026",
   "distributionPermissionStatus": "Owner expressly approved docs/APP-STORE-PERMISSION.txt on 15 October 2026; former LibreCAD table removed and replaced by attributed MIT palette",
-  "appleValidation": "Build 1.0.5 (13) passed 979 app checks, 17 sandbox checks and 8 packaging checks; distribution signatures, profile matching and universal symbols verified. Upload to Apple is in progress. Review submission is not yet confirmed.",
+  "appleValidation": "Xcode reported Upload succeeded and EXPORT SUCCEEDED for 1.0.5 (13). Local app, sandbox, signatures, provisioning and universal symbol checks passed. Apple processing and review submission remain pending.",
   "signedPackage": "dist/app-store/Oanarina-Archi-Tool-1.0.5-13.pkg",
   "signingStatus": "Application and installer distribution-signed on 27 October 2026; strict signatures, fresh certificate/profile matching and matching universal debug symbols verified.",
-  "uploadStatus": "Xcode upload of build 1.0.5 (13) started on 27 October 2026; result pending.",
+  "uploadStatus": "Build 1.0.5 (13) uploaded successfully on 27 October 2026 at 14:10:38 Europe/Bucharest; Apple processing in progress.",
   "reviewStatus": "1.0.5 (13) not yet submitted; previous 1.0.4 (11) still Waiting for Review until replacement is ready.",
   "submissionID": null,
   "submissionDate": null,
