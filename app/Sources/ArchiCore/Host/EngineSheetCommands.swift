@@ -318,7 +318,7 @@ enum EngineSheetCommands {
     }
 
     static let starterName = "TB-CUSTOM"
-    static let titleFieldNames = ["project", "sheetName", "sheetNumber", "scale", "date", "revision", "client", "author", "number", "paper", "address"]
+    static let titleFieldNames = ["project", "sheetName", "sheetNumber", "scale", "date", "revision", "client", "author", "number", "paper", "address"] + SheetRevisionPresentation.fieldNames.filter { $0 != "revision" }
 
     /// A starter block like the built-in title block, with placeholders, drawn left of and above its base point.
     static func starterBlock() -> Block {

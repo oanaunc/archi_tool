@@ -11,7 +11,7 @@ enum CustomTitleBlock {
     static let starterName = "TB-CUSTOM"
 
     static func blockName(_ doc: ArchiDocument, layout: String) -> String? {
-        let n = doc.variable(variable + ":" + layout.uppercased()) ?? doc.variable(variable)
+        let n = doc.variables[variable + ":" + layout.uppercased()] ?? doc.variable(variable)
         guard let n, !n.isEmpty, doc.blocks[n] != nil else { return nil }
         return n
     }
@@ -24,6 +24,7 @@ enum CustomTitleBlock {
             if s[i] == "{", let close = s[i...].firstIndex(of: "}") {
                 let key = String(s[s.index(after: i)..<close]).lowercased()
                 if let v = values[key] { out += v; i = s.index(after: close); continue }
+                if key.hasPrefix("revision.") { i = s.index(after: close); continue }
             }
             out.append(s[i]); i = s.index(after: i)
         }
@@ -64,5 +65,5 @@ enum CustomTitleBlock {
         return Block(name: starterName, basePoint: .zero, entities: es, description: "Custom title block (edit with BEDIT)")
     }
 
-    static let fieldNames = ["project", "sheetName", "sheetNumber", "scale", "date", "revision", "client", "author", "number", "paper", "address"]
+    static let fieldNames = ["project", "sheetName", "sheetNumber", "scale", "date", "revision", "client", "author", "number", "paper", "address"] + SheetRevisionPresentation.fieldNames.filter { $0 != "revision" }
 }

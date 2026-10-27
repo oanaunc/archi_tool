@@ -302,7 +302,8 @@ struct SheetSetPanel: View {
                         revDescription = ""
                     }.buttonStyle(FlatButtonStyle(compact: true))
                 }
-                Text("Revisions appear in a table above the title block and set its Revision field.").font(Theme.fontSmall).foregroundStyle(Theme.textFaint)
+                SheetRevisionControls(model: model, layoutIndex: i)
+                Button("Customize Cartiglio…") { model.activeLayout = i; model.mode = .sheet; model.showSheetCustomization = true }
             }
             .padding(8)
         }

@@ -11,3 +11,6 @@ xcuserdata/
 __pycache__/
 *.provisionprofile
 *.mobileprovision
+
+# Isolated universal release builds.
+/app/.build-release-*/

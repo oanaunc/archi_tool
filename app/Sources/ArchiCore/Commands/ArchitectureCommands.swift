@@ -367,6 +367,7 @@ enum ArchitectureCommands {
                 let oid = ed.doc.addElement(.opening(o), level: host.level, material: ed.doc.openingType(typeName)?.material,
                                             name: typeName ?? (kind == .door ? "Door \(fmt(width))x\(fmt(height))" : (kind == .window ? "Window \(fmt(width))x\(fmt(height))" : "Opening")))
                 if ed.doc.variable("AUTOTAG") == "1", kind != .opening { addTag(ed, oid, field: "mark") }
+                if kind != .opening { addAutomaticSizeTag(ed, opening: oid) }
                 n += 1
             default:
                 save()
@@ -1624,7 +1625,7 @@ extension ArchitectureCommands {
 // MARK: - Types, tags, keynotes, marks, sections and drawing views, schedules
 
 extension ArchitectureCommands {
-    static var documentation: [CommandDef] { [openingTypeCommand, tagCommand, tagAllCommand, marksCommand, keynoteCommand, sectionCommand, viewDrawCommand, viewUpdateCommand] }
+    static var documentation: [CommandDef] { [openingTypeCommand, tagCommand, tagAllCommand, openingSizesCommand, marksCommand, keynoteCommand, sectionCommand, viewDrawCommand, viewUpdateCommand] }
 
     static func isOpening(_ g: BIMGeometry) -> Bool { if case .opening = g { return true }; return false }
 
@@ -1650,7 +1651,7 @@ extension ArchitectureCommands {
         if pos == nil, case .opening(let o) = el.geometry, let host = ed.doc.element(o.hostWall), let f = WallFrame(host) {
             // Beside the wall, on the side away from a door swing.
             let side: Double = o.kind == .door ? (o.flipFacing ? 1 : -1) : (o.flipFacing ? -1 : 1)
-            p = f.pt(o.offset, side * (f.h + 450 * u))
+            p = f.pt(o.offset, side * (f.h + (field.hasPrefix("size") ? 850 : 450) * u))
         }
         let content = Annotations.tagText(el, field: field, doc: ed.doc)
         let tid = ed.doc.add(.text(TextGeom(position: p, height: 180 * u, content: content, halign: .center, valign: .middle)), layer: tagLayer)

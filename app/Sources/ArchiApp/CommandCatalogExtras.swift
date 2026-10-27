@@ -79,6 +79,8 @@ extension CommandCatalog {
     static let documentation: [CmdItem] = [
         CmdItem(title: "Tag", symbol: "tag", names: ["TAG", "ELEMENTTAG"]),
         CmdItem(title: "Tag All", symbol: "tag.circle", names: ["TAGALL"]),
+        CmdItem(title: "Door / Window Sizes", symbol: "ruler", names: ["OPENINGSIZES", "DOORWINDOWSIZES", "QUOTAINFISSI"]),
+        CmdItem(title: "Revision Table", symbol: "tablecells", names: ["SHEETREVTABLE", "REVSTYLE", "REVISIONSTYLE"]),
         CmdItem(title: "Keynote", symbol: "note.text", names: ["KEYNOTE", "KN"]),
         CmdItem(title: "Marks", symbol: "number", names: ["MARKS", "RENUMBER"]),
         CmdItem(title: "Section", symbol: "arrow.left.and.line.vertical.and.arrow.right", names: ["SECTION", "SECTIONLINE"]),

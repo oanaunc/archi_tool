@@ -5,7 +5,7 @@ import Foundation
 /// No document schema change: older drawings keep their original appearance.
 public enum SheetCustomization {
     public enum Part: String, CaseIterable {
-        case frame = "Frame", titleBlock = "TitleBlock", north = "North", scaleBar = "ScaleBar", captions = "Captions"
+        case frame = "Frame", titleBlock = "TitleBlock", north = "North", scaleBar = "ScaleBar", captions = "Captions", revisions = "Revisions"
     }
     public static func key(_ part: Part, _ field: String) -> String { "presentation:\(part.rawValue):\(field)" }
     public static func visible(_ part: Part, in layout: Layout) -> Bool { layout.titleBlock[key(part, "visible")] != "0" }
@@ -75,7 +75,7 @@ public enum SheetViewportEditing {
 }
 
 enum SheetCustomizationCommands {
-    static var all: [CommandDef] { [
+    static var all: [CommandDef] { [SheetRevisionPresentation.command,
         CommandDef("SHEETSTYLE", aliases: ["SHTSTYLE", "SHEETCUSTOMIZE"], category: "Output", summary: "Shows, hides or moves the current sheet's frame, title block, north arrow, scale bar or captions. Offsets are paper mm.") { ed in
             guard let li = FileViewCommands.currentLayoutIndex(ed) else { throw CommandError.invalid("No sheet.") }
             let name = try await ed.getKeyword("Sheet element", SheetCustomization.Part.allCases.map(\.rawValue), defaultValue: "North") ?? "North"

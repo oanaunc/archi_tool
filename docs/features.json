@@ -4957,13 +4957,13 @@
   "area": "Annotation",
   "group": "Text",
   "name": "In-place text editor",
-  "command": "—",
-  "description": "WYSIWYG editor with bold, italic, underline, font, height, colour.",
+  "command": "TEXTEDITINPLACE (MTEDIT)",
+  "description": "In-place whole-text formatting with font, height, bold, italic, underline and colour. Apply and Cancel remain visible; document Save commits pending edits.",
   "reference": "AutoCAD",
   "phase": 2,
   "priority": "must",
   "status": "done",
-  "acceptance": "In-place text editor renders identically on screen, PDF and DXF round-trip."
+  "acceptance": "Editing font, height and text applies as one undo step, closes the editor, and persists when Save is invoked while editing. Toolbar controls fit the editor."
  },
  {
   "id": "ANN-004",
@@ -6686,8 +6686,8 @@
   "area": "Sheets, Layouts & Plotting",
   "group": "Layouts & Viewports",
   "name": "Title block editor",
-  "command": "—",
-  "description": "Design custom title blocks with logos and fields.",
+  "command": "TITLEBLOCKDESIGN (TBDESIGN)",
+  "description": "Custom drawing blocks with logos, fields, live revision fields and indexed history rows; choose the built-in or a user block per sheet in Customize Sheet.",
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
@@ -6751,13 +6751,13 @@
   "area": "Sheets, Layouts & Plotting",
   "group": "Sheet Sets",
   "name": "Revisions table",
-  "command": "—",
-  "description": "Project revisions assigned to sheets.",
+  "command": "SHEETREVTABLE (REVSTYLE)",
+  "description": "Revision history above or inside the cartiglio, or cartiglio fields only. Configurable width, row height, visibility and independent offset; live current and indexed revision fields.",
   "reference": "Revit",
   "phase": 3,
   "priority": "should",
   "status": "done",
-  "acceptance": "Revisions table keeps sheet data consistent across the project."
+  "acceptance": "Native and portable plots share revision presentation. Placement and sizes support command aliases, agent API, Undo and file round-trip; fields-only hides the table without losing revisions."
  },
  {
   "id": "SHT-020",
@@ -9676,13 +9676,13 @@
   "area": "Documentation & Views",
   "group": "Tags & Annotation (BIM)",
   "name": "Tag all not tagged",
-  "command": "—",
-  "description": "Batch tag every untagged element in view.",
+  "command": "TAGALL / OPENINGSIZES (QUOTAINFISSI)",
+  "description": "Batch tags plus live door/window width × height labels on the current level. Units and text height are configurable; Automatic labels newly created BIM openings.",
   "reference": "Revit",
   "phase": 3,
   "priority": "must",
   "status": "done",
-  "acceptance": "Tag all not tagged reads values from elements and updates when they change."
+  "acceptance": "Size labels coexist with mark tags, do not duplicate on repeat, follow changed dimensions, support undo and .archi persistence, and are reachable from ribbon, command line and agent API."
  },
  {
   "id": "DOC-032",

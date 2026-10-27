@@ -235,17 +235,34 @@ extension AppSelfTests {
         check(editor.frame.minX <= p.x + 1 && editor.frame.maxX > p.x && editor.frame.minY <= p.y && editor.frame.maxY > p.y, "in-place editor covers the text's insertion point")
         let cap = (NSFont(name: "Helvetica", size: 100)?.capHeight ?? 72) / 100
         check(abs(editor.pointSize - min(96, max(9, 250 * canvas.scale / cap))) < 0.01, "editor shows the text at its drawn size")
+        check(editor.toolbarButtonsReachable, "all text formatting and Apply/Cancel controls fit inside the editor")
+        editor.chooseFont("Times New Roman")
+        editor.setHeightInput("325,5")
         editor.click("bold"); editor.click("underline")
         check(editor.displayFont.fontDescriptor.symbolicTraits.contains(.bold), "bold button makes the editor text bold (WYSIWYG)")
         editor.setText("Front Door")
         let before = model.editor.changeCount
-        editor.commit()
+        editor.pressApply()
         check(InPlaceTextEditor.current == nil && editor.superview == nil, "committing closes the editor")
         if case .text(let et)? = model.doc.entity(tid)?.geometry {
-            check(et.content == "Front Door" && model.doc.entity(tid)?.props["bold"] == "1" && model.doc.entity(tid)?.props["underline"] == "1" && model.editor.changeCount != before, "editor commit writes content and formatting")
+            check(et.content == "Front Door" && et.height == 325.5 && model.doc.entity(tid)?.props["font"] == "Times New Roman" && model.doc.entity(tid)?.props["bold"] == "1" && model.doc.entity(tid)?.props["underline"] == "1" && model.editor.changeCount != before, "editor commit writes content and formatting")
         } else { check(false, "edited text on the canvas") }
         model.editor.undo()
         if case .text(let ut)? = model.doc.entity(tid)?.geometry { check(ut.content == "Door" && model.doc.entity(tid)?.props["bold"] == nil, "in-place edit is one undo step") }
+        // Saving a project while the editor is open includes its pending font, size and text.
+        check(InPlaceTextEditor.begin(canvas: canvas, model: model, id: tid), "editor opens before document save")
+        InPlaceTextEditor.current?.setText("Saved without dismissing")
+        InPlaceTextEditor.current?.setHeightInput("410")
+        InPlaceTextEditor.current?.chooseFont("Times New Roman")
+        let savedURL = FileManager.default.temporaryDirectory.appendingPathComponent("archi-pending-text-\(UUID().uuidString).archi")
+        check(model.files.write(to: savedURL), "document save accepts pending text edit")
+        if let saved = try? ArchiFile.decode(Data(contentsOf: savedURL)), case .text(let t)? = saved.entity(tid)?.geometry {
+            check(t.content == "Saved without dismissing" && t.height == 410 && saved.entity(tid)?.props["font"] == "Times New Roman", "saved file includes pending text font and height")
+        } else { check(false, "pending text file round trip") }
+        check(InPlaceTextEditor.current == nil, "document save closes pending text editor")
+        try? FileManager.default.removeItem(at: savedURL)
+        try? FileManager.default.removeItem(at: savedURL.deletingPathExtension().appendingPathExtension("bak"))
+        model.editor.undo()
         // Escape discards.
         check(InPlaceTextEditor.begin(canvas: canvas, model: model, id: tid), "editor reopens")
         InPlaceTextEditor.current?.setText("Discarded")

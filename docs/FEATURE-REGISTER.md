@@ -629,7 +629,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | --- | --- | --- | --- | --- | --- |
 | ANN-001 | Single-line text | TEXT (DT) | 1 | must | ✅ done |
 | ANN-002 | Multiline text | MTEXT (T) | 1 | must | ✅ done |
-| ANN-003 | In-place text editor | — | 2 | must | ✅ done |
+| ANN-003 | In-place text editor | TEXTEDITINPLACE (MTEDIT) | 2 | must | ✅ done |
 | ANN-004 | Text styles | STYLE (ST) | 1 | must | ✅ done |
 | ANN-005 | Bullets and numbering | TEXTLIST | 2 | should | ✅ done |
 | ANN-006 | Columns in mtext | MTEXTCOLUMNS | 2 | could | ✅ done |
@@ -827,7 +827,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | SHT-011 | Guide grids on sheets | — | 3 | could | ✅ done |
 | SHT-012 | Viewport titles | — | 3 | must | ✅ done |
 | SHT-013 | Title blocks | — | 1 | must | ✅ done |
-| SHT-014 | Title block editor | — | 3 | should | ✅ done |
+| SHT-014 | Title block editor | TITLEBLOCKDESIGN (TBDESIGN) | 3 | should | ✅ done |
 | SHT-015 | Page setup manager | PAGESETUP | 2 | must | ✅ done |
 
 ### Sheet Sets
@@ -837,7 +837,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | SHT-016 | Sheet set manager | SHEETSET | 3 | must | ✅ done |
 | SHT-017 | Sheet numbering and renumbering | — | 3 | must | ✅ done |
 | SHT-018 | Sheet list/index | — | 3 | must | ✅ done |
-| SHT-019 | Revisions table | — | 3 | should | ✅ done |
+| SHT-019 | Revisions table | SHEETREVTABLE (REVSTYLE) | 3 | should | ✅ done |
 | SHT-020 | Placeholder sheets | — | 3 | could | ✅ done |
 | SHT-021 | Sheet properties custom fields | — | 3 | should | ✅ done |
 
@@ -1172,7 +1172,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | DOC-030 | Tag by category | TAG | 3 | must | ✅ done |
-| DOC-031 | Tag all not tagged | — | 3 | must | ✅ done |
+| DOC-031 | Tag all not tagged | TAGALL / OPENINGSIZES (QUOTAINFISSI) | 3 | must | ✅ done |
 | DOC-032 | Material tags | — | 3 | should | ✅ done |
 | DOC-033 | Multi-category tags | — | 3 | should | ✅ done |
 | DOC-034 | Keynotes | KEYNOTE | 3 | should | ✅ done |

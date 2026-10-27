@@ -106,7 +106,7 @@ final class InPlaceTextEditor: NSView, NSTextViewDelegate {
 
     // MARK: Layout
 
-    static let toolbarHeight: CGFloat = 30
+    static let toolbarHeight: CGFloat = 62
 
     /// Point size showing the text at its drawn height (cap height = height × zoom), within a legible range.
     var pointSize: CGFloat {
@@ -154,6 +154,8 @@ final class InPlaceTextEditor: NSView, NSTextViewDelegate {
         addSubview(scroll)
 
         let bar = NSStackView()
+        let actions = NSStackView()
+        actions.orientation = .horizontal; actions.spacing = 6
         bar.orientation = .horizontal
         bar.spacing = 4
         for (b, tip, font) in [(boldButton, "Bold", NSFont.boldSystemFont(ofSize: 12)),
@@ -185,21 +187,28 @@ final class InPlaceTextEditor: NSView, NSTextViewDelegate {
         colorWell.target = self; colorWell.action = #selector(colorChanged)
         colorWell.toolTip = "Text colour"
         colorWell.widthAnchor.constraint(equalToConstant: 34).isActive = true
-        bar.addArrangedSubview(colorWell)
+        actions.addArrangedSubview(colorWell)
         byLayer.target = self; byLayer.action = #selector(byLayerChanged)
         byLayer.controlSize = .small
-        bar.addArrangedSubview(byLayer)
-        let ok = NSButton(title: "OK", target: self, action: #selector(okPressed))
+        actions.addArrangedSubview(byLayer)
+        let ok = NSButton(title: "Apply", target: self, action: #selector(okPressed))
         ok.controlSize = .small; ok.toolTip = "Apply (⌘↩)"
         let cancel = NSButton(title: "Cancel", target: self, action: #selector(cancelPressed))
         cancel.controlSize = .small; cancel.toolTip = "Discard (Esc)"
-        bar.addArrangedSubview(ok); bar.addArrangedSubview(cancel)
+        actions.addArrangedSubview(ok); actions.addArrangedSubview(cancel)
         bar.translatesAutoresizingMaskIntoConstraints = false
         addSubview(bar)
+        actions.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(actions)
         NSLayoutConstraint.activate([
             bar.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4),
             bar.topAnchor.constraint(equalTo: topAnchor, constant: 3),
-            bar.heightAnchor.constraint(equalToConstant: Self.toolbarHeight - 6),
+            bar.heightAnchor.constraint(equalToConstant: 24),
+            bar.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -4),
+            actions.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4),
+            actions.topAnchor.constraint(equalTo: bar.bottomAnchor, constant: 4),
+            actions.heightAnchor.constraint(equalToConstant: 24),
+            actions.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -4),
         ])
     }
 
@@ -254,7 +263,7 @@ final class InPlaceTextEditor: NSView, NSTextViewDelegate {
         applyFormatting()
     }
     @objc private func heightChanged() {
-        if let v = Double(heightField.stringValue.replacingOccurrences(of: ",", with: ".")), v > 0 { state.height = v; applyFormatting() }
+        if let v = Double(heightField.stringValue.replacingOccurrences(of: ",", with: ".")), v > 0, v.isFinite { state.height = v; applyFormatting() }
         else { heightField.stringValue = fmt(state.height, 4); NSSound.beep() }
     }
     @objc private func colorChanged() {
@@ -284,10 +293,23 @@ final class InPlaceTextEditor: NSView, NSTextViewDelegate {
         DispatchQueue.main.async { [weak self] in
             guard let self, !self.finished, let w = self.window else { return }
             if let r = w.firstResponder as? NSView, r.isDescendant(of: self) { return }
+            // NSTextField uses a window-owned field editor rather than a descendant of this view.
+            if let fieldEditor = w.firstResponder as? NSTextView,
+               let control = fieldEditor.delegate as? NSView, control.isDescendant(of: self) { return }
+            if self.fontPopup.isHighlighted || self.colorWell.isActive { return }
             self.commit()
         }
     }
     override func cancelOperation(_ sender: Any?) { cancel() }
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if event.modifierFlags.contains(.command), ["\r", "\u{3}"].contains(event.charactersIgnoringModifiers ?? "") { commit(); return true }
+        return super.performKeyEquivalent(with: event)
+    }
+
+    static func commitPending(for model: AppModel) {
+        guard let editor = current, editor.model === model else { return }
+        editor.commit()
+    }
 
     // MARK: Finish
 
@@ -309,6 +331,15 @@ final class InPlaceTextEditor: NSView, NSTextViewDelegate {
         if Self.current === self { Self.current = nil }
         (canvas as? PlanCanvasView)?.focus()
         (canvas as? PlanCanvasView)?.invalidateCache()
+    }
+
+    /// Exercises actual toolbar actions, including an uncommitted height field.
+    func setHeightInput(_ value: String) { heightField.stringValue = value }
+    func chooseFont(_ name: String) { fontPopup.selectItem(withTitle: name); fontChanged() }
+    func pressApply() { okPressed() }
+    var toolbarButtonsReachable: Bool {
+        layoutSubtreeIfNeeded()
+        return subviews.compactMap { $0 as? NSStackView }.flatMap(\.arrangedSubviews).allSatisfy { bounds.contains(convert($0.bounds, from: $0)) }
     }
 
     /// Test hook: set the editor text as if typed.

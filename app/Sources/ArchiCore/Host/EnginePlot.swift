@@ -432,10 +432,12 @@ public enum EnginePlot {
         values["address"] = info.address
         let custom = customFields(doc, layout: layout)
         for (k, v) in custom { values[k] = v }
+        for (k, v) in SheetRevisionPresentation.fields(layout) { values[k] = v }
         if let blockEntries = EngineCustomTitleBlock.entries(doc: doc, layout: layout, anchor: Vec2(x1, y0), values: values) {
             out += blockEntries
         } else {
             out += builtInTitleBlock(doc: doc, layout: layout, tbv: tbv, box: (x0, y0, x1, y1), scaleText: scaleText, sheetNo: sheetNo, dateText: dateText, custom: custom)
+            SheetRevisionPresentation.makeRoomInBuiltin(&out, from: titleStart, layout: layout)
         }
         SheetCustomization.finish(&out, from: titleStart, part: .titleBlock, layout: layout)
         let northStart = out.count
@@ -444,10 +446,7 @@ public enum EnginePlot {
         let scaleStart = out.count
         if let vp = layout.viewports.first, vp.scale > 0 { out.append(scaleBar(vp, doc: doc)) }
         SheetCustomization.finish(&out, from: scaleStart, part: .scaleBar, layout: layout)
-        let revisionStart = out.count
-        let revs = EngineSheets.revisions(layout)
-        if !revs.isEmpty { out.append(revisionTable(revs, x0: x0, x1: x1, y1: y1)) }
-        SheetCustomization.finish(&out, from: revisionStart, part: .titleBlock, layout: layout)
+        out += SheetRevisionPresentation.entries(layout, titleOrigin: Vec2(x0, y0), titleSize: tb)
         let captionStart = out.count
         if !EngineSheets.hasViewTitleEntities(layout) {
             for vp in layout.viewports { out.append(viewportCaption(vp, doc: doc)) }
@@ -541,9 +540,9 @@ public enum EnginePlot {
         return DrawEntry(id: nil, items: sb)
     }
 
-    static func revisionTable(_ revs: [EngineSheetRevision], x0: Double, x1: Double, y1: Double) -> DrawEntry {
-        let rh = 5.0
-        let cols: [Double] = [14, 24, titleBlockSize.x - 14 - 24 - 24, 24]
+    static func revisionTable(_ revs: [EngineSheetRevision], x0: Double, x1: Double, y1: Double, rowHeight rh: Double = 5) -> DrawEntry {
+        let factor = (x1 - x0) / titleBlockSize.x
+        let cols: [Double] = [14 * factor, 24 * factor, (titleBlockSize.x - 62) * factor, 24 * factor]
         var ri: [DrawItem] = []
         let rows = revs.count + 1
         let top = y1 + Double(rows) * rh
@@ -566,8 +565,8 @@ public enum EnginePlot {
                 x += cols[k]
             }
         }
-        rowText(0, ["REV", "DATE", "DESCRIPTION", "BY"], 1.8)
-        for (k, r) in revs.enumerated() { rowText(k + 1, [r.code, r.date, r.description, r.by], 2.2) }
+        rowText(0, ["REV", "DATE", "DESCRIPTION", "BY"], 1.8 * rh / 5)
+        for (k, r) in revs.enumerated() { rowText(k + 1, [r.code, r.date, r.description, r.by], 2.2 * rh / 5) }
         return DrawEntry(id: nil, items: ri)
     }
 
@@ -730,7 +729,7 @@ enum EngineCustomTitleBlock {
     static let variable = "TITLEBLOCKBLOCK"
 
     static func blockName(_ doc: ArchiDocument, layout: String) -> String? {
-        let n = doc.variable(variable + ":" + layout.uppercased()) ?? doc.variable(variable)
+        let n = doc.variables[variable + ":" + layout.uppercased()] ?? doc.variable(variable)
         guard let n, !n.isEmpty, doc.blocks[n] != nil else { return nil }
         return n
     }
@@ -744,6 +743,7 @@ enum EngineCustomTitleBlock {
             if s[i] == "{", let close = s[i...].firstIndex(of: "}") {
                 let key = String(s[s.index(after: i)..<close]).lowercased()
                 if let v = values[key] { out += v; i = s.index(after: close); continue }
+                if key.hasPrefix("revision.") { i = s.index(after: close); continue }
             }
             out.append(s[i])
             i = s.index(after: i)

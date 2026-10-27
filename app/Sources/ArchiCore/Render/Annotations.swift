@@ -41,8 +41,13 @@ public enum Annotations {
             return el.name
         case "keynote":
             return el.props["keynote"] ?? ""
-        case "size":
-            if case .opening(let o) = el.geometry { return "\(fmt(o.width))×\(fmt(o.height))" }
+        case "size", "sizemm", "sizecm", "sizem":
+            if case .opening(let o) = el.geometry {
+                let key = field.lowercased()
+                let factor = key == "size" ? 1 : doc.units.mm / (key == "sizecm" ? 10 : key == "sizem" ? 1000 : 1)
+                let suffix = key == "size" ? "" : key == "sizecm" ? " cm" : key == "sizem" ? " m" : " mm"
+                return "\(fmt(o.width * factor))×\(fmt(o.height * factor))" + suffix
+            }
             return ""
         default:
             return el.props[field] ?? PropertyAccess.getProperty(el, field) ?? ProjectParameters.value(field, of: el, doc: doc) ?? ""

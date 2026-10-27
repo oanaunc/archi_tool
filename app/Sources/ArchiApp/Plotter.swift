@@ -335,6 +335,7 @@ enum SheetComposer {
                                         "scale": scaleText, "date": tbv["date"] ?? dateText(), "revision": tbv["revision"] ?? "—", "client": tbv["client"] ?? info.client,
                                         "author": tbv["author"] ?? info.author, "number": tbv["number"] ?? info.number, "paper": layout.paper.name, "address": info.address]
         for (k, v) in SheetTools.fields(doc, layout: layout) { values[k] = v }
+        for (k, v) in SheetRevisionPresentation.fields(layout) { values[k] = v }
         if let custom = MainActor.assumeIsolated({ CustomTitleBlock.entries(doc: doc, layout: layout, anchor: Vec2(x1, y0), values: values) }) {
             out += custom
         } else {
@@ -385,6 +386,7 @@ enum SheetComposer {
             }
             out.append(DrawEntry(id: nil, items: rows))
         }
+        SheetRevisionPresentation.makeRoomInBuiltin(&out, from: titleStart, layout: layout)
         }
 
         SheetCustomization.finish(&out, from: titleStart, part: .titleBlock, layout: layout)
@@ -426,33 +428,7 @@ enum SheetComposer {
         }
 
         SheetCustomization.finish(&out, from: scaleStart, part: .scaleBar, layout: layout)
-        let revisionStart = out.count
-        // Revision table stacked on the title block (header row at the bottom, latest revision on top).
-        let revs = SheetSet.revisions(layout)
-        if !revs.isEmpty {
-            let rh = 5.0, cols = [14.0, 24, tb.x - 14 - 24 - 24, 24]
-            var ri: [DrawItem] = []
-            let rows = revs.count + 1
-            let top = y1 + Double(rows) * rh
-            ri.append(rect(Vec2(x0, y1), Vec2(x1, top), 0.35))
-            for r in 1..<rows { let y = y1 + Double(r) * rh
-                ri.append(.stroke(points: [Vec2(x0, y), Vec2(x1, y)], closed: false, style: s(r == 1 ? 0.35 : 0.18))) }
-            var cx = x0
-            for w in cols.dropLast() { cx += w; ri.append(.stroke(points: [Vec2(cx, y1), Vec2(cx, top)], closed: false, style: s(0.18))) }
-            func rowText(_ r: Int, _ vals: [String], _ h: Double) {
-                var x = x0
-                for (k, v) in vals.enumerated() {
-                    let maxChars = max(1, Int(cols[k] / (h * 0.62)))
-                    ri.append(text(Vec2(x + 1.5, y1 + Double(r) * rh + rh / 2), h, v.count > maxChars ? String(v.prefix(maxChars - 1)) + "…" : v, .left, .middle))
-                    x += cols[k]
-                }
-            }
-            rowText(0, ["REV", "DATE", "DESCRIPTION", "BY"], 1.8)
-            for (k, r) in revs.enumerated() { rowText(k + 1, [r.code, r.date, r.description, r.by], 2.2) }
-            out.append(DrawEntry(id: nil, items: ri))
-        }
-
-        SheetCustomization.finish(&out, from: revisionStart, part: .titleBlock, layout: layout)
+        out += SheetRevisionPresentation.entries(layout, titleOrigin: Vec2(x0, y0), titleSize: tb)
         let captionStart = out.count
         // Viewport captions (unless the sheet has editable view titles, see SheetSet.refreshViewTitles).
         for vp in layout.viewports where !SheetSet.hasViewTitleEntities(layout) {

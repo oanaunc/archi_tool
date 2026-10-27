@@ -341,6 +341,7 @@ final class FileController: EditorHost {
 
     func write(to url: URL) -> Bool {
         guard let model else { return false }
+        InPlaceTextEditor.commitPending(for: model)
         var u = url
         if u.pathExtension.lowercased() == "dxf" {
             do { try DXFWriter.write(model.doc).write(to: u, atomically: true, encoding: .utf8); model.editor.print("Saved DXF \(u.lastPathComponent)"); return true }

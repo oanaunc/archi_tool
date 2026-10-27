@@ -7,7 +7,7 @@ NAME="Oanarina Archi Tool"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$ROOT/app/Info.plist")"
 IDENTITY="${SIGNING_IDENTITY:-16B4420E76E5FB9B5EB8C984B5A54C07D7E8B739}"
 NOTARY_PROFILE="${NOTARY_PROFILE-oanarina-notary}"
-APP="$ROOT/build/$NAME.app"
+APP="${APP_OUTPUT_DIR:-$ROOT/build}/$NAME.app"
 DMG="$ROOT/dist/Oanarina-Archi-Tool-$VERSION.dmg"
 mkdir -p "$ROOT/dist"
 

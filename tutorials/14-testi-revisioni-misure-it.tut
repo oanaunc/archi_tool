@@ -1,0 +1,50 @@
+title: Testi, revisioni e misure di porte e finestre
+summary: Mac 1.0.5: salvare il testo, scegliere il proprio cartiglio e quotare automaticamente gli infissi
+---
+open sample "Cedar House"
+run SHOW2D
+run ZOOM Extents
+speed 40
+caption "Installa Mac 1.0.5" "Chiudi l'app e sostituiscila in Applicazioni con il nuovo download da www.oanarinaldi.com/archi-tool.html"
+wait 4
+caption "Misure automatiche degli infissi" "Annotate > Door / Window Sizes, oppure QUOTAINFISSI: larghezza x altezza di porte e finestre BIM del piano corrente"
+type QUOTAINFISSI All Centimetres 180
+wait 5
+caption "Etichette collegate al modello" "90 x 210 cm: le misure seguono porte e finestre. Ripetere il comando non duplica le etichette"
+wait 4
+caption "Anche per le nuove porte e finestre" "Automatic attiva le etichette sui nuovi infissi. Off le disattiva; quelle esistenti restano"
+type QUOTAINFISSI Automatic Centimetres 180
+wait 3
+caption "Testo: Applica e salva" "Doppio clic sul testo. Font e altezza in alto; Apply e Cancel sulla seconda riga. Cmd+S salva anche la modifica aperta"
+type TEXT 1000,-2200 250 0 "Testo modificabile" ;
+type ZOOM Extents
+typeline TEXTFORMAT
+pick 1300,-2100
+wait 5
+click button "Apply"
+wait 2
+caption "Revisioni nel cartiglio" "Aggiungi la revisione da Sheets > Revisions, oppure con SHEETREVISION. Il campo Revision del cartiglio si aggiorna"
+type LAYOUT New "Revisioni personalizzate"
+type MVIEW 30,90 390,270 1:100 Plan "Ground Floor"
+type SHEETREVISION "Aggiornamento infissi" "NM"
+wait 3
+caption "Scegli dove mostrare la cronologia" "Customize Sheet > Revision history: Above, Inside, oppure Cartiglio fields only"
+type SHEETREVTABLE Inside 180 5
+wait 4
+caption "Solo nel cartiglio, senza tabella separata" "Fields lascia la revisione nel cartiglio e nasconde la tabella della cronologia"
+type SHEETREVTABLE Fields 180 5
+wait 4
+caption "Il tuo cartiglio" "Customize Sheet > Cartiglio drawing sceglie un blocco del progetto, anche importato da DXF"
+type TITLEBLOCKDESIGN Create
+run SHOW2D
+type BEDIT TB-CUSTOM
+type TEXT -175,24 2.5 0 "{revisionDate}  {revisionDescription}  {revisionBy}" ;
+type BCLOSE Save
+type LAYOUT Set "Revisioni personalizzate"
+wait 5
+caption "Campi automatici nel tuo disegno" "{revision}, {revisionDate}, {revisionDescription}, {revisionBy}. Per la cronologia: {revision.1.code}, {revision.1.date}, ecc."
+wait 5
+caption "Salva il progetto ed esporta" "Le impostazioni si salvano nel file .archi e si annullano con Cmd+Z. Il PDF usa lo stesso cartiglio"
+type SAVEAS $TMP/Testi-revisioni-misure-1.0.5.archi
+type PLOT $TMP/Testi-revisioni-misure-1.0.5.pdf
+wait 3

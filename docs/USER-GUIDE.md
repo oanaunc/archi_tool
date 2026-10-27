@@ -1561,6 +1561,7 @@ command inside the app. This table is generated from the command definitions in 
 | `OPENINGFLIP` | `FLIPDOOR`, `FLIPWINDOW`, `DOORFLIP`, `FLIPOPENING` | Flips doors and windows: Hand (hinge side), Facing (swing / exterior side) or Both. |
 | `OPENINGPARTS` | `GLAZINGBARS`, `WINDOWPARTS`, `DOORPARTS` | Sets window mullions/transoms and door fanlights/thresholds on selected openings. |
 | `OPENINGTRIM` | `CASING`, `ARCHITRAVE`, `LINTEL`, `SILLBOARD` | Sets door/window casings (architraves), an interior window board and a lintel with bearings on selected openings. |
+| `OPENINGSIZES` | `DOORWINDOWSIZES`, `QUOTAINFISSI` | Places live door/window width × height labels; units, text height and automatic labelling of new openings are configurable. |
 | `OPENINGTYPE` | `DOORTYPE`, `WINDOWTYPE`, `TYPECATALOG` | Door/window type catalog: list, new, set type parameters and sub-parts (mullions, transoms, threshold), formulas, apply to openings, delete, import CSV. |
 | `PARTS` | `CREATEPARTS`, `DIVIDEPARTS` | Divides compound walls into parts (one per layer, cut by the host's openings), Merge restores the wall, Material overrides a part, Show Parts/Original. |
 | `PHASE` | `PHASES`, `PHASING` | Manages construction phases: list, new, current phase, filter, created/demolished phase of objects. |
@@ -1920,6 +1921,7 @@ command inside the app. This table is generated from the command definitions in 
 | `WEBVIEWEREXPORT` | `WEBEXPORT`, `EXPORTWEB`, `WEBVIEWER` | Exports the 3D model as one standalone HTML file with a WebGL viewer (orbit, pan, zoom, views) that opens in any browser. *(app)* |
 | `SHEETSTYLE` | `SHTSTYLE`, `SHEETCUSTOMIZE` | Shows, hides or moves the current sheet's frame, title block, north arrow, scale bar or captions. Offsets are paper mm. |
 | `VPEDIT` | `VPE`, `VIEWPORTEDIT` | Edits a viewport's paper Position/Size, model Center, print Scale, or centres content without changing scale (CenterContent), or centres its frame on the page (CenterOnSheet). |
+| `SHEETREVTABLE` | `REVSTYLE`, `REVISIONSTYLE` | Configures revision history above/inside the cartiglio or cartiglio fields only, with paper width and row height. |
 | `SHEETTEXT` | `SHTTEXT`, `PAPERTEXT` | Adds, edits, moves or deletes free text on the current sheet in paper millimetres. |
 
 ### Layout
@@ -2250,3 +2252,22 @@ PAGEPRESET Delete "Presentation"
 ```
 
 Aliases: `PSPRESET`, `NAMEDPAGESETUP`. Viewport positions/scales, geometry and title-block text stay intact. Presets include section graphics when present; use **Customize section graphics on this sheet** to edit those settings.
+
+## Text editing, revisions and opening sizes (Mac 1.0.5)
+
+Double-click drawing text to edit it in place. Font and Height are on the first toolbar row; **Apply** and **Cancel** are on the second. Apply saves the edit and closes the editor; Escape discards it. Single-line text also accepts Enter; multiline text accepts Command-Return. **Command-S saves pending text and formatting in the project**, including a height typed with an Italian decimal comma. An applied edit is one Undo step.
+
+On a sheet, open **Customize Sheet**. **Cartiglio drawing** selects the built-in title block or any project block, including one imported from DXF. A custom block uses paper millimetres, with its base point anchored at the lower-right of the frame: draw left and up from it. **Redesign Cartiglio Drawing** opens the selected block in 2D; finish with `BCLOSE Save`. Shared blocks update every sheet using them.
+
+**Revision history / revisioni** is available in Customize Sheet and in the Sheets panel. Choose **Above cartiglio**, **Inside cartiglio**, or **Cartiglio fields only**. Fields only removes the separate history table and keeps the current revision in the cartiglio. Inside adds a history band under the built-in fields; in a custom cartiglio, reserve the appropriate space yourself. Table width (40–1000 mm) and row height (3–30 mm) are configurable. Use **Move element → Revision history table** to adjust its offset independently, or its checkbox to hide it. Revisions still update when the table is hidden.
+
+Custom blocks accept `{revision}`, `{revisionDate}`, `{revisionDescription}`, `{revisionBy}` and indexed rows such as `{revision.1.code}`, `{revision.1.date}`, `{revision.1.description}`, `{revision.1.by}`. Rows are oldest-first. Add revisions from **Sheets → Revisions → Description / By → Add** or `SHEETREVISION`. `SHEETREVTABLE Fields 180 5` selects fields only; `SHEETREVTABLE Inside 180 5` adds the history band. Aliases: `REVSTYLE`, `REVISIONSTYLE`. `SHEETSTYLE Revisions Move -10,5` sets the independent offset in paper mm. Existing files keep their previous appearance until configured.
+
+Use **Annotate → Door / Window Sizes**, or type `QUOTAINFISSI` (`OPENINGSIZES`, `DOORWINDOWSIZES`), to add live **width × height** labels to BIM doors and windows of the current level:
+
+- `QUOTAINFISSI All Centimetres 180` labels both categories; `Doors` or `Windows` selects one category. 180 is the text height in drawing units (1.8 mm on paper at 1:100 when the drawing uses mm).
+- Choose Drawing, Millimetres, Centimetres or Metres. For example a 900 × 2100 mm door is labelled **90×210 cm**.
+- `QUOTAINFISSI Automatic Centimetres 180` labels subsequently created BIM doors and windows. Run All separately for existing openings.
+- `QUOTAINFISSI Off` disables labels on future openings and keeps existing labels.
+
+Repeating the bulk command updates the size labels without duplicating them or replacing existing marks. Labels follow changes to the opening's width and height in the plan and plotted output. They support Undo and save in `.archi`. These labels measure BIM openings; arbitrary lines or blocks in an imported 2D drawing must first be modelled as doors/windows, or dimensioned with the normal dimension tools. The commands also run through the scripting/agent command API.

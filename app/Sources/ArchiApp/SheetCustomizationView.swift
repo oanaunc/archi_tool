@@ -45,15 +45,24 @@ struct SheetCustomizationView: View {
                         })).toggleStyle(.checkbox)
                     }
                     Picker("Move element", selection: $part) {
-                        ForEach([SheetCustomization.Part.titleBlock, .north, .scaleBar], id: \.self) { Text(label($0)).tag($0) }
+                        ForEach([SheetCustomization.Part.titleBlock, .north, .scaleBar, .revisions], id: \.self) { Text(label($0)).tag($0) }
                     }.onChange(of: part) { _ in loadOffset() }
                     HStack { field("ΔX mm", $offsetX); field("ΔY mm", $offsetY) }
                     Button("Apply Element Offset") { applyOffset() }
                     Text("Offsets from the default position: +X right, +Y up.").font(.caption).foregroundStyle(.secondary)
                     Button("Edit Title Block…") { model.sheet = .titleBlock(layoutIndex) }
                     Text("Text, studio name, project, client, date, revision and logo.").font(.caption).foregroundStyle(.secondary)
+                    Picker("Cartiglio drawing", selection: Binding(get: { CustomTitleBlock.blockName(model.doc, layout: l.name) ?? "" }, set: { name in
+                        model.editor.transaction("Choose Cartiglio") { d in d.setVariable(CustomTitleBlock.variable + ":" + l.name.uppercased(), name) }
+                    })) {
+                        Text("Built-in cartiglio").tag("")
+                        ForEach(model.doc.blocks.keys.sorted().filter { !$0.hasPrefix("*") }, id: \.self) { Text($0).tag($0) }
+                    }
+                    Text("Choose your own drawing block, including blocks imported from DXF. Its base point anchors at the lower-right of the frame; draw left and up in paper mm.").font(.caption).foregroundStyle(.secondary)
                     Button("Redesign Cartiglio Drawing…") { redesign() }
                     Text("Opens a drawing block in 2D: edit lines, texts and images with normal tools. BCLOSE Save finishes; return to Sheet. Shared blocks update every sheet using them.").font(.caption).foregroundStyle(.secondary)
+                    Divider()
+                    SheetRevisionControls(model: model, layoutIndex: layoutIndex)
                     Divider()
                     Text("Free text on this sheet").font(.headline)
                     Picker("Text", selection: $textID) {
@@ -106,7 +115,7 @@ struct SheetCustomizationView: View {
         .onChange(of: model.revision) { _ in loadOffset(); loadViewport() }
     }
     private func label(_ p: SheetCustomization.Part) -> String {
-        switch p { case .frame: return "Page border"; case .titleBlock: return "Title block / cartiglio"; case .north: return "North arrow / Nord"; case .scaleBar: return "Scale bar"; case .captions: return "Automatic view captions" }
+        switch p { case .frame: return "Page border"; case .titleBlock: return "Title block / cartiglio"; case .north: return "North arrow / Nord"; case .scaleBar: return "Scale bar"; case .captions: return "Automatic view captions"; case .revisions: return "Revision history table" }
     }
     private func field(_ label: String, _ value: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 3) { Text(label).font(.caption).foregroundStyle(.secondary); TextField(label, text: value).textFieldStyle(.roundedBorder) }

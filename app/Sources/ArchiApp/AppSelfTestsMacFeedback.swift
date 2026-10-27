@@ -53,6 +53,16 @@ extension AppSelfTests {
         check(!strings(native).contains("N"), "custom sheet hides automatic north arrow")
         check(!strings(native).contains { $0.hasPrefix("SCALE ") }, "custom sheet hides scale bar")
         check(strings(native).contains("Studio Maglione"), "custom sheet office name replaces branding")
+        SheetSet.addRevision(&customized, 0, description: "Revised windows", by: "NM", date: "2026-10-27")
+        for mode in SheetRevisionPresentation.Placement.allCases {
+            try? SheetRevisionPresentation.set(mode, width: 150, rowHeight: 6, in: &customized.layouts[0])
+            let macRevisions = SheetComposer.decorations(doc: customized, layout: customized.layouts[0], layoutIndex: 0)
+            let coreRevisions = EnginePlot.decorations(doc: customized, layout: customized.layouts[0], layoutIndex: 0)
+            check(strings(macRevisions) == strings(coreRevisions), "revision \(mode.rawValue) native/portable text parity")
+            let macTable = macRevisions.first { strings([$0]).contains("DESCRIPTION") }
+            let coreTable = coreRevisions.first { strings([$0]).contains("DESCRIPTION") }
+            check(macTable == coreTable, "revision \(mode.rawValue) shares exact native/portable table geometry")
+        }
         let originalNative = SheetComposer.decorations(doc: doc, layout: doc.layouts[0], layoutIndex: 0)
         SheetCustomization.set(.titleBlock, visible: false, offset: .zero, in: &customized.layouts[0])
         let noTitle = SheetComposer.decorations(doc: customized, layout: customized.layouts[0], layoutIndex: 0)
