@@ -1003,7 +1003,13 @@ enum ModifyCommands {
         switch (src.geometry, dst.geometry) {
         case (.text(let s), .text(var d)) where on.contains("Text"): d.height = s.height; d.style = s.style; dst.geometry = .text(d)
         case (.dimension(let s), .dimension(var d)) where on.contains("Dim"): d.style = s.style; dst.geometry = .dimension(d)
-        case (.hatch(let s), .hatch(var d)) where on.contains("Hatch"): d.pattern = s.pattern; d.scale = s.scale; d.angle = s.angle; d.fill = s.fill; dst.geometry = .hatch(d)
+        case (.hatch(let s), .hatch(var d)) where on.contains("Hatch"):
+            d.pattern = s.pattern; d.scale = s.scale; d.angle = s.angle; d.fill = s.fill; dst.geometry = .hatch(d)
+            for key in [DraftRendering.hatchOriginProp, DraftRendering.gradientProp, DraftRendering.gradientColorsProp,
+                        DraftRendering.gradientAngleProp, DraftRendering.gradientCenteredProp, DraftRendering.gradientTintProp,
+                        HatchPatterns.patternTypeProp] {
+                dst.props[key] = src.props[key]
+            }
         case (.polyline(let s), .polyline(var d)) where on.contains("Polyline"): d.width = s.width; dst.geometry = .polyline(d)
         case (.leader(let s), .leader(var d)) where on.contains("Text"): d.textHeight = s.textHeight; dst.geometry = .leader(d)
         default: break
@@ -1030,14 +1036,36 @@ enum ModifyCommands {
             ed.selection = []
             let on = matchSet(ed.doc)
             ed.print("Current active settings: " + matchKinds.filter(on.contains).joined(separator: " "))
-            let dsts = try await ed.getSelection("Select destination object(s)").filter { $0 != pk.id }
-            var n = 0
-            for id in dsts {
-                if let se = ed.doc.entity(pk.id), let i = ed.doc.entityIndex(id) { var d = ed.doc.entities[i]; matchEntity(se, &d, only: on); ed.doc.entities[i] = d; n += 1 }
-                else if let se = ed.doc.element(pk.id), let i = ed.doc.elementIndex(id) { var d = ed.doc.elements[i]; matchElement(se, &d); ed.doc.elements[i] = d; n += 1 }
-                else if let se = ed.doc.entity(pk.id), let i = ed.doc.elementIndex(id), on.contains("Layer") { ed.doc.elements[i].layer = se.layer; n += 1 }
-                else if let se = ed.doc.element(pk.id), let i = ed.doc.entityIndex(id), on.contains("Layer") { ed.doc.entities[i].layer = se.layer; n += 1 }
+            let sourceEntity = ed.doc.entity(pk.id), sourceElement = ed.doc.element(pk.id)
+            var originals: [EntityID: Entity] = [:], originalElements: [EntityID: BIMElement] = [:]
+            var applied: Set<EntityID> = []
+            // Apply each click immediately, like a property painter. Removing a target restores its original style.
+            @MainActor func paint(_ ids: [EntityID]) {
+                let targets = Set(ids).subtracting([pk.id])
+                for id in applied.subtracting(targets) {
+                    if let e = originals[id], let i = ed.doc.entityIndex(id) { ed.doc.entities[i] = e }
+                    if let e = originalElements[id], let i = ed.doc.elementIndex(id) { ed.doc.elements[i] = e }
+                }
+                for id in targets {
+                    if let i = ed.doc.entityIndex(id) {
+                        if originals[id] == nil { originals[id] = ed.doc.entities[i] }
+                        var d = originals[id]!
+                        if let se = sourceEntity { matchEntity(se, &d, only: on) }
+                        else if let se = sourceElement, on.contains("Layer") { d.layer = se.layer }
+                        ed.doc.entities[i] = d
+                    } else if let i = ed.doc.elementIndex(id) {
+                        if originalElements[id] == nil { originalElements[id] = ed.doc.elements[i] }
+                        var d = originalElements[id]!
+                        if let se = sourceElement { matchElement(se, &d) }
+                        else if let se = sourceEntity, on.contains("Layer") { d.layer = se.layer }
+                        ed.doc.elements[i] = d
+                    }
+                }
+                applied = targets
             }
+            let dsts = try await ed.getSelection("Select destination object(s); Enter to finish", onChange: paint).filter { $0 != pk.id }
+            paint(dsts)
+            let n = dsts.count
             ed.selection = []
             ed.print("Properties matched on \(n) object(s).")
         },

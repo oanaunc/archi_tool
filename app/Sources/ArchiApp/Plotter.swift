@@ -254,7 +254,7 @@ enum SheetComposer {
 
     /// Model-space draw entries shown by a viewport, in that view's 2D coordinates.
     static func viewportEntries(doc: ArchiDocument, vp: Viewport, layout: String? = nil) -> [DrawEntry] {
-        let doc = SectionSheetStyle.document(doc, layout: layout, view: vp.view)
+        let doc = SheetModelText.document(SectionSheetStyle.document(doc, layout: layout, view: vp.view), layout: layout)
         // 3D viewports: shade plot of the model seen from the viewport's camera (always drawn on the main thread).
         if vp.view == .axonometric || vp.view == .perspective { return MainActor.assumeIsolated { ShadePlot.entries(doc: doc, vp: vp) } }
         switch vp.view {
@@ -447,10 +447,7 @@ enum SheetComposer {
 
     /// Paper-space entities of the layout (user annotations), drawn in mm.
     static func paperEntities(doc: ArchiDocument, layout: Layout) -> [DrawEntry] {
-        var o = DrawOptions(level: nil); o.forPaper = true
-        return layout.entities.filter { doc.isVisible(layer: $0.layer) }.map {
-            DrawEntry(id: $0.id, items: DrawListBuilder.items(for: $0, doc: doc, options: o))
-        }
+        SheetCustomization.paperEntities(doc: doc, layout: layout)
     }
 
     static func modelToPaper(_ vp: Viewport) -> CGAffineTransform {

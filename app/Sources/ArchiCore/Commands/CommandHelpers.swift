@@ -153,17 +153,39 @@ extension Editor {
     /// Applies a transform to objects; with `copy` new objects are created. Returns the IDs of the results.
     @discardableResult
     func transformObjects(_ ids: [EntityID], _ t: Transform2D, copy: Bool) -> [EntityID] {
+        Self.transformObjects(in: &doc, ids: ids, t, copy: copy)
+    }
+
+    /// Shared by command transforms and native grip transforms so metadata and hosts follow together.
+    @discardableResult
+    public static func transformObjects(in doc: inout ArchiDocument, ids: [EntityID], _ t: Transform2D, copy: Bool) -> [EntityID] {
         var out: [EntityID] = []
         let idSet = Set(ids)
         var wallMap: [EntityID: EntityID] = [:]
+        var entityMap: [EntityID: EntityID] = [:]
         // Entities
         for id in ids {
             guard let i = doc.entityIndex(id) else { continue }
             let g = GeometryOps.transform(doc.entities[i].geometry, t)
             var props = doc.entities[i].props
+            if case .hatch = doc.entities[i].geometry, props[DraftRendering.hatchOriginProp] == nil {
+                props[DraftRendering.hatchOriginProp] = "0,0"
+            }
             DraftProps.transform(&props, t)
-            if copy { var e = doc.entities[i]; e.geometry = g; e.props = props; out.append(doc.add(e)) }
+            if copy { var e = doc.entities[i]; e.geometry = g; e.props = props; let newID = doc.add(e); entityMap[id] = newID; out.append(newID) }
             else { doc.entities[i].geometry = g; doc.entities[i].props = props; out.append(id) }
+        }
+        // Copies must follow the copied boundary. A hatch transformed independently becomes non-associative.
+        for id in ids {
+            let resultID = copy ? entityMap[id] : id
+            guard let resultID, let i = doc.entityIndex(resultID), AssociativeHatch.isAssociative(doc.entities[i]) else { continue }
+            let boundaries = AssociativeHatch.ids(doc.entities[i])
+            if !boundaries.allSatisfy(idSet.contains) {
+                AssociativeHatch.detach(&doc.entities[i])
+            } else if copy {
+                doc.entities[i].props[AssociativeHatch.boundaryProp] = boundaries.compactMap { entityMap[$0] }.map(String.init).joined(separator: ",")
+                doc.entities[i].props[AssociativeHatch.sigProp] = nil
+            }
         }
         // Elements (non-openings first so hosts exist)
         let els = ids.compactMap { doc.element($0) }

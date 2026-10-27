@@ -44,6 +44,7 @@ struct SheetCustomizationView: View {
                             }
                         })).toggleStyle(.checkbox)
                     }
+                    Text("View titles hides generated and stored viewport captions, including the plan name below the frame. Use Text from drawing below to hide a text title inside the plan on this sheet.").font(.caption).foregroundStyle(.secondary)
                     Picker("Move element", selection: $part) {
                         ForEach([SheetCustomization.Part.titleBlock, .north, .scaleBar, .revisions], id: \.self) { Text(label($0)).tag($0) }
                     }.onChange(of: part) { _ in loadOffset() }
@@ -63,7 +64,9 @@ struct SheetCustomizationView: View {
                     Text("Opens a drawing block in 2D: edit lines, texts and images with normal tools. BCLOSE Save finishes; return to Sheet. Shared blocks update every sheet using them.").font(.caption).foregroundStyle(.secondary)
                     Divider()
                     SheetRevisionControls(model: model, layoutIndex: layoutIndex)
+                    TitleBlockFieldControls(model: model, layoutIndex: layoutIndex)
                     Divider()
+                    SheetModelTextControls(model: model, layoutIndex: layoutIndex)
                     Text("Free text on this sheet").font(.headline)
                     Picker("Text", selection: $textID) {
                         Text("New text").tag(0)
@@ -115,7 +118,7 @@ struct SheetCustomizationView: View {
         .onChange(of: model.revision) { _ in loadOffset(); loadViewport() }
     }
     private func label(_ p: SheetCustomization.Part) -> String {
-        switch p { case .frame: return "Page border"; case .titleBlock: return "Title block / cartiglio"; case .north: return "North arrow / Nord"; case .scaleBar: return "Scale bar"; case .captions: return "Automatic view captions"; case .revisions: return "Revision history table" }
+        switch p { case .frame: return "Page border"; case .titleBlock: return "Title block / cartiglio"; case .north: return "North arrow / Nord"; case .scaleBar: return "Scale bar"; case .captions: return "View titles / titoli delle viste"; case .revisions: return "Revision history table" }
     }
     private func field(_ label: String, _ value: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 3) { Text(label).font(.caption).foregroundStyle(.secondary); TextField(label, text: value).textFieldStyle(.roundedBorder) }

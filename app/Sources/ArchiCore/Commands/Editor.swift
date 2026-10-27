@@ -701,7 +701,7 @@ public final class Editor {
     }
 
     /// Returns the current selection if any (noun-verb), otherwise asks the user to select objects.
-    public func getSelection(_ msg: String = "Select objects") async throws -> [EntityID] {
+    public func getSelection(_ msg: String = "Select objects", onChange: (@MainActor ([EntityID]) -> Void)? = nil) async throws -> [EntityID] {
         // PICKFIRST 0: commands ignore the pre-selection (verb-noun only).
         if !selection.isEmpty && doc.variable("PICKFIRST") == "0" { selection = [] }
         if !selection.isEmpty {
@@ -715,6 +715,7 @@ public final class Editor {
             let ok = expandGroups(ids.filter { isSelectable($0) })
             if removing { picked.subtract(ok) } else { picked.formUnion(ok) }
             selection = picked
+            onChange?(Array(picked))
             print("\(ok.count) found\(removing ? ", \(ok.count) removed" : ""), \(picked.count) total")
         }
         while true {

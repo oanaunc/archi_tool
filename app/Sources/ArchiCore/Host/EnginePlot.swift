@@ -360,7 +360,7 @@ public enum EnginePlot {
 
     /// Model-space entries a viewport shows, in its view's 2D coordinates (SheetComposer.viewportEntries).
     public static func viewportEntries(doc: ArchiDocument, vp: Viewport, layout: String? = nil, index: Int? = nil) -> [DrawEntry] {
-        let doc = SectionSheetStyle.document(doc, layout: layout, view: vp.view)
+        let doc = SheetModelText.document(SectionSheetStyle.document(doc, layout: layout, view: vp.view), layout: layout)
         switch vp.view {
         case .axonometric, .perspective:
             return EngineShadePlot.entries(doc: doc, vp: vp, layout: layout, index: index)
@@ -379,13 +379,7 @@ public enum EnginePlot {
 
     /// Paper-space entities of a sheet (annotation in mm) on visible layers.
     static func paperEntities(doc: ArchiDocument, layout: Layout) -> [DrawEntry] {
-        var o = DrawOptions(level: nil)
-        o.forPaper = true
-        var out: [DrawEntry] = []
-        for e in layout.entities where doc.isVisible(layer: e.layer) {
-            out.append(DrawEntry(id: e.id, items: DrawListBuilder.items(for: e, doc: doc, options: o)))
-        }
-        return out
+        SheetCustomization.paperEntities(doc: doc, layout: layout)
     }
 
     /// Custom title-block fields of a sheet (project fields overridden by the sheet's), sorted by label.
@@ -753,26 +747,8 @@ enum EngineCustomTitleBlock {
 
     /// Paper-space entries of the sheet's custom title block, or nil to draw the built-in one.
     static func entries(doc: ArchiDocument, layout: Layout, anchor: Vec2, values v0: [String: String]) -> [DrawEntry]? {
-        guard let name = blockName(doc, layout: layout.name), let blk = doc.blocks[name] else { return nil }
-        var values: [String: String] = [:]
-        for (k, v) in v0 where values[k.lowercased()] == nil { values[k.lowercased()] = v }
-        var tmp = ArchiDocument()
-        tmp.layers = doc.layers; tmp.blocks = doc.blocks; tmp.textStyles = doc.textStyles; tmp.linetypes = doc.linetypes; tmp.units = .millimeters
-        let t = Transform2D.translation(anchor - blk.basePoint)
-        for e in blk.entities {
-            var e2 = e
-            e2.geometry = GeometryOps.transform(e.geometry, t)
-            if case .text(var tg) = e2.geometry {
-                if let tag = e.props["attdef"], let v = values[tag.lowercased()] { tg.content = v } else { tg.content = substitute(tg.content, values) }
-                e2.geometry = .text(tg)
-                e2.props["attdef"] = nil
-                e2.props["invisible"] = nil
-            }
-            _ = tmp.add(e2)
-        }
-        var o = DrawOptions(level: nil)
-        o.forPaper = true
-        return DrawListBuilder.entries(doc: tmp, options: o).map { DrawEntry(id: nil, items: $0.items) }
+        guard let name = blockName(doc, layout: layout.name) else { return nil }
+        return TitleBlockFields.entries(doc: doc, block: name, anchor: anchor, values: v0)
     }
 }
 

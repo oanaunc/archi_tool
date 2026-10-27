@@ -1,0 +1,54 @@
+title: Retini, titoli e revisioni del cartiglio
+summary: Mac 1.0.6: match proprieta, scala dei retini, titoli della tavola e campi revisione
+---
+open new
+speed 45
+zoom window -1500,-2000 12500,6500
+caption "Mac 1.0.6 - build 14" "Scarica da www.oanarinaldi.com/archi-tool.html e sostituisci la copia in Applicazioni"
+wait 3
+run RECTANG 0,0 4000,4000
+run HATCH Pattern ANSI37 Scale 80 2000,2000 ;
+run RECTANG 6000,0 10000,4000
+run HATCH Pattern ANSI31 Scale 140 8000,2000 ;
+caption "Match proprieta dei retini" "Digita MA, clicca dentro il retino sorgente, poi dentro la destinazione. Invio per terminare"
+type MA
+pick 1800,1700
+pick 7800,1700
+wait 3
+enter
+caption "Modifica immediata" "Si copiano motivo, scala, angolo, origine e colori. Settings > All riattiva tutte le proprieta"
+wait 3
+caption "Scala contorno e retino insieme" "SCALE / SC, selezione del quadrato con il retino, punto base e fattore"
+type SCALE Crossing 5900,-100 10100,4100 ; 6000,0 0.5
+wait 4
+caption "Il retino resta visibile" "Anche l'origine del motivo segue la scala; le copie seguono il nuovo contorno"
+wait 3
+run TEXT 2400,5000 350 0 "PIANTA PIANO PRIMO" ;
+run LAYOUT New "Retini e titoli"
+run MVIEW 30,85 390,270 1:100 Plan "Ground Floor"
+run VPFIT 1
+run SHEETVIEWTITLES
+caption "Togliere il titolo sotto la viewport" "Customize Sheet > View titles / titoli delle viste: togli la spunta. Vale anche per titoli gia inseriti"
+wait 3
+type SHEETSTYLE Captions Hide
+wait 3
+caption "Togliere il titolo dentro la pianta" "Customize Sheet > Text from drawing: scegli PIANTA PIANO PRIMO e premi Hide Text on This Sheet"
+type SHEETTEXT ListModel
+wait 4
+caption "Il disegno 2D rimane intatto" "La scelta vale solo per questa tavola e i suoi PDF/SVG. Show Text on This Sheet ripristina il testo"
+wait 3
+caption "Revisione nel tuo cartiglio" "Aggiungi una revisione, poi collega il testo del cartiglio a un campo automatico"
+type SHEETREVISION "Prima emissione" "NM"
+type TITLEBLOCKDESIGN Create
+type SHEETREVTABLE Fields 180 5
+wait 3
+type SHEETREVISION "Aggiornamento retini" "NM"
+wait 3
+caption "Collega il testo esistente" "Customize Sheet > Link custom cartiglio text > Revision code > Link Selected Text. Anche per blocchi annidati"
+wait 4
+caption "Codice e conteggio sono distinti" "{revision} mostra A, B...; {revisionCount} mostra 0, 1, 2...; data, descrizione e autore sono disponibili"
+wait 4
+type SAVEAS $TMP/Retini-titoli-revisioni-1.0.6.archi
+type PLOT $TMP/Retini-titoli-revisioni-1.0.6.pdf
+caption "Salva ed esporta" "Cmd+S salva tutte le impostazioni nel progetto. Cmd+Z annulla ogni modifica"
+wait 3

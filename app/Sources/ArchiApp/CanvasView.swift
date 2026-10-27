@@ -1627,7 +1627,12 @@ final class PlanCanvasView: NSView {
             if d == 0 && e.texts.isEmpty { d = tol * 0.9 }
             if d <= tol, d < (best?.1 ?? .infinity), selectable(id) { best = (id, d) }
         }
-        return best?.0
+        if let id = best?.0 { return id }
+        let filter = PickFilter(model.doc)
+        return model.doc.entities.reversed().first { e in
+            guard case .hatch = e.geometry, filter.pickable(e) else { return false }
+            return GeometryOps.distance(from: w, to: e.geometry, doc: model.doc) == 0
+        }?.id
     }
 
     // MARK: Selection cycling (SEL-018)
@@ -1710,7 +1715,7 @@ final class PlanCanvasView: NSView {
         if let g = hotGrip, !g.dragging { commitGrip(); return }
         if model.zoomWindowPending { windowSel = WindowSel(start: v, current: v, purpose: .zoom); return }
         if let req = ed.request {
-            if req.kinds.contains(.point) { ed.feed(.point(cursorPoint)); return }
+            if req.kinds.contains(.point) { ed.feed(.point(req.kinds.contains(.entity) ? rawWorld : cursorPoint)); return }
             if !req.kinds.isDisjoint(with: [.selection, .entity]) {
                 // Selection prompts pick whole groups (PICKSTYLE); single-entity prompts pick the member itself.
                 if let id = pick(at: rawWorld) { ed.feed(.selection(req.kinds.contains(.selection) ? ed.expandGroups([id]) : [id])) }

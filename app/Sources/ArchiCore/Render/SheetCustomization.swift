@@ -37,6 +37,15 @@ public enum SheetCustomization {
             })
         }
     }
+    /// Stored view-title entities follow the same visibility/offset control as generated captions.
+    public static func paperEntities(doc: ArchiDocument, layout: Layout) -> [DrawEntry] {
+        var options = DrawOptions(level: nil); options.forPaper = true
+        return layout.entities.filter { doc.isVisible(layer: $0.layer) }.flatMap { entity -> [DrawEntry] in
+            let entries = [DrawEntry(id: entity.id, items: DrawListBuilder.items(for: entity, doc: doc, options: options))]
+            return entity.props["viewTitle"] == nil ? entries : apply(entries, part: .captions, layout: layout)
+        }
+    }
+
     /// Applies one decoration group just appended by either the native or portable renderer.
     public static func finish(_ entries: inout [DrawEntry], from start: Int, part: Part, layout: Layout) {
         let result = apply(Array(entries[start...]), part: part, layout: layout)
@@ -138,7 +147,19 @@ public enum SheetTextEditing {
     static var command: CommandDef {
         CommandDef("SHEETTEXT", aliases: ["SHTTEXT", "PAPERTEXT"], category: "Output", summary: "Adds, edits, moves or deletes free text on the current sheet, in paper mm, independently of viewports and automatic decorations.") { ed in
             guard let li = FileViewCommands.currentLayoutIndex(ed) else { throw CommandError.invalid("No sheet.") }
-            let action = try await ed.getKeyword("Sheet text", ["Add", "Edit", "Delete", "List"], defaultValue: "Add") ?? "Add"
+            let action = try await ed.getKeyword("Sheet text", ["Add", "Edit", "Delete", "List", "HideModel", "ShowModel", "ListModel"], defaultValue: "Add") ?? "Add"
+            if action == "ListModel" {
+                for entity in ed.doc.entities {
+                    if case .text(let text) = entity.geometry { ed.print("#\(entity.id): \(text.content) [\(SheetModelText.isHidden(entity.id, in: ed.doc.layouts[li]) ? "hidden" : "shown")]") }
+                }
+                return
+            }
+            if action == "HideModel" || action == "ShowModel" {
+                guard let word = try await ed.getWord("Model text ID (SHEETTEXT ListModel)"), let id = Int(word.trimmingCharacters(in: CharacterSet(charactersIn: "#"))) else { throw CommandError.invalid("Enter the model text ID.") }
+                try SheetModelText.set(&ed.doc, layoutIndex: li, id: id, hidden: action == "HideModel")
+                ed.print("Text \(action == "HideModel" ? "hidden on" : "restored to") this sheet.")
+                return
+            }
             let texts = texts(ed.doc.layouts[li])
             if action == "List" {
                 for (i, e) in texts.enumerated() { if case .text(let t) = e.geometry { ed.print("\(i + 1): \(t.content) at \(fmt(t.position.x)),\(fmt(t.position.y)) mm, height \(fmt(t.height)) mm") } }; return

@@ -69,6 +69,38 @@ extension AppSelfTests {
         check(!strings(noTitle).contains("Studio Maglione"), "custom sheet hides title block")
         check(strings(originalNative).contains("N"), "legacy sheet still shows default north arrow")
 
+        // Sparse hatches are picked by their region even between widely spaced pattern strokes.
+        let hatchModel = AppModel()
+        let hatchCanvas = PlanCanvasView(model: hatchModel)
+        let outer = [Vec2(0, 0), Vec2(1000, 0), Vec2(1000, 1000), Vec2(0, 1000)].map { PolyVertex($0) }
+        let hole = [Vec2(400, 400), Vec2(600, 400), Vec2(600, 600), Vec2(400, 600)].map { PolyVertex($0) }
+        let hatchID = hatchModel.editor.doc.add(.hatch(HatchGeom(loops: [outer, hole], pattern: "LINE", scale: 10000)))
+        check(hatchCanvas.pick(at: Vec2(250, 500)) == hatchID, "sparse hatch selectable between pattern strokes")
+        check(hatchCanvas.pick(at: Vec2(500, 500)) == nil, "hatch hole remains unselected")
+        let boundsBefore = GeometryOps.bounds(hatchModel.editor.doc.entity(hatchID)!.geometry, doc: hatchModel.doc)
+        _ = GripModeEdit.apply(hatchModel.editor, ids: [hatchID], .scale(0.5, 0.5, around: Vec2(0, 1000)), copy: false, label: "Scale hatch")
+        check(DraftProps.point(hatchModel.doc.entity(hatchID)?.props[DraftRendering.hatchOriginProp]) == Vec2(0, 500), "grip scale carries implicit hatch origin")
+        hatchModel.editor.undo()
+        check(GeometryOps.bounds(hatchModel.doc.entity(hatchID)!.geometry, doc: hatchModel.doc) == boundsBefore, "grip scale undo restores hatch")
+        var titlesDoc = doc
+        titlesDoc.layouts[0].viewports = [vp]
+        EngineSheets.refreshViewTitles(&titlesDoc, 0)
+        SheetCustomization.set(.captions, visible: false, offset: .zero, in: &titlesDoc.layouts[0])
+        check(SheetComposer.paperEntities(doc: titlesDoc, layout: titlesDoc.layouts[0]).isEmpty, "native sheet hides stored viewport titles")
+        check(SheetComposer.paperEntities(doc: titlesDoc, layout: titlesDoc.layouts[0]) == SheetCustomization.paperEntities(doc: titlesDoc, layout: titlesDoc.layouts[0]), "stored title visibility native/portable parity")
+        let modelTitle = titlesDoc.add(.text(TextGeom(position: .zero, height: 3, content: "PIANTA PIANO PRIMO")))
+        try? SheetModelText.set(&titlesDoc, layoutIndex: 0, id: modelTitle, hidden: true)
+        check(!SheetComposer.viewportEntries(doc: titlesDoc, vp: vp, layout: titlesDoc.layouts[0].name).contains { $0.id == modelTitle }, "native sheet hides chosen model title")
+        var fieldText = Entity(layer: "0", geometry: .text(TextGeom(position: Vec2(-50, 10), height: 3, content: "{revision} / {revisionCount}")))
+        fieldText.id = 9000
+        titlesDoc.blocks["Nested fields"] = Block(name: "Nested fields", entities: [fieldText])
+        let nestedInsert = Entity(layer: "0", geometry: .insert(InsertGeom(block: "Nested fields", position: .zero)))
+        titlesDoc.blocks["Field cartiglio"] = Block(name: "Field cartiglio", entities: [nestedInsert])
+        titlesDoc.setVariable("TITLEBLOCKBLOCK", "Field cartiglio")
+        EngineSheets.addRevision(&titlesDoc, 0, description: "Update", by: "NM")
+        check(strings(SheetComposer.decorations(doc: titlesDoc, layout: titlesDoc.layouts[0], layoutIndex: 0)).contains("A / 1"), "native nested cartiglio displays revision code and count")
+        check(strings(SheetComposer.decorations(doc: titlesDoc, layout: titlesDoc.layouts[0], layoutIndex: 0)) == strings(EnginePlot.decorations(doc: titlesDoc, layout: titlesDoc.layouts[0], layoutIndex: 0)), "nested revision fields native/portable parity")
+
         // A different level far from the current plan must not move a dropped viewport off its contents.
         var sheetDoc = ArchiDocument()
         sheetDoc.levels.append(Level(id: 99, name: "Remote storey", elevation: 10000))

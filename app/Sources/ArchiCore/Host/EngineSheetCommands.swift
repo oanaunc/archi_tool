@@ -288,9 +288,11 @@ enum EngineSheetCommands {
 
     static var titleBlockDesign: CommandDef {
         CommandDef("TITLEBLOCKDESIGN", aliases: ["TBDESIGN", "CUSTOMTITLEBLOCK", "TITLEBLOCKBLOCK"], category: "Output", summary: "Custom title blocks: Create a starter block (edit it with BEDIT: lines, logo images, {field} texts or attributes), Use a block on all or the current sheet, or go back to the Builtin one.") { ed in
-            let k = try await ed.getKeyword("Title block [Create/Use/Builtin/Fields]", ["Create", "Use", "Builtin", "Fields"], defaultValue: "Create") ?? "Create"
+            let k = try await ed.getKeyword("Title block [Create/Use/Builtin/Fields/Bind]", ["Create", "Use", "Builtin", "Fields", "Bind"], defaultValue: "Create") ?? "Create"
             let variable = EngineCustomTitleBlock.variable
             switch k {
+            case "Bind":
+                try await TitleBlockFields.bindCommand(ed)
             case "Fields":
                 ed.print("Fields: " + EngineSheetCommands.titleFieldNames.map { "{" + $0 + "}" }.joined(separator: " ") + " and custom fields (SHEETFIELD). Attribute tags with these names work too.")
             case "Builtin":

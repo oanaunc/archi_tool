@@ -20,14 +20,16 @@ public enum SheetRevisionPresentation {
     /// Automatic fields for a user's own block. Indexed rows use oldest-first revision order.
     public static func fields(_ layout: Layout) -> [String: String] {
         let revisions = EngineSheets.revisions(layout)
-        var values = ["revision": layout.titleBlock["revision"] ?? revisions.last?.code ?? "—",
+        let manual = layout.titleBlock["revision"]?.trimmingCharacters(in: .whitespacesAndNewlines)
+        var values = ["revision": manual.flatMap { $0.isEmpty ? nil : $0 } ?? revisions.last?.code ?? "—",
+                      "revisionCount": String(revisions.count),
                       "revisionDate": revisions.last?.date ?? "", "revisionDescription": revisions.last?.description ?? "", "revisionBy": revisions.last?.by ?? ""]
         for (i, r) in revisions.enumerated() {
             for (suffix, value) in [("code", r.code), ("date", r.date), ("description", r.description), ("by", r.by)] { values["revision.\(i + 1).\(suffix)"] = value }
         }
         return values
     }
-    public static let fieldNames = ["revision", "revisionDate", "revisionDescription", "revisionBy", "revision.1.code", "revision.1.date", "revision.1.description", "revision.1.by"]
+    public static let fieldNames = ["revision", "revisionCount", "revisionDate", "revisionDescription", "revisionBy", "revision.1.code", "revision.1.date", "revision.1.description", "revision.1.by"]
     public static func makeRoomInBuiltin(_ entries: inout [DrawEntry], from start: Int, layout: Layout) {
         guard placement(layout) == .inside, SheetCustomization.visible(.revisions, in: layout), !EngineSheets.revisions(layout).isEmpty else { return }
         var offsetLayout = Layout(name: "Revision band")

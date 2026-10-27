@@ -312,10 +312,12 @@ public enum HatchPatterns {
         for l in local { for p in l { ymin = min(ymin, p.y); ymax = max(ymax, p.y) } }
         var k0 = Int((ymin / dy).rounded(.up)), k1 = Int((ymax / dy).rounded(.down))
         if k0 > k1 { swap(&k0, &k1) }
-        guard k1 - k0 < 20000 else { return }
+        // Very dense patterns use fewer representative lines instead of vanishing at the safety limit.
+        let lineStep = max(1, Int(ceil(Double(k1 - k0 + 1) / 20000)))
         let dotLen = max(scale * 0.05, 1e-6)
         func world(_ x: Double, _ y: Double) -> Vec2 { o + u * x + v * y }
-        for k in k0...k1 {
+        for k in stride(from: k0, through: k1, by: lineStep) {
+            if out.count >= maxSegments { return }
             let y = Double(k) * dy
             var xs: [Double] = []
             for l in local {

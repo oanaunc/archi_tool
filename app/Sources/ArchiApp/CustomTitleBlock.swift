@@ -33,24 +33,8 @@ enum CustomTitleBlock {
 
     /// Paper-space entries of the custom title block of a sheet, or nil to draw the built-in one.
     @MainActor static func entries(doc: ArchiDocument, layout: ArchiCore.Layout, anchor: Vec2, values v0: [String: String]) -> [DrawEntry]? {
-        guard let name = blockName(doc, layout: layout.name), let blk = doc.blocks[name] else { return nil }
-        let values = Dictionary(v0.map { ($0.key.lowercased(), $0.value) }, uniquingKeysWith: { a, _ in a })
-        var tmp = ArchiDocument()
-        tmp.layers = doc.layers; tmp.blocks = doc.blocks; tmp.textStyles = doc.textStyles; tmp.linetypes = doc.linetypes; tmp.units = .millimeters
-        let t = Transform2D.translation(anchor - blk.basePoint)
-        for e in blk.entities {
-            var e2 = e
-            e2.geometry = GeometryOps.transform(e.geometry, t)
-            if case .text(var tg) = e2.geometry {
-                if let tag = e.props["attdef"], let v = values[tag.lowercased()] { tg.content = v } else { tg.content = substitute(tg.content, values) }
-                e2.geometry = .text(tg)
-                e2.props["attdef"] = nil; e2.props["invisible"] = nil
-            }
-            _ = tmp.add(e2)
-        }
-        var o = DrawOptions(level: nil)
-        o.forPaper = true
-        return DrawListBuilder.entries(doc: tmp, options: o).map { DrawEntry(id: nil, items: $0.items) }
+        guard let name = blockName(doc, layout: layout.name) else { return nil }
+        return TitleBlockFields.entries(doc: doc, block: name, anchor: anchor, values: v0)
     }
 
     /// A starter block like the built-in title block, with placeholders, drawn left of and above its base point.

@@ -83,16 +83,7 @@ enum GripModeEdit {
         guard !targets.isEmpty else { return [] }
         var out: [EntityID] = []
         ed.transaction(label) { d in
-            for id in targets {
-                if let i = d.entityIndex(id) {
-                    let g = GeometryOps.transform(d.entities[i].geometry, t)
-                    if copy { var n = d.entities[i]; n.geometry = g; out.append(d.add(n)) } else { d.entities[i].geometry = g; out.append(id) }
-                } else if let i = d.elementIndex(id) {
-                    let g = CommandHelpers.transform(d.elements[i].geometry, t)
-                    if copy { var n = d.elements[i]; n.id = d.allocateID(); n.geometry = g; d.elements.append(n); out.append(n.id) }
-                    else { d.elements[i].geometry = g; out.append(id) }
-                }
-            }
+            out = Editor.transformObjects(in: &d, ids: targets, t, copy: copy)
         }
         return out
     }

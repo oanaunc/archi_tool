@@ -2753,7 +2753,7 @@
   "phase": 2,
   "priority": "must",
   "status": "done",
-  "acceptance": "Match properties works on mixed selections and is a single undo step."
+  "acceptance": "MATCHPROP / MA applies appearance immediately to each selected target; Remove restores the original. Hatch pattern, origin, type and gradient properties transfer without copying boundary references. Native picking works between pattern strokes. Undo and .archi round-trip pass regression tests."
  },
  {
   "id": "MOD-016",
@@ -2831,7 +2831,7 @@
   "phase": 1,
   "priority": "must",
   "status": "done",
-  "acceptance": "Scale transforms geometry exactly and keeps associativity."
+  "acceptance": "SCALE / SC and native grip scaling retain hatch pattern origin and visible strokes. Copied associative hatches follow copied boundaries; independently transformed hatches detach safely. Undo and .archi round-trip pass regression tests."
  },
  {
   "id": "MOD-022",
@@ -5795,7 +5795,7 @@
   "phase": 2,
   "priority": "must",
   "status": "done",
-  "acceptance": "Associative hatch fills the right area, updates with its boundary and prints correctly."
+  "acceptance": "Associative hatch fills the right area, follows changed boundaries, preserves copy associations and plots dense patterns without disappearing at the line-generation limit."
  },
  {
   "id": "ANN-068",
@@ -6692,7 +6692,7 @@
   "phase": 3,
   "priority": "should",
   "status": "done",
-  "acceptance": "Title block editor displays correctly in layout view and plots at the stated scale."
+  "acceptance": "TITLEBLOCKDESIGN / TBDESIGN Bind links existing cartiglio text to automatic fields, including nested blocks. Customize Sheet provides text selection and revision code/count/date/description/author fields; native and portable output match, with undo and file round-trip."
  },
  {
   "id": "SHT-015",
@@ -7082,7 +7082,7 @@
   "phase": 8,
   "priority": "must",
   "status": "done",
-  "acceptance": "SHEETSTYLE / SHTSTYLE and scripting/agent command API support per-sheet visibility, offsets, reset, undo and file round-trip; decoration tests and native/portable checks pass."
+  "acceptance": "SHEETSTYLE / SHTSTYLE controls generated and stored view-title visibility and offsets. SHEETTEXT / PAPERTEXT HideModel/ShowModel suppresses a selected drawing text on this sheet and its exports only. Native controls, scripting/agent API, undo and .archi persistence pass regression tests."
  },
  {
   "id": "SHT-045",
