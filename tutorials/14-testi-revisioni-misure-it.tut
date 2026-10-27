@@ -21,7 +21,7 @@ type ZOOM Extents
 typeline TEXTFORMAT
 pick 1300,-2100
 wait 5
-click button "Apply"
+type SAVEAS $TMP/Testo-applicato.archi
 wait 2
 caption "Revisioni nel cartiglio" "Aggiungi la revisione da Sheets > Revisions, oppure con SHEETREVISION. Il campo Revision del cartiglio si aggiorna"
 type LAYOUT New "Revisioni personalizzate"
