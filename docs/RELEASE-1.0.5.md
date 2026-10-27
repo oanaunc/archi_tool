@@ -8,4 +8,18 @@
 - OPENINGSIZES (DOORWINDOWSIZES, QUOTAINFISSI) places live width × height labels on current-level BIM doors/windows, with configurable units and text height. Repeated commands update rather than duplicate labels. Automatic mode labels future openings; existing mark tags are retained and size labels use a different default position.
 - Every document change supports Undo and uses existing extensible metadata, entities or variables. No schema change, format-version bump or migration is needed. Windows remains at its separately tested 1.0.4 installer.
 
-Validation and signing evidence will be recorded after release checks finish.
+Validation:
+
+- Seven focused headless regression tests passed (OpeningSizeTests, SheetRevisionPresentationTests and SheetCustomizationTests): live labels, automatic mode, unit conversion, idempotence, existing marks, commands/aliases and agent API, Undo, custom fields, revision placement and file round-trip.
+- The signed universal app and the app mounted read-only from the final DMG each passed all **979 in-app checks**, with **1053 commands and zero missing UI entries**. These include actual toolbar bounds, changed font/height, Save with a pending edit, one-step Undo, and exact native/portable revision table geometry in each placement mode.
+- Native UI verification: changed text, selected Times New Roman, entered height `325,5`, clicked Apply; the editor closed and the properties showed the new text and height 325.5.
+- GUI and CLI contain arm64 and x86_64 slices. The GUI slices declare minimum macOS 14.0. Runtime validation ran on Apple silicon; physical Intel execution was not tested.
+- App notarization accepted: `52641f6b-44dd-4f38-bdd4-c9113ac8c109`. DMG notarization accepted: `47e43a03-d659-41ce-b767-36976c2fe6e6`. Both tickets stapled; Gatekeeper accepted the app and DMG as Notarized Developer ID.
+
+DMG: `Oanarina-Archi-Tool-1.0.5.dmg` (91,821,415 bytes).
+
+SHA-256: `57e579f8304313557cad094647b8ecce86eefb2961c800fbe5c76e866c0d2db7`.
+
+Italian guide: [TEXT-REVISIONS-OPENINGS-IT.md](TEXT-REVISIONS-OPENINGS-IT.md). Tutorial source: `tutorials/14-testi-revisioni-misure-it.tut`. Dry run and recorded run each completed with zero problems. The recording is 108.6 seconds, 1440 × 900, captioned in Italian, published as a 3.4 MB web video on the website.
+
+The customer's own project was not provided. Verification and recording use the Cedar House sample and isolated regression documents. Website: https://www.oanarinaldi.com/archi-tool.html.

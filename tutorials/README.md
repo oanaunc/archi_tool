@@ -98,3 +98,8 @@ performs the button's action directly — the same command or view change — an
 Leading `open`, `run`, `runfile` and `speed` steps run under the title card. Timing: 30 frames per second, typing at
 about 14 characters per second with small random variation, short pauses after each Enter; long commands (renders,
 exports) do not stretch the video. Keep each tutorial between 45 and 120 seconds — `check` reports the length.
+
+## Additional Italian guides
+
+- `13-personalizzare-sheet-it.tut`: sheet positioning, North visibility, free paper text and custom cartiglio drawing (Mac 1.0.4).
+- `14-testi-revisioni-misure-it.tut`: text Apply/Save, revision placement and custom cartiglio fields, and live door/window width × height labels with `QUOTAINFISSI` (Mac 1.0.5).
