@@ -10,7 +10,8 @@
 
 Validation:
 
-- Seven focused headless regression tests passed (OpeningSizeTests, SheetRevisionPresentationTests and SheetCustomizationTests): live labels, automatic mode, unit conversion, idempotence, existing marks, commands/aliases and agent API, Undo, custom fields, revision placement and file round-trip.
+- All 42 focused headless regression tests passed across OpeningSizeTests, SheetRevisionPresentationTests, SheetCustomizationTests, BIMCommandTests, EngineSheetsRecoveryTests, SectionSheetStyleTests, RenderSheetViewsTests, ViewportFramingTests and CommandRegistryTests. They cover live labels, automatic mode, unit conversion, idempotence, existing marks, command aliases and agent API, Undo, custom fields, revision placement, existing BIM commands, sheet rendering and file round-trip.
+- An additional full serial core run recorded 803 passes and no failed test assertions before being interrupted during the existing long-running `IOInteropCorpusTests.testWriteDXFCorpusAndReadBack`. A complete full-suite pass is not claimed; the release regression set above completed independently.
 - The signed universal app and the app mounted read-only from the final DMG each passed all **979 in-app checks**, with **1053 commands and zero missing UI entries**. These include actual toolbar bounds, changed font/height, Save with a pending edit, one-step Undo, and exact native/portable revision table geometry in each placement mode.
 - Native UI verification: changed text, selected Times New Roman, entered height `325,5`, clicked Apply; the editor closed and the properties showed the new text and height 325.5.
 - GUI and CLI contain arm64 and x86_64 slices. The GUI slices declare minimum macOS 14.0. Runtime validation ran on Apple silicon; physical Intel execution was not tested.
@@ -23,3 +24,7 @@ SHA-256: `57e579f8304313557cad094647b8ecce86eefb2961c800fbe5c76e866c0d2db7`.
 Italian guide: [TEXT-REVISIONS-OPENINGS-IT.md](TEXT-REVISIONS-OPENINGS-IT.md). Tutorial source: `tutorials/14-testi-revisioni-misure-it.tut`. Dry run and recorded run each completed with zero problems. The recording is 108.6 seconds, 1440 × 900, captioned in Italian, published as a 3.4 MB web video on the website.
 
 The customer's own project was not provided. Verification and recording use the Cedar House sample and isolated regression documents. Website: https://www.oanarinaldi.com/archi-tool.html.
+
+## Publication verification
+
+Website commit `137bf0010f9061a7f4f1c1f9d18a452c7922b5ba` deployed successfully in [hosting run 40484554463](https://github.com/oanaunc/oanarina_website/actions/runs/40484554463). The live page shows Mac 1.0.5 build 12, the new revision controls, opening size labels and the Italian video. A complete HTTPS read of the live DMG matched the 91,821,415-byte notarized artifact and SHA-256 above. The Italian instructions, video, poster and updated user guide each returned HTTP 200. The original support conversation received an Italian reply with the update link and steps for all three requests after publication verification.
