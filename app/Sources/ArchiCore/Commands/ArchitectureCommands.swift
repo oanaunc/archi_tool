@@ -1838,13 +1838,14 @@ extension ArchitectureCommands {
     static var tagAllCommand: CommandDef {
         CommandDef("TAGALL", aliases: ["TAGALLNOTTAGGED"], category: "Annotate", summary: "Tags every untagged door, window and/or room on the current level.") { ed in
             let k = try await ed.getKeyword("Categories", ["Doors", "Windows", "Rooms", "All"], defaultValue: "All") ?? "All"
-            let tagged = Set(ed.doc.entities.compactMap { $0.props["tagOf"].flatMap(Int.init) })
+            let taggedMarks = Set(ed.doc.entities.filter { ($0.props["tagField"] ?? "mark").lowercased() == "mark" }.compactMap { $0.props["tagOf"].flatMap(Int.init) })
+            let taggedRooms = Set(ed.doc.entities.filter { ($0.props["tagField"] ?? "mark").lowercased() == "room" }.compactMap { $0.props["tagOf"].flatMap(Int.init) })
             var n = 0
-            for el in ed.doc.elements where el.level == ed.doc.currentLevel && !tagged.contains(el.id) {
+            for el in ed.doc.elements where el.level == ed.doc.currentLevel {
                 switch el.geometry {
-                case .opening(let o) where o.kind == .door && (k == "Doors" || k == "All"): addTag(ed, el.id, field: "mark"); n += 1
-                case .opening(let o) where o.kind == .window && (k == "Windows" || k == "All"): addTag(ed, el.id, field: "mark"); n += 1
-                case .space where el.props["areaScheme"] == nil && (k == "Rooms" || k == "All"): addTag(ed, el.id, field: "room"); n += 1
+                case .opening(let o) where !taggedMarks.contains(el.id) && o.kind == .door && (k == "Doors" || k == "All"): addTag(ed, el.id, field: "mark"); n += 1
+                case .opening(let o) where !taggedMarks.contains(el.id) && o.kind == .window && (k == "Windows" || k == "All"): addTag(ed, el.id, field: "mark"); n += 1
+                case .space where !taggedRooms.contains(el.id) && el.props["areaScheme"] == nil && (k == "Rooms" || k == "All"): addTag(ed, el.id, field: "room"); n += 1
                 default: continue
                 }
             }

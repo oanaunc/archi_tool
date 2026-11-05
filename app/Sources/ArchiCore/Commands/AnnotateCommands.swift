@@ -146,9 +146,10 @@ enum AnnotateCommands {
             while case .pick(let pk) = try await ed.pickObject("Select an annotation object", filter: { ed.doc.entity($0) != nil }) {
                 guard let i = ed.doc.entityIndex(pk.id) else { continue }
                 switch ed.doc.entities[i].geometry {
-                case .text(var t):
-                    guard let s = try await ed.getString("Enter new text", defaultValue: t.content) else { continue }
-                    t.content = unescape(s); ed.doc.entities[i].geometry = .text(t)
+                case .text:
+                    let current = Annotations.text(ed.doc.entities[i], doc: ed.doc)
+                    guard let s = try await ed.getString("Enter new text", defaultValue: current) else { continue }
+                    if unescape(s) != current { PropertyAccess.set("content", unescape(s), of: pk.id, in: &ed.doc) }
                     ed.doc.entities[i].props["field"] = nil; ed.markFieldIfNeeded(i)
                 case .leader(var l):
                     guard let s = try await ed.getString("Enter new text", defaultValue: l.text) else { continue }

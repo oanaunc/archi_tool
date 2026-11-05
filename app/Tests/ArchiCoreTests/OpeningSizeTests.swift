@@ -45,4 +45,80 @@ import XCTest
         await ed.run("WINDOW 6000,0 ")
         XCTAssertFalse(ed.doc.entities.contains { $0.props["tagOf"] != nil })
     }
+    func testEditedLabelRendersPersistsUndoesAndRestoresAutomaticValue() async throws {
+        let ed = Editor()
+        await ed.run("WALL 0,0 8000,0")
+        await ed.run("DOOR 2000,0 ")
+        await ed.run("QUOTAINFISSI Doors Drawing 100")
+        let tag = try XCTUnwrap(ed.doc.entities.first { $0.props["tagField"] == "size" })
+        let openingID = try XCTUnwrap(tag.props["tagOf"].flatMap(Int.init))
+        XCTAssertTrue(PropertyAccess.set("width", "1000", of: openingID, in: &ed.doc))
+        XCTAssertEqual(PropertyAccess.properties(of: tag.id, in: ed.doc).first { $0.name == "content" }?.value, "1000×2100")
+        func rendered(_ doc: ArchiDocument) -> [String] {
+            DrawListBuilder.items(for: doc.entity(tag.id)!, doc: doc, options: DrawOptions()).compactMap {
+                if case .text(let t, _, _) = $0 { return t.content }; return nil
+            }
+        }
+        await ed.run("SETPROP #\(tag.id) Content 900x2100")
+        XCTAssertEqual(rendered(ed.doc), ["900x2100"])
+        XCTAssertEqual(PropertyAccess.properties(of: tag.id, in: ed.doc).first { $0.name == "labelMode" }?.value, "Manual")
+        // Annotation edits retain the bubble/leader and do not resize the actual door.
+        XCTAssertEqual(PropertyAccess.getProperty(ed.doc.element(openingID)!, "width"), "1000")
+        XCTAssertEqual(ed.doc.entity(tag.id)?.props["tagOf"], String(openingID))
+        let restored = try ArchiFile.decode(ArchiFile.encode(ed.doc))
+        XCTAssertEqual(rendered(restored), ["900x2100"])
+        ed.undo()
+        XCTAssertEqual(rendered(ed.doc), ["1000×2100"])
+        ed.redo()
+        XCTAssertEqual(rendered(ed.doc), ["900x2100"])
+        ed.selection = []
+        await ed.run("TAGFORMAT #\(tag.id)  Automatic")
+        XCTAssertEqual(rendered(ed.doc), ["1000×2100"])
+        ed.undo()
+        XCTAssertEqual(rendered(ed.doc), ["900x2100"])
+        XCTAssertTrue(PropertyAccess.set("labelMode", "Automatic", of: tag.id, in: &ed.doc))
+        XCTAssertTrue(PropertyAccess.set("width", "850", of: openingID, in: &ed.doc))
+        XCTAssertEqual(rendered(ed.doc), ["850×2100"])
+        ed.selection = []
+        await ed.run("DDEDIT #\(tag.id) 800x2100 ")
+        XCTAssertEqual(rendered(ed.doc), ["800x2100"])
+        ed.selection = []
+        await ed.run("QUOTAINFISSI Doors Drawing 100")
+        XCTAssertEqual(rendered(ed.doc), ["850×2100"])
+    }
+
+    func testMarkLabelsCanBeAddedAfterSizeLabelsAndConvertedWithoutDuplicates() async throws {
+        let ed = Editor()
+        await ed.run("WALL 0,0 8000,0")
+        await ed.run("DOOR 2000,0 ")
+        await ed.run("OPENINGSIZES Doors Drawing 100")
+        let sizeTag = try XCTUnwrap(ed.doc.entities.first { $0.props["tagField"] == "size" })
+        await ed.run("TAGALL Doors")
+        XCTAssertEqual(ed.doc.entities.filter { $0.props["tagField"] == "mark" }.count, 1)
+        await ed.run("TAGALLNOTTAGGED Doors")
+        XCTAssertEqual(ed.doc.entities.filter { $0.props["tagField"] == "mark" }.count, 1)
+        ed.undo()
+        ed.selection = []
+        await ed.run("EDITLABEL #\(sizeTag.id)  Field mark")
+        let openingID = try XCTUnwrap(sizeTag.props["tagOf"].flatMap(Int.init))
+        XCTAssertTrue(PropertyAccess.set("mark", "D1", of: openingID, in: &ed.doc))
+        XCTAssertEqual(Annotations.text(ed.doc.entity(sizeTag.id)!, doc: ed.doc), "D1")
+        let restored = try ArchiFile.decode(ArchiFile.encode(ed.doc))
+        XCTAssertEqual(Annotations.text(restored.entity(sizeTag.id)!, doc: restored), "D1")
+    }
+
+    func testWindowsPropertyPanelUsesTheSameManualAndAutomaticLabels() async throws {
+        let ed = Editor()
+        await ed.run("WALL 0,0 8000,0")
+        await ed.run("DOOR 2000,0 ")
+        await ed.run("OPENINGSIZES Doors Drawing 100")
+        let tag = try XCTUnwrap(ed.doc.entities.first { $0.props["tagField"] == "size" })
+        ed.selection = [tag.id]
+        let session = EngineSession(editor: ed)
+        _ = try await session.call("panel.set", .object([EngineJSONField("panel", .string("properties")), EngineJSONField("key", .string("content")), EngineJSONField("value", .string("900x2100"))]))
+        XCTAssertEqual(Annotations.text(ed.doc.entity(tag.id)!, doc: ed.doc), "900x2100")
+        ed.undo()
+        XCTAssertNil(ed.doc.entity(tag.id)?.props["tagTextOverride"])
+    }
+
 }

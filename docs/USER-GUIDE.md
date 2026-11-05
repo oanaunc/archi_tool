@@ -2294,3 +2294,12 @@ I comandi si digitano nella riga in basso. Alcuni nuovi controlli del pannello M
 - **Solo i campi nel cartiglio:** `SHEETREVTABLE Fields 180 5` nasconde la tabella separata lasciando aggiornati i campi.
 
 Salva con Ctrl+S e annulla con Ctrl+Z. Tutte le impostazioni si conservano nel file .archi. Il video Mac spiega gli stessi concetti; i pulsanti e le scorciatoie di sistema possono differire.
+
+
+## Door and window label editing (1.0.8)
+
+Select a door/window label and change **Content** in **Properties**, double-click it and press **Apply**, or use `TEXTEDIT` (`ED`, `DDEDIT`). The entered text now appears in the drawing and PDF/SVG output and survives save/reopen and Undo. Editing the label changes its annotation only. To change the actual opening, select the door/window itself and edit **Width** and **Height**; automatic size labels follow those model values.
+
+Live tags expose **Label Mode** in Properties: **Manual** indicates a text override. Set it to **Automatic** to restore the linked value, or run `TAGLABEL`, select the labels, finish selection with Enter, and choose `Automatic`. `OPENINGSIZES` explicitly refreshes matching size labels to automatic dimensions. Changing only font/height keeps a live label automatic.
+
+To show only door references, run `TAGLABEL` (`EDITLABEL`, `TAGFORMAT`), select the existing door labels, press Enter, choose `Field`, then type `mark`. The existing bubbles now show the door's Mark instead of width × height. Select each actual door and set **Mark** to `D1`, `D2`, `D3`, etc., or use `MARKS Set`. `MARKS Renumber No` assigns reading-order references `D01`, `D02`, etc. To add missing references use **Annotate → Tag All** (`TAGALL Doors`); existing size labels no longer prevent reference tags from being added. Commands and property edits are also available through the scripting/agent API on both platforms.

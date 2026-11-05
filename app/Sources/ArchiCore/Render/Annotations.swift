@@ -88,6 +88,16 @@ public enum Annotations {
         return b.isEmpty ? .zero : b.center
     }
 
+    /// The same label value is used by the canvas, property panels and text editors.
+    public static func text(_ e: Entity, doc: ArchiDocument) -> String {
+        if let value = e.props["tagTextOverride"] { return value }
+        if let id = e.props["tagOf"].flatMap(Int.init), let el = doc.element(id) {
+            return tagText(el, field: e.props["tagField"] ?? "mark", doc: doc)
+        }
+        if case .text(let t) = e.geometry { return t.content }
+        return ""
+    }
+
     /// Draw items of a tag entity (text geometry with props tagOf/tagField): a symbol around the live text
     /// and a leader to the element when the tag was moved away from it.
     static func tagItems(_ e: Entity, _ t0: TextGeom, doc: ArchiDocument, color: RGBA) -> [DrawItem] {
@@ -96,7 +106,7 @@ public enum Annotations {
             return [.text(TextGeom(position: t0.position, height: t0.height, content: "?", halign: .center, valign: .middle), font: "Helvetica", color: color)]
         }
         var t = t0
-        t.content = tagText(el, field: field, doc: doc)
+        t.content = text(e, doc: doc)
         t.halign = .center; t.valign = .middle
         let h = max(t.height, 1e-9)
         let lines = t.content.components(separatedBy: "\n")

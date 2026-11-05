@@ -2310,7 +2310,7 @@ final class PlanCanvasView: NSView {
         model.editor.transaction("Edit Text") { d in
             guard let k = d.entityIndex(id) else { return }
             switch d.entities[k].geometry {
-            case .text(var t): t.content = value; d.entities[k].geometry = .text(t)
+            case .text: PropertyAccess.set("content", value, of: id, in: &d)
             case .leader(var l): l.text = value; d.entities[k].geometry = .leader(l)
             case .dimension(var dm): dm.textOverride = value.isEmpty ? nil : value; d.entities[k].geometry = .dimension(dm)
             default: break

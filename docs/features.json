@@ -5958,7 +5958,7 @@
   "area": "Annotation",
   "group": "Annotative Scaling & Fields",
   "name": "Text-linked parameters in tags",
-  "command": "—",
+  "command": "TAGLABEL / EDITLABEL / TAGFORMAT",
   "description": "Tag labels read element parameters.",
   "reference": "Revit",
   "phase": 3,

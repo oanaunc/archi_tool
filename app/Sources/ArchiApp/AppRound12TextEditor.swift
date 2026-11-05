@@ -14,9 +14,9 @@ struct TextEditState: Equatable {
     var format: AppRenderInfo.TextFormat
     var color: ColorRef
 
-    init?(entity e: Entity) {
+    init?(entity e: Entity, doc: ArchiDocument? = nil) {
         guard case .text(let t) = e.geometry else { return nil }
-        content = t.content.replacingOccurrences(of: "\\P", with: "\n")
+        content = (doc.map { Annotations.text(e, doc: $0) } ?? t.content).replacingOccurrences(of: "\\P", with: "\n")
         height = t.height
         format = AppRenderInfo.TextFormat(props: e.props) ?? AppRenderInfo.TextFormat()
         color = e.color
@@ -33,11 +33,13 @@ struct TextEditState: Equatable {
     @discardableResult
     func apply(id: EntityID, to d: inout ArchiDocument) -> Bool {
         guard errors.isEmpty, let k = d.entityIndex(id), case .text(var t) = d.entities[k].geometry else { return false }
+        let changesText = content != Annotations.text(d.entities[k], doc: d).replacingOccurrences(of: "\\P", with: "\n")
         t.content = content
         t.height = height
         d.entities[k].geometry = .text(t)
         d.entities[k].color = color
         var props = d.entities[k].props
+        if changesText, props["tagOf"] != nil { props["tagTextOverride"] = content }
         format.write(to: &props)
         if !format.isPlain {
             // DXF exchange: the MTEXT string with the same whole-text formatting (read back by DXFReader).
@@ -75,7 +77,7 @@ final class InPlaceTextEditor: NSView, NSTextViewDelegate {
     /// Opens the editor on a text entity of the canvas. Returns false for non-text objects.
     @discardableResult
     static func begin(canvas: PlanCanvasView, model: AppModel, id: EntityID) -> Bool {
-        guard let e = model.doc.entity(id), case .text(let t) = e.geometry, let st = TextEditState(entity: e) else { return false }
+        guard let e = model.doc.entity(id), case .text(let t) = e.geometry, let st = TextEditState(entity: e, doc: model.doc) else { return false }
         current?.commit()
         let styleFont = TextStyleFonts.style(t.style, doc: model.doc)?.font ?? "Helvetica"
         let ed = InPlaceTextEditor(model: model, id: id, state: st, singleLine: t.width <= 0 && !t.content.contains("\n") && !t.content.contains("\\P"),

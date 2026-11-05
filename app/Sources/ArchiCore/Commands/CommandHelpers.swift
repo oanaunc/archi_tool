@@ -1106,6 +1106,13 @@ public enum PropertyAccess {
         func L<G>(_ g: [P<G>], _ ex: @escaping (Geometry) -> G?, _ em: @escaping (G) -> Geometry) -> [P<Entity>] {
             lift(g, extract: { ex($0.geometry) }, embed: { $0.geometry = em($1) })
         }
+        if en.props["tagOf"] != nil {
+            ps.append(P(name: "labelMode", get: { $0.props["tagTextOverride"] == nil ? "Automatic" : "Manual" }, set: { e, value in
+                guard value.lowercased() == "automatic" else { return false }
+                e.props["tagTextOverride"] = nil
+                return true
+            }))
+        }
         switch en.geometry {
         case .point:
             ps += [P(name: "x", get: { if case .point(let p) = $0.geometry { return fmt(p.x) }; return "" }, set: { t, v in guard case .point(var p) = t.geometry, let x = num(v) else { return false }; p.x = x; t.geometry = .point(p); return true }),
@@ -1183,7 +1190,11 @@ public enum PropertyAccess {
     public static func setProperty(_ e: inout Entity, _ name: String, _ value: String) -> Bool {
         if let p = entityProps(e).first(where: { $0.name.lowercased() == name.lowercased() }) {
             guard let set = p.set else { return false }
-            return set(&e, value)
+            guard set(&e, value) else { return false }
+            if name.lowercased() == "content", e.props["tagOf"] != nil {
+                e.props["tagTextOverride"] = value
+            }
+            return true
         }
         if name.lowercased().hasPrefix("prop.") { e.props[String(name.dropFirst(5))] = value; return true }
         return false
@@ -1191,7 +1202,7 @@ public enum PropertyAccess {
 
     /// Properties of any object in the document by ID (name, value, read-only).
     public static func properties(of id: EntityID, in doc: ArchiDocument) -> [(name: String, value: String, readOnly: Bool)] {
-        if let e = doc.entity(id) { return entityProps(e).map { ($0.name, $0.get(e), $0.set == nil) } }
+        if let e = doc.entity(id) { return entityProps(e).map { ($0.name, $0.name == "content" && e.props["tagOf"] != nil ? Annotations.text(e, doc: doc) : $0.get(e), $0.set == nil) } }
         if let el = doc.element(id) { return elementProps(el).map { ($0.name, $0.get(el), $0.set == nil) } }
         return []
     }

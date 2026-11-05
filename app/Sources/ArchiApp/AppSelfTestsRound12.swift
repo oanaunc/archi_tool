@@ -174,7 +174,7 @@ extension AppSelfTests {
     private static func inPlaceTextEditorChecks(_ check: (Bool, String) -> Void) {
         var d = ArchiDocument()
         let id = d.add(.text(TextGeom(position: Vec2(1000, 1000), height: 250, content: "Hello")))
-        guard var st = d.entity(id).flatMap(TextEditState.init) else { check(false, "text edit state"); return }
+        guard var st = d.entity(id).flatMap({ TextEditState(entity: $0) }) else { check(false, "text edit state"); return }
         check(st.format.isPlain && st.content == "Hello", "text edit state reads plain text")
         st.content = "Hello World"; st.height = 400; st.format.bold = true; st.format.italic = true; st.format.underline = true
         st.format.font = "Georgia"; st.color = .rgb(255, 0, 0)
@@ -268,6 +268,27 @@ extension AppSelfTests {
         InPlaceTextEditor.current?.setText("Discarded")
         InPlaceTextEditor.current?.cancel()
         if case .text(let ct)? = model.doc.entity(tid)?.geometry { check(ct.content == "Door", "cancel leaves the text unchanged") }
+
+        // Live BIM tags must edit the displayed value and retain the bubble/leader.
+        var tags = ArchiDocument()
+        let wall = tags.addElement(.wall(WallGeom(start: .zero, end: Vec2(8000, 0))))
+        let opening = tags.addElement(.opening(OpeningGeom(kind: .door, hostWall: wall, offset: 2000, width: 1000, height: 2100)))
+        let label = tags.add(.text(TextGeom(position: Vec2(2000, -600), height: 100, content: "stale")))
+        if let i = tags.entityIndex(label) { tags.entities[i].props["tagOf"] = String(opening); tags.entities[i].props["tagField"] = "size" }
+        model.editor.replaceDocument(tags, url: nil)
+        check(InPlaceTextEditor.begin(canvas: canvas, model: model, id: label), "live tag opens in the native text editor")
+        check(InPlaceTextEditor.current?.state.content == "1000×2100", "tag editor starts from the displayed live value")
+        InPlaceTextEditor.current?.chooseFont("Times New Roman")
+        InPlaceTextEditor.current?.commit()
+        check(model.doc.entity(label)?.props["tagTextOverride"] == nil, "formatting a tag preserves automatic model updates")
+        check(InPlaceTextEditor.begin(canvas: canvas, model: model, id: label), "live tag reopens")
+        InPlaceTextEditor.current?.setText("900x2100")
+        InPlaceTextEditor.current?.commit()
+        check(Annotations.text(model.doc.entity(label)!, doc: model.doc) == "900x2100", "native tag text edit displays the entered dimensions")
+        let rendered = DrawListBuilder.items(for: model.doc.entity(label)!, doc: model.doc, options: DrawOptions())
+        check(rendered.contains { if case .text(let t, _, _) = $0 { return t.content == "900x2100" }; return false }, "native tag edit reaches canvas and export draw list")
+        model.editor.undo()
+        check(Annotations.text(model.doc.entity(label)!, doc: model.doc) == "1000×2100", "native tag text edit undoes in one step")
     }
 
     private static func webXRChecks(_ check: (Bool, String) -> Void) {

@@ -26,6 +26,7 @@ extension ArchitectureCommands {
                     text.content = Annotations.tagText(element, field: field, doc: ed.doc)
                     ed.doc.entities[index].geometry = .text(text)
                     ed.doc.entities[index].props["tagField"] = field
+                    ed.doc.entities[index].props["tagTextOverride"] = nil
                 } else if let id = addTag(ed, element.id, field: field), let index = ed.doc.entityIndex(id), case .text(var text) = ed.doc.entities[index].geometry {
                     text.height = height; ed.doc.entities[index].geometry = .text(text)
                 }

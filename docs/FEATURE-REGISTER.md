@@ -731,7 +731,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ANN-077 | Add/remove object scales | OBJECTSCALE | 2 | should | ✅ done |
 | ANN-078 | Fields | FIELD | 2 | must | ✅ done |
 | ANN-079 | Update fields | UPDATEFIELD | 2 | should | ✅ done |
-| ANN-080 | Text-linked parameters in tags | — | 3 | must | ✅ done |
+| ANN-080 | Text-linked parameters in tags | TAGLABEL / EDITLABEL / TAGFORMAT | 3 | must | ✅ done |
 
 ## BLK — Blocks & Content
 
