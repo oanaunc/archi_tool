@@ -30,3 +30,6 @@ Apple processed **1.0.8 (17)** as Ready to Submit. The old waiting 1.0.5 (13) su
 
 
 The Windows portable-engine job in [CI run 42061721473](https://github.com/oanaunc/archi_tool/actions/runs/42061721473) completed successfully from fix commit `b5ca1f51ca03b50d992d54a0020bc6de0eaace48`: **all 1065 core tests passed on Windows**, including the new opening-label regressions. The Linux job and the separate Windows installer workflow are still running.
+
+
+The Linux job in the same portable-engine CI run also passed **all 1065 core tests**. The separate Windows app workflow has completed release-engine/DLL validation, shell and Explorer builds, NSIS packaging, per-user installation checks, Explorer thumbnails, installed-app smoke tests (including save/reopen/PDF) and uninstall successfully. Its Chromium UI suite is the remaining installer publication gate.
