@@ -20,3 +20,10 @@ The universal Developer ID app and the app mounted read-only from the final DMG 
 `Oanarina-Archi-Tool-1.0.8.dmg`: **92,098,631 bytes**, SHA-256 `c74103b76de70cf7fb7ff99ab81810aac03d3c76283ff3788446e1c16627edeb`.
 
 The separate sandbox preview **1.0.8 (17)** passed all 997 app checks and 17 sandbox checks. Distribution app/installer signatures, profile/certificate matching and both universal dSYM UUID sets passed. Xcode reported **Upload succeeded** / **EXPORT SUCCEEDED** on 5 November 2026 at 18:24 Europe/Bucharest. Processing and review selection remain pending; upload alone is not review submission. The release engine also passed the external Windows-client label/PDF checks. Website artifact staging commit: `6031862`; hosting and public-file verification are still pending.
+
+
+## Verified hosting and Apple submission
+
+Website artifact commit `6031862` deployed successfully in [hosting run 42064587411](https://github.com/oanaunc/oanarina_website/actions/runs/42064587411). A complete HTTPS read of the public DMG matched all 92,098,631 bytes and its SHA-256. The Italian door-label/reference instructions returned HTTP 200. The release page still advertises the previous downloads pending Windows validation and the final page update.
+
+Apple processed **1.0.8 (17)** as Ready to Submit. The old waiting 1.0.5 (13) submission was cancelled, version/English description/reviewer notes were saved, build 17 was selected and saved, and Add for Review passed. **Submit for Review** returned **1 Item Submitted** at **18:31 Europe/Bucharest**. [Submission 273fc32d-9834-4ddc-8b7c-ab0b45d16379](https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/273fc32d-9834-4ddc-8b7c-ab0b45d16379) visibly confirms **Waiting for Review** for both the submission and **macOS App 1.0.8 (17)**. Automatic release after approval and the existing sandbox entitlement explanation remain selected/saved. No new reviewer message was sent. Approval and public App Store availability remain pending.
