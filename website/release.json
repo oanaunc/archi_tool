@@ -5,7 +5,7 @@
  "formats": 30,
  "size_mb": "92.1",
  "signing": "Developer ID-signed and notarized by Apple.",
- "note": "Mac 1.0.8, build 16 (5 November): edits to door/window label text now appear in the drawing and PDF/SVG, with Automatic mode to restore model dimensions. TAGALL adds missing reference tags even when size labels exist. TAGLABEL > Field > mark shows references in existing bubbles. Windows 1.0.7, build 15 remains the current Windows download and includes the previous hatch, sheet and revision fixes.",
+ "note": "Mac and Windows 1.0.8, build 16 (5 November): edits to door/window label text now appear in the drawing and PDF/SVG. Restore Automatic to follow model dimensions, or use TAGLABEL > Field > mark to show just the reference. TAGALL adds missing references even when size labels already exist. Includes the previous hatch, sheet title and custom cartiglio revision fixes. The updated guide uses the English interface labels.",
  "dmg": "Oanarina-Archi-Tool-1.0.8.dmg",
  "sha_short": "c74103b76de7",
  "agent_doc": "downloads/archi-tool/AGENT-API.md",
@@ -75,13 +75,13 @@
   ]
  ],
  "windows": {
-  "exe": "Oanarina-Archi-Tool-Setup-1.0.7.exe",
+  "exe": "Oanarina-Archi-Tool-Setup-1.0.8.exe",
   "size_mb": "132.8",
-  "sha_short": "b82bd1b5881e",
-  "sha256": "b82bd1b5881e6b7d4b67f2ca4d206445f9cace14e0f319e28a349f10680fbda9",
-  "bytes": 132774785,
-  "release": "https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.7",
-  "version": "1.0.7"
+  "sha_short": "81668aa8abd8",
+  "sha256": "81668aa8abd805c9708ffe27e044fe35186cc6d630af8cedf04a9e45507a89af",
+  "bytes": 132787727,
+  "release": "https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.8",
+  "version": "1.0.8"
  },
  "sheet_tutorial": "https://youtu.be/7runIxmvS-E",
  "feedback_tutorial": "videos/archi-tool/15-retini-titoli-revisioni-it.mp4"

@@ -33,3 +33,10 @@ The Windows portable-engine job in [CI run 42061721473](https://github.com/oanau
 
 
 The Linux job in the same portable-engine CI run also passed **all 1065 core tests**. The separate Windows app workflow has completed release-engine/DLL validation, shell and Explorer builds, NSIS packaging, per-user installation checks, Explorer thumbnails, installed-app smoke tests (including save/reopen/PDF) and uninstall successfully. Its Chromium UI suite is the remaining installer publication gate.
+
+
+## Windows installer verification complete
+
+[Windows app run 42061722441](https://github.com/oanaunc/archi_tool/actions/runs/42061722441) succeeded from fix commit `b5ca1f51ca03b50d992d54a0020bc6de0eaace48`. Release engine/DLL isolation, Electron shell, x64/arm64 Explorer handler builds, NSIS packaging, per-user installation/associations, actual Explorer thumbnails, all **22 installed-app smoke checks**, uninstall, and all **19 Chromium UI suites** passed. No UI suite was skipped. Both portable-engine jobs independently passed all 1065 core tests.
+
+The immutable [Windows 1.0.8 release](https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.8) contains `Oanarina-Archi-Tool-Setup-1.0.8.exe`, **132,787,727 bytes**, file version **1.0.8.16**, SHA-256 `81668aa8abd805c9708ffe27e044fe35186cc6d630af8cedf04a9e45507a89af`. A complete download from the release matched its manifest and checksum. The installer remains unsigned; the existing website disclosure is retained. This is the Windows 10/11 x64 installer, not a native arm64 engine claim. Final website publication and customer email follow these completed verification gates.
