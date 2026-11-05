@@ -1,0 +1,187 @@
+[
+ {
+  "name": "tool bar",
+  "ok": true,
+  "info": "ruler + Off/Move/Rotate/Scale"
+ },
+ {
+  "name": "gizmo X arrow hit",
+  "ok": true,
+  "info": "0"
+ },
+ {
+  "name": "gizmo move preview",
+  "ok": true,
+  "info": "xf dx 1305 mm, hint \"Move X 1304.6\""
+ },
+ {
+  "name": "gizmo move commit",
+  "ok": true,
+  "info": "{\"op\":\"move\",\"axis\":0,\"amount\":1304.5837383200562,\"pivot\":[3000,1500],\"ids\":[\"1\"]}"
+ },
+ {
+  "name": "gizmo preview reset",
+  "ok": true,
+  "info": ""
+ },
+ {
+  "name": "gizmo ring hit",
+  "ok": true,
+  "info": ""
+ },
+ {
+  "name": "gizmo rotate commit",
+  "ok": true,
+  "info": "90.0° (+X → +Y from above is +90°)"
+ },
+ {
+  "name": "measure 3D",
+  "ok": true,
+  "info": "Distance 21412.2 · ΔX 21288.2 · ΔY -2301.4 · ΔZ 0 · plan 21412.2"
+ },
+ {
+  "name": "levels menu",
+  "ok": true,
+  "info": "✓ All levels | Only Ground Floor | Only First Floor | ✓ Not exploded | Explode levels by 1.5 m | Explode levels by 3 m | Explode levels by 6 m | Field of view 24° (56 mm) | Field of view 35° (38 mm) | Field of view 45° (29 mm) | Field of view 60° (21 mm) | Field of view 90° (12 mm)"
+ },
+ {
+  "name": "isolate level",
+  "ok": true,
+  "info": "349 meshes hidden"
+ },
+ {
+  "name": "explode levels",
+  "ok": true,
+  "info": "349 meshes lifted 6 m"
+ },
+ {
+  "name": "field of view",
+  "ok": true,
+  "info": ""
+ },
+ {
+  "name": "cameras menu",
+  "ok": true,
+  "info": "Save Current Camera… | Front | Aerial | Corner | Front | Aerial | Corner"
+ },
+ {
+  "name": "save camera sheet",
+  "ok": true,
+  "info": ""
+ },
+ {
+  "name": "save camera (no engine)",
+  "ok": true,
+  "info": ""
+ },
+ {
+  "name": "clipping plane panel",
+  "ok": true,
+  "info": "{\"on\":true,\"point\":[0,0,3933.044189453125],\"normal\":[0,0,1]}"
+ },
+ {
+  "name": "clipping plane Level",
+  "ok": true,
+  "info": "cut at 1200"
+ },
+ {
+  "name": "section caps",
+  "ok": true,
+  "info": "rgb 140,31,26"
+ },
+ {
+  "name": "section box grip hit (+Z)",
+  "ok": true,
+  "info": "5"
+ },
+ {
+  "name": "section box grip drag",
+  "ok": true,
+  "info": "top 8316 → 5462"
+ },
+ {
+  "name": "Ctrl-click sub-object",
+  "ok": true,
+  "info": "SUBOBJECT #316 Edge *23549.952931,13195.161618,6691.98582"
+ },
+ {
+  "name": "sun study panel",
+  "ok": true,
+  "info": "21 June  15:00 · Altitude 50.9°, azimuth 251.2° · site 44.43°, 26.1°"
+ },
+ {
+  "name": "sun study saves SUNSTUDY",
+  "ok": true,
+  "info": ""
+ },
+ {
+  "name": "steering wheel zoom",
+  "ok": true,
+  "info": "24.2 → 14.7 m"
+ },
+ {
+  "name": "steering wheel rewind",
+  "ok": true,
+  "info": ""
+ },
+ {
+  "name": "door split + swing",
+  "ok": true,
+  "info": "{\"id\":\"21\",\"parts\":[[102,42],[30,42]],\"rotated\":true}"
+ },
+ {
+  "name": "animation playback",
+  "ok": true,
+  "info": "t = 0.50 s"
+ },
+ {
+  "name": "snow cover",
+  "ok": true,
+  "info": "mean 109,94,63 → 151,136,109"
+ },
+ {
+  "name": "weather haze (rain)",
+  "ok": true,
+  "info": ""
+ },
+ {
+  "name": "season tint / vegetation / water",
+  "ok": true,
+  "info": "{\"w\":[0.5880000000000001,0.51,0.164],\"v\":true,\"water\":true}"
+ },
+ {
+  "name": "two-point perspective",
+  "ok": true,
+  "info": "Two-point perspective: verticals are vertical (lens shift 0.217)."
+ },
+ {
+  "name": "VIEWIMAGE transparent PNG",
+  "ok": true,
+  "info": "{\"w\":320,\"h\":200,\"clear\":20955,\"solid\":42252,\"tiff\":\"II42\",\"tiffBytes\":10394}"
+ },
+ {
+  "name": "VIEWIMAGE TIFF",
+  "ok": true,
+  "info": ""
+ },
+ {
+  "name": "PANORAMA 2:1",
+  "ok": true,
+  "info": "[256,128]"
+ },
+ {
+  "name": "STEREOPANORAMA over-under",
+  "ok": true,
+  "info": "{\"mono\":[256,128],\"stereo\":[256,256],\"bytes\":68057}"
+ },
+ {
+  "name": "bridge uses view3d.info",
+  "ok": true,
+  "info": "{\"style\":\"Sketchy\",\"ortho\":true,\"caps\":3,\"cams\":1,\"snow\":0.4}"
+ },
+ {
+  "name": "bridge view3d host actions",
+  "ok": true,
+  "info": "{\"gizmo\":\"Off\",\"measure\":true,\"fov\":30}"
+ }
+]
