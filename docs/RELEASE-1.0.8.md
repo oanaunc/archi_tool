@@ -11,3 +11,12 @@ Initial validation: 14 focused core tests passed, including manual/automatic ren
 
 
 Local native validation passed all **997 app checks** with **1053 commands and zero missing UI entries**. This includes the actual in-place tag editor, displayed-value initialization, formatting without freezing automatic labels, manual dimensions, shared render output and one-step Undo. An external process driven by the Windows JSON-RPC client passed its six base checks and four label checks: panel edit persistence, rendered dimensions, portable PDF export and restoring automatic values. Extracted PDF text contains `900x2100`. Eight App Store packaging regression tests passed. Local runtime tests ran on Apple silicon; Windows CI and release-channel results remain pending.
+
+
+## Mac distribution verified
+
+The universal Developer ID app and the app mounted read-only from the final DMG each passed **997 checks**, with 1053 commands and zero missing UI entries. Both arm64 and x86_64 binaries declare minimum macOS 14.0. Apple notarization accepted the app (`550a485f-ce3e-441a-83f9-a60d7b5ed53e`) and DMG (`df8bc151-e436-403b-be4f-92d1a2c45834`); both tickets were stapled and Gatekeeper accepted both artifacts as Notarized Developer ID.
+
+`Oanarina-Archi-Tool-1.0.8.dmg`: **92,098,631 bytes**, SHA-256 `c74103b76de70cf7fb7ff99ab81810aac03d3c76283ff3788446e1c16627edeb`.
+
+The separate sandbox preview **1.0.8 (17)** passed all 997 app checks and 17 sandbox checks. Distribution app/installer signatures, profile/certificate matching and both universal dSYM UUID sets passed. Xcode reported **Upload succeeded** / **EXPORT SUCCEEDED** on 5 November 2026 at 18:24 Europe/Bucharest. Processing and review selection remain pending; upload alone is not review submission. The release engine also passed the external Windows-client label/PDF checks. Website artifact staging commit: `6031862`; hosting and public-file verification are still pending.
