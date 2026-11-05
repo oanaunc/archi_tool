@@ -1,0 +1,30 @@
+commit b5ca1f51ca03b50d992d54a0020bc6de0eaace48 · run 42061721473 · outcome success
+=== building tests
+Build complete! (95.78s)
+=== running tests (parallel, 120 min limit)
+--- last lines
+[1045/1065] Testing ArchiCoreTests.RenderTests/testWallOutlineMiterAtLCorner
+[1046/1065] Testing ArchiCoreTests.RenderViewGraphicsTests/testDimensionsInElevations
+[1047/1065] Testing ArchiCoreTests.RenderViewGraphicsTests/testHiddenLinesLineWeightsDepthCueAndFarClip
+[1048/1065] Testing ArchiCoreTests.RenderViewGraphicsTests/testLegendsDraftingViewsAndTemplates
+[1049/1065] Testing ArchiCoreTests.RenderViewRangeTests/testViewRangeUnderlayRevealAndCategoryHide
+[1050/1065] Testing ArchiCoreTests.RenderVisibilityTests/testCategoryOverridesAndFilters
+[1051/1065] Testing ArchiCoreTests.RenderVisibilityTests/testDetailLevelChangesWallAndOpeningGraphics
+[1052/1065] Testing ArchiCoreTests.SectionSheetStyleTests/testCommandUndoPersistenceAndIsolation
+[1053/1065] Testing ArchiCoreTests.SectionSheetStyleTests/testMalformedStylesAndLegacyDefaults
+[1054/1065] Testing ArchiCoreTests.SectionSheetStyleTests/testSectionRenderingAndPDFUseSheetStyle
+[1055/1065] Testing ArchiCoreTests.SheetCustomizationTests/testCommandsUndoAPIAndViewportLocks
+[1056/1065] Testing ArchiCoreTests.SheetCustomizationTests/testLegacyDefaultsAndPerSheetDecorationPersistence
+[1057/1065] Testing ArchiCoreTests.SheetCustomizationTests/testOffsetsMoveEveryPrimitiveAndBounds
+[1058/1065] Testing ArchiCoreTests.SheetRevisionPresentationTests/testCommandAliasAgentAPIUndoAndHide
+[1059/1065] Testing ArchiCoreTests.SheetRevisionPresentationTests/testRevisionLayoutFieldsCustomBlockAndPersistence
+[1060/1065] Testing ArchiCoreTests.ViewportFramingTests/testBoundsRespectViewportFreeze
+[1061/1065] Testing ArchiCoreTests.ViewportFramingTests/testBoundsUsePlottedLevelInsteadOfWholeDrawing
+[1062/1065] Testing ArchiCoreTests.ViewportFramingTests/testMviewFitCommandUndoPersistenceAndLock
+[1063/1065] Testing ArchiCoreTests.EngineSessionTests/testView3DCapsGizmoAndBinaryMeshes
+[1064/1065] Testing ArchiCoreTests.EngineOutputTests/testPathTracerAndPasses
+[1065/1065] Testing ArchiCoreTests.IOInteropCorpusTests/testWriteDXFCorpusAndReadBack
+◊ Test run started.
+→ Testing Library Version: 6.1.2 (d6b70f9ef9eb207)
+→ Target Platform: x86_64-unknown-windows-msvc
+√ Test run with 0 tests passed after 0.001 seconds.
