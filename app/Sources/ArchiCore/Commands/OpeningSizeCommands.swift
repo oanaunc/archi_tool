@@ -2,13 +2,16 @@
 import Foundation
 
 extension ArchitectureCommands {
+    static func defaultOpeningTagHeight(in units: Units) -> Double { 100 / units.mm }
+
     static var openingSizesCommand: CommandDef {
         CommandDef("OPENINGSIZES", aliases: ["DOORWINDOWSIZES", "QUOTAINFISSI"], category: "Annotate", summary: "Places live width × height labels on doors/windows of the current level. Configurable units and text height; Automatic labels new openings; Off disables automatic labels.") { ed in
             let action = try await ed.getKeyword("Opening sizes", ["All", "Doors", "Windows", "Automatic", "Off"], defaultValue: "All") ?? "All"
             if action == "Off" { ed.doc.setVariable("OPENINGSIZETAGS", ""); ed.print("Automatic opening size labels off; existing labels are retained."); return }
-            let unit = try await ed.getKeyword("Size units", ["Drawing", "Millimetres", "Centimetres", "Metres"], defaultValue: "Centimetres") ?? "Centimetres"
+            let unit = try await ed.getKeyword("Size units", ["Drawing", "Millimetres", "Centimetres", "Metres"], defaultValue: "Drawing") ?? "Drawing"
             let field = ["Drawing": "size", "Millimetres": "sizemm", "Centimetres": "sizecm", "Metres": "sizem"][unit] ?? "size"
-            let height = try await ed.getReal("Label text height (drawing units)", defaultValue: 180 / ed.doc.units.mm).value ?? 180 / ed.doc.units.mm
+            let defaultHeight = defaultOpeningTagHeight(in: ed.doc.units)
+            let height = try await ed.getReal("Label text height (\(ed.doc.units.abbreviation))", defaultValue: defaultHeight).value ?? defaultHeight
             guard height.isFinite, height > 0 else { throw CommandError.invalid("Text height must be positive and finite.") }
             if action == "Automatic" {
                 ed.doc.setVariable("OPENINGSIZETAGS", field)

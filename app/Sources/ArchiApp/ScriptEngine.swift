@@ -709,14 +709,15 @@ final class ScriptEngine {
                 return self.call { try self.onMain { () -> Any in
                     let ed = try self.editor()
                     guard let host = ed.doc.element(wallID), case .wall(let wg) = host.geometry else { throw ArchiJSON.fail("\(wallID) is not a wall") }
-                    let isWin = kind == .window
-                    let width = ArchiJSON.double(opts["width"]) ?? (isWin ? 1200 : 900)
+                    let defaults = kind.defaultDimensions(in: ed.doc.units)
+                    let width = ArchiJSON.double(opts["width"]) ?? defaults.width
                     guard offset - width / 2 >= -1e-6, offset + width / 2 <= wg.length + 1e-6 else {
                         throw ArchiJSON.fail("opening does not fit in the wall (length \(fmt(wg.length)))")
                     }
                     var g = OpeningGeom(kind: kind, hostWall: wallID, offset: offset, width: width,
-                                        height: ArchiJSON.double(opts["height"]) ?? (isWin ? 1200 : 2100),
-                                        sill: ArchiJSON.double(opts["sill"]) ?? (isWin ? 900 : 0))
+                                        height: ArchiJSON.double(opts["height"]) ?? defaults.height,
+                                        sill: ArchiJSON.double(opts["sill"]) ?? defaults.sill,
+                                        frameWidth: defaults.frameWidth)
                     g.flipHand = opts["flipHand"] as? Bool ?? false
                     g.flipFacing = opts["flipFacing"] as? Bool ?? false
                     if let s = opts["style"] as? String {

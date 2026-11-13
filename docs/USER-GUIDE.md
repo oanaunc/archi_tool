@@ -1543,7 +1543,7 @@ command inside the app. This table is generated from the command definitions in 
 | `CURTAINSYSTEM` | `CURTAINBYFACE`, `CWBYFACE` | Curtain system by face: curtain walls on every vertical face of mass solids (grid spacing and mullion size). |
 | `CURTAINWALL` | `CW`, `CURTAIN` | Draws glazed curtain walls with mullion grids. |
 | `CWGRID` | `CURTAINGRID` | Edits a curtain wall grid: add/remove grid lines, panels (glass, solid, spandrel, louvre, empty, door, double door), mullion types, uniform spacing. |
-| `DOOR` | `DOORS` | Places doors in walls (default 900×2100). |
+| `DOOR` | `DOORS` | Places doors in walls (default 900×2100 mm, converted to drawing units). |
 | `DORMER` | `DORMERS`, `ROOFDORMER` | Builds a dormer on a sloped roof: front and cheek walls, a gable or shed dormer roof, and the opening in the main roof. |
 | `ELEVATOR` | `LIFT`, `ELEVATORSHAFT` | Places an elevator: car, shaft walls up to a top level and a shaft opening through the floors. |
 | `ESCALATOR` | `ESCALATORS`, `MOVINGSTAIR` | Places an escalator from its bottom comb in a travel direction up to the level above (30°/35°, step width 600/800/1000), checks EN 115 rise/inclination/speed rules and cuts the upper floor; Check re-validates existing escalators. |
@@ -1622,7 +1622,7 @@ command inside the app. This table is generated from the command definitions in 
 | `WALLTOP` | `WALLCONSTRAINT`, `TOPCONSTRAINT`, `WT` | Sets the top constraint of walls (a level with offset, the next level, or an unconnected height) and their shape: elevation Profile or Gable, Slant, Taper, Reset. |
 | `WALLWRAP` | `LAYERWRAP`, `WRAPINSERTS` | Wraps the finish layers of compound walls into door/window openings (all walls or selected walls) and around free wall Ends. |
 | `WATER` | `WATERSURFACE`, `POND`, `POOLWATER` | Water surface with animated waves (viewport and renders) inside a closed polyline or picked points, at a surface elevation and depth. *(app)* |
-| `WINDOW` | `WIN` | Places windows in walls (default 1200×1200, sill 900). |
+| `WINDOW` | `WIN` | Places windows in walls (default 1200×1200 mm, sill 900 mm, converted to drawing units). |
 | `ZONE` | `ZONES`, `ROOMZONE` | Zones: Assign rooms to a named fire/HVAC/department/security zone, Remove, List zone areas, or draw zone Outlines (rooms merged across the walls). |
 
 ### Structure
@@ -2265,12 +2265,18 @@ Custom blocks accept `{revision}`, `{revisionDate}`, `{revisionDescription}`, `{
 
 Use **Annotate → Door / Window Sizes**, or type `QUOTAINFISSI` (`OPENINGSIZES`, `DOORWINDOWSIZES`), to add live **width × height** labels to BIM doors and windows of the current level:
 
-- `QUOTAINFISSI All Centimetres 180` labels both categories; `Doors` or `Windows` selects one category. 180 is the text height in drawing units (1.8 mm on paper at 1:100 when the drawing uses mm).
-- Choose Drawing, Millimetres, Centimetres or Metres. For example a 900 × 2100 mm door is labelled **90×210 cm**.
-- `QUOTAINFISSI Automatic Centimetres 180` labels subsequently created BIM doors and windows. Run All separately for existing openings.
+- `QUOTAINFISSI All Centimetres 10` labels both categories in a cm drawing; `Doors` or `Windows` selects one category. 10 is the text height in drawing units (1 mm on paper at 1:100 when the drawing uses cm). Press Enter for the same physical height in any drawing unit.
+- **Drawing** uses the drawing's units. Choose **Centimetres** to include `cm` on the label, for example **90×210 cm**. **Millimetres** and **Metres** remain available.
+- `QUOTAINFISSI Automatic Centimetres 10` labels subsequently created BIM doors and windows in a cm drawing. Run All separately for existing openings.
 - `QUOTAINFISSI Off` disables labels on future openings and keeps existing labels.
 
 Repeating the bulk command updates the size labels without duplicating them or replacing existing marks. Labels follow changes to the opening's width and height in the plan and plotted output. They support Undo and save in `.archi`. These labels measure BIM openings; arbitrary lines or blocks in an imported 2D drawing must first be modelled as doors/windows, or dimensioned with the normal dimension tools. The commands also run through the scripting/agent command API.
+
+### Doors and tags in centimeter drawings (1.0.9)
+
+With the drawing set to **Centimeters**, `DOOR` starts at 90 × 210 cm and uses a 5 cm frame. Choose **Width** or **Height** to enter a custom size in cm. You can also enter a dimension with a unit suffix, such as `900mm` or `2.1m`. If the command remembers an incorrect size from an older version, choose **ReSet** within `DOOR` to restore the stock size, then place the door or press Enter to save the defaults.
+
+For an existing door, select the door and change **Width**, **Height** and, if needed, **Frame Width** in **Properties**. Use `QUOTAINFISSI Doors Centimetres 10` to refresh existing size tags on the current level. This returns their text to the live dimensions. For a reference tag such as D01, select the tag itself and set its **Height** in Properties (e.g. 10 cm); this leaves the reference and door intact.
 
 ### Hatch and sheet support corrections (1.0.6)
 

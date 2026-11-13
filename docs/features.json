@@ -7550,7 +7550,7 @@
   "phase": 1,
   "priority": "must",
   "status": "done",
-  "acceptance": "Placing a door cuts the wall in plan and 3D."
+  "acceptance": "Placing a door cuts the wall in plan and 3D. Stock dimensions and frames follow drawing units, and custom dimensions can be reset from the placement command."
  },
  {
   "id": "BIM-035",
@@ -7563,7 +7563,7 @@
   "phase": 1,
   "priority": "must",
   "status": "done",
-  "acceptance": "Window tool cuts the host wall and shows correct plan symbol and 3D."
+  "acceptance": "Window tool cuts the host wall and shows correct plan symbol and 3D. Stock size, sill and frame dimensions follow drawing units."
  },
  {
   "id": "BIM-036",
@@ -9677,7 +9677,7 @@
   "group": "Tags & Annotation (BIM)",
   "name": "Tag all not tagged",
   "command": "TAGALL / OPENINGSIZES (QUOTAINFISSI)",
-  "description": "Batch tags plus live door/window width × height labels on the current level. Units and text height are configurable; Automatic labels newly created BIM openings.",
+  "description": "Batch tags plus live door/window width × height labels on the current level. Labels default to drawing units with a compact, unit-aware text height; Automatic labels newly created BIM openings.",
   "reference": "Revit",
   "phase": 3,
   "priority": "must",

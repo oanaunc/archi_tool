@@ -207,6 +207,14 @@ public struct OpeningType: Codable, Hashable {
         OpeningType.variant(OpeningType(name: "Pivot 1200x1200", kind: .window, width: 1200, height: 1200, sill: 900, windowStyle: .casement), .pivot),
     ]
     static func variant(_ t: OpeningType, _ v: OpeningVariant) -> OpeningType { var t = t; t.variant = v; return t }
+
+    static func library(in units: Units) -> [OpeningType] {
+        library.map { stock in
+            var t = stock
+            t.width /= units.mm; t.height /= units.mm; t.sill /= units.mm; t.frameWidth /= units.mm
+            return t
+        }
+    }
 }
 
 public struct PaperSize: Codable, Hashable {
@@ -301,7 +309,18 @@ public struct ArchiDocument: Codable, Hashable {
     public static let currentFormatVersion = 6
     public var formatVersion: Int = ArchiDocument.currentFormatVersion
     public var info = ProjectInfo()
-    public var units: Units = .millimeters
+    public var units: Units = .millimeters {
+        didSet {
+            guard oldValue != units else { return }
+            convertStockOpeningTypes(from: oldValue)
+            // Tool preferences are lengths; keep their physical size when the input units change.
+            let scale = oldValue.mm / units.mm
+            let keys = OpeningKind.allCases.flatMap { kind in ["WIDTH", "HEIGHT", "SILL"].map { kind.rawValue.uppercased() + $0 } }
+            for key in keys + ["OPENINGSIZETAGHEIGHT"] {
+                if let n = variable(key).flatMap(Double.init), n.isFinite { setVariable(key, String(n * scale)) }
+            }
+        }
+    }
     public var layers: [Layer]
     public var currentLayer: String = "0"
     public var linetypes: [Linetype] = Linetype.standard
@@ -382,11 +401,20 @@ public struct ArchiDocument: Codable, Hashable {
         try opt(.levels, &levels); try opt(.currentLevel, &currentLevel); try opt(.materials, &materials); try opt(.wallTypes, &wallTypes)
         try opt(.layouts, &layouts); try opt(.namedViews, &namedViews); try opt(.variables, &variables); try opt(.nextID, &nextID)
         try opt(.openingTypes, &openingTypes); try opt(.phases, &phases); try opt(.keynotes, &keynotes)
+        // Older files could contain the unconverted stock catalog. Leave custom types and placed openings alone.
+        if units != .millimeters { convertStockOpeningTypes(from: .millimeters) }
         try opt(.families, &families); try opt(.slabTypes, &slabTypes); try opt(.viewTemplates, &viewTemplates); try opt(.modelGroups, &modelGroups)
         try opt(.globalParameters, &globalParameters); try opt(.psetTemplates, &psetTemplates); try opt(.schedules, &schedules); try opt(.projectParameters, &projectParameters)
         try opt(.views, &views); try opt(.scopeBoxes, &scopeBoxes); try opt(.stairTypes, &stairTypes); try opt(.railingTypes, &railingTypes)
         let maxID = max(entities.map(\.id).max() ?? 0, elements.map(\.id).max() ?? 0)
         if nextID <= maxID { nextID = maxID + 1 }
+    }
+
+    private mutating func convertStockOpeningTypes(from source: Units) {
+        let old = OpeningType.library(in: source), new = OpeningType.library(in: units)
+        for i in openingTypes.indices {
+            if let j = old.firstIndex(of: openingTypes[i]) { openingTypes[i] = new[j] }
+        }
     }
 
     public func openingType(_ n: String?) -> OpeningType? {

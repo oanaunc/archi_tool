@@ -1024,8 +1024,8 @@ public enum PropertyAccess {
             ps += L(v("start", \BeamGeom.start) + v("end", \BeamGeom.end) + [d("width", \BeamGeom.width, min: 1), d("depth", \BeamGeom.depth, min: 1), d("topOffset", \BeamGeom.topOffset),
                     ro("length") { fmt($0.start.distance(to: $0.end)) }], { if case .beam(let g) = $0 { return g }; return nil }, { .beam($0) })
         case .opening:
-            ps += L([ro("kind") { $0.kind.rawValue }, ro("hostWall") { "\($0.hostWall)" }, d("offset", \OpeningGeom.offset), d("width", \OpeningGeom.width, min: 1),
-                     d("height", \OpeningGeom.height, min: 1), d("sill", \OpeningGeom.sill), b("flipHand", \OpeningGeom.flipHand), b("flipFacing", \OpeningGeom.flipFacing),
+            ps += L([ro("kind") { $0.kind.rawValue }, ro("hostWall") { "\($0.hostWall)" }, d("offset", \OpeningGeom.offset), d("width", \OpeningGeom.width, min: 1e-9),
+                     d("height", \OpeningGeom.height, min: 1e-9), d("sill", \OpeningGeom.sill), b("flipHand", \OpeningGeom.flipHand), b("flipFacing", \OpeningGeom.flipFacing),
                      e("doorStyle", \OpeningGeom.doorStyle), e("windowStyle", \OpeningGeom.windowStyle), d("frameWidth", \OpeningGeom.frameWidth, min: 0),
                      d("depth", \OpeningGeom.depth, min: 0), optS("typeName", \OpeningGeom.typeName), optS("mark", \OpeningGeom.mark),
                      ro("isNiche") { $0.isNiche ? "true" : "false" }],

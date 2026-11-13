@@ -928,8 +928,8 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | ID | Feature | Command | Phase | Priority | Status |
 | --- | --- | --- | --- | --- | --- |
 | BIM-033 | Opening data model | — | 1 | must | ✅ done |
-| BIM-034 | Door tool | DOOR | 1 | must | ✅ done |
-| BIM-035 | Window tool | WINDOW | 1 | must | ✅ done |
+| BIM-034 | Door tool (drawing units, size reset) | DOOR | 1 | must | ✅ done |
+| BIM-035 | Window tool (drawing units) | WINDOW | 1 | must | ✅ done |
 | BIM-036 | Door styles | — | 1 | must | ✅ done |
 | BIM-037 | Window styles | — | 1 | must | ✅ done |
 | BIM-038 | Door/window flip | OPENINGFLIP | 1 | must | ✅ done |

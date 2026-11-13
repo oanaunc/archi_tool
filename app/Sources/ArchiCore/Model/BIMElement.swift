@@ -98,7 +98,19 @@ public struct BeamGeom: Codable, Hashable {
     public var endTop: Double { endTopOffset ?? topOffset }
 }
 
-public enum OpeningKind: String, Codable, CaseIterable { case door, window, opening }
+public enum OpeningKind: String, Codable, CaseIterable {
+    case door, window, opening
+
+    /// Stock dimensions expressed in the current drawing's units.
+    public func defaultDimensions(in units: Units) -> (width: Double, height: Double, sill: Double, frameWidth: Double) {
+        let mm = units.mm
+        switch self {
+        case .door: return (900 / mm, 2100 / mm, 0, 50 / mm)
+        case .window: return (1200 / mm, 1200 / mm, 900 / mm, 50 / mm)
+        case .opening: return (1000 / mm, 2100 / mm, 0, 50 / mm)
+        }
+    }
+}
 /// Operation variants refining the base door/window style (BIM-036/037): pocket (sliding into the wall) and bi-fold doors,
 /// pivot and tilt-turn windows. The base style stays the IFC/exchange fallback (pocket → sliding, bi-fold → folding,
 /// pivot and tilt-turn → casement).

@@ -303,38 +303,50 @@ enum ArchitectureCommands {
     // MARK: - Doors / windows / openings
     @MainActor static func placeOpening(_ ed: Editor, _ kind: OpeningKind) async throws {
         let key = kind.rawValue.uppercased()
-        var width = ed.variableDouble(key + "WIDTH", kind == .door ? 900 : (kind == .window ? 1200 : 1000))
-        var height = ed.variableDouble(key + "HEIGHT", kind == .door ? 2100 : (kind == .window ? 1200 : 2100))
-        var sill = ed.variableDouble(key + "SILL", kind == .window ? 900 : 0)
+        let defaults = kind.defaultDimensions(in: ed.doc.units)
+        let unit = ed.doc.units.abbreviation
+        var width = ed.variableDouble(key + "WIDTH", defaults.width)
+        var height = ed.variableDouble(key + "HEIGHT", defaults.height)
+        var sill = ed.variableDouble(key + "SILL", defaults.sill)
         var doorStyle = DoorStyle(rawValue: ed.doc.variable("DOORSTYLE") ?? "") ?? .single
         var windowStyle = WindowStyle(rawValue: ed.doc.variable("WINDOWSTYLE") ?? "") ?? .casement
         var flip = false
         var n = 0
         var variant = OpeningVariant(rawValue: ed.doc.variable(key + "VARIANT") ?? "").flatMap { $0.isDoor == (kind == .door) ? $0 : nil }
         var typeName: String? = kind == .opening ? nil : ed.doc.variable(key + "TYPE").flatMap { ed.doc.openingType($0)?.kind == kind ? $0 : nil }
-        if let t = ed.doc.openingType(typeName) { width = t.width; height = t.height; sill = t.sill; doorStyle = t.doorStyle; windowStyle = t.windowStyle; variant = t.variant }
+        func useType(_ type: OpeningType) {
+            let t = type.resolved().type
+            width = t.width; height = t.height; sill = t.sill; doorStyle = t.doorStyle; windowStyle = t.windowStyle; variant = t.variant
+        }
+        if let t = ed.doc.openingType(typeName) { useType(t) }
         func styleName() -> String { variant?.rawValue ?? (kind == .door ? doorStyle.rawValue : windowStyle.rawValue) }
         @MainActor func save() {
-            ed.doc.setVariable(key + "WIDTH", fmt(width)); ed.doc.setVariable(key + "HEIGHT", fmt(height)); ed.doc.setVariable(key + "SILL", fmt(sill))
+            ed.doc.variables[key + "TYPE"] = typeName
+            if typeName == nil {
+                ed.doc.variables[key + "WIDTH"] = width == defaults.width ? nil : String(width)
+                ed.doc.variables[key + "HEIGHT"] = height == defaults.height ? nil : String(height)
+                ed.doc.variables[key + "SILL"] = sill == defaults.sill ? nil : String(sill)
+            }
             ed.doc.setVariable("DOORSTYLE", doorStyle.rawValue); ed.doc.setVariable("WINDOWSTYLE", windowStyle.rawValue)
             ed.doc.setVariable(key + "VARIANT", variant?.rawValue ?? "")
         }
         while true {
-            var kws = ["Width", "Height", "Sill", "Flip"]
+            var kws = ["Width", "Height", "Sill", "Flip", "ReSet"]
             if kind != .opening { kws.insert("Style", at: 3); kws.append("Type") }
-            ed.print("\(kind.rawValue.capitalized): " + (typeName.map { "Type = \($0), " } ?? "") + "Width = \(fmt(width)), Height = \(fmt(height)), Sill = \(fmt(sill))" + (kind != .opening ? ", Style = \(styleName())" : ""))
+            ed.print("\(kind.rawValue.capitalized) (\(unit)): " + (typeName.map { "Type = \($0), " } ?? "") + "Width = \(fmt(width)), Height = \(fmt(height)), Sill = \(fmt(sill))" + (kind != .opening ? ", Style = \(styleName())" : ""))
             let a = try await ed.pickObject("Select wall location for the \(kind.rawValue)", keywords: kws) { isWall(ed.doc, $0) }
             switch a {
-            case .keyword("Width"): width = try await ed.getPositive("Specify width", defaultValue: width); typeName = nil
-            case .keyword("Height"): height = try await ed.getPositive("Specify height", defaultValue: height); typeName = nil
-            case .keyword("Sill"): sill = try await ed.getPositive("Specify sill height", defaultValue: sill, allowZero: true); typeName = nil
+            case .keyword("Width"): width = try await ed.getPositive("Specify width (\(unit))", defaultValue: width); typeName = nil
+            case .keyword("Height"): height = try await ed.getPositive("Specify height (\(unit))", defaultValue: height); typeName = nil
+            case .keyword("Sill"): sill = try await ed.getPositive("Specify sill height (\(unit))", defaultValue: sill, allowZero: true); typeName = nil
+            case .keyword("ReSet"):
+                width = defaults.width; height = defaults.height; sill = defaults.sill; typeName = nil
             case .keyword("Type"):
                 let types = ed.doc.openingTypes.filter { $0.kind == kind }
                 guard let w = try await ed.getWord("Enter \(kind.rawValue) type name or [?]", defaultValue: typeName ?? types.first?.name) else { break }
                 if w == "?" { ed.print("Types: " + types.map { "\"\($0.name)\"" }.joined(separator: ", ")); break }
                 guard let t = types.first(where: { $0.name.caseInsensitiveCompare(w) == .orderedSame }) ?? types.first(where: { $0.name.lowercased().hasPrefix(w.lowercased()) }) else { ed.print("Type \(w) not found."); break }
-                typeName = t.name; width = t.width; height = t.height; sill = t.sill; doorStyle = t.doorStyle; windowStyle = t.windowStyle; variant = t.variant
-                ed.doc.setVariable(key + "TYPE", t.name)
+                typeName = t.name; useType(t)
             case .keyword("Flip"): flip.toggle(); ed.print("Hand \(flip ? "flipped" : "normal").")
             case .keyword("Style"):
                 typeName = nil
@@ -361,9 +373,9 @@ enum ArchitectureCommands {
                 if overlaps { ed.print("The \(kind.rawValue) would overlap an existing opening."); continue }
                 let facing = dir.cross(pk.point - w.centerStart) < 0
                 var o = OpeningGeom(kind: kind, hostWall: pk.id, offset: along, width: width, height: height, sill: sill, flipHand: flip, flipFacing: facing, doorStyle: doorStyle, windowStyle: windowStyle,
-                                    typeName: typeName, mark: kind == .opening ? nil : nextMark(ed.doc, kind))
+                                    frameWidth: defaults.frameWidth, typeName: typeName, mark: kind == .opening ? nil : nextMark(ed.doc, kind))
                 if kind != .opening { o.variant = variant }
-                if let t = ed.doc.openingType(typeName) { o.frameWidth = t.frameWidth }
+                if let t = ed.doc.openingType(typeName) { t.apply(to: &o) }
                 let oid = ed.doc.addElement(.opening(o), level: host.level, material: ed.doc.openingType(typeName)?.material,
                                             name: typeName ?? (kind == .door ? "Door \(fmt(width))x\(fmt(height))" : (kind == .window ? "Window \(fmt(width))x\(fmt(height))" : "Opening")))
                 if ed.doc.variable("AUTOTAG") == "1", kind != .opening { addTag(ed, oid, field: "mark") }
@@ -379,8 +391,8 @@ enum ArchitectureCommands {
     }
 
     static var openings: [CommandDef] { [
-        CommandDef("DOOR", aliases: ["DOORS"], category: "Architecture", summary: "Places doors in walls (default 900×2100).") { ed in try await placeOpening(ed, .door) },
-        CommandDef("WINDOW", aliases: ["WIN"], category: "Architecture", summary: "Places windows in walls (default 1200×1200, sill 900).") { ed in try await placeOpening(ed, .window) },
+        CommandDef("DOOR", aliases: ["DOORS"], category: "Architecture", summary: "Places doors in walls (default 900×2100 mm, converted to drawing units).") { ed in try await placeOpening(ed, .door) },
+        CommandDef("WINDOW", aliases: ["WIN"], category: "Architecture", summary: "Places windows in walls (default 1200×1200 mm, sill 900 mm, converted to drawing units).") { ed in try await placeOpening(ed, .window) },
         CommandDef("OPENING", aliases: ["WALLOPENING"], category: "Architecture", summary: "Cuts empty openings in walls.") { ed in try await placeOpening(ed, .opening) },
     ] }
 
@@ -1654,7 +1666,8 @@ extension ArchitectureCommands {
             p = f.pt(o.offset, side * (f.h + (field.hasPrefix("size") ? 850 : 450) * u))
         }
         let content = Annotations.tagText(el, field: field, doc: ed.doc)
-        let tid = ed.doc.add(.text(TextGeom(position: p, height: 180 * u, content: content, halign: .center, valign: .middle)), layer: tagLayer)
+        let height = isOpening(el.geometry) ? defaultOpeningTagHeight(in: ed.doc.units) : 180 * u
+        let tid = ed.doc.add(.text(TextGeom(position: p, height: height, content: content, halign: .center, valign: .middle)), layer: tagLayer)
         if let i = ed.doc.entityIndex(tid) {
             ed.doc.entities[i].props["tagOf"] = "\(id)"; ed.doc.entities[i].props["tagField"] = field; ed.doc.entities[i].props["level"] = "\(el.level)"
         }
@@ -1677,10 +1690,11 @@ extension ArchitectureCommands {
                 guard ed.doc.openingType(name) == nil else { throw CommandError.invalid("Type \(name) already exists.") }
                 let kk = try await ed.getKeyword("Kind", ["Door", "Window", "Opening"], defaultValue: "Door") ?? "Door"
                 let kind = OpeningKind(rawValue: kk.lowercased()) ?? .door
-                let w = try await ed.getPositive("Specify width", defaultValue: kind == .window ? 1200 : 900)
-                let h = try await ed.getPositive("Specify height", defaultValue: kind == .window ? 1200 : 2100)
-                let s = try await ed.getPositive("Specify sill height", defaultValue: kind == .window ? 900 : 0, allowZero: true)
-                var t = OpeningType(name: name, kind: kind, width: w, height: h, sill: s)
+                let defaults = kind.defaultDimensions(in: ed.doc.units), unit = ed.doc.units.abbreviation
+                let w = try await ed.getPositive("Specify width (\(unit))", defaultValue: defaults.width)
+                let h = try await ed.getPositive("Specify height (\(unit))", defaultValue: defaults.height)
+                let s = try await ed.getPositive("Specify sill height (\(unit))", defaultValue: defaults.sill, allowZero: true)
+                var t = OpeningType(name: name, kind: kind, width: w, height: h, sill: s, frameWidth: defaults.frameWidth)
                 if kind == .door, let st = try await ed.getWord("Door style [\(DoorStyle.allCases.map(\.rawValue).joined(separator: "/"))]", defaultValue: "single"), let ds = DoorStyle.allCases.first(where: { $0.rawValue.lowercased().hasPrefix(st.lowercased()) }) { t.doorStyle = ds }
                 if kind == .window, let st = try await ed.getWord("Window style [\(WindowStyle.allCases.map(\.rawValue).joined(separator: "/"))]", defaultValue: "casement"), let ws = WindowStyle.allCases.first(where: { $0.rawValue.lowercased() == st.lowercased() }) ?? WindowStyle.allCases.first(where: { $0.rawValue.lowercased().hasPrefix(st.lowercased()) }) { t.windowStyle = ws }
                 ed.doc.openingTypes.append(t)
@@ -1765,7 +1779,7 @@ extension ArchitectureCommands {
                     if r.transoms > 0 { extra.append("transoms=\(r.transoms)") }
                     if r.threshold { extra.append("threshold") }
                     extra += t.formulas.sorted { $0.key < $1.key }.map { "\($0.key):=\($0.value)" }
-                    ed.print("\(t.kind.rawValue) \"\(t.name)\": \(fmt(r.width))×\(fmt(r.height)), sill \(fmt(r.sill)), \(style), \(count) placed" + (extra.isEmpty ? "" : "; " + extra.joined(separator: ", ")))
+                    ed.print("\(t.kind.rawValue) \"\(t.name)\": \(fmt(r.width))×\(fmt(r.height)) \(ed.doc.units.abbreviation), sill \(fmt(r.sill)), \(style), \(count) placed" + (extra.isEmpty ? "" : "; " + extra.joined(separator: ", ")))
                 }
             }
         }
@@ -1792,7 +1806,8 @@ extension ArchitectureCommands {
         for row in parseCSV(csv) {
             let c = row.map { $0.trimmingCharacters(in: .whitespaces) }
             guard c.count >= 4, let kind = OpeningKind(rawValue: c[1].lowercased()), let w = Double(c[2]), let h = Double(c[3]), w > 0, h > 0 else { continue }
-            var t = OpeningType(name: c[0], kind: kind, width: w, height: h, sill: c.count > 4 ? Double(c[4]) ?? 0 : 0)
+            var t = OpeningType(name: c[0], kind: kind, width: w, height: h, sill: c.count > 4 ? Double(c[4]) ?? 0 : 0,
+                                frameWidth: kind.defaultDimensions(in: doc.units).frameWidth)
             if c.count > 5 {
                 if let d = DoorStyle(rawValue: c[5]) { t.doorStyle = d }
                 if let ws = WindowStyle(rawValue: c[5]) { t.windowStyle = ws }

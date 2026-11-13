@@ -225,14 +225,15 @@ extension EngineSession {
         let offset = ScriptJSON.double(arg(a, 1)) ?? 0
         var opts = options(a, 2)
         guard let host = editor.doc.element(wallID), case .wall(let wg) = host.geometry else { throw ScriptJSON.fail("\(wallID) is not a wall") }
-        let isWin = kind == .window
-        let width = ScriptJSON.double(opts["width"]) ?? (isWin ? 1200 : 900)
+        let defaults = kind.defaultDimensions(in: editor.doc.units)
+        let width = ScriptJSON.double(opts["width"]) ?? defaults.width
         guard offset - width / 2 >= -1e-6, offset + width / 2 <= wg.length + 1e-6 else {
             throw ScriptJSON.fail("opening does not fit in the wall (length \(fmt(wg.length)))")
         }
         var g = OpeningGeom(kind: kind, hostWall: wallID, offset: offset, width: width,
-                            height: ScriptJSON.double(opts["height"]) ?? (isWin ? 1200 : 2100),
-                            sill: ScriptJSON.double(opts["sill"]) ?? (isWin ? 900 : 0))
+                            height: ScriptJSON.double(opts["height"]) ?? defaults.height,
+                            sill: ScriptJSON.double(opts["sill"]) ?? defaults.sill,
+                            frameWidth: defaults.frameWidth)
         g.flipHand = ScriptJSON.bool(opts["flipHand"]) ?? false
         g.flipFacing = ScriptJSON.bool(opts["flipFacing"]) ?? false
         if let s = ScriptJSON.string(opts["style"]) {

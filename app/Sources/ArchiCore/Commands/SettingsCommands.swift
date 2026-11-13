@@ -445,7 +445,7 @@ enum SettingsCommands {
         case .slab(var s): s.thickness *= f; s.topOffset *= f; return .slab(s)
         case .column(var c): c.width *= f; c.depth *= f; c.height *= f; c.baseOffset *= f; return .column(c)
         case .beam(var b): b.width *= f; b.depth *= f; b.topOffset *= f; return .beam(b)
-        case .opening(var o): o.offset *= f; o.width *= f; o.height *= f; o.sill *= f; o.frameWidth *= f; return .opening(o)
+        case .opening(var o): o.offset *= f; o.width *= f; o.height *= f; o.sill *= f; o.frameWidth *= f; o.depth *= f; return .opening(o)
         case .roof(var r): r.thickness *= f; r.overhang *= f; r.baseOffset *= f; return .roof(r)
         case .stair(var s): s.width *= f; s.totalRise *= f; s.treadDepth *= f; return .stair(s)
         case .railing(var r): r.height *= f; r.baseOffset *= f; return .railing(r)
