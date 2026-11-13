@@ -1,0 +1,30 @@
+commit 7537aaeb3b07896323bda08653f6a1240189f84a · run 43456973708 · outcome success
+=== building tests
+Build complete! (170.79s)
+=== running tests (parallel, 120 min limit)
+--- last lines
+[1049/1069] Testing ArchiCoreTests.RenderTests/testWallMeshWithWindow
+[1050/1069] Testing ArchiCoreTests.RenderTests/testWallOutlineMiterAtLCorner
+[1051/1069] Testing ArchiCoreTests.RenderViewGraphicsTests/testDimensionsInElevations
+[1052/1069] Testing ArchiCoreTests.RenderViewGraphicsTests/testHiddenLinesLineWeightsDepthCueAndFarClip
+[1053/1069] Testing ArchiCoreTests.RenderViewRangeTests/testViewRangeUnderlayRevealAndCategoryHide
+[1054/1069] Testing ArchiCoreTests.RenderVisibilityTests/testCategoryOverridesAndFilters
+[1055/1069] Testing ArchiCoreTests.RenderVisibilityTests/testDetailLevelChangesWallAndOpeningGraphics
+[1056/1069] Testing ArchiCoreTests.SectionSheetStyleTests/testCommandUndoPersistenceAndIsolation
+[1057/1069] Testing ArchiCoreTests.SectionSheetStyleTests/testMalformedStylesAndLegacyDefaults
+[1058/1069] Testing ArchiCoreTests.RenderViewGraphicsTests/testLegendsDraftingViewsAndTemplates
+[1059/1069] Testing ArchiCoreTests.SectionSheetStyleTests/testSectionRenderingAndPDFUseSheetStyle
+[1060/1069] Testing ArchiCoreTests.SheetCustomizationTests/testCommandsUndoAPIAndViewportLocks
+[1061/1069] Testing ArchiCoreTests.SheetCustomizationTests/testLegacyDefaultsAndPerSheetDecorationPersistence
+[1062/1069] Testing ArchiCoreTests.SheetCustomizationTests/testOffsetsMoveEveryPrimitiveAndBounds
+[1063/1069] Testing ArchiCoreTests.SheetRevisionPresentationTests/testCommandAliasAgentAPIUndoAndHide
+[1064/1069] Testing ArchiCoreTests.SheetRevisionPresentationTests/testRevisionLayoutFieldsCustomBlockAndPersistence
+[1065/1069] Testing ArchiCoreTests.ViewportFramingTests/testBoundsRespectViewportFreeze
+[1066/1069] Testing ArchiCoreTests.ViewportFramingTests/testBoundsUsePlottedLevelInsteadOfWholeDrawing
+[1067/1069] Testing ArchiCoreTests.ViewportFramingTests/testMviewFitCommandUndoPersistenceAndLock
+[1068/1069] Testing ArchiCoreTests.RenderTests/testHatchANSI31InsideSquare
+[1069/1069] Testing ArchiCoreTests.IOInteropCorpusTests/testWriteDXFCorpusAndReadBack
+◊ Test run started.
+→ Testing Library Version: 6.1.2 (d6b70f9ef9eb207)
+→ Target Platform: x86_64-unknown-windows-msvc
+√ Test run with 0 tests passed after 0.001 seconds.
