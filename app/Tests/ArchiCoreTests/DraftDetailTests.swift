@@ -602,16 +602,21 @@ final class DraftDetailTests: XCTestCase {
         let t0 = Date()
         await ed.run("DELAY 30")
         XCTAssertGreaterThanOrEqual(Date().timeIntervalSince(t0), 0.025)
-        let task = Task { @MainActor in await ed.runScriptLines(["DELAY 2000", "LINE 0,0 10,0 ", "LINE 0,0 0,10 "]) }
-        var n = 0
-        while ed.isIdle && n < 100000 { await Task.yield(); n += 1 }
+        let task = Task { @MainActor in await ed.runScriptLines(["DELAY 10000", "LINE 0,0 10,0 ", "LINE 0,0 0,10 "]) }
+        // Give the command task time to run under the parallel test runner. Task.yield() can
+        // immediately resume this test on a busy executor and miss the command entirely.
+        let clock = ContinuousClock()
+        let startDeadline = clock.now + .seconds(5)
+        while ed.activeCommand?.name != "DELAY" && clock.now < startDeadline { try? await Task.sleep(nanoseconds: 5_000_000) }
+        let delayWasRunning = ed.activeCommand?.name == "DELAY"
         ed.cancel()                                     // Escape during DELAY
         await task.value
+        XCTAssertTrue(delayWasRunning, "The script must reach DELAY before Escape")
         XCTAssertEqual(ed.pendingScript?.count, 2)
         XCTAssertEqual(ed.doc.entities.count, 0)
         await ed.run("RESUME")
-        n = 0
-        while ed.doc.entities.count < 2 && n < 200000 { await Task.yield(); n += 1 }
+        let resumeDeadline = clock.now + .seconds(5)
+        while ed.doc.entities.count < 2 && clock.now < resumeDeadline { try? await Task.sleep(nanoseconds: 5_000_000) }
         await ed.waitIdle()
         XCTAssertEqual(ed.doc.entities.count, 2)
         XCTAssertNil(ed.pendingScript)
