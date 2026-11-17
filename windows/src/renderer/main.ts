@@ -256,7 +256,6 @@ addEventListener("keydown", (e) => {
   if (e.key === " " && document.activeElement === plan["overlay"]) return; // Space+drag pans; released without drag repeats (keyup)
   if (e.key.length === 1) { e.preventDefault(); cmd.typeKey(e.key); }
 });
-addEventListener("keyup", (e) => { if (e.key === " " && document.activeElement === plan["overlay"] && !(plan as any).panLast) app.submitLine(""); });
 
 // ---- start ----
 (async () => {

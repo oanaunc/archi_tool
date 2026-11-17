@@ -803,14 +803,15 @@ export class PlanCanvas {
     addEventListener("mouseup", (e) => this.up(pos(e), e));
     o.addEventListener("wheel", (e) => this.wheel(e, pos(e)), { passive: false });
     o.addEventListener("keydown", (e) => { if (e.code === "Space" && this.app.commandInput === "" && !e.repeat && !this.placement && !this.hot) { this.spaceDown = true; this.spacePanned = false; } });
-    o.addEventListener("keyup", (e) => { if (e.code === "Space") { this.spaceDown = false; this.panLast = null; } });
     // Keys the Mac canvas handles itself, ahead of the main window keyboard handler (main.ts).
     addEventListener("keydown", (e) => this.keyDown(e), true);
     addEventListener("keyup", (e) => {
       if (e.key !== " " || !this.el.isConnected) return;
-      // Space released: Enter unless it cycled a grip mode / rotated, or panned with Space+drag (CanvasView.keyUp).
+      // Repeat only when Space started on the canvas. The command line may submit on Space and move focus here.
+      const repeat = this.spaceDown && e.target === o && !this.swallowSpaceUp && !this.spacePanned;
       if (this.swallowSpaceUp || this.spacePanned) { e.stopImmediatePropagation(); e.preventDefault(); }
       this.swallowSpaceUp = false; this.spaceDown = false; this.spacePanned = false; this.panLast = null; this.resetCursor();
+      if (repeat) void this.app.submitLine("");
     }, true);
     // Drag and drop: palette items (blocks, components, commands, materials) and files (IO-065).
     o.addEventListener("dragover", (e) => {
