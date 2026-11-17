@@ -5,7 +5,7 @@
  "formats": 30,
  "size_mb": "92.1",
  "signing": "Developer ID-signed and notarized by Apple.",
- "note": "Mac 1.0.10, build 19. Click <strong>Save and Close Block</strong> in the block editor or type <code>BCLOSE Save</code> to apply your changes and return to the drawing or sheet. <a href=\"archi-tool-guide.html#chiudi-blocco-e-salva-1010\">Istruzioni in italiano</a>.",
+ "note": "Mac and Windows 1.0.10, build 19. Click <strong>Save and Close Block</strong> in the block editor or type <code>BCLOSE Save</code> to apply your changes and return to the drawing or sheet. <a href=\"archi-tool-guide.html#chiudi-blocco-e-salva-1010\">Istruzioni in italiano</a>.",
  "dmg": "Oanarina-Archi-Tool-1.0.10.dmg",
  "sha_short": "d5b664d7bd73",
  "agent_doc": "downloads/archi-tool/AGENT-API.md",
@@ -75,13 +75,13 @@
   ]
  ],
  "windows": {
-  "exe": "Oanarina-Archi-Tool-Setup-1.0.9.exe",
+  "exe": "Oanarina-Archi-Tool-Setup-1.0.10.exe",
   "size_mb": "132.8",
-  "sha_short": "96e01754d2e6",
-  "sha256": "96e01754d2e67e86699d746ed135e49689d486e15102db4cceccde34f06b8ccb",
-  "bytes": 132795875,
-  "release": "https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.9",
-  "version": "1.0.9"
+  "sha_short": "d0714636ba37",
+  "sha256": "d0714636ba37c641dbdb0fddadee150d9c69142667d5cd2470517cb0b6681eed",
+  "bytes": 132794697,
+  "release": "https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.10",
+  "version": "1.0.10"
  },
  "sheet_tutorial": "https://youtu.be/7runIxmvS-E",
  "feedback_tutorial": "videos/archi-tool/15-retini-titoli-revisioni-it.mp4"
