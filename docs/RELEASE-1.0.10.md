@@ -16,3 +16,11 @@
 - All 1,072 local core tests passed. The [portable engine workflow](https://github.com/oanaunc/archi_tool/actions/runs/44119725565) passed on Windows and Linux with the same Swift sources.
 - The first Windows installer exposed a duplicate Space confirmation as focus moved from the command line to the canvas. The renderer now repeats only a Space press that started on the canvas. After the correction, Chromium with the production engine passed the typed block command sequence, saving with `LINE` still active, returning to the sheet and reopening the saved block. The canvas and Windows keyboard suites passed 75 checks.
 - The [final Windows app workflow](https://github.com/oanaunc/archi_tool/actions/runs/44127476258) succeeded for commit `7b25af1`. Engine bundling, icons, packaging, installation, Explorer thumbnails, the installed-app block-close/save/reopen/PDF scenario, uninstall and all renderer suites passed. The [Windows release](https://github.com/oanaunc/archi_tool/releases/tag/windows-v1.0.10) installer is unsigned, file version 1.0.10.19, 132,794,697 bytes, SHA-256 `d0714636ba37c641dbdb0fddadee150d9c69142667d5cd2470517cb0b6681eed`.
+
+## Publication and support
+
+Website commit `b7ab0e7` deployed successfully in [run 44137212685](https://github.com/oanaunc/oanarina_website/actions/runs/44137212685). The public page links both 1.0.10 installers. Complete HTTPS downloads matched both verified byte counts and checksums. Gmail confirmed Italian support reply `1a1ea8fcb75f5e51` as sent in Nicola's original thread, explaining the button, command alternatives, project saving and Mac/Windows installation.
+
+The requested iOS build could not be produced. The repository has a macOS application and a Windows shell, with no iOS app target. An iPhone SDK compile probe fails on the desktop subprocess API `Process` in `DWGConverter.swift`. An iOS application requires a port and its own distribution setup.
+
+The Mac App Store upload is processed and ready for review. A later attempt to open the review controls redirected to sign-in, where Apple reported **Failed to verify your identity**. Build 20 has been uploaded successfully. Selecting it for the store submission still requires restored App Store Connect sign-in.
