@@ -24,6 +24,28 @@ struct MainWindow: View {
                 FileTabsBar(model: model)
                 HSeparator()
             }
+            if let block = model.editingBlock {
+                HStack(spacing: 10) {
+                    Label(L10n.t("Block Editor") + " · " + block, systemImage: "square.and.pencil")
+                        .lineLimit(1)
+                    Spacer()
+                    Button {
+                        InPlaceTextEditor.commitPending(for: model)
+                        model.runCommand("BCLOSE Save")
+                    } label: {
+                        Label(L10n.t("Save and Close Block"), systemImage: "checkmark")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.accent)
+                    .foregroundStyle(Theme.accentText)
+                    .help("BCLOSE Save")
+                }
+                .font(Theme.fontSmall)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Theme.panel)
+                HSeparator()
+            }
             HStack(spacing: 0) {
                 workspace
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

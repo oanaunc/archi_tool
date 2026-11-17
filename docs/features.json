@@ -6010,13 +6010,13 @@
   "area": "Blocks & Content",
   "group": "Blocks",
   "name": "Block editor",
-  "command": "BEDIT (BE)",
-  "description": "Edit block definition in place or in editor.",
+  "command": "BEDIT (BE), BCLOSE (BC)",
+  "description": "Edit a block definition in isolation. Save and Close Block updates its references and returns to the drawing or sheet.",
   "reference": "AutoCAD, LibreCAD",
   "phase": 2,
   "priority": "must",
   "status": "done",
-  "acceptance": "Block editor insertions render and explode correctly and round-trip via DXF."
+  "acceptance": "Save and Close Block saves the definition, returns to the previous workspace, supports Undo, and persists the changes in .archi."
  },
  {
   "id": "BLK-005",

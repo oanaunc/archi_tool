@@ -299,9 +299,7 @@ final class FileController: EditorHost {
             let d = try FileController.readDocument(url)
             model.editor.replaceDocument(d, url: url)
             model.showStart = false
-            model.mode = .plan
-            // Re-open the Model / layout tab that was current when the drawing was saved (CTAB, APP-013).
-            LayoutTabs.restore(model)
+            model.restoreDocumentWorkspace()
             RecentFiles.add(url)
             SyncWatcher.track(model, url: url, doc: d)
             model.editor.print("Opened \(url.lastPathComponent) — \(d.entities.count) objects, \(d.elements.count) building elements.")

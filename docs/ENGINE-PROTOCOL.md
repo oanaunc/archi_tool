@@ -77,12 +77,13 @@ All return the document info:
 ```json
 {"title":"Cedar House","path":"C:\\…\\Cedar House.archi","dirty":false,"units":"millimeters","unitAbbreviation":"mm",
  "levels":[{"id":0,"name":"Ground Floor","elevation":0,"height":3200},{"id":1,"name":"Upper Floor","elevation":3200,"height":3000}],
- "currentLevel":"Ground Floor","currentLevelId":0,"layouts":["Sheet 1"],"extents":[-10000,-18000,32000,20000],"empty":false,
+ "currentLevel":"Ground Floor","currentLevelId":0,"layouts":["Sheet 1"],"editingBlock":null,"extents":[-10000,-18000,32000,20000],"empty":false,
  "project":"Cedar House","currentLayer":"0","entities":408,"elements":59,"canUndo":false,"canRedo":false}
 ```
 `open` reads every format the Mac opens (`.archi`, `.archiz`, `.archit`, `.json`, `.dxf`, IFC and the importers);
 non-native files open untitled. `save` writes by extension (default `.archi`). `extents` = ZOOM Extents of the current
-level (`empty:true` and a 10 m square when nothing is drawn).
+level (`empty:true` and a 10 m square when nothing is drawn). `editingBlock` gives the block name while `BEDIT`
+is active. A shell can run `BCLOSE Save` with `cancel:true` from its Save and Close Block button.
 
 ### command.run `{line, cancel?}` → prompt state
 Runs a command line as if typed and Enter pressed (`"LINE"`, `"LINE 0,0 1000,0 "`, `"WALL"`…); spaces separate

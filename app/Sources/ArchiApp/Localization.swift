@@ -57,6 +57,8 @@ enum L10n {
         "AI Agents": ["Agenți AI", "KI-Agenten", "Agents IA", "Agentes IA", "Agenti IA"],
         "Automation": ["Automatizare", "Automatisierung", "Automatisation", "Automatización", "Automazione"],
         "Block & Reference": ["Bloc și referință", "Block & Referenz", "Bloc et référence", "Bloque y referencia", "Blocco e riferimento"],
+        "Block Editor": ["Editor de blocuri", "Blockeditor", "Éditeur de blocs", "Editor de bloques", "Editor blocchi"],
+        "Save and Close Block": ["Salvează și închide blocul", "Block speichern und schließen", "Enregistrer et fermer le bloc", "Guardar y cerrar bloque", "Chiudi blocco e salva"],
         "Booleans": ["Operații booleene", "Boolesche Operationen", "Booléens", "Booleanas", "Booleane"],
         "Build": ["Construcție", "Bauen", "Construire", "Construir", "Costruisci"],
         "Build+": ["Construcție+", "Bauen+", "Construire+", "Construir+", "Costruisci+"],

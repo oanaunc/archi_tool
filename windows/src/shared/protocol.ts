@@ -11,6 +11,7 @@ export interface LevelInfo { id?: number; name: string; elevation: number; heigh
 export interface DocInfo {
   title: string; path?: string | null; dirty: boolean; units: string;
   levels: LevelInfo[]; currentLevel: string; layouts: string[]; extents: [number, number, number, number];
+  editingBlock?: string | null;
   unitAbbreviation?: string; currentLevelId?: number; empty?: boolean; project?: string; currentLayer?: string; entities?: number; elements?: number; canUndo?: boolean; canRedo?: boolean;
 }
 

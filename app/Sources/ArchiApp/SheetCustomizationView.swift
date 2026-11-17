@@ -61,7 +61,7 @@ struct SheetCustomizationView: View {
                     }
                     Text("Choose your own drawing block, including blocks imported from DXF. Its base point anchors at the lower-right of the frame; draw left and up in paper mm.").font(.caption).foregroundStyle(.secondary)
                     Button("Redesign Cartiglio Drawing…") { redesign() }
-                    Text("Opens a drawing block in 2D: edit lines, texts and images with normal tools. BCLOSE Save finishes; return to Sheet. Shared blocks update every sheet using them.").font(.caption).foregroundStyle(.secondary)
+                    Text("Edit lines, texts and images with normal 2D tools. Save and Close Block returns to this sheet. Shared blocks update every sheet using them.").font(.caption).foregroundStyle(.secondary)
                     Divider()
                     SheetRevisionControls(model: model, layoutIndex: layoutIndex)
                     TitleBlockFieldControls(model: model, layoutIndex: layoutIndex)
@@ -163,7 +163,7 @@ struct SheetCustomizationView: View {
             name = unique
         }
         guard let name else { return }
-        model.showSheetCustomization = false; model.mode = .plan
+        model.showSheetCustomization = false
         let quoted = name.replacingOccurrences(of: "\"", with: "\\\"")
         model.runCommand("BEDIT \"\(quoted)\"")
     }

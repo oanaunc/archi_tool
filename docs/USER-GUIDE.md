@@ -395,7 +395,7 @@ thumbnails, search, favourites and recents; drag a block onto the plan or the 3D
 `XCLIP` clips the display of a block reference (the clip moves with the block) and `BTABLE` stores named parameter sets
 for dynamic blocks.
 
-**Round 7 blocks.** `BEDIT` opens the block editor (`BSAVE`, `BCLOSE`), and `REFEDIT`, `REFSET` and
+**Round 7 blocks.** `BEDIT` opens the block editor. Click **Save and Close Block** above the drawing, or type `BCLOSE Save` (`BC S`), to apply your edits to every instance and return to the previous view or sheet. `BCLOSE Discard` discards changes since the last block save. `BSAVE` saves the definition with the block editor open. Save the `.archi` project separately to keep the updated definition on disk. `REFEDIT`, `REFSET` and
 `REFCLOSE` edit blocks and references in place. Blocks that would contain themselves are refused. Groups can contain building
 elements. `LIBRARYINSTALL` installs the bundled block and annotation symbol library. `LAYERNOTIFY` and `LAYRECONCILE` warn
 about new layers and mark them as reviewed.
@@ -1386,7 +1386,7 @@ command inside the app. This table is generated from the command definitions in 
 | `ATTSYNC` |  | Updates block references with the current attribute definitions of their block. |
 | `BASE` |  | Sets the drawing's insertion base point (INSBASE), used when it is inserted as a block. |
 | `BATTMAN` | `-BATTMAN` | Edits the attribute definitions of a block (prompt, default, tag, modes, order, delete) and syncs references. |
-| `BCLOSE` |  | Closes the block editor, saving or discarding the changes. |
+| `BCLOSE` | `BC` | Closes the block editor, saving or discarding the changes, and returns to the drawing. |
 | `BCOUNT` | `BLOCKCOUNT` | Counts block references (including nested ones) in the drawing or a selection. |
 | `BEDIT` | `BE`, `BLOCKEDITOR` | Opens a block definition in the block editor (only its objects are shown; new objects join the block). BCLOSE saves. |
 | `BFLIP` | `FLIP`, `BLOCKFLIP` | Flips block references about their insertion point (dynamic flip parameter, state kept in the reference). |
@@ -2257,7 +2257,7 @@ Aliases: `PSPRESET`, `NAMEDPAGESETUP`. Viewport positions/scales, geometry and t
 
 Double-click drawing text to edit it in place. Font and Height are on the first toolbar row; **Apply** and **Cancel** are on the second. Apply saves the edit and closes the editor; Escape discards it. Single-line text also accepts Enter; multiline text accepts Command-Return. **Command-S saves pending text and formatting in the project**, including a height typed with an Italian decimal comma. An applied edit is one Undo step.
 
-On a sheet, open **Customize Sheet**. **Cartiglio drawing** selects the built-in title block or any project block, including one imported from DXF. A custom block uses paper millimetres, with its base point anchored at the lower-right of the frame: draw left and up from it. **Redesign Cartiglio Drawing** opens the selected block in 2D; finish with `BCLOSE Save`. Shared blocks update every sheet using them.
+On a sheet, open **Customize Sheet**. **Cartiglio drawing** selects the built-in title block or any project block, including one imported from DXF. A custom block uses paper millimetres, with its base point anchored at the lower-right of the frame: draw left and up from it. **Redesign Cartiglio Drawing** opens the selected block in 2D. Click **Save and Close Block** to return to the sheet. Shared blocks update every sheet using them.
 
 **Revision history / revisioni** is available in Customize Sheet and in the Sheets panel. Choose **Above cartiglio**, **Inside cartiglio**, or **Cartiglio fields only**. Fields only removes the separate history table and keeps the current revision in the cartiglio. Inside adds a history band under the built-in fields; in a custom cartiglio, reserve the appropriate space yourself. Table width (40–1000 mm) and row height (3–30 mm) are configurable. Use **Move element → Revision history table** to adjust its offset independently, or its checkbox to hide it. Revisions still update when the table is hidden.
 

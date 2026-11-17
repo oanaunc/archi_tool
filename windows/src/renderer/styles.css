@@ -111,6 +111,10 @@ body.alt-cues .titlebar .menubar .mn { display: block; }
 .badge button { height: 18px; padding: 0 7px; font-size: 10px; color: var(--dim); }
 .badge button.sel { background: var(--accent); color: var(--accent-text); font-weight: 600; }
 .badge .lvl { font-size: 10px; color: var(--dim); padding: 0 7px; }
+.block-editor-bar { display: flex; flex: none; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 10px; background: var(--panel); border-bottom: 1px solid var(--sep); }
+.block-editor-bar[hidden] { display: none; }
+.block-editor-bar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.block-editor-bar button { flex: none; }
 .panel-handle { width: 1px; background: var(--sep); position: relative; flex: none; }
 .panel-handle::after { content: ""; position: absolute; left: -3px; right: -3px; top: 0; bottom: 0; cursor: ew-resize; }
 

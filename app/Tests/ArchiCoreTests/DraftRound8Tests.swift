@@ -230,7 +230,7 @@ final class DraftRound8Tests: XCTestCase {
 
     // MARK: Block editor and REFEDIT (BLK-004 / BLK-005 / BLK-006)
 
-    func testBlockEditorSavesIntoDefinition() async {
+    func testBlockEditorSavesIntoDefinition() async throws {
         let ed = Editor()
         ed.doc.blocks["DESK"] = Block(name: "DESK", basePoint: .zero, entities: [Entity(id: 1, layer: "0", geometry: .line(LineGeom(Vec2(0, 0), Vec2(1200, 0))))])
         let r1 = ed.doc.add(.insert(InsertGeom(block: "DESK", position: Vec2(5000, 0))))
@@ -241,11 +241,15 @@ final class DraftRound8Tests: XCTestCase {
         await ed.run("LINE 0,0 0,600  ")
         await ed.run("BEDIT OTHER ")
         XCTAssertTrue(ed.log.contains { $0.contains("already being edited") })
-        await ed.run("BCLOSE S ")
+        await ed.run("BC Save")
         XCTAssertNil(BlockEditing.editingBlock(ed.doc))
         XCTAssertEqual(ed.doc.blocks["DESK"]?.entities.count, 2)
         XCTAssertEqual(ed.doc.entities.map(\.id), [r1])
         XCTAssertTrue(PickFilter(ed.doc).pickable(ed.doc.entity(r1)!))
+        let saved = try ArchiFile.decode(ArchiFile.encode(ed.doc))
+        XCTAssertNil(BlockEditing.editingBlock(saved))
+        XCTAssertEqual(saved.blocks["DESK"]?.entities.count, 2)
+        XCTAssertTrue(PickFilter(saved).pickable(try XCTUnwrap(saved.entity(r1))))
         // Undo returns to the editor state.
         ed.undo()
         XCTAssertEqual(BlockEditing.editingBlock(ed.doc), "DESK")
@@ -260,6 +264,7 @@ final class DraftRound8Tests: XCTestCase {
         await ed.run("INSERT NEWB 100,0 1 0 ")
         await ed.run("BCLOSE S ")
         XCTAssertTrue(ed.log.contains { $0.contains("would contain itself") })
+        XCTAssertEqual(BlockEditing.editingBlock(ed.doc), "NEWB")
         await ed.run("BCLOSE D ")
         XCTAssertNil(BlockEditing.editingBlock(ed.doc))
     }

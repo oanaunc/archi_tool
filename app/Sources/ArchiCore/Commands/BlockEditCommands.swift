@@ -15,8 +15,7 @@ enum BlockEditCommands {
             ed.selection = []
             do {
                 let c = try BlockEditing.beginBlockEdit(n, doc: &ed.doc)
-                ed.print("Editing block \"\(BlockEditing.editingBlock(ed.doc) ?? n)\" (\(c) object(s)). BSAVE saves, BCLOSE closes the block editor.")
-                ed.host?.perform(.zoomExtents, editor: ed)
+                ed.print("Editing block \"\(BlockEditing.editingBlock(ed.doc) ?? n)\" (\(c) object(s)). Use BCLOSE Save to save and return to the drawing.")
             } catch { throw fail(error) }
         }
     }
@@ -27,12 +26,12 @@ enum BlockEditCommands {
         }
     }
     static var bclose: CommandDef {
-        CommandDef("BCLOSE", category: "Blocks", summary: "Closes the block editor, saving or discarding the changes.") { ed in
+        CommandDef("BCLOSE", aliases: ["BC"], category: "Blocks", summary: "Closes the block editor, saving or discarding the changes, and returns to the drawing.") { ed in
             guard let n = BlockEditing.editingBlock(ed.doc) else { throw CommandError.invalid("The block editor is not open.") }
             let k = try await ed.getKeyword("Save changes to \(n)?", ["Save", "Discard"], defaultValue: "Save") ?? "Save"
-            ed.selection = []
             do {
                 let c = try BlockEditing.endBlockEdit(save: k == "Save", doc: &ed.doc)
+                ed.selection = []
                 ed.print(k == "Save" ? "Block \"\(n)\" saved (\(c) object(s)); references updated." : "Changes to \"\(n)\" discarded.")
                 ed.host?.perform(.regen, editor: ed)
             } catch { throw fail(error) }

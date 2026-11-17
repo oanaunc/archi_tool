@@ -745,7 +745,7 @@ This register lists every feature planned for Oanarina Archi Tool, a free (GPL-3
 | BLK-001 | Block definition | BLOCK (B) | 1 | must | ✅ done |
 | BLK-002 | Insert block | INSERT (I) | 1 | must | ✅ done |
 | BLK-003 | Write block to file | WBLOCK (W) | 2 | should | ✅ done |
-| BLK-004 | Block editor | BEDIT (BE) | 2 | must | ✅ done |
+| BLK-004 | Block editor | BEDIT (BE), BCLOSE (BC) | 2 | must | ✅ done |
 | BLK-005 | Refedit in place | REFEDIT | 2 | should | ✅ done |
 | BLK-006 | Nested blocks | — | 1 | must | ✅ done |
 | BLK-007 | Block library panel | — | 2 | must | ✅ done |

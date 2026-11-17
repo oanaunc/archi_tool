@@ -110,6 +110,7 @@ export class PlanCanvas {
   private dynInput: { field: 0 | 1; values: [string, string] } | null = null;
   private zoomHistory: [number, number, number][] = [];
   private userZoomed = false;
+  private editingBlock: string | null = null;
   private hint = "";
   private swallowSpaceUp = false;
 
@@ -148,6 +149,7 @@ export class PlanCanvas {
   async loadDrawList() {
     const app = this.app;
     const seq = ++this.drawSeq;
+    const editingBlock = app.info?.editingBlock ?? null;
     const ext = app.info?.extents;
     const pad = ext ? Math.max(ext[2] - ext[0], ext[3] - ext[1]) : 1e6;
     const rect = ext ? [ext[0] - pad, ext[1] - pad, ext[2] + pad, ext[3] + pad] : [-1e7, -1e7, 1e7, 1e7];
@@ -168,7 +170,13 @@ export class PlanCanvas {
       if (seq !== this.drawSeq) return;
       if (sv?.viewports) { this.viewports = sv.viewports; this.sheetGrid = Number(sv.grid ?? 0); }
     }
-    if (layoutKey !== this.lastLayout) { this.lastLayout = layoutKey; this.selectedViewport = null; if (paper) this.fitPaper(); else if (this.entries.length) this.zoomExtents(false); }
+    const blockEditorChanged = editingBlock !== this.editingBlock;
+    if (layoutKey !== this.lastLayout || blockEditorChanged) {
+      this.lastLayout = layoutKey;
+      this.editingBlock = editingBlock;
+      this.selectedViewport = null;
+      if (paper || blockEditorChanged || this.entries.length) this.zoomExtents(false);
+    }
     this.byId = new Map(this.entries.filter((e) => e.id).map((e) => [e.id!, e]));
     if (this.needsInitialZoom && this.entries.length && !params.layout) { this.needsInitialZoom = false; this.zoomExtents(false); }
     this.contentDirty = true; this.schedule();

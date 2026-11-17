@@ -27,6 +27,22 @@ extension AppSelfTests {
             check(ribbon.fittingSize.height >= 116, "ribbon keeps its height at \(Int(width)) pt")
         }
         check(m.editor.registry.lookup("RB")?.name == "CLEANSCREENOFF", "RIBBON / RB recovery command registered")
+        let blockModel = AppModel()
+        LayoutTabs.select(blockModel, 1)
+        blockModel.editor.transaction("Block editor test") { doc in
+            _ = try? BlockEditing.beginBlockEdit("TITLE", doc: &doc)
+        }
+        check(blockModel.editingBlock == "TITLE" && blockModel.mode == .plan, "block editor opens as a 2D workspace from a sheet")
+        blockModel.syncCurrentTab()
+        let resumedBlock = AppModel(document: blockModel.doc)
+        resumedBlock.restoreDocumentWorkspace()
+        resumedBlock.editor.transaction("Save and Close Block") { doc in
+            _ = try? BlockEditing.endBlockEdit(save: true, doc: &doc)
+        }
+        check(resumedBlock.editingBlock == nil && resumedBlock.mode == .sheet && resumedBlock.activeLayout == 0,
+              "closing a reopened block returns to its original sheet")
+        resumedBlock.editor.undo()
+        check(resumedBlock.editingBlock == "TITLE" && resumedBlock.mode == .plan, "undo reopens the block editor")
         // The Mac composition uses the same per-sheet section graphics as the portable PDF writer.
         var doc = ArchiDocument()
         _ = doc.addElement(.wall(WallGeom(start: .zero, end: Vec2(5000, 0), thickness: 200, height: 3000)))

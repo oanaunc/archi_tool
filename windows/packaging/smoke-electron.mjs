@@ -133,6 +133,30 @@ const before = await itemCount();
 required("plan has drawing items", before > 0, `${before} DrawItems`);
 if (!ok) await finish(1);
 
+if (!web) {
+  try {
+    const bar = page.locator(".block-editor-bar");
+    await page.locator(".badge button", { hasText: "Sheet" }).click();
+    await typeLine("BEDIT SMOKE-BLOCK");
+    await bar.waitFor({ state: "visible" });
+    await page.waitForFunction(() => window.archiApp.mode === "2D");
+    await typeLine("CIRCLE 0,0 250");
+    await typeLine("LINE");
+    await bar.locator("button").click();
+    await bar.waitFor({ state: "hidden" });
+    await page.waitForFunction(() => window.archiApp.mode === "Sheet" && !window.archiApp.prompt.active);
+    await typeLine("BEDIT SMOKE-BLOCK");
+    await bar.waitFor({ state: "visible" });
+    required("Save and Close Block restores the sheet and saves the block definition", await itemCount() > 0, await lastLog());
+    await typeLine("BCLOSE Discard");
+    await bar.waitFor({ state: "hidden" });
+    await page.locator(".badge button", { hasText: "2D" }).click();
+  } catch (e) {
+    required("Save and Close Block restores the sheet and saves the block definition", false, `${e}\n${await lastLog()}`);
+    await finish(1);
+  }
+}
+
 // ---- 2b. a floating panel is a separate OS window (FloatingPanels.swift's NSPanel) ----
 if (!web) {
   await page.evaluate(() => window.archiWorkspace?.floatPanel("Layers")).catch(() => {});

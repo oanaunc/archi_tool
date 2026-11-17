@@ -84,6 +84,7 @@ final class AppModel: ObservableObject {
 
     /// Keeps the core CTAB variable (read by VIEWTITLE, LAYOUT and other sheet commands) in step with the sheet shown in the window.
     func syncCurrentTab() {
+        guard editingBlock == nil else { return }
         let layouts = editor.doc.layouts
         let name = mode == .sheet && layouts.indices.contains(activeLayout) ? layouts[activeLayout].name : "Model"
         if editor.doc.variable("CTAB") != name { editor.doc.setVariable("CTAB", name) }
@@ -175,7 +176,12 @@ final class AppModel: ObservableObject {
         editor = Editor(document: document)
         files = FileController(model: self)
         editor.host = files
-        editor.onChange = { [weak self] in self?.revision &+= 1; self?.checkLayerNotify() }
+        editor.onChange = { [weak self] in
+            guard let self else { return }
+            self.syncBlockEditorWorkspace()
+            self.revision &+= 1
+            self.checkLayerNotify()
+        }
         editor.onSelectionChange = { [weak self] in self?.revision &+= 1 }
         editor.onPromptChange = { [weak self] in
             guard let self else { return }
@@ -190,9 +196,33 @@ final class AppModel: ObservableObject {
         autosave = AutosaveSession(model: self)
         AppModel.instances.removeAll { $0.model == nil }
         AppModel.instances.append(WeakModel(model: self))
+        syncBlockEditorWorkspace()
     }
 
     var doc: ArchiDocument { editor.doc }
+    var editingBlock: String? { BlockEditing.editingBlock(doc) }
+    private var blockEditorReturn: (mode: WorkspaceMode, layout: Int)?
+
+    private func syncBlockEditorWorkspace() {
+        if editingBlock != nil, blockEditorReturn == nil {
+            blockEditorReturn = (mode, activeLayout)
+            mode = .plan
+            zoomExtents()
+        } else if editingBlock == nil, let previous = blockEditorReturn {
+            blockEditorReturn = nil
+            activeLayout = previous.layout
+            mode = previous.mode
+            if mode == .plan || mode == .split { zoomExtents() }
+        }
+    }
+
+    /// An open file can contain an unfinished block edit and the sheet to return to in CTAB.
+    func restoreDocumentWorkspace() {
+        blockEditorReturn = nil
+        mode = .plan
+        LayoutTabs.restore(self)
+        if editingBlock != nil { syncBlockEditorWorkspace() }
+    }
 
     // MARK: New layer notification (LAY-020)
     /// Layer names and reconciled list at the last check; a new unreconciled layer prints a notice and shows in Alerts.

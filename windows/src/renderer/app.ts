@@ -37,6 +37,7 @@ export class App {
   showStart = false;
   showScriptConsole = false;
   activeLayout = 0; // 0 = Model, i = layouts[i-1]
+  private blockEditorReturn: { mode: Mode; layout: number } | null = null;
   live = { x: 0, y: 0, zoomPercent: 0, snapHint: "" as string };
   engineError = "";
   commandInput = "";
@@ -107,13 +108,28 @@ export class App {
     const all = what.includes("all");
     const jobs: Promise<void>[] = [];
     if (what.includes("document")) what = [...what, "layers", "drawing", "properties", "history"];
-    if (all || what.includes("document") || what.includes("levels")) jobs.push(this.tryCall("doc.info").then((i) => { if (i) { this.info = i; this.emit("doc"); } }));
+    if (all || what.includes("document") || what.includes("levels")) jobs.push(this.tryCall("doc.info").then((i) => { if (i) this.updateDocumentInfo(i); }));
     if (all || what.includes("layers")) jobs.push(this.tryCall("panel.layers").then((l) => { if (l) { this.layers = { current: l.current ?? this.sysvars.CLAYER ?? "0", layers: l.layers ?? l.items ?? [] }; this.emit("layers"); } }));
     if (all || what.includes("selection")) jobs.push(this.tryCall("select.get").then((s) => { if (s) { this.selection = { ids: (s.ids ?? []).map(String), summary: s.summary ?? "" }; this.emit("selection"); } }));
     if (all || what.includes("sysvars")) jobs.push(this.refreshVars());
     await Promise.all(jobs);
     if (all || what.includes("drawing") || what.includes("document")) this.emit("drawing");
     if (all || what.some((w) => ["properties", "history", "document", "selection", "layers", "levels", "drawing"].includes(w))) this.emit("panel");
+  }
+
+  private updateDocumentInfo(info: DocInfo) {
+    this.info = info;
+    if (info.editingBlock && !this.blockEditorReturn) {
+      this.blockEditorReturn = { mode: this.mode, layout: this.activeLayout };
+      this.mode = "2D";
+      this.emit("ui");
+    } else if (!info.editingBlock && this.blockEditorReturn) {
+      this.mode = this.blockEditorReturn.mode;
+      this.activeLayout = this.blockEditorReturn.layout;
+      this.blockEditorReturn = null;
+      this.emit("ui");
+    }
+    this.emit("doc");
   }
   async refreshVars() {
     const names = [...TOGGLES.map((t) => t.varName), "CLAYER", "CLEVEL", "INSUNITS", "CECOLOR", "CELTYPE", "CELWEIGHT", "DIMSTYLE", "TEXTSIZE", "CANNOSCALE", "GRIDUNIT"];
@@ -163,11 +179,11 @@ export class App {
   }
 
   // ---- commands ----
-  async runCommand(line: string) {
+  async runCommand(line: string, cancel = false) {
     if (!line.trim()) return;
     this.showStart && this.closeStart();
     if (line.startsWith("@")) return this.action(line);
-    const st = await this.tryCallLogged("command.run", { line });
+    const st = await this.tryCallLogged("command.run", { line, cancel });
     if (st) this.setPrompt(st);
     this.canvas?.focus();
   }
@@ -217,7 +233,8 @@ export class App {
     const kind = this.uiHooks.newTemplate?.(template) ?? template;
     const i = await this.tryCallLogged("doc.new", { template: kind });
     if (i) { this.info = i; await this.uiHooks.afterNew?.(template); }
-    this.mode = "2D"; this.closeStart();
+    this.blockEditorReturn = null;
+    this.setUI("mode", "2D"); this.closeStart();
     await this.refresh(["all"]);
     this.canvas?.zoomExtents();
   }

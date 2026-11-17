@@ -25,6 +25,24 @@ extension EngineSessionTests {
         if !s.editor.isIdle { _ = try await s.call("input.key", obj([("key", .string("Enter"))])) }
     }
 
+    @MainActor func testBlockEditorDocumentInfoFollowsCloseAndUndo() async throws {
+        let (s, _) = workspaceSession()
+        try await wsRun(s, "BEDIT Desk")
+        var info = try await s.call("doc.info")
+        XCTAssertEqual(info["editingBlock"]?.stringValue, "Desk")
+        try await wsRun(s, "CIRCLE 0,0 25")
+        try await wsRun(s, "BCLOSE Save")
+        info = try await s.call("doc.info")
+        XCTAssertNil(info["editingBlock"]?.stringValue)
+        XCTAssertEqual(s.editor.doc.blocks["Desk"]?.entities.count, 1)
+        _ = try await s.call("edit.undo")
+        info = try await s.call("doc.info")
+        XCTAssertEqual(info["editingBlock"]?.stringValue, "Desk")
+        _ = try await s.call("edit.redo")
+        info = try await s.call("doc.info")
+        XCTAssertNil(info["editingBlock"]?.stringValue)
+    }
+
     @MainActor func testWorkspacePanelCommands() async throws {
         let (s, sink) = workspaceSession()
         for n in ["NOTIFICATIONS", "NAVIGATOR", "ADCENTER", "OUTLINERPANEL", "FLOATPANEL", "TILEDVIEWS", "DVIEW", "PERSPECTIVE", "KEYBOARDNAV", "ASSISTANT",

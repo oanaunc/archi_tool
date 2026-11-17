@@ -12,6 +12,7 @@ import { CommandLine } from "./ui/commandline";
 import { StatusBar } from "./ui/statusbar";
 import { StartScreen } from "./ui/start";
 import { PlanCanvas } from "./canvas/plan-canvas";
+import { InPlaceTextEditor } from "./canvas/text-editor";
 import { help, closeMenus } from "./ui/menu";
 import { icon } from "./icons";
 import { View3D, EngineBridge } from "./view3d";
@@ -25,6 +26,7 @@ import { installHelp } from "./ui/help";
 import { installDocTools } from "./doctools";
 import { installSheets, layoutTabsVisible } from "./sheets";
 import { installWorkspace } from "./workspace";
+import { t } from "./workspace/l10n";
 import { installStandards } from "./standards";
 import { installSystem, rankCommands, ribbonTitles } from "./system";
 
@@ -197,10 +199,28 @@ const ws = installWorkspace(app, {
 
 // ---- layout ----
 const mainRow = h("div", { class: "main-row" }, workspace);
+const blockEditorName = h("span");
+const closeBlock = h("button", { class: "flatbtn prominent", title: "BCLOSE Save" });
+closeBlock.addEventListener("mousedown", (event) => {
+  if (InPlaceTextEditor.current) event.preventDefault();
+});
+closeBlock.addEventListener("click", async () => {
+  await InPlaceTextEditor.current?.commit();
+  await app.runCommand("BCLOSE Save", true);
+});
+const blockEditorBar = h("div", { class: "block-editor-bar" }, blockEditorName, closeBlock);
+function renderBlockEditorBar() {
+  const block = app.info?.editingBlock;
+  blockEditorBar.hidden = !block;
+  blockEditorName.textContent = block ? `${t("Block Editor")} · ${block}` : "";
+  closeBlock.textContent = t("Save and Close Block");
+}
 function layout() {
   clear(root);
   root.append(titlebar.el);
   if (!app.cleanScreen) root.append(ribbon.el, sheets.strip.el, ws.fileTabs.el, h("div", { class: "hsep" }));
+  renderBlockEditorBar();
+  root.append(blockEditorBar);
   mainRow.replaceChildren(workspace);
   if (app.showPanels && !app.cleanScreen) { panels.el.style.width = app.panelWidth + "px"; mainRow.append(handle, panels.el); }
   root.append(mainRow);
@@ -211,7 +231,7 @@ function layout() {
 }
 let lastMode = app.mode;
 app.on("ui", () => { layout(); if (lastMode !== app.mode) { lastMode = app.mode; renderWorkspace(); } else renderBadge(); });
-app.on("doc", () => { renderBadge(); renderLayoutTabs(); });
+app.on("doc", () => { renderBlockEditorBar(); renderBadge(); renderLayoutTabs(); });
 app.hostView = { zoomTo: (r) => plan.zoomTo(r), pan: (d) => { plan.view.cx += d[0]; plan.view.cy += d[1]; plan.refresh(); } };
 app.canvas = { zoomExtents: () => plan.zoomExtents(), zoomBy: (f) => plan.zoomBy(f), zoomWindow: () => plan.zoomWindow(), focus: () => plan.focus(), refresh: () => plan.refresh() };
 layout(); renderWorkspace();

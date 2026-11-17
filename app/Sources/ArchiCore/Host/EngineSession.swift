@@ -342,6 +342,7 @@ public final class EngineSession {
         o.set("currentLevel", doc.level(doc.currentLevel)?.name ?? "")
         o.set("currentLevelId", doc.currentLevel)
         o.set("layouts", EngineJSON.strings(doc.layouts.map(\.name)))
+        o.set("editingBlock", EngineJSON.optString(BlockEditing.editingBlock(doc)))
         let b = extents()
         o.set("extents", b.isEmpty ? EngineJSON.numbers([0, 0, 10000, 10000]) : EngineDrawJSON.rect(b))
         o.set("empty", b.isEmpty)
