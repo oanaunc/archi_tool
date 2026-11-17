@@ -111,7 +111,9 @@ for k, v in {'V': REL['asset_version'], 'FEATURES': str(REL['features']), 'TOTAL
     tpl = tpl.replace('{{' + k + '}}', v)
 assert '{{' not in tpl, re.findall(r'\{\{\w+\}\}', tpl)
 main = tpl
-page = page.replace('</head>', open(os.path.join(HERE, 'page_assets.html'), encoding='utf-8').read().replace('{{V}}', REL['asset_version']) + '\n</head>', 1)
+assets = open(os.path.join(HERE, 'page_assets.html'), encoding='utf-8').read()
+assets = assets.replace('{{V}}', REL['asset_version']).replace('{{RELEASE_VERSION}}', REL['version'])
+page = page.replace('</head>', assets + '\n</head>', 1)
 
 start = page.index('<section class="contact-area section-padding-100 bg-img bg-overlay has-bg-img editor-breadcrumb"')
 end = page.index('</main>', start) + len('</main>')

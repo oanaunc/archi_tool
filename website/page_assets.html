@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const rb = document.getElementById('at-replay'); if (rb) rb.addEventListener('click', play);
   // Feature explorer
   const areasEl = document.getElementById('at-areas'), listEl = document.getElementById('at-list'), q = document.getElementById('at-q'), countEl = document.getElementById('at-count');
-  if (areasEl) fetch('downloads/archi-tool/features.json?v={{V}}').then(r => r.json()).then(data => {
+  if (areasEl) fetch('downloads/archi-tool/features.json?v={{RELEASE_VERSION}}').then(r => r.json()).then(data => {
     const keys = Object.keys(data.areas); let current = keys[0];
     const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const render = () => {
