@@ -10,3 +10,8 @@
 - Apple accepted and stapled the app (`8df71121-3479-48e9-87fe-103d07d1a0f5`) and DMG (`ef534e26-78f5-4bee-a124-169954e2ae0e`). Gatekeeper accepted both. The DMG is 92,108,613 bytes with SHA-256 `d5b664d7bd73e8deb9f6c62ba60da599b72b8bb99fa2a9ccc0908bb50fb419fc`.
 - Mac App Store version **1.0.10 (20)** passed sandbox-preview, packaging, signature, profile and archive-symbol checks. Xcode confirmed upload at 18:08 Europe/Bucharest on 17 November 2026. [Build 20 in TestFlight](https://appstoreconnect.apple.com/teams/54f57056-d9bb-4a38-aad1-31c9a6ba5707/apps/6823133541/testflight/macos/8547c2d6-1883-4f7b-a5e5-f81fb757b100) shows **Ready to Submit**.
 - Website commit `ce083aa` deployed through [run 44122891723](https://github.com/oanaunc/oanarina_website/actions/runs/44122891723). The complete DMG retrieved from the [public download page](https://www.oanarinaldi.com/archi-tool.html) matched the verified artifact byte for byte. The Italian instructions and feature catalogue are live.
+
+## Shared engine and Windows keyboard input
+
+- All 1,072 local core tests passed. The [portable engine workflow](https://github.com/oanaunc/archi_tool/actions/runs/44119725565) passed on Windows and Linux with the same Swift sources.
+- The first Windows installer exposed a duplicate Space confirmation as focus moved from the command line to the canvas. The renderer now repeats only a Space press that started on the canvas. After the correction, Chromium with the production engine passed the typed block command sequence, saving with `LINE` still active, returning to the sheet and reopening the saved block. The canvas and Windows keyboard suites passed 75 checks.
