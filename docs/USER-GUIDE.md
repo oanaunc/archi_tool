@@ -2309,3 +2309,11 @@ Select a door/window label and change **Content** in **Properties**, double-clic
 Live tags expose **Label Mode** in Properties: **Manual** indicates a text override. Set it to **Automatic** to restore the linked value, or run `TAGLABEL`, select the labels, finish selection with Enter, and choose `Automatic`. `OPENINGSIZES` explicitly refreshes matching size labels to automatic dimensions. Changing only font/height keeps a live label automatic.
 
 To show only door references, run `TAGLABEL` (`EDITLABEL`, `TAGFORMAT`), select the existing door labels, press Enter, choose `Field`, then type `mark`. The existing bubbles now show the door's Mark instead of width × height. Select each actual door and set **Mark** to `D1`, `D2`, `D3`, etc., or use `MARKS Set`. `MARKS Renumber No` assigns reading-order references `D01`, `D02`, etc. To add missing references use **Annotate → Tag All** (`TAGALL Doors`); existing size labels no longer prevent reference tags from being added. Commands and property edits are also available through the scripting/agent API on both platforms.
+
+## Chiudi blocco e salva (1.0.10)
+
+1. Apri il blocco con un doppio clic nel disegno oppure digita `BEDIT` e inserisci il nome del blocco.
+2. Quando hai finito, clicca **Chiudi blocco e salva** nella barra sopra il disegno. Nell'interfaccia inglese il pulsante si chiama **Save and Close Block**. Puoi anche digitare `BCLOSE Save` o `BC S`. Le modifiche si applicano a tutte le istanze del blocco e torni alla vista o alla tavola da cui sei partito.
+3. Salva il progetto `.archi` con **⌘S** su Mac o **Ctrl+S** su Windows.
+
+Per uscire scartando le modifiche dall'ultimo salvataggio del blocco, digita `BCLOSE Discard`. Se usi **Annulla** dopo aver chiuso il blocco, torni nell'editor con le modifiche ancora da confermare.

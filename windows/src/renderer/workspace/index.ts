@@ -216,11 +216,11 @@ export function installWorkspace(app: App, hooks: WorkspaceHooks) {
 
   // FLOATPANEL with a two-word panel ("Quick Props") from the menus: the shell floats it directly.
   const run = app.runCommand.bind(app);
-  app.runCommand = async (line: string) => {
+  app.runCommand = async (line, cancel) => {
     const m = /^\s*FLOATPANEL\s+(.+?)\s*$/i.exec(line);
     const tab = m ? PANEL_TABS.find((t) => t.toLowerCase() === m[1].toLowerCase()) : undefined;
     if (tab && /\s/.test(tab)) { app.print(`Command: FLOATPANEL`); floatPanel(app, tab); return; }
-    return run(line);
+    return run(line, cancel);
   };
   document.addEventListener("archi:floatPanel", (e) => floatPanel(app, String((e as CustomEvent).detail)));
   app.on("ui", () => void app.tryCall("ui.prefs", { values: { panelTab: app.panelTab } }));
