@@ -197,12 +197,8 @@ public final class EngineSession {
     }
 
     /// Cancels a running command and waits for it to unwind (as the Mac AppModel.runCommand does).
-    func cancelAndWait() async {
-        guard !editor.isIdle else { return }
-        editor.cancel()
-        var n = 0
-        while !editor.isIdle && n < 200 { await Task.yield(); n += 1 }
-    }
+    @discardableResult
+    func cancelAndWait() async -> Bool { await editor.cancelAndWait() }
 
     func updatePixels(_ p: EngineJSON) {
         if let ppu = p["pixelsPerUnit"]?.doubleValue, ppu > 0, ppu.isFinite {
@@ -479,7 +475,9 @@ public final class EngineSession {
 
     func commandRun(_ p: EngineJSON) async throws -> EngineJSON {
         let line = try string(p, "line")
-        if p["cancel"]?.boolValue == true { await cancelAndWait() }
+        if p["cancel"]?.boolValue == true, !(await cancelAndWait()) {
+            throw EngineError.failed("The current command is still stopping. Try the new command again.")
+        }
         submit(line)
         await settle()
         return promptState()

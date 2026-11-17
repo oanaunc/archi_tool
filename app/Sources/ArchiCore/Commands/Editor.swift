@@ -447,6 +447,20 @@ public final class Editor {
         cancelCommand()
     }
 
+    /// Lets a cancelled command finish before a toolbar action submits its own input.
+    @discardableResult
+    public func cancelAndWait() async -> Bool {
+        guard !isIdle else { return true }
+        cancel()
+        let clock = ContinuousClock()
+        let deadline = clock.now + .seconds(1)
+        while !isIdle && clock.now < deadline {
+            do { try await Task.sleep(for: .milliseconds(2)) }
+            catch { return false }
+        }
+        return isIdle
+    }
+
     /// Cancels the running command without interrupting a script.
     func cancelCommand() {
         queuedInputs.removeAll()

@@ -265,13 +265,12 @@ final class AppModel: ObservableObject {
     func runCommand(_ line: String) {
         placement = nil
         syncCurrentTab()
-        if !editor.isIdle { editor.cancel() }
-        let l = line
-        // Let the cancelled command unwind before starting the next one.
         Task { @MainActor in
-            var n = 0
-            while !self.editor.isIdle && n < 50 { await Task.yield(); n += 1 }
-            self.editor.submit(l)
+            guard await self.editor.cancelAndWait() else {
+                self.editor.print("The current command is still stopping. Try the new command again.")
+                return
+            }
+            self.editor.submit(line)
             self.canvas?.focus()
         }
     }
