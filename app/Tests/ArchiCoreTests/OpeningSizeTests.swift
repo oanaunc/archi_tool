@@ -239,6 +239,10 @@ import XCTest
         ed.redo()
         let restored = try ArchiFile.decode(ArchiFile.encode(ed.doc))
         XCTAssertEqual(restored.entities, ed.doc.entities)
+        let copied = ed.transformObjects([wall, tag.id], .translation(Vec2(10000, 0)), copy: true)
+        let copiedTag = try XCTUnwrap(copied.compactMap(ed.doc.entity).first)
+        XCTAssertEqual(copiedTag.props["level"], "1")
+        XCTAssertTrue(DrawListBuilder.entries(doc: ed.doc, options: options).contains { $0.id == copiedTag.id })
     }
 
     func testCopiedOpeningTagsFollowCopiedDoorAndImplicitWallOpenings() async throws {

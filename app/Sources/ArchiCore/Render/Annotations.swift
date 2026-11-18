@@ -104,6 +104,9 @@ public enum Annotations {
         }
         guard let targetID, let target = doc.element(targetID) else { return }
         rehost(&tag, to: target, doc: doc)
+        if let plan = original.props["level"].flatMap(Int.init), BIMConstraints.shown(target, onLevel: plan, doc: doc) {
+            tag.props["level"] = String(plan)
+        }
     }
 
     /// Explicit rehosting also repairs existing copied tags and clears stale manual text.
