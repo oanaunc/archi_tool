@@ -289,7 +289,7 @@ extension AppSelfTests {
         check(rendered.contains { if case .text(let t, _, _) = $0 { return t.content == "900x2100" }; return false }, "native tag edit reaches canvas and export draw list")
         model.editor.undo()
         check(Annotations.text(model.doc.entity(label)!, doc: model.doc) == "1000×2100", "native tag text edit undoes in one step")
-        let copies = model.editor.transformObjects([opening, label], .translation(Vec2(3000, 0)), copy: true)
+        let copies = Editor.transformObjects(in: &model.editor.doc, ids: [opening, label], .translation(Vec2(3000, 0)), copy: true)
         let copiedOpening = copies.first { model.doc.element($0) != nil }
         let copiedTag = copies.compactMap(model.doc.entity).first
         check(copiedTag?.props["tagOf"] == copiedOpening.map(String.init), "native copy binds a tag to the copied opening")
