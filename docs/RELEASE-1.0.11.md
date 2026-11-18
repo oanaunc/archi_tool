@@ -5,7 +5,7 @@
 - `TAGLABEL` / `EDITLABEL` / `TAGFORMAT Rehost` explicitly repairs a previously copied tag. Its native/Windows command UI and agent API retain formatting and position, clear manual text overrides and resume live values from the chosen element.
 - Undo/Redo and save/reopen use existing properties. Document format remains 6. [Italian instructions](DOOR-TAG-REPAIR-IT.md).
 
-The customer's original drawing was not supplied. Regression documents reproduce the copy-reference defect and skipped spanning-wall openings; the specific cause of every missing tag in that drawing cannot be confirmed without it. Distribution and publication checks will be recorded after completion.
+The customer's original drawing was not supplied. Regression documents reproduce the copy-reference defect and skipped spanning-wall openings; the specific cause of every missing tag in that drawing cannot be confirmed without it.
 
 ## Verification
 
@@ -28,4 +28,6 @@ The customer's original drawing was not supplied. Regression documents reproduce
 
 ## Publication
 
-The notarized Mac artifact was staged in website commit `59ed605` and deployed successfully in [hosting run 44349817171](https://github.com/oanaunc/oanarina_website/actions/runs/44349817171). A complete HTTPS download matched its verified byte count and SHA-256. The release page update and support reply are pending.
+The notarized Mac artifact was staged in website commit `59ed605` and deployed successfully in [hosting run 44349817171](https://github.com/oanaunc/oanarina_website/actions/runs/44349817171). A complete HTTPS download matched its verified byte count and SHA-256. The final [release page](https://www.oanarinaldi.com/archi-tool.html), English guide, Italian repair instructions and Windows checksum were published in website commit **`0b90383`**, deployed successfully in [hosting run 44366552900](https://github.com/oanaunc/oanarina_website/actions/runs/44366552900). Complete HTTPS reads of both live download links matched every verified byte and SHA-256 above. The guide, checksum file and implemented-feature explorer data also passed live verification. Local browser checks confirmed both new download links and working feature search.
+
+After publication and verification, Nicola received one Italian reply in his original support conversation, with the download link, installation steps, `QUOTAINFISSI Reposition Centimetres 10`, explicit `TAGLABEL` → Rehost instructions and project saving. Gmail confirmed message **`1a1efdd14616acc5`**, thread `1a11ff8507e06936`, with the **SENT** label. The reply asks for a small `.archi` example if any opening still lacks a tag, since the original drawing was not supplied.
