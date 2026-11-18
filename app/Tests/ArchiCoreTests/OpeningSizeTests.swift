@@ -211,4 +211,116 @@ import XCTest
         XCTAssertNil(ed.doc.entity(tag.id)?.props["tagTextOverride"])
     }
 
+    func testVisibleSpanningWallOpeningsGetPerPlanSizesAndReposition() async throws {
+        var doc = ArchiDocument()
+        let wall = doc.addElement(.wall(WallGeom(start: .zero, end: Vec2(8000, 0), thickness: 200, height: 6000)), level: 0)
+        let door = doc.addElement(.opening(OpeningGeom(kind: .door, hostWall: wall, offset: 2000, width: 900, height: 5000)), level: 0)
+        let window = doc.addElement(.opening(OpeningGeom(kind: .window, hostWall: wall, offset: 5000, width: 1200, height: 5000)), level: 0)
+        let ed = Editor(document: doc)
+        await ed.run("OPENINGSIZES All Drawing 100")
+        let groundTags = ed.doc.entities
+        ed.doc.currentLevel = 1
+        await ed.run("QUOTAINFISSI All Centimetres 100")
+        let upperTags = ed.doc.entities.filter { $0.props["level"] == "1" }
+        XCTAssertEqual(upperTags.count, 2)
+        XCTAssertEqual(Set(upperTags.compactMap { $0.props["tagOf"].flatMap(Int.init) }), [door, window])
+        XCTAssertTrue(groundTags.allSatisfy { ed.doc.entity($0.id) == $0 })
+        var options = DrawOptions(); options.level = 1
+        let entries = DrawListBuilder.entries(doc: ed.doc, options: options)
+        XCTAssertTrue(upperTags.allSatisfy { tag in entries.contains { $0.id == tag.id } })
+        let tag = try XCTUnwrap(upperTags.first)
+        let i = try XCTUnwrap(ed.doc.entityIndex(tag.id))
+        if case .text(var text) = ed.doc.entities[i].geometry { text.position = Vec2(99999, 99999); ed.doc.entities[i].geometry = .text(text) }
+        let displaced = ed.doc.entities[i]
+        await ed.run("OPENINGSIZES Reposition Drawing 100")
+        XCTAssertNotEqual(ed.doc.entity(tag.id)?.geometry, displaced.geometry)
+        XCTAssertEqual(ed.doc.entities.count, 4)
+        ed.undo(); XCTAssertEqual(ed.doc.entity(tag.id), displaced)
+        ed.redo()
+        let restored = try ArchiFile.decode(ArchiFile.encode(ed.doc))
+        XCTAssertEqual(restored.entities, ed.doc.entities)
+    }
+
+    func testCopiedOpeningTagsFollowCopiedDoorAndImplicitWallOpenings() async throws {
+        let ed = Editor()
+        await ed.run("WALL 0,0 10000,0 ")
+        await ed.run("DOOR 2000,0 ")
+        await ed.run("OPENINGSIZES Doors Drawing 100")
+        let door = try XCTUnwrap(ed.doc.elements.first { if case .opening = $0.geometry { return true }; return false })
+        let tag = try XCTUnwrap(ed.doc.entities.first)
+        await ed.run("COPY #\(door.id),#\(tag.id)  0,0 3000,0 ")
+        let copiedDoor = try XCTUnwrap(ed.doc.elements.last)
+        let copiedTag = try XCTUnwrap(ed.doc.entities.last)
+        XCTAssertNotEqual(copiedDoor.id, door.id)
+        XCTAssertEqual(copiedTag.props["tagOf"], String(copiedDoor.id))
+        XCTAssertTrue(PropertyAccess.set("width", "800", of: copiedDoor.id, in: &ed.doc))
+        XCTAssertEqual(Annotations.text(copiedTag, doc: ed.doc), "800×2100")
+        XCTAssertEqual(Annotations.text(tag, doc: ed.doc), "900×2100")
+        ed.undo(); XCTAssertNil(ed.doc.entity(copiedTag.id))
+        ed.redo(); XCTAssertEqual(ed.doc.entity(copiedTag.id)?.props["tagOf"], String(copiedDoor.id))
+        let wall = try XCTUnwrap(ed.doc.elements.first)
+        let results = ed.transformObjects([wall.id, tag.id], .translation(Vec2(0, 3000)), copy: true)
+        let wallTag = try XCTUnwrap(results.compactMap(ed.doc.entity).first)
+        let linked = try XCTUnwrap(wallTag.props["tagOf"].flatMap(Int.init).flatMap(ed.doc.element))
+        XCTAssertNotEqual(linked.id, door.id)
+        guard case .opening(let o) = linked.geometry else { return XCTFail("Missing copied opening") }
+        XCTAssertNotEqual(o.hostWall, wall.id)
+        let restored = try ArchiFile.decode(ArchiFile.encode(ed.doc))
+        XCTAssertEqual(restored.entity(wallTag.id)?.props["tagOf"], String(linked.id))
+    }
+
+    func testTagOnlyCopyAndExplicitRehostThroughPortableAPI() async throws {
+        let ed = Editor()
+        await ed.run("WALL 0,0 10000,0 ")
+        await ed.run("DOOR 2000,0 ")
+        await ed.run("DOOR Width 800 5000,0 ")
+        await ed.run("OPENINGSIZES Doors Drawing 100")
+        let sourceTag = try XCTUnwrap(ed.doc.entities.first)
+        let target = try XCTUnwrap(ed.doc.elements.last)
+        let result = ed.transformObjects([sourceTag.id], .translation(Vec2(3000, 0)), copy: true)
+        let copy = try XCTUnwrap(result.first.flatMap(ed.doc.entity))
+        XCTAssertEqual(copy.props["tagOf"], String(target.id))
+        XCTAssertEqual(Annotations.text(copy, doc: ed.doc), "800×2100")
+        let clip = DraftClipboard.capture([sourceTag.id], from: ed.doc, base: .zero)
+        let pasted = clip.paste(into: &ed.doc, offset: Vec2(3000, 0))
+        XCTAssertEqual(pasted.first.flatMap(ed.doc.entity)?.props["tagOf"], String(target.id))
+        // An unmatched displacement must not guess a remote target.
+        let unmatched = ed.transformObjects([sourceTag.id], .translation(Vec2(0, 3000)), copy: true)
+        let stale = try XCTUnwrap(unmatched.first.flatMap(ed.doc.entity))
+        XCTAssertEqual(stale.props["tagOf"], sourceTag.props["tagOf"])
+        ed.selection = [stale.id]
+        let session = EngineSession(editor: ed)
+        _ = try await session.call("command.run", try EngineJSON.parse(#"{"line":"TAGFORMAT Rehost #\#(target.id)"}"#))
+        XCTAssertEqual(ed.doc.entity(stale.id)?.props["tagOf"], String(target.id))
+        XCTAssertEqual(Annotations.text(ed.doc.entity(stale.id)!, doc: ed.doc), "800×2100")
+        ed.undo(); XCTAssertEqual(ed.doc.entity(stale.id), stale)
+        ed.redo()
+        let restored = try ArchiFile.decode(ArchiFile.encode(ed.doc))
+        XCTAssertEqual(Annotations.text(restored.entity(stale.id)!, doc: restored), "800×2100")
+        _ = ed.doc.addElement(target.geometry)
+        let ambiguous = ed.transformObjects([sourceTag.id], .translation(Vec2(3000, 0)), copy: true)
+        XCTAssertEqual(ambiguous.first.flatMap(ed.doc.entity)?.props["tagOf"], sourceTag.props["tagOf"])
+        ed.doc.currentLevel = 1
+        let otherLevel = ed.transformObjects([sourceTag.id], .translation(Vec2(3000, 0)), copy: true)
+        XCTAssertEqual(otherLevel.first.flatMap(ed.doc.entity)?.props["tagOf"], sourceTag.props["tagOf"])
+    }
+
+    func testClipboardWallAndTagRemapAcrossLevels() async throws {
+        let ed = Editor()
+        await ed.run("WALL 0,0 8000,0 ")
+        await ed.run("DOOR 2000,0 ")
+        await ed.run("OPENINGSIZES All Drawing 100")
+        let wall = try XCTUnwrap(ed.doc.elements.first)
+        let tag = try XCTUnwrap(ed.doc.entities.first)
+        let clip = DraftClipboard.capture([wall.id, tag.id], from: ed.doc, base: .zero)
+        let ids = clip.paste(into: &ed.doc, offset: Vec2(0, 4000), level: 1)
+        let copied = try XCTUnwrap(ids.compactMap(ed.doc.entity).first)
+        let target = try XCTUnwrap(copied.props["tagOf"].flatMap(Int.init).flatMap(ed.doc.element))
+        XCTAssertNotEqual(target.id, tag.props["tagOf"].flatMap(Int.init))
+        XCTAssertEqual(target.level, 1)
+        XCTAssertEqual(copied.props["level"], "1")
+        XCTAssertTrue(PropertyAccess.set("width", "750", of: target.id, in: &ed.doc))
+        XCTAssertEqual(Annotations.text(copied, doc: ed.doc), "750×2100")
+    }
+
 }

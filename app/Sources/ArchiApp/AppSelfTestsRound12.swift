@@ -289,6 +289,15 @@ extension AppSelfTests {
         check(rendered.contains { if case .text(let t, _, _) = $0 { return t.content == "900x2100" }; return false }, "native tag edit reaches canvas and export draw list")
         model.editor.undo()
         check(Annotations.text(model.doc.entity(label)!, doc: model.doc) == "1000×2100", "native tag text edit undoes in one step")
+        let copies = model.editor.transformObjects([opening, label], .translation(Vec2(3000, 0)), copy: true)
+        let copiedOpening = copies.first { model.doc.element($0) != nil }
+        let copiedTag = copies.compactMap(model.doc.entity).first
+        check(copiedTag?.props["tagOf"] == copiedOpening.map(String.init), "native copy binds a tag to the copied opening")
+        if let copiedOpening, let copiedTag {
+            _ = PropertyAccess.set("width", "800", of: copiedOpening, in: &model.editor.doc)
+            let copiedItems = DrawListBuilder.items(for: copiedTag, doc: model.doc, options: DrawOptions())
+            check(copiedItems.contains { if case .text(let t, _, _) = $0 { return t.content == "800×2100" }; return false }, "copied native tag renders dimensions of its new opening")
+        }
     }
 
     private static func webXRChecks(_ check: (Bool, String) -> Void) {

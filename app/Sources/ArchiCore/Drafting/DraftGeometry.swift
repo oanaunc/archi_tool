@@ -353,7 +353,8 @@ public struct DraftClipboard {
         for (k, b) in blocks where doc.blocks[k] == nil { doc.blocks[k] = b }
         let t = Transform2D.translation(offset)
         var out: [EntityID] = []
-        for e in entities { var n = e; n.geometry = GeometryOps.transform(e.geometry, t); out.append(doc.add(n)) }
+        var entityMap: [EntityID: EntityID] = [:]
+        for e in entities { var n = e; n.geometry = GeometryOps.transform(e.geometry, t); let id = doc.add(n); entityMap[e.id] = id; out.append(id) }
         var map: [EntityID: EntityID] = [:]
         for el in elements { if case .opening = el.geometry { continue }
             var n = el; n.geometry = CommandHelpers.transform(el.geometry, t); n.id = doc.allocateID(); n.level = level ?? el.level
@@ -363,7 +364,13 @@ public struct DraftClipboard {
             guard case .opening(var o) = el.geometry, let h = map[o.hostWall] else { continue }
             o.hostWall = h
             var n = el; n.geometry = .opening(o); n.id = doc.allocateID(); n.level = level ?? el.level
-            doc.elements.append(n); out.append(n.id)
+            doc.elements.append(n); map[el.id] = n.id; out.append(n.id)
+        }
+        for original in entities {
+            guard let id = entityMap[original.id], let i = doc.entityIndex(id) else { continue }
+            var tag = doc.entities[i]
+            Annotations.relinkCopiedTag(&tag, original: original, elementMap: map, transform: t, doc: doc)
+            doc.entities[i] = tag
         }
         return out
     }

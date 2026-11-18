@@ -1659,12 +1659,7 @@ extension ArchitectureCommands {
         guard let el = ed.doc.element(id) else { return nil }
         if ed.doc.layer(named: tagLayer) == nil { ed.doc.layers.append(Layer(name: tagLayer, color: RGBA(0.85, 0.85, 0.85), lineweight: 0.18)) }
         let u = 1 / ed.doc.units.mm
-        var p = pos ?? Annotations.anchor(el, doc: ed.doc)
-        if pos == nil, case .opening(let o) = el.geometry, let host = ed.doc.element(o.hostWall), let f = WallFrame(host) {
-            // Beside the wall, on the side away from a door swing.
-            let side: Double = o.kind == .door ? (o.flipFacing ? 1 : -1) : (o.flipFacing ? -1 : 1)
-            p = f.pt(o.offset, side * (f.h + (field.hasPrefix("size") ? 850 : 450) * u))
-        }
+        let p = pos ?? defaultTagPosition(el, field: field, doc: ed.doc)
         let content = Annotations.tagText(el, field: field, doc: ed.doc)
         let height = isOpening(el.geometry) ? defaultOpeningTagHeight(in: ed.doc.units) : 180 * u
         let tid = ed.doc.add(.text(TextGeom(position: p, height: height, content: content, halign: .center, valign: .middle)), layer: tagLayer)
@@ -1673,6 +1668,14 @@ extension ArchitectureCommands {
         }
         if case .space = el.geometry, let i = ed.doc.elementIndex(id), field == "room" { ed.doc.elements[i].props["tag"] = "0" }
         return tid
+    }
+
+    static func defaultTagPosition(_ el: BIMElement, field: String, doc: ArchiDocument) -> Vec2 {
+        if case .opening(let o) = el.geometry, let host = doc.element(o.hostWall), let frame = WallFrame(host) {
+            let side: Double = o.kind == .door ? (o.flipFacing ? 1 : -1) : (o.flipFacing ? -1 : 1)
+            return frame.pt(o.offset, side * (frame.h + (field.hasPrefix("size") ? 850 : 450) / doc.units.mm))
+        }
+        return Annotations.anchor(el, doc: doc)
     }
 
     static var openingTypeCommand: CommandDef {

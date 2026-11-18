@@ -163,6 +163,7 @@ extension Editor {
         let idSet = Set(ids)
         var wallMap: [EntityID: EntityID] = [:]
         var entityMap: [EntityID: EntityID] = [:]
+        var elementMap: [EntityID: EntityID] = [:]
         // Entities
         for id in ids {
             guard let i = doc.entityIndex(id) else { continue }
@@ -194,7 +195,7 @@ extension Editor {
             let g = CommandHelpers.transform(el.geometry, t)
             if copy {
                 var n = el; n.geometry = g; n.id = doc.allocateID(); doc.elements.append(n)
-                wallMap[el.id] = n.id; out.append(n.id)
+                wallMap[el.id] = n.id; elementMap[el.id] = n.id; out.append(n.id)
             } else if let i = doc.elementIndex(el.id) { doc.elements[i].geometry = g; out.append(el.id) }
         }
         // Openings: follow their host when it was transformed, otherwise slide along the host wall.
@@ -210,7 +211,7 @@ extension Editor {
             }
             if t.isMirroring { o.flipHand.toggle() }
             if copy {
-                var n = el; n.geometry = .opening(o); n.id = doc.allocateID(); doc.elements.append(n); out.append(n.id)
+                var n = el; n.geometry = .opening(o); n.id = doc.allocateID(); doc.elements.append(n); elementMap[el.id] = n.id; out.append(n.id)
             } else if let i = doc.elementIndex(el.id) { doc.elements[i].geometry = .opening(o); out.append(el.id) }
         }
         // Copy openings hosted by copied walls when they were not selected themselves.
@@ -219,7 +220,13 @@ extension Editor {
                 guard case .opening(var o) = el.geometry, let nh = wallMap[o.hostWall], !idSet.contains(el.id) else { continue }
                 o.hostWall = nh
                 if t.isMirroring { o.flipHand.toggle() }
-                var n = el; n.geometry = .opening(o); n.id = doc.allocateID(); doc.elements.append(n)
+                var n = el; n.geometry = .opening(o); n.id = doc.allocateID(); doc.elements.append(n); elementMap[el.id] = n.id
+            }
+            for (source, result) in entityMap {
+                guard let original = doc.entity(source), let i = doc.entityIndex(result) else { continue }
+                var tag = doc.entities[i]
+                Annotations.relinkCopiedTag(&tag, original: original, elementMap: elementMap, transform: t, doc: doc)
+                doc.entities[i] = tag
             }
         }
         return out

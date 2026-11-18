@@ -5,8 +5,8 @@ extension ArchitectureCommands {
     static func defaultOpeningTagHeight(in units: Units) -> Double { 100 / units.mm }
 
     static var openingSizesCommand: CommandDef {
-        CommandDef("OPENINGSIZES", aliases: ["DOORWINDOWSIZES", "QUOTAINFISSI"], category: "Annotate", summary: "Places live width × height labels on doors/windows of the current level. Configurable units and text height; Automatic labels new openings; Off disables automatic labels.") { ed in
-            let action = try await ed.getKeyword("Opening sizes", ["All", "Doors", "Windows", "Automatic", "Off"], defaultValue: "All") ?? "All"
+        CommandDef("OPENINGSIZES", aliases: ["DOORWINDOWSIZES", "QUOTAINFISSI"], category: "Annotate", summary: "Places live width × height labels on doors/windows of the current plan, including visible openings in spanning walls. Reposition resets label locations. Configurable units and text height; Automatic labels new openings; Off disables automatic labels.") { ed in
+            let action = try await ed.getKeyword("Opening sizes", ["All", "Doors", "Windows", "Reposition", "Automatic", "Off"], defaultValue: "All") ?? "All"
             if action == "Off" { ed.doc.setVariable("OPENINGSIZETAGS", ""); ed.print("Automatic opening size labels off; existing labels are retained."); return }
             let unit = try await ed.getKeyword("Size units", ["Drawing", "Millimetres", "Centimetres", "Metres"], defaultValue: "Drawing") ?? "Drawing"
             let field = ["Drawing": "size", "Millimetres": "sizemm", "Centimetres": "sizecm", "Metres": "sizem"][unit] ?? "size"
@@ -20,18 +20,26 @@ extension ArchitectureCommands {
                 return
             }
             var count = 0
-            for element in ed.doc.elements where element.level == ed.doc.currentLevel {
+            for element in ed.doc.elements where BIMConstraints.shown(element, onLevel: ed.doc.currentLevel, doc: ed.doc) {
                 guard case .opening(let opening) = element.geometry,
                       (opening.kind == .door && action != "Windows") || (opening.kind == .window && action != "Doors") else { continue }
-                let existing = ed.doc.entities.firstIndex { $0.props["tagOf"] == String(element.id) && ["size", "sizemm", "sizecm", "sizem"].contains($0.props["tagField"] ?? "") }
+                let existing = ed.doc.entities.firstIndex {
+                    guard case .text = $0.geometry else { return false }
+                    return $0.props["tagOf"] == String(element.id)
+                        && ($0.props["level"].flatMap(Int.init) ?? element.level) == ed.doc.currentLevel
+                        && ["size", "sizemm", "sizecm", "sizem"].contains(($0.props["tagField"] ?? "").lowercased())
+                }
                 if let index = existing, case .text(var text) = ed.doc.entities[index].geometry {
                     text.height = height
+                    if action == "Reposition" { text.position = defaultTagPosition(element, field: field, doc: ed.doc) }
                     text.content = Annotations.tagText(element, field: field, doc: ed.doc)
                     ed.doc.entities[index].geometry = .text(text)
                     ed.doc.entities[index].props["tagField"] = field
                     ed.doc.entities[index].props["tagTextOverride"] = nil
+                    ed.doc.entities[index].props["level"] = String(ed.doc.currentLevel)
                 } else if let id = addTag(ed, element.id, field: field), let index = ed.doc.entityIndex(id), case .text(var text) = ed.doc.entities[index].geometry {
                     text.height = height; ed.doc.entities[index].geometry = .text(text)
+                    ed.doc.entities[index].props["level"] = String(ed.doc.currentLevel)
                 }
                 count += 1
             }

@@ -88,6 +88,35 @@ public enum Annotations {
         return b.isEmpty ? .zero : b.center
     }
 
+    /// Rebinds a copied tag to a copied element, or to an unambiguous opening at the
+    /// transformed leader anchor. Formatting is retained; a new target resumes live values.
+    public static func relinkCopiedTag(_ tag: inout Entity, original: Entity, elementMap: [EntityID: EntityID], transform: Transform2D, doc: ArchiDocument) {
+        guard let sourceID = original.props["tagOf"].flatMap(Int.init) else { return }
+        var targetID = elementMap[sourceID]
+        if targetID == nil, let source = doc.element(sourceID), case .opening(let opening) = source.geometry {
+            let expected = transform.apply(anchor(source, doc: doc))
+            let candidates = doc.elements.filter { el in
+                guard el.id != sourceID, el.level == doc.currentLevel,
+                      case .opening(let o) = el.geometry, o.kind == opening.kind else { return false }
+                return anchor(el, doc: doc).distance(to: expected) <= 100 / doc.units.mm
+            }
+            if candidates.count == 1 { targetID = candidates[0].id }
+        }
+        guard let targetID, let target = doc.element(targetID) else { return }
+        rehost(&tag, to: target, doc: doc)
+    }
+
+    /// Explicit rehosting also repairs existing copied tags and clears stale manual text.
+    public static func rehost(_ tag: inout Entity, to target: BIMElement, doc: ArchiDocument) {
+        tag.props["tagOf"] = String(target.id)
+        tag.props["level"] = String(target.level)
+        tag.props["tagTextOverride"] = nil
+        if case .text(var text) = tag.geometry {
+            text.content = tagText(target, field: tag.props["tagField"] ?? "mark", doc: doc)
+            tag.geometry = .text(text)
+        }
+    }
+
     /// The same label value is used by the canvas, property panels and text editors.
     public static func text(_ e: Entity, doc: ArchiDocument) -> String {
         if let value = e.props["tagTextOverride"] { return value }

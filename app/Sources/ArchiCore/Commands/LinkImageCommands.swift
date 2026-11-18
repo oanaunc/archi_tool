@@ -101,10 +101,10 @@ public enum LinkImageCommands {
 
     static var tagLabel: CommandDef {
         CommandDef("TAGLABEL", aliases: ["EDITLABEL", "TAGFORMAT"], category: "Annotate",
-                   summary: "Tag labels linked to element parameters: Label template with {Parameter} fields, single Field, Automatic to restore a live label after a text override, Annotative paper height, List.") { ed in
+                   summary: "Tag labels linked to element parameters: Label template with {Parameter} fields, single Field, Rehost to another element, Automatic to restore a live label after a text override, Annotative paper height, List.") { ed in
             let tags = try await ed.getSelection("Select tags").filter { ed.doc.entity($0)?.props["tagOf"] != nil }
             guard !tags.isEmpty else { throw CommandError.invalid("No tags selected.") }
-            let k = try await ed.getKeyword("Enter an option", ["Label", "Field", "Automatic", "Annotative", "List"], defaultValue: "Label") ?? "Label"
+            let k = try await ed.getKeyword("Enter an option", ["Label", "Field", "Rehost", "Automatic", "Annotative", "List"], defaultValue: "Label") ?? "Label"
             switch k {
             case "List":
                 for id in tags {
@@ -113,6 +113,17 @@ public enum LinkImageCommands {
                     let tpl = f.lowercased().hasPrefix("family:") ? ed.doc.family(named: String(f.dropFirst(7)))?.label ?? f : "{\(f)}"
                     ed.print("  #\(id) → \(el.name.isEmpty ? el.typeName : el.name) #\(el.id): \(tpl) = \"\(Annotations.text(e, doc: ed.doc).replacingOccurrences(of: "\n", with: " | "))\"")
                 }
+            case "Rehost":
+                guard case .pick(let pick) = try await ed.pickObject("Select new element for the tag", filter: { ed.doc.element($0) != nil }),
+                      let target = ed.doc.element(pick.id) else { return }
+                for id in tags {
+                    guard let i = ed.doc.entityIndex(id) else { continue }
+                    var tag = ed.doc.entities[i]
+                    Annotations.rehost(&tag, to: target, doc: ed.doc)
+                    tag.props["level"] = String(ed.doc.currentLevel)
+                    ed.doc.entities[i] = tag
+                }
+                ed.print("\(tags.count) tag(s) linked to element #\(target.id).")
             case "Automatic":
                 for id in tags { if let i = ed.doc.entityIndex(id) { ed.doc.entities[i].props["tagTextOverride"] = nil } }
                 ed.print("\(tags.count) tag(s) restored to automatic labels.")

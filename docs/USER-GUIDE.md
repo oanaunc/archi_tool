@@ -2263,7 +2263,7 @@ On a sheet, open **Customize Sheet**. **Cartiglio drawing** selects the built-in
 
 Custom blocks accept `{revision}`, `{revisionDate}`, `{revisionDescription}`, `{revisionBy}` and indexed rows such as `{revision.1.code}`, `{revision.1.date}`, `{revision.1.description}`, `{revision.1.by}`. Rows are oldest-first. Add revisions from **Sheets → Revisions → Description / By → Add** or `SHEETREVISION`. `SHEETREVTABLE Fields 180 5` selects fields only; `SHEETREVTABLE Inside 180 5` adds the history band. Aliases: `REVSTYLE`, `REVISIONSTYLE`. `SHEETSTYLE Revisions Move -10,5` sets the independent offset in paper mm. Existing files keep their previous appearance until configured.
 
-Use **Annotate → Door / Window Sizes**, or type `QUOTAINFISSI` (`OPENINGSIZES`, `DOORWINDOWSIZES`), to add live **width × height** labels to BIM doors and windows of the current level:
+Use **Annotate → Door / Window Sizes**, or type `QUOTAINFISSI` (`OPENINGSIZES`, `DOORWINDOWSIZES`), to add live **width × height** labels to BIM doors and windows shown on the current plan, including openings in walls spanning levels:
 
 - `QUOTAINFISSI All Centimetres 10` labels both categories in a cm drawing; `Doors` or `Windows` selects one category. 10 is the text height in drawing units (1 mm on paper at 1:100 when the drawing uses cm). Press Enter for the same physical height in any drawing unit.
 - **Drawing** uses the drawing's units. Choose **Centimetres** to include `cm` on the label, for example **90×210 cm**. **Millimetres** and **Metres** remain available.
@@ -2317,3 +2317,12 @@ To show only door references, run `TAGLABEL` (`EDITLABEL`, `TAGFORMAT`), select 
 3. Salva il progetto `.archi` con **⌘S** su Mac o **Ctrl+S** su Windows.
 
 Per uscire scartando le modifiche dall'ultimo salvataggio del blocco, digita `BCLOSE Discard`. Se usi **Annulla** dopo aver chiuso il blocco, torni nell'editor con le modifiche ancora da confermare.
+
+
+## Door and window tag repair (1.0.11)
+
+**Annotate → Door / Window Sizes** (`QUOTAINFISSI`, `OPENINGSIZES`) adds missing size labels on the displayed plan. Labels on another level no longer suppress labels on this plan. `QUOTAINFISSI Reposition Drawing` followed by Enter resets existing size-label locations beside their openings and adds missing labels. In a centimetre drawing, `QUOTAINFISSI Reposition Centimetres 10` uses a 10 cm text height. Ordinary All/Doors/Windows preserves manually positioned labels.
+
+Copying an opening together with its tag (or a wall with its hosted opening and tag) binds the copied tag to the new opening. Copying only a tag rebinds it when the transformed leader anchor falls within 100 mm of exactly one other opening of the same category on the current level. Unmatched or ambiguous copies retain their reference; use explicit Rehost in those cases.
+
+For an existing copied tag that points to the wrong door, open **Tag Label**, select the tag, finish selection with Enter, choose **Rehost**, and select the correct door or window. From the command line or agent API: `TAGLABEL #tagID` then Enter, `Rehost #openingID`. Rehost retains the label position and formatting, clears manual text overrides, and restores live values from the new element. Save the `.archi` project after repairing labels. Both repairs support Undo/Redo; document format version 6 is unchanged.
