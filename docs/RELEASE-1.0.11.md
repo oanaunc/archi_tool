@@ -7,4 +7,10 @@
 
 The customer's original drawing was not supplied. Regression documents reproduce the copy-reference defect and skipped spanning-wall openings; the specific cause of every missing tag in that drawing cannot be confirmed without it. Distribution and publication checks will be recorded after completion.
 
-Initial verification: 13 focused opening/label tests passed, including spanning-wall plan coverage, tag-only and opening/tag copies, clipboard wall/tag copies, portable API rehosting, Undo/Redo and file round-trip. Full-suite and distribution checks are in progress.
+## Verification
+
+- Thirteen focused opening/label tests passed, including spanning-wall plan coverage, tag-only and opening/tag copies, clipboard wall/tag copies, portable API rehosting, Undo/Redo and file round-trip. The final full-suite run also includes ambiguity and copied upper-plan tag checks.
+- The native debug app passed **1,002 checks**, including copied-tag live rendering. All **1,053 commands** have a UI entry.
+- The actual Windows JSON-RPC client against the final debug engine passed six protocol checks and five tag checks: door/tag copy remapping, explicit rehosting, Undo, independent live sizes after save/reopen and Reposition restoring automatic labels.
+
+Full-suite, distribution and publication checks are in progress.
