@@ -15,4 +15,10 @@ The customer's original drawing was not supplied. Regression documents reproduce
 
 - All **1,076 local core tests passed**. Both GUI and CLI contain Apple silicon and Intel slices with minimum macOS 14.0. Runtime checks ran on Apple silicon; physical Intel execution was not tested.
 
-Notarization, Windows distribution and publication checks are in progress.
+## Mac distribution
+
+- Apple accepted the app (`be655a41-b583-4ce3-9837-52bd9b2496a5`) and DMG (`d69359c4-9c29-493b-bdcd-f44531e427d2`). Both tickets are stapled; Gatekeeper accepted both as Notarized Developer ID.
+- The app mounted read-only from the final DMG passed **1,002 native checks**, with all **1,053 commands** reachable from the UI.
+- `Oanarina-Archi-Tool-1.0.11.dmg`: **92,705,051 bytes**, SHA-256 `1d0b28f74b47cb38ef798720902e8059bcdb80b3ff1af03024de3c11797baf23`.
+
+Windows distribution and publication checks are in progress.
