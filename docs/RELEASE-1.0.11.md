@@ -10,7 +10,9 @@ The customer's original drawing was not supplied. Regression documents reproduce
 ## Verification
 
 - Thirteen focused opening/label tests passed, including spanning-wall plan coverage, tag-only and opening/tag copies, clipboard wall/tag copies, portable API rehosting, Undo/Redo and file round-trip. The final full-suite run also includes ambiguity and copied upper-plan tag checks.
-- The native debug app passed **1,002 checks**, including copied-tag live rendering. All **1,053 commands** have a UI entry.
-- The actual Windows JSON-RPC client against the final debug engine passed six protocol checks and five tag checks: door/tag copy remapping, explicit rehosting, Undo, independent live sizes after save/reopen and Reposition restoring automatic labels.
+- The native debug and signed universal release apps each passed **1,002 checks**, including copied-tag live rendering. All **1,053 commands** have a UI entry.
+- The actual Windows JSON-RPC client against the final debug and optimized release engines passed six protocol checks and five tag checks: door/tag copy remapping, explicit rehosting, Undo, independent live sizes after save/reopen and Reposition restoring automatic labels.
 
-Full-suite, distribution and publication checks are in progress.
+- All **1,076 local core tests passed**. Both GUI and CLI contain Apple silicon and Intel slices with minimum macOS 14.0. Runtime checks ran on Apple silicon; physical Intel execution was not tested.
+
+Notarization, Windows distribution and publication checks are in progress.
