@@ -1,0 +1,14 @@
+[7116:1118/170804.275:INFO:CONSOLE(0)] "[GroupMarkerNotSet(crbug.com/242999)!:A0302C0094320000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader flag to opt in to lower security guarantees for trusted content.", source: file:///C:/Users/runneradmin/AppData/Local/Programs/Oanarina%20Archi%20Tool/resources/app.asar/dist/renderer/index.html (0)
+[console.warning] [GroupMarkerNotSet(crbug.com/242999)!:A0302C0094320000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader flag to opt in to lower security guarantees for trusted content.
+[7116:1118/170804.325:INFO:CONSOLE(0)] "[.WebGL-00006164038DD500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels", source: file:///C:/Users/runneradmin/AppData/Local/Programs/Oanarina%20Archi%20Tool/resources/app.asar/dist/renderer/index.html (0)
+[console.warning] [.WebGL-00006164038DD500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[7116:1118/170805.109:INFO:CONSOLE(0)] "[.WebGL-00006164038DD500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels", source: file:///C:/Users/runneradmin/AppData/Local/Programs/Oanarina%20Archi%20Tool/resources/app.asar/dist/renderer/index.html (0)
+[console.warning] [.WebGL-00006164038DD500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[7116:1118/170806.331:INFO:CONSOLE(0)] "[.WebGL-00006164038DD500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels", source: file:///C:/Users/runneradmin/AppData/Local/Programs/Oanarina%20Archi%20Tool/resources/app.asar/dist/renderer/index.html (0)
+[console.warning] [.WebGL-00006164038DD500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[7116:1118/170807.635:INFO:CONSOLE(0)] "[.WebGL-00006164038DD500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)", source: file:///C:/Users/runneradmin/AppData/Local/Programs/Oanarina%20Archi%20Tool/resources/app.asar/dist/renderer/index.html (0)
+[console.warning] [.WebGL-00006164038DD500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+Debugger ending on ws://127.0.0.1:58316/2be96fac-7470-4091-8e5d-95fae1a80665
+For help, see: https://nodejs.org/en/docs/inspector
+Debugger ending on ws://127.0.0.1:58373/1c70ff20-6252-4072-9135-57b7bef9d692
+For help, see: https://nodejs.org/en/docs/inspector
