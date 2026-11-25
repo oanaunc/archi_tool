@@ -17,7 +17,7 @@
   "marketingURL": "https://www.oanarinaldi.com/archi-tool.html",
   "supportURL": "https://www.oanarinaldi.com/archi-tool.html",
   "privacyPolicyURL": "https://www.oanarinaldi.com/archi-tool-privacy.html",
-  "description": "Oanarina Archi Tool is a native Mac workspace for architectural drawing, 3D modeling and building information modeling. Draw with precise coordinates, snaps and familiar command aliases. Build projects with levels, walls, doors, windows, floors, roofs, stairs and rooms, then arrange sheets and export drawings or schedules.\n\nWork in 2D and 3D, edit materials, render views, and exchange models using implemented formats including DXF, IFC, OBJ, STL and GLB. Save projects in the native .archi format. Automate work through the built-in JavaScript console and opt-in local agent API.\n\nCustomize drawing sheets with independent viewport positioning, sizing and scale. Hide or move automatic sheet elements, add free text, edit title-block fields and logos, and redesign the title-block drawing. Configure revision history above or inside a title block, or keep only revision fields in your own drawing block. Add live width × height labels to BIM doors and windows, with configurable units and automatic labels for new openings. Text font and height edits can be saved directly from the editor. Changes support Undo and save with the project.\n\nCore drawing and modeling work offline. Online lookups and a configured AI provider require a connection. Select project folders to access linked resources and multi-file exports in the sandboxed Mac App Store edition. Standalone command-line MCP and Python tooling are available in the website edition. Manual edits to live opening labels now appear in the drawing and exports; restore Automatic to follow model dimensions. Reference labels can be added alongside sizes or shown in existing bubbles. Hatch property matching/scaling, sheet title visibility and custom revision fields are also improved.",
+  "description": "Oanarina Archi Tool is a native Mac workspace for architectural drawing, 3D modeling and building information modeling. Draw with precise coordinates, snaps and familiar command aliases. Build projects with levels, walls, doors, windows, floors, roofs, stairs and rooms, then arrange sheets and export drawings or schedules.\n\nWork in 2D and 3D, edit materials, render views, and exchange models using implemented formats including DXF, IFC, OBJ, STL and GLB. Save projects in the native .archi format. Automate work through the built-in JavaScript console and opt-in local agent API.\n\nCustomize drawing sheets with independent viewport positioning, sizing and scale. Hide or move automatic sheet elements, add free text, edit title-block fields and logos, and redesign the title-block drawing. Configure revision history above or inside a title block, or keep only revision fields in your own drawing block. Add live width \u00d7 height labels to BIM doors and windows, with configurable units and automatic labels for new openings. Text font and height edits can be saved directly from the editor. Changes support Undo and save with the project.\n\nCore drawing and modeling work offline. Online lookups and a configured AI provider require a connection. Select project folders to access linked resources and multi-file exports in the sandboxed Mac App Store edition. Standalone command-line MCP and Python tooling are available in the website edition. Manual edits to live opening labels now appear in the drawing and exports; restore Automatic to follow model dimensions. Reference labels can be added alongside sizes or shown in existing bubbles. Hatch property matching/scaling, sheet title visibility and custom revision fields are also improved.",
   "keywords": "architecture,CAD,BIM,drafting,3D,design,DXF,IFC,floorplan,modeling",
   "reviewNotes": "VERSION 1.0.8 (17): Fixes live door/window label editing and reference tag placement. Open Cedar House in 2D. Enter OPENINGSIZES Doors Drawing 100, select a size label and change Content in Properties to 900x2100, or double-click and Apply. The displayed label now uses the entered text; the actual door geometry is unchanged. Label Mode > Automatic in Properties, or TAGLABEL > Automatic, restores the live model value. Font/height-only edits keep labels live. TAGLABEL > Field > mark shows references instead of dimensions. TAGALL Doors now adds missing reference tags even when size labels exist. Undo and save/reopen retain edits. Also includes the previous hatch MATCHPROP/SCALE corrections, sheet title suppression and custom title-block revision bindings. Core modeling works offline, with no login. Native macOS 14+ app for Apple silicon and Intel. File > Allow Project Folder Access selects a folder for linked assets and exports. Online AI is optional and uses the user's provider. Standalone CLI/Python tools are available in the website edition. The implemented local agent server below still requires network.server.\n\nNETWORK SERVER ENTITLEMENT: com.apple.security.network.server is required by the implemented opt-in local agent server in this submitted build. Network.framework NWListener accepts incoming HTTP connections on IPv4 loopback 127.0.0.1 (default port 47800), with acceptLocalOnly enabled. Local automation clients send JSON-RPC 2.0 requests to /rpc to inspect the open drawing, execute CAD/BIM commands and undo edits. The server is off by default; every /rpc request needs a random per-launch bearer token. It does not listen on LAN or internet interfaces. network.client supports outgoing requests and does not replace permission to accept incoming connections.\n\nREPRODUCTION:\n1. Open a drawing or the bundled Cedar House. Choose Oanarina Archi Tool > Settings... (Command-comma), select Agents, and click Start under LOCAL AGENT SERVER. Oanarina Archi Tool > Agent Server... or the in-app command AGENTS opens the same panel.\n2. In Terminal run: curl http://127.0.0.1:47800/health\nThe app responds with JSON containing \"status\":\"ok\" and \"rpc\":\"/rpc\". This health endpoint requires no token.\n3. Click Copy Token in the panel. Replace PASTE_TOKEN_HERE in this Terminal command:\ncurl http://127.0.0.1:47800/rpc -H 'Authorization: Bearer PASTE_TOKEN_HERE' -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"run_command\",\"params\":{\"command\":\"CIRCLE 0,0 500\"}}'\nThe response contains a JSON-RPC result and a circle appears in the drawing. Edit > Undo reverses it. Click Stop in Agents to stop accepting connections. Use the displayed port if changed from 47800.\n\nNo external AI software, account, API key or cloud service is needed to test this incoming server functionality.",
   "remainingBeforeSubmission": [],
@@ -107,7 +107,7 @@
     "responseDeliveryStatus": "Follow-up sent on 23 October 2026 at 11:27 AM Europe/Bucharest; verified sent message and Messages (7).",
     "verifiedMessageCount": 7,
     "liveSubmissionStatus": "Waiting for Review",
-    "liveAppVersionStatus": "1.0.8 (17) — Waiting for Review",
+    "liveAppVersionStatus": "1.0.8 (17) \u2014 Waiting for Review",
     "savedExplanationVerified": true,
     "freshSandboxChecks": "17 passed; incoming HTTP drawing command and RPC undo included. Preview UUIDs match archived build 7; not an App Store-installed test.",
     "localEvidenceLog": "build/app-store/sandbox-runtime-review-2026-10-23.log",
@@ -130,7 +130,7 @@
       "responseTimeZone": "Europe/Bucharest",
       "verifiedMessageCount": 4,
       "liveSubmissionStatus": "Unresolved Issues",
-      "liveAppVersionStatus": "1.0.2 (7) — Rejected — 4.3.0 Design: Spam"
+      "liveAppVersionStatus": "1.0.2 (7) \u2014 Rejected \u2014 4.3.0 Design: Spam"
     }
   ],
   "candidateValidation": {
@@ -199,5 +199,35 @@
     "reviewStatus": "Waiting for Review for both submission and macOS App 1.0.5 (13); verified live on 27 October 2026 after successful submission at 14:19 Europe/Bucharest.",
     "status": "Cancelled on 5 November 2026 to replace it with 1.0.8 (17)"
   },
-  "testFlightBuildID": "54a6348d-3527-4134-9fea-1f5b7032f6b1"
+  "testFlightBuildID": "54a6348d-3527-4134-9fea-1f5b7032f6b1",
+  "publicStoreVerification": {
+    "date": "2026-11-25",
+    "source": "https://itunes.apple.com/lookup?id=6823133541&country=us",
+    "version": "1.0.8",
+    "currentVersionReleaseDate": "2026-11-24T16:46:27Z",
+    "storefront": "US",
+    "latestWebsiteVersion": "1.0.11"
+  },
+  "latestCandidate": {
+    "date": "2026-11-25",
+    "version": "1.0.11",
+    "build": "22",
+    "status": "signed-upload-in-progress",
+    "signedPackage": "dist/app-store/Oanarina-Archi-Tool-1.0.11-22.pkg",
+    "archive": "build/app-store/upload-22/Oanarina Archi Tool.xcarchive",
+    "inAppChecksPassed": 1002,
+    "commandsWithUIEntry": 1053,
+    "sandboxChecksPassed": 17,
+    "packagingTestsPassed": 8,
+    "previewDistributionUUIDsMatch": true,
+    "universalDebugSymbolsMatch": true,
+    "runtimeLimitation": "Tests ran in the local sandbox preview on Apple silicon; physical Intel and App Store-installed execution were not tested.",
+    "whatsNew": "Door and window labels now cover openings in walls spanning multiple levels. Copying and transforming tagged openings preserves their references, and copied labels can be repaired with TAGLABEL > Rehost. Opening dimensions follow drawing units, new tags use a compact size, and the block editor includes Save and Close Block. Includes Undo and project save/reopen support.",
+    "reviewNotes": "VERSION 1.0.11 (22): Includes opening dimension/unit fixes, Save and Close Block, and opening tag repair. In a drawing with centimetre units, DOOR/WINDOW/OPENING use drawing units and accept explicit suffixes. New opening tags use a compact model height. While editing a block, Save and Close Block (or BCLOSE Save) applies changes and returns to the prior drawing/sheet view; save the project with Cmd+S. For tag repair, open Cedar House in 2D: QUOTAINFISSI Reposition Centimetres 10 restores default size-label positions and adds missing labels, including openings in walls spanning levels. TAGLABEL > Rehost assigns a selected tag to another door/window, retains formatting and position, clears manual text overrides and restores live values. Copying tagged openings remaps references to their copies. Undo/Redo and .archi save/reopen preserve changes; document format remains 6. No account is required for local CAD/BIM work. Native macOS 14+ app for Apple silicon and Intel. File > Allow Project Folder Access grants access to linked assets and multi-file exports. Optional online AI uses the user's provider. The implemented local agent server below still requires network.server.\n\nNETWORK SERVER ENTITLEMENT: com.apple.security.network.server is required by the implemented opt-in local agent server in this submitted build. Network.framework NWListener accepts incoming HTTP connections on IPv4 loopback 127.0.0.1 (default port 47800), with acceptLocalOnly enabled. Local automation clients send JSON-RPC 2.0 requests to /rpc to inspect the open drawing, execute CAD/BIM commands and undo edits. The server is off by default; every /rpc request needs a random per-launch bearer token. It does not listen on LAN or internet interfaces. network.client supports outgoing requests and does not replace permission to accept incoming connections.\n\nREPRODUCTION:\n1. Open a drawing or the bundled Cedar House. Choose Oanarina Archi Tool > Settings... (Command-comma), select Agents, and click Start under LOCAL AGENT SERVER. Oanarina Archi Tool > Agent Server... or the in-app command AGENTS opens the same panel.\n2. In Terminal run: curl http://127.0.0.1:47800/health\nThe app responds with JSON containing \"status\":\"ok\" and \"rpc\":\"/rpc\". This health endpoint requires no token.\n3. Click Copy Token in the panel. Replace PASTE_TOKEN_HERE in this Terminal command:\ncurl http://127.0.0.1:47800/rpc -H 'Authorization: Bearer PASTE_TOKEN_HERE' -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"run_command\",\"params\":{\"command\":\"CIRCLE 0,0 500\"}}'\nThe response contains a JSON-RPC result and a circle appears in the drawing. Edit > Undo reverses it. Click Stop in Agents to stop accepting connections. Use the displayed port if changed from 47800.\n\nNo external AI software, account, API key or cloud service is needed to test this incoming server functionality.",
+    "remainingBeforeSubmission": [
+      "Verify Xcode upload and Apple processing.",
+      "Restore App Store Connect browser sign-in.",
+      "Create version 1.0.11, save release/reviewer notes, select build 22 and submit for review."
+    ]
+  }
 }
