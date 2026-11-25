@@ -1,5 +1,5 @@
 {
-  "status": "1.0.8-build-17-submitted-waiting-for-review",
+  "status": "1.0.11-build-22-submitted-waiting-for-review",
   "platform": "macOS only",
   "bundleIdentifier": "com.oanarina.architool",
   "developerTeam": "HBD3XXQK45",
@@ -7,8 +7,8 @@
   "name": "Oanarina Archi Tool",
   "subtitle": "Architecture, CAD and BIM",
   "primaryCategory": "Graphics & Design",
-  "version": "1.0.8",
-  "build": "17",
+  "version": "1.0.11",
+  "build": "22",
   "minimumMacOS": "14.0",
   "architectures": [
     "Apple silicon",
@@ -19,7 +19,7 @@
   "privacyPolicyURL": "https://www.oanarinaldi.com/archi-tool-privacy.html",
   "description": "Oanarina Archi Tool is a native Mac workspace for architectural drawing, 3D modeling and building information modeling. Draw with precise coordinates, snaps and familiar command aliases. Build projects with levels, walls, doors, windows, floors, roofs, stairs and rooms, then arrange sheets and export drawings or schedules.\n\nWork in 2D and 3D, edit materials, render views, and exchange models using implemented formats including DXF, IFC, OBJ, STL and GLB. Save projects in the native .archi format. Automate work through the built-in JavaScript console and opt-in local agent API.\n\nCustomize drawing sheets with independent viewport positioning, sizing and scale. Hide or move automatic sheet elements, add free text, edit title-block fields and logos, and redesign the title-block drawing. Configure revision history above or inside a title block, or keep only revision fields in your own drawing block. Add live width \u00d7 height labels to BIM doors and windows, with configurable units and automatic labels for new openings. Text font and height edits can be saved directly from the editor. Changes support Undo and save with the project.\n\nCore drawing and modeling work offline. Online lookups and a configured AI provider require a connection. Select project folders to access linked resources and multi-file exports in the sandboxed Mac App Store edition. Standalone command-line MCP and Python tooling are available in the website edition. Manual edits to live opening labels now appear in the drawing and exports; restore Automatic to follow model dimensions. Reference labels can be added alongside sizes or shown in existing bubbles. Hatch property matching/scaling, sheet title visibility and custom revision fields are also improved.",
   "keywords": "architecture,CAD,BIM,drafting,3D,design,DXF,IFC,floorplan,modeling",
-  "reviewNotes": "VERSION 1.0.8 (17): Fixes live door/window label editing and reference tag placement. Open Cedar House in 2D. Enter OPENINGSIZES Doors Drawing 100, select a size label and change Content in Properties to 900x2100, or double-click and Apply. The displayed label now uses the entered text; the actual door geometry is unchanged. Label Mode > Automatic in Properties, or TAGLABEL > Automatic, restores the live model value. Font/height-only edits keep labels live. TAGLABEL > Field > mark shows references instead of dimensions. TAGALL Doors now adds missing reference tags even when size labels exist. Undo and save/reopen retain edits. Also includes the previous hatch MATCHPROP/SCALE corrections, sheet title suppression and custom title-block revision bindings. Core modeling works offline, with no login. Native macOS 14+ app for Apple silicon and Intel. File > Allow Project Folder Access selects a folder for linked assets and exports. Online AI is optional and uses the user's provider. Standalone CLI/Python tools are available in the website edition. The implemented local agent server below still requires network.server.\n\nNETWORK SERVER ENTITLEMENT: com.apple.security.network.server is required by the implemented opt-in local agent server in this submitted build. Network.framework NWListener accepts incoming HTTP connections on IPv4 loopback 127.0.0.1 (default port 47800), with acceptLocalOnly enabled. Local automation clients send JSON-RPC 2.0 requests to /rpc to inspect the open drawing, execute CAD/BIM commands and undo edits. The server is off by default; every /rpc request needs a random per-launch bearer token. It does not listen on LAN or internet interfaces. network.client supports outgoing requests and does not replace permission to accept incoming connections.\n\nREPRODUCTION:\n1. Open a drawing or the bundled Cedar House. Choose Oanarina Archi Tool > Settings... (Command-comma), select Agents, and click Start under LOCAL AGENT SERVER. Oanarina Archi Tool > Agent Server... or the in-app command AGENTS opens the same panel.\n2. In Terminal run: curl http://127.0.0.1:47800/health\nThe app responds with JSON containing \"status\":\"ok\" and \"rpc\":\"/rpc\". This health endpoint requires no token.\n3. Click Copy Token in the panel. Replace PASTE_TOKEN_HERE in this Terminal command:\ncurl http://127.0.0.1:47800/rpc -H 'Authorization: Bearer PASTE_TOKEN_HERE' -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"run_command\",\"params\":{\"command\":\"CIRCLE 0,0 500\"}}'\nThe response contains a JSON-RPC result and a circle appears in the drawing. Edit > Undo reverses it. Click Stop in Agents to stop accepting connections. Use the displayed port if changed from 47800.\n\nNo external AI software, account, API key or cloud service is needed to test this incoming server functionality.",
+  "reviewNotes": "VERSION 1.0.11 (22): Includes opening dimension/unit fixes, Save and Close Block, and opening tag repair. In a drawing with centimetre units, DOOR/WINDOW/OPENING use drawing units and accept explicit suffixes. New opening tags use a compact model height. While editing a block, Save and Close Block (or BCLOSE Save) applies changes and returns to the prior drawing/sheet view; save the project with Cmd+S. For tag repair, open Cedar House in 2D: QUOTAINFISSI Reposition Centimetres 10 restores default size-label positions and adds missing labels, including openings in walls spanning levels. TAGLABEL > Rehost assigns a selected tag to another door/window, retains formatting and position, clears manual text overrides and restores live values. Copying tagged openings remaps references to their copies. Undo/Redo and .archi save/reopen preserve changes; document format remains 6. No account is required for local CAD/BIM work. Native macOS 14+ app for Apple silicon and Intel. File > Allow Project Folder Access grants access to linked assets and multi-file exports. Optional online AI uses the user's provider. The implemented local agent server below still requires network.server.\n\nNETWORK SERVER ENTITLEMENT: com.apple.security.network.server is required by the implemented opt-in local agent server in this submitted build. Network.framework NWListener accepts incoming HTTP connections on IPv4 loopback 127.0.0.1 (default port 47800), with acceptLocalOnly enabled. Local automation clients send JSON-RPC 2.0 requests to /rpc to inspect the open drawing, execute CAD/BIM commands and undo edits. The server is off by default; every /rpc request needs a random per-launch bearer token. It does not listen on LAN or internet interfaces. network.client supports outgoing requests and does not replace permission to accept incoming connections.\n\nREPRODUCTION:\n1. Open a drawing or the bundled Cedar House. Choose Oanarina Archi Tool > Settings... (Command-comma), select Agents, and click Start under LOCAL AGENT SERVER. Oanarina Archi Tool > Agent Server... or the in-app command AGENTS opens the same panel.\n2. In Terminal run: curl http://127.0.0.1:47800/health\nThe app responds with JSON containing \"status\":\"ok\" and \"rpc\":\"/rpc\". This health endpoint requires no token.\n3. Click Copy Token in the panel. Replace PASTE_TOKEN_HERE in this Terminal command:\ncurl http://127.0.0.1:47800/rpc -H 'Authorization: Bearer PASTE_TOKEN_HERE' -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"run_command\",\"params\":{\"command\":\"CIRCLE 0,0 500\"}}'\nThe response contains a JSON-RPC result and a circle appears in the drawing. Edit > Undo reverses it. Click Stop in Agents to stop accepting connections. Use the displayed port if changed from 47800.\n\nNo external AI software, account, API key or cloud service is needed to test this incoming server functionality.",
   "remainingBeforeSubmission": [],
   "appleID": "6823133541",
   "appStoreConnectURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/macos/version/inflight",
@@ -68,55 +68,60 @@
     "new submission on 27 October 2026 at 2:19 PM; Waiting for Review",
     "processed build 1.0.8 (17)",
     "English 1.0.8 label/reference description and reviewer notes",
-    "new submission on 5 November 2026 at 18:31; Waiting for Review"
+    "new submission on 5 November 2026 at 18:31; Waiting for Review",
+    "processed build 1.0.11 (22)",
+    "English 1.0.11 release notes and tag/unit/block reviewer instructions",
+    "new submission on 25 November 2026 at 23:33 Europe/Bucharest; Waiting for Review"
   ],
   "appReviewContact": "Saved in App Store Connect using the contact details supplied by the owner; personal contact values are not stored in this repository.",
   "price": "Free (0.00)",
   "availability": "All 175 current countries/regions and future storefronts",
   "privacyDeclarationStatus": "Five-type declaration expressly approved by owner and published in App Store Connect on 15 October 2026",
   "distributionPermissionStatus": "Owner expressly approved docs/APP-STORE-PERMISSION.txt on 15 October 2026; former LibreCAD table removed and replaced by attributed MIT palette",
-  "appleValidation": "Xcode upload and Apple processing succeeded. Build 1.0.5 (13) was selected and saved; Add for Review passed validation and Submit for Review returned 1 Item Submitted. The new submission and macOS App 1.0.5 (13) both show Waiting for Review. Approval and public App Store availability remain unconfirmed.",
-  "signedPackage": "dist/app-store/Oanarina-Archi-Tool-1.0.8-17.pkg",
-  "signingStatus": "Application and installer distribution-signed on 5 November 2026; strict signatures, fresh certificate/profile matching and matching universal debug symbols verified.",
-  "uploadStatus": "Build 1.0.8 (17) uploaded successfully on 5 November 2026 at 18:24:24 Europe/Bucharest, processed by Apple as Ready to Submit, then selected and saved in version 1.0.8.",
-  "reviewStatus": "Waiting for Review for both submission and macOS App 1.0.8 (17); verified live after successful submission on 5 November 2026 at 18:31 Europe/Bucharest.",
-  "submissionID": "273fc32d-9834-4ddc-8b7c-ab0b45d16379",
-  "submissionDate": "2026-11-05",
-  "reviewSubmissionURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/273fc32d-9834-4ddc-8b7c-ab0b45d16379",
-  "reviewNotesSyncStatus": "English 1.0.8 description and live-label/reference regression instructions saved and verified. Existing network.server entitlement explanation and automatic release retained.",
+  "appleValidation": "Xcode upload succeeded. Apple processed build 1.0.11 (22), which was selected and saved. Add for Review passed validation; Submit for Review returned 1 Item Submitted. The submission and macOS App 1.0.11 (22) both show Waiting for Review. Approval remains pending.",
+  "signedPackage": "dist/app-store/Oanarina-Archi-Tool-1.0.11-22.pkg",
+  "signingStatus": "Application and installer distribution-signed on 25 November 2026; strict signatures, fresh certificate/profile matching and matching universal debug symbols verified.",
+  "uploadStatus": "Build 1.0.11 (22) uploaded successfully on 25 November 2026 at 23:29:15 Europe/Bucharest, processed by Apple, selected and saved in version 1.0.11.",
+  "reviewStatus": "Waiting for Review for both submission and macOS App 1.0.11 (22); verified live after successful submission on 25 November 2026 at 23:33 Europe/Bucharest.",
+  "submissionID": "e4a3d70e-a11b-4501-89ce-afd88522d952",
+  "submissionDate": "2026-11-25",
+  "reviewSubmissionURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/e4a3d70e-a11b-4501-89ce-afd88522d952",
+  "reviewNotesSyncStatus": "English 1.0.11 release notes and reviewer instructions saved and verified; existing description, network.server sandbox explanation, no-login requirement and automatic release retained.",
   "reviewIssueDate": "2026-10-22",
   "reviewResponseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
   "reviewResponseDeliveryStatus": "Follow-up sent on 23 October 2026 at 11:27 AM Europe/Bucharest; verified sent message and Messages (7).",
   "remainingToResolveReview": [
-    "Await Apple review of version 1.0.5 (13); no further owner action is currently requested by App Store Connect."
+    "Await Apple review of version 1.0.11 (22); no further owner action is currently requested by App Store Connect."
   ],
-  "resubmissionDate": "2026-11-05",
+  "resubmissionDate": "2026-11-25",
   "resubmissionTimeZone": "Europe/Bucharest",
-  "resubmissionDisplayedTime": "18:31 Europe/Bucharest",
-  "resubmissionStatus": "Confirmed Waiting for Review for submission and macOS App 1.0.8 (17). Pending 1.0.5 (13) submission was cancelled and replaced; automatic release after approval retained.",
+  "resubmissionDisplayedTime": "23:33 Europe/Bucharest",
+  "resubmissionStatus": "New version 1.0.11 (22) submitted after 1.0.8 became Ready for Distribution. Confirmed Waiting for Review for submission and app item. Automatic release after approval retained.",
   "sandboxUsageInformation": {
     "com.apple.security.network.server": "Required by the built-in opt-in local agent server. Network.framework NWListener accepts incoming HTTP connections only on 127.0.0.1:47800 (configurable port), with acceptLocalOnly enabled, and responds to JSON-RPC 2.0 at /rpc. Local automation tools inspect the open drawing, run CAD/BIM commands and undo edits, visible live in the app. Off by default; every RPC request requires a random per-launch bearer token. No LAN/internet listener. To test: open a drawing, choose Oanarina Archi Tool > Settings > Agents > Start, then run curl http://127.0.0.1:47800/health in Terminal. The app responds with status ok. Copy Token in the same panel to exercise the authenticated CIRCLE command documented in App Review Notes; Undo reverses it. Stop ends incoming connections. No AI account or external service is required."
   },
-  "currentReviewIssue": {
-    "guideline": "2.4.5(i) - Performance",
-    "reportedDate": "2026-10-22",
-    "verifiedDate": "2026-10-23",
-    "source": "Owner-supplied Apple message and live App Store Connect inspection",
-    "summary": "Apple again requests the purpose and location of com.apple.security.network.server functionality after acknowledging prior information on 22 October at 7:37 PM Europe/Bucharest.",
-    "responseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
-    "responseDeliveryStatus": "Follow-up sent on 23 October 2026 at 11:27 AM Europe/Bucharest; verified sent message and Messages (7).",
-    "verifiedMessageCount": 7,
-    "liveSubmissionStatus": "Waiting for Review",
-    "liveAppVersionStatus": "1.0.8 (17) \u2014 Waiting for Review",
-    "savedExplanationVerified": true,
-    "freshSandboxChecks": "17 passed; incoming HTTP drawing command and RPC undo included. Preview UUIDs match archived build 7; not an App Store-installed test.",
-    "localEvidenceLog": "build/app-store/sandbox-runtime-review-2026-10-23.log",
-    "storeChangesThisInvestigation": "Reply sent at 11:27 AM first; version 1.0.3 and updated review notes saved; tested and signed build 9 uploaded, processed, selected and submitted at 11:46 AM. Server sandbox explanation and automatic release retained.",
-    "disposition": "Existing entitlement explanation retained; replacement build 1.0.4 (11) submitted on 26 October. Awaiting Apple review; no claim of issue acceptance or final app approval.",
-    "currentSubmissionID": "273fc32d-9834-4ddc-8b7c-ab0b45d16379",
-    "latestStatus": "Historical entitlement feedback remains documented. Build 1.0.8 (17) is submitted and Waiting for Review; no new Apple decision is claimed."
-  },
+  "currentReviewIssue": null,
   "previousReviewIssues": [
+    {
+      "guideline": "2.4.5(i) - Performance",
+      "reportedDate": "2026-10-22",
+      "verifiedDate": "2026-10-23",
+      "source": "Owner-supplied Apple message and live App Store Connect inspection",
+      "summary": "Apple again requests the purpose and location of com.apple.security.network.server functionality after acknowledging prior information on 22 October at 7:37 PM Europe/Bucharest.",
+      "responseFile": "docs/APP-STORE-REVIEW-RESPONSE.md",
+      "responseDeliveryStatus": "Follow-up sent on 23 October 2026 at 11:27 AM Europe/Bucharest; verified sent message and Messages (7).",
+      "verifiedMessageCount": 7,
+      "liveSubmissionStatus": "Waiting for Review",
+      "liveAppVersionStatus": "1.0.8 (17) \u2014 Waiting for Review",
+      "savedExplanationVerified": true,
+      "freshSandboxChecks": "17 passed; incoming HTTP drawing command and RPC undo included. Preview UUIDs match archived build 7; not an App Store-installed test.",
+      "localEvidenceLog": "build/app-store/sandbox-runtime-review-2026-10-23.log",
+      "storeChangesThisInvestigation": "Reply sent at 11:27 AM first; version 1.0.3 and updated review notes saved; tested and signed build 9 uploaded, processed, selected and submitted at 11:46 AM. Server sandbox explanation and automatic release retained.",
+      "disposition": "Existing entitlement explanation retained; replacement build 1.0.4 (11) submitted on 26 October. Awaiting Apple review; no claim of issue acceptance or final app approval.",
+      "currentSubmissionID": "273fc32d-9834-4ddc-8b7c-ab0b45d16379",
+      "latestStatus": "Historical entitlement feedback remains documented. Build 1.0.8 (17) is submitted and Waiting for Review; no new Apple decision is claimed.",
+      "historicalContext": "Historical 2026-10-22 entitlement feedback. Version 1.0.8 subsequently reached Ready for Distribution; confirmed on 25 November 2026. No new review issue is shown for submitted 1.0.11 (22)."
+    },
     {
       "guideline": "4.3(a) - Design - Spam",
       "reportedDate": "2026-10-16",
@@ -134,24 +139,26 @@
     }
   ],
   "candidateValidation": {
-    "date": "2026-11-05",
-    "version": "1.0.8",
-    "build": "17",
-    "inAppChecksPassed": 997,
+    "date": "2026-11-25",
+    "version": "1.0.11",
+    "build": "22",
+    "inAppChecksPassed": 1002,
+    "commandsWithUIEntry": 1053,
     "sandboxChecksPassed": 17,
     "packagingTestsPassed": 8,
     "previewDistributionUUIDsMatch": true,
     "universalDebugSymbolsMatch": true,
+    "runtimeLimitation": "Tests ran in the local sandbox preview on Apple silicon; physical Intel and App Store-installed execution were not tested.",
     "logs": [
-      "build/app-store/prepare-17.log",
-      "build/app-store/selftest-17.log",
-      "build/app-store/sandbox-runtime-17.log",
-      "build/app-store/package-17.log",
-      "build/app-store/archive-17.log",
-      "build/app-store/upload-17.log"
+      "build/app-store/prepare-22.log",
+      "build/app-store/selftest-22.log",
+      "build/app-store/sandbox-runtime-22.log",
+      "build/app-store/test-packaging-22.log",
+      "build/app-store/package-22.log",
+      "build/app-store/archive-22.log",
+      "build/app-store/upload-22.log"
     ],
-    "evidence": "build/app-store/evidence/waiting-review-17.jpg",
-    "runtimeLimit": "Runtime checks on the local sandbox preview on Apple silicon; distribution executable UUIDs match. Not an App Store-installed or Intel runtime test."
+    "evidence": "build/app-store/evidence/waiting-review-22.txt"
   },
   "resubmissionHistory": [
     {
@@ -189,17 +196,46 @@
         ],
         "runtimeLimit": "Runtime checks on the ad-hoc signed sandbox preview on Apple silicon; distribution executable UUIDs match. Not an App Store-installed or Intel runtime test."
       }
+    },
+    {
+      "version": "1.0.5",
+      "build": "13",
+      "submissionID": "b33eece2-610a-4159-8c06-cad5dffc3a1c",
+      "submissionDate": "2026-10-27",
+      "reviewStatus": "Waiting for Review for both submission and macOS App 1.0.5 (13); verified live on 27 October 2026 after successful submission at 14:19 Europe/Bucharest.",
+      "status": "Cancelled on 5 November 2026 to replace it with 1.0.8 (17)"
     }
   ],
   "previousSubmission": {
-    "version": "1.0.5",
-    "build": "13",
-    "submissionID": "b33eece2-610a-4159-8c06-cad5dffc3a1c",
-    "submissionDate": "2026-10-27",
-    "reviewStatus": "Waiting for Review for both submission and macOS App 1.0.5 (13); verified live on 27 October 2026 after successful submission at 14:19 Europe/Bucharest.",
-    "status": "Cancelled on 5 November 2026 to replace it with 1.0.8 (17)"
+    "version": "1.0.8",
+    "build": "17",
+    "submissionID": "273fc32d-9834-4ddc-8b7c-ab0b45d16379",
+    "submissionDate": "2026-11-05",
+    "reviewStatus": "Waiting for Review for both submission and macOS App 1.0.8 (17); verified live after successful submission on 5 November 2026 at 18:31 Europe/Bucharest.",
+    "candidateValidation": {
+      "date": "2026-11-05",
+      "version": "1.0.8",
+      "build": "17",
+      "inAppChecksPassed": 997,
+      "sandboxChecksPassed": 17,
+      "packagingTestsPassed": 8,
+      "previewDistributionUUIDsMatch": true,
+      "universalDebugSymbolsMatch": true,
+      "logs": [
+        "build/app-store/prepare-17.log",
+        "build/app-store/selftest-17.log",
+        "build/app-store/sandbox-runtime-17.log",
+        "build/app-store/package-17.log",
+        "build/app-store/archive-17.log",
+        "build/app-store/upload-17.log"
+      ],
+      "evidence": "build/app-store/evidence/waiting-review-17.jpg",
+      "runtimeLimit": "Runtime checks on the local sandbox preview on Apple silicon; distribution executable UUIDs match. Not an App Store-installed or Intel runtime test."
+    },
+    "status": "Ready for Distribution; public US listing confirms 1.0.8 released on 24 November 2026. Verified 25 November 2026.",
+    "testFlightBuildID": "54a6348d-3527-4134-9fea-1f5b7032f6b1"
   },
-  "testFlightBuildID": "54a6348d-3527-4134-9fea-1f5b7032f6b1",
+  "testFlightBuildID": "3a23ce66-afe9-4f74-ac99-0ec349251c4c",
   "publicStoreVerification": {
     "date": "2026-11-25",
     "source": "https://itunes.apple.com/lookup?id=6823133541&country=us",
@@ -212,7 +248,7 @@
     "date": "2026-11-25",
     "version": "1.0.11",
     "build": "22",
-    "status": "uploaded-processing-browser-sign-in-required",
+    "status": "submitted-waiting-for-review",
     "signedPackage": "dist/app-store/Oanarina-Archi-Tool-1.0.11-22.pkg",
     "archive": "build/app-store/upload-22/Oanarina Archi Tool.xcarchive",
     "inAppChecksPassed": 1002,
@@ -224,13 +260,16 @@
     "runtimeLimitation": "Tests ran in the local sandbox preview on Apple silicon; physical Intel and App Store-installed execution were not tested.",
     "whatsNew": "Door and window labels now cover openings in walls spanning multiple levels. Copying and transforming tagged openings preserves their references, and copied labels can be repaired with TAGLABEL > Rehost. Opening dimensions follow drawing units, new tags use a compact size, and the block editor includes Save and Close Block. Includes Undo and project save/reopen support.",
     "reviewNotes": "VERSION 1.0.11 (22): Includes opening dimension/unit fixes, Save and Close Block, and opening tag repair. In a drawing with centimetre units, DOOR/WINDOW/OPENING use drawing units and accept explicit suffixes. New opening tags use a compact model height. While editing a block, Save and Close Block (or BCLOSE Save) applies changes and returns to the prior drawing/sheet view; save the project with Cmd+S. For tag repair, open Cedar House in 2D: QUOTAINFISSI Reposition Centimetres 10 restores default size-label positions and adds missing labels, including openings in walls spanning levels. TAGLABEL > Rehost assigns a selected tag to another door/window, retains formatting and position, clears manual text overrides and restores live values. Copying tagged openings remaps references to their copies. Undo/Redo and .archi save/reopen preserve changes; document format remains 6. No account is required for local CAD/BIM work. Native macOS 14+ app for Apple silicon and Intel. File > Allow Project Folder Access grants access to linked assets and multi-file exports. Optional online AI uses the user's provider. The implemented local agent server below still requires network.server.\n\nNETWORK SERVER ENTITLEMENT: com.apple.security.network.server is required by the implemented opt-in local agent server in this submitted build. Network.framework NWListener accepts incoming HTTP connections on IPv4 loopback 127.0.0.1 (default port 47800), with acceptLocalOnly enabled. Local automation clients send JSON-RPC 2.0 requests to /rpc to inspect the open drawing, execute CAD/BIM commands and undo edits. The server is off by default; every /rpc request needs a random per-launch bearer token. It does not listen on LAN or internet interfaces. network.client supports outgoing requests and does not replace permission to accept incoming connections.\n\nREPRODUCTION:\n1. Open a drawing or the bundled Cedar House. Choose Oanarina Archi Tool > Settings... (Command-comma), select Agents, and click Start under LOCAL AGENT SERVER. Oanarina Archi Tool > Agent Server... or the in-app command AGENTS opens the same panel.\n2. In Terminal run: curl http://127.0.0.1:47800/health\nThe app responds with JSON containing \"status\":\"ok\" and \"rpc\":\"/rpc\". This health endpoint requires no token.\n3. Click Copy Token in the panel. Replace PASTE_TOKEN_HERE in this Terminal command:\ncurl http://127.0.0.1:47800/rpc -H 'Authorization: Bearer PASTE_TOKEN_HERE' -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"run_command\",\"params\":{\"command\":\"CIRCLE 0,0 500\"}}'\nThe response contains a JSON-RPC result and a circle appears in the drawing. Edit > Undo reverses it. Click Stop in Agents to stop accepting connections. Use the displayed port if changed from 47800.\n\nNo external AI software, account, API key or cloud service is needed to test this incoming server functionality.",
-    "remainingBeforeSubmission": [
-      "Restore App Store Connect browser sign-in.",
-      "Verify build 22 finishes Apple processing.",
-      "Create version 1.0.11, save release/reviewer notes, select build 22 and submit for review."
-    ],
+    "remainingBeforeSubmission": [],
     "uploadStatus": "Xcode confirmed Upload succeeded and EXPORT SUCCEEDED on 25 November 2026 at 23:29:15 Europe/Bucharest. Apple reports the uploaded package is processing.",
     "uploadLog": "build/app-store/upload-22.log",
-    "signedPackageSHA256": "29ed8b685ff74a976d380261066a3ad47441cde54fbedd46a54a3edf07accf32"
-  }
+    "signedPackageSHA256": "29ed8b685ff74a976d380261066a3ad47441cde54fbedd46a54a3edf07accf32",
+    "submissionID": "e4a3d70e-a11b-4501-89ce-afd88522d952",
+    "reviewSubmissionURL": "https://appstoreconnect.apple.com/apps/6823133541/distribution/reviewsubmissions/details/e4a3d70e-a11b-4501-89ce-afd88522d952",
+    "reviewStatus": "Waiting for Review",
+    "submissionDate": "2026-11-25",
+    "submissionTime": "23:33 Europe/Bucharest",
+    "testFlightBuildID": "3a23ce66-afe9-4f74-ac99-0ec349251c4c"
+  },
+  "whatsNew": "Door and window labels now cover openings in walls spanning multiple levels. Copying and transforming tagged openings preserves their references, and copied labels can be repaired with TAGLABEL > Rehost. Opening dimensions follow drawing units, new tags use a compact size, and the block editor includes Save and Close Block. Includes Undo and project save/reopen support."
 }
