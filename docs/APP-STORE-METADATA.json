@@ -212,7 +212,7 @@
     "date": "2026-11-25",
     "version": "1.0.11",
     "build": "22",
-    "status": "signed-upload-in-progress",
+    "status": "uploaded-processing-browser-sign-in-required",
     "signedPackage": "dist/app-store/Oanarina-Archi-Tool-1.0.11-22.pkg",
     "archive": "build/app-store/upload-22/Oanarina Archi Tool.xcarchive",
     "inAppChecksPassed": 1002,
@@ -225,9 +225,12 @@
     "whatsNew": "Door and window labels now cover openings in walls spanning multiple levels. Copying and transforming tagged openings preserves their references, and copied labels can be repaired with TAGLABEL > Rehost. Opening dimensions follow drawing units, new tags use a compact size, and the block editor includes Save and Close Block. Includes Undo and project save/reopen support.",
     "reviewNotes": "VERSION 1.0.11 (22): Includes opening dimension/unit fixes, Save and Close Block, and opening tag repair. In a drawing with centimetre units, DOOR/WINDOW/OPENING use drawing units and accept explicit suffixes. New opening tags use a compact model height. While editing a block, Save and Close Block (or BCLOSE Save) applies changes and returns to the prior drawing/sheet view; save the project with Cmd+S. For tag repair, open Cedar House in 2D: QUOTAINFISSI Reposition Centimetres 10 restores default size-label positions and adds missing labels, including openings in walls spanning levels. TAGLABEL > Rehost assigns a selected tag to another door/window, retains formatting and position, clears manual text overrides and restores live values. Copying tagged openings remaps references to their copies. Undo/Redo and .archi save/reopen preserve changes; document format remains 6. No account is required for local CAD/BIM work. Native macOS 14+ app for Apple silicon and Intel. File > Allow Project Folder Access grants access to linked assets and multi-file exports. Optional online AI uses the user's provider. The implemented local agent server below still requires network.server.\n\nNETWORK SERVER ENTITLEMENT: com.apple.security.network.server is required by the implemented opt-in local agent server in this submitted build. Network.framework NWListener accepts incoming HTTP connections on IPv4 loopback 127.0.0.1 (default port 47800), with acceptLocalOnly enabled. Local automation clients send JSON-RPC 2.0 requests to /rpc to inspect the open drawing, execute CAD/BIM commands and undo edits. The server is off by default; every /rpc request needs a random per-launch bearer token. It does not listen on LAN or internet interfaces. network.client supports outgoing requests and does not replace permission to accept incoming connections.\n\nREPRODUCTION:\n1. Open a drawing or the bundled Cedar House. Choose Oanarina Archi Tool > Settings... (Command-comma), select Agents, and click Start under LOCAL AGENT SERVER. Oanarina Archi Tool > Agent Server... or the in-app command AGENTS opens the same panel.\n2. In Terminal run: curl http://127.0.0.1:47800/health\nThe app responds with JSON containing \"status\":\"ok\" and \"rpc\":\"/rpc\". This health endpoint requires no token.\n3. Click Copy Token in the panel. Replace PASTE_TOKEN_HERE in this Terminal command:\ncurl http://127.0.0.1:47800/rpc -H 'Authorization: Bearer PASTE_TOKEN_HERE' -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"run_command\",\"params\":{\"command\":\"CIRCLE 0,0 500\"}}'\nThe response contains a JSON-RPC result and a circle appears in the drawing. Edit > Undo reverses it. Click Stop in Agents to stop accepting connections. Use the displayed port if changed from 47800.\n\nNo external AI software, account, API key or cloud service is needed to test this incoming server functionality.",
     "remainingBeforeSubmission": [
-      "Verify Xcode upload and Apple processing.",
       "Restore App Store Connect browser sign-in.",
+      "Verify build 22 finishes Apple processing.",
       "Create version 1.0.11, save release/reviewer notes, select build 22 and submit for review."
-    ]
+    ],
+    "uploadStatus": "Xcode confirmed Upload succeeded and EXPORT SUCCEEDED on 25 November 2026 at 23:29:15 Europe/Bucharest. Apple reports the uploaded package is processing.",
+    "uploadLog": "build/app-store/upload-22.log",
+    "signedPackageSHA256": "29ed8b685ff74a976d380261066a3ad47441cde54fbedd46a54a3edf07accf32"
   }
 }

@@ -34,4 +34,4 @@ After publication and verification, Nicola received one Italian reply in his ori
 
 ## Mac App Store update — 25 November 2026
 
-Apple’s public US listing still reports 1.0.8. The new store candidate **1.0.11 (22)** passed 1,002 native checks, all 17 sandbox checks and eight packaging tests. App/installer distribution signatures, profile/certificate matching and universal preview/distribution/debug-symbol UUIDs passed. Xcode upload is in progress; final review submission requires restored App Store Connect browser sign-in.
+Apple’s public US listing still reports 1.0.8. The new store candidate **1.0.11 (22)** passed 1,002 native checks, all 17 sandbox checks and eight packaging tests. App/installer distribution signatures, profile/certificate matching and universal preview/distribution/debug-symbol UUIDs passed. Xcode confirmed **Upload succeeded** and **EXPORT SUCCEEDED** at **23:29:15 Europe/Bucharest**. Apple reports the uploaded package is processing. Build-selection readiness and final review submission remain pending; App Store Connect browser sign-in must be restored first.
